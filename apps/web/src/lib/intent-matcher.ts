@@ -2,6 +2,8 @@
  * Intent Matcher - Parse user queries to determine action and pre-fill data
  */
 
+import { matchServiceToProfession } from './service-matcher';
+
 export type IntentAction = 'find-professional' | 'join' | 'manage-projects' | 'unknown';
 
 export interface IntentResult {
@@ -87,21 +89,29 @@ export function matchIntent(query: string): IntentResult {
   }
 
   // Check for FIND PROFESSIONAL intent (main intent)
-  const findMatch = /\b(find|looking for|need|search|hire|looking|want|get a?n?)\b/.test(normalized);
+  // First, try to match by service/problem description
+  let profession: string | undefined;
+  let location: string | undefined;
+  let confidence = 0;
 
-  if (findMatch) {
-    // Extract profession
-    let profession: string | undefined;
-    let location: string | undefined;
-    let confidence = 0.8;
-
-    // Match profession
+  const matchedProfession = matchServiceToProfession(normalized);
+  if (matchedProfession) {
+    profession = matchedProfession;
+    confidence = 0.95; // High confidence when service matches
+  } else {
+    // Fall back to profession keyword matching
     for (const prof of PROFESSIONS) {
       if (normalized.includes(prof)) {
         profession = prof;
+        confidence = 0.9;
         break;
       }
     }
+  }
+
+  // If we found a profession or service, treat it as a find-professional intent
+  if (profession || confidence > 0) {
+    if (!profession) confidence = 0.8; // Default confidence if no profession found
 
     // Match location
     for (const loc of LOCATIONS) {
@@ -113,6 +123,7 @@ export function matchIntent(query: string): IntentResult {
 
     // Increase confidence if we found both profession and location
     if (profession && location) confidence = 0.95;
+    else if (profession && matchedProfession) confidence = 0.95;
     else if (profession) confidence = 0.9;
 
     const displayText = profession
@@ -127,6 +138,33 @@ export function matchIntent(query: string): IntentResult {
       confidence,
       metadata: {
         professionType: profession,
+        location,
+        displayText,
+      },
+    };
+  }
+
+  // Check for action words (find, need, help, etc.) without specific profession
+  const findMatch = /\b(find|looking for|need|search|hire|looking|want|get a?n?|help with|fix|repair|install|build)\b/.test(normalized);
+
+  if (findMatch) {
+    // Match location
+    for (const loc of LOCATIONS) {
+      if (normalized.includes(loc)) {
+        location = loc;
+        break;
+      }
+    }
+
+    const displayText = location
+      ? `Find professionals in ${location}`
+      : 'Find professionals';
+
+    return {
+      action: 'find-professional',
+      route: '/professionals',
+      confidence: 0.7,
+      metadata: {
         location,
         displayText,
       },
