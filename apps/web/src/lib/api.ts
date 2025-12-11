@@ -1,6 +1,7 @@
 import { Project, Professional, Tradesman } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://fitouthub.onrender.com";
 
 async function safeFetch<T>(path: string): Promise<T | null> {
   const url = `${API_BASE}${path}`;
@@ -34,6 +35,6 @@ export async function getTradesmen(): Promise<Tradesman[]> {
 }
 
 export async function getProfessionals(): Promise<Professional[]> {
-  const data = await import("../data/professionals");
-  return data.professionals;
+  const data = await safeFetch<Professional[]>("/professionals");
+  return data ?? [];
 }

@@ -42,8 +42,8 @@ export default function JoinPage() {
   const handleFormSubmit = async (data: Record<string, string | string[] | boolean>) => {
     setIsSubmitting(true);
     try {
-      // Always use localhost for client-side fetch
-      const apiUrl = 'http://localhost:3001';
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fitouthub.onrender.com';
 
       // Helper function to extract first value from array or string
       const getValue = (value: string | string[] | boolean | undefined): string => {

@@ -10,15 +10,19 @@ export type Tradesman = {
 
 export type Professional = {
   id: string;
-  fullName?: string;
-  type: "contractor" | "reseller";
-  businessType: "sole_trader" | "company";
+  userId?: string | null;
+  professionType: "contractor" | "company" | "reseller";
+  email: string;
+  phone: string;
   status: "pending" | "approved" | "suspended" | "inactive";
   rating: number;
-  serviceArea: string[];
-  primaryTradeTitle?: string;
-  businessName?: string;
-  productCategories?: string[];
+  registrationDate?: string;
+  fullName?: string | null;
+  businessName?: string | null;
+  serviceArea?: string | null;
+  additionalData?: Record<string, unknown> | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type Project = {
