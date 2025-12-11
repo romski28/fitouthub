@@ -33,7 +33,17 @@ export class ProfessionalsService {
   }
 
   async findAll() {
-    return (this.prisma as any).professional.findMany();
+    try {
+      console.log('findAll: Attempting to fetch professionals');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (this.prisma as any).professional.findMany();
+      console.log(`findAll: Success, found ${(result as any).length} professionals`);
+      return result;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('findAll: Error fetching professionals:', errorMsg);
+      throw new Error(`Failed to fetch professionals: ${errorMsg}`);
+    }
   }
 
   async findOne(id: string) {

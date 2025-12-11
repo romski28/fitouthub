@@ -53,8 +53,15 @@ export class ProfessionalsController {
 
   @Get()
   async findAll() {
-    console.log('GET /professionals called');
-    return this.professionalsService.findAll();
+    try {
+      console.log('GET /professionals called');
+      const result = await this.professionalsService.findAll();
+      console.log('Professionals found:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw error;
+    }
   }
 
   @Get(':id')
