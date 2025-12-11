@@ -23,7 +23,8 @@ async function bootstrap() {
     console.log('  Error:', (error as Error).message);
   }
 
-  await app.listen(3001);
-  console.log('✓ API listening on http://localhost:3001');
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`✓ API listening on http://localhost:${port}`);
 }
 bootstrap();
