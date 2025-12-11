@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
+import Footer from "@/components/footer";
+import CornerRibbon from "@/components/corner-ribbon";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +47,9 @@ export default function RootLayout({
             </div>
           </header>
           <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+          <Footer />
         </div>
+        <CornerRibbon />
       </body>
     </html>
   );
