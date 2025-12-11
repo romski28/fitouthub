@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table - Homeowners/Clients who need renovation work
+model User {
+  id                  String   @id @default(cuid())
+  nickname            String   @unique
+  firstName           String
+  surname             String
+  chineseName         String?
+  email               String   @unique
+  mobile              String?
+  passwordHash        String
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
+  emailVerified       Boolean  @default(false)
+  verificationToken   String?
+  role                String   @default("client") // client, admin, professional
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  projects            Project[]
+  professional        Professional?
+}
+
+// Tradesmen/Professions reference table - Links to primary_trade in Professional
+model Tradesman {
+  id          String   @id @default(cuid())
+  title       String   @unique // e.g., "Builder", "Plumber", "Electrician"
+  category    String   // "General", "Interior", "Exterior", "Systems", "Specialist", "Design"
+  emoji       String?
+  description String?
+  featured    Boolean  @default(false)
+  image       String?
+  jobs        String[] // Array of job descriptions
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Fitout Professionals - Contractors, Resellers, Service providers
+model Professional {
+  id               String   @id @default(cuid())
+  userId           String?  @unique
+  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Core fields
+  professionType   String   // "contractor", "company", or "reseller"
+  email            String   @unique
+  phone            String
+  status           String   @default("pending") // "pending", "approved", "suspended", "inactive"
+  rating           Float    @default(0)
+  registrationDate DateTime @default(now())
+
+  // Personal/Business details
+  fullName         String?
+  businessName     String?
+  serviceArea      String?
+
+  // Additional data (stores full form submission as JSON)
+  additionalData   Json?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// Projects - Renovation projects by users
+model Project {
+  id              String   @id @default(cuid())
+  projectName     String
+  clientName      String
+  contractorName  String?
+  region          String
+  budget          Decimal? @db.Decimal(12, 2)
+  status          String   @default("pending") // pending | approved | rejected
+  notes           String?
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  clientId        String? // Legacy field for backward compatibility
+  client          Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Legacy Client model - kept for backward compatibility with existing projects
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  projects  Project[]
+}
