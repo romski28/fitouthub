@@ -320,7 +320,7 @@ async function main() {
         rating: 4.5,
         fullName: `${contractor.firstName} ${contractor.surname}`,
         primaryTradeId: tradeId,
-        serviceArea: ['Hong Kong Island', 'Kowloon'],
+        serviceArea: 'Hong Kong Island, Kowloon',
       },
     });
   }
