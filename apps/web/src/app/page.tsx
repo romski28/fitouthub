@@ -1,3 +1,5 @@
+import SearchFlow from '@/components/search-flow';
+
 const features = [
   {
     title: "Browse Professionals",
@@ -22,6 +24,21 @@ const features = [
 export default function Home() {
   return (
     <div className="space-y-16">
+      {/* Search Flow */}
+      <section className="relative -mx-6 -mt-10 bg-gradient-to-b from-emerald-50 to-white px-6 py-16">
+        <div className="mx-auto max-w-2xl">
+          <div className="text-center mb-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-600 mb-2">
+              Quick Start
+            </p>
+            <h2 className="text-2xl font-bold text-slate-900">
+              Tell us what you need
+            </h2>
+          </div>
+          <SearchFlow />
+        </div>
+      </section>
+
       {/* Hero Section */}
       <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
