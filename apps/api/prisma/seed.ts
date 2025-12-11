@@ -314,12 +314,12 @@ async function main() {
       update: {},
       create: {
         userId: user.id,
-        type: 'contractor',
-        businessType: 'sole_trader',
+        professionType: 'contractor',
+        email: contractor.email,
+        phone: contractor.mobile || '+852-0000-0000',
         status: 'approved',
         rating: 4.5,
         fullName: `${contractor.firstName} ${contractor.surname}`,
-        primaryTradeId: tradeId,
         serviceArea: 'Hong Kong Island, Kowloon',
       },
     });
