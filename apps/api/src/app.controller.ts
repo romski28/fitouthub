@@ -9,4 +9,9 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('test')
+  getTest(): object {
+    return { status: 'ok', message: 'API is working', timestamp: new Date() };
+  }
 }

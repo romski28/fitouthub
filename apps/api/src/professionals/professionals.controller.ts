@@ -53,6 +53,7 @@ export class ProfessionalsController {
 
   @Get()
   async findAll() {
+    console.log('GET /professionals called');
     return this.professionalsService.findAll();
   }
 
