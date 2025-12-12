@@ -194,16 +194,34 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
           : [];
       const areas = serviceAreasRaw.map((s) => s.trim().toLowerCase());
 
-      // Highest priority: tertiary
-      if (targetParts[0] && areas.some((a) => a.includes(targetParts[0]!) || targetParts[0]!.includes(a))) return 3;
-      // Next: secondary
-      if (targetParts[1] && areas.some((a) => a.includes(targetParts[1]!) || targetParts[1]!.includes(a))) return 2;
-      // Next: primary
-      if (targetParts[2] && areas.some((a) => a.includes(targetParts[2]!) || targetParts[2]!.includes(a))) return 1;
-      return 0;
+      if (areas.length === 0) return -1; // push unknown areas to bottom
+
+      const equals = (a: string, b: string) => a === b;
+      const loose = (a: string, b: string) => a.includes(b) || b.includes(a);
+
+      let score = 0;
+      // Tertiary exact match >> loose match
+      if (targetParts[0]) {
+        const t = targetParts[0]!;
+        if (areas.some((a) => equals(a, t))) score += 100;
+        else if (areas.some((a) => loose(a, t))) score += 60;
+      }
+      // Secondary exact > loose
+      if (targetParts[1]) {
+        const s = targetParts[1]!;
+        if (areas.some((a) => equals(a, s))) score += 50;
+        else if (areas.some((a) => loose(a, s))) score += 30;
+      }
+      // Primary exact > loose
+      if (targetParts[2]) {
+        const p = targetParts[2]!;
+        if (areas.some((a) => equals(a, p))) score += 10;
+        else if (areas.some((a) => loose(a, p))) score += 5;
+      }
+      return score;
     };
 
-    return items.sort((a, b) => {
+    const sorted = items.slice().sort((a, b) => {
       const sa = scoreFor(a);
       const sb = scoreFor(b);
       if (sb !== sa) return sb - sa; // higher score first
@@ -215,6 +233,8 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
       const nb = (b.fullName || b.businessName || '').toLowerCase();
       return na.localeCompare(nb);
     });
+
+    return sorted;
   }, [professionals, professionFilter, loc]);
 
   return (
