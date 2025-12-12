@@ -69,13 +69,13 @@ const ProfessionalCard = memo(({ pro }: { pro: Professional }) => {
                 {pro.primaryTrade}
               </span>
             )}
-            {pro.tradesOffered?.map((trade) => (
-              <span key={trade} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+            {pro.tradesOffered?.map((trade, index) => (
+              <span key={`trade-${index}`} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
                 {trade}
               </span>
             ))}
-            {pro.suppliesOffered?.map((supply) => (
-              <span key={supply} className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+            {pro.suppliesOffered?.map((supply, index) => (
+              <span key={`supply-${index}`} className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
                 {supply}
               </span>
             ))}
@@ -85,8 +85,8 @@ const ProfessionalCard = memo(({ pro }: { pro: Professional }) => {
 
       {serviceAreas.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-700">
-          {serviceAreas.map((area) => (
-            <span key={area} className="rounded border border-slate-200 px-2 py-1">
+          {serviceAreas.map((area, index) => (
+            <span key={`${area}-${index}`} className="rounded border border-slate-200 px-2 py-1">
               {area}
             </span>
           ))}
@@ -204,7 +204,7 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
           No matching professionals.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4" suppressHydrationWarning>
           {filtered.map((pro) => (
             <ProfessionalCard key={pro.id} pro={pro} />
           ))}
