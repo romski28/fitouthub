@@ -36,8 +36,9 @@ export default function RootLayout({
             <Navbar />
             <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
             <Footer />
-        </div>
-        <CornerRibbon />
+          </div>
+          <CornerRibbon />
+        </AuthProvider>
       </body>
     </html>
   );
