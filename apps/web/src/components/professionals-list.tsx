@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useCallback, useEffect, memo } from 'react';
+import { useMemo, useState, useEffect, memo } from 'react';
 import LocationSelect, { CanonicalLocation } from '@/components/location-select';
 import { matchLocation } from '@/lib/location-matcher';
 import { Professional } from '@/lib/types';
