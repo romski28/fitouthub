@@ -119,9 +119,23 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
     }
   })();
 
-  const baseLoc = initialLocation && (initialLocation.primary || initialLocation.secondary || initialLocation.tertiary)
+  // Check if initialLocation has any valid location data
+  const hasInitialLocation = initialLocation && (initialLocation.primary || initialLocation.secondary || initialLocation.tertiary);
+  const hasIntentLocation = initialFromIntent.loc.primary || initialFromIntent.loc.secondary || initialFromIntent.loc.tertiary;
+  
+  const baseLoc = hasInitialLocation
     ? initialLocation
-    : initialFromIntent.loc;
+    : hasIntentLocation
+      ? initialFromIntent.loc
+      : ({} as CanonicalLocation);
+
+  console.log('ProfessionalsList location setup:', {
+    initialLocation,
+    hasInitialLocation,
+    intentLocation: initialFromIntent.loc,
+    hasIntentLocation,
+    baseLoc
+  });
 
   const [professionFilter, setProfessionFilter] = useState<string | undefined>(initialFromIntent.profession);
   const [professionInput, setProfessionInput] = useState<string>(initialFromIntent.profession || '');

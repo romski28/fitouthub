@@ -60,6 +60,8 @@ export default function ProfessionalsPage() {
   // Prefer user default location; fallback to intentData (handled in ProfessionalsList)
   const defaultLocation: CanonicalLocation = userLocation;
 
+  console.log('ProfessionalsPage - userLocation from auth:', userLocation);
+
   return (
     <>
       {/* Protected page overlay */}
