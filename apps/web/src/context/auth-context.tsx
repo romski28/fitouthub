@@ -19,7 +19,7 @@ interface User {
 }
 
 interface AuthContextType {
-  isLoggedIn: boolean;
+  isLoggedIn: boolean | undefined; // undefined = loading
   user: User | null;
   accessToken: string | null;
   role: string | null;
@@ -41,7 +41,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined); // Start as loading
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -54,7 +54,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (savedToken && savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        // Batch state updates
         setUser(parsedUser);
         setAccessToken(savedToken);
         setRole(parsedUser.role);
@@ -63,7 +62,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Failed to parse saved user:', error);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
+        setIsLoggedIn(false);
       }
+    } else {
+      setIsLoggedIn(false);
     }
   }, []);
 

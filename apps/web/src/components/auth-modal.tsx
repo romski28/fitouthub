@@ -19,6 +19,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Update activeTab when defaultTab prop changes
+  React.useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
+
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');

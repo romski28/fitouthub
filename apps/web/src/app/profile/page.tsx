@@ -1,23 +1,25 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { redirect } from 'next/navigation';
 
 export default function ProfilePage() {
   const { isLoggedIn, user, logout } = useAuth();
+  const router = useRouter();
 
-  // Client-side redirect for protected page
-  React.useEffect(() => {
-    if (!isLoggedIn) {
-      redirect('/');
+  // Redirect unauthenticated users
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      router.push('/');
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, router]);
 
-  if (!isLoggedIn || !user) {
+  // Show loading state while auth is initializing
+  if (isLoggedIn === undefined || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-slate-600">Redirecting...</p>
+        <p className="text-slate-600">Loading profile...</p>
       </div>
     );
   }
