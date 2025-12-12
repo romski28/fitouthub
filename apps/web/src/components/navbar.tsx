@@ -3,12 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
-import { AuthModal } from '@/components/auth-modal';
+import { useAuthModalControl } from '@/context/auth-modal-control';
 
 export const Navbar: React.FC = () => {
   const { isLoggedIn, user, logout } = useAuth();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState<'login' | 'join'>('login');
+  const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   return (
@@ -30,13 +29,13 @@ export const Navbar: React.FC = () => {
             </a>
             {/* Projects only visible when logged in */}
             {isLoggedIn && (
-              <a className="hover:text-slate-900" href="/projects">
+              <a className="hover:text-slate-900" href="/projects" suppressHydrationWarning>
                 Projects
               </a>
             )}
 
             {/* Auth buttons */}
-            <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6">
+            <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6" suppressHydrationWarning>
               {isLoggedIn && user ? (
                 <div className="relative">
                   <button
@@ -81,19 +80,13 @@ export const Navbar: React.FC = () => {
               ) : (
                 <>
                   <button
-                    onClick={() => {
-                      setAuthModalTab('login');
-                      setAuthModalOpen(true);
-                    }}
+                    onClick={openLoginModal}
                     className="text-slate-700 hover:text-slate-900"
                   >
                     Login
                   </button>
                   <button
-                    onClick={() => {
-                      setAuthModalTab('join');
-                      setAuthModalOpen(true);
-                    }}
+                    onClick={openJoinModal}
                     className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
                   >
                     Join
@@ -104,13 +97,6 @@ export const Navbar: React.FC = () => {
           </nav>
         </div>
       </header>
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        defaultTab={authModalTab}
-      />
     </>
   );
 };

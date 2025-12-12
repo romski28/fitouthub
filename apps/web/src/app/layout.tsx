@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from "@/context/auth-context";
 import { AuthModalControlProvider } from "@/context/auth-modal-control";
 import { Navbar } from "@/components/navbar";
+import { GlobalAuthModal } from "@/components/global-auth-modal";
 import Footer from "@/components/footer";
 import CornerRibbon from "@/components/corner-ribbon";
 import "./globals.css";
@@ -39,6 +40,7 @@ export default function RootLayout({
               <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
               <Footer />
             </div>
+            <GlobalAuthModal />
             <CornerRibbon />
           </AuthModalControlProvider>
         </AuthProvider>

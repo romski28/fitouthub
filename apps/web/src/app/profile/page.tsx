@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import LocationSelect, { type CanonicalLocation } from '@/components/location-select';
 
 export default function ProfilePage() {
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, userLocation, setUserLocation } = useAuth();
   const router = useRouter();
+  const [locationDraft, setLocationDraft] = useState<CanonicalLocation>(userLocation || ({} as CanonicalLocation));
+  const [locationSaved, setLocationSaved] = useState(false);
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -81,6 +84,29 @@ export default function ProfilePage() {
               </a>
             </div>
           )}
+
+          {/* Default location for browsing trades/professionals */}
+          <div className="mt-8 pt-6 border-t border-slate-200 space-y-3">
+            <h2 className="text-xl font-semibold text-slate-900">Default location</h2>
+            <p className="text-sm text-slate-600">
+              Set your preferred location to prefill searches for trades and professionals.
+            </p>
+            <LocationSelect value={locationDraft} onChange={setLocationDraft} enableSearch={true} />
+            <button
+              type="button"
+              className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
+              onClick={() => {
+                setUserLocation(locationDraft);
+                setLocationSaved(true);
+                setTimeout(() => setLocationSaved(false), 1500);
+              }}
+            >
+              Save default location
+            </button>
+            {locationSaved ? (
+              <p className="text-sm text-green-700">Location saved.</p>
+            ) : null}
+          </div>
 
           <div className="mt-8 pt-6 border-t border-slate-200">
             <button

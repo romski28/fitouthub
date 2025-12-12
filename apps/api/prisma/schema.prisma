@@ -70,6 +70,11 @@ model Professional {
   servicePrimaries   String[] @default([])
   serviceSecondaries String[] @default([])
 
+  // Trades and services offered
+  primaryTrade      String?   // Primary trade for contractors (e.g., "Plumber", "Electrician")
+  tradesOffered     String[] @default([]) // Multiple trades for companies
+  suppliesOffered   String[] @default([]) // Supplies/products for resellers
+
   // Additional data (stores full form submission as JSON)
   additionalData   Json?
   

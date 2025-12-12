@@ -4,9 +4,9 @@ import React, {
   createContext,
   useContext,
   useState,
-  useEffect,
   ReactNode,
 } from 'react';
+import type { CanonicalLocation } from '@/components/location-select';
 import { API_BASE_URL } from '@/config/api';
 
 interface User {
@@ -16,6 +16,9 @@ interface User {
   firstName: string;
   surname: string;
   role: string;
+  locationPrimary?: string | null;
+  locationSecondary?: string | null;
+  locationTertiary?: string | null;
 }
 
 interface AuthContextType {
@@ -23,6 +26,8 @@ interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   role: string | null;
+  userLocation: CanonicalLocation;
+  setUserLocation: (loc: CanonicalLocation) => void;
   register: (data: {
     nickname: string;
     email: string;
@@ -41,33 +46,53 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined); // Start as loading
-  const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
-
-  // Initialize from localStorage on mount
-  useEffect(() => {
-    const savedToken = localStorage.getItem('accessToken');
-    const savedUser = localStorage.getItem('user');
-
-    if (savedToken && savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        setAccessToken(savedToken);
-        setRole(parsedUser.role);
-        setIsLoggedIn(true);
-      } catch (error) {
-        console.error('Failed to parse saved user:', error);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        setIsLoggedIn(false);
-      }
-    } else {
-      setIsLoggedIn(false);
+  const extractLocationFromUser = (u: Partial<User> | null): CanonicalLocation => {
+    if (!u) return {} as CanonicalLocation;
+    const { locationPrimary, locationSecondary, locationTertiary } = u;
+    if (locationPrimary || locationSecondary || locationTertiary) {
+      return {
+        primary: locationPrimary ?? undefined,
+        secondary: locationSecondary ?? undefined,
+        tertiary: locationTertiary ?? undefined,
+      } as CanonicalLocation;
     }
-  }, []);
+    return {} as CanonicalLocation;
+  };
+
+  const initialPersisted = (() => {
+    if (typeof window === 'undefined') {
+      return { token: null, user: null, location: {} as CanonicalLocation };
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const storedUserRaw = localStorage.getItem('user');
+      const storedLocRaw = localStorage.getItem('userLocation');
+      const user = storedUserRaw ? (JSON.parse(storedUserRaw) as User) : null;
+      const location = storedLocRaw ? (JSON.parse(storedLocRaw) as CanonicalLocation) : extractLocationFromUser(user);
+      return { token, user, location };
+    } catch (err) {
+      console.warn('Failed to read persisted auth data:', err);
+      return { token: null, user: null, location: {} as CanonicalLocation };
+    }
+  })();
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(
+    initialPersisted.token && initialPersisted.user ? true : false
+  );
+  const [user, setUser] = useState<User | null>(initialPersisted.user);
+  const [accessToken, setAccessToken] = useState<string | null>(initialPersisted.token);
+  const [role, setRole] = useState<string | null>(initialPersisted.user?.role ?? null);
+  const [userLocation, setUserLocationState] = useState<CanonicalLocation>(initialPersisted.location);
+
+  const persistLocation = (loc: CanonicalLocation) => {
+    setUserLocationState(loc);
+    try {
+      localStorage.setItem('userLocation', JSON.stringify(loc));
+    } catch (err) {
+      console.error('Failed to persist user location:', err);
+    }
+  };
 
   const register = async (data: {
     nickname: string;
@@ -100,6 +125,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessToken(result.accessToken);
     setUser(result.user);
     setRole(result.user.role);
+    const derivedLoc = extractLocationFromUser(result.user);
+    if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
+      persistLocation(derivedLoc);
+    }
     setIsLoggedIn(true);
 
     return result;
@@ -127,6 +156,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessToken(result.accessToken);
     setUser(result.user);
     setRole(result.user.role);
+    const derivedLoc = extractLocationFromUser(result.user);
+    if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
+      persistLocation(derivedLoc);
+    }
     setIsLoggedIn(true);
 
     return result;
@@ -139,6 +172,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessToken(null);
     setUser(null);
     setRole(null);
+    setUserLocationState({} as CanonicalLocation);
     setIsLoggedIn(false);
   };
 
@@ -177,6 +211,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         accessToken,
         role,
+        userLocation,
+        setUserLocation: persistLocation,
         register,
         login,
         logout,
