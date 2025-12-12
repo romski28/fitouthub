@@ -150,7 +150,7 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
   }, [professionInput]);
 
   const filtered = useMemo(() => {
-    return professionals.filter((pro) => {
+    const items = professionals.filter((pro) => {
       const byProfession = professionFilter ? pro.professionType?.toLowerCase() === professionFilter.toLowerCase() : true;
       
       // If no location filter is set, show all professionals
@@ -158,8 +158,12 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
         return byProfession;
       }
 
-      const serviceAreas = (pro.serviceArea ?? '')
-        .split(',')
+      const serviceAreasRaw = Array.isArray(pro.serviceArea)
+        ? pro.serviceArea
+        : typeof pro.serviceArea === 'string'
+          ? pro.serviceArea.split(',')
+          : [];
+      const serviceAreas = serviceAreasRaw
         .map((s) => s.trim().toLowerCase())
         .filter(Boolean);
 
@@ -175,6 +179,41 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
       );
 
       return byProfession && byLocation;
+    });
+
+    // Sort by match strength: tertiary > secondary > primary > none
+    const targetParts = [loc.tertiary, loc.secondary, loc.primary]
+      .filter(Boolean)
+      .map((t) => t!.toLowerCase());
+
+    const scoreFor = (pro: Professional) => {
+      const serviceAreasRaw = Array.isArray(pro.serviceArea)
+        ? pro.serviceArea
+        : typeof pro.serviceArea === 'string'
+          ? pro.serviceArea.split(',')
+          : [];
+      const areas = serviceAreasRaw.map((s) => s.trim().toLowerCase());
+
+      // Highest priority: tertiary
+      if (targetParts[0] && areas.some((a) => a.includes(targetParts[0]!) || targetParts[0]!.includes(a))) return 3;
+      // Next: secondary
+      if (targetParts[1] && areas.some((a) => a.includes(targetParts[1]!) || targetParts[1]!.includes(a))) return 2;
+      // Next: primary
+      if (targetParts[2] && areas.some((a) => a.includes(targetParts[2]!) || targetParts[2]!.includes(a))) return 1;
+      return 0;
+    };
+
+    return items.sort((a, b) => {
+      const sa = scoreFor(a);
+      const sb = scoreFor(b);
+      if (sb !== sa) return sb - sa; // higher score first
+      // Stable fallback: by rating desc, then name asc
+      const ra = typeof a.rating === 'number' ? a.rating : 0;
+      const rb = typeof b.rating === 'number' ? b.rating : 0;
+      if (rb !== ra) return rb - ra;
+      const na = (a.fullName || a.businessName || '').toLowerCase();
+      const nb = (b.fullName || b.businessName || '').toLowerCase();
+      return na.localeCompare(nb);
     });
   }, [professionals, professionFilter, loc]);
 

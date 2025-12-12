@@ -27,12 +27,14 @@ export const Navbar: React.FC = () => {
             <a className="hover:text-slate-900" href="/professionals">
               Professionals
             </a>
-            {/* Projects only visible when logged in */}
-            {isLoggedIn && (
-              <a className="hover:text-slate-900" href="/projects" suppressHydrationWarning>
-                Projects
-              </a>
-            )}
+            {/* Projects only visible when logged in; keep markup stable */}
+            <span suppressHydrationWarning>
+              {isLoggedIn ? (
+                <a className="hover:text-slate-900" href="/projects">Projects</a>
+              ) : (
+                null
+              )}
+            </span>
 
             {/* Auth buttons */}
             <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6" suppressHydrationWarning>
@@ -78,7 +80,8 @@ export const Navbar: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <>
+                // Keep button container stable to avoid hydration diffs
+                <div className="flex items-center gap-3">
                   <button
                     onClick={openLoginModal}
                     className="text-slate-700 hover:text-slate-900"
@@ -91,7 +94,7 @@ export const Navbar: React.FC = () => {
                   >
                     Join
                   </button>
-                </>
+                </div>
               )}
             </div>
           </nav>
