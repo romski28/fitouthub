@@ -3,6 +3,7 @@
  */
 
 import { matchServiceToProfession } from './service-matcher';
+import { matchLocation } from './location-matcher';
 
 export type IntentAction = 'find-professional' | 'join' | 'manage-projects' | 'unknown';
 
@@ -38,18 +39,7 @@ const PROFESSIONS = [
   'landscaper',
 ];
 
-// Common location keywords
-const LOCATIONS = [
-  'hong kong island',
-  'kowloon',
-  'new territories',
-  'causeway bay',
-  'central',
-  'mong kok',
-  'tsim sha tsui',
-  'shenzhen',
-  'macau',
-];
+// Location matching now uses centralized HK dataset via matchLocation()
 
 export function matchIntent(query: string): IntentResult {
   const normalized = query.toLowerCase().trim();
@@ -113,12 +103,12 @@ export function matchIntent(query: string): IntentResult {
   if (profession || confidence > 0) {
     if (!profession) confidence = 0.8; // Default confidence if no profession found
 
-    // Match location
-    for (const loc of LOCATIONS) {
-      if (normalized.includes(loc)) {
-        location = loc;
-        break;
-      }
+    // Match location via dataset
+    const locMatch = matchLocation(normalized);
+    if (locMatch) {
+      location = locMatch.display;
+      // Boost confidence based on granularity
+      confidence = Math.max(confidence, locMatch.confidence);
     }
 
     // Increase confidence if we found both profession and location
@@ -148,12 +138,10 @@ export function matchIntent(query: string): IntentResult {
   const findMatch = /\b(find|looking for|need|search|hire|looking|want|get a?n?|help with|fix|repair|install|build)\b/.test(normalized);
 
   if (findMatch) {
-    // Match location
-    for (const loc of LOCATIONS) {
-      if (normalized.includes(loc)) {
-        location = loc;
-        break;
-      }
+    // Match location via dataset
+    const locMatch2 = matchLocation(normalized);
+    if (locMatch2) {
+      location = locMatch2.display;
     }
 
     const displayText = location
@@ -171,8 +159,21 @@ export function matchIntent(query: string): IntentResult {
     };
   }
 
-  // Default fallback: assume they want to browse professionals
+  // Default fallback: attempt location-only detection; otherwise generic browse
   if (normalized.length > 0) {
+    const locOnly = matchLocation(normalized);
+    if (locOnly) {
+      return {
+        action: 'find-professional',
+        route: '/professionals',
+        confidence: Math.max(0.7, locOnly.confidence),
+        metadata: {
+          location: locOnly.display,
+          displayText: `Find professionals in ${locOnly.display}`,
+        },
+      };
+    }
+
     return {
       action: 'find-professional',
       route: '/professionals',

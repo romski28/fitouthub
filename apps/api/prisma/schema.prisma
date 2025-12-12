@@ -60,6 +60,11 @@ model Professional {
   fullName         String?
   businessName     String?
   serviceArea      String?
+  
+  // Canonical location fields (structured from HK locations dataset)
+  locationPrimary  String?   // e.g., "Hong Kong Island", "Kowloon", "New Territories"
+  locationSecondary String?  // e.g., "Central and Western", "Yau Tsim Mong"
+  locationTertiary String?   // e.g., "Central", "Tsim Sha Tsui"
 
   // Additional data (stores full form submission as JSON)
   additionalData   Json?

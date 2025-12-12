@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { ProfessionRegistrationModal } from '@/components/profession-registration-modal';
 import { DynamicForm } from '@/components/dynamic-form';
+import LocationSelect, { CanonicalLocation } from '@/components/location-select';
+import { LocationSelectContractor, type ContractorLocationSelection } from '@/components/location-select-contractor';
+import { matchLocation } from '@/lib/location-matcher';
 import {
   contractorFormSchema,
   companyFormSchema,
@@ -14,12 +17,42 @@ import {
 
 type ProfessionType = 'contractor' | 'company' | 'reseller' | null;
 
+/**
+ * Determines if a profession type uses the contractor location pattern
+ * (multi-select primary + secondary) vs. client pattern (3-level cascade with autocomplete)
+ */
+const isContractorType = (profession: ProfessionType): boolean => {
+  return profession === 'contractor' || profession === 'company';
+};
+
 export default function JoinPage() {
   const router = useRouter();
   const [step, setStep] = useState<'profession' | 'form'>('profession');
   const [selectedProfession, setSelectedProfession] = useState<ProfessionType>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Initialize location from intentData synchronously
+  const initialLocation = (() => {
+    try {
+      const raw = typeof window !== 'undefined' ? sessionStorage.getItem('intentData') : null;
+      if (raw) {
+        const data = JSON.parse(raw);
+        const ml = typeof data?.location === 'string' ? matchLocation(data.location) : null;
+        if (ml) {
+          sessionStorage.removeItem('intentData');
+          return { primary: ml.primary, secondary: ml.secondary, tertiary: ml.tertiary } as CanonicalLocation;
+        }
+        sessionStorage.removeItem('intentData');
+      }
+    } catch {}
+    return {} as CanonicalLocation;
+  })();
+
+  const [supplierLocation, setSupplierLocation] = useState<CanonicalLocation>(initialLocation);
+  const [contractorLocations, setContractorLocations] = useState<ContractorLocationSelection[]>(
+    initialLocation.primary ? [{ primary: initialLocation.primary, secondary: initialLocation.secondary || '' }] : []
+  );
 
   const getFormSchema = (profession: ProfessionType): FormSchema | null => {
     switch (profession) {
@@ -45,12 +78,32 @@ export default function JoinPage() {
       const apiUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fitouthub.onrender.com';
 
-      // Helper function to extract first value from array or string
       const getValue = (value: string | string[] | boolean | undefined): string => {
         if (Array.isArray(value)) return value[0] || '';
         if (typeof value === 'string') return value;
         return '';
       };
+
+      // Build location data based on profession type
+      let serviceArea = '';
+      let locationPrimary = null;
+      let locationSecondary = null;
+      let locationTertiary = null;
+
+      if (isContractorType(selectedProfession)) {
+        // Contractors: use first selected location pair for canonical fields
+        if (contractorLocations.length > 0) {
+          locationPrimary = contractorLocations[0].primary;
+          locationSecondary = contractorLocations[0].secondary || null;
+          serviceArea = [locationPrimary, locationSecondary].filter(Boolean).join(', ');
+        }
+      } else {
+        // Clients: use full 3-level location
+        locationPrimary = supplierLocation.primary ?? null;
+        locationSecondary = supplierLocation.secondary ?? null;
+        locationTertiary = supplierLocation.tertiary ?? null;
+        serviceArea = [locationPrimary, locationSecondary, locationTertiary].filter(Boolean).join(', ');
+      }
 
       const payload = {
         profession_type: selectedProfession,
@@ -58,7 +111,12 @@ export default function JoinPage() {
         phone: getValue(data.phone) || '+1-000-000-0000',
         full_name: getValue(data.full_name),
         business_name: getValue(data.business_name),
-        service_area: getValue(data.service_area),
+        // legacy text field kept for backward compatibility (comma-joined)
+        service_area: serviceArea,
+        // canonical structured location
+        location_primary: locationPrimary,
+        location_secondary: locationSecondary,
+        location_tertiary: locationTertiary,
         additional_data: data,
       };
 
@@ -128,7 +186,23 @@ export default function JoinPage() {
           ) : currentSchema ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8 space-y-6">
+                  {/* Location Selection - Conditional based on profession type */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900 mb-2">Service Location</h3>
+                    {isContractorType(selectedProfession) ? (
+                      <LocationSelectContractor
+                        value={contractorLocations}
+                        onChange={setContractorLocations}
+                      />
+                    ) : (
+                      <LocationSelect
+                        value={supplierLocation}
+                        onChange={setSupplierLocation}
+                        enableSearch={true}
+                      />
+                    )}
+                  </div>
                   <DynamicForm
                     schema={currentSchema}
                     onSubmit={handleFormSubmit}
@@ -198,6 +272,20 @@ export default function JoinPage() {
               >
                 ← Back
               </button>
+              <div className="mb-4">
+                {isContractorType(selectedProfession) ? (
+                  <LocationSelectContractor
+                    value={contractorLocations}
+                    onChange={setContractorLocations}
+                  />
+                ) : (
+                  <LocationSelect
+                    value={supplierLocation}
+                    onChange={setSupplierLocation}
+                    enableSearch={true}
+                  />
+                )}
+              </div>
               <DynamicForm
                 schema={currentSchema}
                 onSubmit={handleFormSubmit}

@@ -20,6 +20,10 @@ export class ProfessionalsService {
           fullName: createProfessionalDto.full_name,
           businessName: createProfessionalDto.business_name,
           serviceArea: createProfessionalDto.service_area,
+          // Canonical location fields
+          locationPrimary: createProfessionalDto.location_primary || null,
+          locationSecondary: createProfessionalDto.location_secondary || null,
+          locationTertiary: createProfessionalDto.location_tertiary || null,
           additionalData: createProfessionalDto.additional_data || {},
         },
       });
@@ -76,5 +80,28 @@ export class ProfessionalsService {
     return (this.prisma as any).professional.delete({
       where: { id },
     });
+  }
+
+  getLocations() {
+    // Return HK locations dataset for client consumption
+    // In production, this would be synced from a shared schema
+    const locations = [
+      { primary: 'Hong Kong Island', secondary: 'Central and Western', tertiary: 'Central' },
+      { primary: 'Hong Kong Island', secondary: 'Central and Western', tertiary: 'Sheung Wan' },
+      { primary: 'Hong Kong Island', secondary: 'Wan Chai', tertiary: 'Causeway Bay' },
+      { primary: 'Hong Kong Island', secondary: 'Wan Chai', tertiary: 'Wan Chai' },
+      { primary: 'Kowloon', secondary: 'Yau Tsim Mong', tertiary: 'Tsim Sha Tsui' },
+      { primary: 'Kowloon', secondary: 'Yau Tsim Mong', tertiary: 'Mong Kok' },
+      { primary: 'Kowloon', secondary: 'Sham Shui Po', tertiary: 'Sham Shui Po' },
+      { primary: 'New Territories', secondary: 'Sai Kung', tertiary: 'Tseung Kwan O' },
+      { primary: 'New Territories', secondary: 'Sha Tin', tertiary: 'Sha Tin' },
+      { primary: 'Islands District', secondary: 'Discovery Bay' },
+    ];
+    return {
+      success: true,
+      data: locations,
+      count: locations.length,
+      message: 'HK locations dataset (sample) for reference',
+    };
   }
 }

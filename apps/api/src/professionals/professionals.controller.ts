@@ -81,4 +81,8 @@ export class ProfessionalsController {
   async remove(@Param('id') id: string) {
     return this.professionalsService.remove(id);
   }
-}
+
+  @Get('meta/locations')
+  async getLocations() {
+    return this.professionalsService.getLocations();
+  }

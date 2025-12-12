@@ -14,6 +14,10 @@ export class CreateProfessionalDto {
   primary_trade?: string;
   years_experience?: string;
   service_area?: string;
+  // Canonical location fields
+  location_primary?: string;
+  location_secondary?: string;
+  location_tertiary?: string;
   additional_data?: Record<string, any>;
   userId?: string;
 }
@@ -26,5 +30,8 @@ export class UpdateProfessionalDto {
   phone?: string;
   address?: string;
   service_area?: string;
+  location_primary?: string;
+  location_secondary?: string;
+  location_tertiary?: string;
   additional_data?: Record<string, any>;
 }
