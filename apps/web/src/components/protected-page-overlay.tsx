@@ -19,7 +19,7 @@ export const ProtectedPageOverlay: React.FC<ProtectedPageOverlayProps> = ({
   if (isLoggedIn !== false) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/5 backdrop-blur-lg">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md mx-4">
         <h2 className="text-2xl font-bold text-slate-900 mb-4">
           Access Restricted
