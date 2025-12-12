@@ -24,6 +24,9 @@ export class ProfessionalsService {
           locationPrimary: createProfessionalDto.location_primary || null,
           locationSecondary: createProfessionalDto.location_secondary || null,
           locationTertiary: createProfessionalDto.location_tertiary || null,
+          // Multi-location arrays for contractors/companies
+          servicePrimaries: createProfessionalDto.location_primaries ?? [],
+          serviceSecondaries: createProfessionalDto.location_secondaries ?? [],
           additionalData: createProfessionalDto.additional_data || {},
         },
       });

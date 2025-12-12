@@ -18,6 +18,9 @@ export class CreateProfessionalDto {
   location_primary?: string;
   location_secondary?: string;
   location_tertiary?: string;
+  // Multi-location arrays (contractors/companies)
+  location_primaries?: string[];
+  location_secondaries?: string[];
   additional_data?: Record<string, any>;
   userId?: string;
 }
@@ -33,5 +36,7 @@ export class UpdateProfessionalDto {
   location_primary?: string;
   location_secondary?: string;
   location_tertiary?: string;
+  location_primaries?: string[];
+  location_secondaries?: string[];
   additional_data?: Record<string, any>;
 }

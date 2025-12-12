@@ -66,6 +66,10 @@ model Professional {
   locationSecondary String?  // e.g., "Central and Western", "Yau Tsim Mong"
   locationTertiary String?   // e.g., "Central", "Tsim Sha Tsui"
 
+  // Multi-location support for contractors/companies
+  servicePrimaries   String[] @default([])
+  serviceSecondaries String[] @default([])
+
   // Additional data (stores full form submission as JSON)
   additionalData   Json?
   

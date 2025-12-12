@@ -89,14 +89,25 @@ export default function JoinPage() {
       let locationPrimary = null;
       let locationSecondary = null;
       let locationTertiary = null;
+      let locationPrimaries: string[] | null = null;
+      let locationSecondaries: string[] | null = null;
 
       if (isContractorType(selectedProfession)) {
-        // Contractors: use first selected location pair for canonical fields
+        const primaries = Array.from(new Set(contractorLocations.map((c) => c.primary))).filter(Boolean);
+        const secondaries = Array.from(
+          new Set(contractorLocations.map((c) => c.secondary).filter((s) => s && s.trim() !== ''))
+        );
+
+        locationPrimaries = primaries.length ? primaries : null;
+        locationSecondaries = secondaries.length ? secondaries : null;
+
+        // Also set canonical fields using the first selection (for backward compatibility)
         if (contractorLocations.length > 0) {
           locationPrimary = contractorLocations[0].primary;
           locationSecondary = contractorLocations[0].secondary || null;
-          serviceArea = [locationPrimary, locationSecondary].filter(Boolean).join(', ');
         }
+
+        serviceArea = [primaries.join(' / '), secondaries.join(' / ')].filter(Boolean).join(' | ');
       } else {
         // Clients: use full 3-level location
         locationPrimary = supplierLocation.primary ?? null;
@@ -117,6 +128,8 @@ export default function JoinPage() {
         location_primary: locationPrimary,
         location_secondary: locationSecondary,
         location_tertiary: locationTertiary,
+        location_primaries: locationPrimaries,
+        location_secondaries: locationSecondaries,
         additional_data: data,
       };
 

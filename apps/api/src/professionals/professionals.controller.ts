@@ -85,4 +85,4 @@ export class ProfessionalsController {
   @Get('meta/locations')
   async getLocations() {
     return this.professionalsService.getLocations();
-  }
+  }}
