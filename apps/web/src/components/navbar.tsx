@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
@@ -9,6 +9,14 @@ export const Navbar: React.FC = () => {
   const { isLoggedIn, user, logout } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  const showAuthed = hydrated && isLoggedIn && user;
+  const showProjectsLink = hydrated && isLoggedIn;
 
   return (
     <>
@@ -27,18 +35,15 @@ export const Navbar: React.FC = () => {
             <a className="hover:text-slate-900" href="/professionals">
               Professionals
             </a>
-            {/* Projects only visible when logged in; keep markup stable */}
-            <span suppressHydrationWarning>
-              {isLoggedIn ? (
-                <a className="hover:text-slate-900" href="/projects">Projects</a>
-              ) : (
-                null
-              )}
-            </span>
+            {showProjectsLink ? (
+              <a className="hover:text-slate-900" href="/projects">
+                Projects
+              </a>
+            ) : null}
 
             {/* Auth buttons */}
-            <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6" suppressHydrationWarning>
-              {isLoggedIn && user ? (
+            <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6">
+              {showAuthed ? (
                 <div className="relative">
                   <button
                     onClick={() => setProfileMenuOpen(!profileMenuOpen)}

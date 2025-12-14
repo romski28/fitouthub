@@ -13,7 +13,7 @@ import {
 
 function Badge({ label }: { label: string }) {
   return (
-    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+    <span className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
       {label}
     </span>
   );
@@ -27,7 +27,7 @@ export default function TradesmenPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [showAllTrades, setShowAllTrades] = useState(false);
 
   useEffect(() => {
     const fetchTradesmen = async () => {
@@ -37,8 +37,12 @@ export default function TradesmenPage() {
 
       try {
         const response = await fetch(`${baseUrl}/tradesmen`, { cache: 'no-store' });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
         const contentType = response.headers.get('content-type') || '';
-
         const payload = contentType.includes('application/json')
           ? await response.json()
           : await response.text().then((text) => {
@@ -51,10 +55,11 @@ export default function TradesmenPage() {
             ? (payload as { data: Tradesman[] }).data
             : [];
 
+        console.log(`Fetched ${data.length} tradesmen from API`);
         setTradesmen(data.length ? data : fallbackTradesmen);
       } catch (error) {
         console.error('Failed to fetch tradesmen:', error);
-        // Fall back to static dataset so the page stays usable
+        console.log(`Using fallback data with ${fallbackTradesmen.length} trades`);
         setTradesmen(fallbackTradesmen);
       } finally {
         setLoading(false);
@@ -93,7 +98,13 @@ export default function TradesmenPage() {
   };
 
   const filteredTradesmen = filterByTerm(searchTerm);
-  const visibleTrades = filteredTradesmen.slice(0, visibleCount);
+  
+  // When searching, show all matching trades; otherwise show featured first, then allow reveal all
+  const displayedTrades = searchTerm 
+    ? filteredTradesmen 
+    : showAllTrades 
+      ? filteredTradesmen 
+      : filteredTradesmen.filter((t) => t.featured);
 
   const suggestionPool = Array.from(
     new Set([
@@ -105,7 +116,7 @@ export default function TradesmenPage() {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    setVisibleCount(6); // reset pagination on new search
+    setShowAllTrades(false); // reset when searching
 
     const trimmed = value.trim();
     if (!trimmed) {
@@ -123,7 +134,7 @@ export default function TradesmenPage() {
   const handleSuggestionSelect = (value: string) => {
     setSearchTerm(value);
     setShowSuggestions(false);
-    setVisibleCount(6);
+    setShowAllTrades(false);
   };
 
   return (
@@ -134,29 +145,56 @@ export default function TradesmenPage() {
         onLoginClick={openLoginModal}
       />
 
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* Compact Hero Section */}
+        <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white py-6 px-6">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-400">
+              Browse Trades
+            </p>
+            <h1 className="text-2xl font-bold">
+              Find Expert Tradesmen for Any Job
+            </h1>
+            <p className="text-sm text-slate-300 max-w-2xl">
+              Discover specialized tradesmen across multiple categories. Filter by skill and expertise.
+            </p>
+          </div>
+        </section>
+
+        {/* Search Section Header */}
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Browse trades
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500 mb-2">
+            Search & Filter
           </p>
-          <h1 className="text-2xl font-semibold text-slate-900">Tradesmen by specialty</h1>
-          <p className="text-sm text-slate-600">
-            Static preview pulled from seed data. API endpoint coming next.
-          </p>
+          <h2 className="text-2xl font-bold text-slate-900">Narrow your search</h2>
         </div>
 
         {/* Search + typeahead */}
         <div className="relative w-full max-w-xl">
           <label className="text-sm text-slate-600">Search by trade or service</label>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            onFocus={() => setShowSuggestions(suggestions.length > 0)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-            placeholder="e.g. plumber, AC servicing, electrician"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-slate-500 focus:outline-none"
-          />
+          <div className="relative mt-1">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSuggestions(suggestions.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+              placeholder="e.g. plumber, AC servicing, electrician"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 shadow-sm focus:border-slate-500 focus:outline-none"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                aria-label="Clear search"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
           {showSuggestions && suggestions.length > 0 ? (
             <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
               {suggestions.map((s) => (
@@ -180,51 +218,70 @@ export default function TradesmenPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {visibleTrades.length === 0 ? (
+            {displayedTrades.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
                 No matching trades found.
               </div>
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleTrades.map((trade) => (
+                  {displayedTrades.map((trade) => (
                     <div
                       key={trade.id}
-                      className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                      className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden transition hover:-translate-y-1 hover:shadow-md"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">{trade.title}</div>
-                          <div className="text-xs text-slate-600">{trade.category}</div>
-                        </div>
-                        {trade.featured ? <Badge label="Featured" /> : null}
-                      </div>
-                      <p className="mt-3 text-sm text-slate-700 line-clamp-3">
-                        {trade.description}
-                      </p>
-                      <div className="mt-4 space-y-1 text-xs text-slate-600">
-                        {trade.jobs.slice(0, 4).map((job: string) => (
-                          <div key={job} className="flex items-center gap-2">
-                            <span className="h-1 w-1 rounded-full bg-slate-400" />
-                            <span>{job}</span>
+                      {/* Card Header with Dark Background */}
+                      <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-4 text-white">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex-1">
+                            <h3 className="text-base font-bold text-white">{trade.title}</h3>
+                            <p className="text-xs font-semibold text-emerald-400 mt-1 uppercase tracking-wide">{trade.category}</p>
                           </div>
-                        ))}
+                          {trade.featured && <Badge label="Featured" />}
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="flex-1 p-4 space-y-3">
+                        <p className="text-sm text-slate-700 line-clamp-2">
+                          {trade.description}
+                        </p>
+
+                        {/* Job Tags */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Specialties</p>
+                          <div className="flex flex-wrap gap-2">
+                            {trade.jobs.slice(0, 3).map((job: string) => (
+                              <span
+                                key={job}
+                                className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white"
+                              >
+                                {job}
+                              </span>
+                            ))}
+                            {trade.jobs.length > 3 && (
+                              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                                +{trade.jobs.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {visibleCount < filteredTradesmen.length ? (
-                  <div className="flex justify-center">
+                {!searchTerm && !showAllTrades && filteredTradesmen.length > displayedTrades.length && (
+                  <div className="flex justify-center pt-4">
                     <button
                       type="button"
-                      className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-400"
-                      onClick={() => setVisibleCount((c) => c + 6)}
+                      className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-400 transition"
+                      onClick={() => setShowAllTrades(true)}
                     >
-                      Show more
+                      Show all {filteredTradesmen.length} trades
                     </button>
                   </div>
-                ) : null}
+                )}
               </>
             )}
           </div>

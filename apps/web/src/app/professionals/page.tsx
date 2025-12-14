@@ -70,16 +70,21 @@ export default function ProfessionalsPage() {
         onLoginClick={openLoginModal}
       />
 
-      <div className="space-y-6">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Marketplace
-          </p>
-          <h1 className="text-2xl font-semibold text-slate-900">Professionals</h1>
-          <p className="text-sm text-slate-600">
-            Live data from the Fitout Hub API.
-          </p>
-        </div>
+      <div className="space-y-8">
+        {/* Compact Hero Section */}
+        <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white py-6 px-6">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-400">
+              Marketplace
+            </p>
+            <h1 className="text-2xl font-bold">
+              Find Trusted Professionals
+            </h1>
+            <p className="text-sm text-slate-300 max-w-2xl">
+              Browse vetted contractors, companies, and resellers with verified ratings and proven expertise.
+            </p>
+          </div>
+        </section>
 
         {loading ? (
           <div className="space-y-4">

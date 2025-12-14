@@ -8,12 +8,14 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Header,
 } from '@nestjs/common';
 import { ProfessionalsService } from './professionals.service';
 import {
   CreateProfessionalDto,
   UpdateProfessionalDto,
 } from './dto/create-professional.dto';
+import { BulkApproveDto } from './dto/bulk-approve.dto';
 
 @Controller('professionals')
 export class ProfessionalsController {
@@ -85,4 +87,23 @@ export class ProfessionalsController {
   @Get('meta/locations')
   async getLocations() {
     return this.professionalsService.getLocations();
-  }}
+  }
+
+  @Get('meta/trades')
+  async getTrades() {
+    return this.professionalsService.getTrades();
+  }
+
+  @Post('bulk-approve')
+  @HttpCode(HttpStatus.OK)
+  async bulkApprove(@Body() bulkApproveDto: BulkApproveDto) {
+    return this.professionalsService.bulkApprove(bulkApproveDto.ids);
+  }
+
+  @Get('export')
+  @Header('Content-Type', 'text/csv')
+  @Header('Content-Disposition', 'attachment; filename="professionals.csv"')
+  async exportCsv() {
+    return this.professionalsService.exportCsv();
+  }
+}

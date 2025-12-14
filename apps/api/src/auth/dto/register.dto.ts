@@ -6,5 +6,5 @@ export class RegisterDto {
   surname: string;
   chineseName?: string;
   mobile?: string;
-  role?: 'client' | 'professional' | 'reseller'; // defaults to 'client'
+  role?: 'client' | 'professional' | 'reseller' | 'admin'; // defaults to 'client'
 }

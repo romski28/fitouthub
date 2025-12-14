@@ -1,0 +1,104 @@
+"use client";
+
+import { useAuth } from "@/context/auth-context";
+import Link from "next/link";
+
+export default function AdminDashboard() {
+  const { user } = useAuth();
+
+  const sections = [
+    {
+      title: "Professionals",
+      description: "Manage contractors, companies, and resellers. Edit profiles, approve/suspend accounts, view ratings.",
+      href: "/admin/professionals",
+      icon: "👷",
+      stats: "View all professionals",
+    },
+    {
+      title: "Users",
+      description: "Manage client and admin accounts. Create new admin users, edit user details, remove accounts.",
+      href: "/admin/users",
+      icon: "👤",
+      stats: "View all users",
+    },
+    {
+      title: "Projects",
+      description: "View all projects, track email notifications, monitor quote submissions and professional responses.",
+      href: "/admin/projects",
+      icon: "📋",
+      stats: "View all projects",
+    },
+    {
+      title: "Pattern Matching",
+      description: "Configure service mappings, location patterns, and trade synonyms for intelligent professional matching.",
+      href: "/admin/patterns",
+      icon: "🔍",
+      stats: "Configure patterns",
+    },
+    {
+      title: "Analytics",
+      description: "Monitor approvals, projects, and engagement across the platform with quick-read metrics and trends.",
+      href: "/admin/analytics",
+      icon: "📈",
+      stats: "View analytics",
+    },
+    {
+      title: "Activity Log",
+      description: "Audit trail of admin actions and bulk operations. Track who changed what and when.",
+      href: "/admin/activity-log",
+      icon: "📜",
+      stats: "View activity",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Hero */}
+      <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Admin</p>
+          <h1 className="text-3xl font-bold">Welcome back{user?.firstName ? `, ${user.firstName}` : ''}</h1>
+          <p className="text-sm text-slate-200/90">Manage all platform data and configurations.</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {sections.map((section) => (
+          <Link
+            key={section.href}
+            href={section.href}
+            className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+          >
+            <div className="flex items-start gap-4 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
+              <div className="text-3xl">{section.icon}</div>
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold">{section.title}</h2>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">{section.stats}</p>
+              </div>
+            </div>
+            <div className="p-4 space-y-2">
+              <p className="text-sm text-slate-700">{section.description}</p>
+              <p className="text-sm font-semibold text-emerald-700 group-hover:text-emerald-800 flex items-center gap-1">
+                Open
+                <span aria-hidden>→</span>
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">⚠️</span>
+          <div>
+            <h3 className="font-semibold text-amber-900">Admin Access</h3>
+            <p className="mt-1 text-sm text-amber-800">
+              You have full access to all platform data. Changes are permanent and affect live users. Use caution when
+              deleting records.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

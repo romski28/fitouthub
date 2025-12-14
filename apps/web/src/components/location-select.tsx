@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getPrimaries, getSecondaries, getTerciaries } from '@/lib/location-matcher';
 import { searchLocations, LocationSearchResult } from '@/lib/location-search';
 
@@ -30,6 +30,12 @@ export default function LocationSelect({
   const [primary, setPrimary] = useState<string | undefined>(value?.primary);
   const [secondary, setSecondary] = useState<string | undefined>(value?.secondary);
   const [tertiary, setTertiary] = useState<string | undefined>(value?.tertiary);
+
+  useEffect(() => {
+    setPrimary(value?.primary);
+    setSecondary(value?.secondary);
+    setTertiary(value?.tertiary);
+  }, [value?.primary, value?.secondary, value?.tertiary]);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');

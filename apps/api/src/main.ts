@@ -2,6 +2,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { PrismaClient } from '@prisma/client';
+import * as express from 'express';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +26,8 @@ async function bootstrap() {
   }
 
   const port = process.env.PORT || 3001;
+  // Serve static uploads without wildcard patterns to avoid Express v5 path-to-regexp issues
+  app.use('/uploads', express.static(join(__dirname, '..', '..', 'uploads')));
   await app.listen(port, '0.0.0.0');
   console.log(`✓ API listening on port ${port}`);
 }

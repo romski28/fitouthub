@@ -20,6 +20,9 @@ export type Professional = {
   fullName?: string | null;
   businessName?: string | null;
   serviceArea?: string | null;
+  locationPrimary?: string | null;
+  locationSecondary?: string | null;
+  locationTertiary?: string | null;
   primaryTrade?: string | null;
   tradesOffered?: string[];
   suppliesOffered?: string[];

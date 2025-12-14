@@ -39,4 +39,9 @@ export class UpdateProfessionalDto {
   location_primaries?: string[];
   location_secondaries?: string[];
   additional_data?: Record<string, any>;
+  status?: string;
+  rating?: number;
+  primary_trade?: string;
+  trades_offered?: string[];
+  supplies_offered?: string[];
 }

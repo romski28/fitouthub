@@ -23,8 +23,17 @@ async function safeFetch<T>(path: string): Promise<T | null> {
   }
 }
 
-export async function getProjects(): Promise<Project[]> {
-  const data = await safeFetch<Project[]>("/projects");
+export async function getProjects(params?: Record<string, string | undefined>): Promise<Project[]> {
+  const search = params
+    ? Object.entries(params)
+        .filter(([, value]) => value)
+        .reduce((acc, [key, value]) => {
+          acc.append(key, value as string);
+          return acc;
+        }, new URLSearchParams())
+    : null;
+  const path = search && Array.from(search.keys()).length > 0 ? `/projects?${search.toString()}` : "/projects";
+  const data = await safeFetch<Project[]>(path);
   return data ?? [];
 }
 

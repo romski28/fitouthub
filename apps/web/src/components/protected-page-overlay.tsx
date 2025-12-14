@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 
@@ -14,9 +14,12 @@ export const ProtectedPageOverlay: React.FC<ProtectedPageOverlayProps> = ({
   onLoginClick,
 }) => {
   const { isLoggedIn } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
-  // Only show if not logged in and auth has initialized
-  if (isLoggedIn !== false) return null;
+  useEffect(() => setMounted(true), []);
+
+  // Avoid SSR/CSR mismatch: render only after mount, and only when explicitly logged out
+  if (!mounted || isLoggedIn !== false) return null;
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/5 backdrop-blur-lg">

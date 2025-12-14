@@ -14,7 +14,7 @@ export function ModalOverlay({ isOpen, onClose, children, maxWidth = 'max-w-2xl'
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 transition-opacity"
+        className="absolute inset-0 bg-slate-900/20 backdrop-blur transition-opacity"
         onClick={onClose}
       />
 
