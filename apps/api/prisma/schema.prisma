@@ -159,6 +159,7 @@ model Pattern {
   pattern    String   // the raw pattern string or regex source
   matchType  String   // contains | equals | startsWith | endsWith | regex
   category   String   // service | location | trade | supply | intent
+  mapsTo     String?  // profession this pattern maps to (e.g., 'plumber', 'electrician')
   notes      String?
   enabled    Boolean  @default(true)
   createdAt  DateTime @default(now())
