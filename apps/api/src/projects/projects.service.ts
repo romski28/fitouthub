@@ -27,7 +27,11 @@ export class ProjectsService {
         },
       });
     } catch (error) {
-      console.warn('Failed to fetch projects from database:', error.message);
+      console.error('[ProjectsService.findAll] Database error:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+      });
       return [];
     }
   }

@@ -24,7 +24,11 @@ export class UsersService {
         },
       });
     } catch (error) {
-      console.warn('Failed to fetch users from database:', error.message);
+      console.error('[UsersService.findAll] Database error:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+      });
       return [];
     }
   }
