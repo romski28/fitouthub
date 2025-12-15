@@ -7,163 +7,142 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Users table - Homeowners/Clients who need renovation work
 model User {
-  id                  String   @id @default(cuid())
-  nickname            String   @unique
+  id                  String        @id @default(cuid())
+  nickname            String        @unique
   firstName           String
   surname             String
   chineseName         String?
-  email               String   @unique
+  email               String        @unique
   mobile              String?
   passwordHash        String
   passwordResetToken  String?
   passwordResetExpiry DateTime?
-  emailVerified       Boolean  @default(false)
+  emailVerified       Boolean       @default(false)
   verificationToken   String?
-  role                String   @default("client") // client, admin, professional
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  projects            Project[]
+  role                String        @default("client")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
   professional        Professional?
+  projects            Project[]
 }
 
-// Tradesmen/Professions reference table - Links to primary_trade in Professional
 model Tradesman {
   id          String   @id @default(cuid())
-  title       String   @unique // e.g., "Builder", "Plumber", "Electrician"
-  category    String   // "General", "Interior", "Exterior", "Systems", "Specialist", "Design"
+  title       String   @unique
+  category    String
   emoji       String?
   description String?
   featured    Boolean  @default(false)
   image       String?
-  jobs        String[] // Array of job descriptions
+  jobs        String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-// Fitout Professionals - Contractors, Resellers, Service providers
 model Professional {
-  id               String   @id @default(cuid())
-  userId           String?  @unique
-  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Core fields
-  professionType   String   // "contractor", "company", or "reseller"
-  email            String   @unique
-  phone            String
-  status           String   @default("pending") // "pending", "approved", "suspended", "inactive"
-  rating           Float    @default(0)
-  registrationDate DateTime @default(now())
-
-  // Personal/Business details
-  fullName         String?
-  businessName     String?
-  serviceArea      String?
-  
-  // Canonical location fields (structured from HK locations dataset)
-  locationPrimary  String?   // e.g., "Hong Kong Island", "Kowloon", "New Territories"
-  locationSecondary String?  // e.g., "Central and Western", "Yau Tsim Mong"
-  locationTertiary String?   // e.g., "Central", "Tsim Sha Tsui"
-
-  // Multi-location support for contractors/companies
-  servicePrimaries   String[] @default([])
-  serviceSecondaries String[] @default([])
-
-  // Trades and services offered
-  primaryTrade      String?   // Primary trade for contractors (e.g., "Plumber", "Electrician")
-  tradesOffered     String[] @default([]) // Multiple trades for companies
-  suppliesOffered   String[] @default([]) // Supplies/products for resellers
-
-  // Additional data (stores full form submission as JSON)
-  additionalData   Json?
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String                @id @default(cuid())
+  userId               String?               @unique
+  status               String                @default("pending")
+  rating               Float                 @default(0)
+  registrationDate     DateTime              @default(now())
+  fullName             String?
+  businessName         String?
+  serviceArea          String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  email                String                @unique
+  phone                String
+  professionType       String
+  additionalData       Json?
+  locationPrimary      String?
+  locationSecondary    String?
+  locationTertiary     String?
+  servicePrimaries     String[]              @default([])
+  serviceSecondaries   String[]              @default([])
+  primaryTrade         String?
+  suppliesOffered      String[]              @default([])
+  tradesOffered        String[]              @default([])
+  emailTokens          EmailToken[]
+  user                 User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectProfessionals ProjectProfessional[]
-  emailTokens      EmailToken[]
 }
 
-// Projects - Renovation projects by users
 model Project {
-  id              String   @id @default(cuid())
-  projectName     String
-  clientName      String
-  contractorName  String?
-  region          String
-  budget          Decimal? @db.Decimal(12, 2)
-  status          String   @default("pending") // pending | approved | rejected
-  notes           String?
-  userId          String?
-  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  clientId        String? // Legacy field for backward compatibility
-  client          Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  professionals   ProjectProfessional[]
-  emailTokens     EmailToken[]
+  id             String                @id @default(cuid())
+  status         String                @default("pending")
+  clientId       String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  userId         String?
+  budget         Decimal?              @db.Decimal(12, 2)
+  clientName     String
+  contractorName String?
+  notes          String?
+  projectName    String
+  region         String
+  emailTokens    EmailToken[]
+  client         Client?               @relation(fields: [clientId], references: [id])
+  user           User?                 @relation(fields: [userId], references: [id])
+  professionals  ProjectProfessional[]
 }
 
-// Junction table for project-professional relationship (invitations & quotes)
 model ProjectProfessional {
-  id              String    @id @default(cuid())
-  projectId       String
-  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  professionalId  String
-  professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-  status          String    @default("pending") // pending | accepted | declined | quoted | awarded
-  respondedAt     DateTime?
-  quoteAmount     Decimal?  @db.Decimal(12, 2)
-  quoteNotes      String?
-  quotedAt        DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String       @id @default(cuid())
+  projectId      String
+  professionalId String
+  status         String       @default("pending")
+  respondedAt    DateTime?
+  quoteAmount    Decimal?     @db.Decimal(12, 2)
+  quoteNotes     String?
+  quotedAt       DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, professionalId])
   @@index([projectId])
   @@index([professionalId])
 }
 
-// Email action tokens for secure accept/decline links
 model EmailToken {
-  id              String    @id @default(cuid())
-  token           String    @unique @default(cuid())
-  projectId       String
-  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  professionalId  String
-  professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-  action          String    // accept | decline
-  expiresAt       DateTime
-  usedAt          DateTime?
-  createdAt       DateTime  @default(now())
+  id             String       @id @default(cuid())
+  token          String       @unique @default(cuid())
+  projectId      String
+  professionalId String
+  action         String
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime     @default(now())
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([projectId])
 }
 
-// Legacy Client model - kept for backward compatibility with existing projects
 model Client {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  email     String?  @unique
+  email     String?   @unique
   phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   projects  Project[]
 }
 
-// Patterns used for matching services, locations, and synonyms
 model Pattern {
-  id         String   @id @default(cuid())
-  name       String
-  pattern    String   // the raw pattern string or regex source
-  matchType  String   // contains | equals | startsWith | endsWith | regex
-  category   String   // service | location | trade | supply | intent
-  mapsTo     String?  // profession this pattern maps to (e.g., 'plumber', 'electrician')
-  notes      String?
-  enabled    Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  pattern   String
+  matchType String
+  category  String
+  notes     String?
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  mapsTo    String?
 
   @@index([category])
   @@index([matchType])
