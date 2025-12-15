@@ -47,11 +47,17 @@ export default function AdminPatternsPage() {
   async function fetchPatterns() {
     try {
       const res = await fetch(`${API_BASE_URL}/patterns?includeCore=true`);
-      if (!res.ok) throw new Error("Failed to fetch");
+      if (!res.ok) {
+        console.warn(`Patterns endpoint returned ${res.status}, loading with empty state`);
+        setPatterns([]);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setPatterns(data);
     } catch (err) {
-      console.error(err);
+      console.warn('Failed to fetch patterns, API may be unavailable:', err);
+      setPatterns([]);
     } finally {
       setLoading(false);
     }
