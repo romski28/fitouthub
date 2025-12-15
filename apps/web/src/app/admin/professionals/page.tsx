@@ -67,14 +67,61 @@ export default function AdminProfessionalsPage() {
 
   const fetchTrades = async () => {
     try {
+      // Try new meta endpoint first
       const res = await fetch(`${API_BASE_URL}/professionals/meta/trades`);
-      if (!res.ok) throw new Error("Failed to fetch trades");
-      const response = await res.json();
-      const titles = response.data.map((t: { title: string }) => t.title);
-      setTradeOptions(titles);
+      if (res.ok) {
+        const response = await res.json();
+        const titles = (response?.data || []).map((t: { title: string }) => t.title);
+        if (Array.isArray(titles) && titles.length) {
+          setTradeOptions(titles);
+          return;
+        }
+      }
+
+      // Fallback to legacy /tradesmen endpoint
+      const res2 = await fetch(`${API_BASE_URL}/tradesmen`);
+      if (res2.ok) {
+        const data = await res2.json();
+        const titles2 = (Array.isArray(data) ? data : []).map((t: { title: string }) => t.title);
+        if (Array.isArray(titles2) && titles2.length) {
+          setTradeOptions(titles2);
+          return;
+        }
+      }
+
+      // Last attempt: derive trades from professionals list
+      const res3 = await fetch(`${API_BASE_URL}/professionals`);
+      if (res3.ok) {
+        const pros: Professional[] = await res3.json();
+        const set = new Set<string>();
+        pros.forEach((p) => {
+          if (p.primaryTrade) set.add(p.primaryTrade);
+          if (Array.isArray(p.tradesOffered)) {
+            p.tradesOffered.forEach((t) => t && set.add(t));
+          }
+        });
+        const titles3 = Array.from(set).filter(Boolean).sort();
+        if (titles3.length) {
+          setTradeOptions(titles3);
+          return;
+        }
+      }
+
+      // Final fallback to a safe hardcoded list
+      setTradeOptions([
+        "Plumber",
+        "Electrician",
+        "Carpenter",
+        "Painter",
+        "HVAC Technician",
+        "Roofer",
+        "Mason",
+        "Tiler",
+        "Glazier",
+        "Landscaper",
+      ]);
     } catch (err) {
-      console.error("Error fetching trades:", err);
-      // Fallback to hardcoded list if API fails
+      // Quietly fallback to avoid console spam in prod
       setTradeOptions([
         "Plumber",
         "Electrician",

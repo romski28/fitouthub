@@ -66,24 +66,6 @@ export class ProfessionalsController {
     }
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.professionalsService.findOne(id);
-  }
-
-  @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateProfessionalDto: UpdateProfessionalDto,
-  ) {
-    return this.professionalsService.update(id, updateProfessionalDto);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.professionalsService.remove(id);
-  }
-
   @Get('meta/locations')
   async getLocations() {
     return this.professionalsService.getLocations();
@@ -105,5 +87,24 @@ export class ProfessionalsController {
   @Header('Content-Disposition', 'attachment; filename="professionals.csv"')
   async exportCsv() {
     return this.professionalsService.exportCsv();
+  }
+
+  // Place parameterized routes after specific meta/export routes to avoid ambiguity
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.professionalsService.findOne(id);
+  }
+
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateProfessionalDto: UpdateProfessionalDto,
+  ) {
+    return this.professionalsService.update(id, updateProfessionalDto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return this.professionalsService.remove(id);
   }
 }
