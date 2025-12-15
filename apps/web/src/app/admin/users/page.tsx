@@ -57,11 +57,17 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/users`);
-      if (!res.ok) throw new Error("Failed to fetch");
+      if (!res.ok) {
+        console.warn(`Users endpoint returned ${res.status}, loading with empty state`);
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setUsers(data);
     } catch (err) {
-      console.error(err);
+      console.warn('Failed to fetch users, API may be unavailable:', err);
+      setUsers([]);
     } finally {
       setLoading(false);
     }

@@ -7,21 +7,26 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        surname: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        // Exclude password
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    try {
+      return await this.prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          surname: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+          // Exclude password
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    } catch (error) {
+      console.warn('Failed to fetch users from database:', error.message);
+      return [];
+    }
   }
 
   async findOne(id: string) {

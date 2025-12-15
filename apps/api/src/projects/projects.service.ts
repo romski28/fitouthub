@@ -15,16 +15,21 @@ export class ProjectsService {
   ) {}
 
   async findAll() {
-    return this.prisma.project.findMany({
-      include: {
-        client: true,
-        professionals: {
-          include: {
-            professional: true,
+    try {
+      return await this.prisma.project.findMany({
+        include: {
+          client: true,
+          professionals: {
+            include: {
+              professional: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.warn('Failed to fetch projects from database:', error.message);
+      return [];
+    }
   }
 
   async findOne(id: string) {

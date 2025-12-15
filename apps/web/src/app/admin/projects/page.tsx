@@ -56,11 +56,17 @@ export default function AdminProjectsPage() {
   const fetchProjects = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/projects`);
-      if (!res.ok) throw new Error("Failed to fetch");
+      if (!res.ok) {
+        console.warn(`Projects endpoint returned ${res.status}, loading with empty state`);
+        setProjects([]);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setProjects(data);
     } catch (err) {
-      console.error(err);
+      console.warn('Failed to fetch projects, API may be unavailable:', err);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
