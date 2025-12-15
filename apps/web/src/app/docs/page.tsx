@@ -19,7 +19,7 @@ export default function DocsPage() {
         <h1 className="text-3xl font-bold">FitoutHub User Manual</h1>
         <p className="text-neutral-600">
           Quick reference for admins and team members. For the full markdown
-          version, see the repo file in <Link href="https://github.com/romski28/fitouthub/blob/main/docs/user-manual.md" className="underline">docs/user-manual.md</Link>.
+          version, see the repo file in <Link href="https://github.com/romski28/fitouthub/blob/main/docs/user-manual.md" className="underline">docs/user-manual.md</Link>. For a step-by-step user walkthrough, see <Link href="/docs/how-to-use" className="underline">How to Use</Link>.
         </p>
       </header>
 

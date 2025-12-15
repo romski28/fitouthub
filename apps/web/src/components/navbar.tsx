@@ -35,6 +35,9 @@ export const Navbar: React.FC = () => {
             <a className="hover:text-slate-900" href="/professionals">
               Professionals
             </a>
+            <a className="hover:text-slate-900" href="/docs">
+              Docs
+            </a>
             {showProjectsLink ? (
               <a className="hover:text-slate-900" href="/projects">
                 Projects
