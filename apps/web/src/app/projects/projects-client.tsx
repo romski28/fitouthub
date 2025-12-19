@@ -35,8 +35,18 @@ function extractPhotoUrls(notes?: string): string[] {
 function toAbsolute(url: string): string {
   if (!url) return url;
   const trimmed = url.trim();
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
   const base = API_BASE_URL.replace(/\/$/, "");
+  
+  // Replace localhost URLs with production URL
+  if (trimmed.startsWith("http://localhost:3001")) {
+    return trimmed.replace("http://localhost:3001", base);
+  }
+  
+  if (trimmed.startsWith("https://localhost:3001")) {
+    return trimmed.replace("https://localhost:3001", base);
+  }
+  
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
   const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
   return `${base}${normalized}`;
 }

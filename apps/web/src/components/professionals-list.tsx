@@ -378,14 +378,14 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
     }
   });
 
-  // Preselect first N (recommendation)
+  // Preselect first N (recommendation) - only if coming from home page with intent
   useMemo(() => {
     // Drop selections that no longer exist in the filtered list
     const currentIds = new Set(filtered.map((p) => p.id));
     const next = new Set<string>();
     selectedIds.forEach((id) => { if (currentIds.has(id)) next.add(id); });
-    // If none selected, preselect first N
-    if (next.size === 0 && filtered.length > 0) {
+    // If none selected AND coming from home page (intentData), preselect first N
+    if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession) {
       for (let i = 0; i < Math.min(3, filtered.length); i++) {
         next.add(filtered[i].id);
       }
@@ -397,7 +397,7 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
     if (Array.from(next).sort().join(',') !== Array.from(selectedIds).sort().join(',')) {
       setSelectedIds(next);
     }
-  }, [filtered]);
+  }, [filtered, initialFromIntent.profession]);
 
   const toggleSelection = (pro: Professional) => {
     setSelectedIds((prev) => {
@@ -537,7 +537,7 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
         </div>
       )}
 
-      {maxSelect > 0 && selectedIds.size === maxSelect ? (
+      {maxSelect > 0 && selectedIds.size > 0 && selectedIds.size === maxSelect ? (
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
