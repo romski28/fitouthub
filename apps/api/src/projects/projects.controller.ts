@@ -36,6 +36,12 @@ export class ProjectsController {
     }
 
     try {
+      const webBaseUrl =
+        process.env.WEB_BASE_URL ||
+        process.env.FRONTEND_BASE_URL ||
+        process.env.APP_WEB_URL ||
+        'https://fitouthub-web.vercel.app';
+
       const result = await this.projectsService.respondToInvitation(
         token,
         action,
@@ -58,7 +64,11 @@ export class ProjectsController {
             <div class="card">
               <h1>${action === 'accept' ? '✅ Project Accepted!' : '❌ Project Declined'}</h1>
               <p>${result.message}</p>
-              ${action === 'accept' ? '<a href="/projects/' + result.projectId + '">View Project & Submit Quote</a>' : '<a href="/">Return to Dashboard</a>'}
+              ${
+                action === 'accept'
+                  ? `<a href="${webBaseUrl}/projects/${result.projectId}">View Project & Submit Quote</a>`
+                  : `<a href="${webBaseUrl}/">Return to Dashboard</a>`
+              }
             </div>
           </body>
         </html>
