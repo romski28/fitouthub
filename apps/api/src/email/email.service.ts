@@ -38,7 +38,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Renovation Platform <onboarding@resend.dev>', // TODO: Replace with your verified domain
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `New Project Opportunity: ${params.projectName}`,
         html: `
@@ -102,7 +102,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Renovation Platform <onboarding@resend.dev>',
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Project Accepted: ${params.projectName}`,
         html: `
@@ -158,7 +158,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Renovation Platform <onboarding@resend.dev>',
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `New Quote Received: ${params.projectName}`,
         html: `
@@ -220,7 +220,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Renovation Platform <onboarding@resend.dev>',
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `⏰ Reminder: Project Response Due Soon - ${params.projectName}`,
         html: `
@@ -278,7 +278,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Renovation Platform <onboarding@resend.dev>',
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `⏰ Reminder: Quote Submission Due Soon - ${params.projectName}`,
         html: `
