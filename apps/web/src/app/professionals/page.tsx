@@ -17,12 +17,8 @@ export default function ProfessionalsPage() {
 
   useEffect(() => {
     const fetchProfessionals = async () => {
-      const baseUrl = (
-        process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fitouthub.onrender.com'
-      ).replace(/\/$/, '');
-
       try {
-        const response = await fetch(`${baseUrl}/professionals`, {
+        const response = await fetch(`${API_BASE_URL}/professionals`, {
           next: { revalidate: 60 }, // Cache for 60 seconds
         });
 

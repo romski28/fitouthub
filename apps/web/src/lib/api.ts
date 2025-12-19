@@ -1,7 +1,7 @@
 import { Project, Professional, Tradesman } from "./types";
+import { API_BASE_URL } from "@/config/api";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://fitouthub.onrender.com";
+const API_BASE = API_BASE_URL;
 
 async function safeFetch<T>(path: string): Promise<T | null> {
   const url = `${API_BASE}${path}`;

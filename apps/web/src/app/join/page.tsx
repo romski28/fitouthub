@@ -8,6 +8,7 @@ import { DynamicForm } from '@/components/dynamic-form';
 import LocationSelect, { CanonicalLocation } from '@/components/location-select';
 import { LocationSelectContractor, type ContractorLocationSelection } from '@/components/location-select-contractor';
 import { matchLocation } from '@/lib/location-matcher';
+import { API_BASE_URL } from '@/config/api';
 import {
   contractorFormSchema,
   companyFormSchema,
@@ -75,9 +76,6 @@ export default function JoinPage() {
   const handleFormSubmit = async (data: Record<string, string | string[] | boolean>) => {
     setIsSubmitting(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fitouthub.onrender.com';
-
       const getValue = (value: string | string[] | boolean | undefined): string => {
         if (Array.isArray(value)) return value[0] || '';
         if (typeof value === 'string') return value;
@@ -136,7 +134,7 @@ export default function JoinPage() {
       console.log('Submitting to:', `${apiUrl}/professionals`);
       console.log('Payload:', payload);
 
-      const response = await fetch(`${apiUrl}/professionals`, {
+      const response = await fetch(`${API_BASE_URL}/professionals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

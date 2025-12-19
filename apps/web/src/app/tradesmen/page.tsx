@@ -6,6 +6,7 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Tradesman } from '../../lib/types';
 import { ProtectedPageOverlay } from '@/components/protected-page-overlay';
 import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
+import { API_BASE_URL } from '@/config/api';
 import {
   SERVICE_TO_PROFESSION,
   matchServiceToProfession,
@@ -31,12 +32,8 @@ export default function TradesmenPage() {
 
   useEffect(() => {
     const fetchTradesmen = async () => {
-      const baseUrl = (
-        process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fitouthub.onrender.com'
-      ).replace(/\/$/, '');
-
       try {
-        const response = await fetch(`${baseUrl}/tradesmen`, { cache: 'no-store' });
+        const response = await fetch(`${API_BASE_URL}/tradesmen`, { cache: 'no-store' });
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
