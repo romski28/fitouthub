@@ -25,11 +25,21 @@ type ProjectsClientProps = {
 
 function extractPhotoUrls(notes?: string): string[] {
   if (!notes) return [];
-  const matches = notes.match(/(https?:\/\/[^\s,;]+|\/uploads\/[^\s,;]+)/g) || [];
-  return matches.filter((url) => {
-    const lower = url.toLowerCase();
-    return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.includes("/uploads/");
-  });
+  // Match full URLs (http/https) and relative upload paths
+  const matches = notes.match(/(https?:\/\/[^\s,;)]+|\/api?\/uploads\/[^\s,;)]+)/gi) || [];
+  return matches
+    .filter((url) => {
+      if (!url) return false;
+      const lower = url.toLowerCase();
+      // Accept if it's an upload path or an image file extension
+      return lower.includes("/uploads/") || 
+             lower.endsWith(".jpg") || 
+             lower.endsWith(".jpeg") || 
+             lower.endsWith(".png") || 
+             lower.endsWith(".webp") ||
+             lower.endsWith(".gif");
+    })
+    .map((url) => url.trim()); // Clean up whitespace
 }
 
 function toAbsolute(url: string): string {

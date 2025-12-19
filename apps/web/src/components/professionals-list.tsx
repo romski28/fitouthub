@@ -384,12 +384,20 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
     const currentIds = new Set(filtered.map((p) => p.id));
     const next = new Set<string>();
     selectedIds.forEach((id) => { if (currentIds.has(id)) next.add(id); });
-    // If none selected AND coming from home page (intentData), preselect first N
+    
+    // If coming from home page (intentData), auto-preselect first N if none selected
     if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession) {
       for (let i = 0; i < Math.min(3, filtered.length); i++) {
         next.add(filtered[i].id);
       }
+    } else if (next.size === 0 && !initialFromIntent.profession) {
+      // NOT coming from intent - clear any stale selections
+      try {
+        sessionStorage.setItem('selectedPros', JSON.stringify([]));
+      } catch {}
+      return;
     }
+    
     // Persist
     try {
       sessionStorage.setItem('selectedPros', JSON.stringify(Array.from(next)));

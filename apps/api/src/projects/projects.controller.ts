@@ -50,7 +50,7 @@ export class ProjectsController {
       const buttonHtml =
         action === 'accept'
           ? `<a href="${webBaseUrl}/projects/${result.projectId}">View Project & Submit Quote</a>`
-          : `<button onclick="window.close()" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; border: none; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Close Window</button>`;
+          : `<p style="color: #6b7280; margin-top: 20px; font-weight: 500;">You may now close this window or return to your dashboard.</p><a href="${webBaseUrl}/" style="margin-top: 10px;">Return to Dashboard</a>`;
 
       return `
         <!DOCTYPE html>
@@ -60,10 +60,10 @@ export class ProjectsController {
             <style>
               body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f3f4f6; }
               .card { background: white; border-radius: 12px; padding: 40px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-              h1 { color: ${action === 'accept' ? '#10b981' : '#6b7280'}; }
+              h1 { color: ${action === 'accept' ? '#10b981' : '#6b7280'}; margin: 0 0 15px 0; }
               p { color: #6b7280; line-height: 1.6; }
-              a, button { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; }
-              a:hover, button:hover { background: #4338ca; }
+              a { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; }
+              a:hover { background: #4338ca; }
             </style>
           </head>
           <body>
