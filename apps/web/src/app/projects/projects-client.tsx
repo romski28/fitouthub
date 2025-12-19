@@ -46,7 +46,10 @@ function toAbsolute(url: string): string {
     return trimmed.replace("https://localhost:3001", base);
   }
   
+  // Already absolute URL - return as-is
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+  
+  // Relative path - prepend API base
   const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
   return `${base}${normalized}`;
 }

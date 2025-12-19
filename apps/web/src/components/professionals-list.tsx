@@ -552,7 +552,14 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
 
       <ProjectShareModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          // Clear selections after sending emails
+          setSelectedIds(new Set());
+          try {
+            sessionStorage.setItem('selectedPros', JSON.stringify([]));
+          } catch {}
+        }}
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
         defaultLocation={loc}
       />

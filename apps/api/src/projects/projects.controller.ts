@@ -47,6 +47,11 @@ export class ProjectsController {
         action,
       );
       // Return HTML for user-friendly response
+      const buttonHtml =
+        action === 'accept'
+          ? `<a href="${webBaseUrl}/projects/${result.projectId}">View Project & Submit Quote</a>`
+          : `<button onclick="window.close()" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; border: none; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Close Window</button>`;
+
       return `
         <!DOCTYPE html>
         <html>
@@ -57,18 +62,15 @@ export class ProjectsController {
               .card { background: white; border-radius: 12px; padding: 40px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
               h1 { color: ${action === 'accept' ? '#10b981' : '#6b7280'}; }
               p { color: #6b7280; line-height: 1.6; }
-              a { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; }
+              a, button { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; }
+              a:hover, button:hover { background: #4338ca; }
             </style>
           </head>
           <body>
             <div class="card">
               <h1>${action === 'accept' ? '✅ Project Accepted!' : '❌ Project Declined'}</h1>
               <p>${result.message}</p>
-              ${
-                action === 'accept'
-                  ? `<a href="${webBaseUrl}/projects/${result.projectId}">View Project & Submit Quote</a>`
-                  : `<a href="${webBaseUrl}/">Return to Dashboard</a>`
-              }
+              ${buttonHtml}
             </div>
           </body>
         </html>
