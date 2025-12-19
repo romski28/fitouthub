@@ -131,7 +131,7 @@ export default function JoinPage() {
         additional_data: data,
       };
 
-      console.log('Submitting to:', `${apiUrl}/professionals`);
+      console.log('Submitting to:', `${API_BASE_URL}/professionals`);
       console.log('Payload:', payload);
 
       const response = await fetch(`${API_BASE_URL}/professionals`, {
