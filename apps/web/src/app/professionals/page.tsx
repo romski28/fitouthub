@@ -8,6 +8,7 @@ import ProfessionalsList from '@/components/professionals-list';
 import { ProtectedPageOverlay } from '@/components/protected-page-overlay';
 import { professionals as fallbackProfessionals } from '@/data/professionals';
 import type { CanonicalLocation } from '@/components/location-select';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ProfessionalsPage() {
   const { isLoggedIn, userLocation } = useAuth();
