@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:professionals": "ts-node src/scripts/seed-professionals.ts",
     "seed:patterns": "ts-node src/scripts/seed-patterns.ts",
-    "update:trades": "ts-node src/scripts/update-professional-trades.ts"
+    "update:trades": "ts-node src/scripts/update-professional-trades.ts",
+    "migrate:uploads": "ts-node src/scripts/migrate-uploads.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
