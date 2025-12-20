@@ -29,8 +29,10 @@ async function bootstrap() {
   }
 
   const port = process.env.PORT || 3001;
-  // Serve static uploads without wildcard patterns to avoid Express v5 path-to-regexp issues
-  app.use('/uploads', express.static(join(__dirname, '..', '..', 'uploads')));
+  // Serve static uploads under both root and global /api prefix so frontend links resolve
+  const uploadsPath = join(__dirname, '..', '..', 'uploads');
+  app.use('/uploads', express.static(uploadsPath));
+  app.use('/api/uploads', express.static(uploadsPath));
   await app.listen(port, '0.0.0.0');
   console.log(`✓ API listening on port ${port}`);
 }
