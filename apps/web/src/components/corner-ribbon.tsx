@@ -16,8 +16,8 @@ export default function CornerRibbon() {
         >
           ✕
         </button>
-        <div className="text-center text-white text-xs font-bold mt-6">
-          <div>BETA</div>
+        <div className="text-center text-white text-[10px] font-bold mt-6 px-2">
+          <div>Start your project today!</div>
         </div>
       </div>
     </div>
