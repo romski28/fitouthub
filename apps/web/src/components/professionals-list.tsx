@@ -367,16 +367,8 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
   }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary]);
 
   const maxSelect = Math.min(3, filtered.length);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
-    try {
-      const raw = typeof window !== 'undefined' ? sessionStorage.getItem('selectedPros') : null;
-      if (!raw) return new Set();
-      const arr = JSON.parse(raw) as string[];
-      return new Set(arr);
-    } catch {
-      return new Set();
-    }
-  });
+  // Always start with empty selection - no persistence
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Preselect first N (recommendation) - only if coming from home page with intent
   useMemo(() => {
@@ -390,18 +382,8 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
       for (let i = 0; i < Math.min(3, filtered.length); i++) {
         next.add(filtered[i].id);
       }
-    } else if (next.size === 0 && !initialFromIntent.profession) {
-      // NOT coming from intent - clear any stale selections
-      try {
-        sessionStorage.setItem('selectedPros', JSON.stringify([]));
-      } catch {}
-      return;
     }
     
-    // Persist
-    try {
-      sessionStorage.setItem('selectedPros', JSON.stringify(Array.from(next)));
-    } catch {}
     if (Array.from(next).sort().join(',') !== Array.from(selectedIds).sort().join(',')) {
       setSelectedIds(next);
     }
@@ -412,7 +394,6 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
       const next = new Set(prev);
       if (next.has(pro.id)) {
         next.delete(pro.id);
-        try { sessionStorage.setItem('selectedPros', JSON.stringify(Array.from(next))); } catch {}
         return next;
       }
       if (next.size >= maxSelect) {
@@ -421,7 +402,6 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
         if (first) next.delete(first);
       }
       next.add(pro.id);
-      try { sessionStorage.setItem('selectedPros', JSON.stringify(Array.from(next))); } catch {}
       return next;
     });
   };
@@ -564,9 +544,6 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
           setIsModalOpen(false);
           // Clear selections after sending emails
           setSelectedIds(new Set());
-          try {
-            sessionStorage.setItem('selectedPros', JSON.stringify([]));
-          } catch {}
         }}
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
         defaultLocation={loc}
