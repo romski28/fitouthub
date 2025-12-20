@@ -47,9 +47,10 @@ export class ProjectsController {
         action,
       );
       // Return HTML for user-friendly response
+      const professionalId = result.professionalId;
       const buttonHtml =
         action === 'accept'
-          ? `<a href="${webBaseUrl}/projects/${result.projectId}">View Project & Submit Quote</a>`
+          ? `<a href="${webBaseUrl}/professional-projects/${result.projectId}?pro=${professionalId}">View Project & Submit Quote</a>`
           : `<p style="color: #6b7280; margin-top: 20px; font-weight: 500;">You may now close this window or return to your dashboard.</p><a href="${webBaseUrl}/" style="margin-top: 10px;">Return to Dashboard</a>`;
 
       return `

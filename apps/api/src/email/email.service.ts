@@ -91,6 +91,7 @@ export class EmailService {
     professionalName: string;
     projectName: string;
     projectId: string;
+    professionalId: string;
     baseUrl: string;
   }): Promise<void> {
     if (!this.resend) {
@@ -98,7 +99,7 @@ export class EmailService {
       return;
     }
 
-    const projectUrl = `${params.baseUrl}/projects/${params.projectId}`;
+    const projectUrl = `${params.baseUrl}/professional-projects/${params.projectId}?pro=${params.professionalId}`;
 
     try {
       await this.resend.emails.send({

@@ -255,6 +255,7 @@ export class ProjectsService {
         professionalName,
         projectName: project.projectName,
         projectId: emailToken.projectId,
+        professionalId: emailToken.professionalId,
         baseUrl,
       });
     }
@@ -266,6 +267,7 @@ export class ProjectsService {
           ? 'Thank you for accepting! Please submit your quote within 24 hours.'
           : 'Project declined. Thank you for your response.',
       projectId: emailToken.projectId,
+      professionalId: emailToken.professionalId,
     };
   }
 
