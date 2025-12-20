@@ -8,6 +8,7 @@ import { matchLocation } from '@/lib/location-matcher';
 import { Professional } from '@/lib/types';
 import { ProjectShareModal } from '@/components/project-share-modal';
 import { useAuth } from '@/context/auth-context';
+import { BackToTop } from '@/components/back-to-top';
 
 const Pill = memo(({ label }: { label: string }) => {
   return (
@@ -548,6 +549,9 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
         defaultLocation={loc}
       />
+      
+      {/* Back to top button - behind the share project button */}
+      <BackToTop zIndex={30} />
     </div>
   );
 }

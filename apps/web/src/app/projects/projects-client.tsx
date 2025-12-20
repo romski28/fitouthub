@@ -6,6 +6,7 @@ import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
 import FileUploader from "@/components/file-uploader";
 import { Project } from "@/lib/types";
+import { BackToTop } from "@/components/back-to-top";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -592,6 +593,8 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
       ) : null}
 
       {lightbox ? <Lightbox url={lightbox} onClose={() => setLightbox("")} /> : null}
+      
+      <BackToTop />
     </div>
   );
 }
