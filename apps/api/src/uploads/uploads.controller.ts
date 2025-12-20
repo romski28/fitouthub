@@ -2,7 +2,8 @@ import { Controller, Post, UploadedFiles, UseInterceptors } from '@nestjs/common
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { randomBytes } from 'crypto';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import type { Express } from 'express';
 
 function filenameGenerator(req: any, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
@@ -11,13 +12,19 @@ function filenameGenerator(req: any, file: Express.Multer.File, cb: (error: Erro
   cb(null, `${Date.now()}_${id}${ext}`);
 }
 
+// Keep uploads in a predictable location regardless of build output path
+const uploadsDir = join(process.cwd(), 'uploads');
+if (!existsSync(uploadsDir)) {
+  mkdirSync(uploadsDir, { recursive: true });
+}
+
 @Controller('uploads')
 export class UploadsController {
   @Post()
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: diskStorage({
-        destination: 'uploads',
+        destination: uploadsDir,
         filename: filenameGenerator,
       }),
       fileFilter: (req, file, cb) => {

@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { PrismaClient } from '@prisma/client';
 import * as express from 'express';
 import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,7 +31,10 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   // Serve static uploads under both root and global /api prefix so frontend links resolve
-  const uploadsPath = join(__dirname, '..', '..', 'uploads');
+  const uploadsPath = join(process.cwd(), 'uploads');
+  if (!existsSync(uploadsPath)) {
+    mkdirSync(uploadsPath, { recursive: true });
+  }
   app.use('/uploads', express.static(uploadsPath));
   app.use('/api/uploads', express.static(uploadsPath));
   await app.listen(port, '0.0.0.0');
