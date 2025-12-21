@@ -248,7 +248,11 @@ export class ProjectsService {
         professional.fullName ||
         professional.businessName ||
         'Professional';
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+      const webBaseUrl =
+        process.env.WEB_BASE_URL ||
+        process.env.FRONTEND_BASE_URL ||
+        process.env.APP_WEB_URL ||
+        'https://fitouthub-web.vercel.app';
 
       await this.emailService.sendProjectAccepted({
         to: professional.email,
@@ -256,7 +260,7 @@ export class ProjectsService {
         projectName: project.projectName,
         projectId: emailToken.projectId,
         professionalId: emailToken.professionalId,
-        baseUrl,
+        baseUrl: webBaseUrl,
       });
     }
 
