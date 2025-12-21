@@ -37,6 +37,14 @@ export async function getProjects(params?: Record<string, string | undefined>): 
   return data ?? [];
 }
 
+export async function getProjectDetail(id: string): Promise<Project> {
+  const data = await safeFetch<Project>(`/projects/${id}`);
+  if (!data) {
+    throw new Error('Project not found');
+  }
+  return data;
+}
+
 // Placeholders until API endpoints exist for tradesmen and professionals.
 export async function getTradesmen(): Promise<Tradesman[]> {
   const data = await import("../data/tradesmen");
