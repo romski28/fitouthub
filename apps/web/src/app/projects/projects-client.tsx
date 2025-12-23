@@ -38,6 +38,46 @@ type ExtendedProject = Project & {
   }>;
 };
 
+// Status precedence for consolidating duplicate professional entries
+const STATUS_ORDER = [
+  "awarded",
+  "quoted",
+  "accepted",
+  "counter_requested",
+  "pending",
+  "declined",
+];
+
+function betterStatus(a?: string, b?: string): string | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  const ia = STATUS_ORDER.indexOf(a);
+  const ib = STATUS_ORDER.indexOf(b);
+  if (ia === -1 && ib === -1) return a;
+  if (ia === -1) return b;
+  if (ib === -1) return a;
+  return ia <= ib ? a : b; // lower index is higher precedence
+}
+
+function dedupeProfessionals(list: NonNullable<ExtendedProject["professionals"]>): NonNullable<ExtendedProject["professionals"]> {
+  const map = new Map<string, NonNullable<ExtendedProject["professionals"]>[number]>();
+  for (const entry of list) {
+    const key = entry.professional?.id || entry.professional?.email || entry.id;
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, { ...entry });
+    } else {
+      const merged = { ...existing };
+      merged.status = betterStatus(existing.status, entry.status) || entry.status || existing.status;
+      if (merged.quoteAmount == null && entry.quoteAmount != null) merged.quoteAmount = entry.quoteAmount;
+      if (!merged.quoteNotes && entry.quoteNotes) merged.quoteNotes = entry.quoteNotes;
+      if (!merged.quotedAt && entry.quotedAt) merged.quotedAt = entry.quotedAt;
+      map.set(key, merged);
+    }
+  }
+  return Array.from(map.values());
+}
+
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -407,33 +447,33 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const { isLoggedIn, accessToken } = useAuth();
   const [hydrated, setHydrated] = useState(false);
   const [items, setItems] = useState<ExtendedProject[]>(() => {
-    // Group duplicates into a single project card and merge professionals
-    const byKey = new Map<string, ExtendedProject>();
+    // Group strictly by project id to avoid visual duplicates
+    const byId = new Map<string, ExtendedProject>();
     for (const p of projects) {
       const ep: ExtendedProject = {
         ...(p as any),
         photos: extractPhotoUrls((p as any).notes),
         professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
       };
-      const key = `${ep.clientName}|${ep.projectName}|${ep.region}`;
-      const existing = byKey.get(key);
+      const key = String((p as any).id);
+      const existing = byId.get(key);
       if (!existing) {
-        byKey.set(key, ep);
+        // Ensure professionals are unique per project
+        ep.professionals = ep.professionals ? dedupeProfessionals(ep.professionals) : ep.professionals;
+        byId.set(key, ep);
       } else {
-        existing.professionals = [
+        const mergedPros = [
           ...(existing.professionals ?? []),
           ...(ep.professionals ?? []),
         ];
-        existing.photos = Array.from(
-          new Set([...(existing.photos ?? []), ...(ep.photos ?? [])]),
-        );
-        // Keep latest updatedAt
+        existing.professionals = dedupeProfessionals(mergedPros);
+        existing.photos = Array.from(new Set([...(existing.photos ?? []), ...(ep.photos ?? [])]));
         if (((ep as any).updatedAt || '') > ((existing as any).updatedAt || '')) {
           (existing as any).updatedAt = (ep as any).updatedAt;
         }
       }
     }
-    return Array.from(byKey.values());
+    return Array.from(byId.values());
   });
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [lightbox, setLightbox] = useState<string>("");
