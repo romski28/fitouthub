@@ -42,7 +42,21 @@ export class ProfessionalController {
         orderBy: { createdAt: 'desc' },
       });
 
-      return projectProfessionals;
+      // Attach unread message count per project (client -> professional unread)
+      const withUnread = await Promise.all(
+        projectProfessionals.map(async (pp: any) => {
+          const unreadCount = await (this.prisma as any).message.count({
+            where: {
+              projectProfessionalId: pp.id,
+              senderType: 'client',
+              readByProfessionalAt: null,
+            },
+          });
+          return { ...pp, unreadCount };
+        }),
+      );
+
+      return withUnread;
     } catch (error) {
       console.error('Error fetching professional projects:', error);
       throw error;
@@ -219,5 +233,88 @@ export class ProfessionalController {
       console.error('Error rejecting project:', error);
       throw error;
     }
+  }
+
+  // Messages: list with pagination (default 30 newest)
+  @Get('projects/:projectProfessionalId/messages')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async getMessages(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+
+    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+      where: { id: projectProfessionalId, professionalId },
+    });
+    if (!projectProfessional) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const messages = await (this.prisma as any).message.findMany({
+      where: { projectProfessionalId },
+      orderBy: { createdAt: 'asc' },
+      take: 100, // initial cap; client will show first 30 and allow more
+    });
+    return { messages };
+  }
+
+  // Messages: send from professional
+  @Post('projects/:projectProfessionalId/messages')
+  @UseGuards(AuthGuard('jwt-professional'))
+  @HttpCode(HttpStatus.CREATED)
+  async sendMessage(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+    @Body() body: { content: string },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    if (!body?.content || body.content.trim().length === 0) {
+      throw new BadRequestException('Message content is required');
+    }
+
+    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+      where: { id: projectProfessionalId, professionalId },
+    });
+    if (!projectProfessional) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const message = await (this.prisma as any).message.create({
+      data: {
+        projectProfessionalId,
+        senderType: 'professional',
+        senderProfessionalId: professionalId,
+        content: body.content.trim(),
+      },
+    });
+    return { success: true, message };
+  }
+
+  // Messages: mark client messages as read by professional
+  @Post('projects/:projectProfessionalId/messages/mark-read')
+  @UseGuards(AuthGuard('jwt-professional'))
+  @HttpCode(HttpStatus.OK)
+  async markMessagesRead(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+      where: { id: projectProfessionalId, professionalId },
+    });
+    if (!projectProfessional) {
+      throw new BadRequestException('Project not found');
+    }
+
+    await (this.prisma as any).message.updateMany({
+      where: {
+        projectProfessionalId,
+        senderType: 'client',
+        readByProfessionalAt: null,
+      },
+      data: { readByProfessionalAt: new Date() },
+    });
+    return { success: true };
   }
 }

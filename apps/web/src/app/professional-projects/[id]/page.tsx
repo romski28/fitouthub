@@ -24,6 +24,14 @@ interface ProjectDetail {
   respondedAt?: string;
 }
 
+interface Message {
+  id: string;
+  projectProfessionalId: string;
+  senderType: 'professional' | 'client' | string;
+  content: string;
+  createdAt: string;
+}
+
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -38,6 +46,9 @@ export default function ProjectDetailPage() {
     amount: '',
     notes: '',
   });
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -90,6 +101,38 @@ export default function ProjectDetailPage() {
     };
 
     fetchProject();
+    // Fetch messages and mark client messages as read
+    const fetchMessages = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/professional/projects/${projectProfessionalId}/messages`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setMessages(data.messages || []);
+          // mark read
+          await fetch(
+            `${API_BASE_URL}/professional/projects/${projectProfessionalId}/messages/mark-read`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          );
+        }
+      } catch {}
+    };
+
+    if (accessToken) {
+      fetchMessages();
+    }
   }, [isLoggedIn, accessToken, projectProfessionalId, router]);
 
   const handleSubmitQuote = async (e: React.FormEvent) => {
@@ -206,6 +249,33 @@ export default function ProjectDetailPage() {
       setError(message);
     } finally {
       setSubmittingQuote(false);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+    setSending(true);
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/professional/projects/${projectProfessionalId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: newMessage.trim() }),
+        },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((msgs) => [...msgs, data.message]);
+        setNewMessage('');
+      }
+    } catch {}
+    finally {
+      setSending(false);
     }
   };
 
@@ -430,6 +500,43 @@ export default function ProjectDetailPage() {
               )}
             </div>
           )}
+
+          {/* Messages */}
+          <div className="p-8 border-t border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Messages</h2>
+            <div className="max-h-96 overflow-y-auto bg-gray-50 p-4 rounded">
+              {messages.length === 0 ? (
+                <p className="text-gray-500 text-sm">No messages yet.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {messages.map((m) => (
+                    <li key={m.id} className={`flex ${m.senderType==='professional' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`inline-block px-3 py-2 rounded-lg text-sm ${m.senderType==='professional' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-900'}`}>
+                        <p>{m.content}</p>
+                        <p className="mt-1 text-xs opacity-70">{new Date(m.createdAt).toLocaleString()}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <form onSubmit={handleSendMessage} className="mt-4 flex gap-3">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+              />
+              <button
+                type="submit"
+                disabled={sending || !newMessage.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+              >
+                {sending ? 'Sending...' : 'Send'}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

@@ -21,12 +21,15 @@ interface ProjectProfessional {
   quoteAmount?: string;
   quoteNotes?: string;
   quotedAt?: string;
+  unreadCount?: number;
 }
 
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
   const [projects, setProjects] = useState<ProjectProfessional[]>([]);
+  const [visibleCount, setVisibleCount] = useState(30);
+  const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +63,11 @@ export default function ProfessionalProjectsPage() {
         }
 
         const data = await response.json();
-        setProjects(Array.isArray(data) ? data : data.projects || []);
+        const list: ProjectProfessional[] = Array.isArray(data) ? data : data.projects || [];
+        // sort by status: pending > accepted > quoted > awarded > rejected/declined
+        const rank: Record<string, number> = { pending: 0, accepted: 1, quoted: 2, awarded: 3, rejected: 4, declined: 4 };
+        list.sort((a, b) => (rank[a.status] ?? 9) - (rank[b.status] ?? 9));
+        setProjects(list);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load projects';
         setError(message);
@@ -102,19 +109,41 @@ export default function ProfessionalProjectsPage() {
               </p>
             )}
           </div>
-          <button
-            onClick={() => {
-              if (window.confirm('Are you sure you want to log out?')) {
-                localStorage.removeItem('professionalAccessToken');
-                localStorage.removeItem('professionalRefreshToken');
-                localStorage.removeItem('professional');
-                router.push('/');
-              }
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Log Out
-          </button>
+          <div className="flex items-center gap-3">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-gray-700"
+            >
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="accepted">Accepted</option>
+              <option value="quoted">Quoted</option>
+              <option value="awarded">Awarded</option>
+              <option value="declined">Declined</option>
+            </select>
+            <button
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Back to Top
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to log out?')) {
+                  localStorage.removeItem('professionalAccessToken');
+                  localStorage.removeItem('professionalRefreshToken');
+                  localStorage.removeItem('professional');
+                  router.push('/');
+                }
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Log Out
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -133,7 +162,10 @@ export default function ProfessionalProjectsPage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((projectProf) => (
+            {projects
+              .filter(p => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))))
+              .slice(0, visibleCount)
+              .map((projectProf) => (
               <Link key={projectProf.id} href={`/professional-projects/${projectProf.id}`}>
                 <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <div className="p-6">
@@ -149,6 +181,12 @@ export default function ProfessionalProjectsPage() {
                           {projectProf.project.region}
                         </p>
                       </div>
+                      <div className="flex items-center gap-2">
+                        {projectProf.unreadCount && projectProf.unreadCount > 0 && (
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-600 text-white text-xs" title={`${projectProf.unreadCount} unread messages`}>
+                            {projectProf.unreadCount}
+                          </span>
+                        )}
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
                           projectProf.status === 'pending'
@@ -164,6 +202,7 @@ export default function ProfessionalProjectsPage() {
                       >
                         {projectProf.status}
                       </span>
+                      </div>
                     </div>
 
                     {projectProf.project.budget && (
@@ -216,6 +255,18 @@ export default function ProfessionalProjectsPage() {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+
+        {/* Load more */}
+        {projects.length > visibleCount && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => setVisibleCount((c) => c + 30)}
+              className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md"
+            >
+              Display More
+            </button>
           </div>
         )}
       </div>

@@ -101,6 +101,7 @@ model ProjectProfessional {
   updatedAt      DateTime     @updatedAt
   professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
   project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages       Message[]
 
   @@unique([projectId, professionalId])
   @@index([projectId])
@@ -147,4 +148,22 @@ model Pattern {
 
   @@index([category])
   @@index([matchType])
+}
+
+model Message {
+  id                     String               @id @default(cuid())
+  projectProfessionalId  String
+  senderType             String               // 'professional' | 'client'
+  senderProfessionalId   String?
+  senderClientId         String?
+  content                String
+  createdAt              DateTime             @default(now())
+  readByProfessionalAt   DateTime?
+  readByClientAt         DateTime?
+
+  projectProfessional    ProjectProfessional  @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
+
+  @@index([projectProfessionalId])
+  @@index([senderType])
+  @@index([createdAt])
 }
