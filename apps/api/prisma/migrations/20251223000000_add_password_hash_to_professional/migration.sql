@@ -1,4 +1,4 @@
 -- AddPasswordHashToProfessional
 
--- AlterTable
-ALTER TABLE "Professional" ADD COLUMN "passwordHash" TEXT;
+-- AlterTable - Only add if not exists (idempotent)
+ALTER TABLE "Professional" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT;
