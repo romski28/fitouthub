@@ -8,12 +8,16 @@
 -- 3. Paste this script and run it
 -- 4. All professionals without passwords will be able to login with password: "password"
 
+-- STEP 1: Add the passwordHash column if it doesn't exist
+ALTER TABLE "Professional" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT;
+
+-- STEP 2: Set default passwords for all professionals
 UPDATE "Professional"
 SET "passwordHash" = '$2b$10$UVlW1ue3xj.v9BzBnLHfOuKG/LOjqm0DxQfR7yqC6hQJ/2qfh3D5i'
 WHERE "passwordHash" IS NULL;
 
--- Verify the update
-SELECT email, "fullName", "businessName", "passwordHash" 
+-- STEP 3: Verify the update
+SELECT email, "fullName", "businessName", 
+       CASE WHEN "passwordHash" IS NOT NULL THEN 'Has Password' ELSE 'No Password' END as password_status
 FROM "Professional" 
-WHERE "passwordHash" IS NOT NULL
 LIMIT 10;
