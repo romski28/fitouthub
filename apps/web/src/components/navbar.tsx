@@ -29,24 +29,31 @@ export const Navbar: React.FC = () => {
       try {
         if (showAuthed) {
           const res = await fetch(`${API_BASE_URL}/client/messages/unread-count`, {
-            headers: { 'Authorization': `Bearer ${accessToken ?? ''}` }
+            headers: { Authorization: `Bearer ${accessToken ?? ''}` },
           });
           if (res.ok) {
             const data = await res.json();
             setClientUnread(data.unreadCount || 0);
+          } else {
+            setClientUnread(0);
           }
         }
         if (showProfessionalAuthed) {
           const token = localStorage.getItem('professionalAccessToken') || '';
           const res = await fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
             const data = await res.json();
             setProfUnread(data.unreadCount || 0);
+          } else {
+            setProfUnread(0);
           }
         }
-      } catch {}
+      } catch {
+        setClientUnread(0);
+        setProfUnread(0);
+      }
     };
     fetchUnread();
   }, [showAuthed, showProfessionalAuthed]);
