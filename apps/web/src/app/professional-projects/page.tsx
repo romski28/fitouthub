@@ -25,6 +25,8 @@ interface ProjectProfessional {
   unreadCount?: number;
 }
 
+type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
+
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
@@ -105,24 +107,44 @@ export default function ProfessionalProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header & Mini Dashboard */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Your Projects</h1>
+    <div className="min-h-screen bg-slate-50 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+        {/* Hero (match client styling) */}
+        <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Projects</p>
+              <h1 className="text-2xl font-bold leading-tight">Projects overview</h1>
               {professional && (
-                <p className="mt-2 text-gray-600">
+                <p className="text-sm text-slate-200/90">
                   {professional.fullName || professional.businessName || professional.email}
                 </p>
               )}
             </div>
-            <div>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+              <SummaryCard label="Total" value={totals.total} tone="slate" />
+              <SummaryCard label="Pending" value={totals.pending} tone="amber" />
+              <SummaryCard label="Accepted" value={totals.accepted} tone="emerald" />
+              <SummaryCard label="Quoted" value={totals.quoted} tone="blue" />
+              <SummaryCard label="Awarded" value={totals.awarded} tone="purple" />
+              <SummaryCard label="Declined" value={totals.declined} tone="rose" />
+            </div>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-sm text-white border border-white/20">
+            <span className="inline-block h-2 w-2 rounded-full bg-red-300" />
+            {totals.unread} unread messages
+          </div>
+        </div>
+
+        {/* Filters (match client styling) */}
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+          <div className="grid gap-2 md:grid-cols-2">
+            <div className="relative grid gap-0.5">
+              <label className="text-xs font-medium text-slate-600">Filter by status</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-gray-700"
+                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
               >
                 <option value="all">All</option>
                 <option value="pending">Pending</option>
@@ -133,39 +155,6 @@ export default function ProfessionalProjectsPage() {
               </select>
             </div>
           </div>
-
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-6 gap-3">
-            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-              <p className="text-[11px] uppercase tracking-wide text-slate-500">Total</p>
-              <p className="text-lg font-bold text-slate-900">{totals.total}</p>
-            </div>
-            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-              <p className="text-[11px] uppercase tracking-wide text-yellow-600">Pending</p>
-              <p className="text-lg font-bold text-slate-900">{totals.pending}</p>
-            </div>
-            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-              <p className="text-[11px] uppercase tracking-wide text-green-600">Accepted</p>
-              <p className="text-lg font-bold text-slate-900">{totals.accepted}</p>
-            </div>
-            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-              <p className="text-[11px] uppercase tracking-wide text-blue-600">Quoted</p>
-              <p className="text-lg font-bold text-slate-900">{totals.quoted}</p>
-            </div>
-            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-              <p className="text-[11px] uppercase tracking-wide text-purple-600">Awarded</p>
-              <p className="text-lg font-bold text-slate-900">{totals.awarded}</p>
-            </div>
-            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-              <p className="text-[11px] uppercase tracking-wide text-rose-600">Declined</p>
-              <p className="text-lg font-bold text-slate-900">{totals.declined}</p>
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="inline-flex items-center gap-2 rounded-md bg-red-50 px-3 py-1 text-sm text-red-700 border border-red-100">
-              <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
-              {totals.unread} unread messages
-            </span>
-          </div>
         </div>
 
         {error && (
@@ -174,105 +163,72 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {/* Projects Grid */}
         {projects.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow">
-            <p className="text-gray-600 text-lg">No projects assigned yet</p>
-            <p className="text-gray-500 mt-2">
-              Once you accept project invitations, they'll appear here.
-            </p>
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+            No projects assigned yet. Once you accept project invitations, they'll appear here.
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-3">
             {projects
               .filter(p => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))))
               .slice(0, visibleCount)
               .map((projectProf) => (
               <Link key={projectProf.id} href={`/professional-projects/${projectProf.id}`}>
-                <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer h-full">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {projectProf.project.projectName}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Client: {projectProf.project.clientName}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {projectProf.project.region}
-                        </p>
+                <div className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                  <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
+                    <div className="space-y-1">
+                      <div className="text-base font-bold">{projectProf.project.projectName}</div>
+                      <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{projectProf.project.region}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {projectProf.unreadCount && projectProf.unreadCount > 0 ? (
+                        <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white" title={`${projectProf.unreadCount} unread messages`}>
+                          {projectProf.unreadCount} new
+                        </span>
+                      ) : null}
+                      <span className={statusBadgeClass(projectProf.status)}>{projectProf.status}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-3">
+                    <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                        <span className="font-semibold">Client:</span>
+                        <span className="text-slate-600">{projectProf.project.clientName}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {projectProf.unreadCount && projectProf.unreadCount > 0 && (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-600 text-white text-xs" title={`${projectProf.unreadCount} unread messages`}>
-                            {projectProf.unreadCount}
-                          </span>
-                        )}
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          projectProf.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : projectProf.status === 'accepted'
-                            ? 'bg-green-100 text-green-800'
-                            : projectProf.status === 'quoted'
-                            ? 'bg-blue-100 text-blue-800'
-                            : projectProf.status === 'awarded'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {projectProf.status}
-                      </span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                        <span className="font-semibold">Status:</span>
+                        <span className="text-slate-600 capitalize">{projectProf.status}</span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                        <span className="font-semibold">Budget:</span>
+                        <span className="text-slate-600">{projectProf.project.budget ? `$${projectProf.project.budget}` : '—'}</span>
+                      </div>
+                      {projectProf.quoteAmount ? (
+                        <div className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                          <span className="font-semibold">Your Quote:</span>
+                          <span className="text-slate-600">${projectProf.quoteAmount}</span>
+                        </div>
+                      ) : null}
                     </div>
 
-                    {projectProf.project.budget && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <p className="text-sm text-gray-600">
-                          Budget:{' '}
-                          <span className="font-semibold text-gray-900">
-                            ${projectProf.project.budget}
-                          </span>
-                        </p>
+                    {projectProf.project.notes ? (
+                      <div className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 border border-slate-100">
+                        <p className="font-semibold text-slate-800 mb-1">Notes</p>
+                        <p className="leading-relaxed line-clamp-2">{projectProf.project.notes}</p>
                       </div>
-                    )}
+                    ) : null}
 
-                    {projectProf.quoteAmount && (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-600">
-                          Your Quote:{' '}
-                          <span className="font-semibold text-gray-900">
-                            ${projectProf.quoteAmount}
-                          </span>
-                        </p>
-                        {projectProf.quotedAt && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(projectProf.quotedAt).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {projectProf.project.notes && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <p className="text-xs font-medium text-gray-700">
-                          Project Notes
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                          {projectProf.project.notes}
-                        </p>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                      }}
-                      className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                    >
-                      View Details
-                    </button>
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                      <span>ID: {projectProf.projectId}</span>
+                      {projectProf.quotedAt ? (
+                        <span>Quoted: {new Date(projectProf.quotedAt).toLocaleDateString()}</span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -280,12 +236,11 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {/* Load more */}
         {projects.length > visibleCount && (
           <div className="mt-8 flex justify-center">
             <button
               onClick={() => setVisibleCount((c) => c + 30)}
-              className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md"
+              className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-md transition font-medium"
             >
               Display More
             </button>
@@ -296,4 +251,35 @@ export default function ProfessionalProjectsPage() {
       </div>
     </div>
   );
+}
+
+function SummaryCard({ label, value, tone }: { label: string; value: number; tone: SummaryTone }) {
+  const toneMap: Record<SummaryTone, { text: string; border: string; badge: string }> = {
+    slate: { text: 'text-slate-100', border: 'border-white/10', badge: 'bg-white/20' },
+    amber: { text: 'text-amber-100', border: 'border-amber-200/40', badge: 'bg-amber-200/30' },
+    emerald: { text: 'text-emerald-100', border: 'border-emerald-200/40', badge: 'bg-emerald-200/30' },
+    blue: { text: 'text-blue-100', border: 'border-blue-200/40', badge: 'bg-blue-200/30' },
+    purple: { text: 'text-purple-100', border: 'border-purple-200/40', badge: 'bg-purple-200/30' },
+    rose: { text: 'text-rose-100', border: 'border-rose-200/40', badge: 'bg-rose-200/30' },
+  };
+
+  const { text, border, badge } = toneMap[tone];
+
+  return (
+    <div className={`rounded-lg border ${border} bg-white/5 px-3 py-2 text-right backdrop-blur-sm`}>
+      <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${text}`}>{label}</p>
+      <div className={`mt-1 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-bold text-white ${badge}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function statusBadgeClass(status: string) {
+  if (status === 'pending') return 'rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800';
+  if (status === 'accepted') return 'rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800';
+  if (status === 'quoted') return 'rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800';
+  if (status === 'awarded') return 'rounded-full bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-800';
+  if (status === 'rejected' || status === 'declined') return 'rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-800';
+  return 'rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-800';
 }

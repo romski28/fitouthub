@@ -49,6 +49,7 @@ export default function ProjectDetailPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -126,8 +127,15 @@ export default function ProjectDetailPage() {
               },
             },
           );
+        } else if (res.status === 404) {
+          setMessageError('Messaging is not available for this project right now.');
+        } else if (res.status === 401) {
+          router.push('/professional-login');
+          return;
         }
-      } catch {}
+      } catch (e) {
+        setMessageError('Failed to load messages. Please try again later.');
+      }
     };
 
     if (accessToken) {
@@ -256,6 +264,7 @@ export default function ProjectDetailPage() {
     e.preventDefault();
     if (!newMessage.trim()) return;
     setSending(true);
+    setMessageError(null);
     try {
       const res = await fetch(
         `${API_BASE_URL}/professional/projects/${projectProfessionalId}/messages`,
@@ -272,8 +281,18 @@ export default function ProjectDetailPage() {
         const data = await res.json();
         setMessages((msgs) => [...msgs, data.message]);
         setNewMessage('');
+      } else if (res.status === 404) {
+        setMessageError('Messaging endpoint not found. Please refresh after we deploy the update.');
+      } else if (res.status === 401) {
+        router.push('/professional-login');
+        return;
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setMessageError(data?.message || 'Failed to send message.');
       }
-    } catch {}
+    } catch {
+      setMessageError('Network error while sending message.');
+    }
     finally {
       setSending(false);
     }
@@ -504,6 +523,11 @@ export default function ProjectDetailPage() {
           {/* Messages */}
           <div className="p-8 border-t border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Messages</h2>
+            {messageError && (
+              <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {messageError}
+              </div>
+            )}
             <div className="max-h-96 overflow-y-auto bg-gray-50 p-4 rounded">
               {messages.length === 0 ? (
                 <p className="text-gray-500 text-sm">No messages yet.</p>
