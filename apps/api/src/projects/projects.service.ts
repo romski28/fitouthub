@@ -14,9 +14,51 @@ export class ProjectsService {
     private emailService: EmailService,
   ) {}
 
+  private readonly STATUS_ORDER = [
+    'awarded',
+    'quoted',
+    'accepted',
+    'counter_requested',
+    'pending',
+    'declined',
+  ];
+
+  private betterStatus(a?: string | null, b?: string | null): string | null | undefined {
+    if (!a) return b;
+    if (!b) return a;
+    const ia = this.STATUS_ORDER.indexOf(a);
+    const ib = this.STATUS_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a;
+    if (ia === -1) return b;
+    if (ib === -1) return a;
+    return ia <= ib ? a : b;
+  }
+
+  private dedupeProfessionals(list: any[] | undefined | null): any[] {
+    if (!Array.isArray(list) || list.length === 0) return [];
+    const map = new Map<string, any>();
+    for (const entry of list) {
+      const key = entry?.professional?.id || entry?.professional?.email || entry?.id;
+      if (!key) continue;
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, { ...entry });
+      } else {
+        const merged: any = { ...existing };
+        merged.status = this.betterStatus(existing.status, entry.status) ?? entry.status ?? existing.status;
+        if (merged.quoteAmount == null && entry.quoteAmount != null) merged.quoteAmount = entry.quoteAmount;
+        if (!merged.quoteNotes && entry.quoteNotes) merged.quoteNotes = entry.quoteNotes;
+        if (!merged.quotedAt && entry.quotedAt) merged.quotedAt = entry.quotedAt;
+        if (!merged.respondedAt && entry.respondedAt) merged.respondedAt = entry.respondedAt;
+        map.set(key, merged);
+      }
+    }
+    return Array.from(map.values());
+  }
+
   async findAll() {
     try {
-      return await this.prisma.project.findMany({
+      const projects = await this.prisma.project.findMany({
         include: {
           client: true,
           professionals: {
@@ -26,6 +68,11 @@ export class ProjectsService {
           },
         },
       });
+      // Consolidate duplicate professionals per project
+      return projects.map((p: any) => ({
+        ...p,
+        professionals: this.dedupeProfessionals(p.professionals),
+      }));
     } catch (error) {
       console.error('[ProjectsService.findAll] Database error:', {
         message: error.message,
@@ -37,7 +84,7 @@ export class ProjectsService {
   }
 
   async findOne(id: string) {
-    return this.prisma.project.findUnique({
+    const project = await this.prisma.project.findUnique({
       where: { id },
       include: {
         client: true,
@@ -48,6 +95,11 @@ export class ProjectsService {
         },
       },
     });
+    if (!project) return null;
+    return {
+      ...project,
+      professionals: this.dedupeProfessionals((project as any).professionals),
+    } as any;
   }
 
   async getEmailTokens(projectId: string) {
@@ -70,7 +122,7 @@ export class ProjectsService {
   }
 
   async getProjectProfessionals(projectId: string) {
-    return this.prisma.projectProfessional.findMany({
+    const pros = await this.prisma.projectProfessional.findMany({
       where: { projectId },
       include: {
         professional: {
@@ -87,6 +139,7 @@ export class ProjectsService {
         createdAt: 'desc',
       },
     });
+    return this.dedupeProfessionals(pros);
   }
 
   async create(createProjectDto: CreateProjectDto) {
