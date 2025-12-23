@@ -24,8 +24,8 @@ export class ProjectsController {
   }
 
   @Get('canonical')
-  async findCanonical() {
-    return this.projectsService.findCanonical();
+  async findCanonical(@Query('clientId') clientId?: string) {
+    return this.projectsService.findCanonical(clientId);
   }
 
   @Get('respond')

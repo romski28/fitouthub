@@ -64,9 +64,10 @@ export class ProjectsService {
       .trim();
   }
 
-  async findCanonical() {
+  async findCanonical(clientId?: string) {
     try {
       const projects = await this.prisma.project.findMany({
+        where: clientId ? { clientId } : undefined,
         include: {
           client: true,
           professionals: {

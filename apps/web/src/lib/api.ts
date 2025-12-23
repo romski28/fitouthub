@@ -39,7 +39,7 @@ export async function getProjects(params?: Record<string, string | undefined>): 
         }, new URLSearchParams())
     : null;
   const hasFilters = search && Array.from(search.keys()).length > 0;
-  const path = hasFilters ? `/projects?${search!.toString()}` : "/projects/canonical";
+  const path = hasFilters ? `/projects/canonical?${search!.toString()}` : "/projects/canonical";
   const data = await safeFetch<Project[]>(path);
   return data ?? [];
 }
