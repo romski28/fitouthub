@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from "@/context/auth-context";
+import { ProfessionalAuthProvider } from "@/context/professional-auth-context";
 import { AuthModalControlProvider } from "@/context/auth-modal-control";
 import { Navbar } from "@/components/navbar";
 import { GlobalAuthModal } from "@/components/global-auth-modal";
@@ -33,16 +34,18 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <AuthModalControlProvider>
-            <Toaster position="top-right" />
-            <div className="min-h-screen bg-slate-50 text-slate-900">
-              <Navbar />
-              <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
-              <Footer />
-            </div>
-            <GlobalAuthModal />
-            <CornerRibbon />
-          </AuthModalControlProvider>
+          <ProfessionalAuthProvider>
+            <AuthModalControlProvider>
+              <Toaster position="top-right" />
+              <div className="min-h-screen bg-slate-50 text-slate-900">
+                <Navbar />
+                <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+                <Footer />
+              </div>
+              <GlobalAuthModal />
+              <CornerRibbon />
+            </AuthModalControlProvider>
+          </ProfessionalAuthProvider>
         </AuthProvider>
       </body>
     </html>
