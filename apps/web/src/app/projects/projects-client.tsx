@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -575,7 +576,15 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
 
                 <div className="flex items-center justify-between text-[11px] text-slate-500">
                   <span>ID: {project.id}</span>
-                  <span>Updated: {formatDate(project.updatedAt)}</span>
+                  <div className="flex items-center gap-3">
+                    <span>Updated: {formatDate(project.updatedAt)}</span>
+                    <Link
+                      href={`/projects/${project.id}`}
+                      className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                    >
+                      View Details
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
