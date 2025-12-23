@@ -6,6 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
   id: string;
@@ -221,6 +222,16 @@ export default function ClientProjectDetailPage() {
       }
       if (!res.ok) throw new Error('Action failed');
       const data = await res.json();
+      
+      // Show success toast
+      if (kind === 'accept') {
+        toast.success('Quote accepted! Project awarded to professional.');
+      } else if (kind === 'reject') {
+        toast.success('Quote declined.');
+      } else {
+        toast.success('Requested better quote.');
+      }
+      
       // Update local selected professional status quickly
       setSelectedProfessional((prev) => (prev ? { ...prev, status: data.projectProfessional.status } : prev));
       // Refresh messages to capture auto-generated message
@@ -234,6 +245,7 @@ export default function ClientProjectDetailPage() {
       }
     } catch (e) {
       console.error('Action failed', e);
+      toast.error('Failed to process quote action. Please try again.');
     } finally {
       setActionBusy(null);
     }
@@ -268,14 +280,16 @@ export default function ClientProjectDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Link href="/projects" className="text-sm text-blue-600 hover:underline">
-            ← Back to projects
-          </Link>
-        </div>
+    <>
+      <Toaster position="top-right" />
+      <div className="min-h-screen bg-slate-50 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <Link href="/projects" className="text-sm text-blue-600 hover:underline">
+              ← Back to projects
+            </Link>
+          </div>
 
         {/* Project Info */}
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -454,5 +468,6 @@ export default function ClientProjectDetailPage() {
         <BackToTop />
       </div>
     </div>
+    </>
   );
 }

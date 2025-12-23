@@ -437,10 +437,24 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
     };
   }, [items]);
 
-  // Fetch per-project unread counts for authenticated client - DISABLED FOR NOW
-  // useEffect(() => {
-  //   // To be re-enabled after stabilizing app
-  // }, [hydrated, isLoggedIn, accessToken]);
+  // Fetch per-project unread counts for authenticated client
+  useEffect(() => {
+    if (!hydrated || !isLoggedIn || !accessToken) return;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
+    fetch(`${API_BASE_URL}/client/projects/unread-counts`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.unreadCounts) setUnreadMap(data.unreadCounts);
+      })
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+  }, [hydrated, isLoggedIn, accessToken]);
 
   const handleSave = (updated: ExtendedProject) => {
     setItems((prev) => prev.map((p) => (p.id === updated.id ? { ...updated } : p)));

@@ -29,11 +29,39 @@ export const Navbar: React.FC = () => {
   useEffect(() => {
     if (!hydrated) return;
     
-    // Skip fetching on initial page load - too risky
-    // Only fetch if user navigates to projects or messaging pages
-    // For now, badges will show as 0 until those pages load them
-    return;
-  }, [hydrated]);
+    // Fetch unread counts with timeout protection
+    if (isLoggedIn && accessToken) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
+      fetch(`${API_BASE_URL}/client/messages/unread-count`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: controller.signal,
+      })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data?.unreadCount !== undefined) setClientUnread(data.unreadCount);
+        })
+        .catch(() => {})
+        .finally(() => clearTimeout(timeoutId));
+    }
+    
+    if (profIsLoggedIn && professional?.accessToken) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
+      fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
+        headers: { Authorization: `Bearer ${professional.accessToken}` },
+        signal: controller.signal,
+      })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data?.unreadCount !== undefined) setProfUnread(data.unreadCount);
+        })
+        .catch(() => {})
+        .finally(() => clearTimeout(timeoutId));
+    }
+  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn, professional]);
 
   return (
     <>

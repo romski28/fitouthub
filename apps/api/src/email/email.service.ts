@@ -155,7 +155,7 @@ export class EmailService {
       return;
     }
 
-    const projectUrl = `${params.baseUrl}/projects?clientId=${params.to}`;
+    const projectUrl = `${params.baseUrl}/projects/${params.projectId}`;
 
     try {
       await this.resend.emails.send({
@@ -179,7 +179,7 @@ export class EmailService {
             
             <div style="margin: 30px 0; text-align: center;">
               <a href="${projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                📊 View All Quotes
+                📊 View Quote & Respond
               </a>
             </div>
             
