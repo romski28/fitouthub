@@ -406,9 +406,35 @@ function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
 export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const { isLoggedIn, accessToken } = useAuth();
   const [hydrated, setHydrated] = useState(false);
-  const [items, setItems] = useState<ExtendedProject[]>(() =>
-    projects.map((p) => ({ ...p, photos: extractPhotoUrls(p.notes) })),
-  );
+  const [items, setItems] = useState<ExtendedProject[]>(() => {
+    // Group duplicates into a single project card and merge professionals
+    const byKey = new Map<string, ExtendedProject>();
+    for (const p of projects) {
+      const ep: ExtendedProject = {
+        ...(p as any),
+        photos: extractPhotoUrls((p as any).notes),
+        professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
+      };
+      const key = `${ep.clientName}|${ep.projectName}|${ep.region}`;
+      const existing = byKey.get(key);
+      if (!existing) {
+        byKey.set(key, ep);
+      } else {
+        existing.professionals = [
+          ...(existing.professionals ?? []),
+          ...(ep.professionals ?? []),
+        ];
+        existing.photos = Array.from(
+          new Set([...(existing.photos ?? []), ...(ep.photos ?? [])]),
+        );
+        // Keep latest updatedAt
+        if (((ep as any).updatedAt || '') > ((existing as any).updatedAt || '')) {
+          (existing as any).updatedAt = (ep as any).updatedAt;
+        }
+      }
+    }
+    return Array.from(byKey.values());
+  });
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [lightbox, setLightbox] = useState<string>("");
   const [search, setSearch] = useState("");
