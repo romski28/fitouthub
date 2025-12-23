@@ -99,15 +99,32 @@ export class ClientController {
   @UseGuards(AuthGuard('jwt'))
   async getUnreadCount(@Request() req: any) {
     const userId = req.user.id || req.user.sub;
-    const count = await (this.prisma as any).message.count({
+    
+    // Get all project professionals for user's projects
+    const projectProfessionals = await (this.prisma as any).projectProfessional.findMany({
       where: {
-        senderType: 'professional',
-        readByClientAt: null,
-        projectProfessional: {
-          OR: [{ project: { userId } }, { project: { clientId: userId } }],
+        project: {
+          OR: [{ userId }, { clientId: userId }],
         },
       },
+      select: { id: true },
     });
+    
+    const projectProfessionalIds = projectProfessionals.map((pp: any) => pp.id);
+    
+    if (projectProfessionalIds.length === 0) {
+      return { unreadCount: 0 };
+    }
+    
+    // Count unread messages from professionals
+    const count = await (this.prisma as any).message.count({
+      where: {
+        projectProfessionalId: { in: projectProfessionalIds },
+        senderType: 'professional',
+        readByClientAt: null,
+      },
+    });
+    
     return { unreadCount: count };
   }
 }
