@@ -10,7 +10,12 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 
 export const Navbar: React.FC = () => {
   const { isLoggedIn, user, accessToken, logout } = useAuth();
-  const { isLoggedIn: profIsLoggedIn, professional, logout: profLogout } = useProfessionalAuth();
+  const {
+    isLoggedIn: profIsLoggedIn,
+    professional,
+    accessToken: professionalAccessToken,
+    logout: profLogout,
+  } = useProfessionalAuth();
   const router = useRouter();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -46,12 +51,12 @@ export const Navbar: React.FC = () => {
         .finally(() => clearTimeout(timeoutId));
     }
     
-    if (profIsLoggedIn && professional?.accessToken) {
+    if (profIsLoggedIn && professionalAccessToken) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
       
       fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
-        headers: { Authorization: `Bearer ${professional.accessToken}` },
+        headers: { Authorization: `Bearer ${professionalAccessToken}` },
         signal: controller.signal,
       })
         .then((r) => r.ok ? r.json() : null)
