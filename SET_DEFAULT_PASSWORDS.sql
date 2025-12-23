@@ -1,6 +1,6 @@
 -- SQL script to set default passwords for professionals
 -- Password: "password"
--- Hash: $2b$10$UVlW1ue3xj.v9BzBnLHfOuKG/LOjqm0DxQfR7yqC6hQJ/2qfh3D5i
+-- Hash: $2b$10$MEF.3I6GeAKPDmM4uqTCbeC4Gu7RZqjdP94e/p63wI5PhPv4wsKoi
 --
 -- To use this:
 -- 1. Go to Supabase Dashboard
@@ -13,8 +13,8 @@ ALTER TABLE "Professional" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT;
 
 -- STEP 2: Set default passwords for all professionals
 UPDATE "Professional"
-SET "passwordHash" = '$2b$10$UVlW1ue3xj.v9BzBnLHfOuKG/LOjqm0DxQfR7yqC6hQJ/2qfh3D5i'
-WHERE "passwordHash" IS NULL;
+SET "passwordHash" = '$2b$10$MEF.3I6GeAKPDmM4uqTCbeC4Gu7RZqjdP94e/p63wI5PhPv4wsKoi'
+WHERE "passwordHash" IS NULL OR "passwordHash" = '$2b$10$UVlW1ue3xj.v9BzBnLHfOuKG/LOjqm0DxQfR7yqC6hQJ/2qfh3D5i';
 
 -- STEP 3: Verify the update
 SELECT email, "fullName", "businessName", 
