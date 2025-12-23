@@ -22,6 +22,7 @@ const statusColors: Record<string, string> = {
 
 type ExtendedProject = Project & { 
   photos: string[]; 
+  sourceIds?: string[];
   professionals?: Array<{
     id: string;
     status: string;
@@ -447,33 +448,43 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const { isLoggedIn, accessToken } = useAuth();
   const [hydrated, setHydrated] = useState(false);
   const [items, setItems] = useState<ExtendedProject[]>(() => {
-    // Group strictly by project id to avoid visual duplicates
-    const byId = new Map<string, ExtendedProject>();
+    // Group by a canonical composite key to merge duplicate records of the same logical project
+    const byKey = new Map<string, ExtendedProject & { sourceIds: string[] }>();
+    const norm = (s?: string) => (s || '').trim().toLowerCase();
     for (const p of projects) {
-      const ep: ExtendedProject = {
+      const base: ExtendedProject = {
         ...(p as any),
         photos: extractPhotoUrls((p as any).notes),
         professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
       };
-      const key = String((p as any).id);
-      const existing = byId.get(key);
+      const key = `${norm((p as any).clientName)}|${norm((p as any).projectName)}|${norm((p as any).region)}`;
+      const existing = byKey.get(key);
       if (!existing) {
-        // Ensure professionals are unique per project
-        ep.professionals = ep.professionals ? dedupeProfessionals(ep.professionals) : ep.professionals;
-        byId.set(key, ep);
+        byKey.set(key, {
+          ...base,
+          sourceIds: [String((p as any).id)],
+          professionals: base.professionals ? dedupeProfessionals(base.professionals) : base.professionals,
+        });
       } else {
         const mergedPros = [
           ...(existing.professionals ?? []),
-          ...(ep.professionals ?? []),
+          ...(base.professionals ?? []),
         ];
         existing.professionals = dedupeProfessionals(mergedPros);
-        existing.photos = Array.from(new Set([...(existing.photos ?? []), ...(ep.photos ?? [])]));
-        if (((ep as any).updatedAt || '') > ((existing as any).updatedAt || '')) {
-          (existing as any).updatedAt = (ep as any).updatedAt;
+        existing.photos = Array.from(new Set([...(existing.photos ?? []), ...(base.photos ?? [])]));
+        existing.sourceIds = Array.from(new Set([...(existing.sourceIds ?? []), String((p as any).id)]));
+        // Choose the most recently updated record as the primary id/details
+        if (((base as any).updatedAt || '') > ((existing as any).updatedAt || '')) {
+          existing.id = (base as any).id;
+          (existing as any).updatedAt = (base as any).updatedAt;
+          existing.status = base.status;
+          existing.contractorName = base.contractorName;
+          existing.budget = base.budget;
+          existing.notes = base.notes;
         }
       }
     }
-    return Array.from(byId.values());
+    return Array.from(byKey.values());
   });
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [lightbox, setLightbox] = useState<string>("");
@@ -621,9 +632,9 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                   <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{project.region}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {unreadMap[project.id] > 0 && (
+                  {((project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)) > 0 && (
                     <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white bg-red-600/70">
-                      {unreadMap[project.id]} new
+                      {(project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)} new
                     </span>
                   )}
                   <StatusBadge status={project.status} />
