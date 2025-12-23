@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 
 export const Navbar: React.FC = () => {
   const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn: profIsLoggedIn, professional, logout: profLogout } = useProfessionalAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -16,6 +18,7 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const showAuthed = hydrated && isLoggedIn && user;
+  const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
   const showProjectsLink = hydrated && isLoggedIn;
 
   return (
@@ -87,15 +90,48 @@ export const Navbar: React.FC = () => {
                     </div>
                   )}
                 </div>
+              ) : showProfessionalAuthed ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-1 rounded-md hover:bg-slate-100"
+                  >
+                    <span className="text-slate-900 font-medium">{professional.fullName || professional.email}</span>
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                      Professional
+                    </span>
+                  </button>
+
+                  {/* Professional Profile dropdown menu */}
+                  {profileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-50">
+                      <a
+                        href="/professional-projects"
+                        className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        My Projects
+                      </a>
+                      <button
+                        onClick={() => {
+                          profLogout();
+                          setProfileMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 // Keep button container stable to avoid hydration diffs
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={openLoginModal}
+                  <Link
+                    href="/login"
                     className="text-slate-700 hover:text-slate-900"
                   >
                     Login
-                  </button>
+                  </Link>
                   <button
                     onClick={openJoinModal}
                     className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
