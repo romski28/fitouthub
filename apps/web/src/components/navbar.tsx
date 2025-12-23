@@ -30,12 +30,14 @@ export const Navbar: React.FC = () => {
   const showProjectsLink = hydrated && isLoggedIn;
   const [clientUnread, setClientUnread] = useState<number>(0);
   const [profUnread, setProfUnread] = useState<number>(0);
+  const [disableClientUnread, setDisableClientUnread] = useState<boolean>(false);
+  const [disableProfUnread, setDisableProfUnread] = useState<boolean>(false);
 
   useEffect(() => {
     if (!hydrated) return;
     
     // Fetch unread counts with timeout protection
-    if (isLoggedIn && accessToken) {
+    if (isLoggedIn && accessToken && !disableClientUnread) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
       
@@ -43,7 +45,13 @@ export const Navbar: React.FC = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
         signal: controller.signal,
       })
-        .then((r) => r.ok ? r.json() : null)
+        .then((r) => {
+          if (r?.status === 401) {
+            setDisableClientUnread(true);
+            return null;
+          }
+          return r?.ok ? r.json() : null;
+        })
         .then((data) => {
           if (data?.unreadCount !== undefined) setClientUnread(data.unreadCount);
         })
@@ -51,7 +59,7 @@ export const Navbar: React.FC = () => {
         .finally(() => clearTimeout(timeoutId));
     }
     
-    if (profIsLoggedIn && professionalAccessToken) {
+    if (profIsLoggedIn && professionalAccessToken && !disableProfUnread) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
       
@@ -59,14 +67,20 @@ export const Navbar: React.FC = () => {
         headers: { Authorization: `Bearer ${professionalAccessToken}` },
         signal: controller.signal,
       })
-        .then((r) => r.ok ? r.json() : null)
+        .then((r) => {
+          if (r?.status === 401) {
+            setDisableProfUnread(true);
+            return null;
+          }
+          return r?.ok ? r.json() : null;
+        })
         .then((data) => {
           if (data?.unreadCount !== undefined) setProfUnread(data.unreadCount);
         })
         .catch(() => {})
         .finally(() => clearTimeout(timeoutId));
     }
-  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn, professional]);
+  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn, professional, disableClientUnread, disableProfUnread]);
 
   return (
     <>

@@ -447,10 +447,15 @@ function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
 export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const { isLoggedIn, accessToken } = useAuth();
   const [hydrated, setHydrated] = useState(false);
+  const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
   const [items, setItems] = useState<ExtendedProject[]>(() => {
     // Group by a canonical composite key to merge duplicate records of the same logical project
     const byKey = new Map<string, ExtendedProject & { sourceIds: string[] }>();
-    const norm = (s?: string) => (s || '').trim().toLowerCase();
+    const canon = (s?: string) => (s || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
     for (const p of projects) {
       const base: ExtendedProject = {
         ...(p as any),
@@ -458,7 +463,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
       };
       // Use a tighter canonical key: client + project (region can vary slightly across duplicates)
-      const key = `${norm((p as any).clientName)}|${norm((p as any).projectName)}`;
+      const key = `${canon((p as any).clientName)}|${canon((p as any).projectName)}`;
       const existing = byKey.get(key);
       if (!existing) {
         byKey.set(key, {
@@ -529,7 +534,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   }, [items]);
 
   useEffect(() => {
-    if (!hydrated || !isLoggedIn || !accessToken) return;
+    if (!hydrated || !isLoggedIn || !accessToken || disableUnreadFetch) return;
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -538,13 +543,19 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
       headers: { Authorization: `Bearer ${accessToken}` },
       signal: controller.signal,
     })
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (r?.status === 401) {
+          setDisableUnreadFetch(true);
+          return null;
+        }
+        return r?.ok ? r.json() : null;
+      })
       .then((data) => {
         if (data?.unreadCounts) setUnreadMap(data.unreadCounts);
       })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
-  }, [hydrated, isLoggedIn, accessToken]);
+  }, [hydrated, isLoggedIn, accessToken, disableUnreadFetch]);
 
   const handleSave = (updated: ExtendedProject) => {
     setItems((prev) => prev.map((p) => (p.id === updated.id ? { ...updated } : p)));
