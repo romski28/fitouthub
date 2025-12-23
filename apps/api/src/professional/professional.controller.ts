@@ -63,6 +63,20 @@ export class ProfessionalController {
     }
   }
 
+  @Get('messages/unread-count')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async getUnreadCount(@Request() req: any) {
+    const professionalId = req.user.id || req.user.sub;
+    const count = await (this.prisma as any).message.count({
+      where: {
+        senderType: 'client',
+        readByProfessionalAt: null,
+        projectProfessional: { professionalId },
+      },
+    });
+    return { unreadCount: count };
+  }
+
   @Get('projects/:projectProfessionalId')
   @UseGuards(AuthGuard('jwt-professional'))
   async getProjectDetail(

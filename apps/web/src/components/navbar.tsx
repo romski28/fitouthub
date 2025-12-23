@@ -4,10 +4,11 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { API_BASE_URL } from '@/config/api';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 
 export const Navbar: React.FC = () => {
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, accessToken, logout } = useAuth();
   const { isLoggedIn: profIsLoggedIn, professional, logout: profLogout } = useProfessionalAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -20,6 +21,35 @@ export const Navbar: React.FC = () => {
   const showAuthed = hydrated && isLoggedIn && user;
   const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
   const showProjectsLink = hydrated && isLoggedIn;
+  const [clientUnread, setClientUnread] = useState<number>(0);
+  const [profUnread, setProfUnread] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        if (showAuthed) {
+          const res = await fetch(`${API_BASE_URL}/client/messages/unread-count`, {
+            headers: { 'Authorization': `Bearer ${accessToken ?? ''}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setClientUnread(data.unreadCount || 0);
+          }
+        }
+        if (showProfessionalAuthed) {
+          const token = localStorage.getItem('professionalAccessToken') || '';
+          const res = await fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setProfUnread(data.unreadCount || 0);
+          }
+        }
+      } catch {}
+    };
+    fetchUnread();
+  }, [showAuthed, showProfessionalAuthed]);
 
   return (
     <>
@@ -42,8 +72,13 @@ export const Navbar: React.FC = () => {
               Docs
             </a>
             {showProjectsLink ? (
-              <a className="hover:text-slate-900" href="/projects">
+              <a className="relative hover:text-slate-900" href="/projects">
                 Projects
+                {clientUnread > 0 && (
+                  <span className="absolute -top-2 -right-3 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
+                    {clientUnread}
+                  </span>
+                )}
               </a>
             ) : null}
 
@@ -97,8 +132,13 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-2 px-3 py-1 rounded-md hover:bg-slate-100"
                   >
                     <span className="text-slate-900 font-medium">{professional.fullName || professional.email}</span>
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                    <span className="relative text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
                       Professional
+                      {profUnread > 0 && (
+                        <span className="absolute -top-2 -right-2 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px]">
+                          {profUnread}
+                        </span>
+                      )}
                     </span>
                   </button>
 

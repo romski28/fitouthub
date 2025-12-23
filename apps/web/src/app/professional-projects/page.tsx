@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
+import { BackToTop } from '@/components/back-to-top';
 
 interface ProjectProfessional {
   id: string;
@@ -32,6 +33,15 @@ export default function ProfessionalProjectsPage() {
   const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const totals = {
+    total: projects.length,
+    pending: projects.filter(p => p.status === 'pending').length,
+    accepted: projects.filter(p => p.status === 'accepted').length,
+    quoted: projects.filter(p => p.status === 'quoted').length,
+    awarded: projects.filter(p => p.status === 'awarded').length,
+    declined: projects.filter(p => p.status === 'rejected' || p.status === 'declined').length,
+    unread: projects.reduce((sum, p) => sum + (p.unreadCount || 0), 0),
+  };
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -97,52 +107,64 @@ export default function ProfessionalProjectsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Your Projects
-            </h1>
-            {professional && (
-              <p className="mt-2 text-gray-600">
-                {professional.fullName || professional.businessName || professional.email}
-              </p>
-            )}
+        {/* Header & Mini Dashboard */}
+        <div className="mb-8">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Your Projects</h1>
+              {professional && (
+                <p className="mt-2 text-gray-600">
+                  {professional.fullName || professional.businessName || professional.email}
+                </p>
+              )}
+            </div>
+            <div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-gray-700"
+              >
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="quoted">Quoted</option>
+                <option value="awarded">Awarded</option>
+                <option value="declined">Declined</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-gray-700"
-            >
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="accepted">Accepted</option>
-              <option value="quoted">Quoted</option>
-              <option value="awarded">Awarded</option>
-              <option value="declined">Declined</option>
-            </select>
-            <button
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Back to Top
-            </button>
-            <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to log out?')) {
-                  localStorage.removeItem('professionalAccessToken');
-                  localStorage.removeItem('professionalRefreshToken');
-                  localStorage.removeItem('professional');
-                  router.push('/');
-                }
-              }}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Log Out
-            </button>
+
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+              <p className="text-[11px] uppercase tracking-wide text-slate-500">Total</p>
+              <p className="text-lg font-bold text-slate-900">{totals.total}</p>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+              <p className="text-[11px] uppercase tracking-wide text-yellow-600">Pending</p>
+              <p className="text-lg font-bold text-slate-900">{totals.pending}</p>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+              <p className="text-[11px] uppercase tracking-wide text-green-600">Accepted</p>
+              <p className="text-lg font-bold text-slate-900">{totals.accepted}</p>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+              <p className="text-[11px] uppercase tracking-wide text-blue-600">Quoted</p>
+              <p className="text-lg font-bold text-slate-900">{totals.quoted}</p>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+              <p className="text-[11px] uppercase tracking-wide text-purple-600">Awarded</p>
+              <p className="text-lg font-bold text-slate-900">{totals.awarded}</p>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+              <p className="text-[11px] uppercase tracking-wide text-rose-600">Declined</p>
+              <p className="text-lg font-bold text-slate-900">{totals.declined}</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="inline-flex items-center gap-2 rounded-md bg-red-50 px-3 py-1 text-sm text-red-700 border border-red-100">
+              <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+              {totals.unread} unread messages
+            </span>
           </div>
         </div>
 
@@ -269,6 +291,8 @@ export default function ProfessionalProjectsPage() {
             </button>
           </div>
         )}
+
+        <BackToTop />
       </div>
     </div>
   );
