@@ -3,8 +3,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
 import { extname } from 'path';
-import type { Express } from 'express';
-import type { Multer } from 'multer';
+import type { File } from 'multer';
 
 /**
  * Initialize S3 client for Cloudflare R2 (S3-compatible)
@@ -35,7 +34,7 @@ const getS3Client = () => {
   });
 };
 
-function filenameGenerator(req: any, file: Multer.File, cb: (error: Error | null, filename: string) => void) {
+function filenameGenerator(req: any, file: File, cb: (error: Error | null, filename: string) => void) {
   const id = randomBytes(8).toString('hex');
   const ext = extname(file.originalname).toLowerCase();
   cb(null, `${Date.now()}_${id}${ext}`);
@@ -57,7 +56,7 @@ export class UploadsController {
       },
     }),
   )
-  async upload(@UploadedFiles() files: Multer.File[]) {
+  async upload(@UploadedFiles() files: File[]) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files uploaded');
     }
