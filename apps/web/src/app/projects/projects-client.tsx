@@ -57,7 +57,7 @@ function toAbsolute(url: string): string {
     return trimmed.replace("https://localhost:3001", base);
   }
   
-  // Already absolute URL - return as-is
+  // Already absolute URL (including R2 HTTPS URLs) - return as-is
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
   
   // Relative path - prepend API base
