@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
@@ -10,6 +11,7 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 export const Navbar: React.FC = () => {
   const { isLoggedIn, user, accessToken, logout } = useAuth();
   const { isLoggedIn: profIsLoggedIn, professional, logout: profLogout } = useProfessionalAuth();
+  const router = useRouter();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -25,38 +27,65 @@ export const Navbar: React.FC = () => {
   const [profUnread, setProfUnread] = useState<number>(0);
 
   useEffect(() => {
-    const fetchUnread = async () => {
+    if (!hydrated) return;
+    
+    // Only attempt to fetch if we have auth tokens
+    if (!isLoggedIn && !profIsLoggedIn) {
+      setClientUnread(0);
+      setProfUnread(0);
+      return;
+    }
+
+    // Schedule fetch after a brief delay to ensure server is ready
+    const timeoutId = setTimeout(async () => {
       try {
-        if (showAuthed) {
-          const res = await fetch(`${API_BASE_URL}/client/messages/unread-count`, {
-            headers: { Authorization: `Bearer ${accessToken ?? ''}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setClientUnread(data.unreadCount || 0);
-          } else {
-            setClientUnread(0);
+        // Try to fetch client unread count
+        if (isLoggedIn && accessToken) {
+          try {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 2000);
+            const res = await fetch(`${API_BASE_URL}/client/messages/unread-count`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              signal: controller.signal,
+            });
+            clearTimeout(id);
+            if (res.ok) {
+              const data = await res.json();
+              setClientUnread(data.unreadCount || 0);
+            }
+          } catch {
+            // Fail silently
           }
         }
-        if (showProfessionalAuthed) {
-          const token = localStorage.getItem('professionalAccessToken') || '';
-          const res = await fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setProfUnread(data.unreadCount || 0);
-          } else {
-            setProfUnread(0);
+        
+        // Try to fetch professional unread count
+        if (profIsLoggedIn) {
+          const token = localStorage.getItem('professionalAccessToken');
+          if (token) {
+            try {
+              const controller = new AbortController();
+              const id = setTimeout(() => controller.abort(), 2000);
+              const res = await fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+              });
+              clearTimeout(id);
+              if (res.ok) {
+                const data = await res.json();
+                setProfUnread(data.unreadCount || 0);
+              }
+            } catch {
+              // Fail silently
+            }
           }
         }
       } catch {
-        setClientUnread(0);
-        setProfUnread(0);
+        // Catch-all for any unexpected errors
       }
-    };
-    fetchUnread();
-  }, [showAuthed, showProfessionalAuthed]);
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn]);
 
   return (
     <>
@@ -124,6 +153,7 @@ export const Navbar: React.FC = () => {
                         onClick={() => {
                           logout();
                           setProfileMenuOpen(false);
+                          router.push('/');
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
                       >
@@ -162,6 +192,7 @@ export const Navbar: React.FC = () => {
                         onClick={() => {
                           profLogout();
                           setProfileMenuOpen(false);
+                          router.push('/');
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
                       >

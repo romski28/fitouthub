@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
@@ -8,6 +8,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import FileUploader from "@/components/file-uploader";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
+import { useAuth } from "@/context/auth-context";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -389,12 +390,20 @@ function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
+  const { isLoggedIn, accessToken } = useAuth();
+  const [hydrated, setHydrated] = useState(false);
   const [items, setItems] = useState<ExtendedProject[]>(() =>
     projects.map((p) => ({ ...p, photos: extractPhotoUrls(p.notes) })),
   );
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [lightbox, setLightbox] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
+
+  // Ensure hydration safety
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const subtitle = useMemo(
     () => (clientId ? `Showing projects for client ${clientId}` : "Live data from the Nest API at /projects."),
@@ -427,6 +436,39 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
       rejected: items.filter((p) => p.status === "rejected").length,
     };
   }, [items]);
+
+  // Fetch per-project unread counts for authenticated client
+  useEffect(() => {
+    if (!hydrated) return;
+    
+    const run = async () => {
+      try {
+        if (!isLoggedIn || !accessToken) {
+          setUnreadMap({});
+          return;
+        }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/client/projects/unread-counts`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) {
+          setUnreadMap({});
+          return;
+        }
+        const data = await res.json();
+        setUnreadMap(data.counts || {});
+      } catch (error) {
+        console.warn('Failed to fetch project unread counts:', error);
+        setUnreadMap({});
+      }
+    };
+    run();
+  }, [hydrated, isLoggedIn, accessToken]);
 
   const handleSave = (updated: ExtendedProject) => {
     setItems((prev) => prev.map((p) => (p.id === updated.id ? { ...updated } : p)));
@@ -515,6 +557,11 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                   <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{project.region}</div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {unreadMap[project.id] > 0 && (
+                    <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white bg-red-600/70">
+                      {unreadMap[project.id]} new
+                    </span>
+                  )}
                   <StatusBadge status={project.status} />
                   <button
                     type="button"

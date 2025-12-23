@@ -12,10 +12,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
+import { EmailService } from '../email/email.service';
 
 @Controller('professional')
 export class ProfessionalController {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private email: EmailService) {}
 
   @Get('projects')
   @UseGuards(AuthGuard('jwt-professional'))
@@ -148,9 +149,46 @@ export class ProfessionalController {
           status: 'quoted',
         },
         include: {
-          project: true,
+          project: { include: { user: true, client: true } },
+          professional: true,
         },
       });
+
+      // Create a message to notify the client in-app
+      await (this.prisma as any).message.create({
+        data: {
+          projectProfessionalId,
+          senderType: 'professional',
+          senderProfessionalId: professionalId,
+          content:
+            `We have submitted a quotation${isNaN(quoteAmount) ? '' : ` for HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`}.`,
+        },
+      });
+
+      // Send email notification to client (best-effort; ignore if email not configured)
+      try {
+        const baseUrl =
+          process.env.WEB_BASE_URL ||
+          process.env.FRONTEND_BASE_URL ||
+          process.env.APP_WEB_URL ||
+          'https://fitouthub-web.vercel.app';
+
+        const clientEmail = updated.project?.user?.email || updated.project?.client?.email;
+        if (clientEmail) {
+          await this.email.sendQuoteSubmitted({
+            to: clientEmail,
+            clientName: updated.project?.user?.firstName || updated.project?.client?.name || 'Client',
+            professionalName:
+              updated.professional?.fullName || updated.professional?.businessName || 'A professional',
+            projectName: updated.project?.projectName || 'Your Project',
+            quoteAmount: Number(quoteAmount) || 0,
+            projectId: updated.project?.id,
+            baseUrl,
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to send quote submitted email:', e);
+      }
 
       return {
         success: true,

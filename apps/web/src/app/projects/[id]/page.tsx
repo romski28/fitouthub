@@ -58,6 +58,7 @@ export default function ClientProjectDetailPage() {
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -201,6 +202,43 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const actOnQuote = async (kind: 'accept' | 'reject' | 'request-better') => {
+    if (!selectedProfessional || !accessToken) return;
+    try {
+      setActionBusy(kind);
+      const res = await fetch(
+        `${API_BASE_URL}/client/projects/${selectedProfessional.id}/quote/${
+          kind === 'request-better' ? 'request-better' : kind
+        }`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
+      if (!res.ok) throw new Error('Action failed');
+      const data = await res.json();
+      // Update local selected professional status quickly
+      setSelectedProfessional((prev) => (prev ? { ...prev, status: data.projectProfessional.status } : prev));
+      // Refresh messages to capture auto-generated message
+      const listRes = await fetch(
+        `${API_BASE_URL}/client/projects/${selectedProfessional.id}/messages`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (listRes.ok) {
+        const list = await listRes.json();
+        setMessages(list.messages || []);
+      }
+    } catch (e) {
+      console.error('Action failed', e);
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
   if (loading || isLoggedIn === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -314,6 +352,33 @@ export default function ClientProjectDetailPage() {
 
               {selectedProfessional && (
                 <div className="p-4 space-y-4">
+                  {/* Quote Actions */}
+                  {selectedProfessional.quoteAmount && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        disabled={!!actionBusy}
+                        onClick={() => actOnQuote('accept')}
+                        className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {actionBusy === 'accept' ? 'Accepting…' : 'Accept Quote'}
+                      </button>
+                      <button
+                        disabled={!!actionBusy}
+                        onClick={() => actOnQuote('reject')}
+                        className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                      >
+                        {actionBusy === 'reject' ? 'Rejecting…' : 'Reject Quote'}
+                      </button>
+                      <button
+                        disabled={!!actionBusy}
+                        onClick={() => actOnQuote('request-better')}
+                        className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                      >
+                        {actionBusy === 'request-better' ? 'Requesting…' : 'Ask for better offer'}
+                      </button>
+                    </div>
+                  )}
+
                   {messageError && (
                     <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                       {messageError}
