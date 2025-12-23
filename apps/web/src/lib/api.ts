@@ -6,12 +6,18 @@ const API_BASE = API_BASE_URL;
 async function safeFetch<T>(path: string): Promise<T | null> {
   const url = `${API_BASE}${path}`;
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const res = await fetch(url, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
+    
     if (!res.ok) {
       console.warn(`API ${res.status} at ${url}:`, await res.text());
       return null;

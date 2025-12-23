@@ -29,63 +29,11 @@ export const Navbar: React.FC = () => {
   useEffect(() => {
     if (!hydrated) return;
     
-    // Only attempt to fetch if we have auth tokens
-    if (!isLoggedIn && !profIsLoggedIn) {
-      setClientUnread(0);
-      setProfUnread(0);
-      return;
-    }
-
-    // Schedule fetch after a brief delay to ensure server is ready
-    const timeoutId = setTimeout(async () => {
-      try {
-        // Try to fetch client unread count
-        if (isLoggedIn && accessToken) {
-          try {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 2000);
-            const res = await fetch(`${API_BASE_URL}/client/messages/unread-count`, {
-              headers: { Authorization: `Bearer ${accessToken}` },
-              signal: controller.signal,
-            });
-            clearTimeout(id);
-            if (res.ok) {
-              const data = await res.json();
-              setClientUnread(data.unreadCount || 0);
-            }
-          } catch {
-            // Fail silently
-          }
-        }
-        
-        // Try to fetch professional unread count
-        if (profIsLoggedIn) {
-          const token = localStorage.getItem('professionalAccessToken');
-          if (token) {
-            try {
-              const controller = new AbortController();
-              const id = setTimeout(() => controller.abort(), 2000);
-              const res = await fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
-                headers: { Authorization: `Bearer ${token}` },
-                signal: controller.signal,
-              });
-              clearTimeout(id);
-              if (res.ok) {
-                const data = await res.json();
-                setProfUnread(data.unreadCount || 0);
-              }
-            } catch {
-              // Fail silently
-            }
-          }
-        }
-      } catch {
-        // Catch-all for any unexpected errors
-      }
-    }, 800);
-
-    return () => clearTimeout(timeoutId);
-  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn]);
+    // Skip fetching on initial page load - too risky
+    // Only fetch if user navigates to projects or messaging pages
+    // For now, badges will show as 0 until those pages load them
+    return;
+  }, [hydrated]);
 
   return (
     <>

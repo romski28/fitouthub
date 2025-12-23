@@ -437,38 +437,10 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
     };
   }, [items]);
 
-  // Fetch per-project unread counts for authenticated client
-  useEffect(() => {
-    if (!hydrated) return;
-    
-    const run = async () => {
-      try {
-        if (!isLoggedIn || !accessToken) {
-          setUnreadMap({});
-          return;
-        }
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/client/projects/unread-counts`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        
-        if (!res.ok) {
-          setUnreadMap({});
-          return;
-        }
-        const data = await res.json();
-        setUnreadMap(data.counts || {});
-      } catch (error) {
-        console.warn('Failed to fetch project unread counts:', error);
-        setUnreadMap({});
-      }
-    };
-    run();
-  }, [hydrated, isLoggedIn, accessToken]);
+  // Fetch per-project unread counts for authenticated client - DISABLED FOR NOW
+  // useEffect(() => {
+  //   // To be re-enabled after stabilizing app
+  // }, [hydrated, isLoggedIn, accessToken]);
 
   const handleSave = (updated: ExtendedProject) => {
     setItems((prev) => prev.map((p) => (p.id === updated.id ? { ...updated } : p)));
