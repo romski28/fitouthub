@@ -11,9 +11,18 @@ import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 import { UsersModule } from './users/users.module';
 import { PatternsModule } from './patterns/patterns.module';
+import { ProfessionalAuthModule } from './professional-auth/professional-auth.module';
 
 @Module({
-  imports: [ProfessionalsModule, TradesmModule, AuthModule, EmailModule, UsersModule, PatternsModule],
+  imports: [
+    ProfessionalsModule,
+    TradesmModule,
+    AuthModule,
+    EmailModule,
+    UsersModule,
+    PatternsModule,
+    ProfessionalAuthModule,
+  ],
   controllers: [AppController, ProjectsController, UploadsController],
   providers: [AppService, PrismaService, ProjectsService],
   exports: [PrismaService],

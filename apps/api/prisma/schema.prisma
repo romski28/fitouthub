@@ -63,6 +63,7 @@ model Professional {
   primaryTrade         String?
   suppliesOffered      String[]              @default([])
   tradesOffered        String[]              @default([])
+  passwordHash         String?
   emailTokens          EmailToken[]
   user                 User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectProfessionals ProjectProfessional[]
