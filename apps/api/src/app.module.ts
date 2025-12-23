@@ -12,6 +12,7 @@ import { EmailModule } from './email/email.module';
 import { UsersModule } from './users/users.module';
 import { PatternsModule } from './patterns/patterns.module';
 import { ProfessionalAuthModule } from './professional-auth/professional-auth.module';
+import { ProfessionalModule } from './professional/professional.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ProfessionalAuthModule } from './professional-auth/professional-auth.mo
     UsersModule,
     PatternsModule,
     ProfessionalAuthModule,
+    ProfessionalModule,
   ],
   controllers: [AppController, ProjectsController, UploadsController],
   providers: [AppService, PrismaService, ProjectsService],
