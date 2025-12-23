@@ -23,6 +23,11 @@ export class ProjectsController {
     return this.projectsService.findAll();
   }
 
+  @Get('canonical')
+  async findCanonical() {
+    return this.projectsService.findCanonical();
+  }
+
   @Get('respond')
   async respond(
     @Query('token') token: string,

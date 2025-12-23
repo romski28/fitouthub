@@ -56,6 +56,65 @@ export class ProjectsService {
     return Array.from(map.values());
   }
 
+  private canon(s?: string | null): string {
+    return (s || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+
+  async findCanonical() {
+    try {
+      const projects = await this.prisma.project.findMany({
+        include: {
+          client: true,
+          professionals: {
+            include: { professional: true },
+          },
+        },
+      });
+
+      const byKey = new Map<string, any>();
+      for (const p of projects as any[]) {
+        const key = `${this.canon(p.clientName)}|${this.canon(p.projectName)}`;
+        const existing = byKey.get(key);
+        if (!existing) {
+          byKey.set(key, {
+            ...p,
+            sourceIds: [String(p.id)],
+            professionals: this.dedupeProfessionals(p.professionals),
+          });
+        } else {
+          const mergedPros = [
+            ...(existing.professionals ?? []),
+            ...(p.professionals ?? []),
+          ];
+          existing.professionals = this.dedupeProfessionals(mergedPros);
+          existing.sourceIds = Array.from(new Set([...(existing.sourceIds ?? []), String(p.id)]));
+          // Prefer the most recently updated record for primary fields
+          if ((p.updatedAt || '') > (existing.updatedAt || '')) {
+            existing.id = p.id;
+            existing.region = p.region;
+            existing.status = p.status;
+            existing.contractorName = p.contractorName;
+            existing.budget = p.budget;
+            existing.notes = p.notes;
+            existing.updatedAt = p.updatedAt;
+          }
+        }
+      }
+      return Array.from(byKey.values());
+    } catch (error) {
+      console.error('[ProjectsService.findCanonical] Database error:', {
+        message: (error as any)?.message,
+        code: (error as any)?.code,
+        meta: (error as any)?.meta,
+      });
+      return [];
+    }
+  }
+
   async findAll() {
     try {
       const projects = await this.prisma.project.findMany({
