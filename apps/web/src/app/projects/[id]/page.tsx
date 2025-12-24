@@ -13,7 +13,7 @@ interface ProjectProfessional {
   professionalId: string;
   projectId: string;
   status: string;
-  quoteAmount?: string;
+  quoteAmount?: string | number;
   quoteNotes?: string;
   quotedAt?: string;
   professional: {
