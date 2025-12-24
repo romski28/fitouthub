@@ -235,27 +235,32 @@ export class ProjectsService {
   }
 
   async create(createProjectDto: CreateProjectDto) {
-    const { professionalId, ...projectData } = createProjectDto;
+    const { professionalIds, ...projectData } = createProjectDto;
 
-    // Fetch professional details for email
-    const professional = await this.prisma.professional.findUnique({
-      where: { id: professionalId },
-      select: { email: true, fullName: true, businessName: true },
-    });
-
-    if (!professional) {
-      throw new Error('Professional not found');
+    // Validate professional IDs
+    if (!professionalIds || professionalIds.length === 0) {
+      throw new Error('At least one professional ID is required');
     }
 
-    // Create project with ProjectProfessional junction
+    // Fetch all professionals for email
+    const professionals = await this.prisma.professional.findMany({
+      where: { id: { in: professionalIds } },
+      select: { id: true, email: true, fullName: true, businessName: true },
+    });
+
+    if (professionals.length !== professionalIds.length) {
+      throw new Error('One or more professionals not found');
+    }
+
+    // Create project with all ProjectProfessional junctions
     const project = await this.prisma.project.create({
       data: {
         ...projectData,
         professionals: {
-          create: {
-            professionalId,
+          create: professionalIds.map((id) => ({
+            professionalId: id,
             status: 'pending',
-          },
+          })),
         },
       },
       include: {
@@ -268,48 +273,58 @@ export class ProjectsService {
       },
     });
 
-    // Generate secure tokens for accept/decline actions
-    const acceptToken = createId();
-    const declineToken = createId();
-    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+    // Generate secure tokens and send invitation emails for each professional
+    const tokenPromises: any[] = [];
+    const emailPromises: any[] = [];
 
-    // Store tokens in database
-    await Promise.all([
-      this.prisma.emailToken.create({
-        data: {
-          token: acceptToken,
-          projectId: project.id,
-          professionalId,
-          action: 'accept',
-          expiresAt,
-        },
-      }),
-      this.prisma.emailToken.create({
-        data: {
-          token: declineToken,
-          projectId: project.id,
-          professionalId,
-          action: 'decline',
-          expiresAt,
-        },
-      }),
-    ]);
+    for (const professional of professionals) {
+      const acceptToken = createId();
+      const declineToken = createId();
+      const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
 
-    // Send invitation email
-    const professionalName =
-      professional.fullName || professional.businessName || 'Professional';
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+      // Store tokens in database
+      tokenPromises.push(
+        this.prisma.emailToken.create({
+          data: {
+            token: acceptToken,
+            projectId: project.id,
+            professionalId: professional.id,
+            action: 'accept',
+            expiresAt,
+          },
+        }),
+        this.prisma.emailToken.create({
+          data: {
+            token: declineToken,
+            projectId: project.id,
+            professionalId: professional.id,
+            action: 'decline',
+            expiresAt,
+          },
+        }),
+      );
 
-    await this.emailService.sendProjectInvitation({
-      to: professional.email,
-      professionalName,
-      projectName: project.projectName,
-      projectDescription: project.notes || 'No description provided',
-      location: project.region,
-      acceptToken,
-      declineToken,
-      baseUrl,
-    });
+      // Send invitation email
+      const professionalName =
+        professional.fullName || professional.businessName || 'Professional';
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+      emailPromises.push(
+        this.emailService.sendProjectInvitation({
+          to: professional.email,
+          professionalName,
+          projectName: project.projectName,
+          projectDescription: project.notes || 'No description provided',
+          location: project.region,
+          acceptToken,
+          declineToken,
+          baseUrl,
+        }),
+      );
+    }
+
+    // Execute all token creations and email sends in parallel
+    await Promise.all([...tokenPromises, ...emailPromises]);
 
     return project;
   }
