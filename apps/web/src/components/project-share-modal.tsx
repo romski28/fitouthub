@@ -105,27 +105,25 @@ export function ProjectShareModal({ isOpen, onClose, professionals, defaultLocat
     const normalizedPhotos = photoUrls.map(toAbsolute);
 
     try {
-      for (const p of professionals) {
-        const displayName = p.fullName || p.businessName || "Professional";
-        const payload = {
-          projectName: `${selectedService} with ${displayName}`,
-          clientName,
-          contractorName: displayName,
-          region: locationLabel || "Hong Kong",
-          notes: `${description.trim()}${normalizedPhotos.length > 0 ? `\nPhotos: ${normalizedPhotos.join(", ")}` : ""}`,
-          status: "pending" as const,
-          userId: user?.id,
-          professionalId: p.id, // Required for email invitations
-        };
-        const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!response.ok) {
-          const message = await response.text();
-          throw new Error(message || "Failed to create project");
-        }
+      // Create a single project with all selected professionals
+      const payload = {
+        projectName: selectedService,
+        clientName,
+        contractorName: "",
+        region: locationLabel || "Hong Kong",
+        notes: `${description.trim()}${normalizedPhotos.length > 0 ? `\nPhotos: ${normalizedPhotos.join(", ")}` : ""}`,
+        status: "pending" as const,
+        userId: user?.id,
+        professionalIds: professionals.map(p => p.id), // Array of all selected professionals
+      };
+      const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to create project");
       }
 
       onClose();

@@ -133,6 +133,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional, defaultLoca
       notes: `${description.trim()}${photoNote}`,
       status: "pending" as const,
       userId: user?.id,
+      professionalIds: [professional.id], // Single professional in an array
     };
 
     try {
