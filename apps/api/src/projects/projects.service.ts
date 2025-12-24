@@ -100,11 +100,14 @@ export class ProjectsService {
       for (const p of projects) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const proj = p as any;
-        const key = `${this.canon(proj.clientName)}|${this.canon(proj.projectName)}`;
+        const key = clientId
+          ? `${clientId}|${this.canon(proj.projectName)}`
+          : `${this.canon(proj.clientName)}|${this.canon(proj.projectName)}`;
         const existing = byKey.get(key);
         if (!existing) {
           byKey.set(key, {
             ...proj,
+            canonicalKey: key,
             sourceIds: [String(proj.id)],
             professionals: this.dedupeProfessionals(proj.professionals),
           });

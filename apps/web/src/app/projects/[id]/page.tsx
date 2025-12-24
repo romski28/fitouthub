@@ -323,6 +323,62 @@ export default function ClientProjectDetailPage() {
           </div>
         </div>
 
+        {/* Professionals Summary Table */}
+        {project.professionals && project.professionals.length > 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="px-5 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-bold text-slate-900">Invited Professionals</h2>
+              <p className="text-sm text-slate-600">Click a row to open the chat with that professional.</p>
+            </div>
+            <div className="p-5 overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-slate-600">
+                    <th className="py-2 pr-4">Name</th>
+                    <th className="py-2 pr-4">Status</th>
+                    <th className="py-2 pr-4">Quote</th>
+                    <th className="py-2 pr-4">Messages</th>
+                    <th className="py-2">Rating</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {project.professionals.map((pp) => {
+                    const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                    return (
+                      <tr
+                        key={pp.id}
+                        onClick={() => setSelectedProfessional(pp)}
+                        className={`${selectedProfessional?.id === pp.id ? 'bg-blue-50' : 'hover:bg-slate-50'} cursor-pointer border-t border-slate-100`}
+                      >
+                        <td className="py-2 pr-4">
+                          <div className="flex items-center gap-2">
+                            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">
+                              {displayName[0]?.toUpperCase()}
+                            </div>
+                            <span className="font-medium text-slate-800">{displayName}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-4">
+                          <span className="inline-block rounded-full px-2 py-1 text-xs font-semibold bg-slate-100 text-slate-800 capitalize">{pp.status.replace('_', ' ')}</span>
+                        </td>
+                        <td className="py-2 pr-4">
+                          {pp.quoteAmount ? (
+                            <span className="font-semibold text-blue-700">${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}</span>
+                          ) : (
+                            <span className="text-slate-500">—</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-4 text-slate-600">Open chat for count</td>
+                        <td className="py-2 text-slate-500">—</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Professionals & Messaging */}
         {project.professionals && project.professionals.length > 0 && (
           <div className="grid gap-5 lg:grid-cols-3">

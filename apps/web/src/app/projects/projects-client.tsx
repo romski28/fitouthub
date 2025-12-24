@@ -462,8 +462,10 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         photos: extractPhotoUrls((p as any).notes),
         professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
       };
-      // Use a tighter canonical key: client + project (region can vary slightly across duplicates)
-      const key = `${canon((p as any).clientName)}|${canon((p as any).projectName)}`;
+      // Use clientId|projectName when clientId provided; else fallback to clientName|projectName
+      const key = clientId
+        ? `${clientId}|${canon((p as any).projectName)}`
+        : `${canon((p as any).clientName)}|${canon((p as any).projectName)}`;
       const existing = byKey.get(key);
       if (!existing) {
         byKey.set(key, {
