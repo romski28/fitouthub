@@ -242,6 +242,10 @@ export class ProjectsService {
       throw new Error('At least one professional ID is required');
     }
 
+    // Debug: log invitation targets (safe for troubleshooting)
+    // eslint-disable-next-line no-console
+    console.log('[ProjectsService.create] inviting professionals:', professionalIds);
+
     // Fetch all professionals for email
     const professionals = await this.prisma.professional.findMany({
       where: { id: { in: professionalIds } },
