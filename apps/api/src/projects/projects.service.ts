@@ -237,22 +237,30 @@ export class ProjectsService {
   async create(createProjectDto: CreateProjectDto) {
     const { professionalIds, ...projectData } = createProjectDto;
 
+    // Backward compatibility: allow single professionalId in payload
+    const ids: string[] = Array.isArray(professionalIds)
+      ? professionalIds.filter(Boolean)
+      : [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const legacyId = (createProjectDto as any).professionalId;
+    if (legacyId && !ids.includes(legacyId)) ids.push(legacyId);
+
     // Validate professional IDs
-    if (!professionalIds || professionalIds.length === 0) {
+    if (!ids || ids.length === 0) {
       throw new Error('At least one professional ID is required');
     }
 
     // Debug: log invitation targets (safe for troubleshooting)
     // eslint-disable-next-line no-console
-    console.log('[ProjectsService.create] inviting professionals:', professionalIds);
+    console.log('[ProjectsService.create] inviting professionals:', ids);
 
     // Fetch all professionals for email
     const professionals = await this.prisma.professional.findMany({
-      where: { id: { in: professionalIds } },
+      where: { id: { in: ids } },
       select: { id: true, email: true, fullName: true, businessName: true },
     });
 
-    if (professionals.length !== professionalIds.length) {
+    if (professionals.length !== ids.length) {
       throw new Error('One or more professionals not found');
     }
 
@@ -261,7 +269,7 @@ export class ProjectsService {
       data: {
         ...projectData,
         professionals: {
-          create: professionalIds.map((id) => ({
+          create: ids.map((id) => ({
             professionalId: id,
             status: 'pending',
           })),
