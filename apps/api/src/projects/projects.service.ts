@@ -235,7 +235,7 @@ export class ProjectsService {
   }
 
   async create(createProjectDto: CreateProjectDto) {
-    const { professionalIds, ...projectData } = createProjectDto;
+    const { professionalIds, userId, ...projectData } = createProjectDto;
 
     // Backward compatibility: allow single professionalId in payload
     const ids: string[] = Array.isArray(professionalIds)
@@ -269,17 +269,25 @@ export class ProjectsService {
       throw new BadRequestException('One or more professionals not found');
     }
 
+    // Transform userId into user relation for Prisma
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const createData: any = {
+      ...projectData,
+      professionals: {
+        create: ids.map((id) => ({
+          professionalId: id,
+          status: 'pending',
+        })),
+      },
+    };
+
+    if (userId) {
+      createData.user = { connect: { id: userId } };
+    }
+
     // Create project with all ProjectProfessional junctions
     const project = await this.prisma.project.create({
-      data: {
-        ...projectData,
-        professionals: {
-          create: ids.map((id) => ({
-            professionalId: id,
-            status: 'pending',
-          })),
-        },
-      },
+      data: createData,
       include: {
         client: true,
         professionals: {
