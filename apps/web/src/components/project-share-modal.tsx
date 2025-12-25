@@ -116,6 +116,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, defaultLocat
         userId: user?.id,
         professionalIds: professionals.map(p => p.id), // Array of all selected professionals
       };
+      console.log('[project-share-modal] BULK INVITE - sending payload:', payload);
       const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
