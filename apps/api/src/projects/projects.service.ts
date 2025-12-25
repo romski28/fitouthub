@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -261,7 +261,12 @@ export class ProjectsService {
     });
 
     if (professionals.length !== ids.length) {
-      throw new Error('One or more professionals not found');
+      // eslint-disable-next-line no-console
+      console.warn('[ProjectsService.create] missing professionals', {
+        requested: ids,
+        found: professionals.map((p) => p.id),
+      });
+      throw new BadRequestException('One or more professionals not found');
     }
 
     // Create project with all ProjectProfessional junctions
@@ -322,16 +327,25 @@ export class ProjectsService {
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
       emailPromises.push(
-        this.emailService.sendProjectInvitation({
-          to: professional.email,
-          professionalName,
-          projectName: project.projectName,
-          projectDescription: project.notes || 'No description provided',
-          location: project.region,
-          acceptToken,
-          declineToken,
-          baseUrl,
-        }),
+        this.emailService
+          .sendProjectInvitation({
+            to: professional.email,
+            professionalName,
+            projectName: project.projectName,
+            projectDescription: project.notes || 'No description provided',
+            location: project.region,
+            acceptToken,
+            declineToken,
+            baseUrl,
+          })
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error('[ProjectsService.create] failed to send invite', {
+              to: professional.email,
+              error: err?.message,
+            });
+            return null;
+          }),
       );
     }
 
