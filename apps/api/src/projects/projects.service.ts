@@ -235,7 +235,10 @@ export class ProjectsService {
   }
 
   async create(createProjectDto: CreateProjectDto) {
-    const { professionalIds, userId, ...projectData } = createProjectDto;
+    const { professionalIds, userId, ...rest } = createProjectDto;
+    // Strip legacy professionalId from the data object so Prisma does not see an unknown field
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { professionalId: _legacyField, ...projectData } = rest as any;
 
     // Backward compatibility: allow single professionalId in payload
     const ids: string[] = Array.isArray(professionalIds)
