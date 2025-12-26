@@ -122,6 +122,14 @@ export class ProjectsController {
     );
   }
 
+  @Post(':id/award/:professionalId')
+  async awardQuote(
+    @Param('id') projectId: string,
+    @Param('professionalId') professionalId: string,
+  ) {
+    return this.projectsService.awardQuote(projectId, professionalId);
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,

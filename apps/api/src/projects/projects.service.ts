@@ -560,6 +560,134 @@ export class ProjectsService {
     };
   }
 
+  async awardQuote(projectId: string, professionalId: string) {
+    // Verify ProjectProfessional relationship exists and has a quote
+    const projectProfessional = await this.prisma.projectProfessional.findUnique(
+      {
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId,
+          },
+        },
+        include: {
+          project: {
+            include: {
+              client: true,
+              professionals: {
+                include: { professional: true },
+              },
+            },
+          },
+          professional: true,
+        },
+      },
+    );
+
+    if (!projectProfessional) {
+      throw new Error('Professional not invited to this project');
+    }
+
+    if (!projectProfessional.quotedAt) {
+      throw new Error('Professional has not submitted a quote yet');
+    }
+
+    // Update this professional's status to "awarded"
+    const awarded = await this.prisma.projectProfessional.update({
+      where: {
+        projectId_professionalId: {
+          projectId,
+          professionalId,
+        },
+      },
+      data: {
+        status: 'awarded',
+      },
+      include: {
+        professional: true,
+      },
+    });
+
+    const project = projectProfessional.project;
+    const professionals = project.professionals;
+    const winnerName =
+      projectProfessional.professional.fullName ||
+      projectProfessional.professional.businessName ||
+      'Professional';
+    const clientName = project.clientName;
+
+    // Send winner notification
+    // eslint-disable-next-line no-console
+    console.log('[ProjectsService.awardQuote] Notifying winner:', {
+      projectId,
+      professionalId,
+      email: projectProfessional.professional.email,
+    });
+
+    await this.emailService.sendWinnerNotification({
+      to: projectProfessional.professional.email,
+      professionalName: winnerName,
+      projectName: project.projectName,
+      quoteAmount: projectProfessional.quoteAmount?.toString() || '0',
+      nextStepsMessage:
+        'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
+    });
+
+    // Send notifications to non-declined, non-awarded professionals
+    const otherProfessionals = professionals.filter(
+      (pp: any) =>
+        pp.professionalId !== professionalId && pp.status !== 'declined',
+    );
+
+    const emailPromises = otherProfessionals.map((pp: any) =>
+      this.emailService
+        .sendLoserNotification({
+          to: pp.professional.email,
+          professionalName:
+            pp.professional.fullName || pp.professional.businessName || 'Professional',
+          projectName: project.projectName,
+          winnerName,
+          thankYouMessage:
+            'Thank you for your time and effort on this project. We hope to work with you on future opportunities.',
+        })
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error('[ProjectsService.awardQuote] Failed to send loser notification', {
+            to: pp.professional.email,
+            error: err?.message,
+          });
+          return null;
+        }),
+    );
+
+    await Promise.all(emailPromises);
+
+    // Add system messages to project chat
+    // Winner message
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId: projectProfessional.id,
+        senderType: 'client',
+        senderClientId: project.clientId,
+        content: `✓ Quote awarded. ${clientName} has selected your quote. Next steps will be discussed via the platform or direct contact.`,
+      },
+    });
+
+    // Loser messages
+    for (const pp of otherProfessionals) {
+      await this.prisma.message.create({
+        data: {
+          projectProfessionalId: pp.id,
+          senderType: 'client',
+          senderClientId: project.clientId,
+          content: `Thank you for your quote on "${project.projectName}". Another professional was selected for this project. We appreciate your time and hope to work with you in the future.`,
+        },
+      });
+    }
+
+    return awarded;
+  }
+
   async remove(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },

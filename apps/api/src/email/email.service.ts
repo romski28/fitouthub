@@ -313,4 +313,113 @@ export class EmailService {
       throw error;
     }
   }
+
+  /**
+   * Send notification to winning professional when quote is awarded
+   */
+  async sendWinnerNotification(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    quoteAmount: string;
+    nextStepsMessage: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send winner notification to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `🎉 Congratulations: Your Quote Was Accepted - ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #10b981;">🎉 Congratulations!</h2>
+            
+            <p>Hi ${params.professionalName},</p>
+            
+            <p>Great news! Your quote has been <strong>accepted</strong> for the following project:</p>
+            
+            <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h3 style="margin-top: 0; color: #047857;">${params.projectName}</h3>
+              <p style="color: #065f46; margin: 10px 0;"><strong>Quote Amount:</strong> ${params.quoteAmount}</p>
+            </div>
+            
+            <p>${params.nextStepsMessage}</p>
+            
+            <div style="background-color: #f0f9ff; border: 1px solid #bfdbfe; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <p style="color: #1e40af; margin: 0;"><strong>💡 Tip:</strong> Keep all communications on the platform for transparency, professional record-keeping, and to maintain the project management trail.</p>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px;">
+              This is an important notification. Please keep this email for your records.
+            </p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Winner notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send winner notification:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send notification to non-selected professionals thanking them
+   */
+  async sendLoserNotification(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    winnerName: string;
+    thankYouMessage: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send loser notification to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Project Update: "${params.projectName}" - Selection Made`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #6b7280;">Project Update</h2>
+            
+            <p>Hi ${params.professionalName},</p>
+            
+            <p>We wanted to keep you updated on the project you quoted on:</p>
+            
+            <div style="background-color: #f3f4f6; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h3 style="margin-top: 0; color: #374151;">"${params.projectName}"</h3>
+            </div>
+            
+            <p>The client has selected <strong>${params.winnerName}</strong> to move forward with this project.</p>
+            
+            <p>${params.thankYouMessage}</p>
+            
+            <p>We encourage professionals to keep trying—every quote is an opportunity to build your reputation on Fitout Hub!</p>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px;">
+              Keep an eye on your dashboard for other project opportunities that match your expertise.
+            </p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Loser notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send loser notification:', error);
+      throw error;
+    }
+  }
 }

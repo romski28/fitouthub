@@ -89,19 +89,21 @@ model Project {
 }
 
 model ProjectProfessional {
-  id             String       @id @default(cuid())
-  projectId      String
-  professionalId String
-  status         String       @default("pending")
-  respondedAt    DateTime?
-  quoteAmount    Decimal?     @db.Decimal(12, 2)
-  quoteNotes     String?
-  quotedAt       DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  messages       Message[]
+  id                    String       @id @default(cuid())
+  projectId             String
+  professionalId        String
+  status                String       @default("pending")
+  respondedAt           DateTime?
+  quoteAmount           Decimal?     @db.Decimal(12, 2)
+  quoteNotes            String?
+  quotedAt              DateTime?
+  directContactShared   Boolean      @default(false)
+  directContactSharedAt DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  professional          Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages              Message[]
 
   @@unique([projectId, professionalId])
   @@index([projectId])
