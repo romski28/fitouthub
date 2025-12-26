@@ -60,6 +60,9 @@ export default function ClientProjectDetailPage() {
   const [messageError, setMessageError] = useState<string | null>(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [awardedProfessional, setAwardedProfessional] = useState<ProjectProfessional | null>(null);
+  const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -207,33 +210,60 @@ export default function ClientProjectDetailPage() {
     if (!selectedProfessional || !accessToken) return;
     try {
       setActionBusy(kind);
-      const res = await fetch(
-        `${API_BASE_URL}/client/projects/${selectedProfessional.id}/quote/${
-          kind === 'request-better' ? 'request-better' : kind
-        }`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      );
-      if (res.status === 401) {
-        router.push('/login');
-        return;
-      }
-      if (!res.ok) throw new Error('Action failed');
-      const data = await res.json();
       
-      // Show success toast
       if (kind === 'accept') {
+        // Award the quote via new endpoint
+        const res = await fetch(
+          `${API_BASE_URL}/projects/${projectId}/award/${selectedProfessional.professionalId}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        if (res.status === 401) {
+          router.push('/login');
+          return;
+        }
+        if (!res.ok) throw new Error('Award failed');
+        
         toast.success('Quote accepted! Project awarded to professional.');
-      } else if (kind === 'reject') {
-        toast.success('Quote declined.');
+        
+        // Show contact sharing modal
+        setAwardedProfessional(selectedProfessional);
+        setShowContactModal(true);
+        
+        // Update local state
+        setSelectedProfessional((prev) => (prev ? { ...prev, status: 'awarded' } : prev));
       } else {
-        toast.success('Requested better quote.');
+        // Reject or counter-request
+        const res = await fetch(
+          `${API_BASE_URL}/client/projects/${selectedProfessional.id}/quote/${
+            kind === 'request-better' ? 'request-better' : kind
+          }`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+        if (res.status === 401) {
+          router.push('/login');
+          return;
+        }
+        if (!res.ok) throw new Error('Action failed');
+        const data = await res.json();
+        
+        if (kind === 'reject') {
+          toast.success('Quote declined.');
+        } else {
+          toast.success('Requested better quote.');
+        }
+        
+        setSelectedProfessional((prev) => (prev ? { ...prev, status: data.projectProfessional.status } : prev));
       }
       
-      // Update local selected professional status quickly
-      setSelectedProfessional((prev) => (prev ? { ...prev, status: data.projectProfessional.status } : prev));
       // Refresh messages to capture auto-generated message
       const listRes = await fetch(
         `${API_BASE_URL}/client/projects/${selectedProfessional.id}/messages`,
@@ -249,6 +279,34 @@ export default function ClientProjectDetailPage() {
     } finally {
       setActionBusy(null);
     }
+  };
+
+  const handleShareContact = async () => {
+    if (!awardedProfessional || !accessToken) return;
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/share-contact/${awardedProfessional.professionalId}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      if (!res.ok) throw new Error('Failed to share contact');
+      const data = await res.json();
+      setSharedContact(data.professional);
+      toast.success('Contact details shared!');
+    } catch (e) {
+      console.error('Contact sharing failed', e);
+      toast.error('Failed to share contact details.');
+    }
+  };
+
+  const handleContinueOnPlatform = () => {
+    toast.success('Continuing via platform. You can message the professional below.');
+    setShowContactModal(false);
   };
 
   if (loading || isLoggedIn === undefined) {
@@ -523,6 +581,63 @@ export default function ClientProjectDetailPage() {
 
         <BackToTop />
       </div>
+
+      {/* Contact Sharing Modal */}
+      {showContactModal && awardedProfessional && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-xl font-bold text-slate-900">🎉 Quote Awarded!</h3>
+            <p className="text-sm text-slate-700">
+              You've selected <strong>{awardedProfessional.professional.fullName || awardedProfessional.professional.businessName}</strong> for this project.
+            </p>
+
+            {sharedContact ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                <p className="text-sm font-semibold text-blue-900">Professional Contact Details:</p>
+                <p className="text-sm text-blue-800"><strong>Name:</strong> {sharedContact.name}</p>
+                <p className="text-sm text-blue-800"><strong>Phone:</strong> {sharedContact.phone}</p>
+                <p className="text-sm text-blue-800"><strong>Email:</strong> {sharedContact.email}</p>
+              </div>
+            ) : (
+              <>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <p className="text-xs text-amber-900 font-medium">
+                    💡 <strong>Recommendation:</strong> We encourage keeping all communications on the platform for transparency, professional record-keeping, and to maintain the project management trail.
+                  </p>
+                </div>
+
+                <p className="text-sm text-slate-600">
+                  Would you like to share contact details or continue via the platform?
+                </p>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={handleContinueOnPlatform}
+                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                  >
+                    Continue on Platform
+                  </button>
+                  <button
+                    onClick={handleShareContact}
+                    className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    Share Contact Details
+                  </button>
+                </div>
+              </>
+            )}
+
+            {sharedContact && (
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="w-full rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 transition"
+              >
+                Close
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
