@@ -87,7 +87,16 @@ export class ProjectsService {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const projects = (await this.prisma.project.findMany({
-        where: clientId ? { clientId } : undefined,
+        // Frontend passes the authenticated user's id via `clientId`
+        // Include projects where either `clientId` or `userId` matches
+        where: clientId
+          ? {
+              OR: [
+                { clientId: clientId },
+                { userId: clientId },
+              ],
+            }
+          : undefined,
         include: {
           client: true,
           professionals: {
