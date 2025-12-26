@@ -160,6 +160,27 @@ export class ProjectsController {
     );
   }
 
+  @Post(':id/schedule')
+  async updateSchedule(
+    @Param('id') projectId: string,
+    @Body() body: { startDate?: string; endDate?: string },
+  ) {
+    return this.projectsService.updateProjectSchedule(projectId, body.startDate, body.endDate);
+  }
+
+  @Post(':id/contractor-contact')
+  async updateContractorContact(
+    @Param('id') projectId: string,
+    @Body() body: { name?: string; phone?: string; email?: string },
+  ) {
+    return this.projectsService.updateContractorContact(
+      projectId,
+      body.name,
+      body.phone,
+      body.email,
+    );
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,

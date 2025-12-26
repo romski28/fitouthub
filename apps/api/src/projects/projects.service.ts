@@ -903,6 +903,64 @@ export class ProjectsService {
     };
   }
 
+  async updateProjectSchedule(projectId: string, startDate?: string, endDate?: string) {
+    // Verify project exists
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new Error('Project not found');
+    }
+
+    // Update schedule fields
+    const updated = await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Schedule updated successfully',
+      project: updated,
+    };
+  }
+
+  async updateContractorContact(
+    projectId: string,
+    name?: string,
+    phone?: string,
+    email?: string,
+  ) {
+    // Verify project exists
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new Error('Project not found');
+    }
+
+    // Update contractor contact fields
+    const updated = await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        contractorContactName: name,
+        contractorContactPhone: phone,
+        contractorContactEmail: email,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Contractor contact updated successfully',
+      project: updated,
+    };
+  }
+
   async remove(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },

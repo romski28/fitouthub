@@ -69,6 +69,14 @@ export default function ClientProjectDetailPage() {
   const [awardedProfessional, setAwardedProfessional] = useState<ProjectProfessional | null>(null);
   const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
 
+  // Schedule & contractor contact editing state
+  const [editingSchedule, setEditingSchedule] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ startDate: '', endDate: '' });
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', phone: '', email: '' });
+  const [updatingSchedule, setUpdatingSchedule] = useState(false);
+  const [updatingContact, setUpdatingContact] = useState(false);
+
   useEffect(() => {
     if (isLoggedIn === false) {
       router.push('/login');
@@ -328,6 +336,73 @@ export default function ClientProjectDetailPage() {
     setShowContactModal(false);
   };
 
+  const handleScheduleSave = async () => {
+    if (!scheduleForm.startDate && !scheduleForm.endDate) {
+      toast.error('Please enter at least a start or end date');
+      return;
+    }
+
+    setUpdatingSchedule(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/schedule`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          startDate: scheduleForm.startDate || undefined,
+          endDate: scheduleForm.endDate || undefined,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update schedule');
+      const data = await res.json();
+      setProject((prev) => prev ? { ...prev, ...data.project } : null);
+      setEditingSchedule(false);
+      toast.success('Schedule updated!');
+    } catch (e) {
+      console.error('Schedule update failed', e);
+      toast.error('Failed to update schedule.');
+    } finally {
+      setUpdatingSchedule(false);
+    }
+  };
+
+  const handleContactSave = async () => {
+    if (!contactForm.name && !contactForm.phone && !contactForm.email) {
+      toast.error('Please enter at least one contact detail');
+      return;
+    }
+
+    setUpdatingContact(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/contractor-contact`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: contactForm.name || undefined,
+          phone: contactForm.phone || undefined,
+          email: contactForm.email || undefined,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update contact');
+      const data = await res.json();
+      setProject((prev) => prev ? { ...prev, ...data.project } : null);
+      setEditingContact(false);
+      toast.success('Contractor contact updated!');
+    } catch (e) {
+      console.error('Contact update failed', e);
+      toast.error('Failed to update contractor contact.');
+    } finally {
+      setUpdatingContact(false);
+    }
+  };
+
   if (loading || isLoggedIn === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -407,37 +482,133 @@ export default function ClientProjectDetailPage() {
                 <h2 className="text-lg font-bold text-emerald-900">Awarded Project Details</h2>
                 <p className="text-sm text-emerald-800">Scheduling and contractor contact information</p>
               </div>
-              <div className="p-5 space-y-4">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                    <span className="font-semibold text-emerald-900">Start Date:</span>
-                    <span className="text-emerald-800">{project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}</span>
+              <div className="p-5 space-y-5">
+                {/* Schedule Section */}
+                <div className="rounded-md bg-white px-4 py-4 text-sm border border-emerald-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-semibold text-emerald-900">Project Schedule</p>
+                    <button
+                      onClick={() => {
+                        setEditingSchedule(!editingSchedule);
+                        setScheduleForm({
+                          startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+                          endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+                        });
+                      }}
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                    >
+                      {editingSchedule ? 'Cancel' : 'Edit'}
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                    <span className="font-semibold text-emerald-900">End Date:</span>
-                    <span className="text-emerald-800">{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}</span>
-                  </div>
+                  {!editingSchedule ? (
+                    <div className="grid gap-2 md:grid-cols-2 text-emerald-800">
+                      <div><span className="font-medium">Start Date:</span> {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}</div>
+                      <div><span className="font-medium">End Date:</span> {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-emerald-900 mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          value={scheduleForm.startDate}
+                          onChange={(e) => setScheduleForm((prev) => ({ ...prev, startDate: e.target.value }))}
+                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-emerald-900 mb-1">End Date</label>
+                        <input
+                          type="date"
+                          value={scheduleForm.endDate}
+                          onChange={(e) => setScheduleForm((prev) => ({ ...prev, endDate: e.target.value }))}
+                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        />
+                      </div>
+                      <button
+                        onClick={handleScheduleSave}
+                        disabled={updatingSchedule}
+                        className="w-full rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {updatingSchedule ? 'Saving...' : 'Save Schedule'}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {(() => {
-                  const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
-                  const displayName = awarded?.professional.fullName || awarded?.professional.businessName || awarded?.professional.email || '—';
-                  const phone = project.contractorContactPhone || awarded?.professional.phone || '—';
-                  const email = project.contractorContactEmail || awarded?.professional.email || '—';
-                  const name = project.contractorContactName || displayName;
-                  return (
-                    <div className="rounded-md bg-white px-3 py-3 text-sm border border-emerald-200">
-                      <p className="font-semibold text-emerald-900 mb-1">Contractor Contact</p>
-                      <div className="grid gap-2 md:grid-cols-3 text-emerald-800">
-                        <div><span className="font-medium">Name:</span> {name}</div>
-                        <div><span className="font-medium">Phone:</span> {phone}</div>
-                        <div><span className="font-medium">Email:</span> {email}</div>
+                {/* Contractor Contact Section */}
+                <div className="rounded-md bg-white px-4 py-4 text-sm border border-emerald-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-semibold text-emerald-900">Contractor Contact</p>
+                    <button
+                      onClick={() => {
+                        setEditingContact(!editingContact);
+                        const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
+                        setContactForm({
+                          name: project.contractorContactName || awarded?.professional.fullName || awarded?.professional.businessName || '',
+                          phone: project.contractorContactPhone || awarded?.professional.phone || '',
+                          email: project.contractorContactEmail || awarded?.professional.email || '',
+                        });
+                      }}
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                    >
+                      {editingContact ? 'Cancel' : 'Edit'}
+                    </button>
+                  </div>
+                  {!editingContact ? (
+                    (() => {
+                      const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
+                      const displayName = awarded?.professional.fullName || awarded?.professional.businessName || awarded?.professional.email || '—';
+                      const phone = project.contractorContactPhone || awarded?.professional.phone || '—';
+                      const email = project.contractorContactEmail || awarded?.professional.email || '—';
+                      const name = project.contractorContactName || displayName;
+                      return (
+                        <div className="grid gap-2 md:grid-cols-3 text-emerald-800">
+                          <div><span className="font-medium">Name:</span> {name}</div>
+                          <div><span className="font-medium">Phone:</span> {phone}</div>
+                          <div><span className="font-medium">Email:</span> {email}</div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-emerald-900 mb-1">Name</label>
+                        <input
+                          type="text"
+                          value={contactForm.name}
+                          onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
+                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        />
                       </div>
+                      <div>
+                        <label className="block text-xs font-medium text-emerald-900 mb-1">Phone</label>
+                        <input
+                          type="tel"
+                          value={contactForm.phone}
+                          onChange={(e) => setContactForm((prev) => ({ ...prev, phone: e.target.value }))}
+                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-emerald-900 mb-1">Email</label>
+                        <input
+                          type="email"
+                          value={contactForm.email}
+                          onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
+                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        />
+                      </div>
+                      <button
+                        onClick={handleContactSave}
+                        disabled={updatingContact}
+                        className="w-full rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {updatingContact ? 'Saving...' : 'Save Contact'}
+                      </button>
                     </div>
-                  );
-                })()}
+                  )}
+                </div>
               </div>
             </div>
           )}
