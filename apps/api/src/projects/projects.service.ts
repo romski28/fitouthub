@@ -688,6 +688,79 @@ export class ProjectsService {
     return awarded;
   }
 
+  async shareContact(projectId: string, professionalId: string, clientId?: string) {
+    // Verify ProjectProfessional relationship exists and quote is awarded
+    const projectProfessional = await this.prisma.projectProfessional.findUnique(
+      {
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId,
+          },
+        },
+        include: {
+          professional: true,
+          project: {
+            include: {
+              user: true,
+              client: true,
+            },
+          },
+        },
+      },
+    );
+
+    if (!projectProfessional) {
+      throw new Error('Professional not invited to this project');
+    }
+
+    if (projectProfessional.status !== 'awarded') {
+      throw new Error('Quote must be awarded before sharing contact details');
+    }
+
+    // Update ProjectProfessional to mark contact shared
+    await this.prisma.projectProfessional.update({
+      where: {
+        projectId_professionalId: {
+          projectId,
+          professionalId,
+        },
+      },
+      data: {
+        directContactShared: true,
+        directContactSharedAt: new Date(),
+      },
+    });
+
+    const project = projectProfessional.project;
+    const professional = projectProfessional.professional;
+    const clientName = project.user
+      ? `${project.user.firstName} ${project.user.surname}`.trim()
+      : project.clientName;
+    const clientPhone = project.user?.mobile || 'Not provided';
+    const professionalName =
+      professional.fullName || professional.businessName || 'Professional';
+
+    // Send notification email to professional with client contact
+    await this.emailService.sendContactShared({
+      to: professional.email,
+      professionalName,
+      clientName,
+      clientPhone,
+      projectName: project.projectName,
+    });
+
+    // Return professional contact to client
+    return {
+      success: true,
+      professional: {
+        name: professionalName,
+        phone: professional.phone,
+        email: professional.email,
+      },
+    };
+  }
+
   async remove(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },

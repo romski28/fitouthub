@@ -130,6 +130,15 @@ export class ProjectsController {
     return this.projectsService.awardQuote(projectId, professionalId);
   }
 
+  @Post(':id/share-contact/:professionalId')
+  async shareContact(
+    @Param('id') projectId: string,
+    @Param('professionalId') professionalId: string,
+    @Body() body?: { clientId?: string },
+  ) {
+    return this.projectsService.shareContact(projectId, professionalId, body?.clientId);
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,

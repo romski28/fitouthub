@@ -422,4 +422,60 @@ export class EmailService {
       throw error;
     }
   }
+
+  /**
+   * Send notification when client shares contact details with professional
+   */
+  async sendContactShared(params: {
+    to: string;
+    professionalName: string;
+    clientName: string;
+    clientPhone: string;
+    projectName: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send contact sharing notification to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Contact Details Shared: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4f46e5;">📞 Client Contact Shared</h2>
+            
+            <p>Hi ${params.professionalName},</p>
+            
+            <p>The client has chosen to share their contact details with you for the project: <strong>"${params.projectName}"</strong></p>
+            
+            <div style="background-color: #f0f9ff; border: 1px solid #bfdbfe; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h3 style="margin-top: 0; color: #1e40af;">Client Contact Information</h3>
+              <p style="color: #1e3a8a; margin: 10px 0;"><strong>Name:</strong> ${params.clientName}</p>
+              <p style="color: #1e3a8a; margin: 10px 0;"><strong>Phone:</strong> ${params.clientPhone}</p>
+            </div>
+            
+            <p>You can now reach out directly to coordinate project details.</p>
+            
+            <div style="background-color: #fef3c7; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <p style="color: #92400e; margin: 0;"><strong>⚠️ Privacy Notice:</strong> Please respect the client's privacy and use this information only for project-related communications. We recommend keeping all communications on the platform when possible for transparency and professional record-keeping.</p>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px;">
+              This information is confidential. Do not share with third parties without the client's consent.
+            </p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Contact sharing notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send contact sharing notification:', error);
+      throw error;
+    }
+  }
 }
