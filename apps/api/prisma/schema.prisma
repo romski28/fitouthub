@@ -82,6 +82,11 @@ model Project {
   notes          String?
   projectName    String
   region         String
+  startDate      DateTime?
+  endDate        DateTime?
+  contractorContactName  String?
+  contractorContactPhone String?
+  contractorContactEmail String?
   emailTokens    EmailToken[]
   client         Client?               @relation(fields: [clientId], references: [id])
   user           User?                 @relation(fields: [userId], references: [id])

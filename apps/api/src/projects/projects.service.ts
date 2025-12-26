@@ -675,6 +675,19 @@ export class ProjectsService {
 
     // Loser messages
     for (const pp of otherProfessionals) {
+      // Update status to declined for non-awarded professionals
+      try {
+        await this.prisma.projectProfessional.update({
+          where: { id: pp.id },
+          data: { status: 'declined' },
+        });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[ProjectsService.awardQuote] Failed to update loser status to declined', {
+          projectProfessionalId: pp.id,
+          error: (err as Error)?.message,
+        });
+      }
       await this.prisma.message.create({
         data: {
           projectProfessionalId: pp.id,

@@ -32,6 +32,11 @@ interface ProjectDetail {
   budget?: string;
   notes?: string;
   professionals?: ProjectProfessional[];
+  startDate?: string;
+  endDate?: string;
+  contractorContactName?: string;
+  contractorContactPhone?: string;
+  contractorContactEmail?: string;
 }
 
 interface Message {
@@ -394,6 +399,48 @@ export default function ClientProjectDetailPage() {
             )}
           </div>
         </div>
+
+          {/* Awarded Details */}
+          {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 shadow-sm">
+              <div className="px-5 py-4 border-b border-emerald-200">
+                <h2 className="text-lg font-bold text-emerald-900">Awarded Project Details</h2>
+                <p className="text-sm text-emerald-800">Scheduling and contractor contact information</p>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                    <span className="font-semibold text-emerald-900">Start Date:</span>
+                    <span className="text-emerald-800">{project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                    <span className="font-semibold text-emerald-900">End Date:</span>
+                    <span className="text-emerald-800">{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}</span>
+                  </div>
+                </div>
+
+                {(() => {
+                  const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
+                  const displayName = awarded?.professional.fullName || awarded?.professional.businessName || awarded?.professional.email || '—';
+                  const phone = project.contractorContactPhone || awarded?.professional.phone || '—';
+                  const email = project.contractorContactEmail || awarded?.professional.email || '—';
+                  const name = project.contractorContactName || displayName;
+                  return (
+                    <div className="rounded-md bg-white px-3 py-3 text-sm border border-emerald-200">
+                      <p className="font-semibold text-emerald-900 mb-1">Contractor Contact</p>
+                      <div className="grid gap-2 md:grid-cols-3 text-emerald-800">
+                        <div><span className="font-medium">Name:</span> {name}</div>
+                        <div><span className="font-medium">Phone:</span> {phone}</div>
+                        <div><span className="font-medium">Email:</span> {email}</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
 
         {/* Professionals Summary Table */}
         {project.professionals && project.professionals.length > 0 && (

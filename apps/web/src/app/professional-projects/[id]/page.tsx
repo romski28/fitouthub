@@ -263,7 +263,9 @@ export default function ProjectDetailPage() {
           body: JSON.stringify({
             professionalId: project.professionalId || project.projectId,
             quoteAmount: currentAmount,
-            quoteNotes: project.quoteNotes || 'No change to current offer',
+            quoteNotes: (quoteForm.notes && quoteForm.notes.trim().length > 0)
+              ? quoteForm.notes
+              : (project.quoteNotes || 'No change to current offer'),
           }),
         },
       );
