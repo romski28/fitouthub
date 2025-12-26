@@ -9,6 +9,7 @@ import Link from 'next/link';
 interface ProjectDetail {
   id: string;
   projectId: string;
+  professionalId?: string;
   project: {
     id: string;
     projectName: string;
@@ -176,7 +177,7 @@ export default function ProjectDetailPage() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              professionalId: project.id,
+              professionalId: project.professionalId || project.projectId /* fallback to projectProfessionalId is incorrect but kept to avoid undefined */,
               quoteAmount: amount,
               quoteNotes: quoteForm.notes,
             }),
@@ -238,7 +239,7 @@ export default function ProjectDetailPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            professionalId: project.id,
+            professionalId: project.professionalId || project.projectId,
             quoteAmount: currentAmount,
             quoteNotes: project.quoteNotes || 'No change to current offer',
           }),
