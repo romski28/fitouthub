@@ -161,20 +161,44 @@ export default function ProjectDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/professional/projects/${projectProfessionalId}/quote`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
+      // Check if this is an update to an existing quote (counter-request scenario)
+      const isUpdate = project?.quotedAt && project.status === 'counter_requested';
+      
+      let response;
+      if (isUpdate) {
+        // Use update-quote endpoint
+        response = await fetch(
+          `${API_BASE_URL}/projects/${project.project.id}/update-quote`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              professionalId: project.id,
+              quoteAmount: amount,
+              quoteNotes: quoteForm.notes,
+            }),
           },
-          body: JSON.stringify({
-            quoteAmount: amount,
-            quoteNotes: quoteForm.notes,
-          }),
-        },
-      );
+        );
+      } else {
+        // Initial quote submission
+        response = await fetch(
+          `${API_BASE_URL}/professional/projects/${projectProfessionalId}/quote`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              quoteAmount: amount,
+              quoteNotes: quoteForm.notes,
+            }),
+          },
+        );
+      }
 
       if (!response.ok) {
         const data = await response.json();
@@ -184,9 +208,54 @@ export default function ProjectDetailPage() {
       const result = await response.json();
       setProject(result.projectProfessional);
       setError(null);
-      alert('Quote submitted successfully!');
+      alert(isUpdate ? 'Quote updated successfully!' : 'Quote submitted successfully!');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit quote';
+      setError(message);
+    } finally {
+      setSubmittingQuote(false);
+    }
+  };
+
+  const handleKeepCurrentQuote = async () => {
+    if (!project || !accessToken) return;
+    const currentAmount = project.quoteAmount ? parseFloat(project.quoteAmount) : NaN;
+    if (isNaN(currentAmount)) {
+      setError('No existing quote amount found to keep. Please enter a new quote.');
+      return;
+    }
+
+    setSubmittingQuote(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${project.project.id}/update-quote`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            professionalId: project.id,
+            quoteAmount: currentAmount,
+            quoteNotes: project.quoteNotes || 'No change to current offer',
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to keep current quote');
+      }
+
+      const result = await response.json();
+      setProject(result.projectProfessional);
+      setError(null);
+      alert('You kept your current offer. The client will review it.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to keep current quote';
       setError(message);
     } finally {
       setSubmittingQuote(false);
@@ -408,11 +477,21 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Quote Form */}
-          {project.status === 'pending' || project.status === 'accepted' ? (
+          {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) ? (
             <div className="p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Submit Your Quote
+                {project.status === 'counter_requested' ? 'Update Your Quote' : 'Submit Your Quote'}
               </h2>
+
+              {project.status === 'counter_requested' ? (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  The client requested a better offer. You can submit a revised quote or keep your current offer.
+                </div>
+              ) : project.status === 'quoted' ? (
+                <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
+                  You can adjust your quote if needed. Submit a revised amount or keep your current offer.
+                </div>
+              ) : null}
 
               <form onSubmit={handleSubmitQuote} className="space-y-6">
                 <div>
@@ -456,14 +535,29 @@ export default function ProjectDetailPage() {
                   />
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex gap-4 flex-wrap">
                   <button
                     type="submit"
                     disabled={submittingQuote}
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
                   >
-                    {submittingQuote ? 'Submitting...' : 'Submit Quote'}
+                    {submittingQuote
+                      ? 'Submitting...'
+                      : project.status === 'counter_requested'
+                      ? 'Submit Revised Quote'
+                      : 'Submit Quote'}
                   </button>
+
+                  {project.status === 'counter_requested' || project.status === 'quoted' ? (
+                    <button
+                      type="button"
+                      onClick={handleKeepCurrentQuote}
+                      disabled={submittingQuote}
+                      className="flex-1 bg-slate-600 text-white py-2 px-4 rounded-md hover:bg-slate-700 disabled:opacity-50 font-medium"
+                    >
+                      {submittingQuote ? 'Processing...' : 'Keep Current Offer'}
+                    </button>
+                  ) : null}
 
                   {project.status === 'pending' && (
                     <>
