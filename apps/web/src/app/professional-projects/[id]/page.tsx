@@ -208,7 +208,12 @@ export default function ProjectDetailPage() {
       }
 
       const result = await response.json();
-      setProject(result.projectProfessional);
+      // Merge updated fields into existing project to preserve nested project object
+      if (isUpdate && result.projectProfessional) {
+        setProject((prev) => prev ? { ...prev, ...result.projectProfessional } : result.projectProfessional);
+      } else {
+        setProject(result.projectProfessional);
+      }
       setError(null);
       setQuoteForm({ amount: '', notes: '' }); // Clear form
       toast.success(isUpdate ? 'Quote updated successfully!' : 'Quote submitted successfully!');
@@ -269,7 +274,8 @@ export default function ProjectDetailPage() {
       }
 
       const result = await response.json();
-      setProject(result.projectProfessional);
+      // Merge updated fields into existing project to preserve nested project object
+      setProject((prev) => prev ? { ...prev, ...result.projectProfessional } : result.projectProfessional);
       setError(null);
       toast.success('Quotation confirmed. The client will review it.');
       
