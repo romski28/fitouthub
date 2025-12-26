@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectDetail {
   id: string;
@@ -209,7 +210,23 @@ export default function ProjectDetailPage() {
       const result = await response.json();
       setProject(result.projectProfessional);
       setError(null);
-      alert(isUpdate ? 'Quote updated successfully!' : 'Quote submitted successfully!');
+      setQuoteForm({ amount: '', notes: '' }); // Clear form
+      toast.success(isUpdate ? 'Quote updated successfully!' : 'Quote submitted successfully!');
+      
+      // Refresh messages to show the auto-generated message
+      const msgRes = await fetch(
+        `${API_BASE_URL}/professional/projects/${projectProfessionalId}/messages`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      if (msgRes.ok) {
+        const msgData = await msgRes.json();
+        setMessages(msgData.messages || []);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit quote';
       setError(message);
@@ -254,7 +271,22 @@ export default function ProjectDetailPage() {
       const result = await response.json();
       setProject(result.projectProfessional);
       setError(null);
-      alert('You kept your current offer. The client will review it.');
+      toast.success('Quotation confirmed. The client will review it.');
+      
+      // Refresh messages
+      const msgRes = await fetch(
+        `${API_BASE_URL}/professional/projects/${projectProfessionalId}/messages`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      if (msgRes.ok) {
+        const msgData = await msgRes.json();
+        setMessages(msgData.messages || []);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to keep current quote';
       setError(message);
@@ -385,6 +417,8 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
+      <>
+      <Toaster position="top-right" />
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Project not found</p>
@@ -396,10 +430,12 @@ export default function ProjectDetailPage() {
           </Link>
         </div>
       </div>
+      </>
     );
   }
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
@@ -481,7 +517,7 @@ export default function ProjectDetailPage() {
           {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) ? (
             <div className="p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                {project.status === 'counter_requested' ? 'Update Your Quote' : 'Submit Your Quote'}
+                {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
               </h2>
 
               {project.status === 'counter_requested' ? (
@@ -542,23 +578,19 @@ export default function ProjectDetailPage() {
                     disabled={submittingQuote}
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
                   >
-                    {submittingQuote
-                      ? 'Submitting...'
-                      : project.status === 'counter_requested'
-                      ? 'Submit Revised Quote'
-                      : 'Submit Quote'}
+                    {submittingQuote ? 'Submitting...' : project.quotedAt ? 'Update Quote' : 'Submit Quote'}
                   </button>
 
-                  {project.status === 'counter_requested' || project.status === 'quoted' ? (
+                  {project.status === 'counter_requested' && (
                     <button
                       type="button"
                       onClick={handleKeepCurrentQuote}
                       disabled={submittingQuote}
                       className="flex-1 bg-slate-600 text-white py-2 px-4 rounded-md hover:bg-slate-700 disabled:opacity-50 font-medium"
                     >
-                      {submittingQuote ? 'Processing...' : 'Keep Current Offer'}
+                      {submittingQuote ? 'Processing...' : 'Confirm Quotation'}
                     </button>
-                  ) : null}
+                  )}
 
                   {project.status === 'pending' && (
                     <>
@@ -659,5 +691,7 @@ export default function ProjectDetailPage() {
         </div>
       </div>
     </div>
+    <Toaster position="top-right" />
+    </>
   );
 }
