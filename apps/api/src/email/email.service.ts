@@ -478,4 +478,68 @@ export class EmailService {
       throw error;
     }
   }
+
+  /**
+   * Send notification when client requests a better offer
+   */
+  async sendCounterRequest(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    currentQuote: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send counter-request notification to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `💰 Client Requests Better Offer: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #f59e0b;">💰 Better Offer Requested</h2>
+            
+            <p>Hi ${params.professionalName},</p>
+            
+            <p>The client has reviewed your quote for <strong>"${params.projectName}"</strong> and would like to see if you can provide a better offer.</p>
+            
+            <div style="background-color: #fef3c7; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <p style="color: #92400e; margin: 0;"><strong>Your Current Quote:</strong> $${params.currentQuote}</p>
+            </div>
+            
+            <p>This is an opportunity to adjust your quote and potentially win the project. Please:</p>
+            <ul style="color: #374151;">
+              <li>Review your pricing structure</li>
+              <li>Consider any flexibility in your quote</li>
+              <li>Submit an updated quote if possible</li>
+            </ul>
+            
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${process.env.WEB_BASE_URL || 'https://fitouthub-web.vercel.app'}/professional-projects" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                📝 Update Your Quote
+              </a>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 13px; margin-top: 20px;">
+              <strong>Note:</strong> You're not obligated to lower your quote. If your current pricing is fair, you can stand by it or provide additional context on why your quote represents good value.
+            </p>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px;">
+              This is an opportunity, not a requirement. Submit your best offer when you're ready.
+            </p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Counter-request notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send counter-request notification:', error);
+      throw error;
+    }
+  }
 }

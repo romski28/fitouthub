@@ -139,6 +139,27 @@ export class ProjectsController {
     return this.projectsService.shareContact(projectId, professionalId, body?.clientId);
   }
 
+  @Post(':id/counter-request/:professionalId')
+  async counterRequest(
+    @Param('id') projectId: string,
+    @Param('professionalId') professionalId: string,
+  ) {
+    return this.projectsService.counterRequest(projectId, professionalId);
+  }
+
+  @Post(':id/update-quote')
+  async updateQuote(
+    @Param('id') projectId: string,
+    @Body() body: { professionalId: string; quoteAmount: number; quoteNotes?: string },
+  ) {
+    return this.projectsService.updateQuote(
+      projectId,
+      body.professionalId,
+      body.quoteAmount,
+      body.quoteNotes,
+    );
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,

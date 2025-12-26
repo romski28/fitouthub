@@ -239,15 +239,29 @@ export default function ClientProjectDetailPage() {
         setSelectedProfessional((prev) => (prev ? { ...prev, status: 'awarded' } : prev));
       } else {
         // Reject or counter-request
-        const res = await fetch(
-          `${API_BASE_URL}/client/projects/${selectedProfessional.id}/quote/${
-            kind === 'request-better' ? 'request-better' : kind
-          }`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
-        );
+        let res;
+        if (kind === 'request-better') {
+          // Use new counter-request endpoint
+          res = await fetch(
+            `${API_BASE_URL}/projects/${projectId}/counter-request/${selectedProfessional.professionalId}`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+            },
+          );
+        } else {
+          // Reject
+          res = await fetch(
+            `${API_BASE_URL}/client/projects/${selectedProfessional.id}/quote/reject`,
+            {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
+          );
+        }
         if (res.status === 401) {
           router.push('/login');
           return;
@@ -261,7 +275,7 @@ export default function ClientProjectDetailPage() {
           toast.success('Requested better quote.');
         }
         
-        setSelectedProfessional((prev) => (prev ? { ...prev, status: data.projectProfessional.status } : prev));
+        setSelectedProfessional((prev) => (prev ? { ...prev, status: kind === 'request-better' ? 'counter_requested' : (data.projectProfessional?.status || prev.status) } : prev));
       }
       
       // Refresh messages to capture auto-generated message

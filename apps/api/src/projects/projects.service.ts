@@ -761,6 +761,135 @@ export class ProjectsService {
     };
   }
 
+  async counterRequest(projectId: string, professionalId: string) {
+    // Verify ProjectProfessional exists and has a quote
+    const projectProfessional = await this.prisma.projectProfessional.findUnique(
+      {
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId,
+          },
+        },
+        include: {
+          professional: true,
+          project: true,
+        },
+      },
+    );
+
+    if (!projectProfessional) {
+      throw new Error('Professional not invited to this project');
+    }
+
+    if (!projectProfessional.quotedAt) {
+      throw new Error('Professional has not submitted a quote yet');
+    }
+
+    // Update status to counter_requested
+    await this.prisma.projectProfessional.update({
+      where: {
+        projectId_professionalId: {
+          projectId,
+          professionalId,
+        },
+      },
+      data: {
+        status: 'counter_requested',
+      },
+    });
+
+    const project = projectProfessional.project;
+    const professional = projectProfessional.professional;
+    const professionalName =
+      professional.fullName || professional.businessName || 'Professional';
+
+    // Send notification email to professional
+    await this.emailService.sendCounterRequest({
+      to: professional.email,
+      professionalName,
+      projectName: project.projectName,
+      currentQuote: projectProfessional.quoteAmount?.toString() || '0',
+    });
+
+    // Add system message
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId: projectProfessional.id,
+        senderType: 'client',
+        senderClientId: project.clientId,
+        content: `The client has requested a better offer. Please review and submit an updated quote if possible.`,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Counter-request sent to professional',
+    };
+  }
+
+  async updateQuote(
+    projectId: string,
+    professionalId: string,
+    quoteAmount: number,
+    quoteNotes?: string,
+  ) {
+    // Verify ProjectProfessional exists
+    const projectProfessional = await this.prisma.projectProfessional.findUnique(
+      {
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId,
+          },
+        },
+        include: {
+          professional: true,
+          project: true,
+        },
+      },
+    );
+
+    if (!projectProfessional) {
+      throw new Error('Professional not invited to this project');
+    }
+
+    // Update quote
+    const updated = await this.prisma.projectProfessional.update({
+      where: {
+        projectId_professionalId: {
+          projectId,
+          professionalId,
+        },
+      },
+      data: {
+        quoteAmount,
+        quoteNotes,
+        quotedAt: new Date(),
+        status: 'quoted', // Reset to quoted for client review
+      },
+      include: {
+        professional: true,
+      },
+    });
+
+    // Add system message
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId: projectProfessional.id,
+        senderType: 'professional',
+        senderProfessionalId: professionalId,
+        content: `Updated quote: $${quoteAmount}${quoteNotes ? ` - ${quoteNotes}` : ''}`,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Quote updated successfully',
+      projectProfessional: updated,
+    };
+  }
+
   async remove(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
