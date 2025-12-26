@@ -9,6 +9,7 @@ import { GlobalAuthModal } from "@/components/global-auth-modal";
 import Footer from "@/components/footer";
 import CornerRibbon from "@/components/corner-ribbon";
 import "./globals.css";
+import pkg from "../../package.json";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const commitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_COMMIT_SHA || "";
+  const appVersion = (pkg as any)?.version ?? "0.0.0";
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -41,6 +44,11 @@ export default function RootLayout({
                 <Navbar />
                 <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
                 <Footer />
+                {/* Version badge for quick deployment verification */}
+                <div className="fixed bottom-2 right-2 z-50 rounded bg-slate-900/80 px-2 py-1 text-[11px] font-medium text-slate-100">
+                  <span>web v{appVersion}</span>
+                  {commitSha ? <span className="ml-2">commit {commitSha.slice(0, 7)}</span> : null}
+                </div>
               </div>
               <GlobalAuthModal />
               <CornerRibbon />
