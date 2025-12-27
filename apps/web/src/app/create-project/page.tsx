@@ -42,33 +42,41 @@ export default function CreateProjectPage() {
 
     setIsSubmitting(true);
     try {
+      const payload = {
+        projectName: formData.projectName,
+        clientName: formData.clientName,
+        region: region,
+        budget: formData.budget ? parseFloat(String(formData.budget)) : null,
+        notes: formData.notes,
+        status: 'pending',
+        professionalIds: [],
+        userId: user?.id,
+      };
+
+      console.log('[create-project] Submitting payload:', payload);
+
       const response = await fetch(`${API_BASE_URL}/projects`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          projectName: formData.projectName,
-          clientName: formData.clientName,
-          region: region,
-          budget: formData.budget ? parseFloat(String(formData.budget)) : null,
-          notes: formData.notes,
-          status: 'pending',
-          professionalIds: [],
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to create project');
+        const data = await response.json().catch(() => ({ message: 'Failed to create project' }));
+        console.error('[create-project] Error response:', data);
+        throw new Error(data.message || `Server error: ${response.status}`);
       }
 
       const project = await response.json();
+      console.log('[create-project] Project created successfully:', project);
       toast.success('Project created! Now invite professionals...');
       router.push(`/projects/${project.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create project';
+      console.error('[create-project] Error:', err);
       setError(message);
       toast.error(message);
     } finally {
