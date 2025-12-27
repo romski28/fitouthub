@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,11 +16,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   defaultTab = 'login',
 }) => {
   const { login, register } = useAuth();
+  const { register: registerProfessional } = useProfessionalAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
+  const [userType, setUserType] = useState<'client' | 'professional'>('client');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Update activeTab when defaultTab prop changes
   React.useEffect(() => {
     setActiveTab(defaultTab);
   }, [defaultTab]);
@@ -28,15 +30,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // Register form state
-  const [regNickname, setRegNickname] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regFirstName, setRegFirstName] = useState('');
-  const [regSurname, setRegSurname] = useState('');
-  const [regChineseName, setRegChineseName] = useState('');
-  const [regMobile, setRegMobile] = useState('');
-  const [regRole, setRegRole] = useState('client');
+  // Client registration state
+  const [clientForm, setClientForm] = useState({
+    nickname: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    surname: '',
+    mobile: '',
+  });
+
+  // Professional registration state
+  const [professionalForm, setProfessionalForm] = useState({
+    businessName: '',
+    contactName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,32 +68,70 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleClientRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
+    if (clientForm.password !== clientForm.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
     try {
       await register({
-        nickname: regNickname,
-        email: regEmail,
-        password: regPassword,
-        firstName: regFirstName,
-        surname: regSurname,
-        chineseName: regChineseName || undefined,
-        mobile: regMobile || undefined,
-        role: regRole,
+        nickname: clientForm.nickname,
+        email: clientForm.email,
+        password: clientForm.password,
+        firstName: clientForm.firstName,
+        surname: clientForm.surname,
+        mobile: clientForm.mobile || undefined,
+        role: 'client',
       });
       onClose();
-      // Clear form
-      setRegNickname('');
-      setRegEmail('');
-      setRegPassword('');
-      setRegFirstName('');
-      setRegSurname('');
-      setRegChineseName('');
-      setRegMobile('');
-      setRegRole('client');
+      setClientForm({
+        nickname: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        firstName: '',
+        surname: '',
+        mobile: '',
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProfessionalRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (professionalForm.password !== professionalForm.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await registerProfessional({
+        businessName: professionalForm.businessName,
+        fullName: professionalForm.contactName,
+        email: professionalForm.email,
+        password: professionalForm.password,
+        phone: professionalForm.phone,
+      });
+      onClose();
+      setProfessionalForm({
+        businessName: '',
+        contactName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -182,120 +233,225 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </form>
           ) : (
-            <form onSubmit={handleRegister} className="space-y-4 max-h-96 overflow-y-auto">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nickname (Username)
-                </label>
-                <input
-                  type="text"
-                  value={regNickname}
-                  onChange={(e) => setRegNickname(e.target.value)}
-                  required
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  placeholder="username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                  required
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  placeholder="your@email.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  required
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  placeholder="••••••••"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    value={regFirstName}
-                    onChange={(e) => setRegFirstName(e.target.value)}
-                    required
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    placeholder="John"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Surname
-                  </label>
-                  <input
-                    type="text"
-                    value={regSurname}
-                    onChange={(e) => setRegSurname(e.target.value)}
-                    required
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    placeholder="Doe"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Chinese Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={regChineseName}
-                  onChange={(e) => setRegChineseName(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  placeholder="中文名"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Mobile (Optional)
-                </label>
-                <input
-                  type="tel"
-                  value={regMobile}
-                  onChange={(e) => setRegMobile(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  placeholder="+852 1234 5678"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Account Type
-                </label>
-                <select
-                  value={regRole}
-                  onChange={(e) => setRegRole(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            <>
+              {/* User Type Toggle */}
+              <div className="mb-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setUserType('client')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition ${
+                    userType === 'client'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  <option value="client">Client (Need Renovation)</option>
-                  <option value="professional">Professional (Contractor)</option>
-                  <option value="reseller">Reseller</option>
-                </select>
+                  👤 Client
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserType('professional')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition ${
+                    userType === 'professional'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  👷 Professional
+                </button>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {loading ? 'Creating account...' : 'Create Account'}
-              </button>
-            </form>
+
+              {userType === 'client' ? (
+                <form onSubmit={handleClientRegister} className="space-y-4 max-h-96 overflow-y-auto">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      value={clientForm.nickname}
+                      onChange={(e) => setClientForm({ ...clientForm, nickname: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={clientForm.email}
+                      onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        value={clientForm.firstName}
+                        onChange={(e) => setClientForm({ ...clientForm, firstName: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        placeholder="John"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Surname
+                      </label>
+                      <input
+                        type="text"
+                        value={clientForm.surname}
+                        onChange={(e) => setClientForm({ ...clientForm, surname: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        placeholder="Doe"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Mobile (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      value={clientForm.mobile}
+                      onChange={(e) => setClientForm({ ...clientForm, mobile: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="+852 1234 5678"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={clientForm.password}
+                      onChange={(e) => setClientForm({ ...clientForm, password: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      value={clientForm.confirmPassword}
+                      onChange={(e) => setClientForm({ ...clientForm, confirmPassword: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    {loading ? 'Creating account...' : 'Create Account'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleProfessionalRegister} className="space-y-4 max-h-96 overflow-y-auto">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Company Name
+                    </label>
+                    <input
+                      type="text"
+                      value={professionalForm.businessName}
+                      onChange={(e) => setProfessionalForm({ ...professionalForm, businessName: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="Your Company Ltd."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      value={professionalForm.contactName}
+                      onChange={(e) => setProfessionalForm({ ...professionalForm, contactName: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="John Smith"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={professionalForm.email}
+                      onChange={(e) => setProfessionalForm({ ...professionalForm, email: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="business@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={professionalForm.phone}
+                      onChange={(e) => setProfessionalForm({ ...professionalForm, phone: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="+852 1234 5678"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={professionalForm.password}
+                      onChange={(e) => setProfessionalForm({ ...professionalForm, password: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      value={professionalForm.confirmPassword}
+                      onChange={(e) => setProfessionalForm({ ...professionalForm, confirmPassword: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    {loading ? 'Creating account...' : 'Create Account'}
+                  </button>
+                </form>
+              )}
+            </>
           )}
         </div>
       </div>

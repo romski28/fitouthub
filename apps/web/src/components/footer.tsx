@@ -1,5 +1,10 @@
+'use client';
+
+import { useAuthModalControl } from '@/context/auth-modal-control';
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { openJoinModal, openLoginModal } = useAuthModalControl();
 
   return (
     <footer className="border-t border-slate-200 bg-slate-900 text-slate-300 mt-16">
@@ -26,18 +31,17 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold text-white">For Clients</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/join" className="hover:text-white transition">Get Started</a></li>
+              <li><button onClick={openJoinModal} className="hover:text-white transition text-left">Get Started</button></li>
               <li><a href="/create-project" className="hover:text-white transition">Create Project</a></li>
             </ul>
           </div>
 
-          {/* For Professionals */}
+          {/* Account */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">For Professionals</h4>
+            <h4 className="font-semibold text-white">Account</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/join" className="hover:text-white transition">Join us</a></li>
-              <li><a href="#" className="hover:text-white transition">Pricing</a></li>
-              <li><a href="#" className="hover:text-white transition">Dashboard</a></li>
+              <li><button onClick={openLoginModal} className="hover:text-white transition text-left">Login</button></li>
+              <li><button onClick={openJoinModal} className="hover:text-white transition text-left">Join</button></li>
             </ul>
           </div>
         </div>
