@@ -616,9 +616,17 @@ export default function ClientProjectDetailPage() {
         {/* Professionals Summary Table */}
         {project.professionals && project.professionals.length > 0 && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="px-5 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">Invited Professionals</h2>
-              <p className="text-sm text-slate-600">Click a row to open the chat with that professional.</p>
+            <div className="px-5 py-4 border-b border-slate-200 flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Invited Professionals</h2>
+                <p className="text-sm text-slate-600">Click a row to open the chat with that professional.</p>
+              </div>
+              <Link
+                href={`/professionals?projectId=${projectId}`}
+                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+              >
+                + Invite More
+              </Link>
             </div>
             <div className="p-5 overflow-x-auto">
               <table className="min-w-full text-sm">
@@ -806,8 +814,17 @@ export default function ClientProjectDetailPage() {
         )}
 
         {(!project.professionals || project.professionals.length === 0) && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600 text-center">
-            No professionals assigned to this project yet.
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center space-y-4">
+            <div className="text-slate-600">
+              <p className="text-base font-semibold mb-2">No professionals invited yet</p>
+              <p className="text-sm">Start by searching for professionals who match your project needs.</p>
+            </div>
+            <Link
+              href={`/professionals?projectId=${projectId}`}
+              className="inline-block rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-sm font-semibold transition"
+            >
+              Search & Invite Professionals
+            </Link>
           </div>
         )}
 
