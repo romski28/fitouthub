@@ -184,10 +184,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [locationSuggestions, setLocationSuggestions] = useState<Array<{ primary?: string; secondary?: string; tertiary?: string; display: string }>>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   
-  // Initialize locationDisplay from baseLoc to show pre-filled location
-  const initialLocationDisplay = [baseLoc.tertiary, baseLoc.secondary, baseLoc.primary]
-    .filter(Boolean)
-    .join(', ');
+  // Initialize locationDisplay from baseLoc - use only tertiary (most specific) for best filter results
+  // The filter will naturally radiate outward from tertiary -> secondary -> primary
+  const initialLocationDisplay = baseLoc.tertiary || baseLoc.secondary || baseLoc.primary || '';
   const [locationDisplay, setLocationDisplay] = useState<string>(initialLocationDisplay);
 
   // Debug: log pre-population values
@@ -488,7 +487,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   handleLocationSearch(e.target.value);
                 }}
                 onFocus={() => {
-                  if (locationDisplay) setLocationDisplay('');
+                  // Don't clear locationDisplay on focus - only when user starts typing
+                  // Show suggestions only if there's an active search
                   if (locationSearch) setShowLocationSuggestions(locationSuggestions.length > 0);
                 }}
                 onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 100)}
