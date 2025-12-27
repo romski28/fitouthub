@@ -547,7 +547,6 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
           setSelectedIds(new Set());
         }}
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
-        defaultLocation={loc}
       />
       
       {/* Back to top button - behind the share project button */}
