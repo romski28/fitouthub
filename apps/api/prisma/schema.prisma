@@ -70,27 +70,27 @@ model Professional {
 }
 
 model Project {
-  id             String                @id @default(cuid())
-  status         String                @default("pending")
-  clientId       String?
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  userId         String?
-  budget         Decimal?              @db.Decimal(12, 2)
-  clientName     String
-  contractorName String?
-  notes          String?
-  projectName    String
-  region         String
-  startDate      DateTime?
-  endDate        DateTime?
+  id                     String                @id @default(cuid())
+  status                 String                @default("pending")
+  clientId               String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  userId                 String?
+  budget                 Decimal?              @db.Decimal(12, 2)
+  clientName             String
+  contractorName         String?
+  notes                  String?
+  projectName            String
+  region                 String
+  startDate              DateTime?
+  endDate                DateTime?
   contractorContactName  String?
   contractorContactPhone String?
   contractorContactEmail String?
-  emailTokens    EmailToken[]
-  client         Client?               @relation(fields: [clientId], references: [id])
-  user           User?                 @relation(fields: [userId], references: [id])
-  professionals  ProjectProfessional[]
+  emailTokens            EmailToken[]
+  client                 Client?               @relation(fields: [clientId], references: [id])
+  user                   User?                 @relation(fields: [userId], references: [id])
+  professionals          ProjectProfessional[]
 }
 
 model ProjectProfessional {
@@ -158,19 +158,55 @@ model Pattern {
 }
 
 model Message {
-  id                     String               @id @default(cuid())
-  projectProfessionalId  String
-  senderType             String               // 'professional' | 'client'
-  senderProfessionalId   String?
-  senderClientId         String?
-  content                String
-  createdAt              DateTime             @default(now())
-  readByProfessionalAt   DateTime?
-  readByClientAt         DateTime?
+  id                    String    @id @default(cuid())
+  projectProfessionalId String
+  senderType            String // 'professional' | 'client'
+  senderProfessionalId  String?
+  senderClientId        String?
+  content               String
+  createdAt             DateTime  @default(now())
+  readByProfessionalAt  DateTime?
+  readByClientAt        DateTime?
 
-  projectProfessional    ProjectProfessional  @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
+  projectProfessional ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
 
   @@index([projectProfessionalId])
   @@index([senderType])
   @@index([createdAt])
+}
+
+model Trade {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  category        String // 'contractor', 'company', 'reseller', 'general'
+  professionType  String? // Maps to Professional.professionType
+  aliases         String[]         @default([]) // Alternative names/spellings
+  description     String?
+  enabled         Boolean          @default(true)
+  usageCount      Int              @default(0) // Track popularity
+  featured        Boolean          @default(false)
+  sortOrder       Int              @default(999)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  serviceMappings ServiceMapping[]
+
+  @@index([category])
+  @@index([enabled])
+  @@index([professionType])
+}
+
+model ServiceMapping {
+  id         String   @id @default(cuid())
+  keyword    String   @unique // e.g., "leaky pipe", "fix toilet"
+  tradeId    String
+  confidence Int      @default(100) // 0-100, for fuzzy matching confidence
+  enabled    Boolean  @default(true)
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  trade      Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+  @@index([keyword])
+  @@index([tradeId])
+  @@index([enabled])
 }

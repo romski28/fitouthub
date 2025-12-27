@@ -61,6 +61,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   Projects
                 </Link>
                 <Link
+                  href="/admin/trades"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Trades
+                </Link>
+                <Link
                   href="/admin/patterns"
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >

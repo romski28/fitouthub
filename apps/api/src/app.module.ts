@@ -14,6 +14,7 @@ import { PatternsModule } from './patterns/patterns.module';
 import { ProfessionalAuthModule } from './professional-auth/professional-auth.module';
 import { ProfessionalModule } from './professional/professional.module';
 import { ClientModule } from './client/client.module';
+import { TradesModule } from './trades/trades.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ClientModule } from './client/client.module';
     ProfessionalAuthModule,
     ProfessionalModule,
     ClientModule,
+    TradesModule,
   ],
   controllers: [AppController, ProjectsController, UploadsController],
   providers: [AppService, PrismaService, ProjectsService],
