@@ -572,13 +572,20 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
     <div className="space-y-5">
       {/* Hero */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Projects</p>
             <h1 className="text-2xl font-bold leading-tight">Projects overview</h1>
             <p className="text-sm text-slate-200/90">{subtitle}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/create-project"
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center"
+            >
+              + Create New Project
+            </Link>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Total</p>
               <p className="text-lg font-bold text-white">{totals.total}</p>
@@ -594,6 +601,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Rejected</p>
               <p className="text-lg font-bold text-rose-200">{totals.rejected}</p>
+            </div>
             </div>
           </div>
         </div>

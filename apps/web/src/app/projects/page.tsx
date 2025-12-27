@@ -1,10 +1,54 @@
-import { ProjectsClient } from "./projects-client";
-import { getProjects } from "../../lib/api";
-import { Project } from "../../lib/types";
+'use client';
 
-export default async function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string }> }) {
-  const { clientId } = await searchParams;
-  const projects: Project[] = await getProjects(clientId ? { clientId } : undefined);
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
+import { ProjectsClient } from "./projects-client";
+import { Project } from "@/lib/types";
+import { API_BASE_URL } from '@/config/api';
+
+export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string }> }) {
+  const router = useRouter();
+  const { isLoggedIn, accessToken } = useAuth();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [clientId, setClientId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    if (isLoggedIn === false) {
+      router.push('/login');
+      return;
+    }
+  }, [isLoggedIn, router]);
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      if (!accessToken || !isLoggedIn) return;
+      try {
+        const params = await searchParams;
+        setClientId(params?.clientId);
+        const response = await fetch(
+          `${API_BASE_URL}/projects${params?.clientId ? `?clientId=${params.clientId}` : ''}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data);
+        }
+      } catch (err) {
+        console.error('Failed to load projects', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProjects();
+  }, [accessToken, isLoggedIn, searchParams]);
+
+  if (isLoggedIn === undefined || isLoggedIn === false || loading) {
+    return null;
+  }
 
   return <ProjectsClient projects={projects} clientId={clientId} />;
 }
