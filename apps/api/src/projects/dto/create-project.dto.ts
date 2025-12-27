@@ -8,5 +8,5 @@ export class CreateProjectDto {
   notes?: string;
   userId?: string;
   clientId?: string;
-  professionalIds: string[]; // Required: array of professional IDs to invite
+  professionalIds?: string[]; // Optional: can invite professionals later
 }

@@ -54,6 +54,7 @@ export default function CreateProjectPage() {
           budget: formData.budget ? parseFloat(formData.budget) : null,
           notes: formData.notes,
           status: 'pending',
+          professionalIds: [],
         }),
       });
 
