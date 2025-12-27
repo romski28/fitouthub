@@ -257,28 +257,31 @@ export class ProjectsService {
     const legacyId = (createProjectDto as any).professionalId;
     if (legacyId && !ids.includes(legacyId)) ids.push(legacyId);
 
-    // Validate professional IDs
-    if (!ids || ids.length === 0) {
-      throw new Error('At least one professional ID is required');
+    // Professional IDs are optional - projects can be created without selecting professionals yet
+    // Professionals can be invited after project creation
+    
+    // Debug: log invitation targets (safe for troubleshooting)
+    if (ids.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('[ProjectsService.create] inviting professionals:', ids);
     }
 
-    // Debug: log invitation targets (safe for troubleshooting)
-    // eslint-disable-next-line no-console
-    console.log('[ProjectsService.create] inviting professionals:', ids);
-
-    // Fetch all professionals for email
-    const professionals = await this.prisma.professional.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, email: true, fullName: true, businessName: true },
-    });
-
-    if (professionals.length !== ids.length) {
-      // eslint-disable-next-line no-console
-      console.warn('[ProjectsService.create] missing professionals', {
-        requested: ids,
-        found: professionals.map((p) => p.id),
+    // Fetch professionals for email (if any)
+    let professionals: any[] = [];
+    if (ids.length > 0) {
+      professionals = await this.prisma.professional.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, email: true, fullName: true, businessName: true },
       });
-      throw new BadRequestException('One or more professionals not found');
+
+      if (professionals.length !== ids.length) {
+        // eslint-disable-next-line no-console
+        console.warn('[ProjectsService.create] missing professionals', {
+          requested: ids,
+          found: professionals.map((p) => p.id),
+        });
+        throw new BadRequestException('One or more professionals not found');
+      }
     }
 
     // Transform userId into user relation for Prisma
