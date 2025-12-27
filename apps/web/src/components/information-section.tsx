@@ -4,6 +4,22 @@ import { useState } from 'react';
 
 type TabType = 'why' | 'how' | 'who' | 'choose';
 
+interface Card {
+  title: string;
+  description: string;
+  number?: string;
+}
+
+interface ContentItem {
+  title: string;
+  description?: string;
+  cards: Card[];
+}
+
+type ContentMap = {
+  [K in TabType]: ContentItem;
+};
+
 export default function InformationSection() {
   const [activeTab, setActiveTab] = useState<TabType>('why');
 
@@ -14,7 +30,7 @@ export default function InformationSection() {
     { id: 'choose' as TabType, label: 'Why choose us' },
   ];
 
-  const content = {
+  const content: ContentMap = {
     why: {
       title: 'Why FitOut Hub',
       description: 'Unlike traditional renovation processes that often lead to miscommunication, delays, and disputes, FitOut Hub provides:',
