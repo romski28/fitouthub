@@ -12,7 +12,16 @@ export default function JoinPage() {
 
   // If user selects professional, show the profession modal
   if (showProfessionalFlow) {
-    return <ProfessionRegistrationModal />;
+    return (
+      <ProfessionRegistrationModal
+        isOpen={true}
+        onClose={() => setShowProfessionalFlow(false)}
+        onSelect={(professionType) => {
+          // After selecting profession, redirect to professional signup
+          router.push(`/professional-signup?profession=${professionType}`);
+        }}
+      />
+    );
   }
 
   // If user selects client, redirect to client signup
