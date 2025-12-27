@@ -14,47 +14,69 @@ export class TradesService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(private prisma: PrismaService) {
-    // Pre-load cache on startup
-    this.refreshCache();
+    // Pre-load cache on startup (with error handling for missing tables)
+    this.refreshCache().catch((err) => {
+      console.warn('[TradesService] Failed to load cache on startup (tables may not exist yet):', err.message);
+      // Set empty cache so service doesn't crash
+      this.cache = {
+        trades: [],
+        mappings: new Map(),
+        lastUpdated: Date.now(),
+      };
+    });
   }
 
   private async refreshCache() {
-    const [trades, mappings] = await Promise.all([
-      this.prisma.trade.findMany({
-        where: { enabled: true },
-        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-        include: {
-          serviceMappings: {
-            where: { enabled: true },
-            select: { keyword: true },
+    try {
+      const [trades, mappings] = await Promise.all([
+        this.prisma.trade.findMany({
+          where: { enabled: true },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+          include: {
+            serviceMappings: {
+              where: { enabled: true },
+              select: { keyword: true },
+            },
           },
-        },
-      }),
-      this.prisma.serviceMapping.findMany({
-        where: { enabled: true },
-        include: {
-          trade: {
-            select: { name: true, professionType: true },
+        }),
+        this.prisma.serviceMapping.findMany({
+          where: { enabled: true },
+          include: {
+            trade: {
+              select: { name: true, professionType: true },
+            },
           },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
-    const mappingsMap = new Map<string, string>();
-    for (const mapping of mappings) {
-      mappingsMap.set(mapping.keyword.toLowerCase(), mapping.trade.professionType || mapping.trade.name);
+      const mappingsMap = new Map<string, string>();
+      for (const mapping of mappings) {
+        mappingsMap.set(mapping.keyword.toLowerCase(), mapping.trade.professionType || mapping.trade.name);
+      }
+
+      this.cache = {
+        trades,
+        mappings: mappingsMap,
+        lastUpdated: Date.now(),
+      };
+
+      console.log('[TradesService] Cache refreshed:', {
+        trades: trades.length,
+        mappings: mappingsMap.size,
+      });
+    } catch (error) {
+      // If tables don't exist yet (during initial deploy), log warning and use empty cache
+      if (error?.code === 'P2021') {
+        console.warn('[TradesService] Trade tables not found - run migrations first');
+        this.cache = {
+          trades: [],
+          mappings: new Map(),
+          lastUpdated: Date.now(),
+        };
+      } else {
+        throw error;
+      }
     }
-
-    this.cache = {
-      trades,
-      mappings: mappingsMap,
-      lastUpdated: Date.now(),
-    };
-
-    console.log('[TradesService] Cache refreshed:', {
-      trades: trades.length,
-      mappings: mappingsMap.size,
-    });
   }
 
   private async getCache(): Promise<TradesCache> {
