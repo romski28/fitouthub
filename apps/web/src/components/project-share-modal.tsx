@@ -27,7 +27,6 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
   const router = useRouter();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
 
   const uploadFiles = async (files: File[]) => {
@@ -110,7 +109,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
             <p className="text-xs uppercase font-semibold tracking-[0.12em] text-emerald-600">Share your project</p>
             <h2 className="text-2xl font-bold text-slate-900">Ask up to {professionals.length} professionals</h2>
             <p className="text-sm text-slate-600 mt-1">
-              We'll notify the selected professionals. You can upload photos to help them understand.
+              We&apos;ll notify the selected professionals. You can upload photos to help them understand.
             </p>
           </div>
         </div>

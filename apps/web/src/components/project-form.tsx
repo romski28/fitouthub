@@ -84,7 +84,6 @@ export function ProjectForm({
 
   const [serviceOptions, setServiceOptions] = useState<{ label: string; value: string }[]>([]);
   const isReadOnly = mode === 'view';
-  const isEditing = mode === 'edit';
 
   // Generate service options from professionals
   useEffect(() => {
@@ -114,9 +113,13 @@ export function ProjectForm({
       .map((value) => ({ label: value, value }))
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    setServiceOptions(sorted);
-    if (!formData.selectedService && sorted.length > 0) {
-      setFormData((prev) => ({ ...prev, selectedService: sorted[0].value }));
+    if (sorted.length > 0) {
+      setServiceOptions(sorted);
+      if (!formData.selectedService) {
+        setFormData((prev) => ({ ...prev, selectedService: sorted[0].value }));
+      }
+    } else {
+      setServiceOptions([]);
     }
   }, [singleProfessional, professionals, formData.selectedService]);
 
@@ -130,7 +133,7 @@ export function ProjectForm({
     return [];
   }, [singleProfessional, professionals]);
 
-  const handleChange = (field: keyof ProjectFormData, value: any) => {
+  const handleChange = (field: keyof ProjectFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -204,7 +207,6 @@ export function ProjectForm({
             maxFileSize={MAX_FILE_SIZE}
             onFilesChange={handleFilesChange}
             showUploadAction={false}
-            disabled={isReadOnly || isSubmitting}
           />
         </div>
 
@@ -374,7 +376,6 @@ export function ProjectForm({
             maxFileSize={MAX_FILE_SIZE}
             onFilesChange={handleFilesChange}
             showUploadAction={false}
-            disabled={isSubmitting}
           />
         </div>
       )}
@@ -414,7 +415,7 @@ export function ProjectForm({
         <div className="mt-8 pt-8 border-t border-slate-200">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
-              <strong>Next Step:</strong> After creating your project, you'll be able to search and invite professionals to submit quotes. We'll help you compare quotes, negotiate, and award the project.
+              <strong>Next Step:</strong> After creating your project, you&apos;ll be able to search and invite professionals to submit quotes. We&apos;ll help you compare quotes, negotiate, and award the project.
             </p>
           </div>
         </div>

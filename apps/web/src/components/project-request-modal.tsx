@@ -27,7 +27,6 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
   const router = useRouter();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
 
   const displayName = professional?.fullName || professional?.businessName || "Professional";
