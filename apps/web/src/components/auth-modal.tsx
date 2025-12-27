@@ -141,17 +141,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+      onClick={handleBackdropClick}
+    >
       <div className="w-full max-w-md rounded-lg bg-white shadow-lg">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            {activeTab === 'login' ? 'Login' : 'Join'}
+          <h2 className="text-2xl font-bold text-gray-900">
+            {activeTab === 'login' ? 'Sign In' : 'Join'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 text-2xl"
             aria-label="Close modal"
           >
             ✕
@@ -159,15 +168,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 bg-gray-50">
           <button
             onClick={() => {
               setActiveTab('login');
               setError(null);
             }}
-            className={`flex-1 px-4 py-3 text-sm font-medium ${
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === 'login'
-                ? 'border-b-2 border-blue-500 text-blue-600'
+                ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -178,9 +187,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setActiveTab('join');
               setError(null);
             }}
-            className={`flex-1 px-4 py-3 text-sm font-medium ${
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === 'join'
-                ? 'border-b-2 border-blue-500 text-blue-600'
+                ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -207,12 +216,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="your@email.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
                 <input
@@ -220,7 +229,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>
@@ -235,14 +244,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           ) : (
             <>
               {/* User Type Toggle */}
-              <div className="mb-6 flex gap-3">
+              <div className="mb-6 flex gap-2 bg-gray-100 p-1 rounded-lg">
                 <button
                   type="button"
                   onClick={() => setUserType('client')}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition ${
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                     userType === 'client'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   👤 Client
@@ -250,10 +259,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setUserType('professional')}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition ${
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                     userType === 'professional'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   👷 Professional
