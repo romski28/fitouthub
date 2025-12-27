@@ -59,7 +59,7 @@ export default function Home() {
 
           {/* Hero Image */}
           <div className="h-96 lg:h-full bg-cover bg-center hidden lg:block" style={{
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 400 400%27%3E%3Cdefs%3E%3ClinearGradient id=%27grad%27 x1=%270%25%27 y1=%270%25%27 x2=%27100%25%27 y2=%27100%25%27%3E%3Cstop offset=%270%25%27 style=%27stop-color:%2310b981;stop-opacity:1%27 /%3E%3Cstop offset=%27100%25%27 style=%27stop-color:%23059669;stop-opacity:1%27 /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill=%27url(%23grad)%27 width=%27400%27 height=%27400%27/%3E%3Ccircle cx=%27200%27 cy=%27200%27 r=%2780%27 fill=%27rgba(255,255,255,0.1)%27/%3E%3Ccircle cx=%27200%27 cy=%27200%27 r=%2750%27 fill=%27rgba(255,255,255,0.2)%27/%3E%3C/svg%3E")'
+            backgroundImage: 'url("/hero-painter.svg")'
           }} />
         </div>
       </section>
