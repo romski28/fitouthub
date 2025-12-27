@@ -55,20 +55,6 @@ export default function Home() {
             <p className="text-lg text-slate-300">
               Connect with trusted contractors, companies, and resellers. Manage your renovation projects with ease and confidence.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <a
-                className="rounded-lg bg-emerald-600 px-6 py-3 text-base font-semibold text-white hover:bg-emerald-700 transition"
-                href="/professionals"
-              >
-                Browse Professionals
-              </a>
-              <a
-                className="rounded-lg border border-white px-6 py-3 text-base font-semibold text-white hover:bg-white hover:text-slate-900 transition"
-                href="/join"
-              >
-                Join as Professional
-              </a>
-            </div>
           </div>
 
           {/* Hero Image */}
