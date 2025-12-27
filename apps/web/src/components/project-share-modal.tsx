@@ -12,6 +12,7 @@ interface ProjectShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   professionals: Professional[];
+  projectId?: string;
 }
 
 const toAbsolute = (url: string) => {
@@ -23,7 +24,7 @@ const toAbsolute = (url: string) => {
   return `${base}${normalized}`;
 };
 
-export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectShareModalProps) {
+export function ProjectShareModal({ isOpen, onClose, professionals, projectId }: ProjectShareModalProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,33 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
     setError(null);
     setSubmitting(true);
 
+    // If inviting to an existing project, bypass project creation
+    if (projectId) {
+      try {
+        const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects/${encodeURIComponent(projectId)}/invite`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ professionalIds: professionals.map((p) => p.id) }),
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || "Failed to invite professionals");
+        }
+
+        onClose();
+        // Return to existing project's detail page
+        router.push(`/projects/${encodeURIComponent(projectId)}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to invite professionals";
+        setError(message);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Otherwise, create a new project and invite selected professionals
     let photoUrls = uploadedUrls;
     if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
       try {
@@ -129,7 +157,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
           error={error}
           submitLabel="Share project"
           showBudget={false}
-          showService={true}
+          showService={!projectId}
         />
       </div>
     </ModalOverlay>

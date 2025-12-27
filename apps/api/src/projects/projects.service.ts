@@ -243,6 +243,108 @@ export class ProjectsService {
     return this.dedupeProfessionals(pros);
   }
 
+  async inviteProfessionals(projectId: string, professionalIds: string[]) {
+    if (!projectId) throw new BadRequestException('projectId is required');
+    const ids = Array.isArray(professionalIds)
+      ? professionalIds.filter(Boolean)
+      : [];
+    if (ids.length === 0) {
+      throw new BadRequestException('At least one professionalId is required');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) throw new BadRequestException('Project not found');
+
+    const professionals = await this.prisma.professional.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, email: true, fullName: true, businessName: true },
+    });
+    if (professionals.length === 0) {
+      throw new BadRequestException('No professionals found for given ids');
+    }
+
+    // Create or ensure ProjectProfessional relations (skip duplicates)
+    const junctionPromises = professionals.map((pro) =>
+      this.prisma.projectProfessional.upsert({
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId: pro.id,
+          },
+        },
+        update: {},
+        create: {
+          projectId,
+          professionalId: pro.id,
+          status: 'pending',
+        },
+      })
+    );
+
+    await Promise.all(junctionPromises);
+
+    // Generate tokens and send emails
+    const tokenPromises: any[] = [];
+    const emailPromises: any[] = [];
+    for (const professional of professionals) {
+      const acceptToken = createId();
+      const declineToken = createId();
+      const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+
+      tokenPromises.push(
+        this.prisma.emailToken.create({
+          data: {
+            token: acceptToken,
+            projectId,
+            professionalId: professional.id,
+            action: 'accept',
+            expiresAt,
+          },
+        }),
+        this.prisma.emailToken.create({
+          data: {
+            token: declineToken,
+            projectId,
+            professionalId: professional.id,
+            action: 'decline',
+            expiresAt,
+          },
+        })
+      );
+
+      const professionalName =
+        professional.fullName || professional.businessName || 'Professional';
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+      emailPromises.push(
+        this.emailService
+          .sendProjectInvitation({
+            to: professional.email,
+            professionalName,
+            projectName: project.projectName,
+            projectDescription: project.notes || 'No description provided',
+            location: project.region,
+            acceptToken,
+            declineToken,
+            baseUrl,
+          })
+          .catch((err) => {
+            console.error('[ProjectsService.inviteProfessionals] failed to send invite', {
+              to: professional.email,
+              error: err?.message,
+            });
+            return null;
+          })
+      );
+    }
+
+    await Promise.all([...tokenPromises, ...emailPromises]);
+
+    return { success: true, invitedCount: professionals.length };
+  }
+
   async create(createProjectDto: CreateProjectDto) {
     const { professionalIds, userId, ...rest } = createProjectDto;
     // Strip legacy professionalId from the data object so Prisma does not see an unknown field

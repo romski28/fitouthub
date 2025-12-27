@@ -139,9 +139,11 @@ ProfessionalCard.displayName = 'ProfessionalCard';
 interface Props {
   professionals: Professional[];
   initialLocation?: CanonicalLocation;
+  projectId?: string;
+  initialSearchTerm?: string;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm }: Props) {
   const { role } = useAuth();
   const isAdmin = role === 'admin';
   // Initialize from intentData synchronously to avoid effect-based setState
@@ -172,7 +174,7 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
       ? initialLocation
       : ({} as CanonicalLocation);
 
-  const initialSearch = initialFromIntent.description || initialFromIntent.profession || '';
+  const initialSearch = (initialSearchTerm || initialFromIntent.description || initialFromIntent.profession || '').trim();
   const [searchTerm, setSearchTerm] = useState<string>(initialSearch);
   const [professionHint] = useState<string | undefined>(initialFromIntent.profession);
   const [loc, setLoc] = useState<CanonicalLocation>(baseLoc);
@@ -547,6 +549,7 @@ export default function ProfessionalsList({ professionals, initialLocation }: Pr
           setSelectedIds(new Set());
         }}
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
+        projectId={projectId}
       />
       
       {/* Back to top button - behind the share project button */}

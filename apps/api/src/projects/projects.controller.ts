@@ -109,6 +109,14 @@ export class ProjectsController {
     return this.projectsService.create(createProjectDto);
   }
 
+  @Post(':id/invite')
+  async invite(
+    @Param('id') projectId: string,
+    @Body() body: { professionalIds: string[] },
+  ) {
+    return this.projectsService.inviteProfessionals(projectId, body.professionalIds);
+  }
+
   @Post(':id/quote')
   async submitQuote(
     @Param('id') projectId: string,

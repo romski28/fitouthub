@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Professional } from '../../lib/types';
@@ -9,12 +9,18 @@ import { ProtectedPageOverlay } from '@/components/protected-page-overlay';
 import { professionals as fallbackProfessionals } from '@/data/professionals';
 import type { CanonicalLocation } from '@/components/location-select';
 import { API_BASE_URL } from '@/config/api';
+import { useSearchParams } from 'next/navigation';
+import { matchLocation } from '@/lib/location-matcher';
 
 export default function ProfessionalsPage() {
   const { isLoggedIn, userLocation } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get('projectId') || undefined;
+  const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
+  const [projectName, setProjectName] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -54,8 +60,33 @@ export default function ProfessionalsPage() {
     }
   }, [isLoggedIn]);
 
+  // If arriving from a project, fetch it to pre-populate filters
+  useEffect(() => {
+    const loadProject = async () => {
+      if (!projectId || !isLoggedIn) return;
+      try {
+        const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/projects/${encodeURIComponent(projectId)}`);
+        if (!res.ok) return;
+        const p = await res.json();
+        const region = typeof p?.region === 'string' ? p.region : undefined;
+        const name = typeof p?.projectName === 'string' ? p.projectName : undefined;
+        setProjectRegion(region);
+        setProjectName(name);
+      } catch {
+        // ignore
+      }
+    };
+    loadProject();
+  }, [projectId, isLoggedIn]);
+
   // Prefer user default location; fallback to intentData (handled in ProfessionalsList)
-  const defaultLocation: CanonicalLocation = userLocation;
+  const defaultLocation: CanonicalLocation = useMemo(() => {
+    if (projectRegion) {
+      const ml = matchLocation(projectRegion);
+      if (ml) return { primary: ml.primary, secondary: ml.secondary, tertiary: ml.tertiary } as CanonicalLocation;
+    }
+    return userLocation;
+  }, [projectRegion, userLocation]);
 
   console.log('ProfessionalsPage - userLocation from auth:', userLocation);
 
@@ -106,6 +137,8 @@ export default function ProfessionalsPage() {
           <ProfessionalsList
             professionals={professionals}
             initialLocation={defaultLocation}
+            projectId={projectId}
+            initialSearchTerm={projectName}
           />
         )}
       </div>
