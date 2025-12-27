@@ -66,16 +66,21 @@ function ProfessionalsPageInner() {
   useEffect(() => {
     const loadProject = async () => {
       if (!projectId || !isLoggedIn) return;
+      console.log('[ProfessionalsPage] Loading project:', projectId);
       try {
         const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/projects/${encodeURIComponent(projectId)}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.warn('[ProfessionalsPage] Project fetch failed:', res.status);
+          return;
+        }
         const p = await res.json();
         const region = typeof p?.region === 'string' ? p.region : undefined;
         const name = typeof p?.projectName === 'string' ? p.projectName : undefined;
+        console.log('[ProfessionalsPage] Project data:', { region, name, project: p });
         setProjectRegion(region);
         setProjectName(name);
-      } catch {
-        // ignore
+      } catch (err) {
+        console.error('[ProfessionalsPage] Project fetch error:', err);
       }
     };
     loadProject();
@@ -85,12 +90,13 @@ function ProfessionalsPageInner() {
   const defaultLocation: CanonicalLocation = useMemo(() => {
     if (projectRegion) {
       const ml = matchLocation(projectRegion);
+      console.log('[ProfessionalsPage] matchLocation result:', { projectRegion, ml });
       if (ml) return { primary: ml.primary, secondary: ml.secondary, tertiary: ml.tertiary } as CanonicalLocation;
     }
     return userLocation;
   }, [projectRegion, userLocation]);
 
-  console.log('ProfessionalsPage - userLocation from auth:', userLocation);
+  console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, projectName, defaultLocation });
 
   return (
     <>

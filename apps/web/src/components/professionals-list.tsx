@@ -183,7 +183,22 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [locationSearch, setLocationSearch] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<Array<{ primary?: string; secondary?: string; tertiary?: string; display: string }>>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const [locationDisplay, setLocationDisplay] = useState<string>('');
+  
+  // Initialize locationDisplay from baseLoc to show pre-filled location
+  const initialLocationDisplay = [baseLoc.tertiary, baseLoc.secondary, baseLoc.primary]
+    .filter(Boolean)
+    .join(', ');
+  const [locationDisplay, setLocationDisplay] = useState<string>(initialLocationDisplay);
+
+  // Debug: log pre-population values
+  console.log('[ProfessionalsList] Pre-population:', {
+    projectId,
+    initialSearchTerm,
+    initialLocation,
+    baseLoc,
+    initialLocationDisplay,
+    initialSearch
+  });
   const [selectedPro, setSelectedPro] = useState<Professional | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -528,16 +543,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         </div>
       )}
 
-      {maxSelect > 0 && selectedIds.size > 0 && selectedIds.size === maxSelect ? (
+      {selectedIds.size > 0 ? (
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-6 right-6 z-40 h-16 w-16 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow"
+          className="fixed bottom-6 right-6 z-40 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3"
           aria-label="Share your project"
         >
-          <span className="flex h-full w-full items-center justify-center px-2 text-[9px] font-semibold leading-tight text-center">
-            Now Share Project Info
-          </span>
+          <div className="flex flex-col items-center justify-center text-center">
+            <span className="text-xs font-semibold leading-tight">
+              {selectedIds.size === 1 ? 'Invite 1 Professional' : `Invite ${selectedIds.size} Professionals`}
+            </span>
+            {selectedIds.size < 3 && (
+              <span className="text-[9px] text-indigo-200 mt-0.5">
+                We recommend at least 3
+              </span>
+            )}
+          </div>
         </button>
       ) : null}
 
