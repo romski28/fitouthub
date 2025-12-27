@@ -38,7 +38,7 @@ export default function Home() {
           </div>
 
           {/* Hero Image */}
-          <div className="h-96 lg:h-full bg-cover bg-center hidden lg:block" style={{
+          <div className="h-96 lg:h-full bg-contain bg-no-repeat bg-center hidden lg:flex items-center justify-center p-8" style={{
             backgroundImage: 'url("/hero-painter.png")'
           }} />
         </div>
