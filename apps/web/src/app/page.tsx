@@ -1,25 +1,5 @@
 import SearchFlow from '@/components/search-flow';
-
-const features = [
-  {
-    title: "Browse Professionals",
-    description: "Discover vetted contractors, companies, and resellers with verified ratings and service coverage.",
-    href: "/professionals",
-    icon: "🏢",
-  },
-  {
-    title: "Manage Projects",
-    description: "Track your fitout projects from start to finish with real-time status updates.",
-    href: "/projects",
-    icon: "📋",
-  },
-  {
-    title: "Join as Pro",
-    description: "Register your business and connect with clients looking for your expertise.",
-    href: "/join",
-    icon: "⭐",
-  },
-];
+import InformationSection from '@/components/information-section';
 
 export default function Home() {
   return (
@@ -65,33 +45,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="space-y-8">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500 mb-2">
-            How it Works
-          </p>
-          <h2 className="text-3xl font-bold text-slate-900">Everything You Need</h2>
-          <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-            A complete platform to find professionals, manage projects, and grow your business.
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {features.map((item) => (
-            <a
-              key={item.title}
-              className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              href={item.href}
-            >
-              <div className="text-4xl mb-4">{item.icon}</div>
-              <div className="text-lg font-semibold text-slate-900 group-hover:text-emerald-600 transition">
-                {item.title}
-              </div>
-              <p className="mt-2 text-sm text-slate-600">{item.description}</p>
-            </a>
-          ))}
-        </div>
-      </section>
+      <InformationSection />
     </div>
   );
 }
