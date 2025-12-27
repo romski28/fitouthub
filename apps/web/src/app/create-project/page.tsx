@@ -28,7 +28,14 @@ export default function CreateProjectPage() {
   const handleSubmit = async (formData: ProjectFormData) => {
     setError(null);
 
-    if (!formData.projectName?.trim() || !formData.region?.trim()) {
+    // Derive region from location object
+    const region = formData.location 
+      ? [formData.location.primary, formData.location.secondary, formData.location.tertiary]
+          .filter(Boolean)
+          .join(", ")
+      : formData.region || '';
+
+    if (!formData.projectName?.trim() || !region.trim()) {
       setError('Project name and region are required');
       return;
     }
@@ -44,7 +51,7 @@ export default function CreateProjectPage() {
         body: JSON.stringify({
           projectName: formData.projectName,
           clientName: formData.clientName,
-          region: formData.region,
+          region: region,
           budget: formData.budget ? parseFloat(String(formData.budget)) : null,
           notes: formData.notes,
           status: 'pending',
