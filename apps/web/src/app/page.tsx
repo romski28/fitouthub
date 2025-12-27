@@ -59,7 +59,7 @@ export default function Home() {
 
           {/* Hero Image */}
           <div className="h-96 lg:h-full bg-cover bg-center hidden lg:block" style={{
-            backgroundImage: 'url("/hero-painter.svg")'
+            backgroundImage: 'url("/hero-painter.png")'
           }} />
         </div>
       </section>
