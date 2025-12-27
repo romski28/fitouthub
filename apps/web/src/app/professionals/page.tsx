@@ -1,6 +1,8 @@
+
+// Wrap search params usage in Suspense to satisfy Next.js requirements
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Professional } from '../../lib/types';
@@ -12,7 +14,7 @@ import { API_BASE_URL } from '@/config/api';
 import { useSearchParams } from 'next/navigation';
 import { matchLocation } from '@/lib/location-matcher';
 
-export default function ProfessionalsPage() {
+function ProfessionalsPageInner() {
   const { isLoggedIn, userLocation } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -143,5 +145,13 @@ export default function ProfessionalsPage() {
         )}
       </div>
     </>
+  );
+}
+
+export default function ProfessionalsPage() {
+  return (
+    <Suspense fallback={<div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading professionals...</div>}>
+      <ProfessionalsPageInner />
+    </Suspense>
   );
 }
