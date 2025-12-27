@@ -27,6 +27,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
   const router = useRouter();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
 
   const displayName = professional?.fullName || professional?.businessName || "Professional";
@@ -47,6 +48,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
     if (!professional) return;
 
     setError(null);
+    setSubmitting(true);
 
     let photoUrls = uploadedUrls;
     if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
@@ -56,6 +58,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
       } catch (err) {
         const message = err instanceof Error ? err.message : "Upload failed";
         setError(message);
+        setSubmitting(false);
         return;
       }
     }
@@ -103,6 +106,8 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create project";
       setError(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 

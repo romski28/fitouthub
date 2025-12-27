@@ -27,6 +27,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
   const router = useRouter();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
 
   const uploadFiles = async (files: File[]) => {
@@ -45,6 +46,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
     if (professionals.length === 0) return;
 
     setError(null);
+    setSubmitting(true);
 
     let photoUrls = uploadedUrls;
     if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
@@ -54,6 +56,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
       } catch (err) {
         const message = err instanceof Error ? err.message : "Upload failed";
         setError(message);
+        setSubmitting(false);
         return;
       }
     }
@@ -96,6 +99,8 @@ export function ProjectShareModal({ isOpen, onClose, professionals }: ProjectSha
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create project";
       setError(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
