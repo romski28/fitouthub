@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import LocationSelect, { CanonicalLocation } from './location-select';
 import FileUploader from './file-uploader';
 import { Professional } from '@/lib/types';
