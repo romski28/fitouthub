@@ -82,7 +82,7 @@ export default function Home() {
             <div className="mt-6">
               <button
                 onClick={() => setShowProjectModal(true)}
-                className="w-full py-3 px-4 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 shadow-sm"
+                className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all duration-200 shadow-sm"
               >
                 ...or start a new project here
               </button>
