@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 
 // In-memory cache for trades and mappings
-interface TradeView {
+export interface TradeView {
   id: string;
   name: string;
   category: string;
@@ -20,6 +20,21 @@ interface TradesCache {
   trades: TradeView[];
   mappings: Map<string, string>;
   lastUpdated: number;
+}
+
+@Injectable()
+export interface TradeView {
+  id: string;
+  name: string;
+  category: string;
+  professionType?: string | null;
+  aliases: string[];
+  description?: string | null;
+  enabled: boolean;
+  featured: boolean;
+  sortOrder: number;
+  usageCount: number;
+  serviceMappings?: { keyword: string }[];
 }
 
 @Injectable()
@@ -78,7 +93,7 @@ export class TradesService {
       };
 
       console.log('[TradesService] Cache refreshed:', {
-        trades: trades.length,
+        trades: this.cache!.trades.length,
         mappings: mappingsMap.size,
       });
     } catch (error) {
@@ -128,6 +143,7 @@ export class TradesService {
     description?: string;
     featured?: boolean;
     sortOrder?: number;
+    enabled?: boolean;
   }) {
     const trade = await this.prisma.tradesman.create({
       data: {
