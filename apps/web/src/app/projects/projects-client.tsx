@@ -191,6 +191,24 @@ function EditProjectModal({
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableTrades, setAvailableTrades] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedTradeId, setSelectedTradeId] = useState<string>("");
+
+  // Fetch available trades
+  useEffect(() => {
+    const fetchTrades = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/trades`);
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableTrades(data.map((t: { id: string; name: string }) => ({ id: t.id, name: t.name })));
+        }
+      } catch (err) {
+        console.warn('[EditProjectModal] Failed to fetch trades:', err);
+      }
+    };
+    fetchTrades();
+  }, []);
 
   const handleChange = (key: keyof EditState, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -318,79 +336,67 @@ function EditProjectModal({
             </select>
           </div>
         </div>
+
         {/* Trades Required */}
         <div className="grid gap-2">
           <label className="text-sm font-medium text-slate-800">Trades Required</label>
-          <div className="flex flex-wrap gap-2 rounded-md border border-slate-300 px-3 py-2 min-h-[42px]">
-            {form.tradesRequired.map((trade, idx) => (
-              <span
-                key={`${trade}-${idx}`}
-                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
-              >
-                {trade}
-                <button
-                  type="button"
-                  onClick={() => handleChange("tradesRequired", form.tradesRequired.filter((_, i) => i !== idx))}
-                  className="hover:text-blue-900"
+          
+          {/* Selected Trades Pills */}
+          {form.tradesRequired.length > 0 && (
+            <div className="flex flex-wrap gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              {form.tradesRequired.map((trade, idx) => (
+                <span
+                  key={`${trade}-${idx}`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700"
                 >
-                  ×
-                </button>
-              </span>
-            ))}
-            <input
-              type="text"
-              placeholder={form.tradesRequired.length === 0 ? "Type trade and press Enter" : "Add another..."}
-              className="flex-1 min-w-[120px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const value = e.currentTarget.value.trim();
-                  if (value && !form.tradesRequired.includes(value)) {
-                    handleChange("tradesRequired", [...form.tradesRequired, value]);
-                    e.currentTarget.value = '';
+                  {trade}
+                  <button
+                    type="button"
+                    onClick={() => handleChange("tradesRequired", form.tradesRequired.filter((_, i) => i !== idx))}
+                    className="hover:text-blue-900 transition"
+                    aria-label="Remove trade"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Add Trade Dropdown + Button */}
+          <div className="flex gap-2">
+            <select
+              value={selectedTradeId}
+              onChange={(e) => setSelectedTradeId(e.target.value)}
+              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="">Select a trade...</option>
+              {availableTrades
+                .filter(t => !form.tradesRequired.includes(t.name))
+                .map((trade) => (
+                  <option key={trade.id} value={trade.id}>
+                    {trade.name}
+                  </option>
+                ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedTradeId) {
+                  const trade = availableTrades.find(t => t.id === selectedTradeId);
+                  if (trade && !form.tradesRequired.includes(trade.name)) {
+                    handleChange("tradesRequired", [...form.tradesRequired, trade.name]);
+                    setSelectedTradeId("");
                   }
                 }
               }}
-            />
+              disabled={!selectedTradeId}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Add
+            </button>
           </div>
-          <p className="text-xs text-slate-500">Type a trade/skill and press Enter. Remove by clicking the × on each chip.</p>
-        </div>
-        {/* Trades Required */}
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-800">Trades Required</label>
-          <div className="flex flex-wrap gap-2 rounded-md border border-slate-300 px-3 py-2 min-h-[42px]">
-            {form.tradesRequired.map((trade, idx) => (
-              <span
-                key={`${trade}-${idx}`}
-                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
-              >
-                {trade}
-                <button
-                  type="button"
-                  onClick={() => handleChange("tradesRequired", form.tradesRequired.filter((_, i) => i !== idx))}
-                  className="hover:text-blue-900"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-            <input
-              type="text"
-              placeholder={form.tradesRequired.length === 0 ? "Type trade and press Enter" : "Add another..."}
-              className="flex-1 min-w-[120px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const value = e.currentTarget.value.trim();
-                  if (value && !form.tradesRequired.includes(value)) {
-                    handleChange("tradesRequired", [...form.tradesRequired, value]);
-                    e.currentTarget.value = '';
-                  }
-                }
-              }}
-            />
-          </div>
-          <p className="text-xs text-slate-500">Type a trade/skill and press Enter. Remove by clicking the × on each chip.</p>
+          <p className="text-xs text-slate-500">Select a trade from the dropdown and click Add. Remove by clicking the × on each chip.</p>
         </div>
 
         <div className="grid gap-2">
