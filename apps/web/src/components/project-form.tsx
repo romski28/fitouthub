@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import LocationSelect, { CanonicalLocation } from './location-select';
 import FileUploader from './file-uploader';
 import { Professional } from '@/lib/types';
+import { API_BASE_URL } from '@/config/api';
 
 export interface ProjectFormData {
   projectName: string;
@@ -84,7 +85,52 @@ export function ProjectForm({
     tradesRequired: initialData?.tradesRequired || [],
   });
 
+  const [availableTrades, setAvailableTrades] = useState<Array<{ id: string; name: string; category: string }>>([]);
+  const [showTradeDropdown, setShowTradeDropdown] = useState(false);
+  const [tradeSearchTerm, setTradeSearchTerm] = useState('');
   const isReadOnly = mode === 'view';
+
+  // Fetch available trades from API
+  useEffect(() => {
+    const fetchTrades = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/trades`);
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableTrades(data.map((t: { id: string; name: string; category: string }) => ({
+            id: t.id,
+            name: t.name,
+            category: t.category,
+          })));
+        }
+      } catch (err) {
+        console.warn('[ProjectForm] Failed to fetch trades:', err);
+      }
+    };
+    fetchTrades();
+  }, []);
+
+  const filteredTrades = useMemo(() => {
+    if (!tradeSearchTerm.trim()) return availableTrades;
+    const search = tradeSearchTerm.toLowerCase();
+    return availableTrades.filter(t => 
+      t.name.toLowerCase().includes(search) || 
+      t.category.toLowerCase().includes(search)
+    );
+  }, [tradeSearchTerm, availableTrades]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showTradeDropdown) {
+        setShowTradeDropdown(false);
+      }
+    };
+    if (showTradeDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showTradeDropdown]);
 
   const displayNames = useMemo(() => {
     if (singleProfessional) {
@@ -138,24 +184,43 @@ export function ProjectForm({
                   </button>
                 </span>
               ))}
-              <input
-                type="text"
-                placeholder={formData.tradesRequired.length === 0 ? "Type trade and press Enter" : "Add another..."}
-                disabled={isReadOnly || isSubmitting}
-                className="flex-1 min-w-[120px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none disabled:bg-slate-50"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const value = e.currentTarget.value.trim();
-                    if (value && !formData.tradesRequired.includes(value)) {
-                      handleChange('tradesRequired', [...formData.tradesRequired, value]);
-                      e.currentTarget.value = '';
-                    }
-                  }
-                }}
-              />
+              <div className="relative flex-1 min-w-[120px]">
+                <input
+                  type="text"
+                  value={tradeSearchTerm}
+                  onChange={(e) => {
+                    setTradeSearchTerm(e.target.value);
+                    setShowTradeDropdown(true);
+                  }}
+                  onFocus={() => setShowTradeDropdown(true)}
+                  placeholder={formData.tradesRequired.length === 0 ? "Select trades..." : "Add another..."}
+                  disabled={isReadOnly || isSubmitting}
+                  className="w-full border-0 bg-transparent px-1 py-0.5 text-sm outline-none disabled:bg-slate-50"
+                />
+                {showTradeDropdown && filteredTrades.length > 0 && !isReadOnly && !isSubmitting && (
+                  <div className="absolute top-full left-0 z-10 mt-1 max-h-48 w-full min-w-[200px] overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                    {filteredTrades.slice(0, 20).map((trade) => (
+                      <button
+                        key={trade.id}
+                        type="button"
+                        onClick={() => {
+                          if (!formData.tradesRequired.includes(trade.name)) {
+                            handleChange('tradesRequired', [...formData.tradesRequired, trade.name]);
+                          }
+                          setTradeSearchTerm('');
+                          setShowTradeDropdown(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between"
+                      >
+                        <span className="font-medium text-slate-900">{trade.name}</span>
+                        <span className="text-xs text-slate-500">{trade.category}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-slate-500">Type a trade/skill and press Enter (e.g., Plumber, Electrician, Carpenter)</p>
+            <p className="text-xs text-slate-500">Select from available trades or type to search. Click to add.</p>
           </div>
         )}
 
@@ -316,25 +381,44 @@ export function ProjectForm({
                 </button>
               </span>
             ))}
-            <input
-              type="text"
-              placeholder={formData.tradesRequired.length === 0 ? "Type trade and press Enter (e.g., Plumber, Electrician)" : "Add another..."}
-              disabled={isReadOnly || isSubmitting}
-              required={!isReadOnly && formData.tradesRequired.length === 0}
-              className="flex-1 min-w-[150px] border-0 bg-transparent px-2 py-1 text-base outline-none disabled:bg-slate-50"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const value = e.currentTarget.value.trim();
-                  if (value && !formData.tradesRequired.includes(value)) {
-                    handleChange('tradesRequired', [...formData.tradesRequired, value]);
-                    e.currentTarget.value = '';
-                  }
-                }
-              }}
-            />
+            <div className="relative flex-1 min-w-[150px]">
+              <input
+                type="text"
+                value={tradeSearchTerm}
+                onChange={(e) => {
+                  setTradeSearchTerm(e.target.value);
+                  setShowTradeDropdown(true);
+                }}
+                onFocus={() => setShowTradeDropdown(true)}
+                placeholder={formData.tradesRequired.length === 0 ? "Select trades..." : "Add another..."}
+                disabled={isReadOnly || isSubmitting}
+                required={!isReadOnly && formData.tradesRequired.length === 0}
+                className="w-full border-0 bg-transparent px-2 py-1 text-base outline-none disabled:bg-slate-50"
+              />
+              {showTradeDropdown && filteredTrades.length > 0 && !isReadOnly && !isSubmitting && (
+                <div className="absolute top-full left-0 z-10 mt-1 max-h-60 w-full min-w-[250px] overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                  {filteredTrades.slice(0, 20).map((trade) => (
+                    <button
+                      key={trade.id}
+                      type="button"
+                      onClick={() => {
+                        if (!formData.tradesRequired.includes(trade.name)) {
+                          handleChange('tradesRequired', [...formData.tradesRequired, trade.name]);
+                        }
+                        setTradeSearchTerm('');
+                        setShowTradeDropdown(false);
+                      }}
+                      className="w-full px-3 py-2.5 text-left hover:bg-blue-50 flex items-center justify-between border-b border-slate-100 last:border-0"
+                    >
+                      <span className="font-medium text-slate-900">{trade.name}</span>
+                      <span className="text-xs text-slate-500 uppercase tracking-wide">{trade.category}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Specify all trades or services needed for this project. Press Enter after typing each one.</p>
+          <p className="text-xs text-slate-500 mt-1">Select from available trades. Type to search, click to add.</p>
         </div>
       )}
 
