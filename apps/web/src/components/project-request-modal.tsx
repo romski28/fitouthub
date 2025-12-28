@@ -67,7 +67,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
       .filter(Boolean)
       .join(", ");
     const clientName = user ? `${user.firstName} ${user.surname}`.trim() : "Client";
-    const projectName = `${formData.selectedService || 'Service Request'} with ${displayName}`;
+    const projectName = formData.notes?.trim() || `Request from ${clientName}`;
 
     const normalizedPhotos = photoUrls.map(toAbsolute);
     const photoNote = normalizedPhotos.length > 0
@@ -76,6 +76,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
 
     const payload = {
       projectName,
+      tradesRequired: formData.selectedService ? [formData.selectedService] : [],
       clientName,
       contractorName: displayName,
       region: locationLabel || "Hong Kong",

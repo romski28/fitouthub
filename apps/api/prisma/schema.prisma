@@ -91,6 +91,7 @@ model Project {
   contractorName         String?
   notes                  String?
   projectName            String
+  tradesRequired         String[]              @default([])
   region                 String
   startDate              DateTime?
   endDate                DateTime?

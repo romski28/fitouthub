@@ -96,7 +96,8 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId }:
     const normalizedPhotos = photoUrls.map(toAbsolute);
 
     const payload = {
-      projectName: formData.selectedService || "Service Request",
+      projectName: formData.notes?.trim() || "Service Request",
+      tradesRequired: formData.selectedService ? [formData.selectedService] : [],
       clientName,
       contractorName: "",
       region: locationLabel || "Hong Kong",

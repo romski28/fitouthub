@@ -75,8 +75,11 @@ function ProfessionalsPageInner() {
         }
         const p = await res.json();
         const region = typeof p?.region === 'string' ? p.region : undefined;
-        const name = typeof p?.projectName === 'string' ? p.projectName : undefined;
-        console.log('[ProfessionalsPage] Project data:', { region, name, project: p });
+        // Use first trade from tradesRequired array, fallback to projectName for old data
+        const name = Array.isArray(p?.tradesRequired) && p.tradesRequired.length > 0
+          ? p.tradesRequired[0]
+          : (typeof p?.projectName === 'string' ? p.projectName : undefined);
+        console.log('[ProfessionalsPage] Project data:', { region, name, tradesRequired: p?.tradesRequired, project: p });
         setProjectRegion(region);
         setProjectName(name);
       } catch (err) {
