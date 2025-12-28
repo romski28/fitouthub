@@ -233,13 +233,32 @@ const serviceMappings = [
 async function main() {
   console.log('🌱 Seeding trades and service mappings...');
 
-  // Create trades
+  // Create trades (using Tradesman model as the source of truth)
   const tradeMap = new Map<string, string>();
   for (const trade of trades) {
-    const created = await prisma.trade.upsert({
-      where: { name: trade.name },
-      update: trade,
-      create: trade,
+    const created = await prisma.tradesman.upsert({
+      where: { title: trade.name },
+      update: {
+        title: trade.name,
+        category: trade.category,
+        professionType: trade.professionType,
+        aliases: trade.aliases ?? [],
+        description: trade.description,
+        featured: trade.featured ?? false,
+        sortOrder: trade.sortOrder ?? 999,
+        enabled: true,
+      },
+      create: {
+        title: trade.name,
+        category: trade.category,
+        professionType: trade.professionType,
+        aliases: trade.aliases ?? [],
+        description: trade.description,
+        featured: trade.featured ?? false,
+        sortOrder: trade.sortOrder ?? 999,
+        enabled: true,
+        jobs: [],
+      },
     });
     tradeMap.set(trade.name, created.id);
     console.log(`✅ Trade: ${trade.name}`);

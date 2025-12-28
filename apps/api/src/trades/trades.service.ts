@@ -2,8 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 
 // In-memory cache for trades and mappings
+interface TradeView {
+  id: string;
+  name: string;
+  category: string;
+  professionType?: string | null;
+  aliases: string[];
+  description?: string | null;
+  enabled: boolean;
+  featured: boolean;
+  sortOrder: number;
+  usageCount: number;
+  serviceMappings?: { keyword: string }[];
+}
+
 interface TradesCache {
-  trades: any[];
+  trades: TradeView[];
   mappings: Map<string, string>;
   lastUpdated: number;
 }
@@ -28,10 +42,10 @@ export class TradesService {
 
   private async refreshCache() {
     try {
-      const [trades, mappings] = await Promise.all([
-        this.prisma.trade.findMany({
+      const [tradesmen, mappings] = await Promise.all([
+        this.prisma.tradesman.findMany({
           where: { enabled: true },
-          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+          orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
           include: {
             serviceMappings: {
               where: { enabled: true },
@@ -43,7 +57,7 @@ export class TradesService {
           where: { enabled: true },
           include: {
             trade: {
-              select: { name: true, professionType: true },
+              select: { title: true, professionType: true },
             },
           },
         }),
@@ -51,11 +65,14 @@ export class TradesService {
 
       const mappingsMap = new Map<string, string>();
       for (const mapping of mappings) {
-        mappingsMap.set(mapping.keyword.toLowerCase(), mapping.trade.professionType || mapping.trade.name);
+        mappingsMap.set(
+          mapping.keyword.toLowerCase(),
+          mapping.trade.professionType || mapping.trade.title,
+        );
       }
 
       this.cache = {
-        trades,
+        trades: tradesmen.map((t) => this.toView(t)),
         mappings: mappingsMap,
         lastUpdated: Date.now(),
       };
@@ -92,7 +109,7 @@ export class TradesService {
   }
 
   async findById(id: string) {
-    return this.prisma.trade.findUnique({
+    const trade = await this.prisma.tradesman.findUnique({
       where: { id },
       include: {
         serviceMappings: {
@@ -100,6 +117,7 @@ export class TradesService {
         },
       },
     });
+    return trade ? this.toView(trade) : null;
   }
 
   async create(data: {
@@ -111,11 +129,20 @@ export class TradesService {
     featured?: boolean;
     sortOrder?: number;
   }) {
-    const trade = await this.prisma.trade.create({
-      data,
+    const trade = await this.prisma.tradesman.create({
+      data: {
+        title: data.name,
+        category: data.category,
+        professionType: data.professionType,
+        aliases: data.aliases ?? [],
+        description: data.description,
+        featured: data.featured ?? false,
+        sortOrder: data.sortOrder ?? 999,
+        enabled: data.enabled ?? true,
+      },
     });
     await this.refreshCache();
-    return trade;
+    return this.toView(trade);
   }
 
   async update(id: string, data: Partial<{
@@ -128,22 +155,31 @@ export class TradesService {
     featured: boolean;
     sortOrder: number;
   }>) {
-    const trade = await this.prisma.trade.update({
+    const trade = await this.prisma.tradesman.update({
       where: { id },
-      data,
+      data: {
+        ...(data.name ? { title: data.name } : {}),
+        ...(data.category ? { category: data.category } : {}),
+        ...(data.professionType !== undefined ? { professionType: data.professionType } : {}),
+        ...(data.aliases ? { aliases: data.aliases } : {}),
+        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.enabled !== undefined ? { enabled: data.enabled } : {}),
+        ...(data.featured !== undefined ? { featured: data.featured } : {}),
+        ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+      },
     });
     await this.refreshCache();
-    return trade;
+    return this.toView(trade);
   }
 
   async delete(id: string) {
-    await this.prisma.trade.delete({ where: { id } });
+    await this.prisma.tradesman.delete({ where: { id } });
     await this.refreshCache();
     return { success: true };
   }
 
   async incrementUsage(id: string) {
-    await this.prisma.trade.update({
+    await this.prisma.tradesman.update({
       where: { id },
       data: {
         usageCount: {
@@ -214,5 +250,21 @@ export class TradesService {
       result[key] = value;
     });
     return result;
+  }
+
+  private toView(trade: any): TradeView {
+    return {
+      id: trade.id,
+      name: trade.title,
+      category: trade.category,
+      professionType: trade.professionType,
+      aliases: trade.aliases ?? [],
+      description: trade.description,
+      enabled: trade.enabled ?? true,
+      featured: trade.featured ?? false,
+      sortOrder: trade.sortOrder ?? 999,
+      usageCount: trade.usageCount ?? 0,
+      serviceMappings: trade.serviceMappings,
+    };
   }
 }
