@@ -80,7 +80,7 @@ export const Navbar: React.FC = () => {
         .catch(() => {})
         .finally(() => clearTimeout(timeoutId));
     }
-  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn, professional, disableClientUnread, disableProfUnread]);
+  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn, professionalAccessToken, disableClientUnread, disableProfUnread]);
 
   return (
     <>
