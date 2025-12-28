@@ -36,8 +36,8 @@ export const Navbar: React.FC = () => {
   useEffect(() => {
     if (!hydrated) return;
     
-    // Fetch unread counts with timeout protection
-    if (isLoggedIn && accessToken && !disableClientUnread) {
+    // Only fetch if we have a token and haven't disabled
+    if (isLoggedIn && accessToken && accessToken.length > 10 && !disableClientUnread) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
       
@@ -46,20 +46,25 @@ export const Navbar: React.FC = () => {
         signal: controller.signal,
       })
         .then((r) => {
-          if (r?.status === 401) {
+          if (!r || r.status === 401 || r.status === 403) {
             setDisableClientUnread(true);
             return null;
           }
-          return r?.ok ? r.json() : null;
+          return r.ok ? r.json() : null;
         })
         .then((data) => {
           if (data?.unreadCount !== undefined) setClientUnread(data.unreadCount);
         })
-        .catch(() => {})
+        .catch((err) => {
+          // Silently disable on error - don't spam console
+          if (err?.name !== 'AbortError') {
+            setDisableClientUnread(true);
+          }
+        })
         .finally(() => clearTimeout(timeoutId));
     }
     
-    if (profIsLoggedIn && professionalAccessToken && !disableProfUnread) {
+    if (profIsLoggedIn && professionalAccessToken && professionalAccessToken.length > 10 && !disableProfUnread) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
       
@@ -68,16 +73,21 @@ export const Navbar: React.FC = () => {
         signal: controller.signal,
       })
         .then((r) => {
-          if (r?.status === 401) {
+          if (!r || r.status === 401 || r.status === 403) {
             setDisableProfUnread(true);
             return null;
           }
-          return r?.ok ? r.json() : null;
+          return r.ok ? r.json() : null;
         })
         .then((data) => {
           if (data?.unreadCount !== undefined) setProfUnread(data.unreadCount);
         })
-        .catch(() => {})
+        .catch((err) => {
+          // Silently disable on error - don't spam console
+          if (err?.name !== 'AbortError') {
+            setDisableProfUnread(true);
+          }
+        })
         .finally(() => clearTimeout(timeoutId));
     }
   }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn, professionalAccessToken, disableClientUnread, disableProfUnread]);
