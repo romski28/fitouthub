@@ -23,21 +23,6 @@ interface TradesCache {
 }
 
 @Injectable()
-export interface TradeView {
-  id: string;
-  name: string;
-  category: string;
-  professionType?: string | null;
-  aliases: string[];
-  description?: string | null;
-  enabled: boolean;
-  featured: boolean;
-  sortOrder: number;
-  usageCount: number;
-  serviceMappings?: { keyword: string }[];
-}
-
-@Injectable()
 export class TradesService {
   private cache: TradesCache | null = null;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
