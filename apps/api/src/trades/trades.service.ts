@@ -82,16 +82,40 @@ export class TradesService {
         mappings: mappingsMap.size,
       });
     } catch (error) {
-      // If tables don't exist yet (during initial deploy), log warning and use empty cache
-      if (error?.code === 'P2021') {
-        console.warn('[TradesService] Trade tables not found - run migrations first');
+      // Fallback for schema mismatch (columns or relations not present yet)
+      console.warn('[TradesService] Primary query failed, attempting fallback without relations/order:', error?.message);
+      try {
+        const tradesmen = await this.prisma.tradesman.findMany({
+          // Some DBs may not have 'enabled' or 'sortOrder' yet
+          orderBy: [{ title: 'asc' }],
+        });
+        let mappingsMap = new Map<string, string>();
+        try {
+          const mappings = await this.prisma.serviceMapping.findMany({
+            include: {
+              trade: {
+                select: { title: true, professionType: true },
+              },
+            },
+          });
+          mappingsMap = new Map(
+            mappings.map((m) => [m.keyword.toLowerCase(), m.trade.professionType || m.trade.title]),
+          );
+        } catch (inner) {
+          console.warn('[TradesService] Mappings query failed, continuing without mappings:', inner?.message);
+        }
+        this.cache = {
+          trades: tradesmen.map((t) => this.toView(t)),
+          mappings: mappingsMap,
+          lastUpdated: Date.now(),
+        };
+      } catch (fallbackErr) {
+        console.warn('[TradesService] Fallback also failed - using empty cache:', fallbackErr?.message);
         this.cache = {
           trades: [],
           mappings: new Map(),
           lastUpdated: Date.now(),
         };
-      } else {
-        throw error;
       }
     }
   }
