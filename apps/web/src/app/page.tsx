@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SearchFlow from '@/components/search-flow';
 import InformationSection from '@/components/information-section';
@@ -15,6 +15,11 @@ export default function Home() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const handleProjectSubmit = async (data: ProjectFormData) => {
     setIsSubmitting(true);
@@ -80,7 +85,7 @@ export default function Home() {
           <SearchFlow />
           
           {/* New Project Button - Only for logged-in users */}
-          {isLoggedIn && (
+          {hydrated && isLoggedIn && (
             <div className="mt-6">
               <button
                 onClick={() => setShowProjectModal(true)}
@@ -122,7 +127,7 @@ export default function Home() {
       <InformationSection />
 
       {/* Project Creation Modal */}
-      {showProjectModal && (
+      {hydrated && showProjectModal && (
         <ModalOverlay isOpen={showProjectModal} onClose={() => setShowProjectModal(false)} maxWidth="max-w-3xl">
           <div className="space-y-6">
             <div className="flex items-start justify-between gap-3">
