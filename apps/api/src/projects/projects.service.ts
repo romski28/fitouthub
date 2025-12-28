@@ -387,9 +387,18 @@ export class ProjectsService {
     }
 
     // Transform userId into user relation for Prisma
+    // Normalize date fields if provided
+    const normalized: any = { ...projectData };
+    if (typeof normalized.startDate === 'string' && normalized.startDate) {
+      normalized.startDate = new Date(normalized.startDate);
+    }
+    if (typeof normalized.endDate === 'string' && normalized.endDate) {
+      normalized.endDate = new Date(normalized.endDate);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const createData: any = {
-      ...projectData,
+      ...normalized,
       professionals: {
         create: ids.map((id) => ({
           professionalId: id,

@@ -8,4 +8,8 @@ export class UpdateProjectDto {
   notes?: string;
   userId?: string;
   clientId?: string;
+  tradesRequired?: string[];
+  startDate?: string; // ISO date string
+  endDate?: string;   // ISO date string
+  isEmergency?: boolean;
 }

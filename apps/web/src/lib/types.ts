@@ -42,4 +42,8 @@ export type Project = {
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
+  tradesRequired?: string[];
+  startDate?: string;
+  endDate?: string;
+  isEmergency?: boolean;
 };

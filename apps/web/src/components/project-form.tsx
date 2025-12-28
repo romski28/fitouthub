@@ -16,6 +16,8 @@ export interface ProjectFormData {
   location?: CanonicalLocation;
   files?: File[];
   tradesRequired: string[];
+  isEmergency?: boolean;
+  endDate?: string; // ISO date string (YYYY-MM-DD)
 }
 
 interface ProjectFormProps {
@@ -83,6 +85,8 @@ export function ProjectForm({
     location: initialData?.location || {},
     files: initialData?.files || [],
     tradesRequired: initialData?.tradesRequired || [],
+    isEmergency: initialData?.isEmergency ?? false,
+    endDate: initialData?.endDate || '',
   });
 
   const [availableTrades, setAvailableTrades] = useState<Array<{ id: string; name: string; category: string }>>([]);
@@ -184,40 +188,34 @@ export function ProjectForm({
                   </button>
                 </span>
               ))}
-              <div className="relative flex-1 min-w-[120px]">
-                <input
-                  type="text"
+              <div className="flex gap-2 w-full">
+                <select
                   value={tradeSearchTerm}
-                  onChange={(e) => {
-                    setTradeSearchTerm(e.target.value);
-                    setShowTradeDropdown(true);
-                  }}
-                  onFocus={() => setShowTradeDropdown(true)}
-                  placeholder={formData.tradesRequired.length === 0 ? "Select trades..." : "Add another..."}
+                  onChange={(e) => setTradeSearchTerm(e.target.value)}
                   disabled={isReadOnly || isSubmitting}
-                  className="w-full border-0 bg-transparent px-1 py-0.5 text-sm outline-none disabled:bg-slate-50"
-                />
-                {showTradeDropdown && filteredTrades.length > 0 && !isReadOnly && !isSubmitting && (
-                  <div className="absolute top-full left-0 z-10 mt-1 max-h-48 w-full min-w-[200px] overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
-                    {filteredTrades.slice(0, 20).map((trade) => (
-                      <button
-                        key={trade.id}
-                        type="button"
-                        onClick={() => {
-                          if (!formData.tradesRequired.includes(trade.name)) {
-                            handleChange('tradesRequired', [...formData.tradesRequired, trade.name]);
-                          }
-                          setTradeSearchTerm('');
-                          setShowTradeDropdown(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between"
-                      >
-                        <span className="font-medium text-slate-900">{trade.name}</span>
-                        <span className="text-xs text-slate-500">{trade.category}</span>
-                      </button>
+                  className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="">Select a trade...</option>
+                  {availableTrades
+                    .filter(t => !formData.tradesRequired.includes(t.name))
+                    .map((trade) => (
+                      <option key={trade.id} value={trade.id}>{trade.name}</option>
                     ))}
-                  </div>
-                )}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const trade = availableTrades.find(t => t.id === tradeSearchTerm);
+                    if (trade && !formData.tradesRequired.includes(trade.name)) {
+                      handleChange('tradesRequired', [...formData.tradesRequired, trade.name]);
+                      setTradeSearchTerm('');
+                    }
+                  }}
+                  disabled={isReadOnly || isSubmitting || !tradeSearchTerm}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50"
+                >
+                  Add
+                </button>
               </div>
             </div>
             <p className="text-xs text-slate-500">Select from available trades or type to search. Click to add.</p>
@@ -333,11 +331,10 @@ export function ProjectForm({
       {/* Client Name */}
       <div>
         <label className="block text-sm font-semibold text-slate-900 mb-2">
-          Your Name {!isReadOnly && '*'}
+          Your Name
         </label>
         <input
           type="text"
-          required={!isReadOnly}
           placeholder="Your full name"
           value={formData.clientName}
           onChange={(e) => handleChange('clientName', e.target.value)}
@@ -458,6 +455,31 @@ export function ProjectForm({
           className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base disabled:bg-slate-50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
         />
         <p className="text-xs text-slate-500 mt-1">You can add photos and more details after creating the project.</p>
+      </div>
+
+      {/* Timescale */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex items-center gap-2">
+          <input
+            id="isEmergency"
+            type="checkbox"
+            checked={!!formData.isEmergency}
+            onChange={(e) => handleChange('isEmergency', e.target.checked)}
+            disabled={isReadOnly || isSubmitting}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          <label htmlFor="isEmergency" className="text-sm font-medium text-slate-800">This is an emergency</label>
+        </div>
+        <div className="grid gap-1">
+          <label className="text-sm font-medium text-slate-800">I need this completed by</label>
+          <input
+            type="date"
+            value={formData.endDate || ''}
+            onChange={(e) => handleChange('endDate', e.target.value)}
+            disabled={isReadOnly || isSubmitting}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+        </div>
       </div>
 
       {/* File Upload */}

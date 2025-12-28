@@ -95,6 +95,7 @@ model Project {
   region                 String
   startDate              DateTime?
   endDate                DateTime?
+  isEmergency            Boolean               @default(false)
   contractorContactName  String?
   contractorContactPhone String?
   contractorContactEmail String?

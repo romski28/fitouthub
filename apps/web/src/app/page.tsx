@@ -35,6 +35,8 @@ export default function Home() {
         notes: data.notes,
         status: "pending" as const,
         userId: user?.id,
+        isEmergency: !!data.isEmergency,
+        endDate: data.endDate || undefined,
       };
 
       const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {

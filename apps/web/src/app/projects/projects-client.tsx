@@ -161,6 +161,8 @@ type EditState = {
   status: "pending" | "approved" | "rejected";
   notes?: string;
   tradesRequired: string[];
+  isEmergency?: boolean;
+  endDate?: string;
 };
 
 function EditProjectModal({
@@ -183,6 +185,8 @@ function EditProjectModal({
     status: project.status,
     notes: stripPhotoSection(project.notes),
     tradesRequired: project.tradesRequired || [],
+    isEmergency: (project as any).isEmergency ?? false,
+    endDate: (project as any).endDate || "",
   });
   const [photos, setPhotos] = useState<string[]>(project.photos || []);
   const [lightboxUrl, setLightboxUrl] = useState<string>("");
@@ -227,6 +231,8 @@ function EditProjectModal({
           const absolutePhotos = photos.map(toAbsolute);
           return `${base ? `${base}\n` : ""}Photos: ${absolutePhotos.join(", ")}`;
         })(),
+        isEmergency: !!form.isEmergency,
+        endDate: form.endDate || undefined,
       };
       const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects/${project.id}`, {
         method: "PUT",
@@ -397,6 +403,29 @@ function EditProjectModal({
             </button>
           </div>
           <p className="text-xs text-slate-500">Select a trade from the dropdown and click Add. Remove by clicking the × on each chip.</p>
+        </div>
+
+        {/* Timescale */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex items-center gap-2">
+            <input
+              id="isEmergencyEdit"
+              type="checkbox"
+              checked={!!form.isEmergency}
+              onChange={(e) => handleChange("isEmergency", e.target.checked as any)}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            <label htmlFor="isEmergencyEdit" className="text-sm font-medium text-slate-800">This is an emergency</label>
+          </div>
+          <div className="grid gap-1">
+            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
+            <input
+              type="date"
+              value={form.endDate || ""}
+              onChange={(e) => handleChange("endDate", e.target.value)}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            />
+          </div>
         </div>
 
         <div className="grid gap-2">
