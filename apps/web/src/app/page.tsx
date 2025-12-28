@@ -17,7 +17,6 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const handleProjectSubmit = async (data: ProjectFormData) => {
-  const handleProjectSubmit = async (data: ProjectFormData) => {
     setIsSubmitting(true);
     setError(null);
 
