@@ -97,7 +97,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId }:
 
     const payload = {
       projectName: formData.notes?.trim() || "Service Request",
-      tradesRequired: formData.selectedService ? [formData.selectedService] : [],
+      tradesRequired: formData.tradesRequired.length > 0 ? formData.tradesRequired : [],
       clientName,
       contractorName: "",
       region: locationLabel || "Hong Kong",

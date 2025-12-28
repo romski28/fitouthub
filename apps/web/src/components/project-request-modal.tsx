@@ -76,7 +76,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
 
     const payload = {
       projectName,
-      tradesRequired: formData.selectedService ? [formData.selectedService] : [],
+      tradesRequired: formData.tradesRequired.length > 0 ? formData.tradesRequired : [],
       clientName,
       contractorName: displayName,
       region: locationLabel || "Hong Kong",

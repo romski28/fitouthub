@@ -75,10 +75,16 @@ function ProfessionalsPageInner() {
         }
         const p = await res.json();
         const region = typeof p?.region === 'string' ? p.region : undefined;
-        // Use first trade from tradesRequired array, fallback to projectName for old data
-        const name = Array.isArray(p?.tradesRequired) && p.tradesRequired.length > 0
-          ? p.tradesRequired[0]
-          : (typeof p?.projectName === 'string' ? p.projectName : undefined);
+        // Use all trades from tradesRequired array, fallback to projectName for old data
+        let name: string | undefined;
+        if (Array.isArray(p?.tradesRequired) && p.tradesRequired.length > 0) {
+          // If multiple trades, use first for now (OR logic will match professionals with any of these)
+          name = p.tradesRequired[0];
+          // Log all required trades for future multi-trade filtering
+          console.log('[ProfessionalsPage] Multiple trades required:', p.tradesRequired);
+        } else if (typeof p?.projectName === 'string') {
+          name = p.projectName;
+        }
         console.log('[ProfessionalsPage] Project data:', { region, name, tradesRequired: p?.tradesRequired, project: p });
         setProjectRegion(region);
         setProjectName(name);

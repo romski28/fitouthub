@@ -14,6 +14,7 @@ export interface ProjectFormData {
   selectedService?: string;
   location?: CanonicalLocation;
   files?: File[];
+  tradesRequired: string[];
 }
 
 interface ProjectFormProps {
@@ -80,48 +81,10 @@ export function ProjectForm({
     selectedService: initialData?.selectedService || '',
     location: initialData?.location || {},
     files: initialData?.files || [],
+    tradesRequired: initialData?.tradesRequired || [],
   });
 
-  const [serviceOptions, setServiceOptions] = useState<{ label: string; value: string }[]>([]);
   const isReadOnly = mode === 'view';
-
-  // Generate service options from professionals
-  useEffect(() => {
-    const options = new Set<string>();
-    
-    if (singleProfessional) {
-      if (singleProfessional.tradesOffered) {
-        singleProfessional.tradesOffered.forEach((t) => options.add(t));
-      }
-      if (singleProfessional.suppliesOffered) {
-        singleProfessional.suppliesOffered.forEach((s) => options.add(s));
-      }
-      if (singleProfessional.primaryTrade) options.add(singleProfessional.primaryTrade);
-      if (singleProfessional.professionType) options.add(singleProfessional.professionType);
-    }
-    
-    if (professionals && professionals.length > 0) {
-      professionals.forEach((p) => {
-        if (p.primaryTrade) options.add(p.primaryTrade);
-        (p.tradesOffered ?? []).forEach((t) => options.add(t));
-        (p.suppliesOffered ?? []).forEach((s) => options.add(s));
-      });
-    }
-
-    const sorted = Array.from(options)
-      .filter(Boolean)
-      .map((value) => ({ label: value, value }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-
-    if (sorted.length > 0) {
-      setServiceOptions(sorted);
-      if (!formData.selectedService) {
-        setFormData((prev) => ({ ...prev, selectedService: sorted[0].value }));
-      }
-    } else {
-      setServiceOptions([]);
-    }
-  }, [singleProfessional, professionals, formData.selectedService]);
 
   const displayNames = useMemo(() => {
     if (singleProfessional) {
@@ -154,24 +117,45 @@ export function ProjectForm({
   if (isQuickRequest) {
     return (
       <form onSubmit={handleFormSubmit} className="space-y-4">
-        {/* Service Selection */}
-        {showService && serviceOptions.length > 0 && (
+        {/* Trades Required */}
+        {showService && (
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-800">Service</label>
-            <select
-              value={formData.selectedService || ''}
-              onChange={(e) => handleChange('selectedService', e.target.value)}
-              disabled={isReadOnly || isSubmitting}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-              required
-            >
-              <option value="">Select a service</option>
-              {serviceOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
+            <label className="text-sm font-medium text-slate-800">Required Trades/Services</label>
+            <div className="flex flex-wrap gap-2 rounded-md border border-slate-300 px-3 py-2 min-h-[42px]">
+              {formData.tradesRequired.map((trade, idx) => (
+                <span
+                  key={`${trade}-${idx}`}
+                  className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+                >
+                  {trade}
+                  <button
+                    type="button"
+                    onClick={() => handleChange('tradesRequired', formData.tradesRequired.filter((_, i) => i !== idx))}
+                    disabled={isReadOnly || isSubmitting}
+                    className="hover:text-blue-900 disabled:opacity-50"
+                  >
+                    ×
+                  </button>
+                </span>
               ))}
-            </select>
+              <input
+                type="text"
+                placeholder={formData.tradesRequired.length === 0 ? "Type trade and press Enter" : "Add another..."}
+                disabled={isReadOnly || isSubmitting}
+                className="flex-1 min-w-[120px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none disabled:bg-slate-50"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = e.currentTarget.value.trim();
+                    if (value && !formData.tradesRequired.includes(value)) {
+                      handleChange('tradesRequired', [...formData.tradesRequired, value]);
+                      e.currentTarget.value = '';
+                    }
+                  }
+                }}
+              />
+            </div>
+            <p className="text-xs text-slate-500">Type a trade/skill and press Enter (e.g., Plumber, Electrician, Carpenter)</p>
           </div>
         )}
 
@@ -309,23 +293,48 @@ export function ProjectForm({
         />
       </div>
 
-      {/* Service Selection */}
-      {showService && serviceOptions.length > 0 && (
+      {/* Trades Required */}
+      {showService && (
         <div>
-          <label className="block text-sm font-semibold text-slate-900 mb-2">Service</label>
-          <select
-            value={formData.selectedService || ''}
-            onChange={(e) => handleChange('selectedService', e.target.value)}
-            disabled={isReadOnly || isSubmitting}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base disabled:bg-slate-50"
-          >
-            <option value="">Select a service</option>
-            {serviceOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Required Trades/Services {!isReadOnly && '*'}
+          </label>
+          <div className="flex flex-wrap gap-2 rounded-lg border border-slate-300 px-4 py-2.5 min-h-[46px] focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+            {formData.tradesRequired.map((trade, idx) => (
+              <span
+                key={`${trade}-${idx}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700"
+              >
+                {trade}
+                <button
+                  type="button"
+                  onClick={() => handleChange('tradesRequired', formData.tradesRequired.filter((_, i) => i !== idx))}
+                  disabled={isReadOnly || isSubmitting}
+                  className="hover:text-blue-900 disabled:opacity-50"
+                >
+                  ×
+                </button>
+              </span>
             ))}
-          </select>
+            <input
+              type="text"
+              placeholder={formData.tradesRequired.length === 0 ? "Type trade and press Enter (e.g., Plumber, Electrician)" : "Add another..."}
+              disabled={isReadOnly || isSubmitting}
+              required={!isReadOnly && formData.tradesRequired.length === 0}
+              className="flex-1 min-w-[150px] border-0 bg-transparent px-2 py-1 text-base outline-none disabled:bg-slate-50"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const value = e.currentTarget.value.trim();
+                  if (value && !formData.tradesRequired.includes(value)) {
+                    handleChange('tradesRequired', [...formData.tradesRequired, value]);
+                    e.currentTarget.value = '';
+                  }
+                }
+              }}
+            />
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Specify all trades or services needed for this project. Press Enter after typing each one.</p>
         </div>
       )}
 

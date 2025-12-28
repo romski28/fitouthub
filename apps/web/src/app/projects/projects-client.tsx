@@ -23,6 +23,7 @@ const statusColors: Record<string, string> = {
 type ExtendedProject = Project & { 
   photos: string[]; 
   sourceIds?: string[];
+  tradesRequired?: string[];
   professionals?: Array<{
     id: string;
     status: string;
@@ -159,6 +160,7 @@ type EditState = {
   budget?: string | number;
   status: "pending" | "approved" | "rejected";
   notes?: string;
+  tradesRequired: string[];
 };
 
 function EditProjectModal({
@@ -180,6 +182,7 @@ function EditProjectModal({
     budget: project.budget,
     status: project.status,
     notes: stripPhotoSection(project.notes),
+    tradesRequired: project.tradesRequired || [],
   });
   const [photos, setPhotos] = useState<string[]>(project.photos || []);
   const [lightboxUrl, setLightboxUrl] = useState<string>("");
@@ -189,7 +192,7 @@ function EditProjectModal({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (key: keyof EditState, value: string) => {
+  const handleChange = (key: keyof EditState, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -314,6 +317,80 @@ function EditProjectModal({
               <option value="rejected">Rejected</option>
             </select>
           </div>
+        </div>
+        {/* Trades Required */}
+        <div className="grid gap-2">
+          <label className="text-sm font-medium text-slate-800">Trades Required</label>
+          <div className="flex flex-wrap gap-2 rounded-md border border-slate-300 px-3 py-2 min-h-[42px]">
+            {form.tradesRequired.map((trade, idx) => (
+              <span
+                key={`${trade}-${idx}`}
+                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+              >
+                {trade}
+                <button
+                  type="button"
+                  onClick={() => handleChange("tradesRequired", form.tradesRequired.filter((_, i) => i !== idx))}
+                  className="hover:text-blue-900"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              placeholder={form.tradesRequired.length === 0 ? "Type trade and press Enter" : "Add another..."}
+              className="flex-1 min-w-[120px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const value = e.currentTarget.value.trim();
+                  if (value && !form.tradesRequired.includes(value)) {
+                    handleChange("tradesRequired", [...form.tradesRequired, value]);
+                    e.currentTarget.value = '';
+                  }
+                }
+              }}
+            />
+          </div>
+          <p className="text-xs text-slate-500">Type a trade/skill and press Enter. Remove by clicking the × on each chip.</p>
+        </div>
+        {/* Trades Required */}
+        <div className="grid gap-2">
+          <label className="text-sm font-medium text-slate-800">Trades Required</label>
+          <div className="flex flex-wrap gap-2 rounded-md border border-slate-300 px-3 py-2 min-h-[42px]">
+            {form.tradesRequired.map((trade, idx) => (
+              <span
+                key={`${trade}-${idx}`}
+                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+              >
+                {trade}
+                <button
+                  type="button"
+                  onClick={() => handleChange("tradesRequired", form.tradesRequired.filter((_, i) => i !== idx))}
+                  className="hover:text-blue-900"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              placeholder={form.tradesRequired.length === 0 ? "Type trade and press Enter" : "Add another..."}
+              className="flex-1 min-w-[120px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const value = e.currentTarget.value.trim();
+                  if (value && !form.tradesRequired.includes(value)) {
+                    handleChange("tradesRequired", [...form.tradesRequired, value]);
+                    e.currentTarget.value = '';
+                  }
+                }
+              }}
+            />
+          </div>
+          <p className="text-xs text-slate-500">Type a trade/skill and press Enter. Remove by clicking the × on each chip.</p>
         </div>
 
         <div className="grid gap-2">
@@ -695,6 +772,23 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                     <span className="text-slate-600 capitalize">{project.status}</span>
                   </div>
                 </div>
+
+                {/* Trades Required */}
+                {(project.tradesRequired?.length || 0) > 0 && (
+                  <div className="rounded-md bg-blue-50 border border-blue-100 px-3 py-2">
+                    <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wide mb-1.5">Trades Required</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(project.tradesRequired || []).map((trade: string, idx: number) => (
+                        <span
+                          key={`${trade}-${idx}`}
+                          className="inline-flex items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-medium text-white"
+                        >
+                          {trade}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Professionals Section - NEW */}
                 {project.professionals && project.professionals.length > 0 && (
