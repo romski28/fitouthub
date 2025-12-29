@@ -444,11 +444,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
         <div className="grid gap-2 md:grid-cols-2">
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">Skill or Trade</label>
+            <label className="text-xs font-medium text-slate-600">Professional or Trade</label>
             <div className="relative">
               <input
                 type="text"
-                placeholder="e.g. plumber, AC servicing"
+                placeholder="e.g. John Smith, plumber, AC servicing"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onFocus={() => setShowSuggestions(suggestions.length > 0)}
