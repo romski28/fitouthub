@@ -13,6 +13,7 @@ interface ProjectShareModalProps {
   onClose: () => void;
   professionals: Professional[];
   projectId?: string;
+  initialData?: Partial<ProjectFormData>;
 }
 
 const toAbsolute = (url: string) => {
@@ -24,7 +25,7 @@ const toAbsolute = (url: string) => {
   return `${base}${normalized}`;
 };
 
-export function ProjectShareModal({ isOpen, onClose, professionals, projectId }: ProjectShareModalProps) {
+export function ProjectShareModal({ isOpen, onClose, professionals, projectId, initialData }: ProjectShareModalProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
@@ -94,9 +95,17 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId }:
       .join(", ");
     const clientName = user ? `${user.firstName} ${user.surname}`.trim() : "Client";
     const normalizedPhotos = photoUrls.map(toAbsolute);
+    const defaultTitle = (() => {
+      const mainTrade = formData.tradesRequired?.[0];
+      const locText = locationLabel;
+      if (mainTrade && locText) return `${mainTrade} in ${locText}`;
+      if (mainTrade) return mainTrade;
+      if (locText) return `Service Request in ${locText}`;
+      return "Service Request";
+    })();
 
     const payload = {
-      projectName: formData.notes?.trim() || "Service Request",
+      projectName: (formData.projectName?.trim() || defaultTitle),
       tradesRequired: formData.tradesRequired.length > 0 ? formData.tradesRequired : [],
       clientName,
       contractorName: "",
@@ -152,6 +161,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId }:
           mode="create"
           isQuickRequest={true}
           professionals={professionals}
+          initialData={initialData}
           onSubmit={handleFormSubmit}
           onCancel={onClose}
           isSubmitting={submitting}

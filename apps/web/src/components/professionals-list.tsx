@@ -589,6 +589,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         }}
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
         projectId={projectId}
+        initialData={(() => {
+          const needle = (searchTerm || '').trim();
+          const mapped = needle ? matchServiceToProfession(needle) : (professionHint || '');
+          const mainTrade = (mapped || needle || '').trim();
+          const locationLabel = [loc.primary, loc.secondary, loc.tertiary].filter(Boolean).join(', ');
+          const defaultTitle = (() => {
+            if (mainTrade && locationLabel) return `${mainTrade} in ${locationLabel}`;
+            if (mainTrade) return mainTrade;
+            if (locationLabel) return `Service Request in ${locationLabel}`;
+            return 'Service Request';
+          })();
+          return {
+            projectName: defaultTitle,
+            location: loc,
+            tradesRequired: mainTrade ? [mainTrade] : [],
+          };
+        })()}
       />
 
       <ProfessionalDetailsModal

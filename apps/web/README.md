@@ -34,3 +34,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Professionals Invite Modal
+
+- Title: The invite modal now includes a visible "Project Title" field. It defaults to "{trade} in {location}" when filters are set, falling back to sensible generic titles.
+- Field Order: Title, Project Location, Description, Required Trades/Services, Photos.
+- Pre-population: Trade is inferred from the professionals search input; location is taken from the location filter. Both are passed into the modal and can be edited.
+- Notes: Photos added in the quick share flow are appended to the created project's notes with absolute URLs.
+
+### Quick Test
+
+1. Open the Professionals page.
+2. Set a trade (e.g., "Plumber") and a location (e.g., "Central").
+3. Select 1–3 professionals and click "Ask for help".
+4. Verify the modal shows the default title and pre-filled trade/location.
+5. Submit to create the project and send invites.

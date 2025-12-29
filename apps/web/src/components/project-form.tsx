@@ -167,6 +167,43 @@ export function ProjectForm({
   if (isQuickRequest) {
     return (
       <form onSubmit={handleFormSubmit} className="space-y-4">
+        {/* Project Title */}
+        <div className="grid gap-2">
+          <label className="text-sm font-medium text-slate-800">Project Title</label>
+          <input
+            type="text"
+            value={formData.projectName}
+            onChange={(e) => handleChange('projectName', e.target.value)}
+            disabled={isReadOnly || isSubmitting}
+            placeholder="e.g. Plumber in Central"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
+          />
+        </div>
+
+        {/* Location */}
+        <div className="grid gap-2">
+          <label className="text-sm font-medium text-slate-800">Project Location</label>
+          <LocationSelect
+            value={formData.location || {}}
+            onChange={handleLocationChange}
+            disabled={isReadOnly || isSubmitting}
+          />
+        </div>
+
+        {/* Description */}
+        <div className="grid gap-2">
+          <label className="text-sm font-medium text-slate-800">Describe the Project</label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => handleChange('notes', e.target.value)}
+            rows={4}
+            disabled={isReadOnly || isSubmitting}
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
+            placeholder="Describe your project scope, requirements, and any specific needs..."
+            required
+          />
+        </div>
+
         {/* Trades Required */}
         {showService && (
           <div className="grid gap-2">
@@ -221,30 +258,6 @@ export function ProjectForm({
             <p className="text-xs text-slate-500">Select from available trades or type to search. Click to add.</p>
           </div>
         )}
-
-        {/* Location */}
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-800">Project Location</label>
-          <LocationSelect
-            value={formData.location || {}}
-            onChange={handleLocationChange}
-            disabled={isReadOnly || isSubmitting}
-          />
-        </div>
-
-        {/* Description */}
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-800">Describe the Project</label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => handleChange('notes', e.target.value)}
-            rows={4}
-            disabled={isReadOnly || isSubmitting}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
-            placeholder="Describe your project scope, requirements, and any specific needs..."
-            required
-          />
-        </div>
 
         {/* File Upload */}
         <div className="grid gap-2">
