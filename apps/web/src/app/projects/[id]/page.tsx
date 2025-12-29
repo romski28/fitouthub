@@ -77,6 +77,53 @@ export default function ClientProjectDetailPage() {
   const [updatingSchedule, setUpdatingSchedule] = useState(false);
   const [updatingContact, setUpdatingContact] = useState(false);
 
+  // Assistance (FOH) state
+  const [assistRequestId, setAssistRequestId] = useState<string | null>(null);
+  const [assistMessages, setAssistMessages] = useState<Message[]>([]);
+  const [assistLoading, setAssistLoading] = useState(false);
+  const [assistError, setAssistError] = useState<string | null>(null);
+  const [assistOpen, setAssistOpen] = useState(false);
+  const [assistNewMessage, setAssistNewMessage] = useState('');
+  const [assistSending, setAssistSending] = useState(false);
+
+  // Helper: fetch project details (reusable)
+  const fetchProject = async () => {
+    if (!accessToken || !projectId) return;
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        throw new Error('Failed to fetch project');
+      }
+
+      const data = await response.json();
+      setProject(data);
+
+      // Auto-select first professional if available
+      if (data.professionals && data.professionals.length > 0) {
+        setSelectedProfessional(data.professionals[0]);
+      } else {
+        setSelectedProfessional(null);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load project';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isLoggedIn === false) {
       router.push('/login');
@@ -86,40 +133,6 @@ export default function ClientProjectDetailPage() {
     if (!isLoggedIn || !accessToken || !projectId) {
       return;
     }
-
-    const fetchProject = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            router.push('/login');
-            return;
-          }
-          throw new Error('Failed to fetch project');
-        }
-
-        const data = await response.json();
-        setProject(data);
-
-        // Auto-select first professional if available
-        if (data.professionals && data.professionals.length > 0) {
-          setSelectedProfessional(data.professionals[0]);
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load project';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     fetchProject();
   }, [isLoggedIn, accessToken, projectId, router]);
@@ -175,6 +188,62 @@ export default function ClientProjectDetailPage() {
 
     fetchMessages();
   }, [selectedProfessional, accessToken, router]);
+
+  // Load FOH assistance thread for this project
+  useEffect(() => {
+    const loadAssist = async () => {
+      if (!accessToken || !projectId) return;
+      try {
+        setAssistLoading(true);
+        setAssistError(null);
+        const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (res.status === 404) {
+          setAssistRequestId(null);
+          setAssistMessages([]);
+          return;
+        }
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Failed to load assistance');
+        }
+        const data = await res.json();
+        const assist = data?.assist;
+        if (assist?.id) {
+          setAssistRequestId(assist.id);
+          // Fetch messages
+          const mres = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assist.id)}/messages`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (mres.ok) {
+            const msgs = await mres.json();
+            const normalized = Array.isArray(msgs) ? msgs : (msgs.messages || []);
+            // Map to Message shape
+            const mapped: Message[] = normalized.map((m: any) => ({
+              id: m.id,
+              projectProfessionalId: '',
+              senderType: (m.senderType as any) || 'foh',
+              content: m.content,
+              createdAt: m.createdAt,
+            }));
+            setAssistMessages(mapped);
+          } else {
+            setAssistMessages([]);
+          }
+        } else {
+          setAssistRequestId(null);
+          setAssistMessages([]);
+        }
+      } catch (err) {
+        console.error('[Assist] load failed', err);
+        setAssistError('Failed to load assistance messages');
+      } finally {
+        setAssistLoading(false);
+      }
+    };
+    loadAssist();
+  }, [accessToken, projectId]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedProfessional || !accessToken) return;
@@ -400,6 +469,50 @@ export default function ClientProjectDetailPage() {
       toast.error('Failed to update contractor contact.');
     } finally {
       setUpdatingContact(false);
+    }
+  };
+
+  // One-click invite for 'selected' professionals
+  const inviteNow = async (pp: ProjectProfessional) => {
+    if (!pp || !accessToken || !projectId) return;
+
+    // Require minimal project info
+    const hasTitle = !!project?.projectName && project.projectName.trim().length > 0;
+    const hasRegion = !!project?.region && project.region.trim().length > 0;
+    if (!hasTitle || !hasRegion) {
+      toast.error('Please add a project title and location before inviting professionals.');
+      return;
+    }
+
+    try {
+      setActionBusy(`invite-${pp.professionalId}`);
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/invite`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ professionalIds: [pp.professionalId] }),
+      });
+
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Failed to send invitation');
+      }
+
+      toast.success('Invitation sent to professional.');
+
+      // Refresh project to update statuses
+      await fetchProject();
+    } catch (e) {
+      console.error('Invite failed', e);
+      toast.error('Failed to send invitation. Please try again.');
+    } finally {
+      setActionBusy(null);
     }
   };
 
@@ -637,6 +750,7 @@ export default function ClientProjectDetailPage() {
                     <th className="py-2 pr-4">Quote</th>
                     <th className="py-2 pr-4">Messages</th>
                     <th className="py-2">Rating</th>
+                    <th className="py-2 pr-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -668,6 +782,23 @@ export default function ClientProjectDetailPage() {
                         </td>
                         <td className="py-2 pr-4 text-slate-600">Open chat for count</td>
                         <td className="py-2 text-slate-500">—</td>
+                        <td className="py-2 pr-4">
+                          {pp.status === 'selected' ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                inviteNow(pp);
+                              }}
+                              disabled={!!actionBusy && actionBusy === `invite-${pp.professionalId}`}
+                              className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                              {actionBusy === `invite-${pp.professionalId}` ? 'Inviting…' : 'Invite now'}
+                            </button>
+                          ) : (
+                            <span className="text-slate-400 text-xs">—</span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -676,6 +807,156 @@ export default function ClientProjectDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Assistance (FOH) Mini Card and Messages */}
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-1 space-y-3">
+            <h2 className="text-lg font-bold text-slate-900">Fitout Hub Assistance</h2>
+            <button
+              onClick={() => setAssistOpen(true)}
+              disabled={!assistRequestId}
+              className={`w-full text-left rounded-lg border px-4 py-3 transition ${assistRequestId ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'}`}
+            >
+              <div className="font-semibold text-slate-900">Project Assistance</div>
+              <div className="text-xs text-slate-600 mt-1">
+                {assistLoading ? 'Loading…' : assistRequestId ? `${assistMessages.length} messages` : 'No assistance thread'}
+              </div>
+              {assistError && (
+                <div className="mt-2 text-xs text-rose-600">{assistError}</div>
+              )}
+            </button>
+          </div>
+
+          {/* Messages Panel */}
+          {assistOpen && (
+            <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl flex items-center justify-between">
+                <h3 className="font-bold text-slate-900">Communications with Fitout Hub</h3>
+                <button
+                  type="button"
+                  onClick={() => setAssistOpen(false)}
+                  className="text-xs font-semibold text-slate-700 hover:text-slate-900"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="p-4">
+                <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                  {assistLoading ? (
+                    <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                  ) : assistMessages.length === 0 ? (
+                    <div className="text-center text-sm text-slate-500">No assistance messages yet.</div>
+                  ) : (
+                    assistMessages.map((msg) => (
+                      <div key={msg.id} className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${msg.senderType === 'client' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 text-slate-800'}`}>
+                          <p>{msg.content}</p>
+                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-blue-100' : 'text-slate-500'}`}>
+                            {new Date(msg.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Send Assistance Message */}
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="text"
+                    value={assistNewMessage}
+                    onChange={(e) => setAssistNewMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !assistSending) {
+                        (async () => {
+                          if (!assistRequestId || !assistNewMessage.trim() || !accessToken) return;
+                          try {
+                            setAssistSending(true);
+                            const res = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`, {
+                              method: 'POST',
+                              headers: {
+                                Authorization: `Bearer ${accessToken}`,
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({ sender: 'client', content: assistNewMessage.trim() }),
+                            });
+                            if (!res.ok) {
+                              const text = await res.text();
+                              throw new Error(text || 'Failed to send assistance message');
+                            }
+                            const created = await res.json();
+                            const m = created?.id ? created : (created.message || created);
+                            setAssistMessages((prev) => [
+                              ...prev,
+                              {
+                                id: m.id,
+                                projectProfessionalId: '',
+                                senderType: 'client',
+                                content: m.content,
+                                createdAt: m.createdAt,
+                              },
+                            ]);
+                            setAssistNewMessage('');
+                          } catch (err) {
+                            console.error('Assist message send failed', err);
+                            toast.error('Failed to send message to Fitout Hub');
+                          } finally {
+                            setAssistSending(false);
+                          }
+                        })();
+                      }
+                    }}
+                    placeholder="Type a message to Fitout Hub..."
+                    className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                    disabled={assistSending || !assistRequestId}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!assistRequestId || !assistNewMessage.trim() || !accessToken) return;
+                      try {
+                        setAssistSending(true);
+                        const res = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`, {
+                          method: 'POST',
+                          headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ sender: 'client', content: assistNewMessage.trim() }),
+                        });
+                        if (!res.ok) {
+                          const text = await res.text();
+                          throw new Error(text || 'Failed to send assistance message');
+                        }
+                        const created = await res.json();
+                        const m = created?.id ? created : (created.message || created);
+                        setAssistMessages((prev) => [
+                          ...prev,
+                          {
+                            id: m.id,
+                            projectProfessionalId: '',
+                            senderType: 'client',
+                            content: m.content,
+                            createdAt: m.createdAt,
+                          },
+                        ]);
+                        setAssistNewMessage('');
+                      } catch (err) {
+                        console.error('Assist message send failed', err);
+                        toast.error('Failed to send message to Fitout Hub');
+                      } finally {
+                        setAssistSending(false);
+                      }
+                    }}
+                    disabled={assistSending || !assistNewMessage.trim() || !assistRequestId}
+                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    {assistSending ? 'Sending...' : 'Send'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Professionals & Messaging */}
         {project.professionals && project.professionals.length > 0 && (
@@ -702,6 +983,21 @@ export default function ClientProjectDetailPage() {
                   {prof.quoteAmount && (
                     <div className="text-xs text-blue-700 mt-1 font-semibold">
                       Quote: ${prof.quoteAmount}
+                    </div>
+                  )}
+                  {prof.status === 'selected' && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          inviteNow(prof);
+                        }}
+                        disabled={!!actionBusy && actionBusy === `invite-${prof.professionalId}`}
+                        className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        {actionBusy === `invite-${prof.professionalId}` ? 'Inviting…' : 'Invite now'}
+                      </button>
                     </div>
                   )}
                 </button>

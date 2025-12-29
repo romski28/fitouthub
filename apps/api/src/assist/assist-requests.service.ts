@@ -139,6 +139,23 @@ export class AssistRequestsService {
     return messages;
   }
 
+  async getLatestByProject(projectId: string) {
+    if (!projectId) throw new BadRequestException('projectId is required');
+    const assist = await (this.prisma as any).projectAssistRequest.findFirst({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        project: {
+          select: { id: true, projectName: true, region: true, clientName: true, status: true },
+        },
+        user: {
+          select: { id: true, firstName: true, surname: true, email: true },
+        },
+      },
+    });
+    return assist || null;
+  }
+
   async updateStatus(id: string, status: 'open' | 'in_progress' | 'closed') {
     if (!id) throw new BadRequestException('id is required');
     if (!['open', 'in_progress', 'closed'].includes(status)) throw new BadRequestException('invalid status');

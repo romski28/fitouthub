@@ -560,6 +560,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const { isLoggedIn, accessToken } = useAuth();
   const [hydrated, setHydrated] = useState(false);
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
+  const [assistMap, setAssistMap] = useState<Record<string, boolean>>({});
   const [items, setItems] = useState<ExtendedProject[]>(() => {
     // Group by a canonical composite key to merge duplicate records of the same logical project
     const byKey = new Map<string, ExtendedProject & { sourceIds: string[] }>();
@@ -671,6 +672,38 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
       .finally(() => clearTimeout(timeoutId));
   }, [hydrated, isLoggedIn, accessToken, disableUnreadFetch]);
 
+  // Fetch assistance presence per project
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken || items.length === 0) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const entries = await Promise.all(
+          items.map(async (p) => {
+            try {
+              const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(p.id)}`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              if (!res.ok) return [p.id, false] as const;
+              const data = await res.json();
+              const hasAssist = !!data?.assist?.id;
+              return [p.id, hasAssist] as const;
+            } catch {
+              return [p.id, false] as const;
+            }
+          })
+        );
+        if (!cancelled) {
+          const next: Record<string, boolean> = {};
+          entries.forEach(([id, has]) => { next[id] = has; });
+          setAssistMap(next);
+        }
+      } catch {}
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [isLoggedIn, accessToken, items]);
+
   const handleSave = (updated: ExtendedProject) => {
     setItems((prev) => prev.map((p) => (p.id === updated.id ? { ...updated } : p)));
   };
@@ -769,6 +802,11 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                   {((project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)) > 0 && (
                     <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white bg-red-600/70">
                       {(project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)} new
+                    </span>
+                  )}
+                  {assistMap[project.id] && (
+                    <span className="rounded-full px-2 py-1 text-[10px] font-semibold bg-purple-100 text-purple-800">
+                      Assistance
                     </span>
                   )}
                   <StatusBadge status={project.status} />

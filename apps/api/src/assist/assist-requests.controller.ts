@@ -51,4 +51,14 @@ export class AssistRequestsController {
       throw new HttpException(error.message || 'Failed to update status', HttpStatus.BAD_REQUEST);
     }
   }
+
+  @Get('by-project/:projectId')
+  async getByProject(@Param('projectId') projectId: string) {
+    try {
+      const assist = await this.service.getLatestByProject(projectId);
+      return { assist };
+    } catch (error) {
+      throw new HttpException(error.message || 'Failed to fetch assist request', HttpStatus.BAD_REQUEST);
+    }
+  }
 }
