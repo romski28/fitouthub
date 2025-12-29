@@ -15,6 +15,8 @@ import { ProfessionalAuthModule } from './professional-auth/professional-auth.mo
 import { ProfessionalModule } from './professional/professional.module';
 import { ClientModule } from './client/client.module';
 import { TradesModule } from './trades/trades.module';
+import { ReportsController } from './reports/reports.controller';
+import { ReportsService } from './reports/reports.service';
 
 @Module({
   imports: [
@@ -29,8 +31,8 @@ import { TradesModule } from './trades/trades.module';
     ClientModule,
     TradesModule,
   ],
-  controllers: [AppController, ProjectsController, UploadsController],
-  providers: [AppService, PrismaService, ProjectsService],
+  controllers: [AppController, ProjectsController, UploadsController, ReportsController],
+  providers: [AppService, PrismaService, ProjectsService, ReportsService],
   exports: [PrismaService],
 })
 export class AppModule {}

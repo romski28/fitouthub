@@ -77,6 +77,7 @@ model Professional {
   emailTokens          EmailToken[]
   user                 User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectProfessionals ProjectProfessional[]
+  reports              ProfessionalReport[]
 }
 
 model Project {
@@ -125,6 +126,20 @@ model ProjectProfessional {
   @@unique([projectId, professionalId])
   @@index([projectId])
   @@index([professionalId])
+}
+
+model ProfessionalReport {
+  id              String       @id @default(cuid())
+  professionalId  String
+  reporterUserId  String?
+  comments        String
+  status          String       @default("new") // new | reviewed | resolved
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId])
+  @@index([status])
 }
 
 model EmailToken {

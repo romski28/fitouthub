@@ -2,9 +2,25 @@
 
 import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/config/api";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const [outstandingReports, setOutstandingReports] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/admin/reports/count`);
+        if (res.ok) {
+          const data = await res.json();
+          setOutstandingReports(Number(data?.outstanding || 0));
+        }
+      } catch {}
+    };
+    fetchCount();
+  }, []);
 
   const sections = [
     {
@@ -34,6 +50,13 @@ export default function AdminDashboard() {
       href: "/admin/patterns",
       icon: "🔍",
       stats: "Configure patterns",
+    },
+    {
+      title: "Professional Reports",
+      description: "Review client-submitted reports about professionals before sharing with the community.",
+      href: "/admin/reports",
+      icon: "🛠️",
+      stats: `${outstandingReports} outstanding`,
     },
     {
       title: "Analytics",
