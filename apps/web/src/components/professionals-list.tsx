@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, memo } from 'react';
+import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { CanonicalLocation } from '@/components/location-select';
 import { searchLocations } from '@/lib/location-search';
 import { SERVICE_TO_PROFESSION, matchServiceToProfession } from '@/lib/service-matcher';
@@ -19,7 +20,7 @@ const Pill = memo(({ label }: { label: string }) => {
 });
 Pill.displayName = 'Pill';
 
-const ProfessionalCard = memo(({ pro, onToggle, isSelected, isAdmin }: { pro: Professional; onToggle: (pro: Professional) => void; isSelected: boolean; isAdmin: boolean }) => {
+const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdmin }: { pro: Professional; onToggle: (pro: Professional) => void; onViewDetails: (pro: Professional) => void; isSelected: boolean; isAdmin: boolean }) => {
   const serviceAreas = useMemo(() => 
     (pro.serviceArea ?? '')
       .split(',')
@@ -121,7 +122,14 @@ const ProfessionalCard = memo(({ pro, onToggle, isSelected, isAdmin }: { pro: Pr
           </div>
         )}
 
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => onViewDetails(pro)}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+          >
+            View details
+          </button>
           <button
             type="button"
             onClick={() => onToggle(pro)}
@@ -198,7 +206,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     initialLocationDisplay,
     initialSearch
   });
-  const [selectedPro, setSelectedPro] = useState<Professional | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const suggestionPool = useMemo(() => {
@@ -423,9 +430,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
   };
 
-  const handleAsk = (pro: Professional) => {
-    setSelectedPro(pro);
-    setIsModalOpen(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
+
+  const openDetails = (pro: Professional) => {
+    setDetailsPro(pro);
+    setDetailsOpen(true);
   };
 
   return (
@@ -538,7 +548,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       ) : (
         <div className="grid gap-4 md:grid-cols-2" suppressHydrationWarning>
           {filtered.map((pro) => (
-            <ProfessionalCard key={pro.id} isSelected={selectedIds.has(pro.id)} pro={pro} onToggle={toggleSelection} isAdmin={isAdmin} />
+            <ProfessionalCard
+              key={pro.id}
+              isSelected={selectedIds.has(pro.id)}
+              pro={pro}
+              onToggle={toggleSelection}
+              onViewDetails={openDetails}
+              isAdmin={isAdmin}
+            />
           ))}
         </div>
       )}
@@ -572,6 +589,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         }}
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
         projectId={projectId}
+      />
+
+      <ProfessionalDetailsModal
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        professional={detailsPro}
       />
       
       {/* Back to top button - behind the share project button */}
