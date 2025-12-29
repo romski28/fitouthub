@@ -69,6 +69,61 @@ export default function Home() {
     }
   };
 
+  const handleAssistRequest = async (data: ProjectFormData) => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const clientName = user ? `${user.firstName} ${user.surname}`.trim() : data.clientName;
+      const locationLabel = [data.location?.primary, data.location?.secondary, data.location?.tertiary]
+        .filter(Boolean)
+        .join(", ");
+
+      const projectPayload = {
+        projectName: data.projectName,
+        tradesRequired: data.tradesRequired,
+        clientName,
+        region: locationLabel || data.region || "Hong Kong",
+        budget: data.budget || undefined,
+        notes: data.notes,
+        status: "pending" as const,
+        userId: user?.id,
+        isEmergency: !!data.isEmergency,
+        endDate: data.endDate || undefined,
+        professionalIds: [],
+      };
+
+      const createRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectPayload),
+      });
+      if (!createRes.ok) throw new Error(await createRes.text() || 'Failed to create project');
+      const project = await createRes.json();
+
+      const assistRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/assist-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: project.id,
+          userId: user?.id,
+          clientName,
+          projectName: data.projectName,
+          notes: data.notes,
+        }),
+      });
+      if (!assistRes.ok) throw new Error(await assistRes.text() || 'Failed to request assistance');
+
+      setShowProjectModal(false);
+      router.push(`/projects/${encodeURIComponent(project.id)}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to request assistance";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-16">
       {/* Search Flow */}
@@ -142,6 +197,7 @@ export default function Home() {
 
             <ProjectForm
               mode="create"
+              onAssistRequest={handleAssistRequest}
               onSubmit={handleProjectSubmit}
               onCancel={() => setShowProjectModal(false)}
               isSubmitting={isSubmitting}

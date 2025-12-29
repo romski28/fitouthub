@@ -84,6 +84,78 @@ export default function CreateProjectPage() {
     }
   };
 
+  const handleAssist = async (formData: ProjectFormData) => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const region = formData.location 
+        ? [formData.location.primary, formData.location.secondary, formData.location.tertiary]
+            .filter(Boolean)
+            .join(", ")
+        : formData.region || '';
+
+      if (!formData.projectName?.trim() || !region.trim()) {
+        setError('Project name and region are required');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const payload = {
+        projectName: formData.projectName,
+        clientName: formData.clientName,
+        region,
+        budget: formData.budget ? parseFloat(String(formData.budget)) : null,
+        notes: formData.notes,
+        status: 'pending',
+        professionalIds: [],
+        userId: user?.id,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/projects`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ message: 'Failed to create project' }));
+        throw new Error(data.message || `Server error: ${response.status}`);
+      }
+
+      const project = await response.json();
+
+      const assistRes = await fetch(`${API_BASE_URL}/assist-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          userId: user?.id,
+          clientName: payload.clientName,
+          projectName: payload.projectName,
+          notes: payload.notes,
+        }),
+      });
+
+      if (!assistRes.ok) {
+        const data = await assistRes.json().catch(() => ({ message: 'Failed to request assistance' }));
+        throw new Error(data.message || `Server error: ${assistRes.status}`);
+      }
+
+      router.push(`/projects/${project.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to request assistance';
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
       <div className="max-w-2xl mx-auto">
@@ -105,6 +177,7 @@ export default function CreateProjectPage() {
             initialData={{
               clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
             }}
+            onAssistRequest={handleAssist}
             onSubmit={handleSubmit}
             onCancel={() => router.push('/projects')}
             isSubmitting={isSubmitting}

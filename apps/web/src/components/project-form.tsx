@@ -544,6 +544,16 @@ export function ProjectForm({
             Cancel
           </button>
         )}
+        {onAssistRequest && !isReadOnly && (
+          <button
+            type="button"
+            onClick={handleAssistClick}
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-6 py-2.5 text-indigo-700 font-semibold hover:bg-indigo-100 transition disabled:opacity-50"
+          >
+            Ask for advice
+          </button>
+        )}
         {!isReadOnly && (
           <button
             type="submit"
