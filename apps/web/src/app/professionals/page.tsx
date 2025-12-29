@@ -21,6 +21,7 @@ function ProfessionalsPageInner() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId') || undefined;
+  const tradeParam = searchParams.get('trade') || undefined;
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
 
@@ -155,7 +156,7 @@ function ProfessionalsPageInner() {
             professionals={professionals}
             initialLocation={defaultLocation}
             projectId={projectId}
-            initialSearchTerm={projectName}
+            initialSearchTerm={tradeParam || projectName}
           />
         )}
       </div>
