@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Tradesman } from '../../lib/types';
@@ -21,7 +22,7 @@ function Badge({ label }: { label: string }) {
 }
 
 export default function TradesmenPage() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, userLocation } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [tradesmen, setTradesmen] = useState<Tradesman[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,7 +169,7 @@ export default function TradesmenPage() {
 
         {/* Search + typeahead */}
         <div className="relative w-full max-w-xl">
-          <label className="text-sm text-slate-600">Search by trade or service</label>
+          <label className="text-sm text-slate-600">Who can help me with...</label>
           <div className="relative mt-1">
             <input
               type="text"
@@ -262,6 +263,25 @@ export default function TradesmenPage() {
                               </span>
                             )}
                           </div>
+                        </div>
+
+                        {/* Link to professionals filtered by this trade */}
+                        <div className="pt-2">
+                          <Link
+                            href={{
+                              pathname: '/professionals',
+                              query: {
+                                trade: trade.title,
+                                ...(userLocation?.primary && { location: userLocation.primary }),
+                              },
+                            }}
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
+                          >
+                            See {trade.title.toLowerCase()} in your area
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Link>
                         </div>
                       </div>
                     </div>
