@@ -179,6 +179,13 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     try {
       if (projectId) {
         await requestAssist({ id: projectId }, formData, formData.projectName || 'Project');
+        if (professionals.length > 0) {
+          await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects/${encodeURIComponent(projectId)}/select`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ professionalIds: professionals.map((p) => p.id) }),
+          });
+        }
         onClose();
         router.push(`/projects/${encodeURIComponent(projectId)}`);
         return;
@@ -186,6 +193,13 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
 
       const { project, defaultTitle } = await createProject(formData, false);
       await requestAssist(project, formData, defaultTitle);
+      if (professionals.length > 0) {
+        await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects/${encodeURIComponent(project.id)}/select`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ professionalIds: professionals.map((p) => p.id) }),
+        });
+      }
       onClose();
       router.push(`/projects/${encodeURIComponent(project.id)}`);
     } catch (err) {

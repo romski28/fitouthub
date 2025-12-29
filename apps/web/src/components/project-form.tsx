@@ -300,7 +300,7 @@ export function ProjectForm({
             <button
               type="button"
               onClick={handleAssistClick}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
               className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50"
             >
               Ask for advice
@@ -548,7 +548,7 @@ export function ProjectForm({
           <button
             type="button"
             onClick={handleAssistClick}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
             className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-6 py-2.5 text-indigo-700 font-semibold hover:bg-indigo-100 transition disabled:opacity-50"
           >
             Ask for advice

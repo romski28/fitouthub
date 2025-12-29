@@ -345,6 +345,50 @@ export class ProjectsService {
     return { success: true, invitedCount: professionals.length };
   }
 
+  // Mark professionals as selected for a project without invitations
+  async selectProfessionals(projectId: string, professionalIds: string[]) {
+    if (!projectId) throw new BadRequestException('projectId is required');
+    const ids = Array.isArray(professionalIds) ? professionalIds.filter(Boolean) : [];
+    if (ids.length === 0) {
+      throw new BadRequestException('At least one professionalId is required');
+    }
+
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new BadRequestException('Project not found');
+
+    const results: any[] = [];
+    for (const proId of ids) {
+      const existing = await this.prisma.projectProfessional.findUnique({
+        where: { projectId_professionalId: { projectId, professionalId: proId } },
+      }).catch(() => null);
+
+      if (!existing) {
+        const created = await this.prisma.projectProfessional.create({
+          data: {
+            projectId,
+            professionalId: proId,
+            status: 'selected',
+          },
+        });
+        results.push(created);
+      } else {
+        // Preserve existing status if they have already been invited/responded
+        // Otherwise mark as selected for visibility in the UI
+        if (!existing.respondedAt && existing.status === 'pending') {
+          const updated = await this.prisma.projectProfessional.update({
+            where: { id: existing.id },
+            data: { status: 'selected' },
+          });
+          results.push(updated);
+        } else {
+          results.push(existing);
+        }
+      }
+    }
+
+    return { ok: true, count: results.length, items: this.dedupeProfessionals(results) } as any;
+  }
+
   async create(createProjectDto: CreateProjectDto) {
     const { professionalIds, userId, ...rest } = createProjectDto;
     // Strip legacy professionalId from the data object so Prisma does not see an unknown field

@@ -117,6 +117,15 @@ export class ProjectsController {
     return this.projectsService.inviteProfessionals(projectId, body.professionalIds);
   }
 
+  // Persist professional selections without inviting them yet
+  @Post(':id/select')
+  async select(
+    @Param('id') projectId: string,
+    @Body() body: { professionalIds: string[] },
+  ) {
+    return this.projectsService.selectProfessionals(projectId, body.professionalIds);
+  }
+
   @Post(':id/quote')
   async submitQuote(
     @Param('id') projectId: string,
