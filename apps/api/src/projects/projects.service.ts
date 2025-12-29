@@ -265,7 +265,7 @@ export class ProjectsService {
       throw new BadRequestException('No professionals found for given ids');
     }
 
-    // Create or ensure ProjectProfessional relations (skip duplicates)
+    // Create or ensure ProjectProfessional relations (update status to 'pending' if exists)
     const junctionPromises = professionals.map((pro) =>
       this.prisma.projectProfessional.upsert({
         where: {
@@ -274,7 +274,7 @@ export class ProjectsService {
             professionalId: pro.id,
           },
         },
-        update: {},
+        update: { status: 'pending' },
         create: {
           projectId,
           professionalId: pro.id,
