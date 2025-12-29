@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Body, Get } from '@nestjs/common';
+import { Controller, Post, Param, Body, Get, Query, Patch } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 
 @Controller()
@@ -17,5 +17,26 @@ export class ReportsController {
   @Get('admin/reports/count')
   async outstandingCount() {
     return this.reports.getOutstandingCount();
+  }
+
+  @Get('admin/reports')
+  async listReports(
+    @Query('status') status?: 'new' | 'reviewed' | 'resolved',
+    @Query('professionalId') professionalId?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : undefined;
+    const parsedOffset = offset ? parseInt(offset, 10) : undefined;
+    return this.reports.listReports({ status, professionalId, limit: parsedLimit, offset: parsedOffset });
+  }
+
+  @Patch('admin/reports/:id')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: 'new' | 'reviewed' | 'resolved' },
+  ) {
+    const updated = await this.reports.updateReportStatus(id, body.status);
+    return { success: true, report: updated };
   }
 }

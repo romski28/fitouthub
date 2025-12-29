@@ -38,6 +38,13 @@ export default function AdminDashboard() {
       stats: "View all users",
     },
     {
+      title: "Trades",
+      description: "Manage trades catalogue, featured trades, and mapping to services.",
+      href: "/admin/trades",
+      icon: "🛠️",
+      stats: "Manage trades",
+    },
+    {
       title: "Projects",
       description: "View all projects, track email notifications, monitor quote submissions and professional responses.",
       href: "/admin/projects",

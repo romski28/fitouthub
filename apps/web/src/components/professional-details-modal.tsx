@@ -156,13 +156,26 @@ function ReportProfessionalModal({ isOpen, onClose, professional }: ReportProfes
           >
             Cancel
           </button>
-          <a
-            href={mailto}
+          <button
+            type="button"
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
-            onClick={onClose}
+            onClick={async () => {
+              try {
+                const res = await fetch(`/professionals/${encodeURIComponent(professional.id)}/report`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ comments: text }),
+                });
+                if (!res.ok) throw new Error(await res.text());
+                onClose();
+              } catch (e) {
+                console.error('Failed to submit report', e);
+                onClose();
+              }
+            }}
           >
             Send
-          </a>
+          </button>
         </div>
       </div>
     </ModalOverlay>
