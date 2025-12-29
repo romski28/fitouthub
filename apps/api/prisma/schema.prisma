@@ -25,6 +25,7 @@ model User {
   updatedAt           DateTime      @updatedAt
   professional        Professional?
   projects            Project[]
+  assistRequests      ProjectAssistRequest[] @relation("UserAssistRequests")
 }
 
 model Tradesman {
@@ -104,6 +105,7 @@ model Project {
   client                 Client?               @relation(fields: [clientId], references: [id])
   user                   User?                 @relation(fields: [userId], references: [id])
   professionals          ProjectProfessional[]
+  assistRequests         ProjectAssistRequest[]
 }
 
 model ProjectProfessional {
@@ -198,6 +200,38 @@ model Message {
   projectProfessional ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
 
   @@index([projectProfessionalId])
+  @@index([senderType])
+  @@index([createdAt])
+}
+
+model ProjectAssistRequest {
+  id         String   @id @default(cuid())
+  projectId  String
+  userId     String?
+  status     String   @default("open") // open | in_progress | closed
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User?    @relation("UserAssistRequests", fields: [userId], references: [id], onDelete: SetNull)
+  messages   AssistMessage[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model AssistMessage {
+  id               String   @id @default(cuid())
+  assistRequestId  String
+  senderType       String   // client | foh
+  senderUserId     String?
+  content          String
+  createdAt        DateTime @default(now())
+  readByFohAt      DateTime?
+  readByClientAt   DateTime?
+  assistRequest    ProjectAssistRequest @relation(fields: [assistRequestId], references: [id], onDelete: Cascade)
+
+  @@index([assistRequestId])
   @@index([senderType])
   @@index([createdAt])
 }

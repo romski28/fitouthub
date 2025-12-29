@@ -44,8 +44,89 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     return data.urls;
   };
 
+  const uploadPendingFiles = async (formData: ProjectFormData) => {
+    let photoUrls = uploadedUrls;
+    if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
+      photoUrls = await uploadFiles(formData.files);
+      setUploadedUrls(photoUrls);
+    }
+    return photoUrls;
+  };
+
+  const buildPayload = (data: ProjectFormData, normalizedPhotos: string[], invitePros: boolean) => {
+    const locationLabel = [data.location?.primary, data.location?.secondary, data.location?.tertiary]
+      .filter(Boolean)
+      .join(", ");
+    const clientName = user ? `${user.firstName} ${user.surname}`.trim() : "Client";
+
+    const defaultTitle = (() => {
+      const mainTrade = data.tradesRequired?.[0];
+      const locText = locationLabel;
+      if (mainTrade && locText) return `${mainTrade} in ${locText}`;
+      if (mainTrade) return mainTrade;
+      if (locText) return `Service Request in ${locText}`;
+      return "Service Request";
+    })();
+
+    return {
+      payload: {
+        projectName: (data.projectName?.trim() || defaultTitle),
+        tradesRequired: data.tradesRequired.length > 0 ? data.tradesRequired : [],
+        clientName,
+        contractorName: "",
+        region: locationLabel || "Hong Kong",
+        notes: `${data.notes?.trim() || ''}${normalizedPhotos.length > 0 ? `\nPhotos: ${normalizedPhotos.join(", ")}` : ""}`,
+        status: "pending" as const,
+        userId: user?.id,
+        professionalIds: invitePros ? professionals.map((p) => p.id) : [],
+      },
+      defaultTitle,
+    };
+  };
+
+  const createProject = async (formData: ProjectFormData, invitePros: boolean) => {
+    const photoUrls = await uploadPendingFiles(formData);
+    const normalizedPhotos = photoUrls.map(toAbsolute);
+    const { payload, defaultTitle } = buildPayload(formData, normalizedPhotos, invitePros);
+
+    const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Failed to create project");
+    }
+
+    const created = await response.json();
+    return { project: created, defaultTitle };
+  };
+
+  const requestAssist = async (project: { id: string; projectName?: string }, formData: ProjectFormData, defaultTitle: string) => {
+    const body = {
+      projectId: project.id,
+      userId: user?.id,
+      notes: formData.notes,
+      clientName: user ? `${user.firstName} ${user.surname}`.trim() : undefined,
+      projectName: project.projectName || defaultTitle,
+    };
+
+    const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/assist-requests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const message = await res.text();
+      throw new Error(message || "Failed to request assistance");
+    }
+  };
+
   const handleFormSubmit = async (formData: ProjectFormData) => {
-    if (professionals.length === 0) return;
+    if (professionals.length === 0 && !projectId) return;
 
     setError(null);
     setSubmitting(true);
@@ -65,7 +146,6 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
         }
 
         onClose();
-        // Return to existing project's detail page
         router.push(`/projects/${encodeURIComponent(projectId)}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to invite professionals";
@@ -76,58 +156,8 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
       return;
     }
 
-    // Otherwise, create a new project and invite selected professionals
-    let photoUrls = uploadedUrls;
-    if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
-      try {
-        photoUrls = await uploadFiles(formData.files);
-        setUploadedUrls(photoUrls);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Upload failed";
-        setError(message);
-        setSubmitting(false);
-        return;
-      }
-    }
-
-    const locationLabel = [formData.location?.primary, formData.location?.secondary, formData.location?.tertiary]
-      .filter(Boolean)
-      .join(", ");
-    const clientName = user ? `${user.firstName} ${user.surname}`.trim() : "Client";
-    const normalizedPhotos = photoUrls.map(toAbsolute);
-    const defaultTitle = (() => {
-      const mainTrade = formData.tradesRequired?.[0];
-      const locText = locationLabel;
-      if (mainTrade && locText) return `${mainTrade} in ${locText}`;
-      if (mainTrade) return mainTrade;
-      if (locText) return `Service Request in ${locText}`;
-      return "Service Request";
-    })();
-
-    const payload = {
-      projectName: (formData.projectName?.trim() || defaultTitle),
-      tradesRequired: formData.tradesRequired.length > 0 ? formData.tradesRequired : [],
-      clientName,
-      contractorName: "",
-      region: locationLabel || "Hong Kong",
-      notes: `${formData.notes?.trim() || ''}${normalizedPhotos.length > 0 ? `\nPhotos: ${normalizedPhotos.join(", ")}` : ""}`,
-      status: "pending" as const,
-      userId: user?.id,
-      professionalIds: professionals.map((p) => p.id),
-    };
-
     try {
-      const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Failed to create project");
-      }
-
+      const { project } = await createProject(formData, true);
       onClose();
       if (user?.id) {
         router.push(`/projects?clientId=${encodeURIComponent(user.id)}`);
@@ -136,6 +166,30 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create project";
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAssistRequest = async (formData: ProjectFormData) => {
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      if (projectId) {
+        await requestAssist({ id: projectId }, formData, formData.projectName || 'Project');
+        onClose();
+        router.push(`/projects/${encodeURIComponent(projectId)}`);
+        return;
+      }
+
+      const { project, defaultTitle } = await createProject(formData, false);
+      await requestAssist(project, formData, defaultTitle);
+      onClose();
+      router.push(`/projects/${encodeURIComponent(project.id)}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to request assistance";
       setError(message);
     } finally {
       setSubmitting(false);
@@ -163,6 +217,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
           professionals={professionals}
           initialData={initialData}
           onSubmit={handleFormSubmit}
+          onAssistRequest={handleAssistRequest}
           onCancel={onClose}
           isSubmitting={submitting}
           error={error}

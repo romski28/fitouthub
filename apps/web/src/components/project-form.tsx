@@ -38,6 +38,7 @@ interface ProjectFormProps {
   
   /** Form submission handler */
   onSubmit: (data: ProjectFormData) => Promise<void>;
+  onAssistRequest?: (data: ProjectFormData) => Promise<void>;
   
   /** Cancel handler */
   onCancel?: () => void;
@@ -68,6 +69,7 @@ export function ProjectForm({
   singleProfessional,
   isQuickRequest = false,
   onSubmit,
+  onAssistRequest,
   onCancel,
   isSubmitting = false,
   error,
@@ -161,6 +163,11 @@ export function ProjectForm({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSubmit(formData);
+  };
+
+  const handleAssistClick = async () => {
+    if (!onAssistRequest) return;
+    await onAssistRequest(formData);
   };
 
   // Quick request form (compact)
@@ -287,6 +294,16 @@ export function ProjectForm({
               className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
             >
               Cancel
+            </button>
+          )}
+          {onAssistRequest && !isReadOnly && (
+            <button
+              type="button"
+              onClick={handleAssistClick}
+              disabled={isSubmitting}
+              className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50"
+            >
+              Ask for advice
             </button>
           )}
           {!isReadOnly && (

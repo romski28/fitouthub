@@ -17,6 +17,8 @@ import { ClientModule } from './client/client.module';
 import { TradesModule } from './trades/trades.module';
 import { ReportsController } from './reports/reports.controller';
 import { ReportsService } from './reports/reports.service';
+import { AssistRequestsController } from './assist/assist-requests.controller';
+import { AssistRequestsService } from './assist/assist-requests.service';
 
 @Module({
   imports: [
@@ -31,8 +33,8 @@ import { ReportsService } from './reports/reports.service';
     ClientModule,
     TradesModule,
   ],
-  controllers: [AppController, ProjectsController, UploadsController, ReportsController],
-  providers: [AppService, PrismaService, ProjectsService, ReportsService],
+  controllers: [AppController, ProjectsController, UploadsController, ReportsController, AssistRequestsController],
+  providers: [AppService, PrismaService, ProjectsService, ReportsService, AssistRequestsService],
   exports: [PrismaService],
 })
 export class AppModule {}

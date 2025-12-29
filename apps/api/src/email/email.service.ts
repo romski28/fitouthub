@@ -542,4 +542,56 @@ export class EmailService {
       throw error;
     }
   }
+
+  /**
+   * Notify FOH when a client requests assistance scoping a project
+   */
+  async sendAssistRequestNotification(params: {
+    to: string;
+    projectName: string;
+    projectId: string;
+    clientName: string;
+    notes?: string;
+    webBaseUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send assist request notification to:', params.to, params);
+      return;
+    }
+
+    const projectUrl = `${params.webBaseUrl.replace(/\/$/, '')}/projects/${params.projectId}`;
+    const notesSection = params.notes
+      ? `<p style="color: #374151; white-space: pre-wrap;">${params.notes}</p>`
+      : '<p style="color: #9ca3af;">No additional notes provided.</p>';
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `🤝 Assist Requested: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #111827; margin: 0 0 12px 0;">Client needs assistance scoping a project</h2>
+            <p style="color: #374151; margin: 0 0 16px 0;">Client: <strong>${params.clientName}</strong></p>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+              <p style="color: #6b7280; margin: 0 0 6px 0; font-size: 14px;">Project</p>
+              <p style="color: #111827; margin: 0; font-weight: 600;">${params.projectName}</p>
+            </div>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px;">
+              <p style="color: #6b7280; margin: 0 0 6px 0; font-size: 14px;">Notes</p>
+              ${notesSection}
+            </div>
+            <div style="margin: 24px 0 0 0; text-align: left;">
+              <a href="${projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Project</a>
+            </div>
+          </div>
+        `,
+      });
+
+      console.log('✅ Assist request notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send assist request notification:', error);
+      throw error;
+    }
+  }
 }
