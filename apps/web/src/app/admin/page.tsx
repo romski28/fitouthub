@@ -8,6 +8,7 @@ import { API_BASE_URL } from "@/config/api";
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [outstandingReports, setOutstandingReports] = useState<number>(0);
+  const [openAssist, setOpenAssist] = useState<number>(0);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -20,6 +21,20 @@ export default function AdminDashboard() {
       } catch {}
     };
     fetchCount();
+  }, []);
+
+  useEffect(() => {
+    const fetchAssistOpen = async () => {
+      try {
+        const url = `${API_BASE_URL.replace(/\/$/, '')}/assist-requests?status=open&limit=1`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          setOpenAssist(Number(data?.total || 0));
+        }
+      } catch {}
+    };
+    fetchAssistOpen();
   }, []);
 
   const sections = [
@@ -64,6 +79,13 @@ export default function AdminDashboard() {
       href: "/admin/reports",
       icon: "🛠️",
       stats: `${outstandingReports} outstanding`,
+    },
+    {
+      title: "Assist Requests",
+      description: "Projects requesting FOH assistance. Review notes, message the client, and track progress.",
+      href: "/admin/assist",
+      icon: "🤝",
+      stats: `${openAssist} open`,
     },
     {
       title: "Analytics",
