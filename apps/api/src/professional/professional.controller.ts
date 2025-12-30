@@ -142,18 +142,29 @@ export class ProfessionalController {
     @Request() req: any,
     @Body() body: { title: string; description?: string; imageUrls?: string[] },
   ) {
-    const professionalId = req.user.id || req.user.sub;
-    if (!body.title || !body.title.trim()) {
-      throw new BadRequestException('Title is required');
+    try {
+      const professionalId = req.user.id || req.user.sub;
+      console.log('[createReferenceProject] req.user:', req.user);
+      console.log('[createReferenceProject] professionalId:', professionalId);
+      if (!professionalId) {
+        throw new BadRequestException('Professional ID not found in auth token');
+      }
+      if (!body.title || !body.title.trim()) {
+        throw new BadRequestException('Title is required');
+      }
+      return (this.prisma as any).professionalReferenceProject.create({
+        data: {
+          professionalId,
+          title: body.title.trim(),
+          description: body.description?.trim() || null,
+          imageUrls: body.imageUrls?.length ? body.imageUrls : [],
+        },
+      });
+    } catch (error) {
+      console.error('[createReferenceProject] Error:', error instanceof Error ? error.message : error);
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException((error as any)?.message || 'Failed to create reference project');
     }
-    return (this.prisma as any).professionalReferenceProject.create({
-      data: {
-        professionalId,
-        title: body.title.trim(),
-        description: body.description?.trim() || null,
-        imageUrls: body.imageUrls?.length ? body.imageUrls : [],
-      },
-    });
   }
 
   @Put('reference-projects/:id')
@@ -163,34 +174,52 @@ export class ProfessionalController {
     @Param('id') id: string,
     @Body() body: { title?: string; description?: string; imageUrls?: string[] },
   ) {
-    const professionalId = req.user.id || req.user.sub;
-    const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
-      where: { id, professionalId },
-    });
-    if (!existing) throw new BadRequestException('Reference project not found');
-    return (this.prisma as any).professionalReferenceProject.update({
-      where: { id },
-      data: {
-        title: body.title?.trim() || existing.title,
-        description:
-          body.description === undefined
-            ? existing.description
-            : body.description?.trim() || null,
-        imageUrls: body.imageUrls ?? existing.imageUrls,
-      },
-    });
+    try {
+      const professionalId = req.user.id || req.user.sub;
+      if (!professionalId) {
+        throw new BadRequestException('Professional ID not found in auth token');
+      }
+      const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
+        where: { id, professionalId },
+      });
+      if (!existing) throw new BadRequestException('Reference project not found');
+      return (this.prisma as any).professionalReferenceProject.update({
+        where: { id },
+        data: {
+          title: body.title?.trim() || existing.title,
+          description:
+            body.description === undefined
+              ? existing.description
+              : body.description?.trim() || null,
+          imageUrls: body.imageUrls ?? existing.imageUrls,
+        },
+      });
+    } catch (error) {
+      console.error('[updateReferenceProject] Error:', error instanceof Error ? error.message : error);
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException((error as any)?.message || 'Failed to update reference project');
+    }
   }
 
   @Delete('reference-projects/:id')
   @UseGuards(AuthGuard('jwt-professional'))
   async deleteReferenceProject(@Request() req: any, @Param('id') id: string) {
-    const professionalId = req.user.id || req.user.sub;
-    const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
-      where: { id, professionalId },
-    });
-    if (!existing) throw new BadRequestException('Reference project not found');
-    await (this.prisma as any).professionalReferenceProject.delete({ where: { id } });
-    return { success: true };
+    try {
+      const professionalId = req.user.id || req.user.sub;
+      if (!professionalId) {
+        throw new BadRequestException('Professional ID not found in auth token');
+      }
+      const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
+        where: { id, professionalId },
+      });
+      if (!existing) throw new BadRequestException('Reference project not found');
+      await (this.prisma as any).professionalReferenceProject.delete({ where: { id } });
+      return { success: true };
+    } catch (error) {
+      console.error('[deleteReferenceProject] Error:', error instanceof Error ? error.message : error);
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException((error as any)?.message || 'Failed to delete reference project');
+    }
   }
 
   @Get('messages/unread-count')
