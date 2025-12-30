@@ -114,7 +114,10 @@ export class ProjectsController {
     @Param('id') projectId: string,
     @Body() body: { professionalIds: string[] },
   ) {
-    return this.projectsService.inviteProfessionals(projectId, body.professionalIds);
+    return this.projectsService.inviteProfessionals(
+      projectId,
+      body.professionalIds,
+    );
   }
 
   // Persist professional selections without inviting them yet
@@ -123,13 +126,21 @@ export class ProjectsController {
     @Param('id') projectId: string,
     @Body() body: { professionalIds: string[] },
   ) {
-    return this.projectsService.selectProfessionals(projectId, body.professionalIds);
+    return this.projectsService.selectProfessionals(
+      projectId,
+      body.professionalIds,
+    );
   }
 
   @Post(':id/quote')
   async submitQuote(
     @Param('id') projectId: string,
-    @Body() quoteDto: { professionalId: string; quoteAmount: number; quoteNotes?: string },
+    @Body()
+    quoteDto: {
+      professionalId: string;
+      quoteAmount: number;
+      quoteNotes?: string;
+    },
   ) {
     return this.projectsService.submitQuote(
       projectId,
@@ -153,7 +164,11 @@ export class ProjectsController {
     @Param('professionalId') professionalId: string,
     @Body() body?: { clientId?: string },
   ) {
-    return this.projectsService.shareContact(projectId, professionalId, body?.clientId);
+    return this.projectsService.shareContact(
+      projectId,
+      professionalId,
+      body?.clientId,
+    );
   }
 
   @Post(':id/counter-request/:professionalId')
@@ -167,7 +182,8 @@ export class ProjectsController {
   @Post(':id/update-quote')
   async updateQuote(
     @Param('id') projectId: string,
-    @Body() body: { professionalId: string; quoteAmount: number; quoteNotes?: string },
+    @Body()
+    body: { professionalId: string; quoteAmount: number; quoteNotes?: string },
   ) {
     return this.projectsService.updateQuote(
       projectId,
@@ -182,7 +198,11 @@ export class ProjectsController {
     @Param('id') projectId: string,
     @Body() body: { startDate?: string; endDate?: string },
   ) {
-    return this.projectsService.updateProjectSchedule(projectId, body.startDate, body.endDate);
+    return this.projectsService.updateProjectSchedule(
+      projectId,
+      body.startDate,
+      body.endDate,
+    );
   }
 
   @Post(':id/contractor-contact')

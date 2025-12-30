@@ -23,12 +23,16 @@ export class ProfessionalAuthService {
     }
 
     // Check if professional already exists with this email
-    const existingProfessional = await (this.prisma as any).professional.findUnique({
+    const existingProfessional = await (
+      this.prisma as any
+    ).professional.findUnique({
       where: { email: dto.email },
     });
 
     if (existingProfessional) {
-      throw new ConflictException('Professional account already exists with this email');
+      throw new ConflictException(
+        'Professional account already exists with this email',
+      );
     }
 
     // Hash password

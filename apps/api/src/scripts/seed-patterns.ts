@@ -228,11 +228,17 @@ async function seedPatterns() {
   for (const pattern of patterns) {
     try {
       const result = await prisma.pattern.upsert({
-        where: { id: `${pattern.category}-${pattern.name}`.toLowerCase().replace(/\s+/g, '-') },
+        where: {
+          id: `${pattern.category}-${pattern.name}`
+            .toLowerCase()
+            .replace(/\s+/g, '-'),
+        },
         update: pattern,
         create: {
           ...pattern,
-          id: `${pattern.category}-${pattern.name}`.toLowerCase().replace(/\s+/g, '-'),
+          id: `${pattern.category}-${pattern.name}`
+            .toLowerCase()
+            .replace(/\s+/g, '-'),
         },
       });
       console.log(`✓ Seeded: ${result.name}`);

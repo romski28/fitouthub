@@ -26,10 +26,12 @@ export class ProfessionalsController {
   async create(@Body() createProfessionalDto: CreateProfessionalDto) {
     try {
       console.log('Received professional registration:', createProfessionalDto);
-      
+
       // Attempt to save to database
-      const result = await this.professionalsService.create(createProfessionalDto);
-      
+      const result = await this.professionalsService.create(
+        createProfessionalDto,
+      );
+
       return {
         success: true,
         data: result,
@@ -37,8 +39,11 @@ export class ProfessionalsController {
       };
     } catch (dbError) {
       // If database save fails, still return success for testing UI
-      console.warn('Database save failed (expected during setup):', (dbError as Error).message);
-      
+      console.warn(
+        'Database save failed (expected during setup):',
+        (dbError as Error).message,
+      );
+
       // Create a mock response that simulates successful registration
       const mockId = Math.random().toString(36).substring(7);
       return {
@@ -48,7 +53,8 @@ export class ProfessionalsController {
           ...createProfessionalDto,
           createdAt: new Date().toISOString(),
         },
-        message: 'Professional registration received (stored in queue for processing)',
+        message:
+          'Professional registration received (stored in queue for processing)',
       };
     }
   }

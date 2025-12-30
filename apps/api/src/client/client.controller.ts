@@ -99,9 +99,11 @@ export class ClientController {
   @UseGuards(AuthGuard('jwt'))
   async getUnreadCount(@Request() req: any) {
     const userId = req.user.id || req.user.sub;
-    
+
     // Get all project professionals for user's projects
-    const projectProfessionals = await (this.prisma as any).projectProfessional.findMany({
+    const projectProfessionals = await (
+      this.prisma as any
+    ).projectProfessional.findMany({
       where: {
         project: {
           OR: [{ userId }, { clientId: userId }],
@@ -109,13 +111,13 @@ export class ClientController {
       },
       select: { id: true },
     });
-    
+
     const projectProfessionalIds = projectProfessionals.map((pp: any) => pp.id);
-    
+
     if (projectProfessionalIds.length === 0) {
       return { unreadCount: 0 };
     }
-    
+
     // Count unread messages from professionals
     const count = await (this.prisma as any).message.count({
       where: {
@@ -124,7 +126,7 @@ export class ClientController {
         readByClientAt: null,
       },
     });
-    
+
     return { unreadCount: count };
   }
 
@@ -169,7 +171,10 @@ export class ClientController {
   ) {
     const userId = req.user.id || req.user.sub;
     const pp = await (this.prisma as any).projectProfessional.findFirst({
-      where: { id: projectProfessionalId, project: { OR: [{ userId }, { clientId: userId }] } },
+      where: {
+        id: projectProfessionalId,
+        project: { OR: [{ userId }, { clientId: userId }] },
+      },
       include: { professional: true },
     });
     if (!pp) throw new BadRequestException('Project not found');
@@ -198,7 +203,10 @@ export class ClientController {
   ) {
     const userId = req.user.id || req.user.sub;
     const pp = await (this.prisma as any).projectProfessional.findFirst({
-      where: { id: projectProfessionalId, project: { OR: [{ userId }, { clientId: userId }] } },
+      where: {
+        id: projectProfessionalId,
+        project: { OR: [{ userId }, { clientId: userId }] },
+      },
     });
     if (!pp) throw new BadRequestException('Project not found');
     const updated = await (this.prisma as any).projectProfessional.update({
@@ -226,7 +234,10 @@ export class ClientController {
   ) {
     const userId = req.user.id || req.user.sub;
     const pp = await (this.prisma as any).projectProfessional.findFirst({
-      where: { id: projectProfessionalId, project: { OR: [{ userId }, { clientId: userId }] } },
+      where: {
+        id: projectProfessionalId,
+        project: { OR: [{ userId }, { clientId: userId }] },
+      },
     });
     if (!pp) throw new BadRequestException('Project not found');
     const updated = await (this.prisma as any).projectProfessional.update({

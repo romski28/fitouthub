@@ -12,7 +12,10 @@ interface CreateAssistRequestDto {
 
 @Injectable()
 export class AssistRequestsService {
-  constructor(private prisma: PrismaService, private emailService: EmailService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async createRequest(dto: CreateAssistRequestDto) {
     if (!dto.projectId) throw new BadRequestException('projectId is required');
@@ -107,9 +110,16 @@ export class AssistRequestsService {
     return { items, total };
   }
 
-  async addMessage(assistRequestId: string, sender: 'client' | 'foh', content: string, senderUserId?: string) {
-    if (!assistRequestId) throw new BadRequestException('assistRequestId is required');
-    if (!content || !content.trim()) throw new BadRequestException('content is required');
+  async addMessage(
+    assistRequestId: string,
+    sender: 'client' | 'foh',
+    content: string,
+    senderUserId?: string,
+  ) {
+    if (!assistRequestId)
+      throw new BadRequestException('assistRequestId is required');
+    if (!content || !content.trim())
+      throw new BadRequestException('content is required');
 
     const assist = await (this.prisma as any).projectAssistRequest.findUnique({
       where: { id: assistRequestId },
@@ -129,7 +139,8 @@ export class AssistRequestsService {
   }
 
   async getMessages(assistRequestId: string, limit = 50, offset = 0) {
-    if (!assistRequestId) throw new BadRequestException('assistRequestId is required');
+    if (!assistRequestId)
+      throw new BadRequestException('assistRequestId is required');
     const messages = await (this.prisma as any).assistMessage.findMany({
       where: { assistRequestId },
       orderBy: { createdAt: 'asc' },
@@ -146,7 +157,13 @@ export class AssistRequestsService {
       orderBy: { createdAt: 'desc' },
       include: {
         project: {
-          select: { id: true, projectName: true, region: true, clientName: true, status: true },
+          select: {
+            id: true,
+            projectName: true,
+            region: true,
+            clientName: true,
+            status: true,
+          },
         },
         user: {
           select: { id: true, firstName: true, surname: true, email: true },
@@ -158,7 +175,8 @@ export class AssistRequestsService {
 
   async updateStatus(id: string, status: 'open' | 'in_progress' | 'closed') {
     if (!id) throw new BadRequestException('id is required');
-    if (!['open', 'in_progress', 'closed'].includes(status)) throw new BadRequestException('invalid status');
+    if (!['open', 'in_progress', 'closed'].includes(status))
+      throw new BadRequestException('invalid status');
     return this.prisma.projectAssistRequest.update({
       where: { id },
       data: { status },

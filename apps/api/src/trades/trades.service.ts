@@ -30,7 +30,10 @@ export class TradesService {
   constructor(private prisma: PrismaService) {
     // Pre-load cache on startup (with error handling for missing tables)
     this.refreshCache().catch((err) => {
-      console.warn('[TradesService] Failed to load cache on startup (tables may not exist yet):', err.message);
+      console.warn(
+        '[TradesService] Failed to load cache on startup (tables may not exist yet):',
+        err.message,
+      );
       // Set empty cache so service doesn't crash
       this.cache = {
         trades: [],
@@ -78,12 +81,15 @@ export class TradesService {
       };
 
       console.log('[TradesService] Cache refreshed:', {
-        trades: this.cache!.trades.length,
+        trades: this.cache.trades.length,
         mappings: mappingsMap.size,
       });
     } catch (error) {
       // Fallback for schema mismatch (columns or relations not present yet)
-      console.warn('[TradesService] Primary query failed, attempting fallback without relations/order:', error?.message);
+      console.warn(
+        '[TradesService] Primary query failed, attempting fallback without relations/order:',
+        error?.message,
+      );
       try {
         const tradesmen = await this.prisma.tradesman.findMany({
           // Some DBs may not have 'enabled' or 'sortOrder' yet
@@ -99,10 +105,16 @@ export class TradesService {
             },
           });
           mappingsMap = new Map(
-            mappings.map((m) => [m.keyword.toLowerCase(), m.trade.professionType || m.trade.title]),
+            mappings.map((m) => [
+              m.keyword.toLowerCase(),
+              m.trade.professionType || m.trade.title,
+            ]),
           );
         } catch (inner) {
-          console.warn('[TradesService] Mappings query failed, continuing without mappings:', inner?.message);
+          console.warn(
+            '[TradesService] Mappings query failed, continuing without mappings:',
+            inner?.message,
+          );
         }
         this.cache = {
           trades: tradesmen.map((t) => this.toView(t)),
@@ -110,7 +122,10 @@ export class TradesService {
           lastUpdated: Date.now(),
         };
       } catch (fallbackErr) {
-        console.warn('[TradesService] Fallback also failed - using empty cache:', fallbackErr?.message);
+        console.warn(
+          '[TradesService] Fallback also failed - using empty cache:',
+          fallbackErr?.message,
+        );
         this.cache = {
           trades: [],
           mappings: new Map(),
@@ -170,24 +185,31 @@ export class TradesService {
     return this.toView(trade);
   }
 
-  async update(id: string, data: Partial<{
-    name: string;
-    category: string;
-    professionType: string;
-    aliases: string[];
-    description: string;
-    enabled: boolean;
-    featured: boolean;
-    sortOrder: number;
-  }>) {
+  async update(
+    id: string,
+    data: Partial<{
+      name: string;
+      category: string;
+      professionType: string;
+      aliases: string[];
+      description: string;
+      enabled: boolean;
+      featured: boolean;
+      sortOrder: number;
+    }>,
+  ) {
     const trade = await this.prisma.tradesman.update({
       where: { id },
       data: {
         ...(data.name ? { title: data.name } : {}),
         ...(data.category ? { category: data.category } : {}),
-        ...(data.professionType !== undefined ? { professionType: data.professionType } : {}),
+        ...(data.professionType !== undefined
+          ? { professionType: data.professionType }
+          : {}),
         ...(data.aliases ? { aliases: data.aliases } : {}),
-        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.description !== undefined
+          ? { description: data.description }
+          : {}),
         ...(data.enabled !== undefined ? { enabled: data.enabled } : {}),
         ...(data.featured !== undefined ? { featured: data.featured } : {}),
         ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
@@ -227,12 +249,15 @@ export class TradesService {
     return mapping;
   }
 
-  async updateMapping(id: string, data: Partial<{
-    keyword: string;
-    tradeId: string;
-    confidence: number;
-    enabled: boolean;
-  }>) {
+  async updateMapping(
+    id: string,
+    data: Partial<{
+      keyword: string;
+      tradeId: string;
+      confidence: number;
+      enabled: boolean;
+    }>,
+  ) {
     const mapping = await this.prisma.serviceMapping.update({
       where: { id },
       data,
@@ -251,7 +276,7 @@ export class TradesService {
   async matchService(keyword: string): Promise<string | null> {
     const cache = await this.getCache();
     const normalized = keyword.toLowerCase().trim();
-    
+
     // Direct match
     if (cache.mappings.has(normalized)) {
       return cache.mappings.get(normalized)!;
@@ -259,7 +284,10 @@ export class TradesService {
 
     // Partial match (find if keyword contains any mapping keyword)
     for (const [mappingKeyword, professionType] of cache.mappings.entries()) {
-      if (normalized.includes(mappingKeyword) || mappingKeyword.includes(normalized)) {
+      if (
+        normalized.includes(mappingKeyword) ||
+        mappingKeyword.includes(normalized)
+      ) {
         return professionType;
       }
     }

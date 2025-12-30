@@ -45,23 +45,17 @@ async function main() {
 
   console.log('\n=== CONTRACTORS (Primary Trade) ===');
   contractors.forEach((c) => {
-    console.log(
-      `${c.fullName}: ${c.primaryTrade || 'None'}`,
-    );
+    console.log(`${c.fullName}: ${c.primaryTrade || 'None'}`);
   });
 
   console.log('\n=== COMPANIES (Multiple Trades) ===');
   companies.forEach((c) => {
-    console.log(
-      `${c.fullName}: ${c.tradesOffered.join(', ') || 'None'}`,
-    );
+    console.log(`${c.fullName}: ${c.tradesOffered.join(', ') || 'None'}`);
   });
 
   console.log('\n=== RESELLERS (Supplies) ===');
   resellers.forEach((r) => {
-    console.log(
-      `${r.businessName}: ${r.suppliesOffered.join(', ') || 'None'}`,
-    );
+    console.log(`${r.businessName}: ${r.suppliesOffered.join(', ') || 'None'}`);
   });
 }
 

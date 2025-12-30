@@ -1,4 +1,10 @@
-import { Controller, Post, UploadedFiles, UseInterceptors, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UploadedFiles,
+  UseInterceptors,
+  BadRequestException,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
@@ -20,7 +26,9 @@ const getS3Client = () => {
   const secretAccessKey = process.env.STORAGE_SECRET_ACCESS_KEY;
 
   if (!endpoint || !accessKeyId || !secretAccessKey) {
-    console.warn('⚠️  R2 storage not configured - file upload will fail. Set STORAGE_ENDPOINT, STORAGE_ACCESS_KEY_ID, STORAGE_SECRET_ACCESS_KEY');
+    console.warn(
+      '⚠️  R2 storage not configured - file upload will fail. Set STORAGE_ENDPOINT, STORAGE_ACCESS_KEY_ID, STORAGE_SECRET_ACCESS_KEY',
+    );
     return null;
   }
 
@@ -34,7 +42,11 @@ const getS3Client = () => {
   });
 };
 
-function filenameGenerator(req: any, file: any, cb: (error: Error | null, filename: string) => void) {
+function filenameGenerator(
+  req: any,
+  file: any,
+  cb: (error: Error | null, filename: string) => void,
+) {
   const id = randomBytes(8).toString('hex');
   const ext = extname(file.originalname).toLowerCase();
   cb(null, `${Date.now()}_${id}${ext}`);
@@ -71,7 +83,8 @@ export class UploadsController {
       throw new BadRequestException('STORAGE_BUCKET not configured');
     }
 
-    const baseUrl = process.env.PUBLIC_ASSETS_BASE_URL || 'https://uploads.example.com';
+    const baseUrl =
+      process.env.PUBLIC_ASSETS_BASE_URL || 'https://uploads.example.com';
     const urls: string[] = [];
 
     try {

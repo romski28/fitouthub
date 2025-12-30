@@ -10,28 +10,71 @@ const prisma = new PrismaClient();
 const PROFESSIONAL_TYPES = ['contractor', 'company', 'reseller'] as const;
 type ProfType = (typeof PROFESSIONAL_TYPES)[number];
 
-const HK_LOCATIONS: Array<{ primary: string; secondary?: string; tertiary?: string }> = [
-  { primary: 'Hong Kong Island', secondary: 'Central and Western', tertiary: 'Central' },
-  { primary: 'Hong Kong Island', secondary: 'Central and Western', tertiary: 'Sheung Wan' },
-  { primary: 'Hong Kong Island', secondary: 'Wan Chai', tertiary: 'Causeway Bay' },
+const HK_LOCATIONS: Array<{
+  primary: string;
+  secondary?: string;
+  tertiary?: string;
+}> = [
+  {
+    primary: 'Hong Kong Island',
+    secondary: 'Central and Western',
+    tertiary: 'Central',
+  },
+  {
+    primary: 'Hong Kong Island',
+    secondary: 'Central and Western',
+    tertiary: 'Sheung Wan',
+  },
+  {
+    primary: 'Hong Kong Island',
+    secondary: 'Wan Chai',
+    tertiary: 'Causeway Bay',
+  },
   { primary: 'Hong Kong Island', secondary: 'Wan Chai', tertiary: 'Wan Chai' },
   { primary: 'Kowloon', secondary: 'Yau Tsim Mong', tertiary: 'Tsim Sha Tsui' },
   { primary: 'Kowloon', secondary: 'Yau Tsim Mong', tertiary: 'Mong Kok' },
   { primary: 'Kowloon', secondary: 'Sham Shui Po', tertiary: 'Sham Shui Po' },
-  { primary: 'New Territories', secondary: 'Sai Kung', tertiary: 'Tseung Kwan O' },
+  {
+    primary: 'New Territories',
+    secondary: 'Sai Kung',
+    tertiary: 'Tseung Kwan O',
+  },
   { primary: 'New Territories', secondary: 'Sha Tin', tertiary: 'Sha Tin' },
-  { primary: 'Islands District', secondary: 'Lantau', tertiary: 'Discovery Bay' },
+  {
+    primary: 'Islands District',
+    secondary: 'Lantau',
+    tertiary: 'Discovery Bay',
+  },
 ];
 
 const TRADES = [
-  'Plumber', 'Electrician', 'Carpenter', 'Painter', 'Builder', 'Renovator',
-  'HVAC Technician', 'Tiler', 'Mason', 'Glazier', 'Roofer', 'Flooring Specialist'
+  'Plumber',
+  'Electrician',
+  'Carpenter',
+  'Painter',
+  'Builder',
+  'Renovator',
+  'HVAC Technician',
+  'Tiler',
+  'Mason',
+  'Glazier',
+  'Roofer',
+  'Flooring Specialist',
 ];
 
 const SUPPLIES = [
-  'Tiles', 'Bathroom Fixtures', 'Kitchen Appliances', 'Lighting Fixtures',
-  'Flooring Materials', 'Paint & Wallpaper', 'Doors & Windows', 'Hardware & Tools',
-  'Plumbing Supplies', 'Electrical Components', 'Building Materials', 'HVAC Equipment'
+  'Tiles',
+  'Bathroom Fixtures',
+  'Kitchen Appliances',
+  'Lighting Fixtures',
+  'Flooring Materials',
+  'Paint & Wallpaper',
+  'Doors & Windows',
+  'Hardware & Tools',
+  'Plumbing Supplies',
+  'Electrical Components',
+  'Building Materials',
+  'HVAC Equipment',
 ];
 
 function pickType(i: number): ProfType {
@@ -51,7 +94,10 @@ function randomRating(i: number): number {
   return parseFloat((3 + (i % 30) / 10).toFixed(1)); // 3.0 - 5.9 range
 }
 
-function getTradesForType(type: ProfType, index: number): {
+function getTradesForType(
+  type: ProfType,
+  index: number,
+): {
   primaryTrade?: string;
   tradesOffered: string[];
   suppliesOffered: string[];
@@ -117,12 +163,15 @@ async function main() {
           rating,
           fullName: type === 'reseller' ? undefined : name,
           businessName: type !== 'reseller' ? undefined : name,
-          serviceArea: [loc.primary, loc.secondary, loc.tertiary].filter(Boolean).join(', '),
+          serviceArea: [loc.primary, loc.secondary, loc.tertiary]
+            .filter(Boolean)
+            .join(', '),
           locationPrimary: loc.primary,
           locationSecondary: loc.secondary,
           locationTertiary: loc.tertiary,
           servicePrimaries: type !== 'reseller' ? [loc.primary] : [],
-          serviceSecondaries: type !== 'reseller' && loc.secondary ? [loc.secondary] : [],
+          serviceSecondaries:
+            type !== 'reseller' && loc.secondary ? [loc.secondary] : [],
           primaryTrade: trades.primaryTrade,
           tradesOffered: trades.tradesOffered,
           suppliesOffered: trades.suppliesOffered,
@@ -149,7 +198,7 @@ async function main() {
 
   console.log(`\n✓ Seeded ${created.length} new professionals.`);
   console.log(`  Skipped ${skipped} duplicates (already exist).`);
-  
+
   const finalCount = await prisma.professional.count();
   console.log(`\nTotal professionals in database: ${finalCount}`);
 }

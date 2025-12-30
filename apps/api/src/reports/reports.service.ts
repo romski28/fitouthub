@@ -5,9 +5,14 @@ import { PrismaService } from '../prisma.service';
 export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
-  async createProfessionalReport(professionalId: string, reporterUserId: string | undefined, comments: string) {
+  async createProfessionalReport(
+    professionalId: string,
+    reporterUserId: string | undefined,
+    comments: string,
+  ) {
     if (!professionalId) throw new Error('professionalId is required');
-    if (!comments || comments.trim().length === 0) throw new Error('comments are required');
+    if (!comments || comments.trim().length === 0)
+      throw new Error('comments are required');
 
     const report = await (this.prisma as any).professionalReport.create({
       data: {
@@ -63,9 +68,13 @@ export class ReportsService {
     return { items, total };
   }
 
-  async updateReportStatus(id: string, status: 'new' | 'reviewed' | 'resolved') {
+  async updateReportStatus(
+    id: string,
+    status: 'new' | 'reviewed' | 'resolved',
+  ) {
     if (!id) throw new Error('id is required');
-    if (!['new', 'reviewed', 'resolved'].includes(status)) throw new Error('invalid status');
+    if (!['new', 'reviewed', 'resolved'].includes(status))
+      throw new Error('invalid status');
     const updated = await (this.prisma as any).professionalReport.update({
       where: { id },
       data: { status },

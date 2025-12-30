@@ -134,29 +134,25 @@ export class AuthService {
         refreshToken: tokens.refreshToken,
       };
     } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token', _error);
     }
   }
 
   private generateTokens(userId: string) {
     const jwtSecret = process.env.JWT_SECRET || 'secret-key';
-    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'refresh-secret-key';
+    const jwtRefreshSecret =
+      process.env.JWT_REFRESH_SECRET || 'refresh-secret-key';
     const jwtExpiry = process.env.JWT_EXPIRY || '15m';
     const jwtRefreshExpiry = process.env.JWT_REFRESH_EXPIRY || '7d';
 
-    const accessToken = jwt.sign(
-      { sub: userId },
-      jwtSecret,
-      { expiresIn: jwtExpiry },
-    );
+    const accessToken = jwt.sign({ sub: userId }, jwtSecret, {
+      expiresIn: jwtExpiry,
+    });
 
-    const refreshToken = jwt.sign(
-      { sub: userId },
-      jwtRefreshSecret,
-      { expiresIn: jwtRefreshExpiry },
-    );
+    const refreshToken = jwt.sign({ sub: userId }, jwtRefreshSecret, {
+      expiresIn: jwtRefreshExpiry,
+    });
 
     return { accessToken, refreshToken };
   }
 }
-

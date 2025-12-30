@@ -8,14 +8,19 @@ export class PatternsService {
 
   async list(includeCore: boolean = false) {
     let dbPatterns: any[] = [];
-    
+
     try {
-      dbPatterns = await this.prisma.pattern.findMany({ orderBy: { updatedAt: 'desc' } });
+      dbPatterns = await this.prisma.pattern.findMany({
+        orderBy: { updatedAt: 'desc' },
+      });
     } catch (error) {
-      console.warn('Failed to fetch patterns from database, returning core patterns only:', error.message);
+      console.warn(
+        'Failed to fetch patterns from database, returning core patterns only:',
+        error.message,
+      );
       // Continue with empty DB patterns if database is unavailable
     }
-    
+
     if (!includeCore) {
       return dbPatterns;
     }
@@ -35,7 +40,7 @@ export class PatternsService {
       _source: 'core' as const,
     }));
 
-    const userPatterns = dbPatterns.map(p => ({
+    const userPatterns = dbPatterns.map((p) => ({
       ...p,
       _source: 'user' as const,
     }));

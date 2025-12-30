@@ -8,6 +8,7 @@ import { Navbar } from "@/components/navbar";
 import { GlobalAuthModal } from "@/components/global-auth-modal";
 import Footer from "@/components/footer";
 import CornerRibbon from "@/components/corner-ribbon";
+import FloatingChat from "@/components/floating-chat";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -52,6 +53,7 @@ export default function RootLayout({
               </div>
               <GlobalAuthModal />
               <CornerRibbon />
+              <FloatingChat />
             </AuthModalControlProvider>
           </ProfessionalAuthProvider>
         </AuthProvider>

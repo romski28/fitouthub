@@ -8,7 +8,9 @@ export class EmailService {
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      console.warn('⚠️  RESEND_API_KEY not configured - email sending disabled');
+      console.warn(
+        '⚠️  RESEND_API_KEY not configured - email sending disabled',
+      );
       return;
     }
     this.resend = new Resend(apiKey);
@@ -95,7 +97,10 @@ export class EmailService {
     baseUrl: string;
   }): Promise<void> {
     if (!this.resend) {
-      console.log('📧 [MOCK] Would send acceptance confirmation to:', params.to);
+      console.log(
+        '📧 [MOCK] Would send acceptance confirmation to:',
+        params.to,
+      );
       return;
     }
 
@@ -434,7 +439,10 @@ export class EmailService {
     projectName: string;
   }): Promise<void> {
     if (!this.resend) {
-      console.log('📧 [MOCK] Would send contact sharing notification to:', params.to);
+      console.log(
+        '📧 [MOCK] Would send contact sharing notification to:',
+        params.to,
+      );
       return;
     }
 
@@ -489,7 +497,10 @@ export class EmailService {
     currentQuote: string;
   }): Promise<void> {
     if (!this.resend) {
-      console.log('📧 [MOCK] Would send counter-request notification to:', params.to);
+      console.log(
+        '📧 [MOCK] Would send counter-request notification to:',
+        params.to,
+      );
       return;
     }
 
@@ -555,7 +566,11 @@ export class EmailService {
     webBaseUrl: string;
   }): Promise<void> {
     if (!this.resend) {
-      console.log('📧 [MOCK] Would send assist request notification to:', params.to, params);
+      console.log(
+        '📧 [MOCK] Would send assist request notification to:',
+        params.to,
+        params,
+      );
       return;
     }
 

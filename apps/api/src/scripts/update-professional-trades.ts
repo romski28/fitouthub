@@ -8,17 +8,39 @@ config({ path: resolve(__dirname, '../../.env') });
 const prisma = new PrismaClient();
 
 const TRADES = [
-  'Plumber', 'Electrician', 'Carpenter', 'Painter', 'Builder', 'Renovator',
-  'HVAC Technician', 'Tiler', 'Mason', 'Glazier', 'Roofer', 'Flooring Specialist'
+  'Plumber',
+  'Electrician',
+  'Carpenter',
+  'Painter',
+  'Builder',
+  'Renovator',
+  'HVAC Technician',
+  'Tiler',
+  'Mason',
+  'Glazier',
+  'Roofer',
+  'Flooring Specialist',
 ];
 
 const SUPPLIES = [
-  'Tiles', 'Bathroom Fixtures', 'Kitchen Appliances', 'Lighting Fixtures',
-  'Flooring Materials', 'Paint & Wallpaper', 'Doors & Windows', 'Hardware & Tools',
-  'Plumbing Supplies', 'Electrical Components', 'Building Materials', 'HVAC Equipment'
+  'Tiles',
+  'Bathroom Fixtures',
+  'Kitchen Appliances',
+  'Lighting Fixtures',
+  'Flooring Materials',
+  'Paint & Wallpaper',
+  'Doors & Windows',
+  'Hardware & Tools',
+  'Plumbing Supplies',
+  'Electrical Components',
+  'Building Materials',
+  'HVAC Equipment',
 ];
 
-function getTradesForType(type: string, index: number): {
+function getTradesForType(
+  type: string,
+  index: number,
+): {
   primaryTrade?: string;
   tradesOffered: string[];
   suppliesOffered: string[];
@@ -58,7 +80,7 @@ function getTradesForType(type: string, index: number): {
 async function main() {
   console.log('Fetching all professionals...');
   const professionals = await prisma.professional.findMany({
-    orderBy: { createdAt: 'asc' }
+    orderBy: { createdAt: 'asc' },
   });
 
   console.log(`Found ${professionals.length} professionals to update.\n`);

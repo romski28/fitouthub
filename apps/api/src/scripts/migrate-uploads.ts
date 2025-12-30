@@ -26,9 +26,13 @@ async function migrateUploads() {
   const files = readdirSync(oldPath).filter((f) => {
     // Only copy image files
     const ext = f.toLowerCase();
-    return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || 
-           ext.endsWith('.png') || ext.endsWith('.webp') || 
-           ext.endsWith('.gif');
+    return (
+      ext.endsWith('.jpg') ||
+      ext.endsWith('.jpeg') ||
+      ext.endsWith('.png') ||
+      ext.endsWith('.webp') ||
+      ext.endsWith('.gif')
+    );
   });
 
   if (files.length === 0) {

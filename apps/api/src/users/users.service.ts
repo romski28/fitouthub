@@ -51,7 +51,7 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     // Filter out undefined values to prevent Prisma errors
     const data = Object.fromEntries(
-      Object.entries(updateUserDto).filter(([, v]) => v !== undefined)
+      Object.entries(updateUserDto).filter(([, v]) => v !== undefined),
     );
 
     if (Object.keys(data).length === 0) {

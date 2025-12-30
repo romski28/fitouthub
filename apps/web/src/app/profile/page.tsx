@@ -62,9 +62,9 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium text-slate-600">
                 Account Type
               </label>
-              <p className="inline-block text-lg font-medium text-white bg-blue-600 px-3 py-1 rounded">
+              <span className="inline-block text-lg font-medium text-white bg-blue-600 px-3 py-1 rounded">
                 {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : 'Client'}
-              </p>
+              </span>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-600">

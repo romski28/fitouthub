@@ -16,7 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   defaultTab = 'login',
 }) => {
   const { login, register } = useAuth();
-  const { register: registerProfessional } = useProfessionalAuth();
+  const { login: loginProfessional, register: registerProfessional } = useProfessionalAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
   const [userType, setUserType] = useState<'client' | 'professional'>('client');
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +57,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
 
     try {
-      await login(loginEmail, loginPassword);
+      if (userType === 'professional') {
+        await loginProfessional(loginEmail, loginPassword);
+      } else {
+        await login(loginEmail, loginPassword);
+      }
       onClose();
       setLoginEmail('');
       setLoginPassword('');
@@ -207,6 +211,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {activeTab === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
+              {/* User Type Toggle for Login */}
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setUserType('client')}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    userType === 'client'
+                      ? 'bg-white text-blue-600 shadow'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Client
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserType('professional')}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    userType === 'professional'
+                      ? 'bg-white text-blue-600 shadow'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Professional
+                </button>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Email

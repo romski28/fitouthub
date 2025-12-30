@@ -16,7 +16,10 @@ import { EmailService } from '../email/email.service';
 
 @Controller('professional')
 export class ProfessionalController {
-  constructor(private prisma: PrismaService, private email: EmailService) {}
+  constructor(
+    private prisma: PrismaService,
+    private email: EmailService,
+  ) {}
 
   @Get('projects')
   @UseGuards(AuthGuard('jwt-professional'))
@@ -160,8 +163,7 @@ export class ProfessionalController {
           projectProfessionalId,
           senderType: 'professional',
           senderProfessionalId: professionalId,
-          content:
-            `We have submitted a quotation${isNaN(quoteAmount) ? '' : ` for HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`}.`,
+          content: `We have submitted a quotation${isNaN(quoteAmount) ? '' : ` for HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`}.`,
         },
       });
 
@@ -173,13 +175,19 @@ export class ProfessionalController {
           process.env.APP_WEB_URL ||
           'https://fitouthub-web.vercel.app';
 
-        const clientEmail = updated.project?.user?.email || updated.project?.client?.email;
+        const clientEmail =
+          updated.project?.user?.email || updated.project?.client?.email;
         if (clientEmail) {
           await this.email.sendQuoteSubmitted({
             to: clientEmail,
-            clientName: updated.project?.user?.firstName || updated.project?.client?.name || 'Client',
+            clientName:
+              updated.project?.user?.firstName ||
+              updated.project?.client?.name ||
+              'Client',
             professionalName:
-              updated.professional?.fullName || updated.professional?.businessName || 'A professional',
+              updated.professional?.fullName ||
+              updated.professional?.businessName ||
+              'A professional',
             projectName: updated.project?.projectName || 'Your Project',
             quoteAmount: Number(quoteAmount) || 0,
             projectId: updated.project?.id,
@@ -296,7 +304,9 @@ export class ProfessionalController {
   ) {
     const professionalId = req.user.id || req.user.sub;
 
-    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+    const projectProfessional = await (
+      this.prisma as any
+    ).projectProfessional.findFirst({
       where: { id: projectProfessionalId, professionalId },
     });
     if (!projectProfessional) {
@@ -325,7 +335,9 @@ export class ProfessionalController {
       throw new BadRequestException('Message content is required');
     }
 
-    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+    const projectProfessional = await (
+      this.prisma as any
+    ).projectProfessional.findFirst({
       where: { id: projectProfessionalId, professionalId },
     });
     if (!projectProfessional) {
@@ -352,7 +364,9 @@ export class ProfessionalController {
     @Param('projectProfessionalId') projectProfessionalId: string,
   ) {
     const professionalId = req.user.id || req.user.sub;
-    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+    const projectProfessional = await (
+      this.prisma as any
+    ).projectProfessional.findFirst({
       where: { id: projectProfessionalId, professionalId },
     });
     if (!projectProfessional) {

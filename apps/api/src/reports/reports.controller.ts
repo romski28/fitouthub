@@ -1,4 +1,12 @@
-import { Controller, Post, Param, Body, Get, Query, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  Body,
+  Get,
+  Query,
+  Patch,
+} from '@nestjs/common';
 import { ReportsService } from './reports.service';
 
 @Controller()
@@ -10,7 +18,11 @@ export class ReportsController {
     @Param('id') professionalId: string,
     @Body() body: { reporterUserId?: string; comments: string },
   ) {
-    const report = await this.reports.createProfessionalReport(professionalId, body.reporterUserId, body.comments);
+    const report = await this.reports.createProfessionalReport(
+      professionalId,
+      body.reporterUserId,
+      body.comments,
+    );
     return { success: true, report };
   }
 
@@ -28,7 +40,12 @@ export class ReportsController {
   ) {
     const parsedLimit = limit ? parseInt(limit, 10) : undefined;
     const parsedOffset = offset ? parseInt(offset, 10) : undefined;
-    return this.reports.listReports({ status, professionalId, limit: parsedLimit, offset: parsedOffset });
+    return this.reports.listReports({
+      status,
+      professionalId,
+      limit: parsedLimit,
+      offset: parsedOffset,
+    });
   }
 
   @Patch('admin/reports/:id')

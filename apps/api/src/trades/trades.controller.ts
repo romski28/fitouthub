@@ -39,22 +39,26 @@ export class TradesController {
   }
 
   @Post()
-  async create(@Body() body: {
-    name: string;
-    category: string;
-    professionType?: string;
-    aliases?: string[];
-    description?: string;
-    featured?: boolean;
-    sortOrder?: number;
-  }) {
+  async create(
+    @Body()
+    body: {
+      name: string;
+      category: string;
+      professionType?: string;
+      aliases?: string[];
+      description?: string;
+      featured?: boolean;
+      sortOrder?: number;
+    },
+  ) {
     return this.tradesService.create(body);
   }
 
   @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() body: Partial<{
+    @Body()
+    body: Partial<{
       name: string;
       category: string;
       professionType: string;
@@ -77,7 +81,8 @@ export class TradesController {
   @Post(':tradeId/mappings')
   async createMapping(
     @Param('tradeId') tradeId: string,
-    @Body() body: {
+    @Body()
+    body: {
       keyword: string;
       confidence?: number;
     },
@@ -91,7 +96,8 @@ export class TradesController {
   @Put('mappings/:id')
   async updateMapping(
     @Param('id') id: string,
-    @Body() body: Partial<{
+    @Body()
+    body: Partial<{
       keyword: string;
       tradeId: string;
       confidence: number;

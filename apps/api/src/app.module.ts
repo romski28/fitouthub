@@ -33,8 +33,20 @@ import { AssistRequestsService } from './assist/assist-requests.service';
     ClientModule,
     TradesModule,
   ],
-  controllers: [AppController, ProjectsController, UploadsController, ReportsController, AssistRequestsController],
-  providers: [AppService, PrismaService, ProjectsService, ReportsService, AssistRequestsService],
+  controllers: [
+    AppController,
+    ProjectsController,
+    UploadsController,
+    ReportsController,
+    AssistRequestsController,
+  ],
+  providers: [
+    AppService,
+    PrismaService,
+    ProjectsService,
+    ReportsService,
+    AssistRequestsService,
+  ],
   exports: [PrismaService],
 })
 export class AppModule {}

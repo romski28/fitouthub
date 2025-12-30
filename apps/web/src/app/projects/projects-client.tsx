@@ -20,6 +20,14 @@ const statusColors: Record<string, string> = {
   counter_requested: "bg-purple-100 text-purple-800",
 };
 
+type AssistStatus = "open" | "in_progress" | "closed";
+
+const assistStatusColors: Record<AssistStatus, string> = {
+  open: "bg-amber-100 text-amber-800",
+  in_progress: "bg-blue-100 text-blue-800",
+  closed: "bg-slate-100 text-slate-800",
+};
+
 type ExtendedProject = Project & { 
   photos: string[]; 
   sourceIds?: string[];
@@ -560,7 +568,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const { isLoggedIn, accessToken } = useAuth();
   const [hydrated, setHydrated] = useState(false);
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
-  const [assistMap, setAssistMap] = useState<Record<string, boolean>>({});
+  const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
   const [items, setItems] = useState<ExtendedProject[]>(() => {
     // Group by a canonical composite key to merge duplicate records of the same logical project
     const byKey = new Map<string, ExtendedProject & { sourceIds: string[] }>();
@@ -684,18 +692,21 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
               const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(p.id)}`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
               });
-              if (!res.ok) return [p.id, false] as const;
+              if (!res.ok) return [p.id, false, undefined] as const;
               const data = await res.json();
               const hasAssist = !!data?.assist?.id;
-              return [p.id, hasAssist] as const;
+              const status = (data?.assist?.status as AssistStatus | undefined) || undefined;
+              return [p.id, hasAssist, status] as const;
             } catch {
-              return [p.id, false] as const;
+              return [p.id, false, undefined] as const;
             }
           })
         );
         if (!cancelled) {
-          const next: Record<string, boolean> = {};
-          entries.forEach(([id, has]) => { next[id] = has; });
+          const next: Record<string, { hasAssist: boolean; status?: AssistStatus }> = {};
+          entries.forEach(([id, has, status]) => {
+            next[id] = { hasAssist: has, status };
+          });
           setAssistMap(next);
         }
       } catch {}
@@ -788,39 +799,46 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((project) => (
-            <div
-              key={project.id}
-              className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
-                <div className="space-y-1">
-                  <div className="text-base font-bold">{project.projectName}</div>
-                  <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{project.region}</div>
+          {filtered.map((project) => {
+            const assistInfo = assistMap[project.id];
+            return (
+              <div
+                key={project.id}
+                className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
+                  <div className="space-y-1">
+                    <div className="text-base font-bold">{project.projectName}</div>
+                    <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{project.region}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {((project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)) > 0 && (
+                      <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white bg-red-600/70">
+                        {(project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)} new
+                      </span>
+                    )}
+                    {assistInfo?.hasAssist && (
+                      <span className="rounded-full px-2 py-1 text-[10px] font-semibold bg-purple-100 text-purple-800">
+                        Assistance
+                      </span>
+                    )}
+                    {assistInfo?.hasAssist && assistInfo.status ? (
+                      <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${assistStatusColors[assistInfo.status]}`}>
+                        {`Assist ${assistInfo.status.replace('_', ' ')}`}
+                      </span>
+                    ) : null}
+                    <StatusBadge status={project.status} />
+                    <button
+                      type="button"
+                      onClick={() => setEditing(project)}
+                      className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {((project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)) > 0 && (
-                    <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white bg-red-600/70">
-                      {(project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)} new
-                    </span>
-                  )}
-                  {assistMap[project.id] && (
-                    <span className="rounded-full px-2 py-1 text-[10px] font-semibold bg-purple-100 text-purple-800">
-                      Assistance
-                    </span>
-                  )}
-                  <StatusBadge status={project.status} />
-                  <button
-                    type="button"
-                    onClick={() => setEditing(project)}
-                    className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </div>
 
-              <div className="p-4 space-y-3">
+                <div className="p-4 space-y-3">
                 <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />

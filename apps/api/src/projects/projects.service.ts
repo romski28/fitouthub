@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
@@ -38,25 +37,24 @@ export class ProjectsService {
     return ia <= ib ? a : b;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private dedupeProfessionals(list: any[] | undefined | null): any[] {
     if (!Array.isArray(list) || list.length === 0) return [];
     const map = new Map<string, unknown>();
     for (const entry of list) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const e = entry as any;
-      const key = (e?.professional?.id || e?.professional?.email || e?.id) as string;
+      const e = entry;
+      const key = (e?.professional?.id ||
+        e?.professional?.email ||
+        e?.id) as string;
       if (!key) continue;
       const existing = map.get(key);
       if (!existing) {
         map.set(key, { ...e });
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const merged: any = { ...(existing as any) };
-        merged.status = this.betterStatus(
-          (existing as any)?.status,
-          e?.status,
-        ) ?? e?.status ?? (existing as any)?.status;
+        merged.status =
+          this.betterStatus((existing as any)?.status, e?.status) ??
+          e?.status ??
+          (existing as any)?.status;
         if (merged.quoteAmount == null && e?.quoteAmount != null) {
           merged.quoteAmount = e.quoteAmount;
         }
@@ -85,16 +83,12 @@ export class ProjectsService {
 
   async findCanonical(clientId?: string) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const projects = (await this.prisma.project.findMany({
         // Frontend passes the authenticated user's id via `clientId`
         // Include projects where either `clientId` or `userId` matches
         where: clientId
           ? {
-              OR: [
-                { clientId: clientId },
-                { userId: clientId },
-              ],
+              OR: [{ clientId: clientId }, { userId: clientId }],
             }
           : undefined,
         include: {
@@ -107,8 +101,7 @@ export class ProjectsService {
 
       const byKey = new Map<string, unknown>();
       for (const p of projects) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const proj = p as any;
+        const proj = p;
         const key = clientId
           ? `${clientId}|${this.canon(proj.projectName)}`
           : `${this.canon(proj.clientName)}|${this.canon(proj.projectName)}`;
@@ -121,7 +114,6 @@ export class ProjectsService {
             professionals: this.dedupeProfessionals(proj.professionals),
           });
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const existing_proj = existing as any;
           const mergedPros = [
             ...(existing_proj.professionals ?? []),
@@ -129,10 +121,7 @@ export class ProjectsService {
           ];
           existing_proj.professionals = this.dedupeProfessionals(mergedPros);
           existing_proj.sourceIds = Array.from(
-            new Set([
-              ...(existing_proj.sourceIds ?? []),
-              String(proj.id),
-            ]),
+            new Set([...(existing_proj.sourceIds ?? []), String(proj.id)]),
           );
           // Prefer the most recently updated record for primary fields
           if ((proj.updatedAt || '') > (existing_proj.updatedAt || '')) {
@@ -149,9 +138,9 @@ export class ProjectsService {
       return Array.from(byKey.values());
     } catch (error) {
       console.error('[ProjectsService.findCanonical] Database error:', {
-        message: (error as any)?.message,
-        code: (error as any)?.code,
-        meta: (error as any)?.meta,
+        message: error?.message,
+        code: error?.code,
+        meta: error?.meta,
       });
       return [];
     }
@@ -280,7 +269,7 @@ export class ProjectsService {
           professionalId: pro.id,
           status: 'pending',
         },
-      })
+      }),
     );
 
     await Promise.all(junctionPromises);
@@ -311,7 +300,7 @@ export class ProjectsService {
             action: 'decline',
             expiresAt,
           },
-        })
+        }),
       );
 
       const professionalName =
@@ -331,12 +320,15 @@ export class ProjectsService {
             baseUrl,
           })
           .catch((err) => {
-            console.error('[ProjectsService.inviteProfessionals] failed to send invite', {
-              to: professional.email,
-              error: err?.message,
-            });
+            console.error(
+              '[ProjectsService.inviteProfessionals] failed to send invite',
+              {
+                to: professional.email,
+                error: err?.message,
+              },
+            );
             return null;
-          })
+          }),
       );
     }
 
@@ -348,19 +340,27 @@ export class ProjectsService {
   // Mark professionals as selected for a project without invitations
   async selectProfessionals(projectId: string, professionalIds: string[]) {
     if (!projectId) throw new BadRequestException('projectId is required');
-    const ids = Array.isArray(professionalIds) ? professionalIds.filter(Boolean) : [];
+    const ids = Array.isArray(professionalIds)
+      ? professionalIds.filter(Boolean)
+      : [];
     if (ids.length === 0) {
       throw new BadRequestException('At least one professionalId is required');
     }
 
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) throw new BadRequestException('Project not found');
 
     const results: any[] = [];
     for (const proId of ids) {
-      const existing = await this.prisma.projectProfessional.findUnique({
-        where: { projectId_professionalId: { projectId, professionalId: proId } },
-      }).catch(() => null);
+      const existing = await this.prisma.projectProfessional
+        .findUnique({
+          where: {
+            projectId_professionalId: { projectId, professionalId: proId },
+          },
+        })
+        .catch(() => null);
 
       if (!existing) {
         const created = await this.prisma.projectProfessional.create({
@@ -386,29 +386,32 @@ export class ProjectsService {
       }
     }
 
-    return { ok: true, count: results.length, items: this.dedupeProfessionals(results) } as any;
+    return {
+      ok: true,
+      count: results.length,
+      items: this.dedupeProfessionals(results),
+    } as any;
   }
 
   async create(createProjectDto: CreateProjectDto) {
     const { professionalIds, userId, ...rest } = createProjectDto;
     // Strip legacy professionalId from the data object so Prisma does not see an unknown field
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { professionalId: _legacyField, ...projectData } = rest as any;
 
     // Backward compatibility: allow single professionalId in payload
     const ids: string[] = Array.isArray(professionalIds)
       ? professionalIds.filter(Boolean)
       : [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const legacyId = (createProjectDto as any).professionalId;
     if (legacyId && !ids.includes(legacyId)) ids.push(legacyId);
 
     // Professional IDs are optional - projects can be created without selecting professionals yet
     // Professionals can be invited after project creation
-    
+
     // Debug: log invitation targets (safe for troubleshooting)
     if (ids.length > 0) {
-      // eslint-disable-next-line no-console
       console.log('[ProjectsService.create] inviting professionals:', ids);
     }
 
@@ -421,7 +424,6 @@ export class ProjectsService {
       });
 
       if (professionals.length !== ids.length) {
-        // eslint-disable-next-line no-console
         console.warn('[ProjectsService.create] missing professionals', {
           requested: ids,
           found: professionals.map((p) => p.id),
@@ -440,7 +442,6 @@ export class ProjectsService {
       normalized.endDate = new Date(normalized.endDate);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const createData: any = {
       ...normalized,
       professionals: {
@@ -517,7 +518,6 @@ export class ProjectsService {
             baseUrl,
           })
           .catch((err) => {
-            // eslint-disable-next-line no-console
             console.error('[ProjectsService.create] failed to send invite', {
               to: professional.email,
               error: err?.message,
@@ -609,9 +609,7 @@ export class ProjectsService {
     // Send follow-up email if accepted
     if (action === 'accept') {
       const professionalName =
-        professional.fullName ||
-        professional.businessName ||
-        'Professional';
+        professional.fullName || professional.businessName || 'Professional';
       const webBaseUrl =
         process.env.WEB_BASE_URL ||
         process.env.FRONTEND_BASE_URL ||
@@ -646,8 +644,8 @@ export class ProjectsService {
     quoteNotes?: string,
   ) {
     // Verify professional has accepted this project
-    const projectProfessional = await this.prisma.projectProfessional.findUnique(
-      {
+    const projectProfessional =
+      await this.prisma.projectProfessional.findUnique({
         where: {
           projectId_professionalId: {
             projectId,
@@ -662,8 +660,7 @@ export class ProjectsService {
           },
           professional: true,
         },
-      },
-    );
+      });
 
     if (!projectProfessional) {
       throw new Error('You are not invited to this project');
@@ -694,7 +691,8 @@ export class ProjectsService {
     });
 
     // Notify client
-    const clientEmail = projectProfessional.project.clientId || 'client@example.com'; // TODO: Get real client email
+    const clientEmail =
+      projectProfessional.project.clientId || 'client@example.com'; // TODO: Get real client email
     const professionalName =
       projectProfessional.professional.fullName ||
       projectProfessional.professional.businessName ||
@@ -720,8 +718,8 @@ export class ProjectsService {
 
   async awardQuote(projectId: string, professionalId: string) {
     // Verify ProjectProfessional relationship exists and has a quote
-    const projectProfessional = await this.prisma.projectProfessional.findUnique(
-      {
+    const projectProfessional =
+      await this.prisma.projectProfessional.findUnique({
         where: {
           projectId_professionalId: {
             projectId,
@@ -739,8 +737,7 @@ export class ProjectsService {
           },
           professional: true,
         },
-      },
-    );
+      });
 
     if (!projectProfessional) {
       throw new Error('Professional not invited to this project');
@@ -775,7 +772,7 @@ export class ProjectsService {
     const clientName = project.clientName;
 
     // Send winner notification
-    // eslint-disable-next-line no-console
+
     console.log('[ProjectsService.awardQuote] Notifying winner:', {
       projectId,
       professionalId,
@@ -802,18 +799,22 @@ export class ProjectsService {
         .sendLoserNotification({
           to: pp.professional.email,
           professionalName:
-            pp.professional.fullName || pp.professional.businessName || 'Professional',
+            pp.professional.fullName ||
+            pp.professional.businessName ||
+            'Professional',
           projectName: project.projectName,
           winnerName,
           thankYouMessage:
             'Thank you for your time and effort on this project. We hope to work with you on future opportunities.',
         })
         .catch((err) => {
-          // eslint-disable-next-line no-console
-          console.error('[ProjectsService.awardQuote] Failed to send loser notification', {
-            to: pp.professional.email,
-            error: err?.message,
-          });
+          console.error(
+            '[ProjectsService.awardQuote] Failed to send loser notification',
+            {
+              to: pp.professional.email,
+              error: err?.message,
+            },
+          );
           return null;
         }),
     );
@@ -840,11 +841,13 @@ export class ProjectsService {
           data: { status: 'declined' },
         });
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('[ProjectsService.awardQuote] Failed to update loser status to declined', {
-          projectProfessionalId: pp.id,
-          error: (err as Error)?.message,
-        });
+        console.error(
+          '[ProjectsService.awardQuote] Failed to update loser status to declined',
+          {
+            projectProfessionalId: pp.id,
+            error: (err as Error)?.message,
+          },
+        );
       }
       await this.prisma.message.create({
         data: {
@@ -859,10 +862,14 @@ export class ProjectsService {
     return awarded;
   }
 
-  async shareContact(projectId: string, professionalId: string, clientId?: string) {
+  async shareContact(
+    projectId: string,
+    professionalId: string,
+    clientId?: string,
+  ) {
     // Verify ProjectProfessional relationship exists and quote is awarded
-    const projectProfessional = await this.prisma.projectProfessional.findUnique(
-      {
+    const projectProfessional =
+      await this.prisma.projectProfessional.findUnique({
         where: {
           projectId_professionalId: {
             projectId,
@@ -878,8 +885,7 @@ export class ProjectsService {
             },
           },
         },
-      },
-    );
+      });
 
     if (!projectProfessional) {
       throw new Error('Professional not invited to this project');
@@ -934,8 +940,8 @@ export class ProjectsService {
 
   async counterRequest(projectId: string, professionalId: string) {
     // Verify ProjectProfessional exists and has a quote
-    const projectProfessional = await this.prisma.projectProfessional.findUnique(
-      {
+    const projectProfessional =
+      await this.prisma.projectProfessional.findUnique({
         where: {
           projectId_professionalId: {
             projectId,
@@ -946,8 +952,7 @@ export class ProjectsService {
           professional: true,
           project: true,
         },
-      },
-    );
+      });
 
     if (!projectProfessional) {
       throw new Error('Professional not invited to this project');
@@ -1006,8 +1011,8 @@ export class ProjectsService {
     quoteNotes?: string,
   ) {
     // Verify ProjectProfessional exists
-    const projectProfessional = await this.prisma.projectProfessional.findUnique(
-      {
+    const projectProfessional =
+      await this.prisma.projectProfessional.findUnique({
         where: {
           projectId_professionalId: {
             projectId,
@@ -1018,8 +1023,7 @@ export class ProjectsService {
           professional: true,
           project: true,
         },
-      },
-    );
+      });
 
     if (!projectProfessional) {
       throw new Error('Professional not invited to this project');
@@ -1061,7 +1065,11 @@ export class ProjectsService {
     };
   }
 
-  async updateProjectSchedule(projectId: string, startDate?: string, endDate?: string) {
+  async updateProjectSchedule(
+    projectId: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     // Verify project exists
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -1136,7 +1144,8 @@ export class ProjectsService {
 
   private async deleteProjectFiles(notes: string) {
     const uploadsRoot = resolve(process.cwd(), 'uploads');
-    const matches = notes.match(/(https?:\/\/[^\s,;]+|\/uploads\/[^\s,;]+)/g) || [];
+    const matches =
+      notes.match(/(https?:\/\/[^\s,;]+|\/uploads\/[^\s,;]+)/g) || [];
 
     const files = matches
       .map((url) => {

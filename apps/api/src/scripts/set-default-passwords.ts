@@ -34,7 +34,9 @@ async function main() {
       },
     });
 
-    console.log(`✓ Updated ${updated.count} professionals with default password`);
+    console.log(
+      `✓ Updated ${updated.count} professionals with default password`,
+    );
     console.log(`  Password for testing: "${defaultPassword}"`);
 
     // List the professionals that were updated

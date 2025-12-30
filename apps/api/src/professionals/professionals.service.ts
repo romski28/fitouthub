@@ -30,7 +30,7 @@ export class ProfessionalsService {
           additionalData: createProfessionalDto.additional_data || {},
         },
       });
-      
+
       console.log('Professional created successfully:', result);
       return result;
     } catch (error) {
@@ -42,9 +42,9 @@ export class ProfessionalsService {
   async findAll() {
     try {
       console.log('findAll: Attempting to fetch professionals');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const result = await (this.prisma as any).professional.findMany();
-      console.log(`findAll: Success, found ${(result as any).length} professionals`);
+      console.log(`findAll: Success, found ${result.length} professionals`);
       return result;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -142,14 +142,42 @@ export class ProfessionalsService {
     // Return HK locations dataset for client consumption
     // In production, this would be synced from a shared schema
     const locations = [
-      { primary: 'Hong Kong Island', secondary: 'Central and Western', tertiary: 'Central' },
-      { primary: 'Hong Kong Island', secondary: 'Central and Western', tertiary: 'Sheung Wan' },
-      { primary: 'Hong Kong Island', secondary: 'Wan Chai', tertiary: 'Causeway Bay' },
-      { primary: 'Hong Kong Island', secondary: 'Wan Chai', tertiary: 'Wan Chai' },
-      { primary: 'Kowloon', secondary: 'Yau Tsim Mong', tertiary: 'Tsim Sha Tsui' },
+      {
+        primary: 'Hong Kong Island',
+        secondary: 'Central and Western',
+        tertiary: 'Central',
+      },
+      {
+        primary: 'Hong Kong Island',
+        secondary: 'Central and Western',
+        tertiary: 'Sheung Wan',
+      },
+      {
+        primary: 'Hong Kong Island',
+        secondary: 'Wan Chai',
+        tertiary: 'Causeway Bay',
+      },
+      {
+        primary: 'Hong Kong Island',
+        secondary: 'Wan Chai',
+        tertiary: 'Wan Chai',
+      },
+      {
+        primary: 'Kowloon',
+        secondary: 'Yau Tsim Mong',
+        tertiary: 'Tsim Sha Tsui',
+      },
       { primary: 'Kowloon', secondary: 'Yau Tsim Mong', tertiary: 'Mong Kok' },
-      { primary: 'Kowloon', secondary: 'Sham Shui Po', tertiary: 'Sham Shui Po' },
-      { primary: 'New Territories', secondary: 'Sai Kung', tertiary: 'Tseung Kwan O' },
+      {
+        primary: 'Kowloon',
+        secondary: 'Sham Shui Po',
+        tertiary: 'Sham Shui Po',
+      },
+      {
+        primary: 'New Territories',
+        secondary: 'Sai Kung',
+        tertiary: 'Tseung Kwan O',
+      },
       { primary: 'New Territories', secondary: 'Sha Tin', tertiary: 'Sha Tin' },
       { primary: 'Islands District', secondary: 'Discovery Bay' },
     ];
@@ -251,7 +279,7 @@ export class ProfessionalsService {
         r.createdAt,
       ]
         .map(escape)
-        .join(',')
+        .join(','),
     );
 
     return [header.join(','), ...rows].join('\n');

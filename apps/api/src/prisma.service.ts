@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
@@ -27,7 +32,9 @@ export class PrismaService
       await this.$connect();
       this.logger.log('Database connection successful');
     } catch (error) {
-      this.logger.warn('Could not connect to database: ' + (error as Error).message);
+      this.logger.warn(
+        'Could not connect to database: ' + (error as Error).message,
+      );
     }
   }
 

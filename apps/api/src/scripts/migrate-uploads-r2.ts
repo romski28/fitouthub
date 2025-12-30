@@ -13,7 +13,13 @@ async function migrateToR2() {
   const secretAccessKey = process.env.STORAGE_SECRET_ACCESS_KEY;
   const publicBaseUrl = process.env.PUBLIC_ASSETS_BASE_URL;
 
-  if (!endpoint || !bucket || !accessKeyId || !secretAccessKey || !publicBaseUrl) {
+  if (
+    !endpoint ||
+    !bucket ||
+    !accessKeyId ||
+    !secretAccessKey ||
+    !publicBaseUrl
+  ) {
     console.error('❌ Missing environment variables:');
     console.error('  STORAGE_ENDPOINT, STORAGE_BUCKET, STORAGE_ACCESS_KEY_ID,');
     console.error('  STORAGE_SECRET_ACCESS_KEY, PUBLIC_ASSETS_BASE_URL');
@@ -73,7 +79,10 @@ async function migrateToR2() {
         console.log(`✓ ${filename} → ${publicUrl}`);
         uploaded++;
       } catch (error) {
-        console.error(`✗ Failed to upload ${filename}:`, error instanceof Error ? error.message : error);
+        console.error(
+          `✗ Failed to upload ${filename}:`,
+          error instanceof Error ? error.message : error,
+        );
         failed++;
       }
     }
@@ -85,7 +94,9 @@ async function migrateToR2() {
     console.log('');
     console.log('📝 Next steps:');
     console.log('  1. Verify files are accessible at PUBLIC_ASSETS_BASE_URL');
-    console.log('  2. Update any hardcoded /uploads/ paths in database (if needed)');
+    console.log(
+      '  2. Update any hardcoded /uploads/ paths in database (if needed)',
+    );
     console.log('  3. Delete local uploads/ folder when confident');
   } catch (error) {
     console.error('❌ Migration failed:', error);

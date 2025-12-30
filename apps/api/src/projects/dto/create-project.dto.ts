@@ -11,6 +11,6 @@ export class CreateProjectDto {
   professionalIds?: string[]; // Optional: can invite professionals later
   tradesRequired?: string[];
   startDate?: string; // ISO date string
-  endDate?: string;   // ISO date string
+  endDate?: string; // ISO date string
   isEmergency?: boolean;
 }
