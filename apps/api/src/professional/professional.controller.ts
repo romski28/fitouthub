@@ -149,6 +149,10 @@ export class ProfessionalController {
       if (!professionalId) {
         throw new BadRequestException('Professional ID not found in auth token');
       }
+      const isUuid = /^[0-9a-fA-F-]{36}$/;
+      if (!isUuid.test(professionalId)) {
+        throw new BadRequestException('Invalid professional ID format. Please log out and log back in.');
+      }
       if (!body.title || !body.title.trim()) {
         throw new BadRequestException('Title is required');
       }
@@ -179,6 +183,10 @@ export class ProfessionalController {
       if (!professionalId) {
         throw new BadRequestException('Professional ID not found in auth token');
       }
+      const isUuid = /^[0-9a-fA-F-]{36}$/;
+      if (!isUuid.test(professionalId)) {
+        throw new BadRequestException('Invalid professional ID format. Please log out and log back in.');
+      }
       const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
         where: { id, professionalId },
       });
@@ -208,6 +216,10 @@ export class ProfessionalController {
       const professionalId = req.user.id || req.user.sub;
       if (!professionalId) {
         throw new BadRequestException('Professional ID not found in auth token');
+      }
+      const isUuid = /^[0-9a-fA-F-]{36}$/;
+      if (!isUuid.test(professionalId)) {
+        throw new BadRequestException('Invalid professional ID format. Please log out and log back in.');
       }
       const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
         where: { id, professionalId },
