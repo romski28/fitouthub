@@ -130,6 +130,8 @@ model ProjectProfessional {
   @@index([projectId])
   @@index([professionalId])
 
+}
+
 model ProfessionalReferenceProject {
   id             String   @id @default(cuid())
   professionalId String
