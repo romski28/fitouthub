@@ -62,6 +62,7 @@ export default function ProfessionalProfilePage() {
     { id: undefined, title: '', description: '', imageUrls: [] },
   );
   const [refSaving, setRefSaving] = useState(false);
+  const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -84,6 +85,7 @@ export default function ProfessionalProfilePage() {
   const uploadRefImages = async (files: File[]) => {
     const urls = await uploadFiles(files);
     setRefDraft((d) => ({ ...d, imageUrls: [...(d.imageUrls || []), ...urls] }));
+    setRefPendingFiles([]);
     return urls;
   };
 
@@ -166,7 +168,19 @@ export default function ProfessionalProfilePage() {
 
   const handleRefSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!refDraft.title.trim() || !accessToken) return;
+    if (!accessToken) return;
+    if (!refDraft.title.trim()) {
+      setError('Title is required');
+      return;
+    }
+    if (!refDraft.description.trim()) {
+      setError('Description is required');
+      return;
+    }
+    if (refPendingFiles.length > 0) {
+      setError('Please upload the selected photos before saving.');
+      return;
+    }
     setRefSaving(true);
     setError(null);
     try {
@@ -212,6 +226,7 @@ export default function ProfessionalProfilePage() {
       description: proj.description || '',
       imageUrls: proj.imageUrls || [],
     });
+    setRefPendingFiles([]);
   };
 
   const handleRefDelete = async (id: string) => {
@@ -453,6 +468,7 @@ export default function ProfessionalProfilePage() {
                 maxFiles={5}
                 maxFileSize={10 * 1024 * 1024}
                 onUpload={uploadRefImages}
+                onFilesChange={(files) => setRefPendingFiles(files)}
                 showUploadAction
               />
               {refDraft.imageUrls.length > 0 && (
@@ -491,7 +507,10 @@ export default function ProfessionalProfilePage() {
               {refDraft.id && (
                 <button
                   type="button"
-                  onClick={resetRefDraft}
+                  onClick={() => {
+                    resetRefDraft();
+                    setRefPendingFiles([]);
+                  }}
                   className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-white"
                 >
                   Cancel edit
@@ -499,7 +518,7 @@ export default function ProfessionalProfilePage() {
               )}
               <button
                 type="submit"
-                disabled={refSaving || !refDraft.title.trim()}
+                disabled={refSaving || !refDraft.title.trim() || !refDraft.description.trim() || refPendingFiles.length > 0}
                 className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
               >
                 {refSaving ? 'Saving...' : refDraft.id ? 'Update project' : 'Add project'}

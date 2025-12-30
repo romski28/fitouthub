@@ -44,7 +44,9 @@ export class ProfessionalsService {
     try {
       console.log('findAll: Attempting to fetch professionals');
 
-      const result = await (this.prisma as any).professional.findMany();
+      const result = await (this.prisma as any).professional.findMany({
+        include: { referenceProjects: { orderBy: { createdAt: 'desc' } } },
+      });
       console.log(`findAll: Success, found ${result.length} professionals`);
       return result;
     } catch (error) {
@@ -57,6 +59,7 @@ export class ProfessionalsService {
   async findOne(id: string) {
     return (this.prisma as any).professional.findUnique({
       where: { id },
+      include: { referenceProjects: { orderBy: { createdAt: 'desc' } } },
     });
   }
 

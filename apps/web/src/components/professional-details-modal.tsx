@@ -88,6 +88,36 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           </div>
         )}
 
+        {(professional.referenceProjects && professional.referenceProjects.length > 0) && (
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Reference Projects</p>
+            <div className="grid gap-3">
+              {professional.referenceProjects.map((proj) => (
+                <div key={proj.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{proj.title}</p>
+                      {proj.description ? (
+                        <p className="mt-1 text-xs text-slate-700 whitespace-pre-line">{proj.description}</p>
+                      ) : null}
+                    </div>
+                    <span className="text-[11px] text-slate-500">{proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : ''}</span>
+                  </div>
+                  {proj.imageUrls && proj.imageUrls.length > 0 ? (
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {proj.imageUrls.map((url) => (
+                        <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+                          <img src={url} alt={proj.title} className="h-16 w-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
