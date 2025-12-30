@@ -29,6 +29,18 @@ export type Professional = {
   additionalData?: Record<string, unknown> | null;
   createdAt?: string;
   updatedAt?: string;
+  profileImages?: string[];
+  referenceProjects?: ReferenceProject[];
+};
+
+export type ReferenceProject = {
+  id: string;
+  professionalId?: string;
+  title: string;
+  description?: string | null;
+  imageUrls?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type Project = {

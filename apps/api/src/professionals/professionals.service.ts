@@ -28,6 +28,7 @@ export class ProfessionalsService {
           servicePrimaries: createProfessionalDto.location_primaries ?? [],
           serviceSecondaries: createProfessionalDto.location_secondaries ?? [],
           additionalData: createProfessionalDto.additional_data || {},
+          profileImages: createProfessionalDto.profile_images ?? [],
         },
       });
 
@@ -105,6 +106,10 @@ export class ProfessionalsService {
 
     if (updateProfessionalDto.supplies_offered !== undefined) {
       data.suppliesOffered = updateProfessionalDto.supplies_offered;
+    }
+
+    if (updateProfessionalDto.profile_images !== undefined) {
+      data.profileImages = updateProfessionalDto.profile_images;
     }
 
     if (updateProfessionalDto.location_primary !== undefined) {

@@ -75,6 +75,19 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           </div>
         ) : null}
 
+        {(professional.profileImages && professional.profileImages.length > 0) && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Photos</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {professional.profileImages.map((url) => (
+                <div key={url} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                  <img src={url} alt={name} className="h-28 w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"

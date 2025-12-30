@@ -72,6 +72,7 @@ model Professional {
   servicePrimaries     String[]              @default([])
   serviceSecondaries   String[]              @default([])
   primaryTrade         String?
+  profileImages        String[]              @default([])
   suppliesOffered      String[]              @default([])
   tradesOffered        String[]              @default([])
   passwordHash         String?

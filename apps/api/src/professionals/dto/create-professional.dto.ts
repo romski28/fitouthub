@@ -22,6 +22,7 @@ export class CreateProfessionalDto {
   location_primaries?: string[];
   location_secondaries?: string[];
   additional_data?: Record<string, any>;
+  profile_images?: string[];
   userId?: string;
 }
 
@@ -39,6 +40,7 @@ export class UpdateProfessionalDto {
   location_primaries?: string[];
   location_secondaries?: string[];
   additional_data?: Record<string, any>;
+  profile_images?: string[];
   status?: string;
   rating?: number;
   primary_trade?: string;

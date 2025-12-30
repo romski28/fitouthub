@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import FileUploader from '@/components/file-uploader';
 
 interface ReferenceProject {
   id: string;
@@ -28,6 +29,7 @@ interface ProfessionalProfile {
   tradesOffered?: string[];
   primaryTrade?: string | null;
   referenceProjects?: ReferenceProject[];
+  profileImages?: string[];
 }
 
 const emptyProfile: ProfessionalProfile = {
@@ -45,6 +47,7 @@ const emptyProfile: ProfessionalProfile = {
   tradesOffered: [],
   primaryTrade: '',
   referenceProjects: [],
+  profileImages: [],
 };
 
 export default function ProfessionalProfilePage() {
@@ -55,18 +58,43 @@ export default function ProfessionalProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refProjects, setRefProjects] = useState<ReferenceProject[]>([]);
-  const [refDraft, setRefDraft] = useState<{ id?: string; title: string; description: string; images: string }>(
-    { id: undefined, title: '', description: '', images: '' },
+  const [refDraft, setRefDraft] = useState<{ id?: string; title: string; description: string; imageUrls: string[] }>(
+    { id: undefined, title: '', description: '', imageUrls: [] },
   );
   const [refSaving, setRefSaving] = useState(false);
 
-  const imageList = useMemo(() => {
-    const raw = refDraft.images || '';
-    return raw
-      .split(/\n|,/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }, [refDraft.images]);
+  const uploadFiles = async (files: File[]) => {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+    const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = (await res.json()) as { urls: string[] };
+    return data.urls;
+  };
+
+  const uploadProfileImages = async (files: File[]) => {
+    const urls = await uploadFiles(files);
+    setProfile((p) => ({ ...p, profileImages: [...(p.profileImages || []), ...urls] }));
+    return urls;
+  };
+
+  const uploadRefImages = async (files: File[]) => {
+    const urls = await uploadFiles(files);
+    setRefDraft((d) => ({ ...d, imageUrls: [...(d.imageUrls || []), ...urls] }));
+    return urls;
+  };
+
+  const removeProfileImage = (url: string) => {
+    setProfile((p) => ({ ...p, profileImages: (p.profileImages || []).filter((u) => u !== url) }));
+  };
+
+  const removeRefImage = (url: string) => {
+    setRefDraft((d) => ({ ...d, imageUrls: (d.imageUrls || []).filter((u) => u !== url) }));
+  };
+
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -123,6 +151,7 @@ export default function ProfessionalProfilePage() {
           suppliesOffered: profile.suppliesOffered || [],
           tradesOffered: profile.tradesOffered || [],
           primaryTrade: profile.primaryTrade || undefined,
+          profileImages: profile.profileImages || [],
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -133,7 +162,7 @@ export default function ProfessionalProfilePage() {
     }
   };
 
-  const resetRefDraft = () => setRefDraft({ id: undefined, title: '', description: '', images: '' });
+  const resetRefDraft = () => setRefDraft({ id: undefined, title: '', description: '', imageUrls: [] });
 
   const handleRefSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,7 +177,7 @@ export default function ProfessionalProfilePage() {
           body: JSON.stringify({
             title: refDraft.title.trim(),
             description: refDraft.description?.trim() || undefined,
-            imageUrls: imageList,
+            imageUrls: refDraft.imageUrls,
           }),
         });
         if (!res.ok) throw new Error(await res.text());
@@ -161,7 +190,7 @@ export default function ProfessionalProfilePage() {
           body: JSON.stringify({
             title: refDraft.title.trim(),
             description: refDraft.description?.trim() || undefined,
-            imageUrls: imageList,
+            imageUrls: refDraft.imageUrls,
           }),
         });
         if (!res.ok) throw new Error(await res.text());
@@ -181,7 +210,7 @@ export default function ProfessionalProfilePage() {
       id: proj.id,
       title: proj.title,
       description: proj.description || '',
-      images: (proj.imageUrls || []).join('\n'),
+      imageUrls: proj.imageUrls || [],
     });
   };
 
@@ -350,6 +379,40 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700">Profile images</p>
+                <p className="text-xs text-slate-500">Upload photos that best represent your work (max 5, 10MB each).</p>
+              </div>
+              <span className="text-xs text-slate-500">Cloudflare storage</span>
+            </div>
+
+            <FileUploader
+              maxFiles={5}
+              maxFileSize={10 * 1024 * 1024}
+              onUpload={uploadProfileImages}
+              showUploadAction
+            />
+
+            {(profile.profileImages && profile.profileImages.length > 0) && (
+              <div className="grid gap-2 sm:grid-cols-3">
+                {profile.profileImages.map((url) => (
+                  <div key={url} className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                    <img src={url} alt="Profile" className="h-28 w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeProfileImage(url)}
+                      className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-rose-700 shadow"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -368,7 +431,7 @@ export default function ProfessionalProfilePage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600">Portfolio</p>
             <h2 className="text-xl font-bold text-slate-900">Reference projects</h2>
-            <p className="text-sm text-slate-600">Add projects that showcase your work (title, description, and image URLs).</p>
+            <p className="text-sm text-slate-600">Add projects that showcase your work (title, description, and photos).</p>
           </div>
         </div>
 
@@ -385,14 +448,29 @@ export default function ProfessionalProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Image URLs (comma or newline)</label>
-              <textarea
-                value={refDraft.images}
-                onChange={(e) => setRefDraft((d) => ({ ...d, images: e.target.value }))}
-                rows={2}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                placeholder="https://...jpg, https://...jpg"
+              <label className="block text-sm font-medium text-slate-700">Project photos</label>
+              <FileUploader
+                maxFiles={5}
+                maxFileSize={10 * 1024 * 1024}
+                onUpload={uploadRefImages}
+                showUploadAction
               />
+              {refDraft.imageUrls.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {refDraft.imageUrls.map((url) => (
+                    <div key={url} className="group relative overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+                      <img src={url} alt={refDraft.title || 'Reference image'} className="h-20 w-32 object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeRefImage(url)}
+                        className="absolute right-1 top-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-rose-700 shadow opacity-0 group-hover:opacity-100"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div>
