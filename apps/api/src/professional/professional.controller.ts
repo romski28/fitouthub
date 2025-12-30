@@ -620,8 +620,8 @@ export class ProfessionalController {
       // Calculate request amount
       const invoiceAmount = Number(projectProfessional.invoice.amount);
       const requestAmount = body.requestType === 'fixed'
-        ? body.amount
-        : (invoiceAmount * body.percentage) / 100;
+        ? body.amount!
+        : (invoiceAmount * body.percentage!) / 100;
 
       // Create advance payment request
       const advanceRequest = await (
@@ -673,3 +673,4 @@ export class ProfessionalController {
       throw err;
     }
   }
+}

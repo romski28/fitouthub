@@ -772,7 +772,7 @@ export class ProjectsService {
     await this.prisma.invoice.create({
       data: {
         projectProfessionalId: awarded.id,
-        amount: projectProfessional.quoteAmount,
+        amount: projectProfessional.quoteAmount || 0,
         paymentStatus: 'pending',
       },
     });
