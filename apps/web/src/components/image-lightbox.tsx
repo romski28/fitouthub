@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type ImageLightboxProps = {
   images: string[];
@@ -11,6 +11,8 @@ export type ImageLightboxProps = {
 export default function ImageLightbox({ images, startIndex = 0, onClose }: ImageLightboxProps) {
   const safeImages = images.filter(Boolean);
   const [index, setIndex] = useState(Math.min(Math.max(startIndex, 0), Math.max(safeImages.length - 1, 0)));
+  const touchStart = useRef<number | null>(null);
+  const touchDelta = useRef<number>(0);
 
   useEffect(() => {
     setIndex(Math.min(Math.max(startIndex, 0), Math.max(safeImages.length - 1, 0)));
@@ -30,6 +32,27 @@ export default function ImageLightbox({ images, startIndex = 0, onClose }: Image
 
   const goNext = () => setIndex((i) => (i + 1) % safeImages.length);
   const goPrev = () => setIndex((i) => (i - 1 + safeImages.length) % safeImages.length);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = e.touches[0]?.clientX ?? null;
+    touchDelta.current = 0;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStart.current === null) return;
+    touchDelta.current = (e.touches[0]?.clientX ?? 0) - touchStart.current;
+  };
+
+  const onTouchEnd = () => {
+    const threshold = 50; // px
+    if (touchDelta.current > threshold) {
+      goPrev();
+    } else if (touchDelta.current < -threshold) {
+      goNext();
+    }
+    touchStart.current = null;
+    touchDelta.current = 0;
+  };
 
   return (
     <div
@@ -79,6 +102,9 @@ export default function ImageLightbox({ images, startIndex = 0, onClose }: Image
       <div
         className="max-h-[85vh] max-w-[90vw] overflow-hidden rounded-xl bg-black/20"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         <img
           src={safeImages[index]}
