@@ -143,7 +143,6 @@ model ProfessionalReferenceProject {
 
   @@index([professionalId])
 }
-}
 
 model ProfessionalReport {
   id              String       @id @default(cuid())
