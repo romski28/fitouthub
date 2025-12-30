@@ -764,4 +764,4 @@ export class EmailService {
       console.error('❌ Failed to send advance payment request notification:', error);
       throw error;
     }
-  }
+  }}

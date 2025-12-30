@@ -1254,4 +1254,4 @@ export class ProjectsService {
     });
 
     return { success: true, invoice: updatedInvoice };
-  }
+  }}

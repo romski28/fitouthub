@@ -230,3 +230,16 @@ export class ProjectsController {
     return this.projectsService.payInvoice(projectId, req.user.id);
   }
 
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+  ) {
+    return this.projectsService.update(id, updateProjectDto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return this.projectsService.remove(id);
+  }
+}
