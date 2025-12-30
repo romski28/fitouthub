@@ -961,7 +961,8 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
