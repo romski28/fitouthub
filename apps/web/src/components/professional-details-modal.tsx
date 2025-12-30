@@ -4,6 +4,7 @@ import { ModalOverlay } from '@/components/modal-overlay';
 import { Professional } from '@/lib/types';
 import { useState } from 'react';
 import { SYSTEM_EMAILS } from '@/config/system-emails';
+import ImageLightbox from '@/components/image-lightbox';
 
 type ProfessionalDetailsModalProps = {
   isOpen: boolean;
@@ -13,6 +14,7 @@ type ProfessionalDetailsModalProps = {
 
 export function ProfessionalDetailsModal({ isOpen, onClose, professional }: ProfessionalDetailsModalProps) {
   const [reportOpen, setReportOpen] = useState(false);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
 
   if (!professional) return null;
 
@@ -79,10 +81,15 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           <div className="space-y-2">
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Photos</p>
             <div className="grid gap-2 sm:grid-cols-3">
-              {professional.profileImages.map((url) => (
-                <div key={url} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                {professional.profileImages.map((url, idx) => (
+                <button
+                  key={url}
+                  type="button"
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                  onClick={() => setLightbox({ images: professional.profileImages || [], index: idx })}
+                >
                   <img src={url} alt={name} className="h-28 w-full object-cover" />
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -105,10 +112,15 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
                   </div>
                   {proj.imageUrls && proj.imageUrls.length > 0 ? (
                     <div className="mt-2 grid grid-cols-3 gap-2">
-                      {proj.imageUrls.map((url) => (
-                        <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+                      {proj.imageUrls.map((url, idx) => (
+                        <button
+                          key={url}
+                          type="button"
+                          onClick={() => setLightbox({ images: proj.imageUrls || [], index: idx })}
+                          className="block overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+                        >
                           <img src={url} alt={proj.title} className="h-16 w-full object-cover" />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   ) : null}
@@ -117,6 +129,14 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
             </div>
           </div>
         )}
+
+        {lightbox ? (
+          <ImageLightbox
+            images={lightbox.images}
+            startIndex={lightbox.index}
+            onClose={() => setLightbox(null)}
+          />
+        ) : null}
 
         <div className="flex justify-end gap-2 pt-2">
           <button

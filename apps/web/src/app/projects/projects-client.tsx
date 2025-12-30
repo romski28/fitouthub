@@ -6,6 +6,7 @@ import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
 import FileUploader from "@/components/file-uploader";
+import ImageLightbox from "@/components/image-lightbox";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
 import { useAuth } from "@/context/auth-context";
@@ -197,7 +198,7 @@ function EditProjectModal({
     endDate: (project as any).endDate || "",
   });
   const [photos, setPhotos] = useState<string[]>(project.photos || []);
-  const [lightboxUrl, setLightboxUrl] = useState<string>("");
+  const [lightboxState, setLightboxState] = useState<{ images: string[]; index: number } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -451,7 +452,7 @@ function EditProjectModal({
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-800">Photos</label>
             <div className="flex flex-wrap gap-2">
-              {photos.map((url) => (
+              {photos.map((url, idx) => (
                 <div
                   key={url}
                   className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
@@ -469,7 +470,7 @@ function EditProjectModal({
                   <button
                     type="button"
                     className="h-full w-full"
-                    onClick={() => setLightboxUrl(toAbsolute(url))}
+                    onClick={() => setLightboxState({ images: photos.map((p) => toAbsolute(p)), index: idx })}
                   >
                     <img src={toAbsolute(url)} alt="Project photo" className="h-full w-full object-cover" />
                   </button>
@@ -550,17 +551,14 @@ function EditProjectModal({
         cancelLabel="Cancel"
         tone="danger"
       />
-      {lightboxUrl ? <Lightbox url={lightboxUrl} onClose={() => setLightboxUrl("")} /> : null}
+      {lightboxState ? (
+        <ImageLightbox
+          images={lightboxState.images}
+          startIndex={lightboxState.index}
+          onClose={() => setLightboxState(null)}
+        />
+      ) : null}
     </ModalOverlay>
-  );
-}
-
-function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
-  if (!url) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
-      <img src={url} alt="Project photo" className="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl" />
-    </div>
   );
 }
 
@@ -616,7 +614,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
     return Array.from(byKey.values());
   });
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
-  const [lightbox, setLightbox] = useState<string>("");
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [search, setSearch] = useState("");
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
 
@@ -934,12 +932,12 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
 
                 {project.photos.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {project.photos.map((url) => (
+                    {project.photos.map((url, idx) => (
                       <button
                         key={url}
                         type="button"
                         className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50 hover:shadow-sm"
-                        onClick={() => setLightbox(toAbsolute(url))}
+                        onClick={() => setLightbox({ images: project.photos.map((p) => toAbsolute(p)), index: idx })}
                       >
                         <img src={toAbsolute(url)} alt="Project photo" className="h-full w-full object-cover" />
                       </button>
@@ -975,7 +973,13 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         />
       ) : null}
 
-      {lightbox ? <Lightbox url={lightbox} onClose={() => setLightbox("")} /> : null}
+      {lightbox ? (
+        <ImageLightbox
+          images={lightbox.images}
+          startIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+        />
+      ) : null}
       
       <BackToTop />
     </div>
