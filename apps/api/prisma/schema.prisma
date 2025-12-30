@@ -79,6 +79,7 @@ model Professional {
   user                 User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectProfessionals ProjectProfessional[]
   reports              ProfessionalReport[]
+  referenceProjects    ProfessionalReferenceProject[]
 }
 
 model Project {
@@ -128,6 +129,20 @@ model ProjectProfessional {
   @@unique([projectId, professionalId])
   @@index([projectId])
   @@index([professionalId])
+
+model ProfessionalReferenceProject {
+  id             String   @id @default(cuid())
+  professionalId String
+  title          String
+  description    String?
+  imageUrls      String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId])
+}
 }
 
 model ProfessionalReport {

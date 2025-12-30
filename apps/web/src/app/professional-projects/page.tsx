@@ -75,7 +75,10 @@ export default function ProfessionalProjectsPage() {
         }
 
         const data = await response.json();
-        const list: ProjectProfessional[] = Array.isArray(data) ? data : data.projects || [];
+        // Filter out "selected" placeholder entries (client holding list) so they don't surface
+        const list: ProjectProfessional[] = (Array.isArray(data) ? data : data.projects || []).filter(
+          (p) => p.status !== 'selected',
+        );
         // sort by status: pending > accepted > quoted > awarded > rejected/declined
         const rank: Record<string, number> = { pending: 0, accepted: 1, quoted: 2, awarded: 3, rejected: 4, declined: 4 };
         list.sort((a, b) => (rank[a.status] ?? 9) - (rank[b.status] ?? 9));

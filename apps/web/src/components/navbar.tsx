@@ -28,6 +28,7 @@ export const Navbar: React.FC = () => {
   const showAuthed = hydrated && isLoggedIn && user;
   const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
   const showProjectsLink = hydrated && isLoggedIn;
+  const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const [clientUnread, setClientUnread] = useState<number>(0);
   const [profUnread, setProfUnread] = useState<number>(0);
   const [disableClientUnread, setDisableClientUnread] = useState<boolean>(false);
@@ -114,10 +115,20 @@ export const Navbar: React.FC = () => {
             </a>
             {showProjectsLink ? (
               <a className="relative hover:text-slate-900" href="/projects">
-                Projects
+                My Projects
                 {clientUnread > 0 && (
                   <span className="absolute -top-2 -right-3 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
                     {clientUnread}
+                  </span>
+                )}
+              </a>
+            ) : null}
+            {showProfessionalProjectsLink ? (
+              <a className="relative hover:text-slate-900" href="/professional-projects">
+                My Projects
+                {profUnread > 0 && (
+                  <span className="absolute -top-2 -right-3 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
+                    {profUnread}
                   </span>
                 )}
               </a>
@@ -188,10 +199,10 @@ export const Navbar: React.FC = () => {
                   {profileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-50">
                       <a
-                        href="/professional-projects"
+                        href="/professional/profile"
                         className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                       >
-                        My Projects
+                        Profile
                       </a>
                       <button
                         onClick={() => {

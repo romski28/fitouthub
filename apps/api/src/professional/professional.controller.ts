@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -20,6 +22,61 @@ export class ProfessionalController {
     private prisma: PrismaService,
     private email: EmailService,
   ) {}
+
+  @Get('me')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async getProfile(@Request() req: any) {
+    const professionalId = req.user.id || req.user.sub;
+    const professional = await (this.prisma as any).professional.findUnique({
+      where: { id: professionalId },
+      include: { referenceProjects: { orderBy: { createdAt: 'desc' } } },
+    });
+    if (!professional) throw new BadRequestException('Professional not found');
+    return professional;
+  }
+
+  @Put('me')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async updateProfile(
+    @Request() req: any,
+    @Body()
+    body: {
+      fullName?: string;
+      businessName?: string;
+      phone?: string;
+      professionType?: string;
+      serviceArea?: string;
+      locationPrimary?: string;
+      locationSecondary?: string;
+      locationTertiary?: string;
+      suppliesOffered?: string[];
+      tradesOffered?: string[];
+      primaryTrade?: string;
+    },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    const data: any = {
+      fullName: body.fullName,
+      businessName: body.businessName,
+      phone: body.phone,
+      professionType: body.professionType,
+      serviceArea: body.serviceArea,
+      locationPrimary: body.locationPrimary,
+      locationSecondary: body.locationSecondary,
+      locationTertiary: body.locationTertiary,
+      suppliesOffered: body.suppliesOffered,
+      tradesOffered: body.tradesOffered,
+      primaryTrade: body.primaryTrade,
+    };
+    // Remove undefined to avoid overwriting
+    Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
+
+    const updated = await (this.prisma as any).professional.update({
+      where: { id: professionalId },
+      data,
+    });
+    return updated;
+  }
 
   @Get('projects')
   @UseGuards(AuthGuard('jwt-professional'))
@@ -65,6 +122,73 @@ export class ProfessionalController {
       console.error('Error fetching professional projects:', error);
       throw error;
     }
+  }
+
+  @Get('reference-projects')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async listReferenceProjects(@Request() req: any) {
+    const professionalId = req.user.id || req.user.sub;
+    return (this.prisma as any).professionalReferenceProject.findMany({
+      where: { professionalId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  @Post('reference-projects')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async createReferenceProject(
+    @Request() req: any,
+    @Body() body: { title: string; description?: string; imageUrls?: string[] },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    if (!body.title || !body.title.trim()) {
+      throw new BadRequestException('Title is required');
+    }
+    return (this.prisma as any).professionalReferenceProject.create({
+      data: {
+        professionalId,
+        title: body.title.trim(),
+        description: body.description?.trim() || null,
+        imageUrls: body.imageUrls?.length ? body.imageUrls : [],
+      },
+    });
+  }
+
+  @Put('reference-projects/:id')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async updateReferenceProject(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: { title?: string; description?: string; imageUrls?: string[] },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
+      where: { id, professionalId },
+    });
+    if (!existing) throw new BadRequestException('Reference project not found');
+    return (this.prisma as any).professionalReferenceProject.update({
+      where: { id },
+      data: {
+        title: body.title?.trim() || existing.title,
+        description:
+          body.description === undefined
+            ? existing.description
+            : body.description?.trim() || null,
+        imageUrls: body.imageUrls ?? existing.imageUrls,
+      },
+    });
+  }
+
+  @Delete('reference-projects/:id')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async deleteReferenceProject(@Request() req: any, @Param('id') id: string) {
+    const professionalId = req.user.id || req.user.sub;
+    const existing = await (this.prisma as any).professionalReferenceProject.findFirst({
+      where: { id, professionalId },
+    });
+    if (!existing) throw new BadRequestException('Reference project not found');
+    await (this.prisma as any).professionalReferenceProject.delete({ where: { id } });
+    return { success: true };
   }
 
   @Get('messages/unread-count')
