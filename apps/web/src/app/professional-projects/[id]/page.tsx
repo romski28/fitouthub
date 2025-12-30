@@ -24,6 +24,20 @@ interface ProjectDetail {
   quoteNotes?: string;
   quotedAt?: string;
   respondedAt?: string;
+  invoice?: {
+    id: string;
+    amount: string;
+    paymentStatus: string;
+    paidAt?: string;
+  };
+  advancePaymentRequest?: {
+    id: string;
+    requestType: string;
+    requestAmount: string;
+    requestPercentage?: number;
+    status: string;
+    createdAt: string;
+  };
 }
 
 interface Message {
@@ -52,10 +66,17 @@ export default function ProjectDetailPage() {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
+  const [showAdvanceRequestForm, setShowAdvanceRequestForm] = useState(false);
+  const [advanceRequestForm, setAdvanceRequestForm] = useState({
+    requestType: 'fixed' as 'fixed' | 'percentage',
+    amount: '',
+    percentage: '',
+  });
+  const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
 
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.push('/professional-login');
+      router.push('/');
       return;
     }
 
@@ -132,7 +153,7 @@ export default function ProjectDetailPage() {
         } else if (res.status === 404) {
           setMessageError('Messaging is not available for this project right now.');
         } else if (res.status === 401) {
-          router.push('/professional-login');
+          router.push('/');
           return;
         }
       } catch (e) {
@@ -370,6 +391,65 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleSubmitAdvanceRequest = async () => {
+    if (!accessToken || !projectProfessionalId) return;
+
+    // Validate form
+    if (advanceRequestForm.requestType === 'fixed') {
+      const amount = parseFloat(advanceRequestForm.amount);
+      if (isNaN(amount) || amount <= 0) {
+        toast.error('Please enter a valid amount');
+        return;
+      }
+    } else {
+      const percentage = parseFloat(advanceRequestForm.percentage);
+      if (isNaN(percentage) || percentage <= 0 || percentage > 100) {
+        toast.error('Please enter a valid percentage (1-100)');
+        return;
+      }
+    }
+
+    setSubmittingAdvanceRequest(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/professional/projects/${projectProfessionalId}/advance-payment-request`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            requestType: advanceRequestForm.requestType,
+            amount: advanceRequestForm.requestType === 'fixed' 
+              ? parseFloat(advanceRequestForm.amount) 
+              : undefined,
+            percentage: advanceRequestForm.requestType === 'percentage' 
+              ? parseFloat(advanceRequestForm.percentage) 
+              : undefined,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to submit advance payment request');
+      }
+
+      toast.success('Advance payment request submitted! Client will be notified.');
+      setShowAdvanceRequestForm(false);
+      setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '' });
+      
+      // Refresh project data
+      window.location.reload();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit request';
+      toast.error(message);
+    } finally {
+      setSubmittingAdvanceRequest(false);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -394,7 +474,7 @@ export default function ProjectDetailPage() {
       } else if (res.status === 404) {
         setMessageError('Messaging endpoint not found. Please refresh after we deploy the update.');
       } else if (res.status === 401) {
-        router.push('/professional-login');
+        router.push('/');
         return;
       } else {
         const data = await res.json().catch(() => ({}));
@@ -652,6 +732,186 @@ export default function ProjectDetailPage() {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Invoice & Advance Payment (shown when awarded) */}
+          {project.status === 'awarded' && (
+            <div className="p-8 border-t border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                💰 Invoice & Payment
+              </h2>
+
+              {project.invoice && (
+                <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-medium text-gray-600">Invoice Status</p>
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${project.invoice.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {project.invoice.paymentStatus === 'paid' ? '✓ Paid' : 'Pending Payment'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Invoice Amount</p>
+                      <p className="text-2xl font-bold text-gray-900">${Number(project.invoice.amount).toFixed(2)}</p>
+                    </div>
+                    {project.invoice.paidAt && (
+                      <div>
+                        <p className="text-sm text-gray-600">Paid On</p>
+                        <p className="text-lg text-gray-900">{new Date(project.invoice.paidAt).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                  </div>
+                  {project.invoice.paymentStatus === 'paid' && (
+                    <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                      <p className="text-sm text-green-900">
+                        ✓ <strong>Payment Received!</strong> Funds are securely held in Fitout Hub's escrow account and will be released according to project milestones.
+                      </p>
+                    </div>
+                  )}
+                  {project.invoice.paymentStatus !== 'paid' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                      <p className="text-sm text-yellow-900">
+                        ⏳ Waiting for client payment. You'll be notified when funds are deposited into escrow.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Advance Payment Request Section */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Request Advance Payment</h3>
+                
+                {project.advancePaymentRequest ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold text-blue-900">Advance Payment Request</p>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          project.advancePaymentRequest.status === 'approved' 
+                            ? 'bg-green-100 text-green-800' 
+                            : project.advancePaymentRequest.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {project.advancePaymentRequest.status}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-blue-700 font-medium">Amount Requested</p>
+                          <p className="text-blue-900 font-semibold">${Number(project.advancePaymentRequest.requestAmount).toFixed(2)}</p>
+                        </div>
+                        {project.advancePaymentRequest.requestType === 'percentage' && (
+                          <div>
+                            <p className="text-blue-700 font-medium">Percentage</p>
+                            <p className="text-blue-900 font-semibold">{project.advancePaymentRequest.requestPercentage}%</p>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-blue-700 mt-3">
+                        Submitted {new Date(project.advancePaymentRequest.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {!showAdvanceRequestForm ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">
+                          Request upfront payment for materials, tools, or other costs before starting the project.
+                        </p>
+                        <button
+                          onClick={() => setShowAdvanceRequestForm(true)}
+                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition-colors"
+                        >
+                          📋 Submit Advance Payment Request
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex gap-4">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="requestType"
+                              value="fixed"
+                              checked={advanceRequestForm.requestType === 'fixed'}
+                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, requestType: e.target.value as 'fixed' })}
+                              className="mr-2"
+                            />
+                            <span className="text-sm font-medium text-gray-700">Fixed Amount</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="requestType"
+                              value="percentage"
+                              checked={advanceRequestForm.requestType === 'percentage'}
+                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, requestType: e.target.value as 'percentage' })}
+                              className="mr-2"
+                            />
+                            <span className="text-sm font-medium text-gray-700">Percentage</span>
+                          </label>
+                        </div>
+
+                        {advanceRequestForm.requestType === 'fixed' ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Amount ($)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={advanceRequestForm.amount}
+                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, amount: e.target.value })}
+                              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="0.00"
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Percentage (%)
+                            </label>
+                            <input
+                              type="number"
+                              step="1"
+                              min="1"
+                              max="100"
+                              value={advanceRequestForm.percentage}
+                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, percentage: e.target.value })}
+                              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="50"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleSubmitAdvanceRequest}
+                            disabled={submittingAdvanceRequest}
+                            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+                          >
+                            {submittingAdvanceRequest ? 'Submitting...' : 'Submit Request'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowAdvanceRequestForm(false);
+                              setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '' });
+                            }}
+                            className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 font-medium transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
 

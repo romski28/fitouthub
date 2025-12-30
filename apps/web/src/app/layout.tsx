@@ -25,6 +25,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Fitout Hub",
   description: "Find tradesmen, professionals, and manage fitout projects",
+  icons: {
+    icon: "/FOHLogo.png",
+  },
 };
 
 export default function RootLayout({

@@ -218,16 +218,12 @@ export class ProjectsController {
     );
   }
 
-  @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateProjectDto: UpdateProjectDto,
+  @Post(':id/pay-invoice')
+  @UseGuards(AuthGuard('jwt'))
+  async payInvoice(
+    @Param('id') projectId: string,
+    @Request() req: any,
   ) {
-    return this.projectsService.update(id, updateProjectDto);
+    return this.projectsService.payInvoice(projectId, req.user.id);
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.projectsService.remove(id);
-  }
-}

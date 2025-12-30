@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -99,9 +100,18 @@ export const Navbar: React.FC = () => {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link
             href="/"
-            className="text-lg font-semibold tracking-tight hover:text-slate-600 transition"
+            className="flex items-center gap-2 hover:opacity-80 transition"
           >
-            Fitout Hub
+            <Image
+              src="/FOHLogo.png"
+              alt="Fitout Hub"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+            <span className="text-lg font-semibold tracking-tight hidden sm:inline">
+              Fitout Hub
+            </span>
           </Link>
           <nav className="flex items-center gap-6 text-sm font-medium text-slate-700">
             <a className="hover:text-slate-900" href="/tradesmen">

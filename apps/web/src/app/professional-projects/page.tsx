@@ -47,7 +47,7 @@ export default function ProfessionalProjectsPage() {
 
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.push('/professional-login');
+      router.push('/');
       return;
     }
 
@@ -68,7 +68,7 @@ export default function ProfessionalProjectsPage() {
 
         if (!response.ok) {
           if (response.status === 401) {
-            router.push('/professional-login');
+            router.push('/');
             return;
           }
           throw new Error('Failed to fetch projects');

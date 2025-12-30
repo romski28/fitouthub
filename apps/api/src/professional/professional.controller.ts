@@ -254,6 +254,8 @@ export class ProfessionalController {
         },
         include: {
           project: true,
+          invoice: true,
+          advancePaymentRequest: true,
         },
       });
 
@@ -538,4 +540,136 @@ export class ProfessionalController {
     });
     return { success: true };
   }
-}
+
+  // Request advance payment for upfront costs
+  @Post('projects/:projectProfessionalId/advance-payment-request')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async requestAdvancePayment(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+    @Body() body: { 
+      requestType: 'fixed' | 'percentage'; 
+      amount?: number; 
+      percentage?: number;
+    },
+  ) {
+    try {
+      const professionalId = req.user.id || req.user.sub;
+
+      // Verify this is the professional's project and it's awarded
+      const projectProfessional = await (
+        this.prisma as any
+      ).projectProfessional.findFirst({
+        where: { 
+          id: projectProfessionalId, 
+          professionalId,
+          status: 'awarded',
+        },
+        include: {
+          project: {
+            include: {
+              client: true,
+            },
+          },
+          professional: true,
+          invoice: true,
+        },
+      });
+
+      if (!projectProfessional) {
+        throw new BadRequestException(
+          'Project not found or not awarded to you',
+        );
+      }
+
+      if (!projectProfessional.invoice) {
+        throw new BadRequestException('No invoice found for this project');
+      }
+
+      // Check if advance payment request already exists
+      const existingRequest = await (
+        this.prisma as any
+      ).advancePaymentRequest.findUnique({
+        where: { projectProfessionalId },
+      });
+
+      if (existingRequest) {
+        throw new BadRequestException(
+          'Advance payment request already submitted',
+        );
+      }
+
+      // Validate request
+      if (body.requestType === 'fixed') {
+        if (!body.amount || body.amount <= 0) {
+          throw new BadRequestException('Invalid amount');
+        }
+        if (body.amount > Number(projectProfessional.invoice.amount)) {
+          throw new BadRequestException(
+            'Amount cannot exceed invoice total',
+          );
+        }
+      } else if (body.requestType === 'percentage') {
+        if (!body.percentage || body.percentage <= 0 || body.percentage > 100) {
+          throw new BadRequestException('Percentage must be between 1 and 100');
+        }
+      } else {
+        throw new BadRequestException('Invalid request type');
+      }
+
+      // Calculate request amount
+      const invoiceAmount = Number(projectProfessional.invoice.amount);
+      const requestAmount = body.requestType === 'fixed'
+        ? body.amount
+        : (invoiceAmount * body.percentage) / 100;
+
+      // Create advance payment request
+      const advanceRequest = await (
+        this.prisma as any
+      ).advancePaymentRequest.create({
+        data: {
+          projectProfessionalId,
+          requestType: body.requestType,
+          requestAmount,
+          requestPercentage: body.requestType === 'percentage' ? body.percentage : null,
+          status: 'pending',
+        },
+      });
+
+      // Send notification to client
+      const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
+      const professionalName = projectProfessional.professional.fullName ||
+        projectProfessional.professional.businessName ||
+        'Professional';
+      const clientEmail = projectProfessional.project.client?.email;
+
+      if (clientEmail) {
+        await this.email.sendAdvancePaymentRequestNotification({
+          to: clientEmail,
+          clientName: projectProfessional.project.clientName,
+          professionalName,
+          projectName: projectProfessional.project.projectName,
+          requestType: body.requestType,
+          requestAmount: `$${requestAmount.toFixed(2)}`,
+          requestPercentage: body.percentage,
+          invoiceAmount: `$${invoiceAmount.toFixed(2)}`,
+          projectUrl: `${webBaseUrl}/projects/${projectProfessional.project.id}`,
+        });
+      }
+
+      // Add system message to chat
+      await (this.prisma as any).message.create({
+        data: {
+          projectProfessionalId,
+          senderType: 'professional',
+          senderProfessionalId: professionalId,
+          content: `💰 Advance payment requested: ${body.requestType === 'percentage' ? `${body.percentage}% (` : ''}$${requestAmount.toFixed(2)}${body.requestType === 'percentage' ? ')' : ''} for upfront costs. Fitout Hub will review and contact the client.`,
+        },
+      });
+
+      return { success: true, advanceRequest };
+    } catch (err) {
+      console.error('[ProfessionalController.requestAdvancePayment] Error:', err);
+      throw err;
+    }
+  }

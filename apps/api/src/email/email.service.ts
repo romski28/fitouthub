@@ -609,4 +609,159 @@ export class EmailService {
       throw error;
     }
   }
-}
+
+  /**
+   * Send escrow notification to professional when project is awarded
+   */
+  async sendEscrowNotification(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    invoiceAmount: string;
+    projectUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send escrow notification to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `💰 Escrow Details: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4f46e5;">💰 Payment & Escrow Information</h2>
+            
+            <p>Hi ${params.professionalName},</p>
+            
+            <p>Congratulations on winning the project! Here's how the payment process works:</p>
+            
+            <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h3 style="margin-top: 0; color: #1e40af;">Project: ${params.projectName}</h3>
+              <p style="color: #1e3a8a; margin: 10px 0;"><strong>Invoice Amount:</strong> ${params.invoiceAmount}</p>
+            </div>
+            
+            <div style="background-color: #fef3c7; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h4 style="color: #92400e; margin-top: 0;">💡 How Escrow Works</h4>
+              <ol style="color: #78350f; margin: 10px 0; padding-left: 20px;">
+                <li style="margin-bottom: 10px;">The client will pay the full invoice amount into Fitout Hub's escrow account</li>
+                <li style="margin-bottom: 10px;">Your funds are securely held until project milestones are met</li>
+                <li style="margin-bottom: 10px;">You can request advance payment for tools, materials, and upfront costs</li>
+                <li>Final payment is released upon project completion and client approval</li>
+              </ol>
+            </div>
+            
+            <div style="background-color: #f0fdf4; border: 1px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h4 style="color: #065f46; margin-top: 0;">📋 Next Steps</h4>
+              <p style="color: #047857; margin: 10px 0;">
+                If you need advance payment for materials, tools, or other upfront costs before starting the project, 
+                you can submit a request through the platform. You can request either:
+              </p>
+              <ul style="color: #047857; margin: 10px 0; padding-left: 20px;">
+                <li><strong>Fixed Amount:</strong> Specify the dollar amount needed</li>
+                <li><strong>Percentage:</strong> Request a percentage of the total invoice amount</li>
+              </ul>
+            </div>
+            
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${params.projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                📝 Submit Advance Payment Request
+              </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #6b7280; font-size: 14px;">
+              <strong>Important:</strong> Your funds are protected by Fitout Hub's escrow service. 
+              Payment will only be released according to the agreed project milestones.
+            </p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Escrow notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send escrow notification:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send notification to client when professional requests advance payment
+   */
+  async sendAdvancePaymentRequestNotification(params: {
+    to: string;
+    clientName: string;
+    professionalName: string;
+    projectName: string;
+    requestType: string;
+    requestAmount: string;
+    requestPercentage?: number;
+    invoiceAmount: string;
+    projectUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send advance payment request to:', params.to);
+      return;
+    }
+
+    const requestDetails = params.requestType === 'percentage'
+      ? `${params.requestPercentage}% of invoice (${params.requestAmount})`
+      : params.requestAmount;
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `💰 Advance Payment Request: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4f46e5;">💰 Advance Payment Request</h2>
+            
+            <p>Hi ${params.clientName},</p>
+            
+            <p>Your professional <strong>${params.professionalName}</strong> has requested advance payment for upfront costs on your project:</p>
+            
+            <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h3 style="margin-top: 0; color: #1e40af;">${params.projectName}</h3>
+              <p style="color: #1e3a8a; margin: 10px 0;"><strong>Total Invoice:</strong> ${params.invoiceAmount}</p>
+              <p style="color: #1e3a8a; margin: 10px 0;"><strong>Advance Requested:</strong> ${requestDetails}</p>
+            </div>
+            
+            <div style="background-color: #fef3c7; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <h4 style="color: #92400e; margin-top: 0;">ℹ️ What is Advance Payment?</h4>
+              <p style="color: #78350f; margin: 10px 0;">
+                Advance payment helps professionals cover upfront costs like materials, tools, or equipment 
+                needed before starting your project. This is common practice in the construction industry.
+              </p>
+            </div>
+            
+            <div style="background-color: #f0fdf4; border: 1px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <p style="color: #047857; margin: 0;">
+                <strong>✓ Protected by Escrow:</strong> All funds are held securely by Fitout Hub until project milestones are met.
+              </p>
+            </div>
+            
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${params.projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                📋 Review Request
+              </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #6b7280; font-size: 14px;">
+              Fitout Hub will review this request and contact you to discuss the next steps.
+            </p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Advance payment request notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send advance payment request notification:', error);
+      throw error;
+    }
+  }

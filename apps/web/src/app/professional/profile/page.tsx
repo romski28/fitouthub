@@ -100,7 +100,7 @@ export default function ProfessionalProfilePage() {
 
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.push('/professional-login');
+      router.push('/');
       return;
     }
     if (!isLoggedIn || !accessToken) return;
@@ -112,7 +112,7 @@ export default function ProfessionalProfilePage() {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (res.status === 401) {
-          router.push('/professional-login');
+          router.push('/');
           return;
         }
         if (!res.ok) throw new Error('Failed to load profile');

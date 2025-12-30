@@ -23,6 +23,12 @@ interface ProjectProfessional {
     businessName?: string;
     phone?: string;
   };
+  invoice?: {
+    id: string;
+    amount: string;
+    paymentStatus: string;
+    paidAt?: string;
+  };
 }
 
 interface ProjectDetail {
@@ -68,6 +74,7 @@ export default function ClientProjectDetailPage() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [awardedProfessional, setAwardedProfessional] = useState<ProjectProfessional | null>(null);
   const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
+  const [payingInvoice, setPayingInvoice] = useState(false);
 
   // Schedule & contractor contact editing state
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -472,6 +479,43 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const handlePayInvoice = async () => {
+    if (!accessToken || !projectId) return;
+
+    const confirmed = window.confirm(
+      'Are you ready to pay the invoice? The funds will be held in escrow by Fitout Hub until the project is completed.'
+    );
+
+    if (!confirmed) return;
+
+    setPayingInvoice(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/pay-invoice`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Payment failed');
+      }
+
+      toast.success('Payment successful! Funds deposited into escrow.');
+      
+      // Refresh project to update invoice status
+      await fetchProject();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to process payment';
+      toast.error(message);
+      console.error('Payment error:', err);
+    } finally {
+      setPayingInvoice(false);
+    }
+  };
+
   // One-click invite for 'selected' professionals
   const inviteNow = async (pp: ProjectProfessional) => {
     if (!pp || !accessToken || !projectId) return;
@@ -722,6 +766,61 @@ export default function ClientProjectDetailPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Invoice & Payment Section */}
+                {(() => {
+                  const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
+                  if (!awarded?.invoice) return null;
+
+                  const invoice = awarded.invoice;
+                  const isPaid = invoice.paymentStatus === 'paid';
+
+                  return (
+                    <div className="rounded-md bg-white px-4 py-4 text-sm border border-blue-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="font-semibold text-blue-900">💰 Invoice & Escrow</p>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {isPaid ? '✓ Paid' : 'Pending Payment'}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="grid gap-2 md:grid-cols-2 text-blue-800">
+                          <div><span className="font-medium">Invoice Amount:</span> ${Number(invoice.amount).toFixed(2)}</div>
+                          {isPaid && invoice.paidAt && (
+                            <div><span className="font-medium">Paid On:</span> {new Date(invoice.paidAt).toLocaleDateString()}</div>
+                          )}
+                        </div>
+                        
+                        {!isPaid && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 space-y-2">
+                            <p className="text-xs text-blue-900 font-medium">
+                              ℹ️ Escrow Protection
+                            </p>
+                            <p className="text-xs text-blue-800">
+                              Your payment will be held securely in Fitout Hub's escrow account. 
+                              Funds are only released to the professional according to project milestones.
+                            </p>
+                            <button
+                              onClick={handlePayInvoice}
+                              disabled={payingInvoice}
+                              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {payingInvoice ? 'Processing Payment...' : '💳 Pay Invoice & Deposit to Escrow'}
+                            </button>
+                          </div>
+                        )}
+
+                        {isPaid && (
+                          <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                            <p className="text-xs text-green-900">
+                              ✓ <strong>Payment Received!</strong> Funds are securely held in escrow and will be released according to project milestones.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

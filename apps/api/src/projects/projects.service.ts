@@ -760,6 +760,20 @@ export class ProjectsService {
       },
       include: {
         professional: true,
+        project: {
+          include: {
+            client: true,
+          },
+        },
+      },
+    });
+
+    // Create invoice for the awarded project
+    await this.prisma.invoice.create({
+      data: {
+        projectProfessionalId: awarded.id,
+        amount: projectProfessional.quoteAmount,
+        paymentStatus: 'pending',
       },
     });
 
@@ -786,6 +800,16 @@ export class ProjectsService {
       quoteAmount: projectProfessional.quoteAmount?.toString() || '0',
       nextStepsMessage:
         'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
+    });
+
+    // Send escrow notification to professional
+    const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
+    await this.emailService.sendEscrowNotification({
+      to: projectProfessional.professional.email,
+      professionalName: winnerName,
+      projectName: project.projectName,
+      invoiceAmount: `$${projectProfessional.quoteAmount?.toString() || '0'}`,
+      projectUrl: `${webBaseUrl}/professional-projects/${awarded.id}`,
     });
 
     // Send notifications to non-declined, non-awarded professionals
@@ -1171,4 +1195,63 @@ export class ProjectsService {
       }),
     );
   }
-}
+
+  async payInvoice(projectId: string, userId: string) {
+    // Verify user owns this project
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, userId },
+      include: {
+        professionals: {
+          where: { status: 'awarded' },
+          include: {
+            invoice: true,
+            professional: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new Error('Project not found or not authorized');
+    }
+
+    const awardedProfessional = project.professionals[0];
+    if (!awardedProfessional) {
+      throw new Error('No awarded professional found for this project');
+    }
+
+    if (!awardedProfessional.invoice) {
+      throw new Error('No invoice found for this project');
+    }
+
+    if (awardedProfessional.invoice.paymentStatus === 'paid') {
+      throw new Error('Invoice already paid');
+    }
+
+    // Update invoice payment status
+    const updatedInvoice = await this.prisma.invoice.update({
+      where: { id: awardedProfessional.invoice.id },
+      data: {
+        paymentStatus: 'paid',
+        paidAt: new Date(),
+      },
+    });
+
+    // Add system message to chat
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId: awardedProfessional.id,
+        senderType: 'client',
+        senderClientId: project.clientId,
+        content: `✓ Invoice paid! $${awardedProfessional.invoice.amount.toString()} has been deposited into Fitout Hub's escrow account. Funds will be released according to project milestones.`,
+      },
+    });
+
+    console.log('[ProjectsService.payInvoice] Invoice paid:', {
+      projectId,
+      invoiceId: updatedInvoice.id,
+      amount: updatedInvoice.amount.toString(),
+    });
+
+    return { success: true, invoice: updatedInvoice };
+  }
