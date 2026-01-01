@@ -102,6 +102,9 @@ export default function ClientProjectDetailPage() {
   const [assistNewMessage, setAssistNewMessage] = useState('');
   const [assistSending, setAssistSending] = useState(false);
 
+  // Derived values
+  const projectStatus = project?.status ?? 'pending';
+
   // Helper: fetch project details (reusable)
   const fetchProject = async () => {
     if (!accessToken || !projectId) return;
@@ -654,17 +657,17 @@ export default function ClientProjectDetailPage() {
             <div className="flex items-center gap-3">
               <span
                 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                  projectStatusBadge[project.status] || 'bg-slate-100 text-slate-700'
+                  projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
                 }`}
               >
-                {project.status.replace('_', ' ')}
+                {projectStatus.replace('_', ' ')}
               </span>
-              {project.status === 'withdrawn' && (
+              {projectStatus === 'withdrawn' && (
                 <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
               )}
             </div>
             {!project.professionals?.some((pp) => pp.status === 'awarded') &&
-              project.status !== 'withdrawn' && (
+              projectStatus !== 'withdrawn' && (
                 <button
                   onClick={handleWithdrawProject}
                   disabled={withdrawing}
