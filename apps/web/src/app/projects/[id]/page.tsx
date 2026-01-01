@@ -53,6 +53,13 @@ interface Message {
   createdAt: string;
 }
 
+const projectStatusBadge: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-800',
+  approved: 'bg-emerald-100 text-emerald-800',
+  rejected: 'bg-rose-100 text-rose-800',
+  withdrawn: 'bg-slate-200 text-slate-800',
+};
+
 export default function ClientProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -75,6 +82,7 @@ export default function ClientProjectDetailPage() {
   const [awardedProfessional, setAwardedProfessional] = useState<ProjectProfessional | null>(null);
   const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
   const [payingInvoice, setPayingInvoice] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   // Schedule & contractor contact editing state
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -516,6 +524,38 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const handleWithdrawProject = async () => {
+    if (!accessToken || !projectId) return;
+
+    const confirmed = window.confirm(
+      'Withdraw this project from bidding? Invited professionals will be notified.',
+    );
+    if (!confirmed) return;
+
+    setWithdrawing(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/withdraw`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to withdraw project');
+      }
+
+      toast.success('Project withdrawn from bidding.');
+      await fetchProject();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to withdraw project';
+      toast.error(message);
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   // One-click invite for 'selected' professionals
   const inviteNow = async (pp: ProjectProfessional) => {
     if (!pp || !accessToken || !projectId) return;
@@ -607,6 +647,31 @@ export default function ClientProjectDetailPage() {
             <p className="text-sm text-emerald-300 font-semibold uppercase tracking-wide mt-1">
               {project.region}
             </p>
+          </div>
+
+          <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <span
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                  projectStatusBadge[project.status] || 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                {project.status.replace('_', ' ')}
+              </span>
+              {project.status === 'withdrawn' && (
+                <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
+              )}
+            </div>
+            {!project.professionals?.some((pp) => pp.status === 'awarded') &&
+              project.status !== 'withdrawn' && (
+                <button
+                  onClick={handleWithdrawProject}
+                  disabled={withdrawing}
+                  className="inline-flex items-center justify-center rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
+                >
+                  {withdrawing ? 'Withdrawing…' : 'Withdraw Project'}
+                </button>
+              )}
           </div>
 
           <div className="p-5 space-y-4">

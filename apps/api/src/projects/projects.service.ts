@@ -15,6 +15,7 @@ export class ProjectsService {
   ) {}
 
   private readonly STATUS_ORDER = [
+    'withdrawn',
     'awarded',
     'quoted',
     'accepted',
@@ -1149,6 +1150,84 @@ export class ProjectsService {
       message: 'Contractor contact updated successfully',
       project: updated,
     };
+  }
+
+  async withdrawProject(projectId: string, userId: string) {
+    const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, userId },
+      include: {
+        client: true,
+        professionals: {
+          include: { professional: true },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new Error('Project not found or not authorized');
+    }
+
+    const hasAwarded = project.professionals?.some(
+      (pp: any) => pp.status === 'awarded',
+    );
+    if (hasAwarded) {
+      throw new Error('Project already awarded; cannot withdraw');
+    }
+
+    const toNotify = (project.professionals || []).filter((pp: any) => {
+      if (pp.status === 'awarded') return false;
+      if (pp.status === 'accepted' || pp.status === 'quoted' || pp.status === 'counter_requested') return true;
+      if (pp.createdAt && pp.createdAt >= cutoff) return true;
+      return false;
+    });
+
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { status: 'withdrawn' },
+    });
+
+    await this.prisma.projectProfessional.updateMany({
+      where: {
+        projectId,
+        status: { in: ['pending', 'accepted', 'quoted', 'counter_requested'] },
+      },
+      data: { status: 'withdrawn' },
+    });
+
+    // Notify professionals via email and system message
+    await Promise.all(
+      toNotify.map(async (pp: any) => {
+        const professionalName =
+          pp.professional.fullName || pp.professional.businessName || 'Professional';
+
+        await this.prisma.message.create({
+          data: {
+            projectProfessionalId: pp.id,
+            senderType: 'client',
+            senderClientId: project.clientId,
+            content:
+              '🚫 Project withdrawn by client. Thank you for your participation.',
+          },
+        });
+
+        try {
+          await this.emailService.sendProjectWithdrawnNotification({
+            to: pp.professional.email,
+            professionalName,
+            projectName: project.projectName,
+          });
+        } catch (err) {
+          console.error('[ProjectsService.withdrawProject] Email failed', {
+            to: pp.professional.email,
+            error: (err as Error)?.message,
+          });
+        }
+      }),
+    );
+
+    return { success: true, status: 'withdrawn' };
   }
 
   async remove(id: string) {

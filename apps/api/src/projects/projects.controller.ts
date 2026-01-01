@@ -221,6 +221,15 @@ export class ProjectsController {
     );
   }
 
+  @Post(':id/withdraw')
+  @UseGuards(AuthGuard('jwt'))
+  async withdraw(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    return this.projectsService.withdrawProject(projectId, req.user.id);
+  }
+
   @Post(':id/pay-invoice')
   @UseGuards(AuthGuard('jwt'))
   async payInvoice(

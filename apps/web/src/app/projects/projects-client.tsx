@@ -19,6 +19,7 @@ const statusColors: Record<string, string> = {
   awarded: "bg-emerald-100 text-emerald-800",
   declined: "bg-slate-100 text-slate-800",
   counter_requested: "bg-purple-100 text-purple-800",
+  withdrawn: "bg-slate-200 text-slate-800",
 };
 
 type AssistStatus = "open" | "in_progress" | "closed";
@@ -51,6 +52,7 @@ type ExtendedProject = Project & {
 
 // Status precedence for consolidating duplicate professional entries
 const STATUS_ORDER = [
+  "withdrawn",
   "awarded",
   "quoted",
   "accepted",

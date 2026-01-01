@@ -765,3 +765,43 @@ export class EmailService {
       throw error;
     }
   }}
+
+  /**
+   * Notify professionals when a project is withdrawn from bidding
+   */
+  async sendProjectWithdrawnNotification(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send project withdrawn notice to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Project Update: ${params.projectName} has been withdrawn`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #111827; margin: 0 0 12px 0;">Project withdrawn</h2>
+            <p style="color: #374151;">Hi ${params.professionalName},</p>
+            <p style="color: #374151; line-height: 1.5;">
+              The client has withdrawn <strong>${params.projectName}</strong> from bidding for now. Thank you for your participation.
+            </p>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin: 18px 0;">
+              <p style="color: #6b7280; margin: 0; font-size: 14px;">No action is required on your side. If the client reopens the project, we'll notify you.</p>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Project withdrawn notice sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send project withdrawn notice:', error);
+      throw error;
+    }
+  }
