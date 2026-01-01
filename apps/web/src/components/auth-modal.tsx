@@ -26,6 +26,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setActiveTab(defaultTab);
   }, [defaultTab]);
 
+  // Clear form fields when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setLoginEmail('');
+      setLoginPassword('');
+      setError(null);
+      setClientForm({
+        nickname: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        firstName: '',
+        surname: '',
+        mobile: '',
+      });
+      setProfessionalForm({
+        businessName: '',
+        contactName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+      });
+    }
+  }, [isOpen]);
+
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -153,10 +179,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 py-12 px-4 sm:px-6 lg:px-8"
       onClick={handleBackdropClick}
+      onMouseDown={(e) => {
+        // Prevent propagation from inner elements
+        if (e.target !== e.currentTarget) {
+          e.stopPropagation();
+        }
+      }}
     >
-      <div className="w-full max-w-md rounded-lg bg-white shadow-lg">
+      <div 
+        className="w-full max-w-md rounded-lg bg-white shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h2 className="text-2xl font-bold text-gray-900">

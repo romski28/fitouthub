@@ -84,6 +84,7 @@ export default function ClientProjectDetailPage() {
   const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
   const [payingInvoice, setPayingInvoice] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
 
   // Schedule & contractor contact editing state
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -531,11 +532,6 @@ export default function ClientProjectDetailPage() {
   const handleWithdrawProject = async () => {
     if (!accessToken || !projectId) return;
 
-    const confirmed = window.confirm(
-      'Withdraw this project from bidding? Invited professionals will be notified.',
-    );
-    if (!confirmed) return;
-
     setWithdrawing(true);
     try {
       const res = await fetch(`${API_BASE_URL}/projects/${projectId}/withdraw`, {
@@ -551,6 +547,7 @@ export default function ClientProjectDetailPage() {
       }
 
       toast.success('Project withdrawn from bidding.');
+      setShowWithdrawConfirm(false);
       await fetchProject();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to withdraw project';
@@ -669,7 +666,7 @@ export default function ClientProjectDetailPage() {
             {!project.professionals?.some((pp) => pp.status === 'awarded') &&
               projectStatus !== 'withdrawn' && (
                 <button
-                  onClick={handleWithdrawProject}
+                  onClick={() => setShowWithdrawConfirm(true)}
                   disabled={withdrawing}
                   className="inline-flex items-center justify-center rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
                 >
@@ -1225,6 +1222,43 @@ export default function ClientProjectDetailPage() {
 
         <BackToTop />
       </div>
+
+      {/* Withdraw Confirmation Modal */}
+      {showWithdrawConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-xl font-bold text-slate-900">Withdraw Project?</h3>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
+              <p className="text-sm text-amber-900">
+                This action will:
+              </p>
+              <ul className="text-sm text-amber-900 space-y-1 ml-4 list-disc">
+                <li>Set the project status to <strong>withdrawn</strong></li>
+                <li>Notify all invited professionals of the withdrawal</li>
+                <li>Remove the project from active bidding</li>
+              </ul>
+            </div>
+            <p className="text-sm text-slate-600">
+              Are you sure you want to continue?
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowWithdrawConfirm(false)}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleWithdrawProject}
+                disabled={withdrawing}
+                className="flex-1 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+              >
+                {withdrawing ? 'Withdrawing...' : 'Withdraw Project'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Contact Sharing Modal */}
       {showContactModal && awardedProfessional && (
