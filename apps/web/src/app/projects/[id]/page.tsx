@@ -35,6 +35,7 @@ interface ProjectDetail {
   id: string;
   projectName: string;
   region: string;
+  status?: string;
   budget?: string;
   notes?: string;
   professionals?: ProjectProfessional[];
