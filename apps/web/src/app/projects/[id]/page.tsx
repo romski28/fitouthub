@@ -894,8 +894,8 @@ export default function ClientProjectDetailPage() {
             </div>
           )}
 
-        {/* Professionals Summary Table */}
-        {project.professionals && project.professionals.length > 0 && (
+        {/* Professionals Summary Table - Hidden when project is awarded */}
+        {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="px-5 py-4 border-b border-slate-200 flex items-start justify-between">
               <div>
@@ -1126,8 +1126,8 @@ export default function ClientProjectDetailPage() {
           )}
         </div>
 
-        {/* Professionals & Messaging */}
-        {project.professionals && project.professionals.length > 0 && (
+        {/* Professionals & Messaging - Hidden when project is awarded */}
+        {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
           <div className="grid gap-5 lg:grid-cols-3">
             {/* Professionals List */}
             <div className="lg:col-span-1 space-y-3">
@@ -1289,6 +1289,117 @@ export default function ClientProjectDetailPage() {
             >
               Search & Invite Professionals
             </Link>
+          </div>
+        )}
+
+        {/* Awarded Project Chat Panel - Show when project is awarded */}
+        {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
+          <div className="grid gap-5 lg:grid-cols-2">
+            {/* Project Details (Compact) */}
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 shadow-sm">
+              <div className="px-5 py-4 border-b border-emerald-200">
+                <h2 className="text-lg font-bold text-emerald-900">Project Details</h2>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="text-sm">
+                  <span className="font-semibold text-emerald-900">Project:</span>
+                  <p className="text-emerald-800">{project.projectName}</p>
+                </div>
+                <div className="text-sm">
+                  <span className="font-semibold text-emerald-900">Location:</span>
+                  <p className="text-emerald-800">{project.region}</p>
+                </div>
+                {project.budget && (
+                  <div className="text-sm">
+                    <span className="font-semibold text-emerald-900">Budget:</span>
+                    <p className="text-emerald-800">${project.budget}</p>
+                  </div>
+                )}
+                {project.notes && (
+                  <div className="text-sm">
+                    <span className="font-semibold text-emerald-900">Notes:</span>
+                    <p className="text-emerald-800 mt-1">{project.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Project Chat Panel */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl">
+                <h3 className="font-bold text-slate-900">Project Chat</h3>
+                {selectedProfessional && (
+                  <p className="text-xs text-slate-600 mt-1">
+                    {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
+                  </p>
+                )}
+              </div>
+
+              {selectedProfessional && (
+                <div className="p-4 space-y-4">
+                  {messageError && (
+                    <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      {messageError}
+                    </div>
+                  )}
+
+                  {/* Messages */}
+                  <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    {loadingMessages ? (
+                      <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                    ) : messages.length === 0 ? (
+                      <div className="text-center text-sm text-slate-500">
+                        No messages yet. Start the conversation!
+                      </div>
+                    ) : (
+                      messages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                              msg.senderType === 'client'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white border border-slate-200 text-slate-800'
+                            }`}
+                          >
+                            <p>{msg.content}</p>
+                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-blue-100' : 'text-slate-500'}`}>
+                              {new Date(msg.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Send Message */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !sending) {
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder="Type your message..."
+                      className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                      disabled={sending}
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={sending || !newMessage.trim()}
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {sending ? 'Sending...' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
