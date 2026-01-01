@@ -701,198 +701,7 @@ export default function ClientProjectDetailPage() {
           </div>
         </div>
 
-          {/* Awarded Details */}
-          {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 shadow-sm">
-              <div className="px-5 py-4 border-b border-emerald-200">
-                <h2 className="text-lg font-bold text-emerald-900">Awarded Project Details</h2>
-                <p className="text-sm text-emerald-800">Scheduling and contractor contact information</p>
-              </div>
-              <div className="p-5 space-y-5">
-                {/* Schedule Section */}
-                <div className="rounded-md bg-white px-4 py-4 text-sm border border-emerald-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="font-semibold text-emerald-900">Project Schedule</p>
-                    <button
-                      onClick={() => {
-                        setEditingSchedule(!editingSchedule);
-                        setScheduleForm({
-                          startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-                          endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
-                        });
-                      }}
-                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
-                    >
-                      {editingSchedule ? 'Cancel' : 'Edit'}
-                    </button>
-                  </div>
-                  {!editingSchedule ? (
-                    <div className="grid gap-2 md:grid-cols-2 text-emerald-800">
-                      <div><span className="font-medium">Start Date:</span> {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}</div>
-                      <div><span className="font-medium">End Date:</span> {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}</div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-emerald-900 mb-1">Start Date</label>
-                        <input
-                          type="date"
-                          value={scheduleForm.startDate}
-                          onChange={(e) => setScheduleForm((prev) => ({ ...prev, startDate: e.target.value }))}
-                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-emerald-900 mb-1">End Date</label>
-                        <input
-                          type="date"
-                          value={scheduleForm.endDate}
-                          onChange={(e) => setScheduleForm((prev) => ({ ...prev, endDate: e.target.value }))}
-                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        />
-                      </div>
-                      <button
-                        onClick={handleScheduleSave}
-                        disabled={updatingSchedule}
-                        className="w-full rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {updatingSchedule ? 'Saving...' : 'Save Schedule'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Contractor Contact Section */}
-                <div className="rounded-md bg-white px-4 py-4 text-sm border border-emerald-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="font-semibold text-emerald-900">Contractor Contact</p>
-                    <button
-                      onClick={() => {
-                        setEditingContact(!editingContact);
-                        const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
-                        setContactForm({
-                          name: project.contractorContactName || awarded?.professional.fullName || awarded?.professional.businessName || '',
-                          phone: project.contractorContactPhone || awarded?.professional.phone || '',
-                          email: project.contractorContactEmail || awarded?.professional.email || '',
-                        });
-                      }}
-                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
-                    >
-                      {editingContact ? 'Cancel' : 'Edit'}
-                    </button>
-                  </div>
-                  {!editingContact ? (
-                    (() => {
-                      const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
-                      const displayName = awarded?.professional.fullName || awarded?.professional.businessName || awarded?.professional.email || '—';
-                      const phone = project.contractorContactPhone || awarded?.professional.phone || '—';
-                      const email = project.contractorContactEmail || awarded?.professional.email || '—';
-                      const name = project.contractorContactName || displayName;
-                      return (
-                        <div className="grid gap-2 md:grid-cols-3 text-emerald-800">
-                          <div><span className="font-medium">Name:</span> {name}</div>
-                          <div><span className="font-medium">Phone:</span> {phone}</div>
-                          <div><span className="font-medium">Email:</span> {email}</div>
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-emerald-900 mb-1">Name</label>
-                        <input
-                          type="text"
-                          value={contactForm.name}
-                          onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
-                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-emerald-900 mb-1">Phone</label>
-                        <input
-                          type="tel"
-                          value={contactForm.phone}
-                          onChange={(e) => setContactForm((prev) => ({ ...prev, phone: e.target.value }))}
-                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-emerald-900 mb-1">Email</label>
-                        <input
-                          type="email"
-                          value={contactForm.email}
-                          onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
-                          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        />
-                      </div>
-                      <button
-                        onClick={handleContactSave}
-                        disabled={updatingContact}
-                        className="w-full rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {updatingContact ? 'Saving...' : 'Save Contact'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Invoice & Payment Section */}
-                {(() => {
-                  const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
-                  if (!awarded?.invoice) return null;
-
-                  const invoice = awarded.invoice;
-                  const isPaid = invoice.paymentStatus === 'paid';
-
-                  return (
-                    <div className="rounded-md bg-white px-4 py-4 text-sm border border-blue-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="font-semibold text-blue-900">💰 Invoice & Escrow</p>
-                        <span className={`text-xs font-semibold px-2 py-1 rounded ${isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {isPaid ? '✓ Paid' : 'Pending Payment'}
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="grid gap-2 md:grid-cols-2 text-blue-800">
-                          <div><span className="font-medium">Invoice Amount:</span> ${Number(invoice.amount).toFixed(2)}</div>
-                          {isPaid && invoice.paidAt && (
-                            <div><span className="font-medium">Paid On:</span> {new Date(invoice.paidAt).toLocaleDateString()}</div>
-                          )}
-                        </div>
-                        
-                        {!isPaid && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 space-y-2">
-                            <p className="text-xs text-blue-900 font-medium">
-                              ℹ️ Escrow Protection
-                            </p>
-                            <p className="text-xs text-blue-800">
-                              Your payment will be held securely in Fitout Hub's escrow account. 
-                              Funds are only released to the professional according to project milestones.
-                            </p>
-                            <button
-                              onClick={handlePayInvoice}
-                              disabled={payingInvoice}
-                              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {payingInvoice ? 'Processing Payment...' : '💳 Pay Invoice & Deposit to Escrow'}
-                            </button>
-                          </div>
-                        )}
-
-                        {isPaid && (
-                          <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                            <p className="text-xs text-green-900">
-                              ✓ <strong>Payment Received!</strong> Funds are securely held in escrow and will be released according to project milestones.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
+          {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
 
         {/* Professionals Summary Table - Hidden when project is awarded */}
         {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
@@ -975,156 +784,6 @@ export default function ClientProjectDetailPage() {
             </div>
           </div>
         )}
-
-        {/* Assistance (FOH) Mini Card and Messages */}
-        <div className="grid gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-1 space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">Fitout Hub Assistance</h2>
-            <button
-              onClick={() => setAssistOpen(true)}
-              disabled={!assistRequestId}
-              className={`w-full text-left rounded-lg border px-4 py-3 transition ${assistRequestId ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'}`}
-            >
-              <div className="font-semibold text-slate-900">Project Assistance</div>
-              <div className="text-xs text-slate-600 mt-1">
-                {assistLoading ? 'Loading…' : assistRequestId ? `${assistMessages.length} messages` : 'No assistance thread'}
-              </div>
-              {assistError && (
-                <div className="mt-2 text-xs text-rose-600">{assistError}</div>
-              )}
-            </button>
-          </div>
-
-          {/* Messages Panel */}
-          {assistOpen && (
-            <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl flex items-center justify-between">
-                <h3 className="font-bold text-slate-900">Communications with Fitout Hub</h3>
-                <button
-                  type="button"
-                  onClick={() => setAssistOpen(false)}
-                  className="text-xs font-semibold text-slate-700 hover:text-slate-900"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="p-4">
-                <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
-                  {assistLoading ? (
-                    <div className="text-center text-sm text-slate-500">Loading messages...</div>
-                  ) : assistMessages.length === 0 ? (
-                    <div className="text-center text-sm text-slate-500">No assistance messages yet.</div>
-                  ) : (
-                    assistMessages.map((msg) => (
-                      <div key={msg.id} className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${msg.senderType === 'client' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 text-slate-800'}`}>
-                          <p>{msg.content}</p>
-                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-blue-100' : 'text-slate-500'}`}>
-                            {new Date(msg.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Send Assistance Message */}
-                <div className="mt-3 flex gap-2">
-                  <input
-                    type="text"
-                    value={assistNewMessage}
-                    onChange={(e) => setAssistNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !assistSending) {
-                        (async () => {
-                          if (!assistRequestId || !assistNewMessage.trim() || !accessToken) return;
-                          try {
-                            setAssistSending(true);
-                            const res = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`, {
-                              method: 'POST',
-                              headers: {
-                                Authorization: `Bearer ${accessToken}`,
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({ sender: 'client', content: assistNewMessage.trim() }),
-                            });
-                            if (!res.ok) {
-                              const text = await res.text();
-                              throw new Error(text || 'Failed to send assistance message');
-                            }
-                            const created = await res.json();
-                            const m = created?.id ? created : (created.message || created);
-                            setAssistMessages((prev) => [
-                              ...prev,
-                              {
-                                id: m.id,
-                                projectProfessionalId: '',
-                                senderType: 'client',
-                                content: m.content,
-                                createdAt: m.createdAt,
-                              },
-                            ]);
-                            setAssistNewMessage('');
-                          } catch (err) {
-                            console.error('Assist message send failed', err);
-                            toast.error('Failed to send message to Fitout Hub');
-                          } finally {
-                            setAssistSending(false);
-                          }
-                        })();
-                      }
-                    }}
-                    placeholder="Type a message to Fitout Hub..."
-                    className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                    disabled={assistSending || !assistRequestId}
-                  />
-                  <button
-                    onClick={async () => {
-                      if (!assistRequestId || !assistNewMessage.trim() || !accessToken) return;
-                      try {
-                        setAssistSending(true);
-                        const res = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`, {
-                          method: 'POST',
-                          headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({ sender: 'client', content: assistNewMessage.trim() }),
-                        });
-                        if (!res.ok) {
-                          const text = await res.text();
-                          throw new Error(text || 'Failed to send assistance message');
-                        }
-                        const created = await res.json();
-                        const m = created?.id ? created : (created.message || created);
-                        setAssistMessages((prev) => [
-                          ...prev,
-                          {
-                            id: m.id,
-                            projectProfessionalId: '',
-                            senderType: 'client',
-                            content: m.content,
-                            createdAt: m.createdAt,
-                          },
-                        ]);
-                        setAssistNewMessage('');
-                      } catch (err) {
-                        console.error('Assist message send failed', err);
-                        toast.error('Failed to send message to Fitout Hub');
-                      } finally {
-                        setAssistSending(false);
-                      }
-                    }}
-                    disabled={assistSending || !assistNewMessage.trim() || !assistRequestId}
-                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    {assistSending ? 'Sending...' : 'Send'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Professionals & Messaging - Hidden when project is awarded */}
         {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
@@ -1295,32 +954,193 @@ export default function ClientProjectDetailPage() {
         {/* Awarded Project Chat Panel - Show when project is awarded */}
         {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
           <div className="grid gap-5 lg:grid-cols-2">
-            {/* Project Details (Compact) */}
+            {/* Combined Project Details & Management */}
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 shadow-sm">
               <div className="px-5 py-4 border-b border-emerald-200">
-                <h2 className="text-lg font-bold text-emerald-900">Project Details</h2>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold text-emerald-900">Project Details</h2>
+                    <p className="text-sm text-emerald-800">Schedule, contact & invoice</p>
+                  </div>
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${assistRequestId ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700'}`}>
+                    {assistRequestId ? '✓ Fitout assisting' : 'No assistance'}
+                  </span>
+                </div>
               </div>
-              <div className="p-5 space-y-3">
-                <div className="text-sm">
-                  <span className="font-semibold text-emerald-900">Project:</span>
-                  <p className="text-emerald-800">{project.projectName}</p>
-                </div>
-                <div className="text-sm">
-                  <span className="font-semibold text-emerald-900">Location:</span>
-                  <p className="text-emerald-800">{project.region}</p>
-                </div>
-                {project.budget && (
+              <div className="p-5 space-y-4 max-h-[600px] overflow-y-auto">
+                {/* Basic Info */}
+                <div className="space-y-2 pb-4 border-b border-emerald-200">
                   <div className="text-sm">
-                    <span className="font-semibold text-emerald-900">Budget:</span>
-                    <p className="text-emerald-800">${project.budget}</p>
+                    <span className="font-semibold text-emerald-900">Project:</span>
+                    <p className="text-emerald-800">{project.projectName}</p>
                   </div>
-                )}
-                {project.notes && (
                   <div className="text-sm">
-                    <span className="font-semibold text-emerald-900">Notes:</span>
-                    <p className="text-emerald-800 mt-1">{project.notes}</p>
+                    <span className="font-semibold text-emerald-900">Location:</span>
+                    <p className="text-emerald-800">{project.region}</p>
                   </div>
-                )}
+                  {project.budget && (
+                    <div className="text-sm">
+                      <span className="font-semibold text-emerald-900">Budget:</span>
+                      <p className="text-emerald-800">${project.budget}</p>
+                    </div>
+                  )}
+                  {project.notes && (
+                    <div className="text-sm">
+                      <span className="font-semibold text-emerald-900">Notes:</span>
+                      <p className="text-emerald-800 mt-1 text-xs">{project.notes}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Schedule Section */}
+                <div className="text-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-semibold text-emerald-900">Schedule</p>
+                    <button
+                      onClick={() => {
+                        setEditingSchedule(!editingSchedule);
+                        setScheduleForm({
+                          startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+                          endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+                        });
+                      }}
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                    >
+                      {editingSchedule ? 'Cancel' : 'Edit'}
+                    </button>
+                  </div>
+                  {!editingSchedule ? (
+                    <div className="space-y-1 text-emerald-800 text-xs">
+                      <div>Start: {project.startDate ? new Date(project.startDate).toLocaleDateString() : '—'}</div>
+                      <div>End: {project.endDate ? new Date(project.endDate).toLocaleDateString() : '—'}</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="date"
+                        value={scheduleForm.startDate}
+                        onChange={(e) => setScheduleForm((prev) => ({ ...prev, startDate: e.target.value }))}
+                        className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      />
+                      <input
+                        type="date"
+                        value={scheduleForm.endDate}
+                        onChange={(e) => setScheduleForm((prev) => ({ ...prev, endDate: e.target.value }))}
+                        className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      />
+                      <button
+                        onClick={handleScheduleSave}
+                        disabled={updatingSchedule}
+                        className="w-full rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Contractor Contact Section */}
+                <div className="text-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-semibold text-emerald-900">Contractor Contact</p>
+                    <button
+                      onClick={() => {
+                        setEditingContact(!editingContact);
+                        const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
+                        setContactForm({
+                          name: project.contractorContactName || awarded?.professional.fullName || awarded?.professional.businessName || '',
+                          phone: project.contractorContactPhone || awarded?.professional.phone || '',
+                          email: project.contractorContactEmail || awarded?.professional.email || '',
+                        });
+                      }}
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                    >
+                      {editingContact ? 'Cancel' : 'Edit'}
+                    </button>
+                  </div>
+                  {!editingContact ? (
+                    (() => {
+                      const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
+                      const displayName = awarded?.professional.fullName || awarded?.professional.businessName || awarded?.professional.email || '—';
+                      const phone = project.contractorContactPhone || awarded?.professional.phone || '—';
+                      const email = project.contractorContactEmail || awarded?.professional.email || '—';
+                      const name = project.contractorContactName || displayName;
+                      return (
+                        <div className="space-y-1 text-emerald-800 text-xs">
+                          <div>Name: {name}</div>
+                          <div>Phone: {phone}</div>
+                          <div>Email: {email}</div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={contactForm.name}
+                        onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="Name"
+                        className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      />
+                      <input
+                        type="tel"
+                        value={contactForm.phone}
+                        onChange={(e) => setContactForm((prev) => ({ ...prev, phone: e.target.value }))}
+                        placeholder="Phone"
+                        className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      />
+                      <input
+                        type="email"
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
+                        placeholder="Email"
+                        className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      />
+                      <button
+                        onClick={handleContactSave}
+                        disabled={updatingContact}
+                        className="w-full rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Invoice & Payment Section */}
+                {(() => {
+                  const awarded = project.professionals?.find((pp) => pp.status === 'awarded');
+                  if (!awarded?.invoice) return null;
+
+                  const invoice = awarded.invoice;
+                  const isPaid = invoice.paymentStatus === 'paid';
+
+                  return (
+                    <div className="text-sm pt-2 border-t border-emerald-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-semibold text-blue-900">💰 Invoice</p>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {isPaid ? '✓ Paid' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-blue-800 text-xs mb-2">
+                        <div>Amount: ${Number(invoice.amount).toFixed(2)}</div>
+                        {isPaid && invoice.paidAt && (
+                          <div>Paid: {new Date(invoice.paidAt).toLocaleDateString()}</div>
+                        )}
+                      </div>
+                      {!isPaid && (
+                        <button
+                          onClick={handlePayInvoice}
+                          disabled={payingInvoice}
+                          className="w-full rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {payingInvoice ? 'Processing...' : '💳 Pay & Escrow'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
