@@ -643,9 +643,19 @@ export default function ClientProjectDetailPage() {
 
         {/* Project Info */}
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4 text-white rounded-t-xl">
-            <h1 className="text-2xl font-bold">{project.projectName}</h1>
-            <p className="text-sm text-emerald-300 font-semibold uppercase tracking-wide mt-1">
+          <div className={`px-5 py-4 text-white rounded-t-xl ${
+            projectStatus === 'withdrawn'
+              ? 'bg-gradient-to-r from-slate-400 to-slate-300'
+              : 'bg-gradient-to-r from-slate-900 to-slate-800'
+          }`}>
+            <h1 className={`text-2xl font-bold ${projectStatus === 'withdrawn' ? 'text-slate-700' : ''}`}>
+              {project.projectName}
+            </h1>
+            <p className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
+              projectStatus === 'withdrawn'
+                ? 'text-slate-600'
+                : 'text-emerald-300'
+            }`}>
               {project.region}
             </p>
           </div>

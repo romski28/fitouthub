@@ -806,10 +806,22 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                 key={project.id}
                 className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
+                <div className={`flex items-start justify-between gap-3 px-4 py-3 text-white ${
+                  project.status === 'withdrawn'
+                    ? 'bg-gradient-to-r from-slate-400 to-slate-300'
+                    : 'bg-gradient-to-r from-slate-900 to-slate-800'
+                }`}>
                   <div className="space-y-1">
-                    <div className="text-base font-bold">{project.projectName}</div>
-                    <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{project.region}</div>
+                    <div className={`text-base font-bold ${project.status === 'withdrawn' ? 'text-slate-700' : ''}`}>
+                      {project.projectName}
+                    </div>
+                    <div className={`text-xs font-semibold uppercase tracking-wide ${
+                      project.status === 'withdrawn'
+                        ? 'text-slate-600'
+                        : 'text-emerald-300'
+                    }`}>
+                      {project.region}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {((project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)) > 0 && (
@@ -828,13 +840,15 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                       </span>
                     ) : null}
                     <StatusBadge status={project.status} />
-                    <button
-                      type="button"
-                      onClick={() => setEditing(project)}
-                      className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
-                    >
-                      Edit
-                    </button>
+                    {project.status !== 'withdrawn' && (
+                      <button
+                        type="button"
+                        onClick={() => setEditing(project)}
+                        className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
+                      >
+                        Edit
+                      </button>
+                    )}
                   </div>
                 </div>
 
