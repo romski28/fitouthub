@@ -169,7 +169,7 @@ type EditState = {
   contractorName?: string;
   region: string;
   budget?: string | number;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "withdrawn";
   notes?: string;
   tradesRequired: string[];
   isEmergency?: boolean;
