@@ -890,52 +890,9 @@ export default function ClientProjectDetailPage() {
 
         {/* Professionals & Messaging - Hidden when project is awarded */}
         {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
-          <div className="grid gap-5 lg:grid-cols-3">
-            {/* Professionals List */}
-            <div className="lg:col-span-1 space-y-3">
-              <h2 className="text-lg font-bold text-slate-900">Professionals</h2>
-              {project.professionals.map((prof) => (
-                <button
-                  key={prof.id}
-                  onClick={() => setSelectedProfessional(prof)}
-                  className={`w-full text-left rounded-lg border px-4 py-3 transition ${
-                    selectedProfessional?.id === prof.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
-                  }`}
-                >
-                  <div className="font-semibold text-slate-900">
-                    {prof.professional.fullName || prof.professional.businessName || prof.professional.email}
-                  </div>
-                  <div className="text-xs text-slate-600 mt-1">
-                    Status: <span className="capitalize font-medium">{prof.status}</span>
-                  </div>
-                  {prof.quoteAmount && (
-                    <div className="text-xs text-blue-700 mt-1 font-semibold">
-                      Quote: ${prof.quoteAmount}
-                    </div>
-                  )}
-                  {prof.status === 'selected' && (
-                    <div className="mt-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          inviteNow(prof);
-                        }}
-                        disabled={!!actionBusy && actionBusy === `invite-${prof.professionalId}`}
-                        className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                      >
-                        {actionBusy === `invite-${prof.professionalId}` ? 'Inviting…' : 'Invite now'}
-                      </button>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Messages Panel */}
-            <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div>
+            {/* Messages Panel - Full Width */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl">
                 <h3 className="font-bold text-slate-900">
                   {selectedProfessional
