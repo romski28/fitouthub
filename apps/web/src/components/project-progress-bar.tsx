@@ -73,44 +73,63 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
     { key: 'feedback', label: 'Feedback', state: feedbackState },
   ];
 
-  const dotSize = variant === 'compact' ? 'h-4 w-4' : 'h-5 w-5';
+  const dotSize = variant === 'compact' ? 'h-5 w-5' : 'h-6 w-6';
   const labelClass = variant === 'compact' ? 'text-[11px]' : 'text-xs';
-  const gapClass = variant === 'compact' ? 'gap-3' : 'gap-4';
-  const lineWidth = variant === 'compact' ? 'w-12 md:w-14' : 'w-16 md:w-20';
+  const lineHeight = variant === 'compact' ? 'h-[2px]' : 'h-[3px]';
 
   const colorFor = (state: StepState) => {
-    if (state === 'done') return 'bg-emerald-500 border-emerald-500';
-    if (state === 'optional-skipped') return 'bg-transparent border-slate-300';
-    return 'bg-slate-700 border-slate-700';
+    if (state === 'done') return 'from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-[0_2px_8px_rgba(16,185,129,0.35)]';
+    if (state === 'optional-skipped') return 'from-white to-white border-slate-300 text-slate-500 shadow-[0_2px_6px_rgba(15,23,42,0.08)]';
+    return 'from-slate-700 to-slate-800 border-slate-700 text-white shadow-[0_2px_8px_rgba(15,23,42,0.25)]';
   };
 
   const lineColor = (state: StepState) => (state === 'done' ? 'bg-emerald-200' : 'bg-slate-300');
 
   return (
     <div className={`rounded-xl border border-slate-200 bg-white shadow-sm ${variant === 'compact' ? 'p-3' : 'p-4'}`}>
-      <div className="flex items-center">
-        <div className="flex flex-1 items-center overflow-x-auto py-2">
+      <div className="flex flex-col gap-2">
+        {/* Top labels */}
+        <div className="flex items-center justify-between">
+          {steps.map((step, idx) => (
+            <div key={`top-${step.key}`} className="flex-1 flex justify-center">
+              {idx % 2 === 0 ? (
+                <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
+              ) : (
+                <span className={`${labelClass} text-transparent select-none`} aria-hidden>_</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Dots and lines */}
+        <div className="flex items-center justify-between gap-2">
           {steps.map((step, idx) => {
-            const labelOnTop = idx % 2 === 0;
+            const isLast = idx === steps.length - 1;
             return (
-              <div key={step.key} className={`flex items-center ${gapClass}`}>
-                <div className="relative flex flex-col items-center">
-                  {labelOnTop && (
-                    <div className={`${labelClass} font-semibold text-slate-800 mb-2 whitespace-nowrap`}>{step.label}</div>
-                  )}
-                  <div className={`relative rounded-full border ${dotSize} ${colorFor(step.state)} flex items-center justify-center text-[11px] font-semibold text-white`}
-                    title={step.label}
-                  >
-                    {step.pill || ''}
-                  </div>
-                  {!labelOnTop && (
-                    <div className={`${labelClass} font-semibold text-slate-800 mt-2 whitespace-nowrap`}>{step.label}</div>
-                  )}
+              <div key={`mid-${step.key}`} className="flex-1 flex items-center">
+                <div
+                  className={`relative flex items-center justify-center rounded-full border bg-gradient-to-br ${dotSize} ${colorFor(step.state)} text-[11px] font-semibold`}
+                  title={step.label}
+                >
+                  {step.pill || ''}
                 </div>
-                {idx !== steps.length - 1 && <div className={`${lineWidth} h-[2px] rounded-full ${lineColor(step.state)}`}></div>}
+                {!isLast && <div className={`flex-1 ${lineHeight} rounded-full ${lineColor(step.state)}`}></div>}
               </div>
             );
           })}
+        </div>
+
+        {/* Bottom labels */}
+        <div className="flex items-center justify-between">
+          {steps.map((step, idx) => (
+            <div key={`bottom-${step.key}`} className="flex-1 flex justify-center">
+              {idx % 2 === 1 ? (
+                <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
+              ) : (
+                <span className={`${labelClass} text-transparent select-none`} aria-hidden>_</span>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
