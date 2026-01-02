@@ -85,13 +85,16 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
 
   const lineColor = (state: StepState) => (state === 'done' ? 'bg-emerald-200' : 'bg-slate-300');
 
+  const gridCols = `grid grid-cols-${steps.length * 2 - 1}`;
+  const colStart = (idx: number) => idx * 2 + 1; // dots on odd columns
+
   return (
     <div className={`rounded-xl border border-slate-200 bg-white shadow-sm ${variant === 'compact' ? 'p-3' : 'p-4'}`}>
       <div className="flex flex-col gap-2">
-        {/* Top labels */}
-        <div className="flex items-center justify-between">
+        {/* Top labels row */}
+        <div className={`${gridCols} items-center`}>
           {steps.map((step, idx) => (
-            <div key={`top-${step.key}`} className="flex-1 flex justify-center">
+            <div key={`top-${step.key}`} className={`flex justify-center col-start-${colStart(idx)}`}>
               {idx % 2 === 0 ? (
                 <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
               ) : (
@@ -101,28 +104,35 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
           ))}
         </div>
 
-        {/* Dots and lines */}
-        <div className="flex items-center justify-between gap-2">
+        {/* Middle row: dots and connecting lines on a 2n-1 column grid */}
+        <div className={`${gridCols} items-center gap-0.5`}>
           {steps.map((step, idx) => {
             const isLast = idx === steps.length - 1;
+            const dotCol = colStart(idx);
             return (
-              <div key={`mid-${step.key}`} className="flex-1 flex items-center">
-                <div
-                  className={`relative flex items-center justify-center rounded-full border bg-gradient-to-br ${dotSize} ${colorFor(step.state)} text-[11px] font-semibold`}
-                  title={step.label}
-                >
-                  {step.pill || ''}
+              <React.Fragment key={`mid-${step.key}`}>
+                <div className={`flex justify-center ${dotSize} col-start-${dotCol}`}>
+                  <div
+                    className={`relative flex items-center justify-center rounded-full border bg-gradient-to-br ${dotSize} ${colorFor(step.state)} text-[11px] font-semibold`}
+                    title={step.label}
+                  >
+                    {step.pill || ''}
+                  </div>
                 </div>
-                {!isLast && <div className={`flex-1 ${lineHeight} rounded-full ${lineColor(step.state)}`}></div>}
-              </div>
+                {!isLast && (
+                  <div className={`col-start-${dotCol + 1}`}>
+                    <div className={`w-full ${lineHeight} rounded-full ${lineColor(step.state)}`}></div>
+                  </div>
+                )}
+              </React.Fragment>
             );
           })}
         </div>
 
-        {/* Bottom labels */}
-        <div className="flex items-center justify-between">
+        {/* Bottom labels row */}
+        <div className={`${gridCols} items-center`}>
           {steps.map((step, idx) => (
-            <div key={`bottom-${step.key}`} className="flex-1 flex justify-center">
+            <div key={`bottom-${step.key}`} className={`flex justify-center col-start-${colStart(idx)}`}>
               {idx % 2 === 1 ? (
                 <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
               ) : (
