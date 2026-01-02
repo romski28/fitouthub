@@ -50,7 +50,15 @@ export type Project = {
   contractorName?: string;
   region: string;
   budget?: number | string;
-  status: 'pending' | 'approved' | 'rejected' | 'withdrawn';
+  status:
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'withdrawn'
+    | 'quoted'
+    | 'awarded'
+    | 'declined'
+    | 'counter_requested';
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
