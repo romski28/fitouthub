@@ -830,15 +830,21 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                       </span>
                     )}
                     {assistInfo?.hasAssist && (
-                      <span className="rounded-full px-2 py-1 text-[10px] font-semibold bg-purple-100 text-purple-800">
-                        Assistance
-                      </span>
+                      <img
+                        src="/FOHAssistYes.png"
+                        alt="Fitout Hub Assistance Requested"
+                        title="Fitout Hub Assistance Requested"
+                        className="h-6 w-6 object-contain"
+                      />
                     )}
-                    {assistInfo?.hasAssist && assistInfo.status ? (
-                      <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${assistStatusColors[assistInfo.status]}`}>
-                        {`Assist ${assistInfo.status.replace('_', ' ')}`}
-                      </span>
-                    ) : null}
+                    {!assistInfo?.hasAssist && (
+                      <img
+                        src="/FOHAssistNo.png"
+                        alt="No Assistance"
+                        title="No Assistance"
+                        className="h-6 w-6 object-contain opacity-40"
+                      />
+                    )}
                     <StatusBadge status={project.status} />
                     {project.status !== 'withdrawn' && (
                       <button

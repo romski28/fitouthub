@@ -777,6 +777,31 @@ export default function ClientProjectDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
+                  {assistRequestId && (
+                    <tr
+                      onClick={() => {
+                        setSelectedProfessional(null);
+                        setViewingAssistChat(true);
+                      }}
+                      className={`${viewingAssistChat ? 'bg-indigo-50' : 'hover:bg-slate-50'} cursor-pointer border-t border-slate-100`}
+                    >
+                      <td className="py-2 pr-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                            FH
+                          </div>
+                          <span className="font-medium text-slate-800">Fitout Hub</span>
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span className="inline-block rounded-full px-2 py-1 text-xs font-semibold bg-indigo-100 text-indigo-800">Assisting</span>
+                      </td>
+                      <td className="py-2 pr-4">—</td>
+                      <td className="py-2 pr-4">💬</td>
+                      <td className="py-2">—</td>
+                      <td className="py-2 pr-4">—</td>
+                    </tr>
+                  )}
                   {project.professionals.map((pp) => {
                     const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
                     return (

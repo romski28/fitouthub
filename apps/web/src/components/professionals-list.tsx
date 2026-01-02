@@ -564,7 +564,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-6 right-6 z-40 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3"
+          className="fixed top-20 right-6 z-40 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3"
           aria-label="Share your project"
         >
           <div className="flex flex-col items-center justify-center text-center">
