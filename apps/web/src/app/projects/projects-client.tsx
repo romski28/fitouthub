@@ -159,6 +159,13 @@ function formatDate(date?: string): string {
   }
 }
 
+function formatHKD(value?: number | string): string {
+  if (value === undefined || value === null || value === "") return "HK$ —";
+  const num = typeof value === "number" ? value : Number(value);
+  if (Number.isNaN(num)) return `HK$ ${value}`;
+  return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
 function StatusBadge({ status }: { status: string }) {
   const cls = statusColors[status] || "bg-slate-100 text-slate-800";
   return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${cls}`}>{status.replace('_', ' ')}</span>;
@@ -803,6 +810,11 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
           {filtered.map((project) => {
             const assistInfo = assistMap[project.id];
             const description = stripPhotoSection(project.notes);
+            const awardedPro = project.professionals?.find((p) => p.status === 'awarded');
+            const isAwarded = project.status === 'awarded' || Boolean(awardedPro);
+            const projectCostValue = awardedPro?.quoteAmount ?? project.budget ?? 0;
+            const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any).escrowAmount ?? 0;
+            const paidValue = (project as any).paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
             return (
               <div
                 key={project.id}
@@ -933,8 +945,29 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                   </div>
                 )}
 
-                {/* Professionals Section - NEW */}
-                {project.professionals && project.professionals.length > 0 && (
+                {/* Budget or Professionals Section */}
+                {isAwarded ? (
+                  <div className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-emerald-900">Project Budget</p>
+                      <span className="text-[10px] font-medium text-emerald-700">Awarded</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
+                        <p className="text-[11px] font-semibold text-emerald-800">Project Cost</p>
+                        <p className="text-sm font-bold text-emerald-900">{formatHKD(projectCostValue)}</p>
+                      </div>
+                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
+                        <p className="text-[11px] font-semibold text-emerald-800">Escrow Account</p>
+                        <p className="text-sm font-bold text-emerald-900">{formatHKD(escrowValue)}</p>
+                      </div>
+                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
+                        <p className="text-[11px] font-semibold text-emerald-800">Paid</p>
+                        <p className="text-sm font-bold text-emerald-900">{formatHKD(paidValue)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : project.professionals && project.professionals.length > 0 ? (
                   <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-semibold text-slate-800">Professionals Invited ({project.professionals.length})</p>
@@ -975,7 +1008,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                       ))}
                     </div>
                   </div>
-                )}
+                ) : null}
                 {project.photos.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {project.photos.map((url, idx) => (
