@@ -578,50 +578,20 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
   const [items, setItems] = useState<ExtendedProject[]>(() => {
-    // Group by a canonical composite key to merge duplicate records of the same logical project
-    const byKey = new Map<string, ExtendedProject & { sourceIds: string[] }>();
-    const canon = (s?: string) => (s || '')
-      .toLowerCase()
-      .replace(/\s+/g, ' ')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim();
-    for (const p of projects) {
+    // Map projects directly without consolidation - each project is unique by ID
+    return projects.map(p => {
       const base: ExtendedProject = {
         ...(p as any),
         photos: extractPhotoUrls((p as any).notes),
         professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
+        sourceIds: [String((p as any).id)],
       };
-      // Use clientId|projectName when clientId provided; else fallback to clientName|projectName
-      const key = clientId
-        ? `${clientId}|${canon((p as any).projectName)}`
-        : `${canon((p as any).clientName)}|${canon((p as any).projectName)}`;
-      const existing = byKey.get(key);
-      if (!existing) {
-        byKey.set(key, {
-          ...base,
-          sourceIds: [String((p as any).id)],
-          professionals: base.professionals ? dedupeProfessionals(base.professionals) : base.professionals,
-        });
-      } else {
-        const mergedPros = [
-          ...(existing.professionals ?? []),
-          ...(base.professionals ?? []),
-        ];
-        existing.professionals = dedupeProfessionals(mergedPros);
-        existing.photos = Array.from(new Set([...(existing.photos ?? []), ...(base.photos ?? [])]));
-        existing.sourceIds = Array.from(new Set([...(existing.sourceIds ?? []), String((p as any).id)]));
-        // Choose the most recently updated record as the primary id/details
-        if (((base as any).updatedAt || '') > ((existing as any).updatedAt || '')) {
-          existing.id = (base as any).id;
-          (existing as any).updatedAt = (base as any).updatedAt;
-          existing.status = base.status;
-          existing.contractorName = base.contractorName;
-          existing.budget = base.budget;
-          existing.notes = base.notes;
-        }
+      // Deduplicate professionals within each project
+      if (base.professionals) {
+        base.professionals = dedupeProfessionals(base.professionals);
       }
-    }
-    return Array.from(byKey.values());
+      return base;
+    });
   });
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
