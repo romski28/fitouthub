@@ -85,16 +85,17 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
 
   const lineColor = (state: StepState) => (state === 'done' ? 'bg-emerald-200' : 'bg-slate-300');
 
-  const gridCols = `grid grid-cols-${steps.length * 2 - 1}`;
+  const columns = steps.length * 2 - 1;
+  const gridTemplate = { gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))` };
   const colStart = (idx: number) => idx * 2 + 1; // dots on odd columns
 
   return (
     <div className={`rounded-xl border border-slate-200 bg-white shadow-sm ${variant === 'compact' ? 'p-3' : 'p-4'}`}>
       <div className="flex flex-col gap-2">
         {/* Top labels row */}
-        <div className={`${gridCols} items-center`}>
+        <div className="grid items-center" style={gridTemplate}>
           {steps.map((step, idx) => (
-            <div key={`top-${step.key}`} className={`flex justify-center col-start-${colStart(idx)}`}>
+            <div key={`top-${step.key}`} className="flex justify-center" style={{ gridColumnStart: colStart(idx) }}>
               {idx % 2 === 0 ? (
                 <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
               ) : (
@@ -105,13 +106,13 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
         </div>
 
         {/* Middle row: dots and connecting lines on a 2n-1 column grid */}
-        <div className={`${gridCols} items-center gap-0.5`}>
+        <div className="grid items-center gap-0.5" style={gridTemplate}>
           {steps.map((step, idx) => {
             const isLast = idx === steps.length - 1;
             const dotCol = colStart(idx);
             return (
               <React.Fragment key={`mid-${step.key}`}>
-                <div className={`flex justify-center ${dotSize} col-start-${dotCol}`}>
+                <div className={`flex justify-center ${dotSize}`} style={{ gridColumnStart: dotCol }}>
                   <div
                     className={`relative flex items-center justify-center rounded-full border bg-gradient-to-br ${dotSize} ${colorFor(step.state)} text-[11px] font-semibold`}
                     title={step.label}
@@ -120,7 +121,7 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
                   </div>
                 </div>
                 {!isLast && (
-                  <div className={`col-start-${dotCol + 1}`}>
+                  <div style={{ gridColumnStart: dotCol + 1 }}>
                     <div className={`w-full ${lineHeight} rounded-full ${lineColor(step.state)}`}></div>
                   </div>
                 )}
@@ -130,9 +131,9 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
         </div>
 
         {/* Bottom labels row */}
-        <div className={`${gridCols} items-center`}>
+        <div className="grid items-center" style={gridTemplate}>
           {steps.map((step, idx) => (
-            <div key={`bottom-${step.key}`} className={`flex justify-center col-start-${colStart(idx)}`}>
+            <div key={`bottom-${step.key}`} className="flex justify-center" style={{ gridColumnStart: colStart(idx) }}>
               {idx % 2 === 1 ? (
                 <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
               ) : (
