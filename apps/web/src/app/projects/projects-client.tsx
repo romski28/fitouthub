@@ -785,6 +785,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
             const projectCostValue = awardedPro?.quoteAmount ?? project.budget ?? 0;
             const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any).escrowAmount ?? 0;
             const paidValue = (project as any).paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
+            const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
             return (
               <div
                 key={project.id}
@@ -796,8 +797,13 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                     : 'bg-gradient-to-r from-slate-900 to-slate-800'
                 }`}>
                   <div className="space-y-1">
-                    <div className={`text-base font-bold ${project.status === 'withdrawn' ? 'text-slate-700' : ''}`}>
-                      {project.projectName}
+                    <div className={`text-base font-bold flex items-center gap-2 ${project.status === 'withdrawn' ? 'text-slate-700' : ''}`}>
+                      <span>{project.projectName}</span>
+                      {unreadCount > 0 && (
+                        <span className="rounded-full border border-white/60 bg-gradient-to-br from-rose-500 to-rose-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(248,113,113,0.35)]">
+                          {unreadCount} new
+                        </span>
+                      )}
                     </div>
                     <div className={`text-xs font-semibold uppercase tracking-wide ${
                       project.status === 'withdrawn'
@@ -808,9 +814,9 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {((project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)) > 0 && (
-                      <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white bg-red-600/70">
-                        {(project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0)} new
+                    {unreadCount > 0 && (
+                      <span className="rounded-full border border-white/60 bg-gradient-to-br from-rose-500 to-rose-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(248,113,113,0.35)]">
+                        {unreadCount} new
                       </span>
                     )}
                     {assistInfo?.hasAssist && (
