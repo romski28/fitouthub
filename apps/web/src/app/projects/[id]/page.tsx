@@ -1181,7 +1181,6 @@ export default function ClientProjectDetailPage() {
                 </div>
               )}
             </div>
-          </div>
         )}
 
         <BackToTop />
