@@ -17,7 +17,7 @@ export default function CreateProjectPage() {
 
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.push('/login');
+      router.push('/');
     }
   }, [isLoggedIn, router]);
 

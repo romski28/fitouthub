@@ -102,6 +102,7 @@ export default function ClientProjectDetailPage() {
   const [assistOpen, setAssistOpen] = useState(false);
   const [assistNewMessage, setAssistNewMessage] = useState('');
   const [assistSending, setAssistSending] = useState(false);
+  const [viewingAssistChat, setViewingAssistChat] = useState(false);
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
@@ -121,7 +122,7 @@ export default function ClientProjectDetailPage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          router.push('/login');
+          router.push('/');
           return;
         }
         throw new Error('Failed to fetch project');
@@ -146,7 +147,7 @@ export default function ClientProjectDetailPage() {
 
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.push('/login');
+      router.push('/');
       return;
     }
 
@@ -179,7 +180,7 @@ export default function ClientProjectDetailPage() {
         }
 
         if (res.status === 401) {
-          router.push('/login');
+          router.push('/');
           return;
         }
 
@@ -265,6 +266,44 @@ export default function ClientProjectDetailPage() {
     loadAssist();
   }, [accessToken, projectId]);
 
+  const handleSendAssistMessage = async () => {
+    if (!assistNewMessage.trim() || !assistRequestId || !accessToken) return;
+
+    try {
+      setAssistSending(true);
+      setAssistError(null);
+      const res = await fetch(
+        `${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: assistNewMessage.trim() }),
+        },
+      );
+
+      if (!res.ok) throw new Error('Failed to send message');
+
+      const data = await res.json();
+      const mapped: Message = {
+        id: data.id,
+        projectProfessionalId: '',
+        senderType: 'client',
+        content: data.content,
+        createdAt: data.createdAt,
+      };
+      setAssistMessages((prev) => [...prev, mapped]);
+      setAssistNewMessage('');
+    } catch (err) {
+      console.error('Error sending assist message:', err);
+      setAssistError('Failed to send message');
+    } finally {
+      setAssistSending(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedProfessional || !accessToken) return;
 
@@ -289,7 +328,7 @@ export default function ClientProjectDetailPage() {
       }
 
       if (res.status === 401) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 
@@ -326,7 +365,7 @@ export default function ClientProjectDetailPage() {
           },
         );
         if (res.status === 401) {
-          router.push('/login');
+          router.push('/');
           return;
         }
         if (!res.ok) throw new Error('Award failed');
@@ -365,7 +404,7 @@ export default function ClientProjectDetailPage() {
           );
         }
         if (res.status === 401) {
-          router.push('/login');
+          router.push('/');
           return;
         }
         if (!res.ok) throw new Error('Action failed');
@@ -581,7 +620,7 @@ export default function ClientProjectDetailPage() {
       });
 
       if (res.status === 401) {
-        router.push('/login');
+          router.push('/');
         return;
       }
       if (!res.ok) {
@@ -1154,15 +1193,97 @@ export default function ClientProjectDetailPage() {
             {/* Project Chat Panel */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl">
-                <h3 className="font-bold text-slate-900">Project Chat</h3>
-                {selectedProfessional && (
-                  <p className="text-xs text-slate-600 mt-1">
-                    {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
-                  </p>
-                )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-slate-900">
+                      {viewingAssistChat ? 'Fitout Hub Assistance' : 'Project Chat'}
+                    </h3>
+                    {!viewingAssistChat && selectedProfessional && (
+                      <p className="text-xs text-slate-600 mt-1">
+                        {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
+                      </p>
+                    )}
+                    {viewingAssistChat && (
+                      <p className="text-xs text-slate-600 mt-1">
+                        Get help from Fitout Hub experts
+                      </p>
+                    )}
+                  </div>
+                  {assistRequestId && (
+                    <button
+                      onClick={() => setViewingAssistChat(!viewingAssistChat)}
+                      className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
+                    >
+                      {viewingAssistChat ? 'View Professional Chat' : 'Fitout Hub Assistance'}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {selectedProfessional && (
+              {viewingAssistChat ? (
+                <div className="p-4 space-y-4">
+                  {assistError && (
+                    <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      {assistError}
+                    </div>
+                  )}
+
+                  {/* Assist Messages */}
+                  <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    {assistLoading ? (
+                      <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                    ) : assistMessages.length === 0 ? (
+                      <div className="text-center text-sm text-slate-500">
+                        No messages yet. Reach out to Fitout Hub for assistance!
+                      </div>
+                    ) : (
+                      assistMessages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                              msg.senderType === 'client'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white border border-indigo-200 text-slate-800'
+                            }`}
+                          >
+                            <p>{msg.content}</p>
+                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-indigo-100' : 'text-slate-500'}`}>
+                              {new Date(msg.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Send Assist Message */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={assistNewMessage}
+                      onChange={(e) => setAssistNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !assistSending) {
+                          handleSendAssistMessage();
+                        }
+                      }}
+                      placeholder="Ask Fitout Hub for help..."
+                      className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                      disabled={assistSending}
+                    />
+                    <button
+                      onClick={handleSendAssistMessage}
+                      disabled={assistSending || !assistNewMessage.trim()}
+                      className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {assistSending ? 'Sending...' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+              ) : selectedProfessional && (
                 <div className="p-4 space-y-4">
                   {messageError && (
                     <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">

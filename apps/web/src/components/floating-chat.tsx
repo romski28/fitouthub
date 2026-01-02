@@ -37,7 +37,7 @@ export default function FloatingChat() {
     <>
       {/* Chat Modal */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-slate-200 flex flex-col">
+        <div className="fixed top-1/2 right-6 -translate-y-1/2 z-50 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-slate-200 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between bg-blue-600 text-white px-4 py-3 rounded-t-lg">
             <h3 className="font-semibold">Chat with us</h3>
@@ -104,7 +104,7 @@ export default function FloatingChat() {
       {/* Floating Chat Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center group"
+        className="fixed top-1/2 right-6 -translate-y-1/2 z-50 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center group"
         aria-label="Open chat"
         title="Ask questions, get help, report abuse"
       >

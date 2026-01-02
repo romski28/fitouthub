@@ -17,7 +17,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
   useEffect(() => {
     // Redirect to login if not authenticated
     if (isLoggedIn === false) {
-      router.push('/login');
+      router.push('/');
       return;
     }
   }, [isLoggedIn, router]);

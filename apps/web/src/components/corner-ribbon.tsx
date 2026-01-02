@@ -31,16 +31,16 @@ export default function CornerRibbon() {
   );
 
   return (
-    <div className="fixed top-0 right-0 z-50 w-32 h-32 overflow-hidden pointer-events-none">
+    <div className="fixed top-0 left-0 z-50 w-32 h-32 overflow-hidden pointer-events-none">
       {ribbonConfig.link ? (
         <button
           onClick={handleClick}
-          className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl ${ribbonConfig.colors.background} transform rotate-45 -translate-y-24 translate-x-24 flex flex-col items-center justify-end pointer-events-auto pb-6 cursor-pointer hover:opacity-90 transition`}
+          className={`absolute top-0 left-0 w-48 h-48 bg-gradient-to-br ${ribbonConfig.colors.background} transform rotate-45 -translate-y-24 -translate-x-24 flex flex-col items-center justify-end pointer-events-auto pb-6 cursor-pointer hover:opacity-90 transition`}
         >
           {RibbonContent}
         </button>
       ) : (
-        <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl ${ribbonConfig.colors.background} transform rotate-45 -translate-y-24 translate-x-24 flex flex-col items-center justify-end pointer-events-auto pb-6`}>
+        <div className={`absolute top-0 left-0 w-48 h-48 bg-gradient-to-br ${ribbonConfig.colors.background} transform rotate-45 -translate-y-24 -translate-x-24 flex flex-col items-center justify-end pointer-events-auto pb-6`}>
           {RibbonContent}
         </div>
       )}

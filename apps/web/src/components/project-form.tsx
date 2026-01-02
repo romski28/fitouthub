@@ -284,6 +284,16 @@ export function ProjectForm({
           </div>
         )}
 
+        {/* Assistance Explanation */}
+        {onAssistRequest && !isReadOnly && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Need Help?</p>
+            <p className="text-xs text-blue-800">
+              <strong>Ask for advice:</strong> Get personalized guidance from Fitout Hub experts. We&apos;ll help you scope your project, find the right professionals, and manage the entire process.
+            </p>
+          </div>
+        )}
+
         {/* Buttons */}
         <div className="flex gap-3 pt-2">
           {onCancel && (
@@ -529,6 +539,16 @@ export function ProjectForm({
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 p-4 text-sm">
           {error}
+        </div>
+      )}
+
+      {/* Assistance Explanation */}
+      {onAssistRequest && !isReadOnly && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+          <p className="text-sm font-semibold text-blue-900 mb-1">💡 Need Help Executing This Project?</p>
+          <p className="text-sm text-blue-800">
+            <strong>Ask for advice:</strong> Get personalized guidance from Fitout Hub experts. We&apos;ll help you scope your project, find the right professionals, negotiate quotes, and manage the entire process from start to finish.
+          </p>
         </div>
       )}
 

@@ -217,9 +217,9 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase font-semibold tracking-[0.12em] text-emerald-600">Share your project</p>
-            <h2 className="text-2xl font-bold text-slate-900">Ask up to {professionals.length} professionals</h2>
-            <p className="text-sm text-slate-600 mt-1">
+            <h2 className="text-2xl font-bold text-slate-900">Enter your project details</h2>
+            <p className="text-xs uppercase font-semibold tracking-[0.12em] text-emerald-600 mt-1">Share your project with up to {professionals.length} professionals</p>
+            <p className="text-sm text-slate-600 mt-2">
               We&apos;ll notify the selected professionals. You can upload photos to help them understand.
             </p>
           </div>
