@@ -652,7 +652,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         return r?.ok ? r.json() : null;
       })
       .then((data) => {
-        if (data?.unreadCounts) setUnreadMap(data.unreadCounts);
+        if (data?.counts) setUnreadMap(data.counts);
       })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
