@@ -25,7 +25,7 @@ type Step = {
   key: string;
   label: string;
   state: StepState;
-  meta?: string;
+  pill?: string;
 };
 
 const isPaid = (project?: ProgressProject) => {
@@ -51,11 +51,6 @@ const countByStatus = (project?: ProgressProject) => {
   return { accepted, declined, total: professionals.length };
 };
 
-const formatCounts = ({ total, accepted, declined }: { total: number; accepted: number; declined: number }) => {
-  if (total === 0) return 'None yet';
-  return `${accepted} accepted • ${declined} not accepted`;
-};
-
 export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: ProjectProgressProps) {
   const { total, accepted, declined } = countByStatus(project);
   const contactedState: StepState = total > 0 ? 'done' : 'upcoming';
@@ -67,32 +62,21 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
   const feedbackState: StepState = project.feedbackEntered ? 'done' : 'upcoming';
 
   const steps: Step[] = [
-    { key: 'new', label: 'New project', state: 'done' },
-    {
-      key: 'assist',
-      label: 'Help requested',
-      state: hasAssist ? 'done' : 'optional-skipped',
-      meta: hasAssist ? 'Fitout Hub assisting' : 'Available any time',
-    },
-    { key: 'contacted', label: 'Professionals contacted', state: contactedState, meta: total ? `${total} invited` : 'Invite pros' },
-    {
-      key: 'replied',
-      label: 'Professionals replied',
-      state: repliedState,
-      meta: formatCounts({ total, accepted, declined }),
-    },
-    { key: 'awarded', label: 'Project awarded', state: awardedState, meta: awardedState === 'done' ? 'Contractor chosen' : undefined },
-    { key: 'funds', label: 'Funds transferred', state: fundsState, meta: fundsState === 'done' ? 'In escrow' : 'Secure payment' },
-    { key: 'started', label: 'Project started', state: startedState },
-    { key: 'completed', label: 'Project completed', state: completedState },
-    { key: 'feedback', label: 'Feedback entered', state: feedbackState },
+    { key: 'new', label: 'New', state: 'done' },
+    { key: 'assist', label: 'Help', state: hasAssist ? 'done' : 'optional-skipped' },
+    { key: 'contacted', label: 'Invited', state: contactedState, pill: total ? String(total) : undefined },
+    { key: 'replied', label: 'Replied', state: repliedState, pill: repliedState === 'done' ? String(accepted + declined) : undefined },
+    { key: 'awarded', label: 'Awarded', state: awardedState },
+    { key: 'funds', label: 'Funds', state: fundsState },
+    { key: 'started', label: 'Started', state: startedState },
+    { key: 'completed', label: 'Done', state: completedState },
+    { key: 'feedback', label: 'Feedback', state: feedbackState },
   ];
 
-  const dotSize = variant === 'compact' ? 'h-3 w-3' : 'h-4 w-4';
+  const dotSize = variant === 'compact' ? 'h-4 w-4' : 'h-5 w-5';
   const labelClass = variant === 'compact' ? 'text-[11px]' : 'text-xs';
-  const metaClass = variant === 'compact' ? 'text-[10px]' : 'text-[11px]';
-  const gapClass = variant === 'compact' ? 'gap-2' : 'gap-3';
-  const lineWidth = variant === 'compact' ? 'w-10 md:w-12' : 'w-14 md:w-16';
+  const gapClass = variant === 'compact' ? 'gap-3' : 'gap-4';
+  const lineWidth = variant === 'compact' ? 'w-12 md:w-14' : 'w-16 md:w-20';
 
   const colorFor = (state: StepState) => {
     if (state === 'done') return 'bg-emerald-500 border-emerald-500';
@@ -100,22 +84,33 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
     return 'bg-slate-700 border-slate-700';
   };
 
-  const lineColor = (state: StepState) => (state === 'done' ? 'bg-emerald-200' : 'bg-slate-200');
+  const lineColor = (state: StepState) => (state === 'done' ? 'bg-emerald-200' : 'bg-slate-300');
 
   return (
     <div className={`rounded-xl border border-slate-200 bg-white shadow-sm ${variant === 'compact' ? 'p-3' : 'p-4'}`}>
-      <div className="flex items-center gap-3">
-        <div className="flex flex-1 items-center overflow-x-auto">
-          {steps.map((step, idx) => (
-            <div key={step.key} className={`flex items-center ${gapClass}`}>
-              <div className="group flex flex-col items-center min-w-[76px] text-center">
-                <div className={`rounded-full border ${dotSize} ${colorFor(step.state)} transition`}></div>
-                <div className={`${labelClass} font-semibold text-slate-800 mt-1`}>{step.label}</div>
-                {step.meta && <div className={`${metaClass} text-slate-500`}>{step.meta}</div>}
+      <div className="flex items-center">
+        <div className="flex flex-1 items-center overflow-x-auto py-2">
+          {steps.map((step, idx) => {
+            const labelOnTop = idx % 2 === 0;
+            return (
+              <div key={step.key} className={`flex items-center ${gapClass}`}>
+                <div className="relative flex flex-col items-center">
+                  {labelOnTop && (
+                    <div className={`${labelClass} font-semibold text-slate-800 mb-2 whitespace-nowrap`}>{step.label}</div>
+                  )}
+                  <div className={`relative rounded-full border ${dotSize} ${colorFor(step.state)} flex items-center justify-center text-[11px] font-semibold text-white`}
+                    title={step.label}
+                  >
+                    {step.pill || ''}
+                  </div>
+                  {!labelOnTop && (
+                    <div className={`${labelClass} font-semibold text-slate-800 mt-2 whitespace-nowrap`}>{step.label}</div>
+                  )}
+                </div>
+                {idx !== steps.length - 1 && <div className={`${lineWidth} h-[2px] rounded-full ${lineColor(step.state)}`}></div>}
               </div>
-              {idx !== steps.length - 1 && <div className={`${lineWidth} h-[2px] rounded-full ${lineColor(step.state)}`}></div>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
