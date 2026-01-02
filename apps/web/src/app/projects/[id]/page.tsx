@@ -266,6 +266,38 @@ export default function ClientProjectDetailPage() {
     loadAssist();
   }, [accessToken, projectId]);
 
+  // Refresh assist messages when viewing assist chat
+  useEffect(() => {
+    if (!viewingAssistChat || !assistRequestId || !accessToken) return;
+
+    const refreshAssistMessages = async () => {
+      try {
+        setAssistLoading(true);
+        setAssistError(null);
+        const res = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (res.ok) {
+          const msgs = await res.json();
+          const normalized = Array.isArray(msgs) ? msgs : (msgs.messages || []);
+          const mapped: Message[] = normalized.map((m: any) => ({
+            id: m.id,
+            projectProfessionalId: '',
+            senderType: (m.senderType as any) || 'foh',
+            content: m.content,
+            createdAt: m.createdAt,
+          }));
+          setAssistMessages(mapped);
+        }
+      } catch (err) {
+        console.error('Error refreshing assist messages:', err);
+      } finally {
+        setAssistLoading(false);
+      }
+    };
+    refreshAssistMessages();
+  }, [viewingAssistChat, assistRequestId, accessToken]);
+
   const handleSendAssistMessage = async () => {
     if (!assistNewMessage.trim() || !assistRequestId || !accessToken) return;
 
@@ -1024,7 +1056,90 @@ export default function ClientProjectDetailPage() {
 
         {/* Awarded Project Chat Panel - Show when project is awarded */}
         {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="space-y-5">
+            {/* Professionals & Fitout Hub Selection Table */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="px-5 py-4 border-b border-slate-200">
+                <h2 className="text-lg font-bold text-slate-900">Project Contacts</h2>
+                <p className="text-sm text-slate-600">Click a contact to view their chat</p>
+              </div>
+              <div className="p-5 overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-slate-600">
+                      <th className="py-2 pr-4">Name</th>
+                      <th className="py-2 pr-4">Status</th>
+                      <th className="py-2 pr-4">Quote</th>
+                      <th className="py-2 pr-4">Messages</th>
+                      <th className="py-2">Rating</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assistRequestId && (
+                      <tr
+                        onClick={() => {
+                          setSelectedProfessional(null);
+                          setViewingAssistChat(true);
+                        }}
+                        className={`${viewingAssistChat ? 'bg-indigo-50' : 'hover:bg-slate-50'} cursor-pointer border-t border-slate-100`}
+                      >
+                        <td className="py-2 pr-4">
+                          <div className="flex items-center gap-2">
+                            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                              FH
+                            </div>
+                            <span className="font-medium text-slate-800">Fitout Hub</span>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-4">
+                          <span className="inline-block rounded-full px-2 py-1 text-xs font-semibold bg-indigo-100 text-indigo-800">Assisting</span>
+                        </td>
+                        <td className="py-2 pr-4">—</td>
+                        <td className="py-2 pr-4">💬</td>
+                        <td className="py-2">—</td>
+                      </tr>
+                    )}
+                    {project.professionals.map((pp) => {
+                      const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                      return (
+                        <tr
+                          key={pp.id}
+                          onClick={() => {
+                            setSelectedProfessional(pp);
+                            setViewingAssistChat(false);
+                          }}
+                          className={`${selectedProfessional?.id === pp.id && !viewingAssistChat ? 'bg-blue-50' : 'hover:bg-slate-50'} cursor-pointer border-t border-slate-100`}
+                        >
+                          <td className="py-2 pr-4">
+                            <div className="flex items-center gap-2">
+                              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">
+                                {displayName[0]?.toUpperCase()}
+                              </div>
+                              <span className="font-medium text-slate-800">{displayName}</span>
+                            </div>
+                          </td>
+                          <td className="py-2 pr-4">
+                            <span className="inline-block rounded-full px-2 py-1 text-xs font-semibold bg-slate-100 text-slate-800 capitalize">{pp.status.replace('_', ' ')}</span>
+                          </td>
+                          <td className="py-2 pr-4">
+                            {pp.quoteAmount ? (
+                              <span className="font-semibold text-blue-700">${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}</span>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
+                          </td>
+                          <td className="py-2 pr-4 text-slate-600">Open chat</td>
+                          <td className="py-2 text-slate-500">—</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Chat Panel */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1181,6 +1296,7 @@ export default function ClientProjectDetailPage() {
                 </div>
               )}
             </div>
+          </div>
         )}
 
         <BackToTop />
