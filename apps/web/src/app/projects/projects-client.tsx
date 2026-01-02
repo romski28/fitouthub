@@ -802,6 +802,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         <div className="space-y-3">
           {filtered.map((project) => {
             const assistInfo = assistMap[project.id];
+            const description = stripPhotoSection(project.notes);
             return (
               <div
                 key={project.id}
@@ -846,7 +847,12 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                         className="h-6 w-6 object-contain opacity-40"
                       />
                     )}
-                    <StatusBadge status={project.status} />
+                    <Link
+                      href={`/projects/${project.id}`}
+                      className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
+                    >
+                      Manage
+                    </Link>
                     {project.status !== 'withdrawn' && (
                       <button
                         type="button"
@@ -877,6 +883,15 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                     variant="compact"
                   />
                 <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
+                  {description ? (
+                    <div className="flex items-start gap-2 sm:col-span-2">
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300" />
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold">Description:</span>
+                        <span className="text-slate-600 leading-relaxed line-clamp-2">{description}</span>
+                      </div>
+                    </div>
+                  ) : null}
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                     <span className="font-semibold">Client:</span>
@@ -961,14 +976,6 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                     </div>
                   </div>
                 )}
-
-                {project.notes ? (
-                  <div className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 border border-slate-100">
-                    <p className="font-semibold text-slate-800 mb-1">Notes</p>
-                    <p className="leading-relaxed line-clamp-3">{project.notes}</p>
-                  </div>
-                ) : null}
-
                 {project.photos.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {project.photos.map((url, idx) => (
@@ -988,12 +995,6 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                   <span>ID: {project.id}</span>
                   <div className="flex items-center gap-3">
                     <span>Updated: {formatDate(project.updatedAt)}</span>
-                    <Link
-                      href={`/projects/${project.id}`}
-                      className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
-                    >
-                      View Details
-                    </Link>
                   </div>
                 </div>
               </div>
