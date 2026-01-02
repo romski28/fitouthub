@@ -9,6 +9,7 @@ import FileUploader from "@/components/file-uploader";
 import ImageLightbox from "@/components/image-lightbox";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
+import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { useAuth } from "@/context/auth-context";
 
 const statusColors: Record<string, string> = {
@@ -859,6 +860,22 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                 </div>
 
                 <div className="p-4 space-y-3">
+                  <ProjectProgressBar
+                    project={{
+                      id: project.id,
+                      status: project.status,
+                      startDate: (project as any).startDate,
+                      endDate: (project as any).endDate,
+                      professionals:
+                        project.professionals?.map((p) => ({
+                          status: p.status,
+                          quoteAmount: p.quoteAmount,
+                          invoice: (p as any).invoice || null,
+                        })) || [],
+                    }}
+                    hasAssist={assistInfo?.hasAssist}
+                    variant="compact"
+                  />
                 <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />

@@ -6,6 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
+import { ProjectProgressBar } from '@/components/project-progress-bar';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -780,6 +781,24 @@ export default function ClientProjectDetailPage() {
         </div>
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
+
+        {/* Project Progress */}
+        <ProjectProgressBar
+          project={{
+            id: project.id,
+            status: project.status,
+            startDate: project.startDate,
+            endDate: project.endDate,
+            professionals:
+              project.professionals?.map((p) => ({
+                status: p.status,
+                quoteAmount: p.quoteAmount,
+                invoice: p.invoice || null,
+              })) || [],
+          }}
+          hasAssist={!!assistRequestId}
+          variant="full"
+        />
 
         {/* Professionals Summary Table - Hidden when project is awarded */}
         {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
