@@ -112,7 +112,7 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
             const dotCol = colStart(idx);
             return (
               <React.Fragment key={`mid-${step.key}`}>
-                <div className={`flex justify-center ${dotSize}`} style={{ gridColumnStart: dotCol }}>
+                <div className="flex justify-center items-center" style={{ gridColumnStart: dotCol }}>
                   <div
                     className={`relative flex items-center justify-center rounded-full border bg-gradient-to-br ${dotSize} ${colorFor(step.state)} text-[11px] font-semibold`}
                     title={step.label}
