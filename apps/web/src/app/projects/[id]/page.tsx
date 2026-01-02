@@ -839,7 +839,10 @@ export default function ClientProjectDetailPage() {
                     return (
                       <tr
                         key={pp.id}
-                        onClick={() => setSelectedProfessional(pp)}
+                        onClick={() => {
+                          setSelectedProfessional(pp);
+                          setViewingAssistChat(false);
+                        }}
                         className={`${selectedProfessional?.id === pp.id ? 'bg-blue-50' : 'hover:bg-slate-50'} cursor-pointer border-t border-slate-100`}
                       >
                         <td className="py-2 pr-4">
