@@ -131,6 +131,17 @@ export class ChatController {
     return { message };
   }
 
+  // ===== ADMIN ENDPOINTS =====
+
+  /**
+   * GET /chat/admin/inbox - Get all threads for FOH admin inbox
+   * TODO: Add proper admin authentication guard
+   */
+  @Get('admin/inbox')
+  async getAdminInbox() {
+    return this.chatService.getAllThreadsForAdmin();
+  }
+
   // ===== PROJECT CHAT ENDPOINTS =====
 
   /**

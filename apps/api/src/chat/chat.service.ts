@@ -300,4 +300,108 @@ export class ChatService {
       createdAt: message.createdAt.toISOString(),
     };
   }
+
+  // ===== ADMIN INBOX =====
+
+  /**
+   * Get all threads for admin FOH inbox
+   */
+  async getAllThreadsForAdmin() {
+    // Fetch private threads
+    const privateThreads = await this.prisma.privateChatThread.findMany({
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+        professional: {
+          select: { id: true, companyName: true, email: true },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Fetch anonymous threads
+    const anonymousThreads = await this.prisma.anonymousChatThread.findMany({
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Fetch project threads
+    const projectThreads = await this.prisma.projectChatThread.findMany({
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        project: {
+          select: { id: true, title: true },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Get unread counts separately for efficiency
+    const unreadCounts = await Promise.all(
+      privateThreads.map(async (thread) => {
+        const count = await this.prisma.privateChatMessage.count({
+          where: {
+            threadId: thread.id,
+            readByFohAt: null,
+            senderType: { not: 'foh' },
+          },
+        });
+        return { threadId: thread.id, count };
+      }),
+    );
+
+    const unreadMap = Object.fromEntries(
+      unreadCounts.map((item) => [item.threadId, item.count]),
+    );
+
+    // Map to unified format
+    const threads = [
+      ...privateThreads.map((thread) => ({
+        id: thread.id,
+        type: 'private' as const,
+        userId: thread.userId,
+        professionalId: thread.professionalId,
+        userName: thread.user?.name,
+        professionalName: thread.professional?.companyName,
+        updatedAt: thread.updatedAt.toISOString(),
+        unreadCount: unreadMap[thread.id] || 0,
+        lastMessage: thread.messages[0]?.content,
+      })),
+      ...anonymousThreads.map((thread) => ({
+        id: thread.id,
+        type: 'anonymous' as const,
+        sessionId: thread.sessionId,
+        updatedAt: thread.updatedAt.toISOString(),
+        unreadCount: 0, // Anonymous threads don't track read status yet
+        lastMessage: thread.messages[0]?.content,
+      })),
+      ...projectThreads.map((thread) => ({
+        id: thread.id,
+        type: 'project' as const,
+        projectId: thread.projectId,
+        projectName: thread.project?.title,
+        updatedAt: thread.updatedAt.toISOString(),
+        unreadCount: 0, // Project threads don't track read status per user
+        lastMessage: thread.messages[0]?.content,
+      })),
+    ];
+
+    // Sort all threads by updatedAt
+    threads.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    return { threads };
+  }
 }

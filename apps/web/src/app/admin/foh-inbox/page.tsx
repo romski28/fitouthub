@@ -33,16 +33,15 @@ export default function FohInboxPage() {
   const loadThreads = async () => {
     setLoading(true);
     try {
-      // In a real implementation, this would call /admin/foh-inbox or similar
-      // For now, we'll show a placeholder
-      // const response = await fetch(`${API_BASE_URL}/admin/foh-inbox`);
-      // const data = await response.json();
-      // setThreads(data.threads);
-      
-      // Placeholder data
-      setThreads([]);
+      const response = await fetch(`${API_BASE_URL}/chat/admin/inbox`);
+      if (!response.ok) {
+        throw new Error('Failed to load threads');
+      }
+      const data = await response.json();
+      setThreads(data.threads || []);
     } catch (error) {
       console.error('Failed to load threads:', error);
+      setThreads([]);
     } finally {
       setLoading(false);
     }
@@ -241,36 +240,6 @@ export default function FohInboxPage() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Coming Soon Notice */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <div className="flex items-start">
-            <svg
-              className="h-6 w-6 text-blue-600 mt-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-900">
-                Backend Integration Required
-              </h3>
-              <p className="mt-2 text-sm text-blue-800">
-                The FOH inbox backend endpoint needs to be implemented to aggregate all threads
-                (private, anonymous, and project chats) into this unified view. Once the database
-                schema is synced and the endpoint is built, this page will display all active
-                support conversations.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
