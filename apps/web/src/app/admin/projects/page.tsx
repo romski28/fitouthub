@@ -5,6 +5,7 @@ import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { EditModal, FieldDefinition } from "@/components/edit-modal";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { ProjectProgressBar } from "@/components/project-progress-bar";
 
 type Project = {
   id: string;
@@ -16,7 +17,14 @@ type Project = {
   status: string;
   notes?: string;
   createdAt: string;
-  professionals?: any[];
+  startDate?: string;
+  endDate?: string;
+  professionals?: Array<{
+    id: string;
+    status: string;
+    quoteAmount?: number | string;
+    invoice?: { amount?: number | string; paymentStatus?: string | null } | null;
+  }>;
   updatedAt?: string;
 };
 
@@ -31,6 +39,13 @@ function formatDate(date?: string): string {
   } catch {
     return "—";
   }
+}
+
+function formatHKD(value?: number | string): string {
+  if (value === undefined || value === null || value === "") return "HK$ —";
+  const num = typeof value === "number" ? value : Number(value);
+  if (Number.isNaN(num)) return `HK$ ${value}`;
+  return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
 export default function AdminProjectsPage() {
@@ -239,6 +254,12 @@ export default function AdminProjectsPage() {
                   >
                     {project.status}
                   </span>
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
+                  >
+                    Manage
+                  </Link>
                   <button
                     type="button"
                     onClick={() => setEditingProject(project)}
@@ -250,6 +271,22 @@ export default function AdminProjectsPage() {
               </div>
 
               <div className="p-4 space-y-3">
+                <ProjectProgressBar
+                  project={{
+                    id: project.id,
+                    status: project.status,
+                    startDate: project.startDate,
+                    endDate: project.endDate,
+                    professionals:
+                      project.professionals?.map((p) => ({
+                        status: p.status,
+                        quoteAmount: p.quoteAmount,
+                        invoice: p.invoice || null,
+                      })) || [],
+                  }}
+                  variant="compact"
+                />
+
                 <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
@@ -266,12 +303,17 @@ export default function AdminProjectsPage() {
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                     <span className="font-semibold">Budget:</span>
-                    <span className="text-slate-600">{project.budget ? `HKD ${project.budget.toLocaleString()}` : '—'}</span>
+                    <span className="text-slate-600">{formatHKD(project.budget)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                     <span className="font-semibold">Status:</span>
                     <span className="text-slate-600 capitalize">{project.status}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                    <span className="font-semibold">Created:</span>
+                    <span className="text-slate-600">{formatDate(project.createdAt)}</span>
                   </div>
                 </div>
 
