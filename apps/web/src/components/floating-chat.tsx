@@ -31,14 +31,32 @@ export default function FloatingChat() {
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
 
-  // Close chat on logout
+  // Close chat and clear state on logout
   useEffect(() => {
-    if (!isLoggedIn && isOpen) {
+    if (!isLoggedIn) {
+      // User logged out
       setIsOpen(false);
       setThreadId(null);
       setMessages([]);
+      setMessage('');
+      setUnreadCount(0);
+      console.log('[FloatingChat] User logged out, clearing chat state');
     }
-  }, [isLoggedIn, isOpen]);
+  }, [isLoggedIn]);
+
+  // Clear thread when user/role changes (switching between accounts)
+  useEffect(() => {
+    if (isLoggedIn && threadId) {
+      // If logged in but thread exists, check if we need to reset it
+      const expectedPrefix = userRole === 'professional' ? 'stub-professional' : userRole === 'client' ? 'stub-client' : 'stub-anon';
+      if (threadId.startsWith('stub-') && !threadId.startsWith(expectedPrefix)) {
+        console.log('[FloatingChat] User switched, resetting thread from', threadId, 'to', expectedPrefix);
+        setThreadId(null);
+        setMessages([]);
+        setMessage('');
+      }
+    }
+  }, [userRole, isLoggedIn, threadId]);
 
   // Load or create thread
   useEffect(() => {
@@ -141,15 +159,15 @@ export default function FloatingChat() {
       console.log('[FloatingChat] Opening chat, loading thread...');
       loadThread();
     }
-  }, [isOpen, isLoggedIn, accessToken, userRole, threadId]);
+  }, [isOpen, isLoggedIn, accessToken, userRole]);
 
-  // Mark as read when opened
+  // Mark as read when opened (skip stub threads)
   useEffect(() => {
-    if (isOpen && threadId && isLoggedIn && accessToken && unreadCount > 0) {
+    if (isOpen && threadId && !threadId.startsWith('stub-') && isLoggedIn && accessToken && unreadCount > 0) {
       fetch(`${API_BASE_URL}/chat/private/${threadId}/read`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
-      }).then(() => setUnreadCount(0));
+      }).then(() => setUnreadCount(0)).catch(e => console.warn('[FloatingChat] Failed to mark as read:', e));
     }
   }, [isOpen, threadId, isLoggedIn, accessToken, unreadCount]);
 
