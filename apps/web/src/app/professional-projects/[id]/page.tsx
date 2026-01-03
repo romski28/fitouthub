@@ -6,6 +6,7 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
+import ProjectChat from '@/components/project-chat';
 
 interface ProjectDetail {
   id: string;
@@ -917,44 +918,57 @@ export default function ProjectDetailPage() {
 
           {/* Messages */}
           <div className="p-8 border-t border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Messages</h2>
-            {messageError && (
-              <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                {messageError}
-              </div>
+            {project.status === 'awarded' ? (
+              <>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Team Chat</h2>
+                <ProjectChat 
+                  projectId={project.project.id} 
+                  accessToken={accessToken || ''} 
+                  currentUserRole="professional"
+                />
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Messages</h2>
+                {messageError && (
+                  <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    {messageError}
+                  </div>
+                )}
+                <div className="max-h-96 overflow-y-auto bg-gray-50 p-4 rounded">
+                  {messages.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No messages yet.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {messages.map((m) => (
+                        <li key={m.id} className={`flex ${m.senderType==='professional' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`inline-block px-3 py-2 rounded-lg text-sm ${m.senderType==='professional' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-900'}`}>
+                            <p>{m.content}</p>
+                            <p className="mt-1 text-xs opacity-70">{new Date(m.createdAt).toLocaleString()}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <form onSubmit={handleSendMessage} className="mt-4 flex gap-3">
+                  <input
+                    type="text"
+                    placeholder="Type a message..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !newMessage.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                  >
+                    {sending ? 'Sending...' : 'Send'}
+                  </button>
+                </form>
+              </>
             )}
-            <div className="max-h-96 overflow-y-auto bg-gray-50 p-4 rounded">
-              {messages.length === 0 ? (
-                <p className="text-gray-500 text-sm">No messages yet.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {messages.map((m) => (
-                    <li key={m.id} className={`flex ${m.senderType==='professional' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`inline-block px-3 py-2 rounded-lg text-sm ${m.senderType==='professional' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-900'}`}>
-                        <p>{m.content}</p>
-                        <p className="mt-1 text-xs opacity-70">{new Date(m.createdAt).toLocaleString()}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <form onSubmit={handleSendMessage} className="mt-4 flex gap-3">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-md px-3 py-2"
-              />
-              <button
-                type="submit"
-                disabled={sending || !newMessage.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-              >
-                {sending ? 'Sending...' : 'Send'}
-              </button>
-            </form>
           </div>
         </div>
       </div>
