@@ -7,6 +7,7 @@ import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
+import { ProjectChat } from '@/components/project-chat';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -1177,24 +1178,44 @@ export default function ClientProjectDetailPage() {
         {/* Awarded Project Chat Panel - Show when project is awarded */}
         {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
           <div className="space-y-5">
-            {/* Professionals & Fitout Hub Selection Table */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="px-5 py-4 border-b border-slate-200">
-                <h2 className="text-lg font-bold text-slate-900">Project Contacts</h2>
-                <p className="text-sm text-slate-600">Click a contact to view their chat</p>
+            {/* Shared Project Team Chat */}
+            <div>
+              <div className="mb-3">
+                <h2 className="text-lg font-bold text-slate-900">Project Team Chat</h2>
+                <p className="text-sm text-slate-600">Communicate with all awarded professionals and Fitout Hub</p>
               </div>
-              <div className="p-5 overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-slate-600">
-                      <th className="py-2 pr-4">Name</th>
-                      <th className="py-2 pr-4">Status</th>
-                      <th className="py-2 pr-4">Quote</th>
-                      <th className="py-2 pr-4">Messages</th>
-                      <th className="py-2">Rating</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              {accessToken && (
+                <ProjectChat
+                  projectId={projectId}
+                  accessToken={accessToken}
+                  currentUserRole="client"
+                />
+              )}
+            </div>
+
+            {/* Private Chats Section */}
+            <div>
+              <div className="mb-3">
+                <h2 className="text-lg font-bold text-slate-900">Private Chats</h2>
+                <p className="text-sm text-slate-600">One-on-one conversations with professionals (not visible to others)</p>
+              </div>
+
+              {/* Professionals & Fitout Hub Selection Table */}
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="px-5 py-4 border-b border-slate-200">
+                  <h3 className="text-sm font-semibold text-slate-900">Select a contact for private chat</h3>
+                </div>
+                <div className="p-5 overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-slate-600">
+                        <th className="py-2 pr-4">Name</th>
+                        <th className="py-2 pr-4">Status</th>
+                        <th className="py-2 pr-4">Quote</th>
+                        <th className="py-2">Rating</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                     {assistRequestId && (
                       <tr
                         onClick={() => {
@@ -1248,7 +1269,6 @@ export default function ClientProjectDetailPage() {
                               <span className="text-slate-500">—</span>
                             )}
                           </td>
-                          <td className="py-2 pr-4 text-slate-600">Open chat</td>
                           <td className="py-2 text-slate-500">—</td>
                         </tr>
                       );
@@ -1258,35 +1278,22 @@ export default function ClientProjectDetailPage() {
               </div>
             </div>
 
-            {/* Chat Panel */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-slate-900">
-                      {viewingAssistChat ? 'Fitout Hub Assistance' : 'Project Chat'}
-                    </h3>
-                    {!viewingAssistChat && selectedProfessional && (
-                      <p className="text-xs text-slate-600 mt-1">
-                        {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
-                      </p>
-                    )}
-                    {viewingAssistChat && (
-                      <p className="text-xs text-slate-600 mt-1">
-                        Get help from Fitout Hub experts
-                      </p>
-                    )}
+            {/* Private Chat Panel - Only show when a professional is selected */}
+            {!viewingAssistChat && selectedProfessional && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="bg-amber-50 px-4 py-3 border-b border-amber-200 rounded-t-xl">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <h3 className="font-bold text-amber-900 text-sm">
+                        Private Chat with {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
+                      </h3>
+                      <p className="text-xs text-amber-700">This conversation is only visible to you, this professional, and Fitout Hub</p>
+                    </div>
                   </div>
-                  {assistRequestId && (
-                    <button
-                      onClick={() => setViewingAssistChat(!viewingAssistChat)}
-                      className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
-                    >
-                      {viewingAssistChat ? 'View Professional Chat' : 'Fitout Hub Assistance'}
-                    </button>
-                  )}
                 </div>
-              </div>
 
               {viewingAssistChat ? (
                 <div className="p-4 space-y-4">
