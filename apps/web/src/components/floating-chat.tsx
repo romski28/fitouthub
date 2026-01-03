@@ -26,10 +26,7 @@ export default function FloatingChat() {
   const [sending, setSending] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Hide on admin pages
   const isAdminPage = pathname?.startsWith('/admin');
-  if (isAdminPage) return null;
-
   const isLoggedIn = clientLoggedIn || proLoggedIn;
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
@@ -40,73 +37,102 @@ export default function FloatingChat() {
       setLoading(true);
       try {
         if (isLoggedIn && accessToken) {
-          // Fetch or create user's private FOH thread
-          const res = await fetch(`${API_BASE_URL}/chat/private`, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (res.ok) {
-            const data = await res.json();
-            setThreadId(data.threadId || data.id);
-            setMessages(data.messages || []);
-            setUnreadCount(data.unreadCount || 0);
-          } else if (res.status === 404) {
-            // Create new thread
-            const createRes = await fetch(`${API_BASE_URL}/chat/private`, {
-              method: 'POST',
+          console.log('[FloatingChat] Loading logged-in user thread...');
+          // Try to fetch or create user's private FOH thread
+          try {
+            const res = await fetch(`${API_BASE_URL}/chat/private`, {
+              method: 'GET',
               headers: {
                 Authorization: `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
               },
             });
-            if (createRes.ok) {
-              const data = await createRes.json();
+            
+            if (res.ok) {
+              const data = await res.json();
+              console.log('[FloatingChat] Fetched thread:', data);
               setThreadId(data.threadId || data.id);
-              setMessages([]);
+              setMessages(data.messages || []);
+              setUnreadCount(data.unreadCount || 0);
+              return;
+            } else if (res.status === 404) {
+              console.log('[FloatingChat] Thread not found, creating new one...');
+              // Try to create new thread
+              const createRes = await fetch(`${API_BASE_URL}/chat/private`, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+              if (createRes.ok) {
+                const data = await createRes.json();
+                console.log('[FloatingChat] Created new thread:', data);
+                setThreadId(data.threadId || data.id);
+                setMessages([]);
+                return;
+              }
             }
+          } catch (e) {
+            console.warn('[FloatingChat] Private chat endpoint error:', e);
           }
+          // Fallback: use a stub thread ID based on user
+          const stubId = `stub-${userRole}`;
+          console.log('[FloatingChat] Using fallback stub threadId:', stubId);
+          setThreadId(stubId);
+          setMessages([]);
         } else {
+          console.log('[FloatingChat] Loading anonymous user thread...');
           // Anonymous user - use local storage
           let anonId = localStorage.getItem('foh_anon_thread');
           if (!anonId) {
-            // Create anonymous thread
-            const res = await fetch(`${API_BASE_URL}/chat/anonymous`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            });
-            if (res.ok) {
-              const data = await res.json();
-              anonId = data.threadId || data.id;
-              if (anonId) {
-                localStorage.setItem('foh_anon_thread', anonId);
+            // Try to create anonymous thread
+            try {
+              const res = await fetch(`${API_BASE_URL}/chat/anonymous`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+              });
+              if (res.ok) {
+                const data = await res.json();
+                anonId = data.threadId || data.id;
+                if (anonId) {
+                  localStorage.setItem('foh_anon_thread', anonId);
+                  console.log('[FloatingChat] Created anonymous thread:', anonId);
+                }
               }
+            } catch (e) {
+              console.warn('[FloatingChat] Anonymous chat endpoint error:', e);
+              anonId = `stub-anon-${Date.now()}`;
+              localStorage.setItem('foh_anon_thread', anonId);
+              console.log('[FloatingChat] Using fallback stub anonymous threadId:', anonId);
             }
           }
           if (anonId) {
+            console.log('[FloatingChat] Setting anonymous threadId:', anonId);
             setThreadId(anonId);
-            // Fetch messages for anon thread
-            const res = await fetch(`${API_BASE_URL}/chat/anonymous/${anonId}`);
-            if (res.ok) {
-              const data = await res.json();
-              setMessages(data.messages || []);
+            // Try to fetch messages
+            try {
+              const res = await fetch(`${API_BASE_URL}/chat/anonymous/${anonId}`);
+              if (res.ok) {
+                const data = await res.json();
+                setMessages(data.messages || []);
+              }
+            } catch (e) {
+              console.warn('[FloatingChat] Could not fetch anon messages:', e);
             }
           }
         }
-      } catch (error) {
-        console.error('Failed to load FOH chat thread:', error);
       } finally {
+        console.log('[FloatingChat] Finished loading thread');
         setLoading(false);
       }
     };
 
-    if (isOpen) {
+    if (isOpen && !threadId) {
+      console.log('[FloatingChat] Opening chat, loading thread...');
       loadThread();
     }
-  }, [isOpen, isLoggedIn, accessToken]);
+  }, [isOpen, isLoggedIn, accessToken, userRole, threadId]);
 
   // Mark as read when opened
   useEffect(() => {
@@ -124,6 +150,18 @@ export default function FloatingChat() {
 
     setSending(true);
     try {
+      // For stub threads, just add message locally
+      if (threadId.startsWith('stub-')) {
+        setMessages((prev) => [...prev, {
+          id: Date.now().toString(),
+          senderType: 'user',
+          content: message.trim(),
+          createdAt: new Date().toISOString(),
+        }]);
+        setMessage('');
+        return;
+      }
+
       const endpoint = isLoggedIn && accessToken
         ? `${API_BASE_URL}/chat/private/${threadId}/messages`
         : `${API_BASE_URL}/chat/anonymous/${threadId}/messages`;
@@ -141,7 +179,7 @@ export default function FloatingChat() {
         const data = await res.json();
         setMessages((prev) => [...prev, data.message || {
           id: Date.now().toString(),
-          senderType: userRole,
+          senderType: 'user',
           content: message.trim(),
           createdAt: new Date().toISOString(),
         }]);
@@ -155,6 +193,9 @@ export default function FloatingChat() {
       setSending(false);
     }
   };
+
+  // Don't show on admin pages
+  if (isAdminPage) return null;
 
   return (
     <>
