@@ -255,7 +255,7 @@ export default function AdminProjectsPage() {
                     {project.status}
                   </span>
                   <Link
-                    href={`/projects/${project.id}`}
+                    href={`/admin/projects/${project.id}`}
                     className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
                   >
                     Manage
@@ -266,6 +266,13 @@ export default function AdminProjectsPage() {
                     className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
                   >
                     Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingId(project.id)}
+                    className="rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>
@@ -352,20 +359,7 @@ export default function AdminProjectsPage() {
                   </Link>
                 </div>
 
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => setEditingProject(project)}
-                    className="flex-1 rounded-md border border-emerald-600 px-3 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeletingId(project.id)}
-                    className="flex-1 rounded-md border border-rose-600 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
-                  >
-                    Delete
-                  </button>
-                </div>
+                <div className="flex gap-2 pt-1"></div>
               </div>
             </div>
           ))}
