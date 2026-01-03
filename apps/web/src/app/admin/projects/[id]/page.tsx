@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { useAuth } from "@/context/auth-context";
@@ -58,7 +59,10 @@ const formatHKD = (value?: number | string) => {
 };
 
 export default function AdminProjectDetailPage({ params }: { params: { id: string } }) {
-  const projectId = params.id;
+  const routeParams = useParams();
+  const router = useRouter();
+  // Prefer useParams to avoid hydration edge cases where params prop can be undefined in client components
+  const projectId = (routeParams?.id as string) || params.id;
   const { isLoggedIn, accessToken } = useAuth();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +70,11 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
 
   useEffect(() => {
     if (!isLoggedIn || !accessToken) return;
+    if (!projectId) {
+      setError("Project id is missing in route");
+      setLoading(false);
+      return;
+    }
     const load = async () => {
       setLoading(true);
       try {
@@ -106,6 +115,13 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
     };
     load();
   }, [projectId, isLoggedIn, accessToken]);
+
+  useEffect(() => {
+    // Redirect to list if somehow no id is present
+    if (!projectId && !loading) {
+      router.push("/admin/projects");
+    }
+  }, [projectId, loading, router]);
 
   if (loading) {
     return <div className="p-6 text-sm text-slate-600">Loading project…</div>;
