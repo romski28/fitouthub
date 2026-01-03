@@ -1277,6 +1277,7 @@ export default function ClientProjectDetailPage() {
                 </table>
               </div>
             </div>
+            </div>
 
             {/* Private Chat Panel - Only show when a professional is selected and not viewing assist */}
             {!viewingAssistChat && selectedProfessional && (
