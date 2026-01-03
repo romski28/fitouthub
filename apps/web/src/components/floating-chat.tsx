@@ -8,7 +8,7 @@ import { API_BASE_URL } from '@/config/api';
 
 interface ChatMessage {
   id: string;
-  senderType: 'user' | 'foh' | 'client' | 'professional';
+  senderType: 'user' | 'foh' | 'client' | 'professional' | 'anonymous';
   content: string;
   createdAt: string;
 }
