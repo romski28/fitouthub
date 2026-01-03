@@ -14,6 +14,7 @@ import { ChatService } from './chat.service';
 import { CreatePrivateMessageDto } from './dto/create-private-message.dto';
 import { CreateAnonymousMessageDto } from './dto/anonymous-chat.dto';
 import { CreateProjectChatMessageDto } from './dto/project-chat.dto';
+import { CombinedAuthGuard } from './auth-combined.guard';
 
 @Controller('chat')
 export class ChatController {
@@ -23,10 +24,10 @@ export class ChatController {
 
   /**
    * GET /chat/private - Get or create user's private FOH support thread
-   * Requires authentication
+   * Requires authentication (client or professional)
    */
   @Get('private')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async getOrCreatePrivateThread(@Request() req: any) {
     const userId = req.user.isProfessional ? undefined : req.user.id;
     const professionalId = req.user.isProfessional ? req.user.id : undefined;
@@ -35,10 +36,10 @@ export class ChatController {
 
   /**
    * POST /chat/private - Create a new private thread (in case of edge case)
-   * Requires authentication
+   * Requires authentication (client or professional)
    */
   @Post('private')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async createPrivateThread(@Request() req: any) {
     // Just return existing or create new one
     const userId = req.user.isProfessional ? undefined : req.user.id;
@@ -48,20 +49,20 @@ export class ChatController {
 
   /**
    * GET /chat/private/:threadId - Get a specific private thread
-   * Requires authentication
+   * Requires authentication (client or professional)
    */
   @Get('private/:threadId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async getPrivateThread(@Param('threadId') threadId: string) {
     return this.chatService.getPrivateThread(threadId);
   }
 
   /**
    * POST /chat/private/:threadId/messages - Send a message to private thread
-   * Requires authentication
+   * Requires authentication (client or professional)
    */
   @Post('private/:threadId/messages')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async addPrivateMessage(
     @Param('threadId') threadId: string,
     @Body() dto: CreatePrivateMessageDto,
@@ -86,10 +87,10 @@ export class ChatController {
 
   /**
    * POST /chat/private/:threadId/read - Mark private thread as read by FOH
-   * Requires authentication (FOH only, but we'll accept any request for now)
+   * Requires authentication (FOH admin only, but accepting any authenticated user for now)
    */
   @Post('private/:threadId/read')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async markPrivateAsRead(@Param('threadId') threadId: string) {
     await this.chatService.markPrivateThreadAsRead(threadId);
     return { success: true };
