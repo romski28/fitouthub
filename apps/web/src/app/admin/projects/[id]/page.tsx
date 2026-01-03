@@ -71,13 +71,18 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       try {
         const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
+          credentials: "include",
         });
         if (!res.ok) {
           const errText = await res.text().catch(() => "");
           throw new Error(`Failed to load project (${res.status}) ${errText || ""}`.trim());
         }
         const text = await res.text();
-        if (!text) throw new Error(`Empty response when fetching project (status ${res.status})`);
+        if (!text || !text.trim()) {
+          setError(`No project data returned (status ${res.status})`);
+          setProject(null);
+          return;
+        }
         const data = JSON.parse(text);
         setProject(data);
       } catch (e: any) {
