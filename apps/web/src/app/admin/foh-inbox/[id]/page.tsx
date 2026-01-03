@@ -42,21 +42,15 @@ export default function FohInboxDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      // Try to determine thread type and fetch accordingly
-      // For now, we'll fetch from the general endpoint
-      const response = await fetch(`${API_BASE_URL}/chat/private/${threadId}`);
+      // Use the admin endpoint which doesn't require authentication
+      const response = await fetch(`${API_BASE_URL}/chat/admin/threads/${threadId}`);
       if (response.ok) {
         const data = await response.json();
         setThread(data);
       } else if (response.status === 404) {
-        // Try anonymous
-        const anonResponse = await fetch(`${API_BASE_URL}/chat/anonymous/${threadId}`);
-        if (anonResponse.ok) {
-          const data = await anonResponse.json();
-          setThread(data);
-        } else {
-          setError('Thread not found');
-        }
+        setError('Thread not found');
+      } else {
+        setError(`Failed to load thread: ${response.status}`);
       }
     } catch (err) {
       console.error('Failed to load thread:', err);

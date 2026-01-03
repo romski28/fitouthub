@@ -147,6 +147,42 @@ export class ChatController {
     return this.chatService.getAllThreadsForAdmin();
   }
 
+  /**
+   * GET /chat/admin/threads/:threadId - Get a specific thread by ID (for admin)
+   * TODO: Add proper admin authentication guard
+   */
+  @Get('admin/threads/:threadId')
+  async getAdminThread(@Param('threadId') threadId: string) {
+    // Try to get as private thread first
+    if (threadId.startsWith('private-') || !threadId.includes('-anon-') && !threadId.includes('-project-')) {
+      try {
+        return await this.chatService.getPrivateThread(threadId);
+      } catch (e) {
+        // Fall through to try anonymous
+      }
+    }
+
+    // Try to get as anonymous thread
+    if (threadId.includes('-anon-') || threadId.startsWith('anon-')) {
+      try {
+        return await this.chatService.getAnonymousThread(threadId);
+      } catch (e) {
+        // Fall through to try project
+      }
+    }
+
+    // Try to get as project thread
+    if (threadId.includes('-project-') || threadId.startsWith('project-')) {
+      try {
+        return await this.chatService.getProjectThread(threadId);
+      } catch (e) {
+        // All failed
+      }
+    }
+
+    throw new UnauthorizedException('Thread not found');
+  }
+
   // ===== PROJECT CHAT ENDPOINTS =====
 
   /**
