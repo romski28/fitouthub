@@ -81,7 +81,9 @@ export default function FloatingChat() {
             if (res.ok) {
               const data = await res.json();
               anonId = data.threadId || data.id;
-              localStorage.setItem('foh_anon_thread', anonId);
+              if (anonId) {
+                localStorage.setItem('foh_anon_thread', anonId);
+              }
             }
           }
           if (anonId) {
