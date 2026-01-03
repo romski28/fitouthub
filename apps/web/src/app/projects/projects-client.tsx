@@ -897,6 +897,11 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                     <span className="font-semibold">Status:</span>
                     <span className="text-slate-600 capitalize">{project.status}</span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                    <span className="font-semibold">Created:</span>
+                    <span className="text-slate-600">{formatDate(project.createdAt)}</span>
+                  </div>
                 </div>
 
                 {/* Trades Required */}

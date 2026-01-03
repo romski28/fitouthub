@@ -42,6 +42,8 @@ interface ProjectDetail {
   professionals?: ProjectProfessional[];
   startDate?: string;
   endDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
   contractorContactName?: string;
   contractorContactPhone?: string;
   contractorContactEmail?: string;
@@ -60,6 +62,26 @@ const projectStatusBadge: Record<string, string> = {
   approved: 'bg-emerald-100 text-emerald-800',
   rejected: 'bg-rose-100 text-rose-800',
   withdrawn: 'bg-slate-200 text-slate-800',
+};
+
+const formatDate = (date?: string) => {
+  if (!date) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(date));
+  } catch {
+    return '—';
+  }
+};
+
+const formatHKD = (value?: number | string) => {
+  if (value === undefined || value === null || value === '') return 'HK$ —';
+  const num = typeof value === 'number' ? value : Number(value);
+  if (Number.isNaN(num)) return `HK$ ${value}`;
+  return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
 
 export default function ClientProjectDetailPage() {
@@ -688,6 +710,12 @@ export default function ClientProjectDetailPage() {
     return null;
   }
 
+  const awardedPro = project?.professionals?.find((p) => p.status === 'awarded');
+  const isAwarded = project?.status === 'awarded' || Boolean(awardedPro);
+  const projectCostValue = awardedPro?.quoteAmount ?? project?.budget ?? 0;
+  const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
+  const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
+
   if (error || !project) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -762,12 +790,17 @@ export default function ClientProjectDetailPage() {
               <div className="flex items-center gap-2 text-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                 <span className="font-semibold text-slate-700">Budget:</span>
-                <span className="text-slate-600">{project.budget ? `$${project.budget}` : 'Not specified'}</span>
+                <span className="text-slate-600">{project.budget ? formatHKD(project.budget) : 'Not specified'}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                 <span className="font-semibold text-slate-700">Professionals:</span>
                 <span className="text-slate-600">{project.professionals?.length || 0}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                <span className="font-semibold text-slate-700">Created:</span>
+                <span className="text-slate-600">{formatDate(project.createdAt)}</span>
               </div>
             </div>
 
@@ -779,6 +812,29 @@ export default function ClientProjectDetailPage() {
             )}
           </div>
         </div>
+
+          {isAwarded && (
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-emerald-900">Project Budget</p>
+                <span className="text-xs font-medium text-emerald-700">Awarded</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
+                  <p className="text-[11px] font-semibold text-emerald-800">Project Cost</p>
+                  <p className="text-sm font-bold text-emerald-900">{formatHKD(projectCostValue)}</p>
+                </div>
+                <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
+                  <p className="text-[11px] font-semibold text-emerald-800">Escrow Account</p>
+                  <p className="text-sm font-bold text-emerald-900">{formatHKD(escrowValue)}</p>
+                </div>
+                <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
+                  <p className="text-[11px] font-semibold text-emerald-800">Paid</p>
+                  <p className="text-sm font-bold text-emerald-900">{formatHKD(paidValue)}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
 
