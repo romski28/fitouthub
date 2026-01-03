@@ -8,6 +8,7 @@ import {
   Request,
   Headers,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ChatService } from './chat.service';
