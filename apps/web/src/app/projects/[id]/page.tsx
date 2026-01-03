@@ -7,7 +7,7 @@ import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
-import { ProjectChat } from '@/components/project-chat';
+import ProjectChat from '@/components/project-chat';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {

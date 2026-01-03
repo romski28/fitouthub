@@ -18,7 +18,7 @@ interface ProjectChatProps {
   className?: string;
 }
 
-export function ProjectChat({ projectId, accessToken, currentUserRole, className = '' }: ProjectChatProps) {
+export default function ProjectChat({ projectId, accessToken, currentUserRole, className = '' }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
