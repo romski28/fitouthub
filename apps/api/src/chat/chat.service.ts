@@ -11,17 +11,28 @@ export class ChatService {
   // ===== PRIVATE CHAT (FOH Support) =====
 
   /**
-   * Get or create a private chat thread for logged-in user
+   * Get or create a private chat thread for logged-in user or professional
    */
-  async getOrCreatePrivateThread(userId: string): Promise<PrivateChatThreadDto> {
-    let thread = await this.prisma.privateChatThread.findUnique({
-      where: { userId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
-    });
+  async getOrCreatePrivateThread(
+    userId?: string,
+    professionalId?: string,
+  ): Promise<PrivateChatThreadDto> {
+    // Find thread by either userId or professionalId (whichever is provided)
+    let thread = userId
+      ? await this.prisma.privateChatThread.findUnique({
+          where: { userId },
+          include: { messages: { orderBy: { createdAt: 'asc' } } },
+        })
+      : professionalId
+      ? await this.prisma.privateChatThread.findUnique({
+          where: { professionalId },
+          include: { messages: { orderBy: { createdAt: 'asc' } } },
+        })
+      : null;
 
     if (!thread) {
       thread = await this.prisma.privateChatThread.create({
-        data: { userId },
+        data: userId ? { userId } : { professionalId },
         include: { messages: { orderBy: { createdAt: 'asc' } } },
       });
     }

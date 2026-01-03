@@ -28,7 +28,9 @@ export class ChatController {
   @Get('private')
   @UseGuards(AuthGuard('jwt'))
   async getOrCreatePrivateThread(@Request() req: any) {
-    return this.chatService.getOrCreatePrivateThread(req.user.id);
+    const userId = req.user.isProfessional ? undefined : req.user.id;
+    const professionalId = req.user.isProfessional ? req.user.id : undefined;
+    return this.chatService.getOrCreatePrivateThread(userId, professionalId);
   }
 
   /**
@@ -39,7 +41,9 @@ export class ChatController {
   @UseGuards(AuthGuard('jwt'))
   async createPrivateThread(@Request() req: any) {
     // Just return existing or create new one
-    return this.chatService.getOrCreatePrivateThread(req.user.id);
+    const userId = req.user.isProfessional ? undefined : req.user.id;
+    const professionalId = req.user.isProfessional ? req.user.id : undefined;
+    return this.chatService.getOrCreatePrivateThread(userId, professionalId);
   }
 
   /**
