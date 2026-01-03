@@ -12,8 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
  */
 @Injectable()
 export class CombinedAuthGuard implements CanActivate {
-  private jwtGuard: AuthGuard;
-  private jwtProGuard: AuthGuard;
+  private jwtGuard: any;
+  private jwtProGuard: any;
 
   constructor(private reflector: Reflector) {
     this.jwtGuard = new (AuthGuard('jwt'))();
