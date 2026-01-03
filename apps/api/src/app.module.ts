@@ -19,6 +19,8 @@ import { ReportsController } from './reports/reports.controller';
 import { ReportsService } from './reports/reports.service';
 import { AssistRequestsController } from './assist/assist-requests.controller';
 import { AssistRequestsService } from './assist/assist-requests.service';
+import { ChatModule } from './chat/chat.module';
+import { ChatService } from './chat/chat.service';
 
 @Module({
   imports: [
@@ -32,6 +34,7 @@ import { AssistRequestsService } from './assist/assist-requests.service';
     ProfessionalModule,
     ClientModule,
     TradesModule,
+    ChatModule,
   ],
   controllers: [
     AppController,
@@ -46,6 +49,7 @@ import { AssistRequestsService } from './assist/assist-requests.service';
     ProjectsService,
     ReportsService,
     AssistRequestsService,
+    ChatService,
   ],
   exports: [PrismaService],
 })

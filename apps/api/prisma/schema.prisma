@@ -26,6 +26,8 @@ model User {
   professional        Professional?
   projects            Project[]
   assistRequests      ProjectAssistRequest[] @relation("UserAssistRequests")
+  privateChatThread   PrivateChatThread?
+  privateChatMessagesSent PrivateChatMessage[] @relation("UserSender")
 }
 
 model Tradesman {
@@ -81,6 +83,8 @@ model Professional {
   projectProfessionals ProjectProfessional[]
   reports              ProfessionalReport[]
   referenceProjects    ProfessionalReferenceProject[]
+  privateChatThread    PrivateChatThread?
+  privateChatMessagesSent PrivateChatMessage[] @relation("ProfessionalSender")
 }
 
 model Project {
@@ -108,6 +112,7 @@ model Project {
   user                   User?                 @relation(fields: [userId], references: [id])
   professionals          ProjectProfessional[]
   assistRequests         ProjectAssistRequest[]
+  chatThread             ProjectChatThread?
 }
 
 model ProjectProfessional {
@@ -251,6 +256,93 @@ model AssistMessage {
   assistRequest    ProjectAssistRequest @relation(fields: [assistRequestId], references: [id], onDelete: Cascade)
 
   @@index([assistRequestId])
+  @@index([senderType])
+  @@index([createdAt])
+}
+
+// FOH Private Support Threads (logged-in users & professionals)
+model PrivateChatThread {
+  id              String   @id @default(cuid())
+  userId          String?  @unique // null for professionals
+  professionalId  String?  @unique // null for clients
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  messages        PrivateChatMessage[]
+
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([professionalId])
+  @@index([updatedAt])
+}
+
+model PrivateChatMessage {
+  id              String   @id @default(cuid())
+  threadId        String
+  senderType      String   // 'user' | 'professional' | 'foh'
+  senderUserId    String?
+  senderProId     String?
+  content         String
+  createdAt       DateTime @default(now())
+  readByFohAt     DateTime?
+  thread          PrivateChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userSender      User?    @relation("UserSender", fields: [senderUserId], references: [id], onDelete: SetNull)
+  proSender       Professional? @relation("ProfessionalSender", fields: [senderProId], references: [id], onDelete: SetNull)
+
+  @@index([threadId])
+  @@index([senderType])
+  @@index([createdAt])
+}
+
+// Anonymous FOH Support Threads
+model AnonymousChatThread {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique // Anonymous session ID
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  messages        AnonymousChatMessage[]
+
+  @@index([createdAt])
+}
+
+model AnonymousChatMessage {
+  id              String   @id @default(cuid())
+  threadId        String
+  senderType      String   // 'anonymous' | 'foh'
+  content         String
+  createdAt       DateTime @default(now())
+  thread          AnonymousChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([createdAt])
+}
+
+// Project Chat Threads (post-award shared team chat)
+model ProjectChatThread {
+  id              String   @id @default(cuid())
+  projectId       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  messages        ProjectChatMessage[]
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId])
+  @@index([projectId])
+  @@index([updatedAt])
+}
+
+model ProjectChatMessage {
+  id              String   @id @default(cuid())
+  threadId        String
+  senderType      String   // 'client' | 'professional' | 'foh'
+  senderUserId    String?
+  senderProId     String?
+  content         String
+  createdAt       DateTime @default(now())
+  thread          ProjectChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
   @@index([senderType])
   @@index([createdAt])
 }

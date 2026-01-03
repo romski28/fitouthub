@@ -11,15 +11,20 @@ import {
   HttpStatus,
   UseGuards,
   Request,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { ChatService } from '../chat/chat.service';
 
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly chatService: ChatService,
+  ) {}
 
   @Get()
   async findAll() {
@@ -250,5 +255,73 @@ export class ProjectsController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.projectsService.remove(id);
+  }
+
+  // ===== PROJECT CHAT ENDPOINTS =====
+
+  /**
+   * GET /projects/:projectId/chat - Get or create project chat thread
+   * Requires authentication
+   */
+  @Get(':projectId/chat')
+  @UseGuards(AuthGuard('jwt'))
+  async getProjectChat(@Param('projectId') projectId: string) {
+    return this.chatService.getOrCreateProjectThread(projectId);
+  }
+
+  /**
+   * POST /projects/:projectId/chat - Create project chat (same as GET, but for POST requests)
+   * Requires authentication
+   */
+  @Post(':projectId/chat')
+  @UseGuards(AuthGuard('jwt'))
+  async createProjectChat(@Param('projectId') projectId: string) {
+    return this.chatService.getOrCreateProjectThread(projectId);
+  }
+
+  /**
+   * POST /projects/:projectId/chat/messages - Send a message to project chat
+   * Requires authentication
+   */
+  @Post(':projectId/chat/messages')
+  @UseGuards(AuthGuard('jwt'))
+  async addProjectMessage(
+    @Param('projectId') projectId: string,
+    @Body() body: { content: string },
+    @Request() req: any,
+  ) {
+    if (!body.content || !body.content.trim()) {
+      throw new BadRequestException('Message content cannot be empty');
+    }
+
+    // Get the thread first
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+
+    // Determine sender type
+    const senderType = req.user.isProfessional ? 'professional' : 'client';
+    const message = await this.chatService.addProjectMessage(
+      thread.id,
+      senderType,
+      req.user.isProfessional ? null : req.user.id,
+      req.user.isProfessional ? req.user.id : null,
+      body.content,
+    );
+
+    return { message };
+  }
+
+  /**
+   * POST /projects/:projectId/chat/read - Mark project chat as read
+   * Requires authentication
+   */
+  @Post(':projectId/chat/read')
+  @UseGuards(AuthGuard('jwt'))
+  async markProjectChatAsRead(@Param('projectId') projectId: string) {
+    // Get the thread
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+
+    // In a full implementation, we'd track read status per user
+    // For now, just return success
+    return { success: true };
   }
 }
