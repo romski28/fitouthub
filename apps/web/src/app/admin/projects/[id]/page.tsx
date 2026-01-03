@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
+import { useAuth } from "@/context/auth-context";
 
 interface ProjectProfessional {
   id: string;
@@ -58,15 +59,19 @@ const formatHKD = (value?: number | string) => {
 
 export default function AdminProjectDetailPage({ params }: { params: { id: string } }) {
   const projectId = params.id;
+  const { isLoggedIn, accessToken } = useAuth();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isLoggedIn === false) return;
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE_URL}/projects/${projectId}`);
+        const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        });
         if (!res.ok) throw new Error(`Failed to load project (${res.status})`);
         const text = await res.text();
         if (!text) throw new Error('Empty response when fetching project');
@@ -79,7 +84,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       }
     };
     load();
-  }, [projectId]);
+  }, [projectId, isLoggedIn, accessToken]);
 
   if (loading) {
     return <div className="p-6 text-sm text-slate-600">Loading project…</div>;
