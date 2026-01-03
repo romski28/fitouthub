@@ -82,18 +82,22 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
           throw new Error(`Failed to load project (${res.status}) ${errText || ""}`.trim());
         }
 
-        const data = await res.json().catch(async () => {
-          const raw = await res.text().catch(() => "");
-          throw new Error(raw ? `Unexpected response: ${raw}` : "Empty project response");
-        });
+        const raw = await res.text().catch(() => "");
 
-        if (!data) {
-          setError(`No project data returned (status ${res.status})`);
+        if (!raw || !raw.trim()) {
+          setError(`Empty body from ${res.url} (status ${res.status})`);
           setProject(null);
           return;
         }
 
-        setProject(data);
+        try {
+          const data = JSON.parse(raw);
+          setProject(data);
+        } catch (err) {
+          console.warn("Admin project detail received non-JSON response", { status: res.status, raw });
+          setError(`Non-JSON project response (status ${res.status}): ${raw.slice(0, 200)}`);
+          setProject(null);
+        }
       } catch (e: any) {
         setError(e?.message || "Failed to load project");
       } finally {
