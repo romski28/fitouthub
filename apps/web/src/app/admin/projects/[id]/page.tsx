@@ -65,16 +65,19 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isLoggedIn === false) return;
+    if (!isLoggedIn || !accessToken) return;
     const load = async () => {
       setLoading(true);
       try {
         const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
-        if (!res.ok) throw new Error(`Failed to load project (${res.status})`);
+        if (!res.ok) {
+          const errText = await res.text().catch(() => "");
+          throw new Error(`Failed to load project (${res.status}) ${errText || ""}`.trim());
+        }
         const text = await res.text();
-        if (!text) throw new Error('Empty response when fetching project');
+        if (!text) throw new Error(`Empty response when fetching project (status ${res.status})`);
         const data = JSON.parse(text);
         setProject(data);
       } catch (e: any) {
