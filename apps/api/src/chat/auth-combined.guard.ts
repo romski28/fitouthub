@@ -4,67 +4,55 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
+import { AuthGuard } from '@nestjs/passport';
 
 /**
  * Combined auth guard that accepts both client (jwt) and professional (jwt-professional) tokens
  */
 @Injectable()
 export class CombinedAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  private jwtGuard: AuthGuard;
+  private jwtProGuard: AuthGuard;
+
+  constructor(private reflector: Reflector) {
+    this.jwtGuard = new (AuthGuard('jwt'))();
+    this.jwtProGuard = new (AuthGuard('jwt-professional'))();
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
-
-    if (!authHeader) {
-      throw new UnauthorizedException('Missing authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-
+    // Try JWT (client) first
     try {
-      // Try to verify as client JWT
-      try {
-        const decoded = await this.jwtService.verifyAsync(token, {
-          secret: process.env.JWT_SECRET || 'secret-key',
-        });
-
-        // If type is not specified or is 'client', treat as client
-        if (!decoded.type || decoded.type === 'client') {
-          request.user = {
-            id: decoded.sub,
-            isProfessional: false,
-          };
-          return true;
+      const result = await this.jwtGuard.canActivate(context);
+      if (result) {
+        console.log('[CombinedAuthGuard] Client JWT authenticated');
+        const request = context.switchToHttp().getRequest();
+        // Ensure isProfessional is set
+        if (request.user && !request.user.isProfessional) {
+          request.user.isProfessional = false;
         }
-      } catch (e1) {
-        // Client JWT failed, try professional
+        return true;
       }
-
-      // Try to verify as professional JWT
-      try {
-        const decoded = await this.jwtService.verifyAsync(token, {
-          secret: process.env.JWT_SECRET || 'secret-key',
-        });
-
-        // Check if it's a professional token
-        if (decoded.type === 'professional') {
-          request.user = {
-            id: decoded.sub,
-            isProfessional: true,
-          };
-          return true;
-        }
-      } catch (e2) {
-        // Professional JWT also failed
-      }
-
-      throw new UnauthorizedException(
-        'Invalid token: not a valid client or professional JWT',
-      );
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
+    } catch (e) {
+      console.log('[CombinedAuthGuard] Client JWT failed:', e.message);
     }
+
+    // Try JWT Professional
+    try {
+      const result = await this.jwtProGuard.canActivate(context);
+      if (result) {
+        console.log('[CombinedAuthGuard] Professional JWT authenticated');
+        const request = context.switchToHttp().getRequest();
+        // Set isProfessional flag
+        if (request.user) {
+          request.user.isProfessional = true;
+        }
+        return true;
+      }
+    } catch (e) {
+      console.log('[CombinedAuthGuard] Professional JWT failed:', e.message);
+    }
+
+    throw new UnauthorizedException('Invalid or missing authentication token');
   }
 }
