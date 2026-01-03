@@ -1278,7 +1278,7 @@ export default function ClientProjectDetailPage() {
               </div>
             </div>
 
-            {/* Private Chat Panel - Only show when a professional is selected */}
+            {/* Private Chat Panel - Only show when a professional is selected and not viewing assist */}
             {!viewingAssistChat && selectedProfessional && (
               <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="bg-amber-50 px-4 py-3 border-b border-amber-200 rounded-t-xl">
@@ -1295,70 +1295,6 @@ export default function ClientProjectDetailPage() {
                   </div>
                 </div>
 
-              {viewingAssistChat ? (
-                <div className="p-4 space-y-4">
-                  {assistError && (
-                    <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                      {assistError}
-                    </div>
-                  )}
-
-                  {/* Assist Messages */}
-                  <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
-                    {assistLoading ? (
-                      <div className="text-center text-sm text-slate-500">Loading messages...</div>
-                    ) : assistMessages.length === 0 ? (
-                      <div className="text-center text-sm text-slate-500">
-                        No messages yet. Reach out to Fitout Hub for assistance!
-                      </div>
-                    ) : (
-                      assistMessages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                              msg.senderType === 'client'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white border border-indigo-200 text-slate-800'
-                            }`}
-                          >
-                            <p>{msg.content}</p>
-                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-indigo-100' : 'text-slate-500'}`}>
-                              {new Date(msg.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Send Assist Message */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={assistNewMessage}
-                      onChange={(e) => setAssistNewMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !assistSending) {
-                          handleSendAssistMessage();
-                        }
-                      }}
-                      placeholder="Ask Fitout Hub for help..."
-                      className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                      disabled={assistSending}
-                    />
-                    <button
-                      onClick={handleSendAssistMessage}
-                      disabled={assistSending || !assistNewMessage.trim()}
-                      className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      {assistSending ? 'Sending...' : 'Send'}
-                    </button>
-                  </div>
-                </div>
-              ) : selectedProfessional && (
                 <div className="p-4 space-y-4">
                   {messageError && (
                     <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -1421,10 +1357,94 @@ export default function ClientProjectDetailPage() {
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Assist Chat Panel - Only show when viewing assist chat */}
+            {viewingAssistChat && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="bg-indigo-50 px-4 py-3 border-b border-indigo-200 rounded-t-xl">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <h3 className="font-bold text-indigo-900 text-sm">Fitout Hub Assistance</h3>
+                      <p className="text-xs text-indigo-700">Get help from Fitout Hub experts</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 space-y-4">
+                  {assistError && (
+                    <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      {assistError}
+                    </div>
+                  )}
+
+                  {/* Assist Messages */}
+                  <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    {assistLoading ? (
+                      <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                    ) : assistMessages.length === 0 ? (
+                      <div className="text-center text-sm text-slate-500">
+                        No messages yet. Reach out to Fitout Hub for assistance!
+                      </div>
+                    ) : (
+                      assistMessages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                              msg.senderType === 'client'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white border border-indigo-200 text-slate-800'
+                            }`}
+                          >
+                            <p>{msg.content}</p>
+                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-indigo-100' : 'text-slate-500'}`}>
+                              {new Date(msg.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Send Assist Message */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={assistNewMessage}
+                      onChange={(e) => setAssistNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !assistSending) {
+                          handleSendAssistMessage();
+                        }
+                      }}
+                      placeholder="Ask Fitout Hub for help..."
+                      className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                      disabled={assistSending}
+                    />
+                    <button
+                      onClick={handleSendAssistMessage}
+                      disabled={assistSending || !assistNewMessage.trim()}
+                      className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {assistSending ? 'Sending...' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+        <BackToTop />
+      </div>
+
 
         <BackToTop />
       </div>
