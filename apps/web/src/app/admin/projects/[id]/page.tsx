@@ -68,7 +68,9 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       try {
         const res = await fetch(`${API_BASE_URL}/projects/${projectId}`);
         if (!res.ok) throw new Error(`Failed to load project (${res.status})`);
-        const data = await res.json();
+        const text = await res.text();
+        if (!text) throw new Error('Empty response when fetching project');
+        const data = JSON.parse(text);
         setProject(data);
       } catch (e: any) {
         setError(e?.message || "Failed to load project");
