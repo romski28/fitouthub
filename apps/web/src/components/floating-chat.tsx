@@ -31,6 +31,15 @@ export default function FloatingChat() {
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
 
+  // Close chat on logout
+  useEffect(() => {
+    if (!isLoggedIn && isOpen) {
+      setIsOpen(false);
+      setThreadId(null);
+      setMessages([]);
+    }
+  }, [isLoggedIn, isOpen]);
+
   // Load or create thread
   useEffect(() => {
     const loadThread = async () => {
@@ -152,9 +161,10 @@ export default function FloatingChat() {
     try {
       // For stub threads, just add message locally
       if (threadId.startsWith('stub-')) {
+        console.log('[FloatingChat] Sending to stub thread:', threadId);
         setMessages((prev) => [...prev, {
           id: Date.now().toString(),
-          senderType: 'user',
+          senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
           content: message.trim(),
           createdAt: new Date().toISOString(),
         }]);
@@ -169,26 +179,30 @@ export default function FloatingChat() {
       const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
+      console.log('[FloatingChat] Sending message to endpoint:', endpoint, 'Thread:', threadId, 'User role:', userRole);
       const res = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify({ content: message.trim() }),
       });
 
+      console.log('[FloatingChat] Response status:', res.status);
       if (res.ok) {
         const data = await res.json();
+        console.log('[FloatingChat] Message sent successfully:', data);
         setMessages((prev) => [...prev, data.message || {
           id: Date.now().toString(),
-          senderType: 'user',
+          senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
           content: message.trim(),
           createdAt: new Date().toISOString(),
         }]);
         setMessage('');
       } else {
-        console.error('Failed to send message:', await res.text());
+        const errorText = await res.text();
+        console.error('[FloatingChat] Failed to send message:', res.status, errorText);
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[FloatingChat] Error sending message:', error);
     } finally {
       setSending(false);
     }
