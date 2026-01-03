@@ -315,10 +315,10 @@ export class ChatService {
           take: 1,
         },
         user: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, firstName: true, surname: true, email: true },
         },
         professional: {
-          select: { id: true, companyName: true, email: true },
+          select: { id: true, businessName: true, email: true },
         },
       },
       orderBy: { updatedAt: 'desc' },
@@ -343,7 +343,7 @@ export class ChatService {
           take: 1,
         },
         project: {
-          select: { id: true, title: true },
+          select: { id: true, projectName: true },
         },
       },
       orderBy: { updatedAt: 'desc' },
@@ -374,8 +374,8 @@ export class ChatService {
         type: 'private' as const,
         userId: thread.userId,
         professionalId: thread.professionalId,
-        userName: thread.user?.name,
-        professionalName: thread.professional?.companyName,
+        userName: thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined,
+        professionalName: thread.professional?.businessName,
         updatedAt: thread.updatedAt.toISOString(),
         unreadCount: unreadMap[thread.id] || 0,
         lastMessage: thread.messages[0]?.content,
@@ -392,7 +392,7 @@ export class ChatService {
         id: thread.id,
         type: 'project' as const,
         projectId: thread.projectId,
-        projectName: thread.project?.title,
+        projectName: thread.project?.projectName,
         updatedAt: thread.updatedAt.toISOString(),
         unreadCount: 0, // Project threads don't track read status per user
         lastMessage: thread.messages[0]?.content,
