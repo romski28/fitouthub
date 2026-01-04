@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 
@@ -48,15 +48,15 @@ const formatHKD = (value: number | string) => {
 };
 
 const getTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
+  const map: Record<string, string> = {
     escrow_deposit: 'Escrow Deposit',
-    advance_payment_request: 'Advance Payment Request',
-    advance_payment_approval: 'Payment Approved',
-    advance_payment_rejection: 'Payment Rejected',
-    release_payment: 'Release Payment',
     escrow_confirmation: 'Escrow Confirmed',
+    advance_payment_request: 'Advance Payment Request',
+    advance_payment_approval: 'Advance Approved',
+    advance_payment_rejection: 'Advance Rejected',
+    release_payment: 'Payment Released',
   };
-  return labels[type] || type;
+  return map[type] || type;
 };
 
 const getStatusBadge = (status: string) => {
@@ -76,14 +76,13 @@ export default function ProjectFinancialsCard({
   projectCost,
   role,
 }: ProjectFinancialsCardProps) {
-  const [summary, setSummary] = useState<Summary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // Request deduplication - prevent multiple concurrent requests
-  const requestInFlightRef = useRef<Promise<Summary> | null>(null);
+  // Prevent duplicate in-flight requests
+  const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
 
   const filteredTransactions = useMemo(() => {
     if (role === 'professional' && projectProfessionalId) {
@@ -107,42 +106,41 @@ export default function ProjectFinancialsCard({
   useEffect(() => {
     const load = async () => {
       try {
-        // Use request deduplication - if a request is in flight, wait for it
         if (requestInFlightRef.current) {
-          const result = await requestInFlightRef.current;
-          setSummary(result);
+          const [, txData] = await requestInFlightRef.current;
+          setTransactions(txData);
           return;
         }
 
         setLoading(true);
         setError(null);
 
-        // Create a new promise for this request
-        const summaryPromise = fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        requestInFlightRef.current = summaryPromise.then((res) => res.json());
+        const combinedPromise = (async () => {
+          const [summaryRes, txRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            fetch(`${API_BASE_URL}/financial/project/${projectId}`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+          ]);
 
-        const [summaryRes, txRes] = await Promise.all([
-          summaryPromise,
-          fetch(`${API_BASE_URL}/financial/project/${projectId}`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ]);
+          if (!summaryRes.ok || !txRes.ok) {
+            throw new Error('Failed to load financial data');
+          }
 
-        if (!summaryRes.ok || !txRes.ok) {
-          throw new Error('Failed to load financial data');
-        }
+          const summaryData: Summary = await summaryRes.json();
+          const txData: Transaction[] = await txRes.json();
+          return [summaryData, txData] as const;
+        })();
 
-        const summaryData = await summaryRes.json();
-        const txData: Transaction[] = await txRes.json();
-        setSummary(summaryData);
+        requestInFlightRef.current = combinedPromise;
+        const [, txData] = await combinedPromise;
         setTransactions(txData);
-        requestInFlightRef.current = null;
       } catch (err) {
-        requestInFlightRef.current = null;
         setError(err instanceof Error ? err.message : 'Failed to load financials');
       } finally {
+        requestInFlightRef.current = null;
         setLoading(false);
       }
     };
@@ -150,7 +148,7 @@ export default function ProjectFinancialsCard({
     if (projectId && accessToken) {
       load();
     }
-  }, [projectId, accessToken]);
+  }, [projectId, accessToken, projectProfessionalId, role]);
 
   const handleConfirmDeposit = async (transactionId: string) => {
     try {
