@@ -42,60 +42,83 @@ export class ProjectsController {
     @Query('token') token: string,
     @Query('action') action: 'accept' | 'decline',
   ) {
+    const webBaseUrl =
+      process.env.WEB_BASE_URL ||
+      process.env.FRONTEND_BASE_URL ||
+      process.env.APP_WEB_URL ||
+      'https://fitouthub-web.vercel.app';
+
     if (!token || !action) {
-      throw new HttpException(
-        'Token and action are required',
-        HttpStatus.BAD_REQUEST,
-      );
+      return this.renderResponsePage({
+        title: 'Link invalid',
+        message: 'Token and action are required.',
+        action,
+        webBaseUrl,
+      });
     }
 
     try {
-      const webBaseUrl =
-        process.env.WEB_BASE_URL ||
-        process.env.FRONTEND_BASE_URL ||
-        process.env.APP_WEB_URL ||
-        'https://fitouthub-web.vercel.app';
-
       const result = await this.projectsService.respondToInvitation(
         token,
         action,
       );
-      // Return HTML for user-friendly response
-      const professionalId = result.professionalId;
-      const buttonHtml =
-        action === 'accept'
-          ? `<a href="${webBaseUrl}/professional-projects/${result.projectId}?pro=${professionalId}">View Project & Submit Quote</a>`
-          : `<p style="color: #6b7280; margin-top: 20px; font-weight: 500;">You may now close this window or return to your dashboard.</p><a href="${webBaseUrl}/" style="margin-top: 10px;">Return to Dashboard</a>`;
-
-      return `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Response Recorded</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f3f4f6; }
-              .card { background: white; border-radius: 12px; padding: 40px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-              h1 { color: ${action === 'accept' ? '#10b981' : '#6b7280'}; margin: 0 0 15px 0; }
-              p { color: #6b7280; line-height: 1.6; }
-              a { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; }
-              a:hover { background: #4338ca; }
-            </style>
-          </head>
-          <body>
-            <div class="card">
-              <h1>${action === 'accept' ? '✅ Project Accepted!' : '❌ Project Declined'}</h1>
-              <p>${result.message}</p>
-              ${buttonHtml}
-            </div>
-          </body>
-        </html>
-      `;
+      return this.renderResponsePage({
+        title: action === 'accept' ? '✅ Project Accepted!' : '❌ Project Declined',
+        message: result.message,
+        action,
+        webBaseUrl,
+        projectId: result.projectId,
+        professionalId: result.professionalId,
+      });
     } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to process response',
-        HttpStatus.BAD_REQUEST,
-      );
+      // Gracefully show a user-facing page instead of a raw 400
+      const msg = error?.message || 'Failed to process response';
+      return this.renderResponsePage({
+        title: 'Link expired or invalid',
+        message: msg,
+        action,
+        webBaseUrl,
+      });
     }
+  }
+
+  private renderResponsePage(params: {
+    title: string;
+    message: string;
+    action: 'accept' | 'decline';
+    webBaseUrl: string;
+    projectId?: string;
+    professionalId?: string;
+  }) {
+    const { title, message, action, webBaseUrl, projectId, professionalId } = params;
+    const buttonHtml =
+      action === 'accept' && projectId && professionalId
+        ? `<a href="${webBaseUrl}/professional-projects/${projectId}?pro=${professionalId}">View Project & Submit Quote</a>`
+        : `<p style="color: #6b7280; margin-top: 20px; font-weight: 500;">You may now close this window or return to your dashboard.</p><a href="${webBaseUrl}/" style="margin-top: 10px;">Return to Dashboard</a>`;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f3f4f6; }
+            .card { background: white; border-radius: 12px; padding: 40px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            h1 { color: ${action === 'accept' ? '#10b981' : '#6b7280'}; margin: 0 0 15px 0; }
+            p { color: #6b7280; line-height: 1.6; }
+            a { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; }
+            a:hover { background: #4338ca; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>${title}</h1>
+            <p>${message}</p>
+            ${buttonHtml}
+          </div>
+        </body>
+      </html>
+    `;
   }
 
   @Get(':id')
