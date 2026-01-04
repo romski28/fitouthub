@@ -24,86 +24,111 @@ export class FinancialService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Create a new financial transaction
+   * Retry helper with exponential backoff for transient errors
    */
-  async createTransaction(data: CreateFinancialTransactionDto) {
-    return this.prisma.financialTransaction.create({
-      data: {
-        projectId: data.projectId,
-        projectProfessionalId: data.projectProfessionalId,
-        type: data.type,
-        description: data.description,
-        amount: new Decimal(data.amount.toString()),
-        requestedBy: data.requestedBy,
-        requestedByRole: data.requestedByRole,
-        notes: data.notes,
-      },
-      include: {
-        project: true,
-        projectProfessional: {
-          include: {
-            professional: true,
-          },
-        },
-      },
-    });
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries = 3,
+    initialDelayMs = 100,
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await Promise.race([
+          operation(),
+          new Promise<T>((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Operation timeout')),
+              5000, // 5 second timeout per operation
+            ),
+          ),
+        ]);
+      } catch (error) {
+        lastError = error as Error;
+        if (attempt < maxRetries - 1) {
+          const delayMs = initialDelayMs * Math.pow(2, attempt);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+
+    throw lastError || new Error('Operation failed after retries');
   }
 
   /**
-   * Get all transactions for a project
+   * Create a new financial transaction
+   */
+  async createTransaction(data: CreateFinancialTransactionDto) {
+    return this.retryWithBackoff(() =>
+      this.prisma.financialTransaction.create({
+        data: {
+          projectId: data.projectId,
+          projectProfessionalId: data.projectProfessionalId,
+          type: data.type,
+          description: data.description,
+          amount: new Decimal(data.amount.toString()),
+          requestedBy: data.requestedBy,
+          requestedByRole: data.requestedByRole,
+          notes: data.notes,
+        },
+      }),
+    );
+  }
+
+  /**
+   * Get all transactions for a project - optimized with minimal includes
    */
   async getProjectTransactions(projectId: string) {
-    return this.prisma.financialTransaction.findMany({
-      where: { projectId },
-      include: {
-        projectProfessional: {
-          include: {
-            professional: true,
-          },
+    return this.retryWithBackoff(() =>
+      this.prisma.financialTransaction.findMany({
+        where: { projectId },
+        select: {
+          id: true,
+          projectProfessionalId: true,
+          type: true,
+          description: true,
+          amount: true,
+          status: true,
+          requestedBy: true,
+          requestedByRole: true,
+          approvedBy: true,
+          approvedAt: true,
+          notes: true,
+          createdAt: true,
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        take: 1000, // Limit results to prevent memory issues
+      }),
+    );
   }
 
   /**
    * Get a single transaction
    */
   async getTransaction(transactionId: string) {
-    return this.prisma.financialTransaction.findUnique({
-      where: { id: transactionId },
-      include: {
-        project: true,
-        projectProfessional: {
-          include: {
-            professional: true,
-          },
-        },
-      },
-    });
+    return this.retryWithBackoff(() =>
+      this.prisma.financialTransaction.findUnique({
+        where: { id: transactionId },
+      }),
+    );
   }
 
   /**
    * Update a transaction (typically for status changes)
    */
   async updateTransaction(transactionId: string, data: UpdateFinancialTransactionDto) {
-    return this.prisma.financialTransaction.update({
-      where: { id: transactionId },
-      data: {
-        status: data.status,
-        approvedBy: data.approvedBy,
-        approvedAt: data.approvedBy ? new Date() : undefined,
-        notes: data.notes,
-      },
-      include: {
-        project: true,
-        projectProfessional: {
-          include: {
-            professional: true,
-          },
+    return this.retryWithBackoff(() =>
+      this.prisma.financialTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: data.status,
+          approvedBy: data.approvedBy,
+          approvedAt: data.approvedBy ? new Date() : undefined,
+          notes: data.notes,
         },
-      },
-    });
+      }),
+    );
   }
 
   /**
@@ -189,11 +214,23 @@ export class FinancialService {
   }
 
   /**
-   * Get summary of project finances
+   * Get summary of project finances - optimized with database aggregation
    */
   async getProjectFinancialSummary(projectId: string) {
+    // Get all transactions with minimal data
     const transactions = await this.getProjectTransactions(projectId);
-    
+
+    // Use database aggregation for summary instead of post-processing
+    const aggregation = await this.retryWithBackoff(() =>
+      this.prisma.financialTransaction.groupBy({
+        by: ['type', 'status'],
+        where: { projectId },
+        _sum: {
+          amount: true,
+        },
+      }),
+    );
+
     const summary = {
       totalEscrow: new Decimal(0),
       escrowConfirmed: new Decimal(0),
@@ -203,13 +240,14 @@ export class FinancialService {
       transactions,
     };
 
-    for (const tx of transactions) {
-      const amount = new Decimal(tx.amount);
-      
-      switch (tx.type) {
+    // Build summary from aggregated data
+    for (const agg of aggregation) {
+      const amount = agg._sum.amount ? new Decimal(agg._sum.amount.toString()) : new Decimal(0);
+
+      switch (agg.type) {
         case 'escrow_deposit':
           summary.totalEscrow = summary.totalEscrow.plus(amount);
-          if (tx.status === 'confirmed') {
+          if (agg.status === 'confirmed') {
             summary.escrowConfirmed = summary.escrowConfirmed.plus(amount);
           }
           break;
@@ -217,12 +255,12 @@ export class FinancialService {
           summary.advancePaymentRequested = summary.advancePaymentRequested.plus(amount);
           break;
         case 'advance_payment_approval':
-          if (tx.status === 'confirmed') {
+          if (agg.status === 'confirmed') {
             summary.advancePaymentApproved = summary.advancePaymentApproved.plus(amount);
           }
           break;
         case 'release_payment':
-          if (tx.status === 'completed') {
+          if (agg.status === 'completed') {
             summary.paymentsReleased = summary.paymentsReleased.plus(amount);
           }
           break;

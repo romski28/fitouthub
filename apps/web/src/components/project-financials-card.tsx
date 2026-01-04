@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 
@@ -82,6 +82,9 @@ export default function ProjectFinancialsCard({
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  // Request deduplication - prevent multiple concurrent requests
+  const requestInFlightRef = useRef<Promise<Summary> | null>(null);
+
   const filteredTransactions = useMemo(() => {
     if (role === 'professional' && projectProfessionalId) {
       return transactions.filter((tx) => tx.projectProfessionalId === projectProfessionalId);
@@ -104,12 +107,24 @@ export default function ProjectFinancialsCard({
   useEffect(() => {
     const load = async () => {
       try {
+        // Use request deduplication - if a request is in flight, wait for it
+        if (requestInFlightRef.current) {
+          const result = await requestInFlightRef.current;
+          setSummary(result);
+          return;
+        }
+
         setLoading(true);
         setError(null);
+
+        // Create a new promise for this request
+        const summaryPromise = fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        requestInFlightRef.current = summaryPromise.then((res) => res.json());
+
         const [summaryRes, txRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
+          summaryPromise,
           fetch(`${API_BASE_URL}/financial/project/${projectId}`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
@@ -123,7 +138,9 @@ export default function ProjectFinancialsCard({
         const txData: Transaction[] = await txRes.json();
         setSummary(summaryData);
         setTransactions(txData);
+        requestInFlightRef.current = null;
       } catch (err) {
+        requestInFlightRef.current = null;
         setError(err instanceof Error ? err.message : 'Failed to load financials');
       } finally {
         setLoading(false);
