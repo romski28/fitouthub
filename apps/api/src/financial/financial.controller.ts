@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Param, Body, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { FinancialService, CreateFinancialTransactionDto, UpdateFinancialTransactionDto } from './financial.service';
+import type { CreateFinancialTransactionDto, UpdateFinancialTransactionDto } from './financial.service';
+import { FinancialService } from './financial.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 @Controller('financial')

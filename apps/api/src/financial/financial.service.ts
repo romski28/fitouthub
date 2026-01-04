@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@nestjs/prisma';
+import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 export interface CreateFinancialTransactionDto {
@@ -110,11 +110,12 @@ export class FinancialService {
    * Create an escrow deposit request (auto-created when project is awarded)
    */
   async createEscrowDepositRequest(projectId: string, amount: number | Decimal) {
+    const amountValue = amount instanceof Decimal ? amount.toNumber() : amount;
     return this.createTransaction({
       projectId,
       type: 'escrow_deposit',
       description: 'Escrow deposit for project initiation',
-      amount,
+      amount: amountValue,
       requestedByRole: 'admin',
     });
   }
