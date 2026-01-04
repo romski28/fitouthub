@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { useAuth } from "@/context/auth-context";
-import FinancialTransactionsTable from "@/components/financial-transactions-table";
+import ProjectFinancialsCard from "@/components/project-financials-card";
 
 interface ProjectProfessional {
   id: string;
@@ -248,21 +248,14 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         </div>
       )}
 
-      {/* Financial Transactions - Admin View */}
+      {/* Financials */}
       {isAwarded && accessToken && (
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
-          <div className="mb-4">
-            <h2 className="text-lg font-bold text-slate-900 mb-1">Financial Transactions</h2>
-            <p className="text-sm text-slate-600">Manage escrow deposits and payment releases.</p>
-          </div>
-          <FinancialTransactionsTable 
-            projectId={project.id}
-            accessToken={accessToken}
-            onTransactionUpdate={() => {
-              // Transaction updated - table will auto-refresh
-            }}
-          />
-        </div>
+        <ProjectFinancialsCard
+          projectId={project.id}
+          accessToken={accessToken}
+          projectCost={projectCostValue}
+          role="admin"
+        />
       )}
 
       {project.professionals && project.professionals.length > 0 && (

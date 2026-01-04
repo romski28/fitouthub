@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
 import ProjectChat from '@/components/project-chat';
-import ClientFinancialSection from '@/components/client-financial-section';
+import ProjectFinancialsCard from '@/components/project-financials-card';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -815,13 +815,13 @@ export default function ClientProjectDetailPage() {
           </div>
         </div>
 
-          {/* Financial Section with Escrow and Payment Management */}
+          {/* Project Financials */}
           {accessToken && (
-            <ClientFinancialSection 
+            <ProjectFinancialsCard
               projectId={project.id}
               accessToken={accessToken}
               projectCost={projectCostValue}
-              isAwarded={isAwarded}
+              role="client"
             />
           )}
 
