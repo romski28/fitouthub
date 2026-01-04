@@ -184,6 +184,51 @@ export class ChatController {
     throw new UnauthorizedException('Thread not found');
   }
 
+  /**
+   * POST /chat/admin/threads/:threadId/reply - Admin reply to a thread
+   * TODO: Add proper admin authentication guard
+   */
+  @Post('admin/threads/:threadId/reply')
+  async adminReplyToThread(
+    @Param('threadId') threadId: string,
+    @Body() body: { content: string },
+  ) {
+    if (!body.content || !body.content.trim()) {
+      throw new BadRequestException('Message content cannot be empty');
+    }
+
+    // Determine thread type and send appropriate reply
+    // Try private thread first
+    try {
+      const thread = await this.chatService.getPrivateThread(threadId);
+      const message = await this.chatService.addPrivateMessage(
+        threadId,
+        'foh',
+        null,
+        null,
+        body.content,
+      );
+      return { success: true, message };
+    } catch (e) {
+      // Not a private thread, try anonymous
+    }
+
+    // Try anonymous thread
+    try {
+      const thread = await this.chatService.getAnonymousThread(threadId);
+      const message = await this.chatService.addAnonymousMessage(
+        threadId,
+        'foh',
+        body.content,
+      );
+      return { success: true, message };
+    } catch (e) {
+      // Not an anonymous thread either
+    }
+
+    throw new BadRequestException('Invalid thread type or thread not found');
+  }
+
   // ===== PROJECT CHAT ENDPOINTS =====
 
   /**

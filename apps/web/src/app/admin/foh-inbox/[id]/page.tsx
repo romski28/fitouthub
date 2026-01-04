@@ -66,10 +66,7 @@ export default function FohInboxDetailPage() {
 
     setSending(true);
     try {
-      const endpoint =
-        thread.type === 'anonymous'
-          ? `${API_BASE_URL}/chat/anonymous/${threadId}/messages`
-          : `${API_BASE_URL}/chat/private/${threadId}/messages`;
+      const endpoint = `${API_BASE_URL}/chat/admin/threads/${threadId}/reply`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
