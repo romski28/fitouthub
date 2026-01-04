@@ -113,6 +113,7 @@ model Project {
   professionals          ProjectProfessional[]
   assistRequests         ProjectAssistRequest[]
   chatThread             ProjectChatThread?
+  financialTransactions  FinancialTransaction[]
 }
 
 model ProjectProfessional {
@@ -133,6 +134,7 @@ model ProjectProfessional {
   messages              Message[]
   invoice               Invoice?
   advancePaymentRequest AdvancePaymentRequest?
+  financialTransactions FinancialTransaction[]
 
   @@unique([projectId, professionalId])
   @@index([projectId])
@@ -391,4 +393,28 @@ model AdvancePaymentRequest {
 
   @@unique([projectProfessionalId])
   @@index([status])
+}
+
+model FinancialTransaction {
+  id                    String       @id @default(cuid())
+  projectId             String
+  projectProfessionalId String?      // null for escrow deposits
+  type                  String       // "escrow_deposit" | "advance_payment_request" | "advance_payment_approval" | "advance_payment_rejection" | "release_payment" | "escrow_confirmation"
+  description           String       // Human-readable description
+  amount                Decimal      @db.Decimal(12, 2)
+  status                String       @default("pending") // pending | confirmed | completed | rejected
+  requestedBy           String?      // user_id or professional_id
+  requestedByRole       String?      // "client" | "professional" | "admin"
+  approvedBy            String?      // admin_id
+  approvedAt            DateTime?
+  notes                 String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectProfessional   ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([projectProfessionalId])
+  @@index([status])
+  @@index([type])
 }

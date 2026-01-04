@@ -21,6 +21,7 @@ import { AssistRequestsController } from './assist/assist-requests.controller';
 import { AssistRequestsService } from './assist/assist-requests.service';
 import { ChatModule } from './chat/chat.module';
 import { ChatService } from './chat/chat.service';
+import { FinancialModule } from './financial/financial.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ChatService } from './chat/chat.service';
     ClientModule,
     TradesModule,
     ChatModule,
+    FinancialModule,
   ],
   controllers: [
     AppController,
