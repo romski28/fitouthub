@@ -28,6 +28,8 @@ export class EmailService {
     location: string;
     acceptToken: string;
     declineToken: string;
+    authToken: string;
+    projectId: string;
     baseUrl: string;
   }): Promise<void> {
     if (!this.resend) {
@@ -37,6 +39,7 @@ export class EmailService {
 
     const acceptUrl = `${params.baseUrl}/api/projects/respond?token=${params.acceptToken}&action=accept`;
     const declineUrl = `${params.baseUrl}/api/projects/respond?token=${params.declineToken}&action=decline`;
+    const magicAuthUrl = `${params.baseUrl}/api/auth/magic-link?token=${params.authToken}`;
 
     try {
       await this.resend.emails.send({
@@ -61,8 +64,16 @@ export class EmailService {
             <p style="font-weight: 600; color: #dc2626;">⏰ Please respond within 2 hours to maintain your rating.</p>
             
             <div style="margin: 30px 0; text-align: center;">
+              <a href="${magicAuthUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 0 5px; font-weight: 600;">
+                👁️ View Project & Quote
+              </a>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 14px; text-align: center;">or</p>
+            
+            <div style="margin: 20px 0; text-align: center;">
               <a href="${acceptUrl}" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 0 10px; font-weight: 600;">
-                ✅ Accept & View Details
+                ✅ Accept
               </a>
               <a href="${declineUrl}" style="display: inline-block; background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 0 10px; font-weight: 600;">
                 ❌ Decline

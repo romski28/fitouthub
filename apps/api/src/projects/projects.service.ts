@@ -281,7 +281,9 @@ export class ProjectsService {
     for (const professional of professionals) {
       const acceptToken = createId();
       const declineToken = createId();
+      const authToken = createId();
       const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+      const authExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days for auth token
 
       tokenPromises.push(
         this.prisma.emailToken.create({
@@ -302,6 +304,15 @@ export class ProjectsService {
             expiresAt,
           },
         }),
+        this.prisma.emailToken.create({
+          data: {
+            token: authToken,
+            projectId,
+            professionalId: professional.id,
+            action: 'auth',
+            expiresAt: authExpiresAt,
+          },
+        }),
       );
 
       const professionalName =
@@ -318,6 +329,8 @@ export class ProjectsService {
             location: project.region,
             acceptToken,
             declineToken,
+            authToken,
+            projectId,
             baseUrl,
           })
           .catch((err) => {
@@ -477,7 +490,9 @@ export class ProjectsService {
     for (const professional of professionals) {
       const acceptToken = createId();
       const declineToken = createId();
+      const authToken = createId();
       const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+      const authExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days for auth token
 
       // Store tokens in database
       tokenPromises.push(
@@ -499,6 +514,15 @@ export class ProjectsService {
             expiresAt,
           },
         }),
+        this.prisma.emailToken.create({
+          data: {
+            token: authToken,
+            projectId: project.id,
+            professionalId: professional.id,
+            action: 'auth',
+            expiresAt: authExpiresAt,
+          },
+        }),
       );
 
       // Send invitation email
@@ -516,6 +540,8 @@ export class ProjectsService {
             location: project.region,
             acceptToken,
             declineToken,
+            authToken,
+            projectId: project.id,
             baseUrl,
           })
           .catch((err) => {
@@ -633,6 +659,38 @@ export class ProjectsService {
         action === 'accept'
           ? 'Thank you for accepting! Please submit your quote within 24 hours.'
           : 'Project declined. Thank you for your response.',
+      projectId: emailToken.projectId,
+      professionalId: emailToken.professionalId,
+    };
+  }
+
+  async validateMagicAuthToken(token: string) {
+    const emailToken = await this.prisma.emailToken.findUnique({
+      where: { token },
+    });
+
+    if (!emailToken) {
+      throw new Error('Invalid or expired token');
+    }
+
+    if (emailToken.action !== 'auth') {
+      throw new Error('Invalid token type');
+    }
+
+    if (new Date() > emailToken.expiresAt) {
+      throw new Error('This link has expired');
+    }
+
+    const professional = await this.prisma.professional.findUnique({
+      where: { id: emailToken.professionalId },
+    });
+
+    if (!professional) {
+      throw new Error('Professional not found');
+    }
+
+    return {
+      professional,
       projectId: emailToken.projectId,
       professionalId: emailToken.professionalId,
     };

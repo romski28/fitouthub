@@ -22,6 +22,8 @@ import { AssistRequestsService } from './assist/assist-requests.service';
 import { ChatModule } from './chat/chat.module';
 import { ChatService } from './chat/chat.service';
 import { FinancialModule } from './financial/financial.module';
+import { MagicLinkController } from './auth/magic-link.controller';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -37,6 +39,10 @@ import { FinancialModule } from './financial/financial.module';
     TradesModule,
     ChatModule,
     FinancialModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'your-secret-key',
+      signOptions: { expiresIn: '30d' },
+    }),
   ],
   controllers: [
     AppController,
@@ -44,6 +50,7 @@ import { FinancialModule } from './financial/financial.module';
     UploadsController,
     ReportsController,
     AssistRequestsController,
+    MagicLinkController,
   ],
   providers: [
     AppService,
