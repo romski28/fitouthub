@@ -171,6 +171,30 @@ export default function FloatingChat() {
     }
   }, [isOpen, threadId, isLoggedIn, accessToken, unreadCount]);
 
+  // Poll for new messages when modal is closed
+  useEffect(() => {
+    if (!isOpen || !threadId || threadId.startsWith('stub-') || !isLoggedIn || !accessToken) return;
+
+    const pollInterval = setInterval(() => {
+      fetch(`${API_BASE_URL}/chat/private/${threadId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+        .then((res) => res.ok && res.json())
+        .then((data) => {
+          if (data) {
+            setMessages(data.messages || []);
+            // Only update unreadCount if modal is closed
+            if (!isOpen) {
+              setUnreadCount(data.unreadCount || 0);
+            }
+          }
+        })
+        .catch((e) => console.warn('[FloatingChat] Poll error:', e));
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [isOpen, threadId, isLoggedIn, accessToken]);
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !threadId || sending) return;

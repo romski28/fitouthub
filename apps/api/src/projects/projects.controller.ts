@@ -18,6 +18,7 @@ import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ChatService } from '../chat/chat.service';
+import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 @Controller('projects')
 export class ProjectsController {
@@ -261,30 +262,30 @@ export class ProjectsController {
 
   /**
    * GET /projects/:projectId/chat - Get or create project chat thread
-   * Requires authentication
+   * Requires authentication (client or professional token)
    */
   @Get(':projectId/chat')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async getProjectChat(@Param('projectId') projectId: string) {
     return this.chatService.getOrCreateProjectThread(projectId);
   }
 
   /**
    * POST /projects/:projectId/chat - Create project chat (same as GET, but for POST requests)
-   * Requires authentication
+   * Requires authentication (client or professional token)
    */
   @Post(':projectId/chat')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async createProjectChat(@Param('projectId') projectId: string) {
     return this.chatService.getOrCreateProjectThread(projectId);
   }
 
   /**
    * POST /projects/:projectId/chat/messages - Send a message to project chat
-   * Requires authentication
+   * Requires authentication (client or professional token)
    */
   @Post(':projectId/chat/messages')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async addProjectMessage(
     @Param('projectId') projectId: string,
     @Body() body: { content: string },
@@ -312,10 +313,10 @@ export class ProjectsController {
 
   /**
    * POST /projects/:projectId/chat/read - Mark project chat as read
-   * Requires authentication
+   * Requires authentication (client or professional token)
    */
   @Post(':projectId/chat/read')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async markProjectChatAsRead(@Param('projectId') projectId: string) {
     // Get the thread
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
