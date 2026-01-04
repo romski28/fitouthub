@@ -132,6 +132,10 @@ export class FinancialService {
       where: { id: projectProfessionalId },
     });
 
+    if (!projectProf) {
+      throw new Error('ProjectProfessional not found');
+    }
+
     return this.createTransaction({
       projectId: projectProf.projectId,
       projectProfessionalId,

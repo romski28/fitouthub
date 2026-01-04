@@ -90,6 +90,10 @@ export class FinancialController {
   async confirmEscrowDeposit(@Param('transactionId') transactionId: string, @Request() req: any) {
     const transaction = await this.financialService.getTransaction(transactionId);
     
+    if (!transaction) {
+      throw new BadRequestException('Transaction not found');
+    }
+
     if (transaction.type !== 'escrow_deposit') {
       throw new BadRequestException('This transaction is not an escrow deposit');
     }
@@ -106,6 +110,10 @@ export class FinancialController {
   async approvePayment(@Param('transactionId') transactionId: string, @Request() req: any) {
     const transaction = await this.financialService.getTransaction(transactionId);
     
+    if (!transaction) {
+      throw new BadRequestException('Transaction not found');
+    }
+
     if (transaction.type !== 'advance_payment_request') {
       throw new BadRequestException('This transaction is not an advance payment request');
     }
@@ -130,6 +138,10 @@ export class FinancialController {
   ) {
     const transaction = await this.financialService.getTransaction(transactionId);
     
+    if (!transaction) {
+      throw new BadRequestException('Transaction not found');
+    }
+
     if (transaction.type !== 'advance_payment_request') {
       throw new BadRequestException('This transaction is not an advance payment request');
     }
