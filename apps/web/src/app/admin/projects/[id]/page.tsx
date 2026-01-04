@@ -249,7 +249,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       )}
 
       {/* Financial Transactions - Admin View */}
-      {isAwarded && (
+      {isAwarded && accessToken && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
           <div className="mb-4">
             <h2 className="text-lg font-bold text-slate-900 mb-1">Financial Transactions</h2>

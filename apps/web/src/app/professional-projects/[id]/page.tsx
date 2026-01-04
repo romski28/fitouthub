@@ -918,12 +918,12 @@ export default function ProjectDetailPage() {
           )}
 
           {/* Financial Status - For Awarded Projects */}
-          {project.status === 'awarded' && project.quoteAmount && (
+          {project.status === 'awarded' && project.quoteAmount && accessToken && (
             <div className="p-8 border-t border-gray-200">
               <ProfessionalFinancialSection
                 projectProfessionalId={project.id}
                 projectId={project.project.id}
-                accessToken={accessToken || ''}
+                accessToken={accessToken}
                 quoteAmount={project.quoteAmount}
                 isAwarded={project.status === 'awarded'}
               />

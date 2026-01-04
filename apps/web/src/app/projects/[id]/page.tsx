@@ -816,12 +816,14 @@ export default function ClientProjectDetailPage() {
         </div>
 
           {/* Financial Section with Escrow and Payment Management */}
-          <ClientFinancialSection 
-            projectId={project.id}
-            accessToken={accessToken}
-            projectCost={projectCostValue}
-            isAwarded={isAwarded}
-          />
+          {accessToken && (
+            <ClientFinancialSection 
+              projectId={project.id}
+              accessToken={accessToken}
+              projectCost={projectCostValue}
+              isAwarded={isAwarded}
+            />
+          )}
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
 
