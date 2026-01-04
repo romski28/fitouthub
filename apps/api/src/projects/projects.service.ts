@@ -696,6 +696,28 @@ export class ProjectsService {
     };
   }
 
+  async getAcceptTokenForMagicLink(magicToken: string) {
+    // Find the auth token to get projectId and professionalId
+    const authToken = await this.prisma.emailToken.findUnique({
+      where: { token: magicToken },
+    });
+
+    if (!authToken) {
+      return null;
+    }
+
+    // Find the corresponding accept token for same project/professional
+    const acceptToken = await this.prisma.emailToken.findFirst({
+      where: {
+        projectId: authToken.projectId,
+        professionalId: authToken.professionalId,
+        action: 'accept',
+      },
+    });
+
+    return acceptToken || null;
+  }
+
   async submitQuote(
     projectId: string,
     professionalId: string,

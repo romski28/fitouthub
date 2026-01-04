@@ -29,6 +29,27 @@ export class MagicLinkController {
       const { professional, projectId } =
         await this.projectsService.validateMagicAuthToken(token);
 
+      // Auto-accept the project as part of the magic link flow
+      // First, get the accept token to use for acceptance
+      const emailToken = await this.projectsService.getAcceptTokenForMagicLink(
+        token,
+      );
+
+      if (emailToken) {
+        // Accept the project
+        try {
+          await this.projectsService.respondToInvitation(
+            emailToken.token,
+            'accept',
+          );
+        } catch (acceptErr) {
+          console.warn('[MagicLinkController] Failed to auto-accept project:', {
+            error: acceptErr?.message,
+          });
+          // Continue anyway - they can still accept manually
+        }
+      }
+
       // Generate JWT token for the professional
       const jwtToken = this.jwtService.sign(
         {
@@ -55,7 +76,7 @@ export class MagicLinkController {
               // Redirect to project page
               window.location.href = '${webBaseUrl}/professional-projects/${projectId}';
             </script>
-            <p>Logging you in... If this page doesn't redirect automatically, please <a href="${webBaseUrl}/">click here</a>.</p>
+            <p>Logging you in and preparing your project... If this page doesn't redirect automatically, please <a href="${webBaseUrl}/">click here</a>.</p>
           </body>
         </html>
       `;
