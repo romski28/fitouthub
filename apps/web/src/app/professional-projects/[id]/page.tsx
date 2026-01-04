@@ -7,6 +7,7 @@ import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import ProjectChat from '@/components/project-chat';
+import ProfessionalFinancialSection from '@/components/professional-financial-section';
 
 interface ProjectDetail {
   id: string;
@@ -913,6 +914,19 @@ export default function ProjectDetailPage() {
                   </>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Financial Status - For Awarded Projects */}
+          {project.status === 'awarded' && project.quoteAmount && (
+            <div className="p-8 border-t border-gray-200">
+              <ProfessionalFinancialSection
+                projectProfessionalId={project.id}
+                projectId={project.project.id}
+                accessToken={accessToken || ''}
+                quoteAmount={project.quoteAmount}
+                isAwarded={project.status === 'awarded'}
+              />
             </div>
           )}
 
