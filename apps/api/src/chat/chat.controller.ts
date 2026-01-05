@@ -156,34 +156,28 @@ export class ChatController {
   @Get('admin/threads/:threadId')
   @UseGuards(CombinedAuthGuard)
   async getAdminThread(@Param('threadId') threadId: string) {
-    // Try to get as private thread first
-    if (threadId.startsWith('private-') || !threadId.includes('-anon-') && !threadId.includes('-project-')) {
-      try {
-        return await this.chatService.getPrivateThread(threadId);
-      } catch (e) {
-        // Fall through to try anonymous
-      }
+    // Try private thread
+    try {
+      return await this.chatService.getPrivateThread(threadId);
+    } catch (e) {
+      // ignore and try next
     }
 
-    // Try to get as anonymous thread
-    if (threadId.includes('-anon-') || threadId.startsWith('anon-')) {
-      try {
-        return await this.chatService.getAnonymousThread(threadId);
-      } catch (e) {
-        // Fall through to try project
-      }
+    // Try anonymous thread
+    try {
+      return await this.chatService.getAnonymousThread(threadId);
+    } catch (e) {
+      // ignore and try next
     }
 
-    // Try to get as project thread
-    if (threadId.includes('-project-') || threadId.startsWith('project-')) {
-      try {
-        return await this.chatService.getProjectThread(threadId);
-      } catch (e) {
-        // All failed
-      }
+    // Try project thread
+    try {
+      return await this.chatService.getProjectThread(threadId);
+    } catch (e) {
+      // ignore and fall through
     }
 
-      throw new NotFoundException('Thread not found');
+    throw new NotFoundException('Thread not found');
   }
 
   /**
