@@ -9,6 +9,7 @@ import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
 import ProjectChat from '@/components/project-chat';
 import ProjectFinancialsCard from '@/components/project-financials-card';
+import { ProjectImagesCard } from '@/components/project-images-card';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -625,6 +626,33 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const handleSaveImageNote = async (photoId: string, note: string) => {
+    if (!accessToken || !projectId) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/photos/${photoId}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ note }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update photo note');
+      }
+
+      // Refresh project to update photos
+      await fetchProject();
+      toast.success('Photo note updated!');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update photo note';
+      toast.error(message);
+      console.error('Photo update error:', err);
+    }
+  };
+
   const handleWithdrawProject = async () => {
     if (!accessToken || !projectId) return;
 
@@ -824,6 +852,13 @@ export default function ClientProjectDetailPage() {
               role="client"
             />
           )}
+
+          {/* Project Images */}
+          <ProjectImagesCard
+            photos={(project as any).photos || []}
+            onPhotoNoteUpdate={handleSaveImageNote}
+            isLoading={loading}
+          />
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
 
