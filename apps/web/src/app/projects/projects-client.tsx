@@ -519,11 +519,11 @@ function EditProjectModal({
           <FileUploader
             maxFiles={MAX_FILES}
             maxFileSize={MAX_FILE_SIZE}
-            onUpload={async (files) => {
-              // Just store the files, don't upload them yet
-              setPendingFiles((prev) => [...prev, ...files]);
-              return files.map((f) => f.name);
+            onFilesChange={(files) => {
+              // Store the files locally; upload happens on Save
+              setPendingFiles(files);
             }}
+            showUploadAction={false}
             className="mt-1"
           />
           {pendingFiles.length > 0 && (
