@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
+import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 
 interface Message {
@@ -27,6 +28,7 @@ interface ThreadDetail {
 export default function FohInboxDetailPage() {
   const params = useParams();
   const threadId = params.id as string;
+  const { accessToken } = useAuth();
   
   const [thread, setThread] = useState<ThreadDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,16 +36,16 @@ export default function FohInboxDetailPage() {
   const [replyMessage, setReplyMessage] = useState('');
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    loadThread();
-  }, [threadId]);
-
-  const loadThread = async () => {
+  const loadThread = useCallback(async () => {
+    if (!accessToken) return;
     setLoading(true);
     setError(null);
     try {
-      // Use the admin endpoint which doesn't require authentication
-      const response = await fetch(`${API_BASE_URL}/chat/admin/threads/${threadId}`);
+      const response = await fetch(`${API_BASE_URL}/chat/admin/threads/${threadId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setThread(data);
@@ -58,7 +60,11 @@ export default function FohInboxDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [threadId, accessToken]);
+
+  useEffect(() => {
+    loadThread();
+  }, [loadThread]);
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +76,10 @@ export default function FohInboxDetailPage() {
 
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           content: replyMessage,
         }),

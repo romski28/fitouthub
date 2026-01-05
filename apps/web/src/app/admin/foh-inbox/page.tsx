@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { API_BASE_URL } from '@/config/api';
+import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 
 interface Thread {
@@ -20,20 +21,22 @@ interface Thread {
 }
 
 export default function FohInboxPage() {
+  const { accessToken } = useAuth();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'private' | 'anonymous' | 'project'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    loadThreads();
-  }, []);
-
-  const loadThreads = async () => {
+  const loadThreads = useCallback(async () => {
+    if (!accessToken) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/chat/admin/inbox`);
+      const response = await fetch(`${API_BASE_URL}/chat/admin/inbox`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to load threads');
       }
@@ -45,7 +48,11 @@ export default function FohInboxPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken]);
+
+  useEffect(() => {
+    loadThreads();
+  }, [loadThreads]);
 
   const filteredThreads = threads.filter((thread) => {
     if (filter === 'unread' && thread.unreadCount === 0) return false;
@@ -106,7 +113,7 @@ export default function FohInboxPage() {
               </label>
               <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as any)}
+                onChange={(e) => setTypeFilter(e.target.value as 'all' | 'private' | 'anonymous' | 'project')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Types</option>
