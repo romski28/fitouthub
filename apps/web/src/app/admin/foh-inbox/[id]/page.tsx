@@ -139,7 +139,7 @@ export default function FohInboxDetailPage() {
     thread.userName ||
     thread.professionalName ||
     thread.projectName ||
-    `Anonymous ${thread.sessionId?.slice(0, 8)}`;
+    (thread.sessionId ? `Anonymous ${thread.sessionId.slice(0, 8)}` : 'Anonymous Visitor');
 
   return (
     <div className="min-h-screen bg-gray-50">

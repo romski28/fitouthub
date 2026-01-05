@@ -13,6 +13,8 @@ export class PrivateChatThreadDto {
   id: string;
   userId?: string;
   professionalId?: string;
+  userName?: string;
+  professionalName?: string;
   createdAt: string;
   updatedAt: string;
   messages: PrivateChatMessageDto[];

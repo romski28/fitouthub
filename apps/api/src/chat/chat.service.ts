@@ -21,19 +21,31 @@ export class ChatService {
     let thread = userId
       ? await this.prisma.privateChatThread.findUnique({
           where: { userId },
-          include: { messages: { orderBy: { createdAt: 'asc' } } },
+          include: {
+            messages: { orderBy: { createdAt: 'asc' } },
+            user: { select: { firstName: true, surname: true, email: true } },
+            professional: { select: { businessName: true, email: true } },
+          },
         })
       : professionalId
       ? await this.prisma.privateChatThread.findUnique({
           where: { professionalId },
-          include: { messages: { orderBy: { createdAt: 'asc' } } },
+          include: {
+            messages: { orderBy: { createdAt: 'asc' } },
+            user: { select: { firstName: true, surname: true, email: true } },
+            professional: { select: { businessName: true, email: true } },
+          },
         })
       : null;
 
     if (!thread) {
       thread = await this.prisma.privateChatThread.create({
         data: userId ? { userId } : { professionalId },
-        include: { messages: { orderBy: { createdAt: 'asc' } } },
+        include: {
+          messages: { orderBy: { createdAt: 'asc' } },
+          user: { select: { firstName: true, surname: true, email: true } },
+          professional: { select: { businessName: true, email: true } },
+        },
       });
     }
 
@@ -46,7 +58,11 @@ export class ChatService {
   async getPrivateThread(threadId: string): Promise<PrivateChatThreadDto> {
     const thread = await this.prisma.privateChatThread.findUnique({
       where: { id: threadId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        messages: { orderBy: { createdAt: 'asc' } },
+        user: { select: { firstName: true, surname: true, email: true } },
+        professional: { select: { businessName: true, email: true } },
+      },
     });
 
     if (!thread) {
@@ -174,13 +190,19 @@ export class ChatService {
   async getOrCreateProjectThread(projectId: string): Promise<ProjectChatThreadDto> {
     let thread = await this.prisma.projectChatThread.findUnique({
       where: { projectId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        messages: { orderBy: { createdAt: 'asc' } },
+        project: { select: { projectName: true } },
+      },
     });
 
     if (!thread) {
       thread = await this.prisma.projectChatThread.create({
         data: { projectId },
-        include: { messages: { orderBy: { createdAt: 'asc' } } },
+        include: {
+          messages: { orderBy: { createdAt: 'asc' } },
+          project: { select: { projectName: true } },
+        },
       });
     }
 
@@ -193,7 +215,10 @@ export class ChatService {
   async getProjectThread(threadId: string): Promise<ProjectChatThreadDto> {
     const thread = await this.prisma.projectChatThread.findUnique({
       where: { id: threadId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        messages: { orderBy: { createdAt: 'asc' } },
+        project: { select: { projectName: true } },
+      },
     });
 
     if (!thread) {
@@ -248,6 +273,8 @@ export class ChatService {
       threadId: thread.id, // Alias for frontend compatibility
       userId: thread.userId,
       professionalId: thread.professionalId,
+      userName: thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined,
+      professionalName: thread.professional?.businessName,
       createdAt: thread.createdAt.toISOString(),
       updatedAt: thread.updatedAt.toISOString(),
       messages: thread.messages.map((m: any) => this.mapPrivateMessageDto(m)),
@@ -294,6 +321,7 @@ export class ChatService {
       id: thread.id,
       threadId: thread.id,
       projectId: thread.projectId,
+      projectName: thread.project?.projectName,
       createdAt: thread.createdAt.toISOString(),
       updatedAt: thread.updatedAt.toISOString(),
       messages: thread.messages.map((m: any) => this.mapProjectMessageDto(m)),

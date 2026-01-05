@@ -15,6 +15,7 @@ export class ProjectChatMessageDto {
 export class ProjectChatThreadDto {
   id: string;
   projectId: string;
+  projectName?: string;
   createdAt: string;
   updatedAt: string;
   messages: ProjectChatMessageDto[];
