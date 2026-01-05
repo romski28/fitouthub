@@ -1077,6 +1077,42 @@ export class ProjectsService {
       },
     });
 
+    // Create financial transactions mirroring the client acceptance flow
+    const quoteAmount = projectProfessional.quoteAmount
+      ? new Decimal(projectProfessional.quoteAmount.toString())
+      : new Decimal(0);
+
+    if (quoteAmount.greaterThan(0)) {
+      // Informational line: quotation accepted
+      await this.prisma.financialTransaction.create({
+        data: {
+          projectId,
+          projectProfessionalId: awarded.id,
+          type: 'quotation_accepted',
+          description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
+          amount: quoteAmount,
+          status: 'info',
+          requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
+          requestedByRole: 'client',
+        },
+      });
+
+      // Action line: request client deposit into escrow
+      await this.prisma.financialTransaction.create({
+        data: {
+          projectId,
+          projectProfessionalId: awarded.id,
+          type: 'escrow_deposit_request',
+          description: 'Request to deposit project fees to escrow',
+          amount: quoteAmount,
+          status: 'Deposited',
+          requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
+          requestedByRole: 'client',
+          notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
+        },
+      });
+    }
+
     const project = projectProfessional.project;
     const professionals = project.professionals;
     const winnerName =
