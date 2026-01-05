@@ -77,6 +77,7 @@ export default function ProjectDetailPage() {
   const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
   const [showUptfrontCostsDialog, setShowUptfrontCostsDialog] = useState(false);
   const [uptfrontCostsAmount, setUptfrontCostsAmount] = useState<string>('');
+  const [hasShownUpfrontPrompt, setHasShownUpfrontPrompt] = useState(false);
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -352,11 +353,6 @@ export default function ProjectDetailPage() {
       const result = await response.json();
       setProject(result.projectProfessional);
       toast.success('Project accepted!');
-      
-      // Show upfront costs dialog after a brief delay
-      setTimeout(() => {
-        setShowUptfrontCostsDialog(true);
-      }, 500);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to accept project';
       setError(message);
@@ -365,6 +361,14 @@ export default function ProjectDetailPage() {
       setSubmittingQuote(false);
     }
   };
+
+  // Show upfront costs prompt only once when the project becomes awarded
+  useEffect(() => {
+    if (project?.status === 'awarded' && !hasShownUpfrontPrompt) {
+      setShowUptfrontCostsDialog(true);
+      setHasShownUpfrontPrompt(true);
+    }
+  }, [project?.status, hasShownUpfrontPrompt]);
 
   const handleReject = async () => {
     const confirmed = await new Promise<boolean>((resolve) => {

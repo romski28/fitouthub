@@ -60,34 +60,35 @@ export class MagicLinkController {
         { expiresIn: '30d' },
       );
 
-      // Return HTML that stores JWT and redirects
-      // Note: We escape JSON strings for safe embedding in JavaScript
-      const professionalJson = JSON.stringify({
+      // We cannot write to localStorage from the API domain; send data to the web app to persist.
+      const professionalPayload = {
         id: professional.id,
         email: professional.email,
         fullName: professional.fullName,
         businessName: professional.businessName,
         professionType: professional.professionType,
         status: professional.status,
-      }).replace(/'/g, "\\'");
+      };
 
+      // Encode professional JSON for a safe query param
+      const professionalB64 = Buffer.from(
+        JSON.stringify(professionalPayload),
+        'utf8',
+      ).toString('base64url');
+
+      const redirectUrl = `${webBaseUrl}/professional-magic?token=${jwtToken}&professional=${professionalB64}&projectId=${projectId || ''}`;
+
+      // Simple HTML that immediately redirects to the web app bridge page
       return `
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Logging in...</title>
+            <meta http-equiv="refresh" content="0;url=${redirectUrl}" />
+            <script>window.location.href='${redirectUrl.replace(/'/g, "\\'")}'</script>
           </head>
           <body>
-            <script>
-              // Store JWT token with correct key for professional auth
-              localStorage.setItem('professionalAccessToken', '${jwtToken}');
-              localStorage.setItem('professional', '${professionalJson}');
-              localStorage.setItem('isProfessional', 'true');
-              
-              // Redirect to professional projects list page
-              window.location.href = '${webBaseUrl}/professional-projects';
-            </script>
-            <p>Logging you in and preparing your project... If this page doesn't redirect automatically, please <a href="${webBaseUrl}/">click here</a>.</p>
+            <p>Redirecting to your project...</p>
+            <p>If you are not redirected, <a href="${redirectUrl}">click here</a>.</p>
           </body>
         </html>
       `;
