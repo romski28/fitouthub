@@ -14,16 +14,23 @@ export default function CreateProjectPage() {
   const { isLoggedIn, accessToken, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (isLoggedIn === false) {
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated && isLoggedIn === false) {
       router.push('/');
     }
-  }, [isLoggedIn, router]);
+  }, [hydrated, isLoggedIn, router]);
 
-  if (isLoggedIn === undefined || isLoggedIn === false) {
-    return null;
+  if (!hydrated || isLoggedIn === undefined) {
+    return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" />;
   }
+
+  if (isLoggedIn === false) return null;
 
   const handleSubmit = async (formData: ProjectFormData) => {
     setError(null);
