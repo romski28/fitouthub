@@ -21,6 +21,8 @@ export const SERVICE_TO_PROFESSION: Record<string, string> = {
   'leaking pipe': 'plumber',
   'burst pipe': 'plumber',
   'water pipe': 'plumber',
+  'pipe': 'plumber',
+  'pipes': 'plumber',
   'toilet repair': 'plumber',
   'blocked drain': 'plumber',
   'drainage': 'plumber',
@@ -30,6 +32,7 @@ export const SERVICE_TO_PROFESSION: Record<string, string> = {
   'sink repair': 'plumber',
   'taps': 'plumber',
   'faucet': 'plumber',
+  'plumbing': 'plumber',
 
   // ELECTRICAL SERVICES
   'electrical work': 'electrician',
@@ -93,6 +96,8 @@ export const SERVICE_TO_PROFESSION: Record<string, string> = {
   // TILING/FLOORING
   'tile installation': 'tiler',
   'tiling': 'tiler',
+  'tiles': 'tiler',
+  'tile': 'tiler',
   'floor tile': 'tiler',
   'wall tile': 'tiler',
   'bathroom tile': 'tiler',
@@ -179,6 +184,28 @@ export function matchServiceToProfession(query: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * Match a user query to multiple professions
+ * Returns all unique matching professions found
+ * 
+ * Example:
+ * matchMultipleServices("I need to fix leaky pipes and install new tiles")
+ * => ["plumber", "tiler"]
+ */
+export function matchMultipleServices(query: string): string[] {
+  const normalized = query.toLowerCase().trim();
+  const matchedProfessions = new Set<string>();
+
+  // Check all service keywords that appear in the query
+  for (const [service, profession] of Object.entries(SERVICE_TO_PROFESSION)) {
+    if (normalized.includes(service)) {
+      matchedProfessions.add(profession);
+    }
+  }
+
+  return Array.from(matchedProfessions);
 }
 
 /**

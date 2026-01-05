@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { matchServiceToProfession } from '@/lib/service-matcher';
+import { matchServiceToProfession, matchMultipleServices } from '@/lib/service-matcher';
 import { matchLocation } from '@/lib/location-matcher';
 import type { CanonicalLocation } from '@/components/location-select';
 
@@ -27,7 +27,7 @@ export function ProjectDescriptionModal({
 }: ProjectDescriptionModalProps) {
   const [description, setDescription] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [matchedProfession, setMatchedProfession] = useState<string | null>(null);
+  const [matchedProfessions, setMatchedProfessions] = useState<string[]>([]);
   const [matchedLocation, setMatchedLocation] = useState<CanonicalLocation | null>(null);
 
   if (!isOpen) return null;
@@ -37,8 +37,8 @@ export function ProjectDescriptionModal({
 
     // Real-time pattern matching
     if (text.trim().length > 10) {
-      const profession = matchServiceToProfession(text.toLowerCase());
-      setMatchedProfession(profession || null);
+      const professions = matchMultipleServices(text.toLowerCase());
+      setMatchedProfessions(professions);
 
       const locMatch = matchLocation(text.toLowerCase());
       if (locMatch) {
@@ -54,7 +54,7 @@ export function ProjectDescriptionModal({
         setMatchedLocation(null);
       }
     } else {
-      setMatchedProfession(null);
+      setMatchedProfessions([]);
       setMatchedLocation(null);
     }
   };
@@ -64,10 +64,10 @@ export function ProjectDescriptionModal({
     setIsProcessing(true);
 
     try {
-      const profession = matchServiceToProfession(description.toLowerCase()) || undefined;
+      const professions = matchMultipleServices(description.toLowerCase());
       const locMatch = matchLocation(description.toLowerCase());
 
-      const tradesRequired = profession ? [profession] : [];
+      const tradesRequired = professions.length > 0 ? professions : [];
       const location = locMatch
         ? {
             primary: locMatch.primary || '',
@@ -81,7 +81,7 @@ export function ProjectDescriptionModal({
         'projectDescription',
         JSON.stringify({
           description,
-          profession,
+          profession: professions[0] || undefined,
           location,
           tradesRequired,
         })
@@ -89,7 +89,7 @@ export function ProjectDescriptionModal({
 
       onSubmit({
         description,
-        profession,
+        profession: professions[0] || undefined,
         location,
         tradesRequired,
       });
@@ -131,11 +131,22 @@ export function ProjectDescriptionModal({
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 border border-slate-200">
               <h3 className="text-sm font-semibold text-slate-700">Detected from your description:</h3>
 
-              {matchedProfession && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span className="text-slate-600">Professional Type:</span>
-                  <span className="font-semibold text-slate-900 capitalize">{matchedProfession}</span>
+              {matchedProfessions.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-slate-600">Professional Types:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 ml-4">
+                    {matchedProfessions.map((prof) => (
+                      <span
+                        key={prof}
+                        className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 capitalize"
+                      >
+                        {prof}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -151,8 +162,8 @@ export function ProjectDescriptionModal({
                 </div>
               )}
 
-              {!matchedProfession && !matchedLocation && (
-                <p className="text-sm text-slate-500 italic">Keep typing to detect profession and location...</p>
+              {matchedProfessions.length === 0 && !matchedLocation && (
+                <p className="text-sm text-slate-500 italic">Keep typing to detect professions and location...</p>
               )}
             </div>
           )}

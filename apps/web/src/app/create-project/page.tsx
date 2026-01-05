@@ -200,6 +200,7 @@ export default function CreateProjectPage() {
       <ProjectDescriptionModal
         isOpen={showDescriptionModal}
         onSubmit={(data) => {
+          console.log('[create-project] Description data received:', data);
           setDescriptionData(data);
           setShowDescriptionModal(false);
         }}
@@ -219,25 +220,28 @@ export default function CreateProjectPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-8">
-          <ProjectForm
-            mode="create"
-            initialData={{
-              clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
-              notes: descriptionData?.description || '',
-              tradesRequired: descriptionData?.tradesRequired || [],
-              location: descriptionData?.location || undefined,
-            }}
-            onAssistRequest={handleAssist}
-            onSubmit={handleSubmit}
-            onCancel={() => router.push('/projects')}
-            isSubmitting={isSubmitting}
-            error={error}
-            submitLabel="Create Project"
-            showBudget={true}
-            showService={true}
-          />
-        </div>
+        {!showDescriptionModal && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-8">
+            <ProjectForm
+              mode="create"
+              key={descriptionData ? JSON.stringify(descriptionData) : 'empty'}
+              initialData={{
+                clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
+                notes: descriptionData?.description || '',
+                tradesRequired: descriptionData?.tradesRequired || [],
+                location: descriptionData?.location || undefined,
+              }}
+              onAssistRequest={handleAssist}
+              onSubmit={handleSubmit}
+              onCancel={() => router.push('/projects')}
+              isSubmitting={isSubmitting}
+              error={error}
+              submitLabel="Create Project"
+              showBudget={true}
+              showService={true}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
