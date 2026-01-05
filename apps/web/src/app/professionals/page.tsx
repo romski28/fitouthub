@@ -132,7 +132,7 @@ function ProfessionalsPageInner() {
         setProjectName(name);
         setProjectPrefill({
           projectName: typeof p?.projectName === 'string' ? p.projectName : name,
-          tradesRequired: Array.isArray(p?.tradesRequired) && p.tradesRequired.length > 0 ? p.tradesRequired : name ? [name] : [],
+          tradesRequired: Array.isArray(p?.tradesRequired) && p.tradesRequired.length > 0 ? p.tradesRequired : [],
           location: matchedLocation ? { primary: matchedLocation.primary, secondary: matchedLocation.secondary, tertiary: matchedLocation.tertiary } : undefined,
           notes: cleanedNotes,
           photoUrls,
