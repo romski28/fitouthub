@@ -20,7 +20,7 @@ interface ProjectDescriptionData {
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const { isLoggedIn, accessToken, user } = useAuth();
+  const { isLoggedIn, accessToken, user, userLocation } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -229,7 +229,7 @@ export default function CreateProjectPage() {
                 clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
                 notes: descriptionData?.description || '',
                 tradesRequired: descriptionData?.tradesRequired || [],
-                location: descriptionData?.location || undefined,
+                location: descriptionData?.location || userLocation || undefined,
               }}
               onAssistRequest={handleAssist}
               onSubmit={handleSubmit}
