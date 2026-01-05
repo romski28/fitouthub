@@ -211,8 +211,8 @@ function EditProjectModal({
     endDate: (project as any).endDate || "",
   });
   const [photos, setPhotos] = useState<string[]>(project.photos || []);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [lightboxState, setLightboxState] = useState<{ images: string[]; index: number } | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -244,7 +244,26 @@ function EditProjectModal({
     setSaving(true);
     setError(null);
     try {
-        const absolutePhotos = photos.map(toAbsolute);
+      let uploadedPhotos = photos;
+
+      // Upload pending files first if any
+      if (pendingFiles.length > 0) {
+        const formData = new FormData();
+        pendingFiles.forEach((f) => formData.append("files", f));
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          const message = await uploadRes.text();
+          throw new Error(message || "Failed to upload files");
+        }
+        const uploadData = (await uploadRes.json()) as { urls: string[] };
+        uploadedPhotos = Array.from(new Set([...photos, ...uploadData.urls]));
+        setPendingFiles([]);
+      }
+
+      const absolutePhotos = uploadedPhotos.map(toAbsolute);
       const payload = {
         ...form,
         budget: form.budget === "" ? undefined : Number(form.budget),
@@ -501,28 +520,17 @@ function EditProjectModal({
             maxFiles={MAX_FILES}
             maxFileSize={MAX_FILE_SIZE}
             onUpload={async (files) => {
-              setUploading(true);
-              try {
-                const formData = new FormData();
-                files.forEach((f) => formData.append("files", f));
-                const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
-                  method: "POST",
-                  body: formData,
-                });
-                if (!res.ok) {
-                  const message = await res.text();
-                  throw new Error(message || "Upload failed");
-                }
-                const data = (await res.json()) as { urls: string[] };
-                setPhotos((prev) => Array.from(new Set([...prev, ...data.urls])));
-                return data.urls;
-              } finally {
-                setUploading(false);
-              }
+              // Just store the files, don't upload them yet
+              setPendingFiles((prev) => [...prev, ...files]);
+              return files.map((f) => f.name);
             }}
             className="mt-1"
           />
-          {uploading ? <p className="text-xs text-slate-500">Uploading...</p> : null}
+          {pendingFiles.length > 0 && (
+            <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
+              📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Save)
+            </div>
+          )}
         </div>
 
         {error ? (
@@ -552,7 +560,7 @@ function EditProjectModal({
             disabled={saving || deleting}
             className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save changes"}
+            {saving ? (pendingFiles.length > 0 ? "Uploading & saving..." : "Saving...") : "Save changes"}
           </button>
         </div>
       </div>
