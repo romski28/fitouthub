@@ -15,6 +15,7 @@ export interface ProjectFormData {
   selectedService?: string;
   location?: CanonicalLocation;
   files?: File[];
+  photoUrls?: string[];
   tradesRequired: string[];
   isEmergency?: boolean;
   endDate?: string; // ISO date string (YYYY-MM-DD)
@@ -86,6 +87,7 @@ export function ProjectForm({
     selectedService: initialData?.selectedService || '',
     location: initialData?.location || {},
     files: initialData?.files || [],
+    photoUrls: initialData?.photoUrls || [],
     tradesRequired: initialData?.tradesRequired || [],
     isEmergency: initialData?.isEmergency ?? false,
     endDate: initialData?.endDate || '',
@@ -275,6 +277,27 @@ export function ProjectForm({
             onFilesChange={handleFilesChange}
             showUploadAction={false}
           />
+          {formData.photoUrls && formData.photoUrls.length > 0 && (
+            <div className="mt-3 space-y-1 text-xs text-slate-700">
+              <div className="font-semibold text-slate-900">Existing attachments</div>
+              <div className="flex flex-wrap gap-2">
+                {formData.photoUrls.map((url) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 hover:bg-slate-50"
+                  >
+                    <span>Photo</span>
+                    <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0-7L10 14m-4 0H3v7h7v-3" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Error */}
@@ -532,6 +555,27 @@ export function ProjectForm({
             onFilesChange={handleFilesChange}
             showUploadAction={false}
           />
+          {formData.photoUrls && formData.photoUrls.length > 0 && (
+            <div className="mt-3 space-y-1 text-xs text-slate-700">
+              <div className="font-semibold text-slate-900">Existing attachments</div>
+              <div className="flex flex-wrap gap-2">
+                {formData.photoUrls.map((url) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 hover:bg-slate-50"
+                  >
+                    <span>Photo</span>
+                    <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0-7L10 14m-4 0H3v7h7v-3" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

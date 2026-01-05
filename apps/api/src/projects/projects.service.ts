@@ -82,6 +82,32 @@ export class ProjectsService {
       .trim();
   }
 
+  private normalizePhotos(
+    photos?: Array<{ url?: string; note?: string }> | null,
+    legacyUrls?: string[] | null,
+  ): Array<{ url: string; note?: string }> {
+    const result: Array<{ url: string; note?: string }> = [];
+    if (Array.isArray(photos)) {
+      for (const p of photos) {
+        if (!p) continue;
+        const url = typeof p.url === 'string' ? p.url.trim() : '';
+        if (!url) continue;
+        result.push({ url, note: typeof p.note === 'string' ? p.note : undefined });
+      }
+    }
+    if (Array.isArray(legacyUrls)) {
+      for (const u of legacyUrls) {
+        const url = typeof u === 'string' ? u.trim() : '';
+        if (!url) continue;
+        // Avoid duplicates
+        if (!result.some((p) => p.url === url)) {
+          result.push({ url });
+        }
+      }
+    }
+    return result;
+  }
+
   async findCanonical(clientId?: string) {
     try {
       const projects = (await this.prisma.project.findMany({
@@ -97,6 +123,7 @@ export class ProjectsService {
           professionals: {
             include: { professional: true },
           },
+          photos: true,
         },
       })) as any[];
 
@@ -157,6 +184,7 @@ export class ProjectsService {
               professional: true,
             },
           },
+          photos: true,
         },
       });
       // Consolidate duplicate professionals per project
@@ -184,6 +212,7 @@ export class ProjectsService {
             professional: true,
           },
         },
+        photos: true,
       },
     });
     if (!project) return null;
@@ -408,10 +437,12 @@ export class ProjectsService {
   }
 
   async create(createProjectDto: CreateProjectDto) {
-    const { professionalIds, userId, ...rest } = createProjectDto;
+    const { professionalIds, userId, photos, photoUrls, ...rest } = createProjectDto;
     // Strip legacy professionalId from the data object so Prisma does not see an unknown field
 
     const { professionalId: _legacyField, ...projectData } = rest as any;
+
+    const normalizedPhotos = this.normalizePhotos(photos, photoUrls);
 
     // Backward compatibility: allow single professionalId in payload
     const ids: string[] = Array.isArray(professionalIds)
@@ -466,6 +497,12 @@ export class ProjectsService {
       },
     };
 
+    if (normalizedPhotos.length > 0) {
+      createData.photos = {
+        create: normalizedPhotos.map((p) => ({ url: p.url, note: p.note })),
+      };
+    }
+
     if (userId) {
       createData.user = { connect: { id: userId } };
     }
@@ -480,6 +517,7 @@ export class ProjectsService {
             professional: true,
           },
         },
+        photos: true,
       },
     });
 
@@ -561,17 +599,48 @@ export class ProjectsService {
   }
 
   async update(id: string, updateProjectDto: UpdateProjectDto) {
-    return this.prisma.project.update({
-      where: { id },
-      data: updateProjectDto,
-      include: {
-        client: true,
-        professionals: {
-          include: {
-            professional: true,
+    const { photos, photoUrls, ...rest } = updateProjectDto;
+    const hasPhotoUpdate = photos !== undefined || photoUrls !== undefined;
+    const normalizedPhotos = hasPhotoUpdate
+      ? this.normalizePhotos(photos, photoUrls)
+      : [];
+
+    // Normalize dates if provided
+    if (typeof (rest as any).startDate === 'string' && (rest as any).startDate) {
+      (rest as any).startDate = new Date((rest as any).startDate);
+    }
+    if (typeof (rest as any).endDate === 'string' && (rest as any).endDate) {
+      (rest as any).endDate = new Date((rest as any).endDate);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      if (hasPhotoUpdate) {
+        await tx.projectPhoto.deleteMany({ where: { projectId: id } });
+        if (normalizedPhotos.length > 0) {
+          await tx.projectPhoto.createMany({
+            data: normalizedPhotos.map((p) => ({ projectId: id, url: p.url, note: p.note })),
+          });
+        }
+      }
+
+      const project = await tx.project.update({
+        where: { id },
+        data: rest,
+        include: {
+          client: true,
+          professionals: {
+            include: {
+              professional: true,
+            },
           },
+          photos: true,
         },
-      },
+      });
+
+      return {
+        ...project,
+        professionals: this.dedupeProfessionals((project as any).professionals),
+      } as any;
     });
   }
 

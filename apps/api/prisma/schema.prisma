@@ -111,10 +111,23 @@ model Project {
   emailTokens            EmailToken[]
   client                 Client?               @relation(fields: [clientId], references: [id])
   user                   User?                 @relation(fields: [userId], references: [id])
+  photos                 ProjectPhoto[]
   professionals          ProjectProfessional[]
   assistRequests         ProjectAssistRequest[]
   chatThread             ProjectChatThread?
   financialTransactions  FinancialTransaction[]
+}
+
+model ProjectPhoto {
+  id         String   @id @default(cuid())
+  projectId  String
+  url        String
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }
 
 model ProjectProfessional {

@@ -28,6 +28,7 @@ export const Navbar: React.FC = () => {
 
   const showAuthed = hydrated && isLoggedIn && user;
   const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
+  const isAdmin = Boolean(user && user.role === 'admin');
   const showProjectsLink = hydrated && isLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const [clientUnread, setClientUnread] = useState<number>(0);
@@ -153,9 +154,19 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-2 px-3 py-1 rounded-md hover:bg-slate-100"
                   >
                     <span className="text-slate-900 font-medium">{user.nickname}</span>
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                      {user.role}
-                    </span>
+                    {isAdmin ? (
+                      <Link
+                        href="/admin"
+                        className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-200 font-semibold"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Admin Portal
+                      </Link>
+                    ) : (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        {user.role}
+                      </span>
+                    )}
                   </button>
 
                   {/* Profile dropdown menu */}

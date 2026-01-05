@@ -13,4 +13,6 @@ export class CreateProjectDto {
   startDate?: string; // ISO date string
   endDate?: string; // ISO date string
   isEmergency?: boolean;
+  photos?: Array<{ url: string; note?: string }>;
+  photoUrls?: string[]; // Legacy compatibility
 }

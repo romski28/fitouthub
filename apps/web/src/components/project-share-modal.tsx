@@ -16,21 +16,21 @@ interface ProjectShareModalProps {
   initialData?: Partial<ProjectFormData>;
 }
 
-const toAbsolute = (url: string) => {
-  if (!url) return url;
-  const trimmed = url.trim();
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
-  const base = API_BASE_URL.replace(/\/$/, "");
-  const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  return `${base}${normalized}`;
-};
-
 export function ProjectShareModal({ isOpen, onClose, professionals, projectId, initialData }: ProjectShareModalProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>(initialData?.photoUrls || []);
+
+  const toAbsolute = (url: string) => {
+    if (!url) return url;
+    const trimmed = url.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    const base = API_BASE_URL.replace(/\/$/, "");
+    const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return `${base}${normalized}`;
+  };
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -75,7 +75,8 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
         clientName,
         contractorName: "",
         region: locationLabel || "Hong Kong",
-        notes: `${data.notes?.trim() || ''}${normalizedPhotos.length > 0 ? `\nPhotos: ${normalizedPhotos.join(", ")}` : ""}`,
+        notes: data.notes?.trim() || "",
+        photos: normalizedPhotos.length > 0 ? normalizedPhotos.map((url) => ({ url })) : undefined,
         status: "pending" as const,
         userId: user?.id,
         professionalIds: invitePros ? professionals.map((p) => p.id) : [],

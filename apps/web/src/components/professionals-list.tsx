@@ -10,6 +10,7 @@ import { Professional } from '@/lib/types';
 import { ProjectShareModal } from '@/components/project-share-modal';
 import { useAuth } from '@/context/auth-context';
 import { BackToTop } from '@/components/back-to-top';
+import type { ProjectFormData } from '@/components/project-form';
 
 const Pill = memo(({ label }: { label: string }) => {
   return (
@@ -149,9 +150,10 @@ interface Props {
   initialLocation?: CanonicalLocation;
   projectId?: string;
   initialSearchTerm?: string;
+  initialProjectData?: Partial<ProjectFormData>;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialProjectData }: Props) {
   const { role } = useAuth();
   const isAdmin = role === 'admin';
   // Initialize from intentData synchronously to avoid effect-based setState
@@ -600,10 +602,15 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             if (locationLabel) return `Service Request in ${locationLabel}`;
             return 'Service Request';
           })();
+          const prefill = initialProjectData || {};
           return {
-            projectName: defaultTitle,
-            location: loc,
-            tradesRequired: mainTrade ? [mainTrade] : [],
+            projectName: prefill.projectName || defaultTitle,
+            location: prefill.location || loc,
+            tradesRequired: (prefill.tradesRequired && prefill.tradesRequired.length > 0)
+              ? prefill.tradesRequired
+              : (mainTrade ? [mainTrade] : []),
+            notes: prefill.notes,
+            photoUrls: prefill.photoUrls,
           };
         })()}
       />

@@ -43,6 +43,15 @@ export type ReferenceProject = {
   updatedAt?: string;
 };
 
+export type ProjectPhoto = {
+  id: string;
+  projectId?: string;
+  url: string;
+  note?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type Project = {
   id: string;
   projectName: string;
@@ -66,4 +75,6 @@ export type Project = {
   startDate?: string;
   endDate?: string;
   isEmergency?: boolean;
+  photos?: ProjectPhoto[];
+  photoUrls?: string[];
 };

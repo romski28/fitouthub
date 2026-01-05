@@ -13,6 +13,43 @@ import type { CanonicalLocation } from '@/components/location-select';
 import { API_BASE_URL } from '@/config/api';
 import { useSearchParams } from 'next/navigation';
 import { matchLocation } from '@/lib/location-matcher';
+import type { ProjectFormData } from '@/components/project-form';
+
+function extractPhotoUrls(notes?: string): string[] {
+  if (!notes) return [];
+  const matches = notes.match(/(https?:\/\/[^\s,;\)]+|\/api?\/uploads\/[^\s,;\)]+)/gi) || [];
+  return matches
+    .filter((url) => {
+      if (!url) return false;
+      const lower = url.toLowerCase();
+      return lower.includes("/uploads/") ||
+             lower.endsWith(".jpg") ||
+             lower.endsWith(".jpeg") ||
+             lower.endsWith(".png") ||
+             lower.endsWith(".webp") ||
+             lower.endsWith(".gif");
+    })
+    .map((url) => url.trim());
+}
+
+function stripPhotoSection(notes?: string): string {
+  if (!notes) return "";
+  return notes
+    .split(/\r?\n/)
+    .map((line) => (line.trim().toLowerCase().startsWith("photos:") ? "" : line))
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function toAbsolute(url: string): string {
+  if (!url) return url;
+  const trimmed = url.trim();
+  const base = API_BASE_URL.replace(/\/$/, "");
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+  const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${base}${normalized}`;
+}
 
 function ProfessionalsPageInner() {
   const { isLoggedIn, userLocation } = useAuth();
@@ -24,6 +61,7 @@ function ProfessionalsPageInner() {
   const tradeParam = searchParams.get('trade') || undefined;
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
+  const [projectPrefill, setProjectPrefill] = useState<Partial<ProjectFormData>>({});
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -86,9 +124,19 @@ function ProfessionalsPageInner() {
         } else if (typeof p?.projectName === 'string') {
           name = p.projectName;
         }
+        const photoUrls = extractPhotoUrls(p?.notes || undefined).map(toAbsolute);
+        const cleanedNotes = stripPhotoSection(p?.notes || undefined);
+        const matchedLocation = region ? matchLocation(region) : null;
         console.log('[ProfessionalsPage] Project data:', { region, name, tradesRequired: p?.tradesRequired, project: p });
         setProjectRegion(region);
         setProjectName(name);
+        setProjectPrefill({
+          projectName: typeof p?.projectName === 'string' ? p.projectName : name,
+          tradesRequired: Array.isArray(p?.tradesRequired) && p.tradesRequired.length > 0 ? p.tradesRequired : name ? [name] : [],
+          location: matchedLocation ? { primary: matchedLocation.primary, secondary: matchedLocation.secondary, tertiary: matchedLocation.tertiary } : undefined,
+          notes: cleanedNotes,
+          photoUrls,
+        });
       } catch (err) {
         console.error('[ProfessionalsPage] Project fetch error:', err);
       }
@@ -157,6 +205,7 @@ function ProfessionalsPageInner() {
             initialLocation={defaultLocation}
             projectId={projectId}
             initialSearchTerm={tradeParam || projectName}
+            initialProjectData={projectPrefill}
           />
         )}
       </div>

@@ -14,15 +14,6 @@ interface ProjectRequestModalProps {
   professional: Professional | null;
 }
 
-const toAbsolute = (url: string) => {
-  if (!url) return url;
-  const trimmed = url.trim();
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
-  const base = API_BASE_URL.replace(/\/$/, "");
-  const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  return `${base}${normalized}`;
-};
-
 export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRequestModalProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -31,6 +22,15 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
 
   const displayName = professional?.fullName || professional?.businessName || "Professional";
+
+  const toAbsolute = (url: string) => {
+    if (!url) return url;
+    const trimmed = url.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    const base = API_BASE_URL.replace(/\/$/, "");
+    const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return `${base}${normalized}`;
+  };
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -70,9 +70,6 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
     const projectName = formData.notes?.trim() || `Request from ${clientName}`;
 
     const normalizedPhotos = photoUrls.map(toAbsolute);
-    const photoNote = normalizedPhotos.length > 0
-      ? `\nPhotos: ${normalizedPhotos.join(", ")}`
-      : "";
 
     const payload = {
       projectName,
@@ -80,7 +77,8 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
       clientName,
       contractorName: displayName,
       region: locationLabel || "Hong Kong",
-      notes: `${formData.notes?.trim() || ''}${photoNote}`,
+      notes: formData.notes?.trim() || "",
+      photos: normalizedPhotos.length > 0 ? normalizedPhotos.map((url) => ({ url })) : undefined,
       status: "pending" as const,
       userId: user?.id,
       professionalIds: [professional.id],

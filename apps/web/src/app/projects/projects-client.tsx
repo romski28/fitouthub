@@ -241,15 +241,12 @@ function EditProjectModal({
     setSaving(true);
     setError(null);
     try {
+        const absolutePhotos = photos.map(toAbsolute);
       const payload = {
         ...form,
         budget: form.budget === "" ? undefined : Number(form.budget),
-        notes: (() => {
-          const base = stripPhotoSection(form.notes);
-          if (photos.length === 0) return base;
-          const absolutePhotos = photos.map(toAbsolute);
-          return `${base ? `${base}\n` : ""}Photos: ${absolutePhotos.join(", ")}`;
-        })(),
+          notes: stripPhotoSection(form.notes),
+          photos: absolutePhotos.length > 0 ? absolutePhotos.map((url) => ({ url })) : [],
         isEmergency: !!form.isEmergency,
         endDate: form.endDate || undefined,
       };
@@ -263,7 +260,12 @@ function EditProjectModal({
         throw new Error(message || "Failed to update project");
       }
       const updated: Project = await res.json();
-      onSave({ ...updated, photos: extractPhotoUrls(updated.notes) });
+      const updatedPhotos = Array.isArray((updated as any).photos)
+        ? (updated as any).photos.map((p: any) => p?.url).filter(Boolean)
+        : Array.isArray((updated as any).photoUrls)
+          ? (updated as any).photoUrls.filter(Boolean)
+          : extractPhotoUrls((updated as any).notes);
+      onSave({ ...updated, photos: updatedPhotos });
       onClose();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update project";
@@ -580,9 +582,17 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const [items, setItems] = useState<ExtendedProject[]>(() => {
     // Map projects directly without consolidation - each project is unique by ID
     return projects.map(p => {
+      const relationPhotos = Array.isArray((p as any).photos)
+        ? (p as any).photos.map((ph: any) => ph?.url).filter(Boolean)
+        : [];
+      const legacyPhotoUrls = Array.isArray((p as any).photoUrls) ? (p as any).photoUrls.filter(Boolean) : [];
+      const extracted = extractPhotoUrls((p as any).notes);
+      const photos = relationPhotos.length > 0
+        ? relationPhotos
+        : (legacyPhotoUrls.length > 0 ? legacyPhotoUrls : extracted);
       const base: ExtendedProject = {
         ...(p as any),
-        photos: extractPhotoUrls((p as any).notes),
+        photos,
         professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
         sourceIds: [String((p as any).id)],
       };
@@ -772,8 +782,15 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-          No projects yet. Create one via the API (POST /projects) and refresh.
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center space-y-3">
+          <p className="text-base font-semibold text-slate-800">No projects yet</p>
+          <p className="text-sm text-slate-600">Kickstart your next renovation with a new project.</p>
+          <a
+            href="/create-project"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          >
+            Do something great, start a project now!
+          </a>
         </div>
       ) : (
         <div className="space-y-3">

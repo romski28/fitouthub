@@ -347,7 +347,7 @@ export default function FloatingChat() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed top-1/2 right-6 -translate-y-1/2 z-50 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center group"
+          className="fixed top-1/2 right-6 -translate-y-1/2 z-50 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center group attention-wiggle"
           aria-label="Open chat"
           title="Chat with Fitout Hub support"
         >
@@ -372,6 +372,21 @@ export default function FloatingChat() {
           </span>
         </button>
       )}
+
+      <style jsx>{`
+        @keyframes wink-wiggle {
+          0%, 80%, 100% { transform: translateY(-50%) rotate(0deg) scale(1); box-shadow: 0 10px 20px rgba(59,130,246,0.25); }
+          85% { transform: translateY(-50%) rotate(-4deg) scale(1.02); }
+          90% { transform: translateY(-50%) rotate(4deg) scale(1.02); }
+          95% { transform: translateY(-50%) rotate(0deg) scale(1.04); box-shadow: 0 12px 28px rgba(59,130,246,0.35); }
+        }
+        .attention-wiggle {
+          animation: wink-wiggle 3.2s ease-in-out infinite;
+        }
+        .attention-wiggle:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </>
   );
 }
