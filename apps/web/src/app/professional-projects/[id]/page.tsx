@@ -778,7 +778,7 @@ export default function ProjectDetailPage() {
           ) : null}
 
           {/* Invoice & Advance Payment (shown when awarded) */}
-          {project.status === 'awarded' && !(project.status === 'declined' || project.status === 'rejected') && (
+          {project.status === 'awarded' && (
             <div className="p-8 border-t border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 💰 Invoice & Payment
@@ -958,7 +958,7 @@ export default function ProjectDetailPage() {
           )}
 
           {/* Project Financials */}
-          {project.status === 'awarded' && project.quoteAmount && accessToken && !(project.status === 'declined' || project.status === 'rejected') && (
+          {project.status === 'awarded' && project.quoteAmount && accessToken && (
             <div className="p-8 border-t border-gray-200">
               <ProjectFinancialsCard
                 projectProfessionalId={project.id}
