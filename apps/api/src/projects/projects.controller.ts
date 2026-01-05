@@ -306,6 +306,36 @@ export class ProjectsController {
     return this.projectsService.updatePhoto(projectId, photoId, body.note);
   }
 
+  // ===== PROJECT FINANCIAL ENDPOINTS =====
+
+  /**
+   * POST /projects/:projectId/financials - Create a financial transaction for the project
+   */
+  @Post(':projectId/financials')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async createFinancialTransaction(
+    @Param('projectId') projectId: string,
+    @Body() body: {
+      type: string;
+      description: string;
+      amount: string;
+      status: string;
+      requestedByRole: string;
+      projectProfessionalId?: string;
+    },
+    @Request() req: any,
+  ) {
+    return this.projectsService.createFinancialTransaction(projectId, {
+      type: body.type,
+      description: body.description,
+      amount: body.amount,
+      status: body.status,
+      requestedBy: req.user.id || req.user.sub,
+      requestedByRole: body.requestedByRole,
+      projectProfessionalId: body.projectProfessionalId,
+    });
+  }
+
   // ===== PROJECT CHAT ENDPOINTS =====
 
   /**

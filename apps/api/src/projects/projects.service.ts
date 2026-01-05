@@ -6,6 +6,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { resolve } from 'path';
 import { promises as fs } from 'fs';
 import { createId } from '@paralleldrive/cuid2';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ProjectsService {
@@ -750,6 +751,46 @@ export class ProjectsService {
     return this.prisma.projectPhoto.update({
       where: { id: photoId },
       data: { note: note || null },
+    });
+  }
+
+  /**
+   * Create a financial transaction for a project
+   */
+  async createFinancialTransaction(
+    projectId: string,
+    data: {
+      type: string;
+      description: string;
+      amount: string;
+      status: string;
+      requestedBy?: string;
+      requestedByRole?: string;
+      projectProfessionalId?: string;
+    },
+  ) {
+    // Verify project exists
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const amount = new Decimal(data.amount);
+
+    return this.prisma.financialTransaction.create({
+      data: {
+        projectId,
+        projectProfessionalId: data.projectProfessionalId || null,
+        type: data.type,
+        description: data.description,
+        amount,
+        status: data.status,
+        requestedBy: data.requestedBy,
+        requestedByRole: data.requestedByRole,
+      },
     });
   }
 

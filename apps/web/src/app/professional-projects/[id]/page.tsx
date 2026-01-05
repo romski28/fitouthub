@@ -75,6 +75,8 @@ export default function ProjectDetailPage() {
     percentage: '',
   });
   const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
+  const [showUptfrontCostsDialog, setShowUptfrontCostsDialog] = useState(false);
+  const [uptfrontCostsAmount, setUptfrontCostsAmount] = useState<string>('');
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -349,17 +351,52 @@ export default function ProjectDetailPage() {
 
       const result = await response.json();
       setProject(result.projectProfessional);
-      alert('Project accepted!');
+      toast.success('Project accepted!');
+      
+      // Show upfront costs dialog after a brief delay
+      setTimeout(() => {
+        setShowUptfrontCostsDialog(true);
+      }, 500);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to accept project';
       setError(message);
+      toast.error(message);
     } finally {
       setSubmittingQuote(false);
     }
   };
 
   const handleReject = async () => {
-    if (!window.confirm('Are you sure you want to reject this project?')) {
+    const confirmed = await new Promise<boolean>((resolve) => {
+      toast((t) => (
+        <div className="space-y-3">
+          <p className="font-medium text-slate-900">Reject this project?</p>
+          <p className="text-sm text-slate-600">This action cannot be undone.</p>
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                resolve(false);
+              }}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                resolve(true);
+              }}
+              className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-sm font-medium hover:bg-rose-700"
+            >
+              Reject
+            </button>
+          </div>
+        </div>
+      ));
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -383,11 +420,12 @@ export default function ProjectDetailPage() {
         throw new Error(data.message || 'Failed to reject project');
       }
 
-      alert('Project rejected');
+      toast.success('Project rejected');
       router.push('/professional-projects');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to reject project';
       setError(message);
+      toast.error(message);
     } finally {
       setSubmittingQuote(false);
     }
@@ -987,6 +1025,86 @@ export default function ProjectDetailPage() {
         </div>
       </div>
     </div>
+
+    {/* Upfront Costs Dialog */}
+    {showUptfrontCostsDialog && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full space-y-6 p-6">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Upfront Costs Required?</h3>
+            <p className="text-sm text-slate-600 mt-1">Are there any upfront costs needed to start this project?</p>
+          </div>
+
+          <div>
+            <label htmlFor="uptfrontAmount" className="block text-sm font-medium text-slate-700 mb-2">
+              Amount (HKD) - Leave blank if none
+            </label>
+            <input
+              id="uptfrontAmount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={uptfrontCostsAmount}
+              onChange={(e) => setUptfrontCostsAmount(e.target.value)}
+              placeholder="0.00"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 justify-end pt-2">
+            <button
+              onClick={() => {
+                setShowUptfrontCostsDialog(false);
+                setUptfrontCostsAmount('');
+              }}
+              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50"
+            >
+              No Upfront Costs
+            </button>
+            <button
+              onClick={async () => {
+                const amount = parseFloat(uptfrontCostsAmount || '0');
+                if (amount > 0) {
+                  // Create financial line for upfront costs request
+                  try {
+                    const response = await fetch(`${API_BASE_URL}/projects/${project?.project?.id}/financials`, {
+                      method: 'POST',
+                      headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        type: 'upfront_costs_request',
+                        description: 'Request for upfront costs to start project',
+                        amount: amount.toString(),
+                        status: 'Confirm',
+                        requestedByRole: 'professional',
+                        projectProfessionalId: projectProfessionalId,
+                      }),
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('Failed to submit upfront costs request');
+                    }
+
+                    toast.success('Upfront costs request submitted!');
+                  } catch (err) {
+                    const msg = err instanceof Error ? err.message : 'Failed to submit request';
+                    toast.error(msg);
+                  }
+                }
+                setShowUptfrontCostsDialog(false);
+                setUptfrontCostsAmount('');
+              }}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+            >
+              {uptfrontCostsAmount ? 'Submit Request' : 'Skip'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     <Toaster position="top-right" />
     </>
   );

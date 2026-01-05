@@ -15,6 +15,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Controller('professional')
 export class ProfessionalController {
@@ -383,12 +384,16 @@ export class ProfessionalController {
           id: projectProfessionalId,
           professionalId,
         },
+        include: {
+          project: true,
+        },
       });
 
       if (!projectProfessional) {
         throw new BadRequestException('Project not found');
       }
 
+      // Update project professional status
       const updated = await (this.prisma as any).projectProfessional.update({
         where: { id: projectProfessionalId },
         data: {
@@ -399,6 +404,42 @@ export class ProfessionalController {
           project: true,
         },
       });
+
+      // Create financial transactions for quotation acceptance
+      const quoteAmount = projectProfessional.quoteAmount 
+        ? new Decimal(projectProfessional.quoteAmount.toString()) 
+        : new Decimal(0);
+
+      if (quoteAmount.greaterThan(0)) {
+        // Transaction 1: Quotation accepted notification (info status)
+        await (this.prisma as any).financialTransaction.create({
+          data: {
+            projectId: projectProfessional.projectId,
+            projectProfessionalId,
+            type: 'quotation_accepted',
+            description: `Quotation accepted from ${projectProfessional.project?.contractorName || 'Professional'}`,
+            amount: quoteAmount,
+            status: 'info', // informational, not actionable
+            requestedBy: professionalId,
+            requestedByRole: 'professional',
+          },
+        });
+
+        // Transaction 2: Escrow deposit request (Deposited status - action button)
+        const project = projectProfessional.project;
+        await (this.prisma as any).financialTransaction.create({
+          data: {
+            projectId: projectProfessional.projectId,
+            type: 'escrow_deposit_request',
+            description: `Request to deposit project fees to escrow`,
+            amount: quoteAmount,
+            status: 'Deposited', // action button status
+            requestedBy: project?.userId || project?.clientId,
+            requestedByRole: 'client',
+            notes: `Quote amount for project ${project?.projectName || 'Project'}`,
+          },
+        });
+      }
 
       return {
         success: true,
