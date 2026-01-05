@@ -150,9 +150,10 @@ export class ChatController {
 
   /**
    * GET /chat/admin/threads/:threadId - Get a specific thread by ID (for admin)
-   * TODO: Add proper admin authentication guard
+   * Requires admin authentication (JWT)
    */
   @Get('admin/threads/:threadId')
+  @UseGuards(AuthGuard('jwt'))
   async getAdminThread(@Param('threadId') threadId: string) {
     // Try to get as private thread first
     if (threadId.startsWith('private-') || !threadId.includes('-anon-') && !threadId.includes('-project-')) {
@@ -186,9 +187,10 @@ export class ChatController {
 
   /**
    * POST /chat/admin/threads/:threadId/reply - Admin reply to a thread
-   * TODO: Add proper admin authentication guard
+   * Requires admin authentication (JWT)
    */
   @Post('admin/threads/:threadId/reply')
+  @UseGuards(AuthGuard('jwt'))
   async adminReplyToThread(
     @Param('threadId') threadId: string,
     @Body() body: { content: string },
