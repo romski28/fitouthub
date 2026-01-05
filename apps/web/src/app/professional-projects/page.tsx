@@ -205,18 +205,22 @@ export default function ProfessionalProjectsPage() {
                         <span className="font-semibold">Status:</span>
                         <span className="text-slate-600 capitalize">{projectProf.status}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                        <span className="font-semibold">Budget:</span>
-                        <span className="text-slate-600">{projectProf.project.budget ? `$${projectProf.project.budget}` : '—'}</span>
-                      </div>
-                      {projectProf.quoteAmount ? (
-                        <div className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                          <span className="font-semibold">Your Quote:</span>
-                          <span className="text-slate-600">${projectProf.quoteAmount}</span>
-                        </div>
-                      ) : null}
+                      {!(projectProf.status === 'declined' || projectProf.status === 'rejected') && (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                            <span className="font-semibold">Budget:</span>
+                            <span className="text-slate-600">{projectProf.project.budget ? `$${projectProf.project.budget}` : '—'}</span>
+                          </div>
+                          {projectProf.quoteAmount ? (
+                            <div className="flex items-center gap-2">
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                              <span className="font-semibold">Your Quote:</span>
+                              <span className="text-slate-600">${projectProf.quoteAmount}</span>
+                            </div>
+                          ) : null}
+                        </>
+                      )}
                     </div>
 
                     {projectProf.project.notes ? (

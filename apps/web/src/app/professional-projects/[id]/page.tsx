@@ -605,12 +605,14 @@ export default function ProjectDetailPage() {
                   {project.project.region}
                 </p>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Project Budget</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {project.project.budget ? `$${project.project.budget}` : 'Not specified'}
-                </p>
-              </div>
+              {!(project.status === 'declined' || project.status === 'rejected') && (
+                <div>
+                  <p className="text-sm text-gray-600">Project Budget</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {project.project.budget ? `$${project.project.budget}` : 'Not specified'}
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="text-sm text-gray-600">Status</p>
                 <span
@@ -642,7 +644,7 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Quote Form */}
-          {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) ? (
+          {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && !(project.status === 'declined' || project.status === 'rejected') ? (
             <div className="p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
@@ -743,7 +745,7 @@ export default function ProjectDetailPage() {
                 </div>
               </form>
             </div>
-          ) : (
+          ) : !(project.status === 'declined' || project.status === 'rejected') ? (
             <div className="p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Your Quote
@@ -773,10 +775,10 @@ export default function ProjectDetailPage() {
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
           {/* Invoice & Advance Payment (shown when awarded) */}
-          {project.status === 'awarded' && (
+          {project.status === 'awarded' && !(project.status === 'declined' || project.status === 'rejected') && (
             <div className="p-8 border-t border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 💰 Invoice & Payment
@@ -956,7 +958,7 @@ export default function ProjectDetailPage() {
           )}
 
           {/* Project Financials */}
-          {project.status === 'awarded' && project.quoteAmount && accessToken && (
+          {project.status === 'awarded' && project.quoteAmount && accessToken && !(project.status === 'declined' || project.status === 'rejected') && (
             <div className="p-8 border-t border-gray-200">
               <ProjectFinancialsCard
                 projectProfessionalId={project.id}

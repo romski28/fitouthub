@@ -26,7 +26,7 @@ export class MagicLinkController {
     }
 
     try {
-      const { professional, projectId } =
+      const { professional, projectId, professionalId } =
         await this.projectsService.validateMagicAuthToken(token);
 
       // Auto-accept the project as part of the magic link flow
@@ -61,6 +61,16 @@ export class MagicLinkController {
       );
 
       // Return HTML that stores JWT and redirects
+      // Note: We escape JSON strings for safe embedding in JavaScript
+      const professionalJson = JSON.stringify({
+        id: professional.id,
+        email: professional.email,
+        fullName: professional.fullName,
+        businessName: professional.businessName,
+        professionType: professional.professionType,
+        status: professional.status,
+      }).replace(/'/g, "\\'");
+
       return `
         <!DOCTYPE html>
         <html>
@@ -69,12 +79,13 @@ export class MagicLinkController {
           </head>
           <body>
             <script>
-              // Store JWT token
-              localStorage.setItem('authToken', '${jwtToken}');
+              // Store JWT token with correct key for professional auth
+              localStorage.setItem('professionalAccessToken', '${jwtToken}');
+              localStorage.setItem('professional', '${professionalJson}');
               localStorage.setItem('isProfessional', 'true');
               
-              // Redirect to project page
-              window.location.href = '${webBaseUrl}/professional-projects/${projectId}';
+              // Redirect to professional projects list page
+              window.location.href = '${webBaseUrl}/professional-projects';
             </script>
             <p>Logging you in and preparing your project... If this page doesn't redirect automatically, please <a href="${webBaseUrl}/">click here</a>.</p>
           </body>
