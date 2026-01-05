@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ProfessionalMagicBridge() {
+  return (
+    <Suspense fallback={<BridgeFallback />}>
+      <BridgeInner />
+    </Suspense>
+  );
+}
+
+function BridgeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -67,10 +75,16 @@ export default function ProfessionalMagicBridge() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm max-w-md w-full text-center space-y-3">
-        <div className="animate-spin inline-block rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div>
-        <p className="text-sm text-slate-700">Logging you in...</p>
-      </div>
+      <BridgeFallback />
+    </div>
+  );
+}
+
+function BridgeFallback() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm max-w-md w-full text-center space-y-3">
+      <div className="animate-spin inline-block rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div>
+      <p className="text-sm text-slate-700">Logging you in...</p>
     </div>
   );
 }
