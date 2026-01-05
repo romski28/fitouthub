@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ProjectPhoto {
   id: string;
@@ -38,10 +38,12 @@ export function ProjectImageModal({
 }: ProjectImageModalProps) {
   const [note, setNote] = useState<string>(photo?.note || '');
 
-  // Update note when photo changes
-  if (isOpen && photo && note !== (photo?.note || '')) {
-    setNote(photo?.note || '');
-  }
+  // Sync note when the selected photo changes
+  useEffect(() => {
+    if (isOpen && photo) {
+      setNote(photo.note || '');
+    }
+  }, [isOpen, photo?.id, photo?.note]);
 
   if (!isOpen || !photo) return null;
 
