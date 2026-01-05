@@ -9,8 +9,8 @@ import {
   Headers,
   BadRequestException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ChatService } from './chat.service';
 import { CreatePrivateMessageDto } from './dto/create-private-message.dto';
 import { CreateAnonymousMessageDto } from './dto/anonymous-chat.dto';
@@ -141,19 +141,20 @@ export class ChatController {
 
   /**
    * GET /chat/admin/inbox - Get all threads for FOH admin inbox
-   * TODO: Add proper admin authentication guard
+   * Requires authentication (client/admin/professional)
    */
   @Get('admin/inbox')
+  @UseGuards(CombinedAuthGuard)
   async getAdminInbox() {
     return this.chatService.getAllThreadsForAdmin();
   }
 
   /**
-   * GET /chat/admin/threads/:threadId - Get a specific thread by ID (for admin)
-   * Requires admin authentication (JWT)
+  * GET /chat/admin/threads/:threadId - Get a specific thread by ID (for admin)
+  * Requires authentication (client/admin/professional)
    */
   @Get('admin/threads/:threadId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async getAdminThread(@Param('threadId') threadId: string) {
     // Try to get as private thread first
     if (threadId.startsWith('private-') || !threadId.includes('-anon-') && !threadId.includes('-project-')) {
@@ -182,15 +183,15 @@ export class ChatController {
       }
     }
 
-    throw new UnauthorizedException('Thread not found');
+      throw new NotFoundException('Thread not found');
   }
 
   /**
-   * POST /chat/admin/threads/:threadId/reply - Admin reply to a thread
-   * Requires admin authentication (JWT)
+  * POST /chat/admin/threads/:threadId/reply - Admin reply to a thread
+  * Requires authentication (client/admin/professional)
    */
   @Post('admin/threads/:threadId/reply')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async adminReplyToThread(
     @Param('threadId') threadId: string,
     @Body() body: { content: string },
@@ -228,7 +229,7 @@ export class ChatController {
       // Not an anonymous thread either
     }
 
-    throw new BadRequestException('Invalid thread type or thread not found');
+      throw new NotFoundException('Invalid thread type or thread not found');
   }
 
   // ===== PROJECT CHAT ENDPOINTS =====
@@ -238,7 +239,7 @@ export class ChatController {
    * Requires authentication
    */
   @Get()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async getProjectThreadViaQuery(@Request() req: any) {
     // This is a workaround for routing - actual endpoint is /projects/:projectId/chat
     throw new BadRequestException('Use /projects/:projectId/chat instead');
@@ -249,7 +250,7 @@ export class ChatController {
    * Requires authentication
    */
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async createProjectThread(@Request() req: any) {
     // This is a workaround for routing
     throw new BadRequestException('Use /projects/:projectId/chat instead');
