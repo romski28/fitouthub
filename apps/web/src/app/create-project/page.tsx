@@ -62,7 +62,7 @@ export default function CreateProjectPage() {
 
   if (isLoggedIn === false) return null;
 
-  const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[]) => {
+  const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setError(null);
 
     // Derive region from location object
@@ -140,7 +140,7 @@ export default function CreateProjectPage() {
     }
   };
 
-  const handleAssist = async (formData: ProjectFormData, pendingFiles: File[]) => {
+  const handleAssist = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setError(null);
     setIsSubmitting(true);
     try {

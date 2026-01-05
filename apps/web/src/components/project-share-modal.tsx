@@ -45,12 +45,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
   };
 
   const uploadPendingFiles = async (formData: ProjectFormData) => {
-    let photoUrls = uploadedUrls;
-    if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
-      photoUrls = await uploadFiles(formData.files);
-      setUploadedUrls(photoUrls);
-    }
-    return photoUrls;
+    return uploadedUrls;
   };
 
   const buildPayload = (data: ProjectFormData, normalizedPhotos: string[], invitePros: boolean) => {
@@ -137,7 +132,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     }
   };
 
-  const handleFormSubmit = async (formData: ProjectFormData, pendingFiles: File[]) => {
+  const handleFormSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     if (professionals.length === 0 && !projectId) return;
 
     setError(null);
@@ -184,7 +179,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     }
   };
 
-  const handleAssistRequest = async (formData: ProjectFormData, pendingFiles: File[]) => {
+  const handleAssistRequest = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setError(null);
     setSubmitting(true);
 

@@ -14,8 +14,8 @@ export interface ProjectFormData {
   notes: string;
   selectedService?: string;
   location?: CanonicalLocation;
-  files?: File[];
   photoUrls?: string[];
+  existingPhotos?: Array<{ id?: string; url: string; note?: string | null }>;
   tradesRequired: string[];
   isEmergency?: boolean;
   endDate?: string; // ISO date string (YYYY-MM-DD)
@@ -37,9 +37,9 @@ interface ProjectFormProps {
   /** Whether this is a quick request (shorthand form) vs full creation form */
   isQuickRequest?: boolean;
   
-  /** Form submission handler - receives form data and pending files separately */
-  onSubmit: (data: ProjectFormData, pendingFiles: File[]) => Promise<void>;
-  onAssistRequest?: (data: ProjectFormData, pendingFiles: File[]) => Promise<void>;
+  /** Form submission handler - receives form data, pending files, and removed photo URLs/ids */
+  onSubmit: (data: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => Promise<void>;
+  onAssistRequest?: (data: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => Promise<void>;
   
   /** Cancel handler */
   onCancel?: () => void;
@@ -86,8 +86,8 @@ export function ProjectForm({
     notes: initialData?.notes || '',
     selectedService: initialData?.selectedService || '',
     location: initialData?.location || {},
-    files: initialData?.files || [],
     photoUrls: initialData?.photoUrls || [],
+    existingPhotos: initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []),
     tradesRequired: initialData?.tradesRequired || [],
     isEmergency: initialData?.isEmergency ?? false,
     endDate: initialData?.endDate || '',
@@ -97,6 +97,8 @@ export function ProjectForm({
   const [showTradeDropdown, setShowTradeDropdown] = useState(false);
   const [tradeSearchTerm, setTradeSearchTerm] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []));
+  const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
   const isReadOnly = mode === 'view';
 
   // Fetch available trades from API
@@ -164,14 +166,19 @@ export function ProjectForm({
     setPendingFiles((prev) => [...prev, ...files]);
   };
 
+  const handleRemoveExistingPhoto = (urlOrId: string) => {
+    setExistingPhotos((prev) => prev.filter((p) => p.id !== urlOrId && p.url !== urlOrId));
+    setRemovedPhotos((prev) => (prev.includes(urlOrId) ? prev : [...prev, urlOrId]));
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData, pendingFiles);
+    await onSubmit({ ...formData, existingPhotos }, pendingFiles, removedPhotos);
   };
 
   const handleAssistClick = async () => {
     if (!onAssistRequest) return;
-    await onAssistRequest(formData, pendingFiles);
+    await onAssistRequest({ ...formData, existingPhotos }, pendingFiles, removedPhotos);
   };
 
   // Quick request form (compact)
@@ -284,23 +291,27 @@ export function ProjectForm({
               📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
             </div>
           )}
-          {formData.photoUrls && formData.photoUrls.length > 0 && (
-            <div className="mt-3 space-y-1 text-xs text-slate-700">
-              <div className="font-semibold text-slate-900">Existing attachments</div>
+          {existingPhotos.length > 0 && (
+            <div className="mt-3 space-y-2 text-xs text-slate-700">
+              <div className="font-semibold text-slate-900">Existing photos</div>
               <div className="flex flex-wrap gap-2">
-                {formData.photoUrls.map((url) => (
-                  <a
-                    key={url}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 hover:bg-slate-50"
+                {existingPhotos.map((photo) => (
+                  <div
+                    key={photo.id || photo.url}
+                    className="relative h-16 w-20 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
                   >
-                    <span>Photo</span>
-                    <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0-7L10 14m-4 0H3v7h7v-3" />
-                    </svg>
-                  </a>
+                    <img src={photo.url} alt="Project photo" className="h-full w-full object-cover" />
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
+                        onClick={() => handleRemoveExistingPhoto(photo.id || photo.url)}
+                        aria-label="Remove photo"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -567,23 +578,27 @@ export function ProjectForm({
               📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
             </div>
           )}
-          {formData.photoUrls && formData.photoUrls.length > 0 && (
-            <div className="mt-3 space-y-1 text-xs text-slate-700">
-              <div className="font-semibold text-slate-900">Existing attachments</div>
+          {existingPhotos.length > 0 && (
+            <div className="mt-3 space-y-2 text-xs text-slate-700">
+              <div className="font-semibold text-slate-900">Existing photos</div>
               <div className="flex flex-wrap gap-2">
-                {formData.photoUrls.map((url) => (
-                  <a
-                    key={url}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 hover:bg-slate-50"
+                {existingPhotos.map((photo) => (
+                  <div
+                    key={photo.id || photo.url}
+                    className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
                   >
-                    <span>Photo</span>
-                    <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0-7L10 14m-4 0H3v7h7v-3" />
-                    </svg>
-                  </a>
+                    <img src={photo.url} alt="Project photo" className="h-full w-full object-cover" />
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
+                        onClick={() => handleRemoveExistingPhoto(photo.id || photo.url)}
+                        aria-label="Remove photo"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

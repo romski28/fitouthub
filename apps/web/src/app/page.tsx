@@ -21,7 +21,7 @@ export default function Home() {
     setHydrated(true);
   }, []);
 
-  const handleProjectSubmit = async (data: ProjectFormData, pendingFiles: File[]) => {
+  const handleProjectSubmit = async (data: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -87,7 +87,7 @@ export default function Home() {
     }
   };
 
-  const handleAssistRequest = async (data: ProjectFormData, pendingFiles: File[]) => {
+  const handleAssistRequest = async (data: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setIsSubmitting(true);
     setError(null);
 

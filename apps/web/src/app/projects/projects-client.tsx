@@ -7,8 +7,8 @@ import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { ProjectDescriptionModal } from "@/components/project-description-modal";
-import FileUploader from "@/components/file-uploader";
 import ImageLightbox from "@/components/image-lightbox";
+import { ProjectForm, type ProjectFormData } from "@/components/project-form";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
@@ -174,19 +174,6 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${cls}`}>{status.replace('_', ' ')}</span>;
 }
 
-type EditState = {
-  projectName: string;
-  clientName: string;
-  contractorName?: string;
-  region: string;
-  budget?: string | number;
-  status: Project["status"];
-  notes?: string;
-  tradesRequired: string[];
-  isEmergency?: boolean;
-  endDate?: string;
-};
-
 function EditProjectModal({
   project,
   onClose,
@@ -198,80 +185,80 @@ function EditProjectModal({
   onSave: (updated: ExtendedProject) => void;
   onDelete: (id: string) => void;
 }) {
-  const [form, setForm] = useState<EditState>({
-    projectName: project.projectName,
-    clientName: project.clientName,
-    contractorName: project.contractorName,
-    region: project.region,
-    budget: project.budget,
-    status: project.status,
-    notes: stripPhotoSection(project.notes),
-    tradesRequired: project.tradesRequired || [],
-    isEmergency: (project as any).isEmergency ?? false,
-    endDate: (project as any).endDate || "",
-  });
-  const [photos, setPhotos] = useState<string[]>(project.photos || []);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [lightboxState, setLightboxState] = useState<{ images: string[]; index: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [availableTrades, setAvailableTrades] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedTradeId, setSelectedTradeId] = useState<string>("");
 
-  // Fetch available trades
-  useEffect(() => {
-    const fetchTrades = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/trades`);
-        if (res.ok) {
-          const data = await res.json();
-          setAvailableTrades(data.map((t: { id: string; name: string }) => ({ id: t.id, name: t.name })));
-        }
-      } catch (err) {
-        console.warn('[EditProjectModal] Failed to fetch trades:', err);
-      }
-    };
-    fetchTrades();
-  }, []);
-
-  const handleChange = (key: keyof EditState, value: string | string[]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const initialData: ProjectFormData = {
+    projectName: project.projectName || "",
+    clientName: project.clientName || "",
+    region: project.region || "",
+    budget: project.budget ?? "",
+    notes: stripPhotoSection(project.notes),
+    tradesRequired: project.tradesRequired || [],
+    isEmergency: (project as any).isEmergency ?? false,
+    endDate: (project as any).endDate || "",
+    existingPhotos:
+      Array.isArray((project as any).photos)
+        ? (project as any).photos.map((p: any) =>
+            typeof p === "string"
+              ? { url: p }
+              : { id: p.id || p.url, url: p.url, note: p.note },
+          )
+        : Array.isArray((project as any).photoUrls)
+          ? (project as any).photoUrls.map((url: string) => ({ url }))
+          : [],
+    photoUrls: [],
+    location: undefined,
+    selectedService: undefined,
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (
+    formData: ProjectFormData,
+    pendingFiles: File[],
+    removedPhotos: string[],
+  ) => {
     setSaving(true);
     setError(null);
     try {
-      let uploadedPhotos = photos;
-
-      // Upload pending files first if any
+      // Upload new files
+      let uploadedUrls: string[] = [];
       if (pendingFiles.length > 0) {
-        const formData = new FormData();
-        pendingFiles.forEach((f) => formData.append("files", f));
+        const formDataUpload = new FormData();
+        pendingFiles.forEach((f) => formDataUpload.append("files", f));
         const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
           method: "POST",
-          body: formData,
+          body: formDataUpload,
         });
         if (!uploadRes.ok) {
           const message = await uploadRes.text();
           throw new Error(message || "Failed to upload files");
         }
         const uploadData = (await uploadRes.json()) as { urls: string[] };
-        uploadedPhotos = Array.from(new Set([...photos, ...uploadData.urls]));
-        setPendingFiles([]);
+        uploadedUrls = uploadData.urls || [];
       }
 
-      const absolutePhotos = uploadedPhotos.map(toAbsolute);
+      const existing = (formData.existingPhotos || []).filter(
+        (p) => !removedPhotos.includes(p.id || p.url),
+      );
+      const mergedPhotos = [...existing.map((p) => p.url), ...uploadedUrls];
+      const uniquePhotos = Array.from(new Set(mergedPhotos)).map((url) => ({ url: toAbsolute(url) }));
+
       const payload = {
-        ...form,
-        budget: form.budget === "" ? undefined : Number(form.budget),
-          notes: stripPhotoSection(form.notes),
-          photos: absolutePhotos.length > 0 ? absolutePhotos.map((url) => ({ url })) : [],
-        isEmergency: !!form.isEmergency,
-        endDate: form.endDate || undefined,
+        projectName: formData.projectName,
+        clientName: formData.clientName,
+        contractorName: project.contractorName,
+        region: formData.region,
+        budget: formData.budget === "" ? undefined : Number(formData.budget),
+        status: project.status,
+        notes: stripPhotoSection(formData.notes),
+        tradesRequired: formData.tradesRequired || [],
+        isEmergency: !!formData.isEmergency,
+        endDate: formData.endDate || undefined,
+        photos: uniquePhotos,
       };
+
       const res = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects/${project.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -330,222 +317,23 @@ function EditProjectModal({
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-800">Project name</label>
-            <input
-              value={form.projectName}
-              onChange={(e) => handleChange("projectName", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-800">Client</label>
-            <input
-              value={form.clientName}
-              onChange={(e) => handleChange("clientName", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-800">Contractor</label>
-            <input
-              value={form.contractorName || ""}
-              onChange={(e) => handleChange("contractorName", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-800">Region</label>
-            <input
-              value={form.region}
-              onChange={(e) => handleChange("region", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-800">Budget (HKD)</label>
-            <input
-              type="number"
-              value={form.budget ?? ""}
-              onChange={(e) => handleChange("budget", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-800">Status</label>
-            <select
-              value={form.status}
-              onChange={(e) => handleChange("status", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Trades Required */}
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-800">Trades Required</label>
-          
-          {/* Selected Trades Pills */}
-          {form.tradesRequired.length > 0 && (
-            <div className="flex flex-wrap gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              {form.tradesRequired.map((trade, idx) => (
-                <span
-                  key={`${trade}-${idx}`}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700"
-                >
-                  {trade}
-                  <button
-                    type="button"
-                    onClick={() => handleChange("tradesRequired", form.tradesRequired.filter((_, i) => i !== idx))}
-                    className="hover:text-blue-900 transition"
-                    aria-label="Remove trade"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Add Trade Dropdown + Button */}
-          <div className="flex gap-2">
-            <select
-              value={selectedTradeId}
-              onChange={(e) => setSelectedTradeId(e.target.value)}
-              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="">Select a trade...</option>
-              {availableTrades
-                .filter(t => !form.tradesRequired.includes(t.name))
-                .map((trade) => (
-                  <option key={trade.id} value={trade.id}>
-                    {trade.name}
-                  </option>
-                ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedTradeId) {
-                  const trade = availableTrades.find(t => t.id === selectedTradeId);
-                  if (trade && !form.tradesRequired.includes(trade.name)) {
-                    handleChange("tradesRequired", [...form.tradesRequired, trade.name]);
-                    setSelectedTradeId("");
-                  }
-                }
-              }}
-              disabled={!selectedTradeId}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Add
-            </button>
-          </div>
-          <p className="text-xs text-slate-500">Select a trade from the dropdown and click Add. Remove by clicking the × on each chip.</p>
-        </div>
-
-        {/* Timescale */}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex items-center gap-2">
-            <input
-              id="isEmergencyEdit"
-              type="checkbox"
-              checked={!!form.isEmergency}
-              onChange={(e) => handleChange("isEmergency", e.target.checked as any)}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            <label htmlFor="isEmergencyEdit" className="text-sm font-medium text-slate-800">This is an emergency</label>
-          </div>
-          <div className="grid gap-1">
-            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
-            <input
-              type="date"
-              value={form.endDate || ""}
-              onChange={(e) => handleChange("endDate", e.target.value)}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-800">Notes</label>
-          <textarea
-            value={form.notes || ""}
-            onChange={(e) => handleChange("notes", e.target.value)}
-            rows={4}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            placeholder="Add details, links, or photo URLs."
-          />
-        </div>
-
-        {photos.length > 0 ? (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-800">Photos</label>
-            <div className="flex flex-wrap gap-2">
-              {photos.map((url, idx) => (
-                <div
-                  key={url}
-                  className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
-                >
-                  <button
-                    type="button"
-                    className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPhotos((prev) => prev.filter((p) => p !== url));
-                    }}
-                  >
-                    Remove
-                  </button>
-                  <button
-                    type="button"
-                    className="h-full w-full"
-                    onClick={() => setLightboxState({ images: photos.map((p) => toAbsolute(p)), index: idx })}
-                  >
-                    <img src={toAbsolute(url)} alt="Project photo" className="h-full w-full object-cover" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-800">Add photos</label>
-          <FileUploader
-            maxFiles={MAX_FILES}
-            maxFileSize={MAX_FILE_SIZE}
-            onFilesChange={(files) => {
-              // Store the files locally; upload happens on Save
-              setPendingFiles(files);
-            }}
-            showUploadAction={false}
-            className="mt-1"
-          />
-          {pendingFiles.length > 0 && (
-            <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
-              📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Save)
-            </div>
-          )}
-        </div>
-
         {error ? (
           <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
         ) : null}
 
+        <ProjectForm
+          mode="edit"
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          isSubmitting={saving}
+          error={error}
+          submitLabel="Save changes"
+          showBudget
+          showService
+        />
+
         <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-            disabled={saving}
-          >
-            Cancel
-          </button>
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
@@ -553,14 +341,6 @@ function EditProjectModal({
             className="flex-1 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
           >
             {deleting ? "Deleting..." : "Delete"}
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={saving || deleting}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
-          >
-            {saving ? (pendingFiles.length > 0 ? "Uploading & saving..." : "Saving...") : "Save changes"}
           </button>
         </div>
       </div>
@@ -574,13 +354,6 @@ function EditProjectModal({
         cancelLabel="Cancel"
         tone="danger"
       />
-      {lightboxState ? (
-        <ImageLightbox
-          images={lightboxState.images}
-          startIndex={lightboxState.index}
-          onClose={() => setLightboxState(null)}
-        />
-      ) : null}
     </ModalOverlay>
   );
 }

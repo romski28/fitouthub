@@ -44,7 +44,7 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
     return data.urls;
   };
 
-  const handleFormSubmit = async (formData: ProjectFormData, pendingFiles: File[]) => {
+  const handleFormSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     if (!professional) return;
 
     setError(null);
@@ -55,16 +55,6 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
     if (pendingFiles.length > 0) {
       try {
         photoUrls = await uploadFiles(pendingFiles);
-        setUploadedUrls(photoUrls);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Upload failed";
-        setError(message);
-        setSubmitting(false);
-        return;
-      }
-    } else if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
-      try {
-        photoUrls = await uploadFiles(formData.files);
         setUploadedUrls(photoUrls);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Upload failed";
