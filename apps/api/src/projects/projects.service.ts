@@ -644,6 +644,115 @@ export class ProjectsService {
     });
   }
 
+  /**
+   * Get S3 client for Cloudflare R2
+   */
+  private getS3Client() {
+    try {
+      const { S3Client } = require('@aws-sdk/client-s3');
+      
+      const accountId = process.env.STORAGE_ACCOUNT_ID;
+      const accessKeyId = process.env.STORAGE_ACCESS_KEY_ID;
+      const secretAccessKey = process.env.STORAGE_SECRET_ACCESS_KEY;
+
+      if (!accountId || !accessKeyId || !secretAccessKey) {
+        console.warn('Storage credentials not configured');
+        return null;
+      }
+
+      return new S3Client({
+        region: 'auto',
+        endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to initialize S3 client:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete a specific photo and remove it from Cloudflare R2
+   */
+  async deletePhoto(projectId: string, photoId: string) {
+    // Get photo to extract filename
+    const photo = await this.prisma.projectPhoto.findUnique({
+      where: { id: photoId },
+    });
+
+    if (!photo) {
+      throw new BadRequestException('Photo not found');
+    }
+
+    if (photo.projectId !== projectId) {
+      throw new BadRequestException('Photo does not belong to this project');
+    }
+
+    try {
+      // Extract filename from URL
+      const url = photo.url;
+      const filename = url.split('/').pop();
+      
+      if (filename) {
+        // Delete from Cloudflare R2
+        const s3 = this.getS3Client();
+        if (s3) {
+          try {
+            const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+            const bucket = process.env.STORAGE_BUCKET;
+            
+            if (bucket) {
+              await s3.send(
+                new DeleteObjectCommand({
+                  Bucket: bucket,
+                  Key: filename,
+                }),
+              );
+            }
+          } catch (s3Error) {
+            console.error('Failed to delete from R2:', s3Error);
+            // Continue - delete from DB even if R2 delete fails
+          }
+        }
+      }
+
+      // Delete from database
+      await this.prisma.projectPhoto.delete({
+        where: { id: photoId },
+      });
+
+      return { success: true, photoId };
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      throw new BadRequestException('Failed to delete photo');
+    }
+  }
+
+  /**
+   * Update a photo's note
+   */
+  async updatePhoto(projectId: string, photoId: string, note?: string) {
+    const photo = await this.prisma.projectPhoto.findUnique({
+      where: { id: photoId },
+    });
+
+    if (!photo) {
+      throw new BadRequestException('Photo not found');
+    }
+
+    if (photo.projectId !== projectId) {
+      throw new BadRequestException('Photo does not belong to this project');
+    }
+
+    return this.prisma.projectPhoto.update({
+      where: { id: photoId },
+      data: { note: note || null },
+    });
+  }
+
   async respondToInvitation(token: string, action: 'accept' | 'decline') {
     // Validate token
     const emailToken = await this.prisma.emailToken.findUnique({

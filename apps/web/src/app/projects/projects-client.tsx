@@ -222,6 +222,26 @@ function EditProjectModal({
     setSaving(true);
     setError(null);
     try {
+      // Delete removed photos from backend
+      const existingPhotos = (formData.existingPhotos || []);
+      const photoIdsToDelete = removedPhotos
+        .map((removedId) => {
+          const photo = existingPhotos.find((p) => p.id === removedId || p.url === removedId);
+          return photo?.id;
+        })
+        .filter(Boolean);
+
+      for (const photoId of photoIdsToDelete) {
+        try {
+          await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects/${project.id}/photos/${photoId}`, {
+            method: "DELETE",
+          });
+        } catch (deleteErr) {
+          console.error(`Failed to delete photo ${photoId}:`, deleteErr);
+          // Continue - don't fail entire save if individual photo delete fails
+        }
+      }
+
       // Upload new files
       let uploadedUrls: string[] = [];
       if (pendingFiles.length > 0) {

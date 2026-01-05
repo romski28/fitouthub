@@ -281,6 +281,31 @@ export class ProjectsController {
     return this.projectsService.remove(id);
   }
 
+  // ===== PROJECT PHOTO ENDPOINTS =====
+
+  /**
+   * DELETE /projects/:projectId/photos/:photoId - Delete a photo and remove from storage
+   */
+  @Delete(':projectId/photos/:photoId')
+  async deletePhoto(
+    @Param('projectId') projectId: string,
+    @Param('photoId') photoId: string,
+  ) {
+    return this.projectsService.deletePhoto(projectId, photoId);
+  }
+
+  /**
+   * PUT /projects/:projectId/photos/:photoId - Update a photo's note
+   */
+  @Put(':projectId/photos/:photoId')
+  async updatePhoto(
+    @Param('projectId') projectId: string,
+    @Param('photoId') photoId: string,
+    @Body() body: { note?: string },
+  ) {
+    return this.projectsService.updatePhoto(projectId, photoId, body.note);
+  }
+
   // ===== PROJECT CHAT ENDPOINTS =====
 
   /**

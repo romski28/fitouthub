@@ -1,9 +1,11 @@
 import {
   Controller,
   Post,
+  Delete,
   UploadedFiles,
   UseInterceptors,
   BadRequestException,
+  Param,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -107,6 +109,38 @@ export class UploadsController {
     } catch (error) {
       console.error('Failed to upload to R2:', error);
       throw new BadRequestException('Failed to upload files to storage');
+    }
+  }
+
+  /**
+   * DELETE /uploads/:filename
+   * Delete a file from Cloudflare R2 by filename
+   */
+  @Delete(':filename')
+  async deleteFile(@Param('filename') filename: string) {
+    const s3 = getS3Client();
+    if (!s3) {
+      throw new BadRequestException('Storage service not configured');
+    }
+
+    const bucket = process.env.STORAGE_BUCKET;
+    if (!bucket) {
+      throw new BadRequestException('STORAGE_BUCKET not configured');
+    }
+
+    try {
+      // Delete from R2
+      const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: bucket,
+          Key: filename,
+        }),
+      );
+      return { success: true, filename };
+    } catch (error) {
+      console.error('Failed to delete from R2:', error);
+      throw new BadRequestException('Failed to delete file from storage');
     }
   }
 }
