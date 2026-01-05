@@ -31,8 +31,9 @@ const assistStatusColors: Record<AssistStatus, string> = {
   closed: "bg-slate-100 text-slate-800",
 };
 
-type ExtendedProject = Project & { 
-  photos: string[]; 
+type ExtendedProject = Omit<Project, 'photos' | 'photoUrls'> & {
+  photos: string[];
+  photoUrls?: string[];
   sourceIds?: string[];
   tradesRequired?: string[];
   professionals?: Array<{
