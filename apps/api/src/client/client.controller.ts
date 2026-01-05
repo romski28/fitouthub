@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Controller('client')
 export class ClientController {
@@ -175,7 +176,7 @@ export class ClientController {
         id: projectProfessionalId,
         project: { OR: [{ userId }, { clientId: userId }] },
       },
-      include: { professional: true },
+      include: { professional: true, project: true },
     });
     if (!pp) throw new BadRequestException('Project not found');
     const updated = await (this.prisma as any).projectProfessional.update({
@@ -190,6 +191,40 @@ export class ClientController {
         content: 'We have accepted your quotation.',
       },
     });
+
+    // Create financial transactions for accepted quotation
+    const quoteAmount = pp.quoteAmount ? new Decimal(pp.quoteAmount.toString()) : new Decimal(0);
+    if (quoteAmount.greaterThan(0)) {
+      // 1) Informational line: quotation accepted
+      await (this.prisma as any).financialTransaction.create({
+        data: {
+          projectId: pp.projectId,
+          projectProfessionalId,
+          type: 'quotation_accepted',
+          description: `Quotation accepted from ${pp.professional?.businessName || pp.professional?.fullName || 'Professional'}`,
+          amount: quoteAmount,
+          status: 'info',
+          requestedBy: userId,
+          requestedByRole: 'client',
+        },
+      });
+
+      // 2) Action line: request client deposit into escrow
+      await (this.prisma as any).financialTransaction.create({
+        data: {
+          projectId: pp.projectId,
+          projectProfessionalId,
+          type: 'escrow_deposit_request',
+          description: 'Request to deposit project fees to escrow',
+          amount: quoteAmount,
+          status: 'Deposited',
+          requestedBy: userId,
+          requestedByRole: 'client',
+          notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,
+        },
+      });
+    }
+
     return { success: true, projectProfessional: updated };
   }
 
