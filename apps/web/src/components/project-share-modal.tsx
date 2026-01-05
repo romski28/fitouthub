@@ -85,8 +85,19 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     };
   };
 
-  const createProject = async (formData: ProjectFormData, invitePros: boolean) => {
-    const photoUrls = await uploadPendingFiles(formData);
+  const createProject = async (formData: ProjectFormData, pendingFiles: File[], invitePros: boolean) => {
+    let photoUrls = uploadedUrls;
+    // Upload pending files if any
+    if (pendingFiles.length > 0) {
+      try {
+        photoUrls = await uploadFiles(pendingFiles);
+        setUploadedUrls(photoUrls);
+      } catch (err) {
+        throw err;
+      }
+    } else {
+      photoUrls = await uploadPendingFiles(formData);
+    }
     const normalizedPhotos = photoUrls.map(toAbsolute);
     const { payload, defaultTitle } = buildPayload(formData, normalizedPhotos, invitePros);
 
@@ -126,7 +137,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     }
   };
 
-  const handleFormSubmit = async (formData: ProjectFormData) => {
+  const handleFormSubmit = async (formData: ProjectFormData, pendingFiles: File[]) => {
     if (professionals.length === 0 && !projectId) return;
 
     setError(null);
@@ -158,7 +169,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     }
 
     try {
-      const { project } = await createProject(formData, true);
+      const { project } = await createProject(formData, pendingFiles, true);
       onClose();
       if (user?.id) {
         router.push(`/projects?clientId=${encodeURIComponent(user.id)}`);
@@ -173,7 +184,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     }
   };
 
-  const handleAssistRequest = async (formData: ProjectFormData) => {
+  const handleAssistRequest = async (formData: ProjectFormData, pendingFiles: File[]) => {
     setError(null);
     setSubmitting(true);
 
@@ -192,7 +203,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
         return;
       }
 
-      const { project, defaultTitle } = await createProject(formData, false);
+      const { project, defaultTitle } = await createProject(formData, pendingFiles, false);
       await requestAssist(project, formData, defaultTitle);
       if (professionals.length > 0) {
         await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects/${encodeURIComponent(project.id)}/select`, {

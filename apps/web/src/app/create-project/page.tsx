@@ -62,7 +62,7 @@ export default function CreateProjectPage() {
 
   if (isLoggedIn === false) return null;
 
-  const handleSubmit = async (formData: ProjectFormData) => {
+  const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[]) => {
     setError(null);
 
     // Derive region from location object
@@ -79,6 +79,23 @@ export default function CreateProjectPage() {
 
     setIsSubmitting(true);
     try {
+      // Upload pending files first if any
+      let photoUrls: string[] = [];
+      if (pendingFiles.length > 0) {
+        const uploadFormData = new FormData();
+        pendingFiles.forEach((f) => uploadFormData.append("files", f));
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
+          method: "POST",
+          body: uploadFormData,
+        });
+        if (!uploadRes.ok) {
+          const message = await uploadRes.text();
+          throw new Error(message || "Failed to upload files");
+        }
+        const uploadData = (await uploadRes.json()) as { urls: string[] };
+        photoUrls = uploadData.urls;
+      }
+
       const payload = {
         projectName: formData.projectName,
         clientName: formData.clientName,
@@ -89,6 +106,7 @@ export default function CreateProjectPage() {
         professionalIds: [],
         userId: user?.id,
         tradesRequired: formData.tradesRequired || [],
+        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       };
 
       console.log('[create-project] Submitting payload:', payload);
@@ -122,7 +140,7 @@ export default function CreateProjectPage() {
     }
   };
 
-  const handleAssist = async (formData: ProjectFormData) => {
+  const handleAssist = async (formData: ProjectFormData, pendingFiles: File[]) => {
     setError(null);
     setIsSubmitting(true);
     try {
@@ -138,6 +156,23 @@ export default function CreateProjectPage() {
         return;
       }
 
+      // Upload pending files first if any
+      let photoUrls: string[] = [];
+      if (pendingFiles.length > 0) {
+        const uploadFormData = new FormData();
+        pendingFiles.forEach((f) => uploadFormData.append("files", f));
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
+          method: "POST",
+          body: uploadFormData,
+        });
+        if (!uploadRes.ok) {
+          const message = await uploadRes.text();
+          throw new Error(message || "Failed to upload files");
+        }
+        const uploadData = (await uploadRes.json()) as { urls: string[] };
+        photoUrls = uploadData.urls;
+      }
+
       const payload = {
         projectName: formData.projectName,
         clientName: formData.clientName,
@@ -148,6 +183,7 @@ export default function CreateProjectPage() {
         professionalIds: [],
         userId: user?.id,
         tradesRequired: formData.tradesRequired || [],
+        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       };
 
       const response = await fetch(`${API_BASE_URL}/projects`, {

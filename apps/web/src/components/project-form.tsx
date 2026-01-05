@@ -37,9 +37,9 @@ interface ProjectFormProps {
   /** Whether this is a quick request (shorthand form) vs full creation form */
   isQuickRequest?: boolean;
   
-  /** Form submission handler */
-  onSubmit: (data: ProjectFormData) => Promise<void>;
-  onAssistRequest?: (data: ProjectFormData) => Promise<void>;
+  /** Form submission handler - receives form data and pending files separately */
+  onSubmit: (data: ProjectFormData, pendingFiles: File[]) => Promise<void>;
+  onAssistRequest?: (data: ProjectFormData, pendingFiles: File[]) => Promise<void>;
   
   /** Cancel handler */
   onCancel?: () => void;
@@ -96,6 +96,7 @@ export function ProjectForm({
   const [availableTrades, setAvailableTrades] = useState<Array<{ id: string; name: string; category: string }>>([]);
   const [showTradeDropdown, setShowTradeDropdown] = useState(false);
   const [tradeSearchTerm, setTradeSearchTerm] = useState('');
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const isReadOnly = mode === 'view';
 
   // Fetch available trades from API
@@ -159,17 +160,18 @@ export function ProjectForm({
   };
 
   const handleFilesChange = (files: File[]) => {
-    setFormData((prev) => ({ ...prev, files }));
+    // Store new files in pendingFiles state, don't upload yet
+    setPendingFiles((prev) => [...prev, ...files]);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    await onSubmit(formData, pendingFiles);
   };
 
   const handleAssistClick = async () => {
     if (!onAssistRequest) return;
-    await onAssistRequest(formData);
+    await onAssistRequest(formData, pendingFiles);
   };
 
   // Quick request form (compact)
@@ -277,6 +279,11 @@ export function ProjectForm({
             onFilesChange={handleFilesChange}
             showUploadAction={false}
           />
+          {pendingFiles.length > 0 && (
+            <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
+              📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
+            </div>
+          )}
           {formData.photoUrls && formData.photoUrls.length > 0 && (
             <div className="mt-3 space-y-1 text-xs text-slate-700">
               <div className="font-semibold text-slate-900">Existing attachments</div>
@@ -345,7 +352,7 @@ export function ProjectForm({
               disabled={isSubmitting}
               className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
             >
-              {isSubmitting ? `${submitLabel || 'Creating'}...` : submitLabel || 'Create Project'}
+              {isSubmitting ? `${submitLabel || 'Creating'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
             </button>
           )}
         </div>
@@ -555,6 +562,11 @@ export function ProjectForm({
             onFilesChange={handleFilesChange}
             showUploadAction={false}
           />
+          {pendingFiles.length > 0 && (
+            <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700 mt-2">
+              📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
+            </div>
+          )}
           {formData.photoUrls && formData.photoUrls.length > 0 && (
             <div className="mt-3 space-y-1 text-xs text-slate-700">
               <div className="font-semibold text-slate-900">Existing attachments</div>
@@ -624,7 +636,7 @@ export function ProjectForm({
             disabled={isSubmitting}
             className="flex-1 rounded-lg bg-blue-600 text-white font-semibold py-2.5 hover:bg-blue-700 disabled:opacity-50 transition"
           >
-            {isSubmitting ? `${submitLabel || 'Creating Project'}...` : submitLabel || 'Create Project'}
+            {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
           </button>
         )}
       </div>

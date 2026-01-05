@@ -44,14 +44,25 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
     return data.urls;
   };
 
-  const handleFormSubmit = async (formData: ProjectFormData) => {
+  const handleFormSubmit = async (formData: ProjectFormData, pendingFiles: File[]) => {
     if (!professional) return;
 
     setError(null);
     setSubmitting(true);
 
     let photoUrls = uploadedUrls;
-    if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
+    // Upload pending files if any
+    if (pendingFiles.length > 0) {
+      try {
+        photoUrls = await uploadFiles(pendingFiles);
+        setUploadedUrls(photoUrls);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Upload failed";
+        setError(message);
+        setSubmitting(false);
+        return;
+      }
+    } else if (formData.files && formData.files.length > 0 && uploadedUrls.length === 0) {
       try {
         photoUrls = await uploadFiles(formData.files);
         setUploadedUrls(photoUrls);

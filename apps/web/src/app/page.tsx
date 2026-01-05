@@ -21,11 +21,28 @@ export default function Home() {
     setHydrated(true);
   }, []);
 
-  const handleProjectSubmit = async (data: ProjectFormData) => {
+  const handleProjectSubmit = async (data: ProjectFormData, pendingFiles: File[]) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
+      // Upload pending files first if any
+      let photoUrls: string[] = [];
+      if (pendingFiles.length > 0) {
+        const uploadFormData = new FormData();
+        pendingFiles.forEach((f) => uploadFormData.append("files", f));
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
+          method: "POST",
+          body: uploadFormData,
+        });
+        if (!uploadRes.ok) {
+          const message = await uploadRes.text();
+          throw new Error(message || "Failed to upload files");
+        }
+        const uploadData = (await uploadRes.json()) as { urls: string[] };
+        photoUrls = uploadData.urls;
+      }
+
       const clientName = user ? `${user.firstName} ${user.surname}`.trim() : data.clientName;
       const locationLabel = [data.location?.primary, data.location?.secondary, data.location?.tertiary]
         .filter(Boolean)
@@ -42,6 +59,7 @@ export default function Home() {
         userId: user?.id,
         isEmergency: !!data.isEmergency,
         endDate: data.endDate || undefined,
+        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       };
 
       const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
@@ -69,11 +87,28 @@ export default function Home() {
     }
   };
 
-  const handleAssistRequest = async (data: ProjectFormData) => {
+  const handleAssistRequest = async (data: ProjectFormData, pendingFiles: File[]) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
+      // Upload pending files first if any
+      let photoUrls: string[] = [];
+      if (pendingFiles.length > 0) {
+        const uploadFormData = new FormData();
+        pendingFiles.forEach((f) => uploadFormData.append("files", f));
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
+          method: "POST",
+          body: uploadFormData,
+        });
+        if (!uploadRes.ok) {
+          const message = await uploadRes.text();
+          throw new Error(message || "Failed to upload files");
+        }
+        const uploadData = (await uploadRes.json()) as { urls: string[] };
+        photoUrls = uploadData.urls;
+      }
+
       const clientName = user ? `${user.firstName} ${user.surname}`.trim() : data.clientName;
       const locationLabel = [data.location?.primary, data.location?.secondary, data.location?.tertiary]
         .filter(Boolean)
@@ -91,6 +126,7 @@ export default function Home() {
         isEmergency: !!data.isEmergency,
         endDate: data.endDate || undefined,
         professionalIds: [],
+        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       };
 
       const createRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
