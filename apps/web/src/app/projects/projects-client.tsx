@@ -2,9 +2,11 @@
 
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { ProjectDescriptionModal } from "@/components/project-description-modal";
 import FileUploader from "@/components/file-uploader";
 import ImageLightbox from "@/components/image-lightbox";
 import { Project } from "@/lib/types";
@@ -577,9 +579,11 @@ function EditProjectModal({
 
 export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
   const { isLoggedIn, accessToken } = useAuth();
+  const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [items, setItems] = useState<ExtendedProject[]>(() => {
     // Map projects directly without consolidation - each project is unique by ID
     return projects.map(p => {
@@ -715,6 +719,17 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
 
   return (
     <div className="space-y-5">
+      <ProjectDescriptionModal
+        isOpen={showDescriptionModal}
+        onSubmit={(data) => {
+          // Store description data in sessionStorage for create-project page to consume
+          sessionStorage.setItem('projectDescription', JSON.stringify(data));
+          setShowDescriptionModal(false);
+          router.push('/create-project');
+        }}
+        onCancel={() => setShowDescriptionModal(false)}
+      />
+
       {/* Hero */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -724,12 +739,12 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
             <p className="text-sm text-slate-200/90">{subtitle}</p>
           </div>
           <div className="flex flex-col gap-3">
-            <Link
-              href="/create-project"
+            <button
+              onClick={() => setShowDescriptionModal(true)}
               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center"
             >
               + Create New Project
-            </Link>
+            </button>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Total</p>
@@ -786,12 +801,12 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center space-y-3">
           <p className="text-base font-semibold text-slate-800">No projects yet</p>
           <p className="text-sm text-slate-600">Kickstart your next renovation with a new project.</p>
-          <a
-            href="/create-project"
+          <button
+            onClick={() => setShowDescriptionModal(true)}
             className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
           >
             Do something great, start a project now!
-          </a>
+          </button>
         </div>
       ) : (
         <div className="space-y-3">

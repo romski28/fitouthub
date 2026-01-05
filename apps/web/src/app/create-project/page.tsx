@@ -7,7 +7,16 @@ import Link from 'next/link';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import { ProjectForm } from '@/components/project-form';
+import { ProjectDescriptionModal } from '@/components/project-description-modal';
 import type { ProjectFormData } from '@/components/project-form';
+import type { CanonicalLocation } from '@/components/location-select';
+
+interface ProjectDescriptionData {
+  description: string;
+  profession?: string;
+  location?: CanonicalLocation;
+  tradesRequired: string[];
+}
 
 export default function CreateProjectPage() {
   const router = useRouter();
@@ -15,6 +24,8 @@ export default function CreateProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [descriptionData, setDescriptionData] = useState<ProjectDescriptionData | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -25,6 +36,25 @@ export default function CreateProjectPage() {
       router.push('/');
     }
   }, [hydrated, isLoggedIn, router]);
+
+  useEffect(() => {
+    if (hydrated && isLoggedIn) {
+      // Check if we have description data from sessionStorage (from projects list)
+      const stored = sessionStorage.getItem('projectDescription');
+      if (stored) {
+        try {
+          setDescriptionData(JSON.parse(stored));
+          sessionStorage.removeItem('projectDescription');
+        } catch (e) {
+          console.warn('[create-project] Failed to parse sessionStorage data:', e);
+        }
+      }
+      // Show description modal if no data stored
+      if (!stored) {
+        setShowDescriptionModal(true);
+      }
+    }
+  }, [hydrated, isLoggedIn]);
 
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" />;
@@ -58,6 +88,7 @@ export default function CreateProjectPage() {
         status: 'pending',
         professionalIds: [],
         userId: user?.id,
+        tradesRequired: formData.tradesRequired || [],
       };
 
       console.log('[create-project] Submitting payload:', payload);
@@ -116,6 +147,7 @@ export default function CreateProjectPage() {
         status: 'pending',
         professionalIds: [],
         userId: user?.id,
+        tradesRequired: formData.tradesRequired || [],
       };
 
       const response = await fetch(`${API_BASE_URL}/projects`, {
@@ -165,6 +197,15 @@ export default function CreateProjectPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
+      <ProjectDescriptionModal
+        isOpen={showDescriptionModal}
+        onSubmit={(data) => {
+          setDescriptionData(data);
+          setShowDescriptionModal(false);
+        }}
+        onCancel={() => router.push('/projects')}
+      />
+
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -183,6 +224,9 @@ export default function CreateProjectPage() {
             mode="create"
             initialData={{
               clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
+              notes: descriptionData?.description || '',
+              tradesRequired: descriptionData?.tradesRequired || [],
+              location: descriptionData?.location || undefined,
             }}
             onAssistRequest={handleAssist}
             onSubmit={handleSubmit}
@@ -191,7 +235,7 @@ export default function CreateProjectPage() {
             error={error}
             submitLabel="Create Project"
             showBudget={true}
-            showService={false}
+            showService={true}
           />
         </div>
       </div>
