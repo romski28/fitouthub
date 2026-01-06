@@ -1053,7 +1053,7 @@ export class ProjectsService {
         type: 'escrow_deposit_confirmation',
         description: 'Client confirms deposit payment made to Fitout Hub escrow',
         amount: transaction.amount,
-        status: 'Awaiting Confirmation',
+        status: 'awaiting_confirmation',
         requestedBy: transaction.requestedBy,
         requestedByRole: 'client',
         notes: `Confirmation for escrow deposit request ${transactionId}`,
@@ -1064,7 +1064,7 @@ export class ProjectsService {
     await this.prisma.financialTransaction.update({
       where: { id: transactionId },
       data: {
-        status: 'Paid',
+        status: 'paid',
         notes: `${transaction.notes || ''} | Client confirmed payment made`,
       },
     });
@@ -1153,7 +1153,7 @@ export class ProjectsService {
           type: 'quotation_accepted',
           description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
           amount: quoteAmount,
-          status: 'Info',
+          status: 'info',
           requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
           requestedByRole: 'client',
         },
@@ -1167,7 +1167,7 @@ export class ProjectsService {
           type: 'escrow_deposit_request',
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,
-          status: 'Pending',
+          status: 'pending',
           requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
           requestedByRole: 'client',
           notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,

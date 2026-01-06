@@ -14,7 +14,7 @@ export interface CreateFinancialTransactionDto {
 }
 
 export interface UpdateFinancialTransactionDto {
-  status?: 'pending' | 'confirmed' | 'completed' | 'rejected';
+  status?: 'pending' | 'confirmed' | 'completed' | 'rejected' | 'paid' | 'awaiting_confirmation' | 'info';
   approvedBy?: string;
   notes?: string;
 }
@@ -197,10 +197,51 @@ export class FinancialService {
    * Confirm escrow deposit
    */
   async confirmEscrowDeposit(transactionId: string, approvedBy: string) {
-    return this.updateTransaction(transactionId, {
+    // Load transaction with context for messaging
+    const tx = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        projectProfessional: {
+          include: {
+            professional: true,
+            project: true,
+          },
+        },
+      },
+    });
+
+    if (!tx) {
+      throw new Error('Transaction not found');
+    }
+
+    if (!['escrow_deposit', 'escrow_deposit_confirmation'].includes(tx.type)) {
+      throw new Error('This transaction is not an escrow deposit');
+    }
+
+    const updated = await this.updateTransaction(transactionId, {
       status: 'confirmed',
       approvedBy,
     });
+
+    // Send a message to the awarded professional confirming deposit
+    if (tx.projectProfessionalId && tx.projectProfessional?.project?.clientId) {
+      const clientId = tx.projectProfessional.project.clientId;
+      const professionalName =
+        tx.projectProfessional.professional?.fullName ||
+        tx.projectProfessional.professional?.businessName ||
+        'Professional';
+
+      await this.prisma.message.create({
+        data: {
+          projectProfessionalId: tx.projectProfessionalId,
+          senderType: 'client',
+          senderClientId: clientId,
+          content: `Escrow deposit has been confirmed by Fitout Hub. Funds for ${professionalName} are now secured in escrow.`,
+        },
+      });
+    }
+
+    return updated;
   }
 
   /**

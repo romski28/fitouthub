@@ -49,6 +49,8 @@ const formatHKD = (value: number | string) => {
 
 const getTypeLabel = (type: string) => {
   const map: Record<string, string> = {
+    escrow_deposit_request: 'Escrow Deposit Request',
+    escrow_deposit_confirmation: 'Escrow Deposit Confirmation',
     escrow_deposit: 'Escrow Deposit',
     escrow_confirmation: 'Escrow Confirmed',
     advance_payment_request: 'Advance Payment Request',
@@ -62,6 +64,9 @@ const getTypeLabel = (type: string) => {
 const getStatusBadge = (status: string) => {
   const map: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-800',
+    info: 'bg-slate-100 text-slate-700',
+    paid: 'bg-blue-100 text-blue-800',
+    awaiting_confirmation: 'bg-indigo-100 text-indigo-800',
     confirmed: 'bg-blue-100 text-blue-800',
     completed: 'bg-emerald-100 text-emerald-800',
     rejected: 'bg-rose-100 text-rose-800',
@@ -299,12 +304,15 @@ export default function ProjectFinancialsCard({
                 )}
                 {filteredTransactions.map((tx) => {
                   const createdDate = new Date(tx.createdAt).toLocaleDateString('en-HK');
-                  const canConfirmDeposit = role === 'admin' && tx.type === 'escrow_deposit' && tx.status === 'pending';
+                  const canConfirmDeposit =
+                    role === 'admin' &&
+                    ((tx.type === 'escrow_deposit' && tx.status === 'pending') ||
+                      (tx.type === 'escrow_deposit_confirmation' && tx.status === 'awaiting_confirmation'));
                   const canApprove = role === 'client' && tx.type === 'advance_payment_request' && tx.status === 'pending';
                   const canRelease = role === 'admin' && tx.type === 'advance_payment_request' && tx.status === 'confirmed';
                   const canReject = role === 'client' && tx.type === 'advance_payment_request' && tx.status === 'pending';
-                  const canMarkPaid = role === 'client' && tx.type === 'escrow_deposit_request' && tx.status === 'Pending';
-                  const isInfo = tx.status === 'Info';
+                  const canMarkPaid = role === 'client' && tx.type === 'escrow_deposit_request' && tx.status === 'pending';
+                  const isInfo = tx.status === 'info';
 
                   const actionButton = () => {
                     if (isInfo) {

@@ -94,7 +94,7 @@ export class FinancialController {
       throw new BadRequestException('Transaction not found');
     }
 
-    if (transaction.type !== 'escrow_deposit') {
+    if (!['escrow_deposit', 'escrow_deposit_confirmation'].includes(transaction.type)) {
       throw new BadRequestException('This transaction is not an escrow deposit');
     }
 
@@ -165,5 +165,28 @@ export class FinancialController {
   @UseGuards(AuthGuard('jwt'))
   async releasePayment(@Param('transactionId') transactionId: string, @Request() req: any) {
     return this.financialService.releasePayment(transactionId, req.user.id);
+  }
+
+  /**
+   * POST /financial/project-professional/:projectProfessionalId/advance-request - Professional requests advance payment
+   */
+  @Post('project-professional/:projectProfessionalId/advance-request')
+  @UseGuards(CombinedAuthGuard)
+  async requestAdvancePayment(
+    @Param('projectProfessionalId') projectProfessionalId: string,
+    @Body() body: { amount: number },
+    @Request() req: any,
+  ) {
+    if (!req.user.isProfessional) {
+      throw new BadRequestException('Only professionals can request advance payment');
+    }
+    if (!body.amount || Number(body.amount) <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+    return this.financialService.createAdvancePaymentRequest(
+      projectProfessionalId,
+      Number(body.amount),
+      req.user.id,
+    );
   }
 }
