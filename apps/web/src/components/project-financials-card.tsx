@@ -225,9 +225,15 @@ export default function ProjectFinancialsCard({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="p-5 border-b border-slate-200">
-        <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
-        <p className="text-sm text-slate-600">Escrow, advances, and releases</p>
+      <div className="p-5 border-b border-slate-200 flex items-start justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
+          <p className="text-sm text-slate-600">Escrow, advances, and releases</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-slate-600 uppercase tracking-wide">Budget</p>
+          <p className="text-lg font-bold text-slate-900">{formatHKD(projectCost)}</p>
+        </div>
       </div>
 
       {loading ? (

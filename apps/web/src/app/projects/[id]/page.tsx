@@ -793,27 +793,44 @@ export default function ClientProjectDetailPage() {
               ? 'bg-gradient-to-r from-slate-400 to-slate-300'
               : 'bg-gradient-to-r from-slate-900 to-slate-800'
           }`}>
-            <h1 className={`text-2xl font-bold ${projectStatus === 'withdrawn' ? 'text-slate-700' : ''}`}>
-              {project.projectName}
-            </h1>
-            <p className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
-              projectStatus === 'withdrawn'
-                ? 'text-slate-600'
-                : 'text-emerald-300'
-            }`}>
-              {project.region}
-            </p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className={`text-2xl font-bold ${
+                  projectStatus === 'withdrawn' ? 'text-slate-700' : ''
+                }`}>
+                  {project.projectName}
+                </h1>
+                <p className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
+                  projectStatus === 'withdrawn'
+                    ? 'text-slate-600'
+                    : 'text-emerald-300'
+                }`}>
+                  {project.region}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                    projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  {projectStatus.replace('_', ' ')}
+                </span>
+                {projectStatus === 'awarded' && project.professionals?.some((pp) => pp.status === 'awarded') && (
+                  <span className={`text-xs font-medium ${
+                    projectStatus === 'withdrawn' ? 'text-slate-600' : 'text-slate-300'
+                  }`}>
+                    {project.professionals.find((pp) => pp.status === 'awarded')?.professional.fullName || 
+                     project.professionals.find((pp) => pp.status === 'awarded')?.professional.businessName || 
+                     'Professional'}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <span
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                  projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                {projectStatus.replace('_', ' ')}
-              </span>
               {projectStatus === 'withdrawn' && (
                 <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
               )}
@@ -834,25 +851,21 @@ export default function ClientProjectDetailPage() {
             <div className="grid gap-3 md:grid-cols-2">
               <div className="flex items-center gap-2 text-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                <span className="font-semibold text-slate-700">Budget:</span>
-                <span className="text-slate-600">{project.budget ? formatHKD(project.budget) : 'Not specified'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                 <span className="font-semibold text-slate-700">Professionals:</span>
                 <span className="text-slate-600">{project.professionals?.length || 0}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                <span className="font-semibold text-slate-700">Created:</span>
-                <span className="text-slate-600">{formatDate(project.createdAt)}</span>
               </div>
             </div>
 
             {project.notes && (
               <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100">
-                <p className="font-semibold text-slate-800 mb-1">Notes</p>
+                <p className="font-semibold text-slate-800 mb-1">Project description</p>
                 <p className="text-slate-700 leading-relaxed">{project.notes}</p>
+                <div className="flex gap-4 mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500">
+                  <span>Created: {formatDate(project.createdAt)}</span>
+                  {project.updatedAt && (
+                    <span>Last updated: {formatDate(project.updatedAt)}</span>
+                  )}
+                </div>
               </div>
             )}
           </div>
