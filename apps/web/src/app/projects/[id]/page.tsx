@@ -817,9 +817,7 @@ export default function ClientProjectDetailPage() {
                   {projectStatus.replace('_', ' ')}
                 </span>
                 {projectStatus === 'awarded' && project.professionals?.some((pp) => pp.status === 'awarded') && (
-                  <span className={`text-xs font-medium ${
-                    projectStatus === 'withdrawn' ? 'text-slate-600' : 'text-slate-300'
-                  }`}>
+                  <span className="text-xs font-medium text-slate-300">
                     {project.professionals.find((pp) => pp.status === 'awarded')?.professional.fullName || 
                      project.professionals.find((pp) => pp.status === 'awarded')?.professional.businessName || 
                      'Professional'}
