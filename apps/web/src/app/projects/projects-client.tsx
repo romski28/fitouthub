@@ -536,7 +536,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Projects</p>
-            <h1 className="text-2xl font-bold leading-tight">Projects overview</h1>
+            <h1 className="text-2xl font-bold leading-tight">My Projects</h1>
             <p className="text-sm text-slate-200/90">{subtitle}</p>
           </div>
           <div className="flex flex-col gap-3">

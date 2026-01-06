@@ -117,7 +117,7 @@ export default function ProfessionalProjectsPage() {
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Projects</p>
-              <h1 className="text-2xl font-bold leading-tight">Projects overview</h1>
+              <h1 className="text-2xl font-bold leading-tight">My Projects</h1>
               {professional && (
                 <p className="text-sm text-slate-200/90">
                   {professional.fullName || professional.businessName || professional.email}

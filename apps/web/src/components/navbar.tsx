@@ -268,16 +268,16 @@ export const Navbar: React.FC = () => {
             {showAuthed ? (
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className="text-slate-900 font-medium text-sm hover:bg-slate-100 px-2 py-1 rounded"
+                className="text-slate-900 font-medium text-sm hover:bg-slate-100 px-2 py-1 rounded max-w-[120px] truncate"
               >
                 {user.nickname}
               </button>
             ) : showProfessionalAuthed ? (
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className="text-slate-900 font-medium text-sm hover:bg-slate-100 px-2 py-1 rounded"
+                className="text-slate-900 font-medium text-sm hover:bg-slate-100 px-2 py-1 rounded max-w-[120px] truncate"
               >
-                Pro
+                {professional.fullName?.split(' ')[0] || 'Pro'}
               </button>
             ) : (
               <div className="flex items-center gap-2">
