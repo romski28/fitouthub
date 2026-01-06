@@ -135,8 +135,12 @@ export default function ClientProjectDetailPage() {
 
   // Scroll to top on page load
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+    // Use setTimeout to ensure DOM is rendered before scrolling
+    const scrollTimer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+    return () => clearTimeout(scrollTimer);
+  }, [projectId]);
 
   // Helper: fetch project details (reusable)
   const fetchProject = async () => {
@@ -441,6 +445,9 @@ export default function ClientProjectDetailPage() {
         
         // Update local state
         setSelectedProfessional((prev) => (prev ? { ...prev, status: 'awarded' } : prev));
+        
+        // Refresh project to update project.status to 'awarded'
+        await fetchProject();
       } else {
         // Reject or counter-request
         let res;
@@ -1206,268 +1213,288 @@ export default function ClientProjectDetailPage() {
         {/* Awarded Project Chat Panel - Show when project is awarded */}
         {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
           <div className="space-y-5">
-            {/* Shared Project Team Chat */}
+            {/* Unified Chat Section */}
             <div>
               <div className="mb-3">
-                <h2 className="text-lg font-bold text-slate-900">Project Team Chat</h2>
+                <h2 className="text-lg font-bold text-slate-900">Project Chat</h2>
                 <p className="text-sm text-slate-600">Communicate with all awarded professionals and Fitout Hub</p>
               </div>
-              {accessToken && (
-                <ProjectChat
-                  projectId={projectId}
-                  accessToken={accessToken}
-                  currentUserRole="client"
-                />
-              )}
-            </div>
 
-            {/* Private Chats Section */}
-            <div>
-              <div className="mb-3">
-                <h2 className="text-lg font-bold text-slate-900">Private Chats</h2>
-                <p className="text-sm text-slate-600">One-on-one conversations with professionals (not visible to others)</p>
-              </div>
-
-              {/* Professionals & Fitout Hub Selection Table */}
+              {/* Chat Mode Selector */}
               <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div className="px-5 py-4 border-b border-slate-200">
-                  <h3 className="text-sm font-semibold text-slate-900">Select a contact for private chat</h3>
+                {/* Tab Navigation */}
+                <div className="flex border-b border-slate-200">
+                  <button
+                    onClick={() => {
+                      setSelectedProfessional(null);
+                      setViewingAssistChat(false);
+                    }}
+                    className={`flex-1 px-4 py-3 text-sm font-semibold border-b-2 transition ${
+                      !viewingAssistChat && !selectedProfessional
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Project Team
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedProfessional(null);
+                      setViewingAssistChat(true);
+                    }}
+                    className={`flex-1 px-4 py-3 text-sm font-semibold border-b-2 transition ${
+                      viewingAssistChat
+                        ? 'border-indigo-600 text-indigo-600'
+                        : 'border-transparent text-slate-600 hover:text-slate-900'
+                    }`}
+                    disabled={!assistRequestId}
+                  >
+                    Fitout Hub Help
+                  </button>
+                  <button
+                    onClick={() => setViewingAssistChat(false)}
+                    className={`flex-1 px-4 py-3 text-sm font-semibold border-b-2 transition ${
+                      !viewingAssistChat && selectedProfessional
+                        ? 'border-amber-600 text-amber-600'
+                        : 'border-transparent text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Private Chats
+                  </button>
                 </div>
-                <div className="p-5 overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-slate-600">
-                        <th className="py-2 pr-4">Name</th>
-                        <th className="py-2 pr-4">Status</th>
-                        <th className="py-2 pr-4">Quote</th>
-                        <th className="py-2">Rating</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                    {assistRequestId && (
-                      <tr
-                        onClick={() => {
-                          setSelectedProfessional(null);
-                          setViewingAssistChat(true);
-                        }}
-                        className={`${viewingAssistChat ? 'bg-indigo-50' : 'hover:bg-slate-50'} cursor-pointer border-t border-slate-100`}
-                      >
-                        <td className="py-2 pr-4">
+
+                {/* Team Chat View */}
+                {!viewingAssistChat && !selectedProfessional && (
+                  <div>
+                    <div className="p-4">
+                      <p className="text-sm text-slate-600 mb-3">Chat with all awarded professionals</p>
+                    </div>
+                    {accessToken && (
+                      <ProjectChat
+                        projectId={projectId}
+                        accessToken={accessToken}
+                        currentUserRole="client"
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* Fitout Hub Assistance View */}
+                {viewingAssistChat && (
+                  <div className="bg-indigo-50 border-t border-indigo-200">
+                    <div className="p-4 space-y-4">
+                      {assistError && (
+                        <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                          {assistError}
+                        </div>
+                      )}
+
+                      {/* Assist Messages */}
+                      <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                        {assistLoading ? (
+                          <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                        ) : assistMessages.length === 0 ? (
+                          <div className="text-center text-sm text-slate-500">
+                            No messages yet. Reach out to Fitout Hub for assistance!
+                          </div>
+                        ) : (
+                          assistMessages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
+                            >
+                              <div
+                                className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                                  msg.senderType === 'client'
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-white border border-indigo-200 text-slate-800'
+                                }`}
+                              >
+                                <p>{msg.content}</p>
+                                <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                  {new Date(msg.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Send Assist Message */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={assistNewMessage}
+                          onChange={(e) => setAssistNewMessage(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !assistSending) {
+                              handleSendAssistMessage();
+                            }
+                          }}
+                          placeholder="Ask Fitout Hub for help..."
+                          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                          disabled={assistSending}
+                        />
+                        <button
+                          onClick={handleSendAssistMessage}
+                          disabled={assistSending || !assistNewMessage.trim()}
+                          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                          {assistSending ? 'Sending...' : 'Send'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Private Chats View */}
+                {!viewingAssistChat && !selectedProfessional && (
+                  <div className="p-4">
+                    <p className="text-sm text-slate-600 mb-3">Select a professional to open private chat</p>
+                    <div className="space-y-2">
+                      {assistRequestId && (
+                        <button
+                          onClick={() => setViewingAssistChat(true)}
+                          className="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-indigo-50 transition"
+                        >
                           <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                               FH
                             </div>
-                            <span className="font-medium text-slate-800">Fitout Hub</span>
-                          </div>
-                        </td>
-                        <td className="py-2 pr-4">
-                          <span className="inline-block rounded-full px-2 py-1 text-xs font-semibold bg-indigo-100 text-indigo-800">Assisting</span>
-                        </td>
-                        <td className="py-2 pr-4">—</td>
-                        <td className="py-2 pr-4">💬</td>
-                        <td className="py-2">—</td>
-                      </tr>
-                    )}
-                    {project.professionals.map((pp) => {
-                      const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
-                      return (
-                        <tr
-                          key={pp.id}
-                          onClick={() => {
-                            setSelectedProfessional(pp);
-                            setViewingAssistChat(false);
-                          }}
-                          className={`${selectedProfessional?.id === pp.id && !viewingAssistChat ? 'bg-blue-50' : 'hover:bg-slate-50'} cursor-pointer border-t border-slate-100`}
-                        >
-                          <td className="py-2 pr-4">
-                            <div className="flex items-center gap-2">
-                              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">
-                                {displayName[0]?.toUpperCase()}
-                              </div>
-                              <span className="font-medium text-slate-800">{displayName}</span>
+                            <div>
+                              <p className="font-semibold text-slate-900">Fitout Hub</p>
+                              <p className="text-xs text-slate-600">Assistance</p>
                             </div>
-                          </td>
-                          <td className="py-2 pr-4">
-                            <span className="inline-block rounded-full px-2 py-1 text-xs font-semibold bg-slate-100 text-slate-800 capitalize">{pp.status.replace('_', ' ')}</span>
-                          </td>
-                          <td className="py-2 pr-4">
-                            {pp.quoteAmount ? (
-                              <span className="font-semibold text-blue-700">${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}</span>
-                            ) : (
-                              <span className="text-slate-500">—</span>
-                            )}
-                          </td>
-                          <td className="py-2 text-slate-500">—</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            </div>
-
-            {/* Private Chat Panel - Only show when a professional is selected and not viewing assist */}
-            {!viewingAssistChat && selectedProfessional && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div className="bg-amber-50 px-4 py-3 border-b border-amber-200 rounded-t-xl">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                    <div>
-                      <h3 className="font-bold text-amber-900 text-sm">
-                        Private Chat with {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
-                      </h3>
-                      <p className="text-xs text-amber-700">This conversation is only visible to you, this professional, and Fitout Hub</p>
+                          </div>
+                        </button>
+                      )}
+                      {project.professionals.map((pp) => {
+                        const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                        return (
+                          <button
+                            key={pp.id}
+                            onClick={() => setSelectedProfessional(pp)}
+                            className="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-blue-50 transition"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 flex-1">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                  {displayName[0]?.toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-slate-900">{displayName}</p>
+                                  <p className="text-xs text-slate-600">{pp.status.replace('_', ' ')}</p>
+                                </div>
+                              </div>
+                              {pp.quoteAmount && (
+                                <p className="font-semibold text-blue-700 ml-2">${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}</p>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
+                )}
 
-                <div className="p-4 space-y-4">
-                  {messageError && (
-                    <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                      {messageError}
-                    </div>
-                  )}
-
-                  {/* Messages */}
-                  <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
-                    {loadingMessages ? (
-                      <div className="text-center text-sm text-slate-500">Loading messages...</div>
-                    ) : messages.length === 0 ? (
-                      <div className="text-center text-sm text-slate-500">
-                        No messages yet. Start the conversation!
-                      </div>
-                    ) : (
-                      messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                              msg.senderType === 'client'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white border border-slate-200 text-slate-800'
-                            }`}
-                          >
-                            <p>{msg.content}</p>
-                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-blue-100' : 'text-slate-500'}`}>
-                              {new Date(msg.createdAt).toLocaleString()}
-                            </p>
+                {/* Private Chat with Professional View */}
+                {!viewingAssistChat && selectedProfessional && (
+                  <div className="bg-amber-50 border-t border-amber-200">
+                    <div className="p-4 space-y-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          <div>
+                            <h3 className="font-bold text-amber-900 text-sm">
+                              Private Chat with {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
+                            </h3>
+                            <p className="text-xs text-amber-700">Only visible to you, this professional, and Fitout Hub</p>
                           </div>
                         </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Send Message */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !sending) {
-                          handleSendMessage();
-                        }
-                      }}
-                      placeholder="Type your message..."
-                      className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                      disabled={sending}
-                    />
-                    <button
-                      onClick={handleSendMessage}
-                      disabled={sending || !newMessage.trim()}
-                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      {sending ? 'Sending...' : 'Send'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Assist Chat Panel - Only show when viewing assist chat */}
-            {viewingAssistChat && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div className="bg-indigo-50 px-4 py-3 border-b border-indigo-200 rounded-t-xl">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <div>
-                      <h3 className="font-bold text-indigo-900 text-sm">Fitout Hub Assistance</h3>
-                      <p className="text-xs text-indigo-700">Get help from Fitout Hub experts</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 space-y-4">
-                  {assistError && (
-                    <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                      {assistError}
-                    </div>
-                  )}
-
-                  {/* Assist Messages */}
-                  <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
-                    {assistLoading ? (
-                      <div className="text-center text-sm text-slate-500">Loading messages...</div>
-                    ) : assistMessages.length === 0 ? (
-                      <div className="text-center text-sm text-slate-500">
-                        No messages yet. Reach out to Fitout Hub for assistance!
-                      </div>
-                    ) : (
-                      assistMessages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
+                        <button
+                          onClick={() => setSelectedProfessional(null)}
+                          className="text-amber-600 hover:text-amber-900"
+                          title="Back to contacts"
                         >
-                          <div
-                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                              msg.senderType === 'client'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white border border-indigo-200 text-slate-800'
-                            }`}
-                          >
-                            <p>{msg.content}</p>
-                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-indigo-100' : 'text-slate-500'}`}>
-                              {new Date(msg.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                      </div>
 
-                  {/* Send Assist Message */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={assistNewMessage}
-                      onChange={(e) => setAssistNewMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !assistSending) {
-                          handleSendAssistMessage();
-                        }
-                      }}
-                      placeholder="Ask Fitout Hub for help..."
-                      className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                      disabled={assistSending}
-                    />
-                    <button
-                      onClick={handleSendAssistMessage}
-                      disabled={assistSending || !assistNewMessage.trim()}
-                      className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      {assistSending ? 'Sending...' : 'Send'}
-                    </button>
+                      {messageError && (
+                        <div className="rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-amber-800">
+                          {messageError}
+                        </div>
+                      )}
+
+                      {/* Messages */}
+                      <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-white">
+                        {loadingMessages ? (
+                          <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                        ) : messages.length === 0 ? (
+                          <div className="text-center text-sm text-slate-500">
+                            No messages yet. Start the conversation!
+                          </div>
+                        ) : (
+                          messages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
+                            >
+                              <div
+                                className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                                  msg.senderType === 'client'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-100 border border-slate-200 text-slate-800'
+                                }`}
+                              >
+                                <p>{msg.content}</p>
+                                <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-blue-100' : 'text-slate-500'}`}>
+                                  {new Date(msg.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Send Message - Disabled if professional declined */}
+                      {selectedProfessional.status === 'declined' ? (
+                        <div className="p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm">
+                          This professional has declined the project. This chat is read-only.
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !sending) {
+                                handleSendMessage();
+                              }
+                            }}
+                            placeholder="Type your message..."
+                            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            disabled={sending}
+                          />
+                          <button
+                            onClick={handleSendMessage}
+                            disabled={sending || !newMessage.trim()}
+                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            {sending ? 'Sending...' : 'Send'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
