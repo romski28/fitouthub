@@ -53,8 +53,7 @@ const countByStatus = (project?: ProgressProject) => {
 
 export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: ProjectProgressProps) {
   const { total, accepted, declined } = countByStatus(project);
-  const contactedState: StepState = total > 0 ? 'done' : 'upcoming';
-  const repliedState: StepState = accepted + declined > 0 ? 'done' : 'upcoming';
+  const biddingState: StepState = total > 0 ? 'done' : 'upcoming';
   const awardedState: StepState = awardedProfessional(project) || project.status === 'awarded' ? 'done' : 'upcoming';
   const fundsState: StepState = isPaid(project) ? 'done' : 'upcoming';
   const startedState: StepState = project.startDate ? 'done' : 'upcoming';
@@ -64,8 +63,7 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: Pro
   const steps: Step[] = [
     { key: 'new', label: 'New', state: 'done' },
     { key: 'assist', label: 'Help', state: hasAssist ? 'done' : 'optional-skipped' },
-    { key: 'contacted', label: 'Invited', state: contactedState, pill: total ? String(total) : undefined },
-    { key: 'replied', label: 'Replied', state: repliedState, pill: repliedState === 'done' ? String(accepted + declined) : undefined },
+    { key: 'bidding', label: 'Bidding', state: biddingState, pill: total ? String(total) : undefined },
     { key: 'awarded', label: 'Awarded', state: awardedState },
     { key: 'funds', label: 'Funds', state: fundsState },
     { key: 'started', label: 'Started', state: startedState },

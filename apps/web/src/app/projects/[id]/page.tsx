@@ -883,12 +883,67 @@ export default function ClientProjectDetailPage() {
             />
           )}
 
-          {/* Project Images */}
-          <ProjectImagesCard
-            photos={(project as any).photos || []}
-            onPhotoNoteUpdate={handleSaveImageNote}
-            isLoading={loading}
-          />
+          {/* Bidding Card - Show when professionals are invited but not awarded */}
+          {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+              <div className="mb-4">
+                <h2 className="text-lg font-bold text-slate-900">Bidding</h2>
+                <p className="text-sm text-slate-600">Review quotes from invited professionals</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {project.professionals.map((pp) => {
+                  const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                  return (
+                    <div key={pp.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4 hover:border-blue-300 transition">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                          {displayName[0]?.toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900 text-sm truncate">{displayName}</p>
+                          <span className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-slate-200 text-slate-800 capitalize mt-1">
+                            {pp.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                      {pp.quoteAmount && (
+                        <div className="mb-3 p-2 rounded-md bg-blue-50 border border-blue-100">
+                          <p className="text-xs text-blue-700 font-medium">Quote Price</p>
+                          <p className="text-lg font-bold text-blue-900">${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}</p>
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedProfessional(pp);
+                            setViewingAssistChat(false);
+                          }}
+                          className="flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                          title="Ask for a better price"
+                        >
+                          🔄 Refresh
+                        </button>
+                        {pp.status !== 'declined' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProfessional(pp);
+                              setViewingAssistChat(false);
+                            }}
+                            className="flex-1 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                            title="Accept this quote"
+                          >
+                            ✓ Accept
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
 
@@ -1444,6 +1499,13 @@ export default function ClientProjectDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Project Images - Moved to end */}
+        <ProjectImagesCard
+          photos={(project as any).photos || []}
+          onPhotoNoteUpdate={handleSaveImageNote}
+          isLoading={loading}
+        />
 
         <BackToTop />
       </div>
