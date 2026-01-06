@@ -379,7 +379,7 @@ function EditProjectModal({
 }
 
 export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
-  const { isLoggedIn, accessToken } = useAuth();
+  const { isLoggedIn, accessToken, user } = useAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
