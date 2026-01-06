@@ -644,8 +644,8 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     {unreadCount > 0 && (
-                      <span className="rounded-full border border-white/60 bg-gradient-to-br from-rose-500 to-rose-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(248,113,113,0.35)]">
-                        {unreadCount}
+                      <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white" title={`${unreadCount} unread messages`}>
+                        {unreadCount} new
                       </span>
                     )}
                     {assistInfo?.hasAssist && (
@@ -664,6 +664,7 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                         className="h-6 w-6 object-contain opacity-40"
                       />
                     )}
+                    <StatusBadge status={project.status} />
                     <Link
                       href={`/projects/${project.id}`}
                       className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
@@ -700,15 +701,6 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                     variant="compact"
                   />
                 <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
-                  {description ? (
-                    <div className="flex items-start gap-2 sm:col-span-2">
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300" />
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold">Description:</span>
-                        <span className="text-slate-600 leading-relaxed line-clamp-2">{description}</span>
-                      </div>
-                    </div>
-                  ) : null}
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                     <span className="font-semibold">Client:</span>
@@ -728,32 +720,10 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">Status:</span>
-                    <span className="text-slate-600 capitalize">{project.status}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                     <span className="font-semibold">Created:</span>
                     <span className="text-slate-600">{formatDate(project.createdAt)}</span>
                   </div>
                 </div>
-
-                {/* Trades Required */}
-                {(project.tradesRequired?.length || 0) > 0 && (
-                  <div className="rounded-md bg-blue-50 border border-blue-100 px-3 py-2">
-                    <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wide mb-1.5">Trades Required</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(project.tradesRequired || []).map((trade: string, idx: number) => (
-                        <span
-                          key={`${trade}-${idx}`}
-                          className="inline-flex items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-medium text-white"
-                        >
-                          {trade}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Budget or Professionals Section */}
                 {isAwarded ? (
@@ -817,20 +787,6 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                         </div>
                       ))}
                     </div>
-                  </div>
-                ) : null}
-                {project.photos.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {project.photos.map((url, idx) => (
-                      <button
-                        key={url}
-                        type="button"
-                        className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50 hover:shadow-sm"
-                        onClick={() => setLightbox({ images: project.photos.map((p) => toAbsolute(p)), index: idx })}
-                      >
-                        <img src={toAbsolute(url)} alt="Project photo" className="h-full w-full object-cover" />
-                      </button>
-                    ))}
                   </div>
                 ) : null}
 
