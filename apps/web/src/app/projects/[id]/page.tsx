@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -101,6 +101,7 @@ export default function ClientProjectDetailPage() {
   const [selectedProfessional, setSelectedProfessional] = useState<ProjectProfessional | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -132,6 +133,8 @@ export default function ClientProjectDetailPage() {
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
+  const refreshRequestTemplate =
+    'Thanks for your quotation — we have received other offers and would like to give you the opportunity to rebid with your best price.';
 
   // Scroll to top on page load
   useEffect(() => {
@@ -918,6 +921,8 @@ export default function ClientProjectDetailPage() {
                           onClick={() => {
                             setSelectedProfessional(pp);
                             setViewingAssistChat(false);
+                            setNewMessage(refreshRequestTemplate);
+                            requestAnimationFrame(() => messageInputRef.current?.focus());
                           }}
                           className="flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
                           title="Ask for a better price"
@@ -927,14 +932,42 @@ export default function ClientProjectDetailPage() {
                         {pp.status !== 'declined' && (
                           <button
                             type="button"
-                            onClick={() => {
-                              setSelectedProfessional(pp);
-                              setViewingAssistChat(false);
+                            onClick={async () => {
+                              setActionBusy('accept');
+                              try {
+                                const res = await fetch(
+                                  `${API_BASE_URL}/projects/${projectId}/award/${pp.professionalId}`,
+                                  {
+                                    method: 'POST',
+                                    headers: {
+                                      Authorization: `Bearer ${accessToken}`,
+                                      'Content-Type': 'application/json',
+                                    },
+                                  },
+                                );
+
+                                if (!res.ok) {
+                                  const errData = await res.json();
+                                  throw new Error(errData.message || 'Failed to award quote');
+                                }
+
+                                toast.success('Quote awarded successfully!');
+                                setMessageError(null);
+                                setNewMessage('');
+                                await fetchProject();
+                              } catch (err) {
+                                const msg = err instanceof Error ? err.message : 'Failed to award quote';
+                                setMessageError(msg);
+                                toast.error(msg);
+                              } finally {
+                                setActionBusy(null);
+                              }
                             }}
-                            className="flex-1 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                            disabled={actionBusy === 'accept'}
+                            className="flex-1 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                             title="Accept this quote"
                           >
-                            ✓ Accept
+                            {actionBusy === 'accept' ? '…' : '✓ Accept'}
                           </button>
                         )}
                       </div>
@@ -1224,6 +1257,7 @@ export default function ClientProjectDetailPage() {
                   {/* Send Message */}
                   <div className="flex gap-2">
                     <input
+                      ref={messageInputRef}
                       type="text"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}

@@ -116,13 +116,8 @@ export default function ProfessionalProjectsPage() {
         <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Projects</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">{professional?.fullName || professional?.businessName || 'Projects'}</p>
               <h1 className="text-2xl font-bold leading-tight">My Projects</h1>
-              {professional && (
-                <p className="text-sm text-slate-200/90">
-                  {professional.fullName || professional.businessName || professional.email}
-                </p>
-              )}
             </div>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
               <SummaryCard label="Total" value={totals.total} tone="slate" />

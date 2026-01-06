@@ -99,7 +99,7 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
           {/* Logo */}
           <Link
             href="/"

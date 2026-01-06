@@ -173,7 +173,6 @@ export default function AdminProjectsPage() {
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Admin</p>
             <h1 className="text-2xl font-bold leading-tight">All Projects</h1>
-            <p className="text-sm text-slate-200/90">{projects.length} total projects</p>
           </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">

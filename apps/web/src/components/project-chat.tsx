@@ -24,10 +24,13 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -138,7 +141,7 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[500px]">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[500px]">
         {loading ? (
           <div className="text-center text-slate-500 text-sm py-8">Loading chat...</div>
         ) : error ? (
@@ -183,7 +186,6 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}

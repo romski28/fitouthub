@@ -1077,6 +1077,12 @@ export class ProjectsService {
       },
     });
 
+    // Mark project as awarded for downstream views
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { status: 'awarded' },
+    });
+
     // Create financial transactions mirroring the client acceptance flow
     const quoteAmount = projectProfessional.quoteAmount
       ? new Decimal(projectProfessional.quoteAmount.toString())
