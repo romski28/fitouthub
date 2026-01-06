@@ -227,7 +227,14 @@ export default function ProjectFinancialsCard({
       });
       if (!res.ok) throw new Error('Failed to confirm deposit');
       toast.success('Deposit confirmed! Waiting for FOH verification.');
-      await fetchTransactions();
+      // Refresh transactions by fetching them again
+      const txRes = await fetch(`${API_BASE_URL}/financial/project/${projectId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (txRes.ok) {
+        const txData: Transaction[] = await txRes.json();
+        setTransactions(txData);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to confirm deposit');
     } finally {
