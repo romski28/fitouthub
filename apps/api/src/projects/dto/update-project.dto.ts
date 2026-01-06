@@ -4,7 +4,7 @@ export class UpdateProjectDto {
   contractorName?: string;
   region?: string;
   budget?: number;
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: 'pending' | 'awarded' | 'withdrawn' | 'started' | 'completed' | 'rated';
   notes?: string;
   userId?: string;
   clientId?: string;
