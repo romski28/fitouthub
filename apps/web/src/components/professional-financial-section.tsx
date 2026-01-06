@@ -78,17 +78,13 @@ export default function ProfessionalFinancialSection({
 
     try {
       setSubmitting(true);
-      const res = await fetch(`${API_BASE_URL}/financial`, {
+      const res = await fetch(`${API_BASE_URL}/financial/project-professional/${projectProfessionalId}/advance-request`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          projectId,
-          projectProfessionalId,
-          type: 'advance_payment_request',
-          description: `Advance payment request - ${formatHKD(requestAmount)}`,
           amount: parseFloat(requestAmount),
         }),
       });
