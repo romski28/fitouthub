@@ -907,8 +907,20 @@ export default function ClientProjectDetailPage() {
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {project.professionals.map((pp) => {
                   const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                  const isSelected = selectedProfessional?.id === pp.id;
                   return (
-                    <div key={pp.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4 hover:border-blue-300 transition">
+                    <div 
+                      key={pp.id} 
+                      onClick={() => {
+                        setSelectedProfessional(pp);
+                        setViewingAssistChat(false);
+                      }}
+                      className={`rounded-lg border p-4 transition cursor-pointer ${
+                        isSelected 
+                          ? 'border-blue-500 bg-blue-50 shadow-md' 
+                          : 'border-slate-200 bg-slate-50 hover:border-blue-300'
+                      }`}
+                    >
                       <div className="flex items-start gap-3 mb-3">
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                           {displayName[0]?.toUpperCase()}
