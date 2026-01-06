@@ -9,6 +9,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isLoggedIn } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -37,10 +38,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <nav className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/admin" className="text-xl font-bold text-slate-900">
-                Admin Portal
-              </Link>
+            {/* Logo/Title */}
+            <Link href="/admin" className="text-xl font-bold text-slate-900">
+              Admin Portal
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-8">
               <div className="flex gap-4">
                 <Link
                   href="/admin/professionals"
@@ -79,20 +83,113 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   Patterns
                 </Link>
               </div>
+              <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
+                <span className="text-sm text-slate-600">
+                  {user.firstName} {user.surname}
+                </span>
+                <Link
+                  href="/"
+                  className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                >
+                  Exit Admin
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-600">
-                {user.firstName} {user.surname}
+
+            {/* Mobile: User name and hamburger */}
+            <div className="md:hidden flex items-center gap-3">
+              <span className="text-sm text-slate-600 font-medium">
+                {user.firstName}
               </span>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-md hover:bg-slate-100"
+                aria-label="Toggle menu"
+              >
+                <svg
+                  className="w-6 h-6 text-slate-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  {mobileMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-200 bg-slate-50">
+            <div className="px-4 py-3 space-y-2">
+              <Link
+                href="/admin/professionals"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Professionals
+              </Link>
+              <Link
+                href="/admin/users"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Users
+              </Link>
+              <Link
+                href="/admin/projects"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Projects
+              </Link>
+              <Link
+                href="/admin/foh-inbox"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Support Inbox
+              </Link>
+              <Link
+                href="/admin/trades"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Trades
+              </Link>
+              <Link
+                href="/admin/patterns"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Patterns
+              </Link>
+              <hr className="my-2" />
               <Link
                 href="/"
-                className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                className="block rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Exit Admin
               </Link>
             </div>
           </div>
-        </div>
+        )}
       </nav>
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
     </div>

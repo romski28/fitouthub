@@ -189,40 +189,11 @@ export default function ProfessionalProjectsPage() {
                           {projectProf.unreadCount} new
                         </span>
                       ) : null}
-                      <span className={statusBadgeClass(projectProf.status)}>{projectProf.status}</span>
+                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeClass(projectProf.status)}`}>{projectProf.status}</span>
                     </div>
                   </div>
 
                   <div className="p-4 space-y-3">
-                    <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                        <span className="font-semibold">Client:</span>
-                        <span className="text-slate-600">{projectProf.project.clientName}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                        <span className="font-semibold">Status:</span>
-                        <span className="text-slate-600 capitalize">{projectProf.status}</span>
-                      </div>
-                      {!(projectProf.status === 'declined' || projectProf.status === 'rejected') && (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                            <span className="font-semibold">Budget:</span>
-                            <span className="text-slate-600">{projectProf.project.budget ? `$${projectProf.project.budget}` : '—'}</span>
-                          </div>
-                          {projectProf.quoteAmount ? (
-                            <div className="flex items-center gap-2">
-                              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                              <span className="font-semibold">Your Quote:</span>
-                              <span className="text-slate-600">${projectProf.quoteAmount}</span>
-                            </div>
-                          ) : null}
-                        </>
-                      )}
-                    </div>
-
                     {projectProf.project.notes ? (
                       <div className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 border border-slate-100">
                         <p className="font-semibold text-slate-800 mb-1">Notes</p>
