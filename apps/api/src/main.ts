@@ -13,9 +13,18 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: true, // Allow all origins for now - restrict later in production
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://fitouthub-web.vercel.app',
+      'https://fitouthub-web-git-main-romski28s-projects.vercel.app',
+      /\.vercel\.app$/, // Allow all Vercel preview deployments
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Length', 'Content-Type'],
+    maxAge: 86400, // 24 hours
   });
 
   try {
