@@ -133,6 +133,11 @@ export default function ClientProjectDetailPage() {
   // Derived values
   const projectStatus = project?.status ?? 'pending';
 
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Helper: fetch project details (reusable)
   const fetchProject = async () => {
     if (!accessToken || !projectId) return;
@@ -631,7 +636,7 @@ export default function ClientProjectDetailPage() {
 
     try {
       const res = await fetch(`${API_BASE_URL}/projects/${projectId}/photos/${photoId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',

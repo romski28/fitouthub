@@ -261,23 +261,21 @@ export default function ProfessionalProjectsPage() {
 }
 
 function SummaryCard({ label, value, tone }: { label: string; value: number; tone: SummaryTone }) {
-  const toneMap: Record<SummaryTone, { text: string; border: string; badge: string }> = {
-    slate: { text: 'text-slate-100', border: 'border-white/10', badge: 'bg-white/20' },
-    amber: { text: 'text-amber-100', border: 'border-amber-200/40', badge: 'bg-amber-200/30' },
-    emerald: { text: 'text-emerald-100', border: 'border-emerald-200/40', badge: 'bg-emerald-200/30' },
-    blue: { text: 'text-blue-100', border: 'border-blue-200/40', badge: 'bg-blue-200/30' },
-    purple: { text: 'text-purple-100', border: 'border-purple-200/40', badge: 'bg-purple-200/30' },
-    rose: { text: 'text-rose-100', border: 'border-rose-200/40', badge: 'bg-rose-200/30' },
+  const toneMap: Record<SummaryTone, { valueColor: string }> = {
+    slate: { valueColor: 'text-white' },
+    amber: { valueColor: 'text-amber-200' },
+    emerald: { valueColor: 'text-emerald-300' },
+    blue: { valueColor: 'text-blue-200' },
+    purple: { valueColor: 'text-purple-200' },
+    rose: { valueColor: 'text-rose-200' },
   };
 
-  const { text, border, badge } = toneMap[tone];
+  const { valueColor } = toneMap[tone];
 
   return (
-    <div className={`rounded-lg border ${border} bg-white/5 px-3 py-2 text-right backdrop-blur-sm`}>
-      <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${text}`}>{label}</p>
-      <div className={`mt-1 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-bold text-white ${badge}`}>
-        {value}
-      </div>
+    <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
+      <p className="text-[11px] uppercase tracking-wide text-slate-200">{label}</p>
+      <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
     </div>
   );
 }

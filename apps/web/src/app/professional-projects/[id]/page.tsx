@@ -79,6 +79,11 @@ export default function ProjectDetailPage() {
   const [uptfrontCostsAmount, setUptfrontCostsAmount] = useState<string>('');
   const [hasShownUpfrontPrompt, setHasShownUpfrontPrompt] = useState(false);
 
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     if (isLoggedIn === false) {
       router.push('/');

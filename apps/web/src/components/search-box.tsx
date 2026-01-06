@@ -105,8 +105,8 @@ export default function SearchBox({ onSubmit }: SearchBoxProps) {
   return (
     <div className="relative w-full">
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex items-center bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden">
-          <span className="px-4 text-slate-400">🔍</span>
+        <div className="flex items-center bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden gap-0">
+          <span className="px-3 sm:px-4 text-slate-400 flex-shrink-0">🔍</span>
           <input
             type="text"
             value={query}
@@ -117,11 +117,11 @@ export default function SearchBox({ onSubmit }: SearchBoxProps) {
             onFocus={() => setShowSuggestions(query.length > 0 || !query)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={placeholder}
-            className="flex-1 px-4 py-4 outline-none text-lg text-slate-900 placeholder-slate-400"
+            className="flex-1 px-3 sm:px-4 py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 min-w-0"
           />
           <button
             type="submit"
-            className="px-6 py-4 bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
+            className="px-3 sm:px-6 py-3 sm:py-4 bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition flex-shrink-0 text-sm sm:text-base whitespace-nowrap"
           >
             Search
           </button>

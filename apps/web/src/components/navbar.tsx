@@ -20,6 +20,7 @@ export const Navbar: React.FC = () => {
   const router = useRouter();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -98,7 +99,8 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4">
+          {/* Logo */}
           <Link
             href="/"
             className="flex items-center gap-2 hover:opacity-80 transition"
@@ -114,7 +116,9 @@ export const Navbar: React.FC = () => {
               Fitout Hub
             </span>
           </Link>
-          <nav className="flex items-center gap-6 text-sm font-medium text-slate-700">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
             <a className="hover:text-slate-900" href="/tradesmen">
               Tradesmen
             </a>
@@ -145,7 +149,7 @@ export const Navbar: React.FC = () => {
               </a>
             ) : null}
 
-            {/* Auth buttons */}
+            {/* Desktop Auth buttons */}
             <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6">
               {showAuthed ? (
                 <div className="relative">
@@ -257,7 +261,263 @@ export const Navbar: React.FC = () => {
               )}
             </div>
           </nav>
+
+          {/* Mobile Auth & Hamburger */}
+          <div className="md:hidden flex items-center gap-3">
+            {/* Auth buttons on mobile */}
+            {showAuthed ? (
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="text-slate-900 font-medium text-sm hover:bg-slate-100 px-2 py-1 rounded"
+              >
+                {user.nickname}
+              </button>
+            ) : showProfessionalAuthed ? (
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="text-slate-900 font-medium text-sm hover:bg-slate-100 px-2 py-1 rounded"
+              >
+                Pro
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={openLoginModal}
+                  className="text-slate-700 hover:text-slate-900 font-medium text-sm"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={openJoinModal}
+                  className="rounded-md bg-blue-600 px-3 py-1.5 text-white font-medium text-sm hover:bg-blue-700"
+                >
+                  Join
+                </button>
+              </div>
+            )}
+
+            {/* Hamburger menu button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-md hover:bg-slate-100"
+              aria-label="Toggle menu"
+            >
+              <svg
+                className="w-6 h-6 text-slate-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {mobileMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-200 bg-slate-50">
+            <nav className="flex flex-col px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
+              <a
+                className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                href="/tradesmen"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Tradesmen
+              </a>
+              <a
+                className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                href="/professionals"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Professionals
+              </a>
+              <a
+                className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                href="/docs"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Docs
+              </a>
+              {showProjectsLink ? (
+                <a
+                  className="relative px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                  href="/projects"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  My Projects
+                  {clientUnread > 0 && (
+                    <span className="absolute -top-1 left-8 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
+                      {clientUnread}
+                    </span>
+                  )}
+                </a>
+              ) : null}
+              {showProfessionalProjectsLink ? (
+                <a
+                  className="relative px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                  href="/professional-projects"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  My Projects
+                  {profUnread > 0 && (
+                    <span className="absolute -top-1 left-8 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
+                      {profUnread}
+                    </span>
+                  )}
+                </a>
+              ) : null}
+
+              {/* Mobile profile menu */}
+              {showAuthed && (
+                <>
+                  <hr className="my-2" />
+                  <a
+                    href="/profile"
+                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Profile
+                  </a>
+                  {user.role === 'admin' ? (
+                    <Link
+                      href="/admin"
+                      className="px-3 py-2 rounded hover:bg-slate-100 text-amber-800 font-semibold"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Admin Portal
+                    </Link>
+                  ) : null}
+                  {user.role === 'professional' && (
+                    <a
+                      href="/professional/edit"
+                      className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Edit Professional Info
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                      router.push('/');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded hover:bg-slate-100 text-red-600"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
+
+              {showProfessionalAuthed && (
+                <>
+                  <hr className="my-2" />
+                  <a
+                    href="/professional/profile"
+                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Profile
+                  </a>
+                  <button
+                    onClick={() => {
+                      profLogout();
+                      setMobileMenuOpen(false);
+                      router.push('/');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded hover:bg-slate-100 text-red-600"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
+            </nav>
+          </div>
+        )}
+
+        {/* Mobile Profile Dropdown */}
+        {profileMenuOpen && (showAuthed || showProfessionalAuthed) && mobileMenuOpen === false && (
+          <div className="md:hidden border-t border-slate-200 bg-white">
+            <div className="px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
+              {showAuthed && (
+                <>
+                  <a
+                    href="/profile"
+                    className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    Profile
+                  </a>
+                  {user.role === 'admin' ? (
+                    <Link
+                      href="/admin"
+                      className="block px-3 py-2 rounded hover:bg-slate-50 text-amber-800 font-semibold"
+                      onClick={() => setProfileMenuOpen(false)}
+                    >
+                      Admin Portal
+                    </Link>
+                  ) : null}
+                  {user.role === 'professional' && (
+                    <a
+                      href="/professional/edit"
+                      className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
+                      onClick={() => setProfileMenuOpen(false)}
+                    >
+                      Edit Professional Info
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      logout();
+                      setProfileMenuOpen(false);
+                      router.push('/');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-red-600"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
+
+              {showProfessionalAuthed && (
+                <>
+                  <a
+                    href="/professional/profile"
+                    className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    Profile
+                  </a>
+                  <button
+                    onClick={() => {
+                      profLogout();
+                      setProfileMenuOpen(false);
+                      router.push('/');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-red-600"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     </>
   );
