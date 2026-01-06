@@ -55,7 +55,7 @@ export function ProjectImagesCard({
               key={photo.id}
               onClick={() => setSelectedPhoto(photo)}
               disabled={isLoading}
-              className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-50 hover:border-emerald-300 transition disabled:opacity-50"
+              className="group relative aspect-video overflow-hidden rounded-lg border border-slate-200 bg-slate-50 hover:border-emerald-300 transition disabled:opacity-50"
             >
               <img
                 src={photo.url}

@@ -855,6 +855,24 @@ export default function ClientProjectDetailPage() {
           </div>
         </div>
 
+        {/* Project Progress - Moved to 2nd position */}
+        <ProjectProgressBar
+          project={{
+            id: project.id,
+            status: project.status,
+            startDate: project.startDate,
+            endDate: project.endDate,
+            professionals:
+              project.professionals?.map((p) => ({
+                status: p.status,
+                quoteAmount: p.quoteAmount,
+                invoice: p.invoice || null,
+              })) || [],
+          }}
+          hasAssist={!!assistRequestId}
+          variant="full"
+        />
+
           {/* Project Financials */}
           {accessToken && (
             <ProjectFinancialsCard
@@ -873,24 +891,6 @@ export default function ClientProjectDetailPage() {
           />
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
-
-        {/* Project Progress */}
-        <ProjectProgressBar
-          project={{
-            id: project.id,
-            status: project.status,
-            startDate: project.startDate,
-            endDate: project.endDate,
-            professionals:
-              project.professionals?.map((p) => ({
-                status: p.status,
-                quoteAmount: p.quoteAmount,
-                invoice: p.invoice || null,
-              })) || [],
-          }}
-          hasAssist={!!assistRequestId}
-          variant="full"
-        />
 
         {/* Professionals Summary Table - Hidden when project is awarded */}
         {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
@@ -1220,54 +1220,53 @@ export default function ClientProjectDetailPage() {
                 <p className="text-sm text-slate-600">Communicate with all awarded professionals and Fitout Hub</p>
               </div>
 
-              {/* Chat Mode Selector */}
+              {/* Chat Mode Selector - Dropdown */}
               <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                {/* Tab Navigation */}
-                <div className="flex border-b border-slate-200">
-                  <button
-                    onClick={() => {
-                      setSelectedProfessional(null);
-                      setViewingAssistChat(false);
+                <div className="p-4 border-b border-slate-200">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Chat with:</label>
+                  <select
+                    value={
+                      viewingAssistChat ? 'fitouthub' : 
+                      selectedProfessional ? `professional-${selectedProfessional.id}` : 
+                      'project'
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'fitouthub') {
+                        setViewingAssistChat(true);
+                        setSelectedProfessional(null);
+                      } else if (val === 'project') {
+                        setViewingAssistChat(false);
+                        setSelectedProfessional(null);
+                      } else {
+                        const profId = val.replace('professional-', '');
+                        const prof = project.professionals?.find(p => p.id === profId);
+                        if (prof) {
+                          setSelectedProfessional(prof);
+                          setViewingAssistChat(false);
+                        }
+                      }
                     }}
-                    className={`flex-1 px-4 py-3 text-sm font-semibold border-b-2 transition ${
-                      !viewingAssistChat && !selectedProfessional
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-slate-600 hover:text-slate-900'
-                    }`}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                   >
-                    Project Team
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedProfessional(null);
-                      setViewingAssistChat(true);
-                    }}
-                    className={`flex-1 px-4 py-3 text-sm font-semibold border-b-2 transition ${
-                      viewingAssistChat
-                        ? 'border-indigo-600 text-indigo-600'
-                        : 'border-transparent text-slate-600 hover:text-slate-900'
-                    }`}
-                    disabled={!assistRequestId}
-                  >
-                    Fitout Hub Help
-                  </button>
-                  <button
-                    onClick={() => setViewingAssistChat(false)}
-                    className={`flex-1 px-4 py-3 text-sm font-semibold border-b-2 transition ${
-                      !viewingAssistChat && selectedProfessional
-                        ? 'border-amber-600 text-amber-600'
-                        : 'border-transparent text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Private Chats
-                  </button>
+                    <option value="project">Project (All professionals)</option>
+                    {project.professionals?.map((pp) => {
+                      const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                      return (
+                        <option key={pp.id} value={`professional-${pp.id}`}>
+                          {displayName}
+                        </option>
+                      );
+                    })}
+                    {assistRequestId && <option value="fitouthub">Fitout Hub</option>}
+                  </select>
                 </div>
 
                 {/* Team Chat View */}
                 {!viewingAssistChat && !selectedProfessional && (
                   <div>
-                    <div className="p-4">
-                      <p className="text-sm text-slate-600 mb-3">Chat with all awarded professionals</p>
+                    <div className="p-4 bg-blue-50">
+                      <p className="text-sm text-blue-700">Chat with all awarded professionals</p>
                     </div>
                     {accessToken && (
                       <ProjectChat
@@ -1347,64 +1346,13 @@ export default function ClientProjectDetailPage() {
                   </div>
                 )}
 
-                {/* Private Chats View */}
-                {!viewingAssistChat && !selectedProfessional && (
-                  <div className="p-4">
-                    <p className="text-sm text-slate-600 mb-3">Select a professional to open private chat</p>
-                    <div className="space-y-2">
-                      {assistRequestId && (
-                        <button
-                          onClick={() => setViewingAssistChat(true)}
-                          className="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-indigo-50 transition"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                              FH
-                            </div>
-                            <div>
-                              <p className="font-semibold text-slate-900">Fitout Hub</p>
-                              <p className="text-xs text-slate-600">Assistance</p>
-                            </div>
-                          </div>
-                        </button>
-                      )}
-                      {project.professionals.map((pp) => {
-                        const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
-                        return (
-                          <button
-                            key={pp.id}
-                            onClick={() => setSelectedProfessional(pp)}
-                            className="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-blue-50 transition"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 flex-1">
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                                  {displayName[0]?.toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-slate-900">{displayName}</p>
-                                  <p className="text-xs text-slate-600">{pp.status.replace('_', ' ')}</p>
-                                </div>
-                              </div>
-                              {pp.quoteAmount && (
-                                <p className="font-semibold text-blue-700 ml-2">${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}</p>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 {/* Private Chat with Professional View */}
                 {!viewingAssistChat && selectedProfessional && (
                   <div className="bg-amber-50 border-t border-amber-200">
                     <div className="p-4 space-y-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                           </svg>
                           <div>
                             <h3 className="font-bold text-amber-900 text-sm">
