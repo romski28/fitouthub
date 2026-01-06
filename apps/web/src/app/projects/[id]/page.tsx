@@ -757,7 +757,7 @@ export default function ClientProjectDetailPage() {
 
   const awardedPro = project?.professionals?.find((p) => p.status === 'awarded');
   const isAwarded = project?.status === 'awarded' || Boolean(awardedPro);
-  const projectCostValue = awardedPro?.quoteAmount ?? project?.budget ?? 0;
+  const projectCostValue = project?.budget ?? 0;
   const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
   const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
 
@@ -846,14 +846,6 @@ export default function ClientProjectDetailPage() {
           </div>
 
           <div className="p-5 space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                <span className="font-semibold text-slate-700">Professionals:</span>
-                <span className="text-slate-600">{project.professionals?.length || 0}</span>
-              </div>
-            </div>
-
             {project.notes && (
               <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100">
                 <p className="font-semibold text-slate-800 mb-1">Project description</p>
