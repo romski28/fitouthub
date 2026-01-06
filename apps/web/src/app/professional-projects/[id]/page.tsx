@@ -75,9 +75,6 @@ export default function ProjectDetailPage() {
     percentage: '',
   });
   const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
-  const [showUptfrontCostsDialog, setShowUptfrontCostsDialog] = useState(false);
-  const [uptfrontCostsAmount, setUptfrontCostsAmount] = useState<string>('');
-  const [hasShownUpfrontPrompt, setHasShownUpfrontPrompt] = useState(false);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -368,12 +365,7 @@ export default function ProjectDetailPage() {
   };
 
   // Show upfront costs prompt only once when the project becomes awarded
-  useEffect(() => {
-    if (project?.status === 'awarded' && !hasShownUpfrontPrompt) {
-      setShowUptfrontCostsDialog(true);
-      setHasShownUpfrontPrompt(true);
-    }
-  }, [project?.status, hasShownUpfrontPrompt]);
+  // REMOVED: Now handled by advance payment request form in detail card
 
   const handleReject = async () => {
     const confirmed = await new Promise<boolean>((resolve) => {
@@ -1036,85 +1028,6 @@ export default function ProjectDetailPage() {
         </div>
       </div>
     </div>
-
-    {/* Upfront Costs Dialog */}
-    {showUptfrontCostsDialog && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full space-y-6 p-6">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Upfront Costs Required?</h3>
-            <p className="text-sm text-slate-600 mt-1">Are there any upfront costs needed to start this project?</p>
-          </div>
-
-          <div>
-            <label htmlFor="uptfrontAmount" className="block text-sm font-medium text-slate-700 mb-2">
-              Amount (HKD) - Leave blank if none
-            </label>
-            <input
-              id="uptfrontAmount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={uptfrontCostsAmount}
-              onChange={(e) => setUptfrontCostsAmount(e.target.value)}
-              placeholder="0.00"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 justify-end pt-2">
-            <button
-              onClick={() => {
-                setShowUptfrontCostsDialog(false);
-                setUptfrontCostsAmount('');
-              }}
-              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50"
-            >
-              No Upfront Costs
-            </button>
-            <button
-              onClick={async () => {
-                const amount = parseFloat(uptfrontCostsAmount || '0');
-                if (amount > 0) {
-                  // Create financial line for upfront costs request
-                  try {
-                    const response = await fetch(`${API_BASE_URL}/projects/${project?.project?.id}/financials`, {
-                      method: 'POST',
-                      headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        type: 'upfront_costs_request',
-                        description: 'Request for upfront costs to start project',
-                        amount: amount.toString(),
-                        status: 'Confirm',
-                        requestedByRole: 'professional',
-                        projectProfessionalId: projectProfessionalId,
-                      }),
-                    });
-
-                    if (!response.ok) {
-                      throw new Error('Failed to submit upfront costs request');
-                    }
-
-                    toast.success('Upfront costs request submitted!');
-                  } catch (err) {
-                    const msg = err instanceof Error ? err.message : 'Failed to submit request';
-                    toast.error(msg);
-                  }
-                }
-                setShowUptfrontCostsDialog(false);
-                setUptfrontCostsAmount('');
-              }}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-            >
-              {uptfrontCostsAmount ? 'Submit Request' : 'Skip'}
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
 
     <Toaster position="top-right" />
     </>
