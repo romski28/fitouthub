@@ -892,9 +892,17 @@ export default function ClientProjectDetailPage() {
           {/* Bidding Card - Show when professionals are invited but not awarded */}
           {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
-              <div className="mb-4">
-                <h2 className="text-lg font-bold text-slate-900">Bidding</h2>
-                <p className="text-sm text-slate-600">Review quotes from invited professionals</p>
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Bidding</h2>
+                  <p className="text-sm text-slate-600">Review quotes from invited professionals</p>
+                </div>
+                <Link
+                  href={`/professionals?projectId=${projectId}`}
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                >
+                  + Invite More
+                </Link>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {project.professionals.map((pp) => {
@@ -918,28 +926,69 @@ export default function ClientProjectDetailPage() {
                           <p className="text-lg font-bold text-blue-900">${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}</p>
                         </div>
                       )}
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedProfessional(pp);
-                            setViewingAssistChat(false);
-                            setNewMessage(refreshRequestTemplate);
-                            requestAnimationFrame(() => messageInputRef.current?.focus());
-                          }}
-                          className="flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                          title="Ask for a better price"
-                        >
-                          🔄 Refresh
-                        </button>
-                        {pp.status !== 'declined' && (
+                      {pp.quoteAmount && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProfessional(pp);
+                              setViewingAssistChat(false);
+                              setNewMessage(refreshRequestTemplate);
+                              requestAnimationFrame(() => messageInputRef.current?.focus());
+                            }}
+                            className="flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                            title="Ask for a better price"
+                          >
+                            🔄 Refresh
+                          </button>
+                          {pp.status !== 'declined' && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setActionBusy('accept');
+                                try {
+                                  const res = await fetch(
+                                    `${API_BASE_URL}/projects/${projectId}/award/${pp.professionalId}`,
+                                    {
+                                      method: 'POST',
+                                      headers: {
+                                        Authorization: `Bearer ${accessToken}`,
+                                        'Content-Type': 'application/json',
+                                      },
+                                    },
+                                  );
+
+                                  if (!res.ok) {
+                                    const errData = await res.json();
+                                    throw new Error(errData.message || 'Failed to award quote');
+                                  }
+
+                                  toast.success('Quote awarded successfully!');
+                                  setMessageError(null);
+                                  setNewMessage('');
+                                  await fetchProject();
+                                } catch (err) {
+                                  const msg = err instanceof Error ? err.message : 'Failed to award quote';
+                                  setMessageError(msg);
+                                  toast.error(msg);
+                                } finally {
+                                  setActionBusy(null);
+                                }
+                              }}
+                              disabled={actionBusy === 'accept'}
+                              className="flex-1 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                              title="Accept this quote"
+                            >
+                              {actionBusy === 'accept' ? '…' : '✓ Accept'}
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={async () => {
-                              setActionBusy('accept');
+                              setActionBusy('reject');
                               try {
                                 const res = await fetch(
-                                  `${API_BASE_URL}/projects/${projectId}/award/${pp.professionalId}`,
+                                  `${API_BASE_URL}/professional/projects/${pp.id}/reject-quote`,
                                   {
                                     method: 'POST',
                                     headers: {
@@ -951,29 +1000,26 @@ export default function ClientProjectDetailPage() {
 
                                 if (!res.ok) {
                                   const errData = await res.json();
-                                  throw new Error(errData.message || 'Failed to award quote');
+                                  throw new Error(errData.message || 'Failed to reject quote');
                                 }
 
-                                toast.success('Quote awarded successfully!');
-                                setMessageError(null);
-                                setNewMessage('');
+                                toast.success('Quote rejected');
                                 await fetchProject();
                               } catch (err) {
-                                const msg = err instanceof Error ? err.message : 'Failed to award quote';
-                                setMessageError(msg);
+                                const msg = err instanceof Error ? err.message : 'Failed to reject quote';
                                 toast.error(msg);
                               } finally {
                                 setActionBusy(null);
                               }
                             }}
-                            disabled={actionBusy === 'accept'}
-                            className="flex-1 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                            title="Accept this quote"
+                            disabled={actionBusy === 'reject'}
+                            className="rounded-md bg-rose-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+                            title="Reject this quote"
                           >
-                            {actionBusy === 'accept' ? '…' : '✓ Accept'}
+                            ✕
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -983,21 +1029,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
 
-        {/* Professionals Summary Table - Hidden when project is awarded */}
-        {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="px-5 py-4 border-b border-slate-200 flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Invited Professionals</h2>
-                <p className="text-sm text-slate-600">Click a row to open the chat with that professional.</p>
-              </div>
-              <Link
-                href={`/professionals?projectId=${projectId}`}
-                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-              >
-                + Invite More
-              </Link>
-            </div>
+          {/* Professionals Summary Table - REMOVED, replaced by Bidding Card above */}
             <div className="p-5 overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
@@ -1193,33 +1225,6 @@ export default function ClientProjectDetailPage() {
                 </div>
               ) : selectedProfessional && (
                 <div className="p-4 space-y-4">
-                  {/* Quote Actions */}
-                  {selectedProfessional.quoteAmount && (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        disabled={!!actionBusy}
-                        onClick={() => actOnQuote('accept')}
-                        className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {actionBusy === 'accept' ? 'Accepting…' : 'Accept Quote'}
-                      </button>
-                      <button
-                        disabled={!!actionBusy}
-                        onClick={() => actOnQuote('reject')}
-                        className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                      >
-                        {actionBusy === 'reject' ? 'Rejecting…' : 'Reject Quote'}
-                      </button>
-                      <button
-                        disabled={!!actionBusy}
-                        onClick={() => actOnQuote('request-better')}
-                        className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-                      >
-                        {actionBusy === 'request-better' ? 'Requesting…' : 'Ask for better offer'}
-                      </button>
-                    </div>
-                  )}
-
                   {messageError && (
                     <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                       {messageError}
