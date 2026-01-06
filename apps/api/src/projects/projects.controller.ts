@@ -268,6 +268,16 @@ export class ProjectsController {
     return this.projectsService.payInvoice(projectId, req.user.id);
   }
 
+  @Post(':id/transactions/:transactionId/confirm-deposit')
+  @UseGuards(AuthGuard('jwt'))
+  async confirmDepositPaid(
+    @Param('id') projectId: string,
+    @Param('transactionId') transactionId: string,
+    @Request() req: any,
+  ) {
+    return this.projectsService.confirmDepositPaid(transactionId, projectId);
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,

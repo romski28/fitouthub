@@ -218,6 +218,23 @@ export default function ProjectFinancialsCard({
     }
   };
 
+  const handleConfirmDepositPaid = async (transactionId: string) => {
+    try {
+      setProcessingId(transactionId);
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/transactions/${transactionId}/confirm-deposit`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to confirm deposit');
+      toast.success('Deposit confirmed! Waiting for FOH verification.');
+      await fetchTransactions();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to confirm deposit');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const budgetLabel = role === 'professional' ? 'Contract Value' : 'Project Budget';
   const paymentsLabel = 'Payments Released';
   const escrowActive = escrowConfirmed > 0;
@@ -279,8 +296,24 @@ export default function ProjectFinancialsCard({
                   const canApprove = role === 'client' && tx.type === 'advance_payment_request' && tx.status === 'pending';
                   const canRelease = role === 'admin' && tx.type === 'advance_payment_request' && tx.status === 'confirmed';
                   const canReject = role === 'client' && tx.type === 'advance_payment_request' && tx.status === 'pending';
+                  const canMarkPaid = role === 'client' && tx.type === 'escrow_deposit_request' && tx.status === 'Pending';
+                  const isInfo = tx.status === 'Info';
 
                   const actionButton = () => {
+                    if (isInfo) {
+                      return <span className="text-slate-400 text-xs">—</span>;
+                    }
+                    if (canMarkPaid) {
+                      return (
+                        <button
+                          onClick={() => handleConfirmDepositPaid(tx.id)}
+                          disabled={processingId === tx.id}
+                          className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
+                        >
+                          {processingId === tx.id ? 'Processing...' : 'Paid'}
+                        </button>
+                      );
+                    }
                     if (canConfirmDeposit) {
                       return (
                         <button

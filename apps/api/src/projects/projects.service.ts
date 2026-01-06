@@ -1016,6 +1016,62 @@ export class ProjectsService {
     };
   }
 
+  async confirmDepositPaid(transactionId: string, projectId: string) {
+    // Verify the transaction exists and is a pending escrow deposit request
+    const transaction = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        project: {
+          include: {
+            client: true,
+          },
+        },
+      },
+    });
+
+    if (!transaction) {
+      throw new Error('Transaction not found');
+    }
+
+    if (transaction.projectId !== projectId) {
+      throw new Error('Transaction does not belong to this project');
+    }
+
+    if (transaction.type !== 'escrow_deposit_request') {
+      throw new Error('This transaction is not an escrow deposit request');
+    }
+
+    if (transaction.status !== 'Pending') {
+      throw new Error('This deposit request is not pending');
+    }
+
+    // Create a new transaction confirming the payment was made by client
+    await this.prisma.financialTransaction.create({
+      data: {
+        projectId,
+        projectProfessionalId: transaction.projectProfessionalId,
+        type: 'escrow_deposit_confirmation',
+        description: 'Client confirms deposit payment made to Fitout Hub escrow',
+        amount: transaction.amount,
+        status: 'Awaiting Confirmation',
+        requestedBy: transaction.requestedBy,
+        requestedByRole: 'client',
+        notes: `Confirmation for escrow deposit request ${transactionId}`,
+      },
+    });
+
+    // Update the original transaction status
+    await this.prisma.financialTransaction.update({
+      where: { id: transactionId },
+      data: {
+        status: 'Paid',
+        notes: `${transaction.notes || ''} | Client confirmed payment made`,
+      },
+    });
+
+    return { success: true };
+  }
+
   async awardQuote(projectId: string, professionalId: string) {
     // Verify ProjectProfessional relationship exists and has a quote
     const projectProfessional =
@@ -1097,7 +1153,7 @@ export class ProjectsService {
           type: 'quotation_accepted',
           description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
           amount: quoteAmount,
-          status: 'info',
+          status: 'Info',
           requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
           requestedByRole: 'client',
         },
@@ -1111,7 +1167,7 @@ export class ProjectsService {
           type: 'escrow_deposit_request',
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,
-          status: 'Deposited',
+          status: 'Pending',
           requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
           requestedByRole: 'client',
           notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
