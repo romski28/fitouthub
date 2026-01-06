@@ -190,6 +190,16 @@ export class ProjectsController {
     return this.projectsService.awardQuote(projectId, professionalId);
   }
 
+  @Post(':id/transactions/:transactionId/confirm-deposit')
+  @UseGuards(AuthGuard('jwt'))
+  async confirmDepositPaid(
+    @Param('id') projectId: string,
+    @Param('transactionId') transactionId: string,
+    @Request() req: any,
+  ) {
+    return this.projectsService.confirmDepositPaid(transactionId, projectId);
+  }
+
   @Post(':id/share-contact/:professionalId')
   async shareContact(
     @Param('id') projectId: string,
@@ -266,16 +276,6 @@ export class ProjectsController {
     @Request() req: any,
   ) {
     return this.projectsService.payInvoice(projectId, req.user.id);
-  }
-
-  @Post(':id/transactions/:transactionId/confirm-deposit')
-  @UseGuards(AuthGuard('jwt'))
-  async confirmDepositPaid(
-    @Param('id') projectId: string,
-    @Param('transactionId') transactionId: string,
-    @Request() req: any,
-  ) {
-    return this.projectsService.confirmDepositPaid(transactionId, projectId);
   }
 
   @Put(':id')
