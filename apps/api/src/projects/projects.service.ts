@@ -1666,3 +1666,4 @@ export class ProjectsService {
   }
 
   // Removed payInvoice flow; payments are handled via escrow and payment requests
+}
