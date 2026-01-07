@@ -747,11 +747,12 @@ export default function ProjectDetailPage() {
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">💰 Request Payment</h2>
                 
-                {project.advancePaymentRequest ? (
-                  <div className="space-y-4">
+                {/* Show existing payment request if one exists */}
+                {project.advancePaymentRequest && (
+                  <div className="space-y-4 mb-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-blue-900">Payment Request</p>
+                        <p className="text-sm font-semibold text-blue-900">Latest Payment Request</p>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           project.advancePaymentRequest.status === 'approved' 
                             ? 'bg-green-100 text-green-800' 
@@ -779,22 +780,23 @@ export default function ProjectDetailPage() {
                       </p>
                     </div>
                   </div>
+                )}
+
+                {/* Always show payment request form (for new or additional requests) */}
+                {!showAdvanceRequestForm ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Request payment for materials, labor, milestones, or advance payment before starting work.
+                    </p>
+                    <button
+                      onClick={() => setShowAdvanceRequestForm(true)}
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition-colors"
+                    >
+                      📋 {project.advancePaymentRequest ? 'Submit New Payment Request' : 'Request Payment'}
+                    </button>
+                  </div>
                 ) : (
-                  <>
-                    {!showAdvanceRequestForm ? (
-                      <div className="space-y-3">
-                        <p className="text-sm text-gray-600">
-                          Request payment for materials, labor, milestones, or advance payment before starting work.
-                        </p>
-                        <button
-                          onClick={() => setShowAdvanceRequestForm(true)}
-                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition-colors"
-                        >
-                          📋 Request Payment
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
+                  <div className="space-y-4">
                         <div className="flex gap-4">
                           <label className="flex items-center">
                             <input
@@ -886,8 +888,6 @@ export default function ProjectDetailPage() {
                         </div>
                       </div>
                     )}
-                  </>
-                )}
               </div>
             </div>
           )}
