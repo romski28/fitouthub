@@ -17,6 +17,7 @@ export type ProjectProgressProps = {
   project: ProgressProject;
   hasAssist?: boolean;
   variant?: 'full' | 'compact';
+  fundsSecured?: boolean;
 };
 
 type StepState = 'done' | 'optional-skipped' | 'upcoming';
@@ -51,11 +52,11 @@ const countByStatus = (project?: ProgressProject) => {
   return { accepted, declined, total: professionals.length };
 };
 
-export function ProjectProgressBar({ project, hasAssist, variant = 'full' }: ProjectProgressProps) {
+export function ProjectProgressBar({ project, hasAssist, variant = 'full', fundsSecured }: ProjectProgressProps) {
   const { total, accepted, declined } = countByStatus(project);
   const biddingState: StepState = total > 0 ? 'done' : 'upcoming';
   const awardedState: StepState = awardedProfessional(project) || project.status === 'awarded' ? 'done' : 'upcoming';
-  const fundsState: StepState = isPaid(project) ? 'done' : 'upcoming';
+  const fundsState: StepState = fundsSecured ? 'done' : (isPaid(project) ? 'done' : 'upcoming');
   const startedState: StepState = project.startDate ? 'done' : 'upcoming';
   const completedState: StepState = project.endDate || project.status === 'completed' ? 'done' : 'upcoming';
   const feedbackState: StepState = project.feedbackEntered ? 'done' : 'upcoming';

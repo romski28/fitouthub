@@ -68,6 +68,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fundsSecured, setFundsSecured] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isLoggedIn || !accessToken) return;
@@ -116,6 +117,26 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
     };
     load();
   }, [projectId, isLoggedIn, accessToken]);
+
+  // Load financial summary to reflect funds secured (escrow confirmed)
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        if (!projectId || !accessToken) return;
+        const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const summary = await res.json();
+        const confirmedVal = summary?.escrowConfirmed;
+        const confirmedNum = typeof confirmedVal === 'string' ? parseFloat(confirmedVal) : Number(confirmedVal || 0);
+        setFundsSecured(confirmedNum > 0);
+      } catch {
+        // ignore summary errors; progress bar will fall back
+      }
+    };
+    loadSummary();
+  }, [projectId, accessToken]);
 
   useEffect(() => {
     // Redirect to list if somehow no id is present
@@ -223,6 +244,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
             })) || [],
         }}
         variant="full"
+        fundsSecured={fundsSecured}
       />
 
       {isAwarded && (
