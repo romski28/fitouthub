@@ -74,6 +74,7 @@ export default function ProjectDetailPage() {
     requestType: 'fixed' as 'fixed' | 'percentage',
     amount: '',
     percentage: '',
+    notes: '',
   });
   const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
 
@@ -469,6 +470,7 @@ export default function ProjectDetailPage() {
             percentage: advanceRequestForm.requestType === 'percentage' 
               ? parseFloat(advanceRequestForm.percentage) 
               : undefined,
+            notes: advanceRequestForm.notes,
           }),
         },
       );
@@ -478,9 +480,9 @@ export default function ProjectDetailPage() {
         throw new Error(data.message || 'Failed to submit advance payment request');
       }
 
-      toast.success('Advance payment request submitted! Client will be notified.');
+      toast.success('Payment request submitted! Client will be notified.');
       setShowAdvanceRequestForm(false);
-      setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '' });
+      setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '', notes: '' });
       
       // Refresh project data
       window.location.reload();
@@ -686,7 +688,7 @@ export default function ProjectDetailPage() {
                 </div>
               </form>
             </div>
-          ) : !(project.status === 'declined' || project.status === 'rejected') ? (
+          ) : project.quoteAmount && !(project.status === 'declined' || project.status === 'rejected') ? (
             <div className="p-8 border-t border-gray-200">
               <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Your Quote</h2>
@@ -739,59 +741,17 @@ export default function ProjectDetailPage() {
             </div>
           ) : null}
 
-          {/* Invoice & Advance Payment (shown when awarded) */}
+          {/* Payment Request (shown when awarded) */}
           {project.status === 'awarded' && (
-            <div className="p-8 border-t border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                💰 Invoice & Payment
-              </h2>
-
-              {project.invoice && (
-                <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm font-medium text-gray-600">Invoice Status</p>
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${project.invoice.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {project.invoice.paymentStatus === 'paid' ? '✓ Paid' : 'Pending Payment'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Invoice Amount</p>
-                      <p className="text-2xl font-bold text-gray-900">${Number(project.invoice.amount).toFixed(2)}</p>
-                    </div>
-                    {project.invoice.paidAt && (
-                      <div>
-                        <p className="text-sm text-gray-600">Paid On</p>
-                        <p className="text-lg text-gray-900">{new Date(project.invoice.paidAt).toLocaleDateString()}</p>
-                      </div>
-                    )}
-                  </div>
-                  {project.invoice.paymentStatus === 'paid' && (
-                    <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                      <p className="text-sm text-green-900">
-                        ✓ <strong>Payment Received!</strong> Funds are securely held in Fitout Hub's escrow account and will be released according to project milestones.
-                      </p>
-                    </div>
-                  )}
-                  {project.invoice.paymentStatus !== 'paid' && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                      <p className="text-sm text-yellow-900">
-                        ⏳ Waiting for client payment. You'll be notified when funds are deposited into escrow.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Advance Payment Request Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Request Advance Payment</h3>
+            <div className="p-8 border-t border-gray-200">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-slate-900 mb-4">💰 Request Payment</h2>
                 
                 {project.advancePaymentRequest ? (
                   <div className="space-y-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-blue-900">Advance Payment Request</p>
+                        <p className="text-sm font-semibold text-blue-900">Payment Request</p>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           project.advancePaymentRequest.status === 'approved' 
                             ? 'bg-green-100 text-green-800' 
@@ -824,13 +784,13 @@ export default function ProjectDetailPage() {
                     {!showAdvanceRequestForm ? (
                       <div className="space-y-3">
                         <p className="text-sm text-gray-600">
-                          Request upfront payment for materials, tools, or other costs before starting the project.
+                          Request payment for materials, labor, milestones, or advance payment before starting work.
                         </p>
                         <button
                           onClick={() => setShowAdvanceRequestForm(true)}
                           className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition-colors"
                         >
-                          📋 Submit Advance Payment Request
+                          📋 Request Payment
                         </button>
                       </div>
                     ) : (
@@ -893,6 +853,19 @@ export default function ProjectDetailPage() {
                           </div>
                         )}
 
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Notes / Reason for Payment
+                          </label>
+                          <textarea
+                            value={advanceRequestForm.notes}
+                            onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, notes: e.target.value })}
+                            className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            rows={3}
+                            placeholder="e.g., Advance payment for materials, First milestone completion, Labor for week 1, etc."
+                          />
+                        </div>
+
                         <div className="flex gap-3">
                           <button
                             onClick={handleSubmitAdvanceRequest}
@@ -904,7 +877,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={() => {
                               setShowAdvanceRequestForm(false);
-                              setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '' });
+                              setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '', notes: '' });
                             }}
                             className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 font-medium transition-colors"
                           >
