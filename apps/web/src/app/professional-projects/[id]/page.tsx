@@ -558,7 +558,13 @@ export default function ProjectDetailPage() {
           >
             Back to Projects
           </Link>
-        return (
+        </div>
+      </div>
+      </>
+    );
+  }
+
+  return (
           <>
             <Toaster position="top-right" />
             <div className="min-h-screen bg-slate-50 pb-16">
