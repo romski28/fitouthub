@@ -687,34 +687,36 @@ export default function ProjectDetailPage() {
               </form>
             </div>
           ) : !(project.status === 'declined' || project.status === 'rejected') ? (
-            <div className="p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Your Quote
-              </h2>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600">Quote Amount</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    ${project.quoteAmount}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Submitted</p>
-                  <p className="text-lg text-gray-900">
-                    {project.quotedAt
-                      ? new Date(project.quotedAt).toLocaleDateString()
-                      : 'Not submitted'}
-                  </p>
+            <div className="p-8 border-t border-gray-200">
+              <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Your Quote</h2>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-600">Amount</p>
+                      <p className="text-xl font-bold text-slate-900">
+                        ${project.quoteAmount}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-slate-600">Submitted</p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {project.quotedAt
+                          ? new Date(project.quotedAt).toLocaleDateString()
+                          : 'Not submitted'}
+                      </p>
+                    </div>
+                  </div>
+                  {project.quoteNotes && (
+                    <div className="pt-3 border-t border-slate-100">
+                      <p className="text-sm text-slate-600 mb-2">Notes</p>
+                      <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded">
+                        {project.quoteNotes}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-              {project.quoteNotes && (
-                <div className="mt-6">
-                  <p className="text-sm text-gray-600 mb-2">Notes</p>
-                  <p className="text-gray-900 bg-gray-50 p-4 rounded">
-                    {project.quoteNotes}
-                  </p>
-                </div>
-              )}
             </div>
           ) : null}
 
