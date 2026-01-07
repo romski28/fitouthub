@@ -684,7 +684,7 @@ export default function ProjectDetailPage() {
               </form>
             </div>
           ) : project.quoteAmount && !(project.status === 'declined' || project.status === 'rejected') ? (
-            <div className="p-8 border-t border-gray-200">
+            <div className="p-8">
               <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Your Quote</h2>
                 <div className="grid grid-cols-4 gap-4">
@@ -738,7 +738,7 @@ export default function ProjectDetailPage() {
 
           {/* Payment Request (shown when awarded) */}
           {project.status === 'awarded' && (
-            <div className="p-8 border-t border-gray-200">
+            <div className="p-8">
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">💰 Request Payment</h2>
                 
@@ -904,7 +904,7 @@ export default function ProjectDetailPage() {
 
           {/* Project Financials */}
           {project.status === 'awarded' && project.quoteAmount && accessToken && (
-            <div className="p-8 border-t border-gray-200">
+            <div className="p-8">
               <ProjectFinancialsCard
                 projectProfessionalId={project.id}
                 projectId={project.project.id}
@@ -916,7 +916,7 @@ export default function ProjectDetailPage() {
           )}
 
           {/* Messages */}
-          <div className="p-8 border-t border-gray-200">
+          <div className="p-8">
             {project.status === 'awarded' ? (
               <>
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Team Chat</h2>
