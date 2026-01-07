@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from './prisma.service';
 import * as express from 'express';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
@@ -28,10 +28,9 @@ async function bootstrap() {
   });
 
   try {
-    const prisma = new PrismaClient();
+    const prisma = app.get(PrismaService);
     const count = await prisma.project.count();
     console.log('✓ Database connected - Project rows:', count);
-    await prisma.$disconnect();
   } catch (error) {
     console.log('⚠ Database connection failed, but API is running');
     console.log('  Error:', (error as Error).message);
