@@ -565,71 +565,24 @@ export default function ProjectDetailPage() {
   }
 
   return (
-          <>
-            <Toaster position="top-right" />
-            <div className="min-h-screen bg-slate-50 pb-16">
-              <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-                <div className="flex items-center justify-between">
-                  <Link href="/professional-projects" className="text-sm text-blue-600 hover:underline">
-                    ← Back to my projects
-                  </Link>
-                </div>
+    <>
+      <Toaster position="top-right" />
+      <div className="min-h-screen bg-slate-50 pb-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <Link href="/professional-projects" className="text-sm text-blue-600 hover:underline">
+              ← Back to my projects
+            </Link>
+          </div>
 
-                {/* Unified Top Project Info */}
-                <ProjectInfoCard
-                  role="professional"
-                  title={project!.project.projectName}
-                  region={project!.project.region}
-                  status={project!.status}
-                  notes={project!.project.notes || undefined}
-                />
-                <p className="text-sm text-gray-600">Client Name</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {project.project.clientName}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Location</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {project.project.region}
-                </p>
-              </div>
-              {!(project.status === 'declined' || project.status === 'rejected') && (
-                <div>
-                  <p className="text-sm text-gray-600">Project Budget</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {project.project.budget ? `$${project.project.budget}` : 'Not specified'}
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm text-gray-600">Status</p>
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-1 ${
-                    project.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : project.status === 'accepted'
-                      ? 'bg-green-100 text-green-800'
-                      : project.status === 'quoted'
-                      ? 'bg-blue-100 text-blue-800'
-                      : project.status === 'awarded'
-                      ? 'bg-purple-100 text-purple-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {project.status}
-                </span>
-              </div>
-            </div>
-
-            {project.project.notes && (
-              <div>
-                <p className="text-sm text-gray-600 mb-2">Project Notes</p>
-                <p className="text-gray-900 bg-gray-50 p-4 rounded">
-                  {project.project.notes}
-                </p>
-              </div>
-            )}
+          {/* Unified Top Project Info */}
+          <ProjectInfoCard
+            role="professional"
+            title={project!.project.projectName}
+            region={project!.project.region}
+            status={project!.status}
+            notes={project!.project.notes || undefined}
+          />
 
           {/* Quote Form */}
           {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && !(project.status === 'declined' || project.status === 'rejected') ? (
@@ -1014,9 +967,8 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
-    </div>
 
-    <Toaster position="top-right" />
+      <Toaster position="top-right" />
     </>
   );
 }
