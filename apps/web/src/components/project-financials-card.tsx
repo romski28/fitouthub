@@ -106,13 +106,23 @@ export default function ProjectFinancialsCard({
   }, [filteredTransactions]);
 
   const escrowConfirmed = useMemo(() => {
-    return filteredTransactions
+    const escrow = filteredTransactions
       .filter(
         (tx) =>
           (tx.type === 'escrow_deposit' && tx.status?.toLowerCase() === 'confirmed') ||
           (tx.type === 'escrow_deposit_confirmation' && ['awaiting_confirmation', 'confirmed'].includes(tx.status?.toLowerCase() || ''))
       )
       .reduce((sum, tx) => sum + (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount), 0);
+    
+    if (filteredTransactions.length > 0) {
+      console.log('[ProjectFinancials] Filtered Transactions:', filteredTransactions);
+      console.log('[ProjectFinancials] Escrow amount:', escrow);
+      filteredTransactions.forEach(tx => {
+        console.log(`[ProjectFinancials] Tx - Type: ${tx.type}, Status: ${tx.status}, Amount: ${tx.amount}`);
+      });
+    }
+    
+    return escrow;
   }, [filteredTransactions]);
 
   useEffect(() => {
@@ -148,6 +158,7 @@ export default function ProjectFinancialsCard({
 
         requestInFlightRef.current = combinedPromise;
         const [, txData] = await combinedPromise;
+        console.log('[ProjectFinancials] Loaded transactions:', txData);
         setTransactions(txData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load financials');
@@ -282,11 +293,19 @@ export default function ProjectFinancialsCard({
         <div className="p-5 space-y-6">
           {/* Three Mini Cards */}
           <div className="grid gap-4 sm:grid-cols-3">
-            {/* Project Value Card */}
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-              <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Project Value</p>
-              <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
-            </div>
+            {/* Project Value Card - Show for all roles */}
+            {role === 'professional' && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+                <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Project Value</p>
+                <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
+              </div>
+            )}
+            {(role === 'client' || role === 'admin') && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+                <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Approved Quote</p>
+                <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
+              </div>
+            )}
 
             {/* In Escrow Card */}
             <div className={`rounded-lg border px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
@@ -304,6 +323,7 @@ export default function ProjectFinancialsCard({
               }`}>
                 {formatHKD(escrowConfirmed)}
               </p>
+              {!escrowActive && <p className="text-xs text-slate-500 mt-1">Awaiting confirmation</p>}
             </div>
 
             {/* Paid Card */}
