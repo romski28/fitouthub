@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { EmailService } from '../email/email.service';
+import { ChatService } from '../chat/chat.service';
 
 export interface CreateFinancialTransactionDto {
   projectId: string;
@@ -21,7 +23,11 @@ export interface UpdateFinancialTransactionDto {
 
 @Injectable()
 export class FinancialService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+    private chatService: ChatService,
+  ) {}
 
   /**
    * Retry helper with exponential backoff for transient errors
@@ -204,7 +210,7 @@ export class FinancialService {
         projectProfessional: {
           include: {
             professional: true,
-            project: true,
+            project: { include: { client: true } },
           },
         },
       },
@@ -223,22 +229,39 @@ export class FinancialService {
       approvedBy,
     });
 
-    // Send a message to the awarded professional confirming deposit
-    if (tx.projectProfessionalId && tx.projectProfessional?.project?.clientId) {
-      const clientId = tx.projectProfessional.project.clientId;
-      const professionalName =
-        tx.projectProfessional.professional?.fullName ||
-        tx.projectProfessional.professional?.businessName ||
-        'Professional';
+    // Project chat announcement
+    if (tx.projectProfessional?.projectId) {
+      const thread = await this.chatService.getOrCreateProjectThread(tx.projectProfessional.projectId);
+      await this.chatService.addProjectMessage(
+        (thread as any).id || (thread as any).threadId,
+        'admin',
+        null,
+        null,
+        'Project funds are secure and the project can be started at any time.',
+      );
+    }
 
-      await this.prisma.message.create({
-        data: {
-          projectProfessionalId: tx.projectProfessionalId,
-          senderType: 'client',
-          senderClientId: clientId,
-          content: `Escrow deposit has been confirmed by Fitout Hub. Funds for ${professionalName} are now secured in escrow.`,
-        },
-      });
+    // Email notifications to client and professional
+    const clientEmail = tx.projectProfessional?.project?.client?.email;
+    const professionalEmail = tx.projectProfessional?.professional?.email;
+    const projectName = tx.projectProfessional?.project?.projectName || 'Project';
+    const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
+
+    if (professionalEmail) {
+      await this.emailService.sendFundsSecureNotification({
+        to: professionalEmail,
+        role: 'professional',
+        projectName,
+        projectUrl: `${webBaseUrl}/professional-projects/${tx.projectProfessionalId}`,
+      }).catch(() => void 0);
+    }
+    if (clientEmail) {
+      await this.emailService.sendFundsSecureNotification({
+        to: clientEmail,
+        role: 'client',
+        projectName,
+        projectUrl: `${webBaseUrl}/projects/${tx.projectProfessional?.projectId}`,
+      }).catch(() => void 0);
     }
 
     return updated;

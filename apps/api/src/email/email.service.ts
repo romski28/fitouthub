@@ -622,6 +622,47 @@ export class EmailService {
   }
 
   /**
+   * Send notification that funds are secure and project can start
+   */
+  async sendFundsSecureNotification(params: {
+    to: string;
+    role: 'client' | 'professional';
+    projectName: string;
+    projectUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send funds secure notification to:', params.to);
+      return;
+    }
+
+    const subjectPrefix = params.role === 'professional' ? '✅ Escrow Confirmed' : '✅ Funds Secured';
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `${subjectPrefix}: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #10b981;">✅ Funds Secured</h2>
+            <p>Project funds are secure and the project can be started at any time.</p>
+            <div style="margin: 24px 0; text-align: center;">
+              <a href="${params.projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+                View Project
+              </a>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">This notification was sent by Fitout Hub.</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Funds secure notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send funds secure notification:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Send escrow notification to professional when project is awarded
    */
   async sendEscrowNotification(params: {
