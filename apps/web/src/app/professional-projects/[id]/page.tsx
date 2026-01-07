@@ -29,26 +29,13 @@ interface ProjectDetail {
   respondedAt?: string;
   invoice?: {
     id: string;
-    amount: string;
-    paymentStatus: string;
-    paidAt?: string;
-  };
-  advancePaymentRequest?: {
-    id: string;
-    requestType: string;
-    requestAmount: string;
-    requestPercentage?: number;
-    status: string;
-    createdAt: string;
-  };
-  advancePaymentRequests?: {
-    id: string;
-    requestType: string;
+  paymentRequests?: {
     requestAmount: string;
     requestPercentage?: number;
     status: string;
     notes?: string;
     createdAt: string;
+    notes?: string;
   }[];
 }
 
@@ -757,11 +744,11 @@ export default function ProjectDetailPage() {
                 <h2 className="text-lg font-bold text-slate-900 mb-4">💰 Request Payment</h2>
                 
                 {/* Payment Request History */}
-                {project.advancePaymentRequests && project.advancePaymentRequests.length > 0 && (
+                {project.paymentRequests && project.paymentRequests.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-sm font-semibold text-slate-700 mb-3">Payment Request History</h3>
                     <div className="space-y-3">
-                      {project.advancePaymentRequests.map((request) => (
+                      {project.paymentRequests.map((request) => (
                         <div key={request.id} className="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                           {/* Amount */}
                           <div>
@@ -816,7 +803,7 @@ export default function ProjectDetailPage() {
                       onClick={() => setShowAdvanceRequestForm(true)}
                       className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition-colors"
                     >
-                      📋 {project.advancePaymentRequests && project.advancePaymentRequests.length > 0 ? 'Submit New Payment Request' : 'Request Payment'}
+                      📋 {project.paymentRequests && project.paymentRequests.length > 0 ? 'Submit New Payment Request' : 'Request Payment'}
                     </button>
                   </div>
                 ) : (

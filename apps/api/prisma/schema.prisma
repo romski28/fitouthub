@@ -146,8 +146,7 @@ model ProjectProfessional {
   professional          Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
   project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   messages              Message[]
-  invoice               Invoice?
-  advancePaymentRequest AdvancePaymentRequest?
+  paymentRequests       PaymentRequest[]
   financialTransactions FinancialTransaction[]
 
   @@unique([projectId, professionalId])
@@ -378,34 +377,20 @@ model ServiceMapping {
   @@index([tradeId])
   @@index([enabled])
 }
-model Invoice {
-  id                    String       @id @default(cuid())
-  projectProfessionalId String
-  amount                Decimal      @db.Decimal(12, 2)
-  paymentStatus         String       @default("pending") // pending | paid | cancelled
-  paidAt                DateTime?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  projectProfessional   ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
-
-  @@unique([projectProfessionalId])
-  @@index([paymentStatus])
-}
-
-model AdvancePaymentRequest {
+model PaymentRequest {
   id                    String       @id @default(cuid())
   projectProfessionalId String
   requestType           String       // "fixed" (amount) or "percentage"
   requestAmount         Decimal      @db.Decimal(12, 2) // dollar amount
-  requestPercentage     Float? // percentage of invoice amount (0-100)
+  requestPercentage     Float?       // percentage of quote amount (0-100)
   status                String       @default("pending") // pending | approved | rejected
   approvedAmount        Decimal?     @db.Decimal(12, 2)
   rejectionReason       String?
+  notes                 String?
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
   projectProfessional   ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
 
-  @@unique([projectProfessionalId])
   @@index([status])
 }
 

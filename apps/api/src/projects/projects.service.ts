@@ -1124,14 +1124,7 @@ export class ProjectsService {
       },
     });
 
-    // Create invoice for the awarded project
-    await this.prisma.invoice.create({
-      data: {
-        projectProfessionalId: awarded.id,
-        amount: projectProfessional.quoteAmount || 0,
-        paymentStatus: 'pending',
-      },
-    });
+    // No invoice creation; payment requests are created by professional as needed
 
     // Mark project as awarded for downstream views
     await this.prisma.project.update({
@@ -1672,62 +1665,4 @@ export class ProjectsService {
     );
   }
 
-  async payInvoice(projectId: string, userId: string) {
-    // Verify user owns this project
-    const project = await this.prisma.project.findFirst({
-      where: { id: projectId, userId },
-      include: {
-        professionals: {
-          where: { status: 'awarded' },
-          include: {
-            invoice: true,
-            professional: true,
-          },
-        },
-      },
-    });
-
-    if (!project) {
-      throw new Error('Project not found or not authorized');
-    }
-
-    const awardedProfessional = project.professionals[0];
-    if (!awardedProfessional) {
-      throw new Error('No awarded professional found for this project');
-    }
-
-    if (!awardedProfessional.invoice) {
-      throw new Error('No invoice found for this project');
-    }
-
-    if (awardedProfessional.invoice.paymentStatus === 'paid') {
-      throw new Error('Invoice already paid');
-    }
-
-    // Update invoice payment status
-    const updatedInvoice = await this.prisma.invoice.update({
-      where: { id: awardedProfessional.invoice.id },
-      data: {
-        paymentStatus: 'paid',
-        paidAt: new Date(),
-      },
-    });
-
-    // Add system message to chat
-    await this.prisma.message.create({
-      data: {
-        projectProfessionalId: awardedProfessional.id,
-        senderType: 'client',
-        senderClientId: project.clientId,
-        content: `✓ Invoice paid! $${awardedProfessional.invoice.amount.toString()} has been deposited into Fitout Hub's escrow account. Funds will be released according to project milestones.`,
-      },
-    });
-
-    console.log('[ProjectsService.payInvoice] Invoice paid:', {
-      projectId,
-      invoiceId: updatedInvoice.id,
-      amount: updatedInvoice.amount.toString(),
-    });
-
-    return { success: true, invoice: updatedInvoice };
-  }}
+  // Removed payInvoice flow; payments are handled via escrow and payment requests

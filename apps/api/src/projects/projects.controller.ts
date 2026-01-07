@@ -269,14 +269,7 @@ export class ProjectsController {
     return this.projectsService.withdrawProject(projectId, req.user.id);
   }
 
-  @Post(':id/pay-invoice')
-  @UseGuards(AuthGuard('jwt'))
-  async payInvoice(
-    @Param('id') projectId: string,
-    @Request() req: any,
-  ) {
-    return this.projectsService.payInvoice(projectId, req.user.id);
-  }
+  // Removed pay-invoice endpoint; payments are handled via escrow and payment requests
 
   @Put(':id')
   async update(

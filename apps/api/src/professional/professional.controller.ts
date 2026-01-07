@@ -255,8 +255,7 @@ export class ProfessionalController {
         },
         include: {
           project: true,
-          invoice: true,
-          advancePaymentRequest: true,
+          paymentRequests: true,
         },
       });
 
@@ -592,6 +591,7 @@ export class ProfessionalController {
       requestType: 'fixed' | 'percentage'; 
       amount?: number; 
       percentage?: number;
+      notes?: string;
     },
   ) {
     try {
@@ -613,7 +613,6 @@ export class ProfessionalController {
             },
           },
           professional: true,
-          invoice: true,
         },
       });
 
@@ -623,22 +622,7 @@ export class ProfessionalController {
         );
       }
 
-      if (!projectProfessional.invoice) {
-        throw new BadRequestException('No invoice found for this project');
-      }
-
-      // Check if advance payment request already exists
-      const existingRequest = await (
-        this.prisma as any
-      ).advancePaymentRequest.findUnique({
-        where: { projectProfessionalId },
-      });
-
-      if (existingRequest) {
-        throw new BadRequestException(
-          'Advance payment request already submitted',
-        );
-      }
+      // Allow multiple payment requests; no invoice dependency
 
       // Validate request
       if (body.requestType === 'fixed') {
@@ -659,21 +643,22 @@ export class ProfessionalController {
       }
 
       // Calculate request amount
-      const invoiceAmount = Number(projectProfessional.invoice.amount);
+      const quoteAmount = Number(projectProfessional.quoteAmount || 0);
       const requestAmount = body.requestType === 'fixed'
         ? body.amount!
-        : (invoiceAmount * body.percentage!) / 100;
+        : (quoteAmount * body.percentage!) / 100;
 
       // Create advance payment request
-      const advanceRequest = await (
+      const paymentRequest = await (
         this.prisma as any
-      ).advancePaymentRequest.create({
+      ).paymentRequest.create({
         data: {
           projectProfessionalId,
           requestType: body.requestType,
           requestAmount,
           requestPercentage: body.requestType === 'percentage' ? body.percentage : null,
           status: 'pending',
+          notes: body.notes || null,
         },
       });
 
@@ -693,7 +678,7 @@ export class ProfessionalController {
           requestType: body.requestType,
           requestAmount: `$${requestAmount.toFixed(2)}`,
           requestPercentage: body.percentage,
-          invoiceAmount: `$${invoiceAmount.toFixed(2)}`,
+          invoiceAmount: `$${quoteAmount.toFixed(2)}`,
           projectUrl: `${webBaseUrl}/projects/${projectProfessional.project.id}`,
         });
       }
@@ -708,7 +693,7 @@ export class ProfessionalController {
         },
       });
 
-      return { success: true, advanceRequest };
+      return { success: true, paymentRequest };
     } catch (err) {
       console.error('[ProfessionalController.requestAdvancePayment] Error:', err);
       throw err;
