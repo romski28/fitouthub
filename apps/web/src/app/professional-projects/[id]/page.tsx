@@ -27,15 +27,14 @@ interface ProjectDetail {
   quoteNotes?: string;
   quotedAt?: string;
   respondedAt?: string;
-  invoice?: {
-    id: string;
   paymentRequests?: {
+    id: string;
+    requestType: string;
     requestAmount: string;
     requestPercentage?: number;
     status: string;
     notes?: string;
     createdAt: string;
-    notes?: string;
   }[];
 }
 
