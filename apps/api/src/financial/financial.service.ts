@@ -307,11 +307,18 @@ export class FinancialService {
     // Build summary from aggregated data
     for (const agg of aggregation) {
       const amount = agg._sum.amount ? new Decimal(agg._sum.amount.toString()) : new Decimal(0);
+      const statusLower = agg.status?.toLowerCase() || '';
 
       switch (agg.type) {
         case 'escrow_deposit':
           summary.totalEscrow = summary.totalEscrow.plus(amount);
-          if (agg.status === 'confirmed') {
+          if (statusLower === 'confirmed') {
+            summary.escrowConfirmed = summary.escrowConfirmed.plus(amount);
+          }
+          break;
+        case 'escrow_deposit_confirmation':
+          // When client confirms escrow deposit, funds are secured
+          if (statusLower === 'awaiting_confirmation' || statusLower === 'confirmed') {
             summary.escrowConfirmed = summary.escrowConfirmed.plus(amount);
           }
           break;
@@ -319,12 +326,12 @@ export class FinancialService {
           summary.advancePaymentRequested = summary.advancePaymentRequested.plus(amount);
           break;
         case 'advance_payment_approval':
-          if (agg.status === 'confirmed') {
+          if (statusLower === 'confirmed') {
             summary.advancePaymentApproved = summary.advancePaymentApproved.plus(amount);
           }
           break;
         case 'release_payment':
-          if (agg.status === 'completed') {
+          if (statusLower === 'completed') {
             summary.paymentsReleased = summary.paymentsReleased.plus(amount);
           }
           break;
