@@ -190,28 +190,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         fundsSecured={fundsSecured}
       />
 
-      {isAwarded && (
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-emerald-900">Project Budget</p>
-            <span className="text-xs font-medium text-emerald-700">Awarded</span>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-              <p className="text-[11px] font-semibold text-emerald-800">Project Cost</p>
-              <p className="text-sm font-bold text-emerald-900">{formatHKD(projectCostValue)}</p>
-            </div>
-            <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-              <p className="text-[11px] font-semibold text-emerald-800">Escrow Account</p>
-              <p className="text-sm font-bold text-emerald-900">{formatHKD(escrowValue)}</p>
-            </div>
-            <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-              <p className="text-[11px] font-semibold text-emerald-800">Paid</p>
-              <p className="text-sm font-bold text-emerald-900">{formatHKD(paidValue)}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed redundant Project Budget summary; consolidated in ProjectFinancialsCard */}
 
       {/* Financials */}
       {isAwarded && accessToken && (
