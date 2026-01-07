@@ -690,31 +690,50 @@ export default function ProjectDetailPage() {
             <div className="p-8 border-t border-gray-200">
               <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Your Quote</h2>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-600">Amount</p>
-                      <p className="text-xl font-bold text-slate-900">
-                        ${project.quoteAmount}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-slate-600">Submitted</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {project.quotedAt
-                          ? new Date(project.quotedAt).toLocaleDateString()
-                          : 'Not submitted'}
-                      </p>
-                    </div>
+                <div className="grid grid-cols-4 gap-4">
+                  {/* Amount */}
+                  <div>
+                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Amount</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      ${project.quoteAmount}
+                    </p>
                   </div>
-                  {project.quoteNotes && (
-                    <div className="pt-3 border-t border-slate-100">
-                      <p className="text-sm text-slate-600 mb-2">Notes</p>
-                      <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded">
-                        {project.quoteNotes}
-                      </p>
-                    </div>
-                  )}
+                  
+                  {/* Submitted Date */}
+                  <div>
+                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Submitted</p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {project.quotedAt
+                        ? new Date(project.quotedAt).toLocaleDateString()
+                        : '—'}
+                    </p>
+                  </div>
+                  
+                  {/* Notes */}
+                  <div>
+                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Notes</p>
+                    <p className="text-sm text-slate-700 line-clamp-2">
+                      {project.quoteNotes || '—'}
+                    </p>
+                  </div>
+                  
+                  {/* Status */}
+                  <div>
+                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Status</p>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                      project.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : project.status === 'accepted'
+                        ? 'bg-green-100 text-green-800'
+                        : project.status === 'quoted'
+                        ? 'bg-blue-100 text-blue-800'
+                        : project.status === 'counter_requested'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {project.status.replace('_', ' ')}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
