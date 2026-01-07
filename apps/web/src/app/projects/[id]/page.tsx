@@ -831,14 +831,14 @@ export default function ClientProjectDetailPage() {
             </div>
           </div>
 
-          <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              {projectStatus === 'withdrawn' && (
-                <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
-              )}
-            </div>
-            {!project.professionals?.some((pp) => pp.status === 'awarded') &&
-              projectStatus !== 'withdrawn' && (
+          {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
+            <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                {projectStatus === 'withdrawn' && (
+                  <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
+                )}
+              </div>
+              {!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn' && (
                 <button
                   onClick={() => setShowWithdrawConfirm(true)}
                   disabled={withdrawing}
@@ -847,7 +847,8 @@ export default function ClientProjectDetailPage() {
                   {withdrawing ? 'Withdrawing…' : 'Withdraw Project'}
                 </button>
               )}
-          </div>
+            </div>
+          )}
 
           <div className="p-5 space-y-4">
             {project.notes && (
