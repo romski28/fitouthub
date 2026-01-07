@@ -9,6 +9,7 @@ import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
 import ProjectChat from '@/components/project-chat';
 import ProjectFinancialsCard from '@/components/project-financials-card';
+import { useFundsSecured } from '@/hooks/use-funds-secured';
 import { ProjectImagesCard } from '@/components/project-images-card';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -112,7 +113,6 @@ export default function ClientProjectDetailPage() {
   const [payingInvoice, setPayingInvoice] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
-  const [fundsSecured, setFundsSecured] = useState<boolean>(false);
 
   // Schedule & contractor contact editing state
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -120,25 +120,8 @@ export default function ClientProjectDetailPage() {
   const [editingContact, setEditingContact] = useState(false);
   const [contactForm, setContactForm] = useState({ name: '', phone: '', email: '' });
 
-  // Load financial summary to reflect funds secured (escrow confirmed)
-  useEffect(() => {
-    const loadSummary = async () => {
-      try {
-        if (!projectId || !accessToken) return;
-        const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (!res.ok) return;
-        const summary = await res.json();
-        const confirmedVal = summary?.escrowConfirmed;
-        const confirmedNum = typeof confirmedVal === 'string' ? parseFloat(confirmedVal) : Number(confirmedVal || 0);
-        setFundsSecured(confirmedNum > 0);
-      } catch {
-        // ignore summary errors; progress bar will fall back
-      }
-    };
-    loadSummary();
-  }, [projectId, accessToken]);
+  // Check if funds are secured via financial summary
+  const fundsSecured = useFundsSecured(projectId, accessToken);
   const [updatingSchedule, setUpdatingSchedule] = useState(false);
   const [updatingContact, setUpdatingContact] = useState(false);
 

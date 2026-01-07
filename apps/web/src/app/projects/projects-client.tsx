@@ -13,6 +13,7 @@ import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { useAuth } from "@/context/auth-context";
+import { useFundsSecured } from "@/hooks/use-funds-secured";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -25,6 +26,13 @@ const statusColors: Record<string, string> = {
   declined: "bg-slate-100 text-slate-800",
   counter_requested: "bg-purple-100 text-purple-800",
 };
+
+// Wrapper component to provide fundsSecured for each card
+function ProjectProgressWrapper({ projectId, project, hasAssist, variant }: { projectId: string; project: any; hasAssist?: boolean; variant?: 'full' | 'compact' }) {
+  const { accessToken } = useAuth();
+  const fundsSecured = useFundsSecured(projectId, accessToken);
+  return <ProjectProgressBar project={project} hasAssist={hasAssist} variant={variant} fundsSecured={fundsSecured} />;
+}
 
 type AssistStatus = "open" | "in_progress" | "closed";
 
@@ -684,7 +692,8 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
                 </div>
 
                 <div className="p-4 space-y-3">
-                  <ProjectProgressBar
+                  <ProjectProgressWrapper
+                    projectId={project.id}
                     project={{
                       id: project.id,
                       status: project.status,
