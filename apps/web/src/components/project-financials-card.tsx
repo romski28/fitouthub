@@ -62,7 +62,7 @@ const getTypeLabel = (type: string) => {
 };
 
 const getStatusBadge = (status: string) => {
-  const key = (status || '').toLowerCase();
+  const key = (status || '').toLowerCase().replace(/\s+/g, '_');
   const map: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-800',
     info: 'bg-slate-100 text-slate-700',
@@ -306,16 +306,17 @@ export default function ProjectFinancialsCard({
                 {filteredTransactions.map((tx) => {
                   const createdDate = new Date(tx.createdAt).toLocaleDateString('en-HK');
                   const status = (tx.status || '').toLowerCase();
+                  const statusKey = status.replace(/\s+/g, '_');
                   const type = tx.type;
                   const canConfirmDeposit =
                     role === 'admin' &&
-                    ((type === 'escrow_deposit' && status === 'pending') ||
-                      (type === 'escrow_deposit_confirmation' && status === 'awaiting_confirmation'));
-                  const canApprove = role === 'client' && type === 'advance_payment_request' && status === 'pending';
-                  const canRelease = role === 'admin' && type === 'advance_payment_request' && status === 'confirmed';
-                  const canReject = role === 'client' && type === 'advance_payment_request' && status === 'pending';
-                  const canMarkPaid = role === 'client' && type === 'escrow_deposit_request' && status === 'pending';
-                  const isInfo = status === 'info';
+                    ((type === 'escrow_deposit' && statusKey === 'pending') ||
+                      (type === 'escrow_deposit_confirmation' && statusKey === 'awaiting_confirmation'));
+                  const canApprove = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
+                  const canRelease = role === 'admin' && type === 'advance_payment_request' && statusKey === 'confirmed';
+                  const canReject = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
+                  const canMarkPaid = role === 'client' && type === 'escrow_deposit_request' && statusKey === 'pending';
+                  const isInfo = statusKey === 'info';
 
                   const actionButton = () => {
                     if (isInfo) {
