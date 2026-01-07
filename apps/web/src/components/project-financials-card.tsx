@@ -34,7 +34,8 @@ interface ProjectFinancialsCardProps {
   projectId: string;
   projectProfessionalId?: string;
   accessToken: string;
-  projectCost: number | string;
+  projectCost: number | string; // The approved quote
+  originalBudget?: number | string; // Original project budget (for client/admin)
   role: ProjectFinancialRole;
 }
 
@@ -80,6 +81,7 @@ export default function ProjectFinancialsCard({
   projectProfessionalId,
   accessToken,
   projectCost,
+  originalBudget,
   role,
 }: ProjectFinancialsCardProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -105,7 +107,11 @@ export default function ProjectFinancialsCard({
 
   const escrowConfirmed = useMemo(() => {
     return filteredTransactions
-      .filter((tx) => tx.type === 'escrow_deposit' && tx.status === 'confirmed')
+      .filter(
+        (tx) =>
+          (tx.type === 'escrow_deposit' && tx.status?.toLowerCase() === 'confirmed') ||
+          (tx.type === 'escrow_deposit_confirmation' && ['awaiting_confirmation', 'confirmed'].includes(tx.status?.toLowerCase() || ''))
+      )
       .reduce((sum, tx) => sum + (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount), 0);
   }, [filteredTransactions]);
 
@@ -255,15 +261,17 @@ export default function ProjectFinancialsCard({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      {/* Header */}
       <div className="p-5 border-b border-slate-200 flex items-start justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
-          <p className="text-sm text-slate-600">Escrow, advances, and releases</p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-slate-600 uppercase tracking-wide">Budget</p>
-          <p className="text-lg font-bold text-slate-900">{formatHKD(projectCost)}</p>
-        </div>
+        {(role === 'client' || role === 'admin') && originalBudget && (
+          <div className="text-right">
+            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold">Original Budget</p>
+            <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -271,15 +279,36 @@ export default function ProjectFinancialsCard({
       ) : error ? (
         <div className="p-5 text-sm text-rose-600">{error}</div>
       ) : (
-        <div className="p-5 space-y-4">
-          {/* Mini cards */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-              <p className="text-[11px] font-semibold text-emerald-800">{budgetTitle}</p>
-              <p className="text-xl font-bold text-emerald-900">{formatHKD(projectCost)}</p>
+        <div className="p-5 space-y-6">
+          {/* Three Mini Cards */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            {/* Project Value Card */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+              <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Project Value</p>
+              <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
             </div>
+
+            {/* In Escrow Card */}
+            <div className={`rounded-lg border px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
+              escrowActive
+                ? 'border-emerald-100 bg-emerald-50'
+                : 'border-slate-200 bg-slate-50'
+            }`}>
+              <p className={`text-[11px] font-semibold uppercase tracking-wide ${
+                escrowActive ? 'text-emerald-700' : 'text-slate-700'
+              }`}>
+                In Escrow
+              </p>
+              <p className={`text-xl font-bold ${
+                escrowActive ? 'text-emerald-900' : 'text-slate-900'
+              }`}>
+                {formatHKD(escrowConfirmed)}
+              </p>
+            </div>
+
+            {/* Paid Card */}
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 shadow-[0_1px_3px_rgba(59,130,246,0.08)]">
-              <p className="text-[11px] font-semibold text-blue-800">{paymentsLabel}</p>
+              <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">Paid</p>
               <p className="text-xl font-bold text-blue-900">{formatHKD(paymentsReleasedTotal)}</p>
             </div>
           </div>

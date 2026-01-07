@@ -259,6 +259,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
           projectId={project.id}
           accessToken={accessToken}
           projectCost={projectCostValue}
+          originalBudget={project.budget}
           role="admin"
         />
       )}

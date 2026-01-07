@@ -890,6 +890,7 @@ export default function ClientProjectDetailPage() {
               projectId={project.id}
               accessToken={accessToken}
               projectCost={projectCostValue}
+              originalBudget={project.budget}
               role="client"
             />
           )}
