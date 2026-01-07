@@ -41,6 +41,15 @@ interface ProjectDetail {
     status: string;
     createdAt: string;
   };
+  advancePaymentRequests?: {
+    id: string;
+    requestType: string;
+    requestAmount: string;
+    requestPercentage?: number;
+    status: string;
+    notes?: string;
+    createdAt: string;
+  }[];
 }
 
 interface Message {
@@ -747,37 +756,52 @@ export default function ProjectDetailPage() {
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">💰 Request Payment</h2>
                 
-                {/* Show existing payment request if one exists */}
-                {project.advancePaymentRequest && (
-                  <div className="space-y-4 mb-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-blue-900">Latest Payment Request</p>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          project.advancePaymentRequest.status === 'approved' 
-                            ? 'bg-green-100 text-green-800' 
-                            : project.advancePaymentRequest.status === 'rejected'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {project.advancePaymentRequest.status}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <p className="text-blue-700 font-medium">Amount Requested</p>
-                          <p className="text-blue-900 font-semibold">${Number(project.advancePaymentRequest.requestAmount).toFixed(2)}</p>
-                        </div>
-                        {project.advancePaymentRequest.requestType === 'percentage' && (
+                {/* Payment Request History */}
+                {project.advancePaymentRequests && project.advancePaymentRequests.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Payment Request History</h3>
+                    <div className="space-y-3">
+                      {project.advancePaymentRequests.map((request) => (
+                        <div key={request.id} className="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                          {/* Amount */}
                           <div>
-                            <p className="text-blue-700 font-medium">Percentage</p>
-                            <p className="text-blue-900 font-semibold">{project.advancePaymentRequest.requestPercentage}%</p>
+                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Amount</p>
+                            <p className="text-lg font-bold text-slate-900">
+                              ${Number(request.requestAmount).toFixed(2)}
+                            </p>
                           </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-blue-700 mt-3">
-                        Submitted {new Date(project.advancePaymentRequest.createdAt).toLocaleDateString()}
-                      </p>
+                          
+                          {/* Date */}
+                          <div>
+                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Submitted</p>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {new Date(request.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          
+                          {/* Notes */}
+                          <div>
+                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Description</p>
+                            <p className="text-sm text-slate-700 line-clamp-2">
+                              {request.notes || '—'}
+                            </p>
+                          </div>
+                          
+                          {/* Status */}
+                          <div>
+                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Status</p>
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                              request.status === 'approved'
+                                ? 'bg-green-100 text-green-800'
+                                : request.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {request.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -792,7 +816,7 @@ export default function ProjectDetailPage() {
                       onClick={() => setShowAdvanceRequestForm(true)}
                       className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition-colors"
                     >
-                      📋 {project.advancePaymentRequest ? 'Submit New Payment Request' : 'Request Payment'}
+                      📋 {project.advancePaymentRequests && project.advancePaymentRequests.length > 0 ? 'Submit New Payment Request' : 'Request Payment'}
                     </button>
                   </div>
                 ) : (
