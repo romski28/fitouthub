@@ -630,7 +630,6 @@ export default function ProjectDetailPage() {
                 </p>
               </div>
             )}
-          </div>
 
           {/* Quote Form */}
           {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && !(project.status === 'declined' || project.status === 'rejected') ? (
