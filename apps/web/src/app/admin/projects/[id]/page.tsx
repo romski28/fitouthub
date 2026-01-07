@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
+import ProjectInfoCard from "@/components/project-info-card";
 import { useAuth } from "@/context/auth-context";
 import ProjectFinancialsCard from "@/components/project-financials-card";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
@@ -160,58 +161,17 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         <span className="text-xs text-slate-500">ID: {project.id}</span>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div
-          className={`px-5 py-4 text-white rounded-t-xl ${
-            project.status === "withdrawn"
-              ? "bg-gradient-to-r from-slate-400 to-slate-300"
-              : "bg-gradient-to-r from-slate-900 to-slate-800"
-          }`}
-        >
-          <h1 className={`text-2xl font-bold ${project.status === "withdrawn" ? "text-slate-700" : ""}`}>
-            {project.projectName}
-          </h1>
-          <p
-            className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
-              project.status === "withdrawn" ? "text-slate-600" : "text-emerald-300"
-            }`}
-          >
-            {project.region}
-          </p>
-        </div>
-
-        <div className="p-5 space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-              <span className="font-semibold text-slate-700">Budget:</span>
-              <span className="text-slate-600">{project.budget ? formatHKD(project.budget) : "Not specified"}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-              <span className="font-semibold text-slate-700">Professionals:</span>
-              <span className="text-slate-600">{project.professionals?.length || 0}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-              <span className="font-semibold text-slate-700">Created:</span>
-              <span className="text-slate-600">{formatDate(project.createdAt)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-              <span className="font-semibold text-slate-700">Updated:</span>
-              <span className="text-slate-600">{formatDate(project.updatedAt)}</span>
-            </div>
-          </div>
-
-          {project.notes && (
-            <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100">
-              <p className="font-semibold text-slate-800 mb-1">Notes</p>
-              <p className="text-slate-700 leading-relaxed">{project.notes}</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <ProjectInfoCard
+        role="admin"
+        title={project.projectName}
+        region={project.region}
+        status={project.status}
+        notes={project.notes || undefined}
+        createdAt={project.createdAt}
+        updatedAt={project.updatedAt}
+        awardedDisplayName={project.professionals?.find((pp) => pp.status === 'awarded')?.professional.fullName ||
+          project.professionals?.find((pp) => pp.status === 'awarded')?.professional.businessName}
+      />
 
       <ProjectProgressBar
         project={{
