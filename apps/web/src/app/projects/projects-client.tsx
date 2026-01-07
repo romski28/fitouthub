@@ -30,7 +30,7 @@ const statusColors: Record<string, string> = {
 // Wrapper component to provide fundsSecured for each card
 function ProjectProgressWrapper({ projectId, project, hasAssist, variant }: { projectId: string; project: any; hasAssist?: boolean; variant?: 'full' | 'compact' }) {
   const { accessToken } = useAuth();
-  const fundsSecured = useFundsSecured(projectId, accessToken);
+  const fundsSecured = useFundsSecured(projectId, accessToken || undefined);
   return <ProjectProgressBar project={project} hasAssist={hasAssist} variant={variant} fundsSecured={fundsSecured} />;
 }
 

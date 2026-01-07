@@ -71,7 +71,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const [error, setError] = useState<string | null>(null);
 
   // Check if funds are secured via financial summary
-  const fundsSecured = useFundsSecured(projectId, accessToken);
+  const fundsSecured = useFundsSecured(projectId, accessToken || undefined);
 
   useEffect(() => {
     if (!isLoggedIn || !accessToken) return;

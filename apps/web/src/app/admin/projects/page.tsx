@@ -53,7 +53,7 @@ function formatHKD(value?: number | string): string {
 // Wrapper component to use useFundsSecured hook for each card
 function ProjectCard({ project, onEdit, onDelete }: { project: Project; onEdit: (p: Project) => void; onDelete: (id: string) => void }) {
   const { accessToken } = useAuth();
-  const fundsSecured = useFundsSecured(project.id, accessToken);
+  const fundsSecured = useFundsSecured(project.id, accessToken || undefined);
 
   return (
     <div key={project.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -121,7 +121,7 @@ export default function ClientProjectDetailPage() {
   const [contactForm, setContactForm] = useState({ name: '', phone: '', email: '' });
 
   // Check if funds are secured via financial summary
-  const fundsSecured = useFundsSecured(projectId, accessToken);
+  const fundsSecured = useFundsSecured(projectId, accessToken || undefined);
   const [updatingSchedule, setUpdatingSchedule] = useState(false);
   const [updatingContact, setUpdatingContact] = useState(false);
 
