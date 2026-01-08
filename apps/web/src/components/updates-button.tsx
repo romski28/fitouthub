@@ -30,6 +30,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [summary, setSummary] = useState<UpdatesSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
 
   // Use whichever token is available
   const token = clientToken || profToken;
@@ -41,11 +42,13 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
 
   const fetchSummary = async () => {
     if (!token) {
+      console.log('No token available, skipping fetch');
       setLoading(false);
       return;
     }
 
     try {
+      console.log('Fetching updates summary...');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/updates/summary`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -54,13 +57,14 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Updates summary fetched:', data);
         setSummary({
           totalCount: data.totalCount,
           financialCount: data.financialCount,
           unreadCount: data.unreadCount,
         });
       } else {
-        console.error('Failed to fetch updates:', response.status);
+        console.error('Failed to fetch updates:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Failed to fetch updates:', error);
@@ -69,19 +73,26 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
     }
   };
 
+  // Hydration check
   useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     if (!token) {
-      setLoading(false);
+      console.log('Waiting for token...');
       return;
     }
 
+    console.log('Token available, fetching updates');
     fetchSummary();
 
     // Poll every 60 seconds
     const interval = setInterval(fetchSummary, 60000);
 
     return () => clearInterval(interval);
-  }, [token]);
+  }, [token, hydrated]);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -93,11 +104,18 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
     fetchSummary();
   };
 
-  if (loading || !summary) {
+  // Don't render until hydrated
+  if (!hydrated) {
     return null;
   }
 
-  const hasUpdates = summary.totalCount > 0;
+  // Don't render if not logged in
+  if (!isLoggedIn && !profIsLoggedIn) {
+    return null;
+  }
+
+  // Show loading state or inspirational message while fetching
+  const hasUpdates = summary && summary.totalCount > 0;
 
   return (
     <>
@@ -111,7 +129,9 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
       >
         <span className="text-lg">{hasUpdates ? '🔔' : '✨'}</span>
         <span>
-          {hasUpdates ? (
+          {loading && !summary ? (
+            'Loading...'
+          ) : hasUpdates ? (
             <>
               You have {summary.totalCount} {summary.totalCount === 1 ? 'update' : 'updates'}
             </>
