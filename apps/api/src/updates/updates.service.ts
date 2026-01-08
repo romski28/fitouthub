@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 
 export interface FinancialActionItem {
@@ -475,6 +475,183 @@ export class UpdatesService {
       (a, b) =>
         b.latestMessage.createdAt.getTime() - a.latestMessage.createdAt.getTime(),
     );
+  }
+
+  async markMessageGroupAsRead(
+    userId: string,
+    role: 'client' | 'professional' | 'admin',
+    body: {
+      chatType: 'project-professional' | 'project-general' | 'assist' | 'private-foh';
+      threadId: string;
+    },
+  ): Promise<{ success: boolean }> {
+    const { chatType, threadId } = body;
+
+    if (!chatType || !threadId) {
+      throw new BadRequestException('chatType and threadId are required');
+    }
+
+    // Resolve professional record once if needed
+    const professional =
+      role === 'professional'
+        ? await this.prisma.professional.findFirst({ where: { userId } })
+        : null;
+
+    if (role === 'professional' && !professional) {
+      throw new BadRequestException('Professional not found');
+    }
+
+    if (chatType === 'project-professional') {
+      const projectProfessional = await this.prisma.projectProfessional.findUnique({
+        where: { id: threadId },
+        include: { project: true },
+      });
+
+      if (!projectProfessional) {
+        throw new BadRequestException('Project thread not found');
+      }
+
+      if (role === 'client') {
+        if (
+          projectProfessional.project.userId !== userId &&
+          projectProfessional.project.clientId !== userId
+        ) {
+          throw new BadRequestException('Not authorized');
+        }
+
+        await this.prisma.message.updateMany({
+          where: {
+            projectProfessionalId: threadId,
+            senderType: 'professional',
+            readByClientAt: null,
+          },
+          data: { readByClientAt: new Date() },
+        });
+      } else if (role === 'professional') {
+        if (projectProfessional.professionalId !== professional!.id) {
+          throw new BadRequestException('Not authorized');
+        }
+
+        await this.prisma.message.updateMany({
+          where: {
+            projectProfessionalId: threadId,
+            senderType: 'client',
+            readByProfessionalAt: null,
+          },
+          data: { readByProfessionalAt: new Date() },
+        });
+      }
+    } else if (chatType === 'project-general') {
+      const thread = await this.prisma.projectChatThread.findUnique({
+        where: { id: threadId },
+        include: { project: true },
+      });
+
+      if (!thread) {
+        throw new BadRequestException('Project chat not found');
+      }
+
+      if (role === 'client') {
+        if (thread.project.userId !== userId && thread.project.clientId !== userId) {
+          throw new BadRequestException('Not authorized');
+        }
+
+        await this.prisma.projectChatMessage.updateMany({
+          where: {
+            threadId,
+            senderType: { not: 'client' },
+            readByClientAt: null,
+          },
+          data: { readByClientAt: new Date() },
+        });
+      } else if (role === 'professional') {
+        const awarded = await this.prisma.projectProfessional.findFirst({
+          where: {
+            projectId: thread.projectId,
+            professionalId: professional!.id,
+            status: 'awarded',
+          },
+        });
+
+        if (!awarded) {
+          throw new BadRequestException('Not authorized');
+        }
+
+        await this.prisma.projectChatMessage.updateMany({
+          where: {
+            threadId,
+            senderType: { not: 'professional' },
+            readByProAt: null,
+          },
+          data: { readByProAt: new Date() },
+        });
+      }
+    } else if (chatType === 'assist') {
+      const assistRequest = await this.prisma.projectAssistRequest.findUnique({
+        where: { id: threadId },
+        include: { project: true },
+      });
+
+      if (!assistRequest) {
+        throw new BadRequestException('Assist request not found');
+      }
+
+      if (
+        role !== 'client' ||
+        (assistRequest.project.userId !== userId && assistRequest.project.clientId !== userId)
+      ) {
+        throw new BadRequestException('Not authorized');
+      }
+
+      await this.prisma.assistMessage.updateMany({
+        where: {
+          assistRequestId: threadId,
+          senderType: 'foh',
+          readByClientAt: null,
+        },
+        data: { readByClientAt: new Date() },
+      });
+    } else if (chatType === 'private-foh') {
+      if (role === 'client') {
+        const thread = await this.prisma.privateChatThread.findFirst({
+          where: { id: threadId, userId },
+        });
+
+        if (!thread) {
+          throw new BadRequestException('Support thread not found');
+        }
+
+        await this.prisma.privateChatMessage.updateMany({
+          where: {
+            threadId,
+            senderType: 'foh',
+            readByUserAt: null,
+          },
+          data: { readByUserAt: new Date() },
+        });
+      } else if (role === 'professional') {
+        const thread = await this.prisma.privateChatThread.findFirst({
+          where: { id: threadId, professionalId: professional!.id },
+        });
+
+        if (!thread) {
+          throw new BadRequestException('Support thread not found');
+        }
+
+        await this.prisma.privateChatMessage.updateMany({
+          where: {
+            threadId,
+            senderType: 'foh',
+            readByProAt: null,
+          },
+          data: { readByProAt: new Date() },
+        });
+      }
+    } else {
+      throw new BadRequestException('Invalid chat type');
+    }
+
+    return { success: true };
   }
 
   /**

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import { colors, radii } from '@/styles/theme';
 import { StatusPill } from './status-pill';
 
 interface FinancialActionItem {
@@ -191,13 +192,30 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
     onClose();
   };
 
-  const handleMarkMessageAsRead = async (e: React.MouseEvent, group: UnreadMessageGroup) => {
+  const handleMarkMessageAsRead = async (e: MouseEvent, group: UnreadMessageGroup) => {
     e.stopPropagation();
+    if (!token || !group.threadId) {
+      return;
+    }
+
     setActionLoading(`msg-${group.threadId}`);
     try {
-      // Mark as read by clicking the message which triggers navigation or just refresh
-      // For now, we'll just refresh the data to reflect any changes
+      const response = await fetch(`${API_BASE_URL}/updates/messages/mark-read`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ chatType: group.chatType, threadId: group.threadId }),
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Failed to mark message as read');
+      }
+
       await fetchData();
+      onRefresh();
     } catch (error) {
       console.error('Failed to mark message as read:', error);
     } finally {
@@ -337,15 +355,23 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
                             <button
                               onClick={(e) => handleMarkMessageAsRead(e, group)}
                               disabled={actionLoading === `msg-${group.threadId}`}
-                              className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 text-sm font-medium"
+                              style={{
+                                backgroundColor: colors.success,
+                                color: colors.background,
+                              }}
+                              className={`px-3 py-2 font-medium text-sm ${radii.sm} transition-opacity hover:opacity-90 disabled:opacity-50`}
                             >
                               {actionLoading === `msg-${group.threadId}` ? 'Processing...' : 'OK'}
                             </button>
                             <button
                               onClick={() => handleMessageClick(group)}
-                              className="px-3 py-2 text-action hover:text-action-hover font-medium text-sm"
+                              style={{
+                                backgroundColor: colors.action,
+                                color: colors.background,
+                              }}
+                              className={`px-3 py-2 font-medium text-sm ${radii.sm} transition-opacity hover:opacity-90`}
                             >
-                              View →
+                              View
                             </button>
                           </div>
                         </div>
