@@ -43,7 +43,6 @@ export default function ProfessionalProjectsPage() {
     quoted: projects.filter(p => p.status === 'quoted').length,
     awarded: projects.filter(p => p.status === 'awarded').length,
     declined: projects.filter(p => p.status === 'rejected' || p.status === 'declined').length,
-    unread: projects.reduce((sum, p) => sum + (p.unreadCount || 0), 0),
   };
 
   useEffect(() => {
@@ -133,10 +132,6 @@ export default function ProfessionalProjectsPage() {
               <SummaryCard label="Awarded" value={totals.awarded} tone="purple" />
               <SummaryCard label="Declined" value={totals.declined} tone="rose" />
             </div>
-          </div>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-sm text-white border border-white/20">
-            <span className="inline-block h-2 w-2 rounded-full bg-red-300" />
-            {totals.unread} unread messages
           </div>
         </div>
 

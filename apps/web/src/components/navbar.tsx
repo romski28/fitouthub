@@ -32,69 +32,6 @@ export const Navbar: React.FC = () => {
   const isAdmin = Boolean(user && user.role === 'admin');
   const showProjectsLink = hydrated && isLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
-  const [clientUnread, setClientUnread] = useState<number>(0);
-  const [profUnread, setProfUnread] = useState<number>(0);
-  const [disableClientUnread, setDisableClientUnread] = useState<boolean>(false);
-  const [disableProfUnread, setDisableProfUnread] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    
-    // Only fetch if we have a token and haven't disabled
-    if (isLoggedIn && accessToken && accessToken.length > 10 && !disableClientUnread) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      fetch(`${API_BASE_URL}/client/messages/unread-count`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: controller.signal,
-      })
-        .then((r) => {
-          if (!r || r.status === 401 || r.status === 403) {
-            setDisableClientUnread(true);
-            return null;
-          }
-          return r.ok ? r.json() : null;
-        })
-        .then((data) => {
-          if (data?.unreadCount !== undefined) setClientUnread(data.unreadCount);
-        })
-        .catch((err) => {
-          // Silently disable on error - don't spam console
-          if (err?.name !== 'AbortError') {
-            setDisableClientUnread(true);
-          }
-        })
-        .finally(() => clearTimeout(timeoutId));
-    }
-    
-    if (profIsLoggedIn && professionalAccessToken && professionalAccessToken.length > 10 && !disableProfUnread) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      fetch(`${API_BASE_URL}/professional/messages/unread-count`, {
-        headers: { Authorization: `Bearer ${professionalAccessToken}` },
-        signal: controller.signal,
-      })
-        .then((r) => {
-          if (!r || r.status === 401 || r.status === 403) {
-            setDisableProfUnread(true);
-            return null;
-          }
-          return r.ok ? r.json() : null;
-        })
-        .then((data) => {
-          if (data?.unreadCount !== undefined) setProfUnread(data.unreadCount);
-        })
-        .catch((err) => {
-          // Silently disable on error - don't spam console
-          if (err?.name !== 'AbortError') {
-            setDisableProfUnread(true);
-          }
-        })
-        .finally(() => clearTimeout(timeoutId));
-    }
-  }, [hydrated, isLoggedIn, accessToken, profIsLoggedIn, professionalAccessToken, disableClientUnread, disableProfUnread]);
 
   return (
     <>
@@ -129,23 +66,13 @@ export const Navbar: React.FC = () => {
               Docs
             </a>
             {showProjectsLink ? (
-              <a className="relative hover:text-slate-900" href="/projects">
+              <a className="hover:text-slate-900" href="/projects">
                 My Projects
-                {clientUnread > 0 && (
-                  <span className="absolute -top-2 -right-3 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
-                    {clientUnread}
-                  </span>
-                )}
               </a>
             ) : null}
             {showProfessionalProjectsLink ? (
-              <a className="relative hover:text-slate-900" href="/professional-projects">
+              <a className="hover:text-slate-900" href="/professional-projects">
                 My Projects
-                {profUnread > 0 && (
-                  <span className="absolute -top-2 -right-3 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
-                    {profUnread}
-                  </span>
-                )}
               </a>
             ) : null}
 
@@ -355,30 +282,20 @@ export const Navbar: React.FC = () => {
               </a>
               {showProjectsLink ? (
                 <a
-                  className="relative px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                  className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                   href="/projects"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   My Projects
-                  {clientUnread > 0 && (
-                    <span className="absolute -top-1 left-8 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
-                      {clientUnread}
-                    </span>
-                  )}
                 </a>
               ) : null}
               {showProfessionalProjectsLink ? (
                 <a
-                  className="relative px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                  className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                   href="/professional-projects"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   My Projects
-                  {profUnread > 0 && (
-                    <span className="absolute -top-1 left-8 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs">
-                      {profUnread}
-                    </span>
-                  )}
                 </a>
               ) : null}
 
