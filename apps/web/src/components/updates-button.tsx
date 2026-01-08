@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesModal } from './updates-modal';
 
 interface UpdatesButtonProps {
@@ -23,9 +25,14 @@ const INSPIRATIONAL_MESSAGES = [
 ];
 
 export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
+  const { accessToken: clientToken, isLoggedIn } = useAuth();
+  const { accessToken: profToken, isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [summary, setSummary] = useState<UpdatesSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Use whichever token is available
+  const token = clientToken || profToken;
 
   // Pick a random inspirational message (stable per session)
   const inspirationalMessage = useMemo(() => {
@@ -33,8 +40,12 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
   }, []);
 
   const fetchSummary = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/updates/summary`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -48,6 +59,8 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
           financialCount: data.financialCount,
           unreadCount: data.unreadCount,
         });
+      } else {
+        console.error('Failed to fetch updates:', response.status);
       }
     } catch (error) {
       console.error('Failed to fetch updates:', error);
@@ -57,13 +70,18 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
   };
 
   useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     fetchSummary();
 
     // Poll every 60 seconds
     const interval = setInterval(fetchSummary, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [token]);
 
   const handleOpen = () => {
     setIsOpen(true);

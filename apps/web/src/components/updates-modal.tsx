@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { StatusPill } from './status-pill';
 
 interface FinancialActionItem {
@@ -44,13 +46,22 @@ interface UpdatesModalProps {
 
 export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) {
   const router = useRouter();
+  const { accessToken: clientToken } = useAuth();
+  const { accessToken: profToken } = useProfessionalAuth();
   const [data, setData] = useState<UpdatesSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Use whichever token is available
+  const token = clientToken || profToken;
+
   const fetchData = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/updates/summary`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -73,7 +84,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
       setLoading(true);
       fetchData();
     }
-  }, [isOpen]);
+  }, [isOpen, token]);
 
   const handleApprovePayment = async (transactionId: string) => {
     setActionLoading(transactionId);
