@@ -217,7 +217,7 @@ export class ClientController {
           type: 'escrow_deposit_request',
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,
-          status: 'Deposited',
+          status: 'pending',
           requestedBy: userId,
           requestedByRole: 'client',
           notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,

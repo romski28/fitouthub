@@ -1041,7 +1041,7 @@ export class ProjectsService {
       throw new Error('This transaction is not an escrow deposit request');
     }
 
-    if (transaction.status !== 'Pending') {
+    if ((transaction.status || '').toLowerCase() !== 'pending') {
       throw new Error('This deposit request is not pending');
     }
 

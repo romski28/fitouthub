@@ -1,4 +1,5 @@
 import React from 'react';
+import StatusPill, { statusToneFromStatus } from './status-pill';
 
 type Role = 'client' | 'admin' | 'professional';
 
@@ -14,15 +15,6 @@ export type ProjectInfoProps = {
   showWithdrawButton?: boolean;
   withdrawing?: boolean;
   onWithdraw?: () => void;
-};
-
-const projectStatusBadge: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-emerald-100 text-emerald-800',
-  rejected: 'bg-rose-100 text-rose-800',
-  withdrawn: 'bg-slate-200 text-slate-800',
-  awarded: 'bg-blue-100 text-blue-800',
-  completed: 'bg-emerald-200 text-emerald-800',
 };
 
 const formatDate = (date?: string) => {
@@ -72,13 +64,11 @@ export default function ProjectInfoCard({
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <span
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                projectStatusBadge[status] || 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              {status.replace('_', ' ')}
-            </span>
+            <StatusPill
+              status={status}
+              label={status.replace('_', ' ')}
+              tone={statusToneFromStatus(status)}
+            />
             {status === 'awarded' && awardedDisplayName && (
               <span className="text-xs font-medium text-slate-300">{awardedDisplayName}</span>
             )}

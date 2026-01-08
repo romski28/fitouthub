@@ -424,7 +424,7 @@ export class ProfessionalController {
           },
         });
 
-        // Transaction 2: Escrow deposit request (Deposited status - action button)
+            // Transaction 2: Escrow deposit request (pending until client confirms payment)
         const project = projectProfessional.project;
         await (this.prisma as any).financialTransaction.create({
           data: {
@@ -432,7 +432,7 @@ export class ProfessionalController {
             type: 'escrow_deposit_request',
             description: `Request to deposit project fees to escrow`,
             amount: quoteAmount,
-            status: 'Deposited', // action button status
+               status: 'pending',
             requestedBy: project?.userId || project?.clientId,
             requestedByRole: 'client',
             notes: `Quote amount for project ${project?.projectName || 'Project'}`,
