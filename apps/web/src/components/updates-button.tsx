@@ -124,7 +124,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
         onClick={handleOpen}
         className={`relative inline-flex items-center gap-3 px-6 py-3 ${
           hasUpdates
-            ? 'bg-action text-white hover:bg-action-hover'
+            ? 'bg-slate-900 text-white hover:bg-slate-800'
             : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
         } font-medium rounded-lg transition-colors shadow-sm ${className}`}
       >
@@ -141,7 +141,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
           )}
         </span>
         {hasUpdates && (
-          <span className="flex items-center justify-center min-w-[24px] h-6 px-2 bg-white text-action rounded-full text-sm font-bold">
+          <span className="flex items-center justify-center min-w-[24px] h-6 px-2 bg-white text-slate-900 rounded-full text-sm font-bold">
             {summary.totalCount}
           </span>
         )}
