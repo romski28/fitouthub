@@ -137,13 +137,8 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-2 px-3 py-1 rounded-md hover:bg-slate-100"
                   >
                     <span className="text-slate-900 font-medium">{professional.fullName || professional.email}</span>
-                    <span className="relative text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
                       Professional
-                      {profUnread > 0 && (
-                        <span className="absolute -top-2 -right-2 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px]">
-                          {profUnread}
-                        </span>
-                      )}
                     </span>
                   </button>
 
