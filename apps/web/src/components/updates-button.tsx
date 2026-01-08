@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { API_BASE_URL } from '@/config/api';
 import { UpdatesModal } from './updates-modal';
 
 interface UpdatesButtonProps {
@@ -49,7 +50,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
 
     try {
       console.log('Fetching updates summary...');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/updates/summary`, {
+      const response = await fetch(`${API_BASE_URL}/updates/summary`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

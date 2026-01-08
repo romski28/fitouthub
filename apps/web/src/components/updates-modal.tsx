@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { API_BASE_URL } from '@/config/api';
 import { StatusPill } from './status-pill';
 
 interface FinancialActionItem {
@@ -62,7 +63,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/updates/summary`, {
+      const response = await fetch(`${API_BASE_URL}/updates/summary`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -91,7 +92,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/financial/${transactionId}/approve`,
+        `${API_BASE_URL}/financial/${transactionId}/approve`,
         {
           method: 'POST',
           headers: {
@@ -120,7 +121,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/financial/${transactionId}/reject`,
+        `${API_BASE_URL}/financial/${transactionId}/reject`,
         {
           method: 'POST',
           headers: {
@@ -153,7 +154,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
       if (!projectId) return;
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/confirm-deposit`,
+        `${API_BASE_URL}/projects/${projectId}/confirm-deposit`,
         {
           method: 'POST',
           headers: {
