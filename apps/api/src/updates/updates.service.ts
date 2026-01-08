@@ -494,7 +494,11 @@ export class UpdatesService {
     // Resolve professional record once if needed
     const professional =
       role === 'professional'
-        ? await this.prisma.professional.findFirst({ where: { userId } })
+        ? await this.prisma.professional.findFirst({
+            where: {
+              OR: [{ userId }, { id: userId }],
+            },
+          })
         : null;
 
     if (role === 'professional' && !professional) {
