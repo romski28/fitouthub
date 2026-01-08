@@ -7,17 +7,23 @@ import { ChatService } from '../chat/chat.service';
 export interface CreateFinancialTransactionDto {
   projectId: string;
   projectProfessionalId?: string;
-  type: 'escrow_deposit' | 'advance_payment_request' | 'advance_payment_approval' | 'advance_payment_rejection' | 'release_payment' | 'escrow_confirmation';
+  professionalId?: string;  // direct link to professional
+  type: 'escrow_deposit' | 'advance_payment_request' | 'advance_payment_approval' | 'advance_payment_rejection' | 'release_payment' | 'escrow_confirmation' | 'escrow_deposit_request' | 'escrow_deposit_confirmation' | 'quotation_accepted';
   description: string;
   amount: number | string;
   requestedBy?: string;
-  requestedByRole?: 'client' | 'professional' | 'admin';
+  requestedByRole?: 'client' | 'professional' | 'admin' | 'platform';
+  actionComplete?: boolean;  // true for info transactions or completed items
   notes?: string;
 }
 
 export interface UpdateFinancialTransactionDto {
   status?: 'pending' | 'confirmed' | 'completed' | 'rejected' | 'paid' | 'awaiting_confirmation' | 'info';
-  approvedBy?: string;
+  actionBy?: string;  // who took the action
+  actionByRole?: 'client' | 'admin' | 'professional';
+  actionAt?: Date;  // when action was taken
+  actionComplete?: boolean;  // mark action complete
+  approvedBy?: string;  // deprecated, use actionBy
   notes?: string;
 }
 
@@ -71,11 +77,13 @@ export class FinancialService {
         data: {
           projectId: data.projectId,
           projectProfessionalId: data.projectProfessionalId,
+          professionalId: data.professionalId,
           type: data.type,
           description: data.description,
           amount: new Decimal(data.amount.toString()),
           requestedBy: data.requestedBy,
           requestedByRole: data.requestedByRole,
+          actionComplete: data.actionComplete ?? false,  // default to false for pending items
           notes: data.notes,
         },
       }),
@@ -129,8 +137,11 @@ export class FinancialService {
         where: { id: transactionId },
         data: {
           status: data.status,
-          approvedBy: data.approvedBy,
-          approvedAt: data.approvedBy ? new Date() : undefined,
+          actionBy: data.actionBy,
+          actionByRole: data.actionByRole,
+          actionAt: data.actionAt,
+          actionComplete: data.actionComplete,
+          approvedBy: data.approvedBy,  // keep for backward compatibility
           notes: data.notes,
         },
       }),
@@ -181,20 +192,28 @@ export class FinancialService {
   /**
    * Approve advance payment request
    */
-  async approveAdvancePayment(transactionId: string, approvedBy: string) {
+  async approveAdvancePayment(transactionId: string, approvedBy: string, approverRole: 'client' | 'admin' = 'client') {
     return this.updateTransaction(transactionId, {
       status: 'confirmed',
-      approvedBy,
+      actionBy: approvedBy,
+      actionByRole: approverRole,
+      actionAt: new Date(),
+      actionComplete: true,
+      approvedBy,  // keep for backward compatibility
     });
   }
 
   /**
    * Reject advance payment request
    */
-  async rejectAdvancePayment(transactionId: string, approvedBy: string, reason: string) {
+  async rejectAdvancePayment(transactionId: string, approvedBy: string, reason: string, approverRole: 'client' | 'admin' = 'client') {
     return this.updateTransaction(transactionId, {
       status: 'rejected',
-      approvedBy,
+      actionBy: approvedBy,
+      actionByRole: approverRole,
+      actionAt: new Date(),
+      actionComplete: true,
+      approvedBy,  // keep for backward compatibility
       notes: reason,
     });
   }

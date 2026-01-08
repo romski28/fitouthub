@@ -122,7 +122,8 @@ export class FinancialController {
       throw new BadRequestException('Professionals cannot approve payments');
     }
 
-    return this.financialService.approveAdvancePayment(transactionId, req.user.id);
+    const approverRole = req.user.role === 'admin' ? 'admin' : 'client';
+    return this.financialService.approveAdvancePayment(transactionId, req.user.id, approverRole);
   }
 
   /**
@@ -150,10 +151,12 @@ export class FinancialController {
       throw new BadRequestException('Professionals cannot reject payments');
     }
 
+    const approverRole = req.user.role === 'admin' ? 'admin' : 'client';
     return this.financialService.rejectAdvancePayment(
       transactionId,
       req.user.id,
       body.reason || 'Rejected by client',
+      approverRole,
     );
   }
 

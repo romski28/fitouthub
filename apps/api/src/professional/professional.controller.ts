@@ -415,12 +415,14 @@ export class ProfessionalController {
           data: {
             projectId: projectProfessional.projectId,
             projectProfessionalId,
+            professionalId,
             type: 'quotation_accepted',
             description: `Quotation accepted from ${projectProfessional.project?.contractorName || 'Professional'}`,
             amount: quoteAmount,
             status: 'info', // informational, not actionable
             requestedBy: professionalId,
             requestedByRole: 'professional',
+            actionComplete: true,
           },
         });
 
@@ -429,12 +431,15 @@ export class ProfessionalController {
         await (this.prisma as any).financialTransaction.create({
           data: {
             projectId: projectProfessional.projectId,
+            projectProfessionalId,
+            professionalId,
             type: 'escrow_deposit_request',
             description: `Request to deposit project fees to escrow`,
             amount: quoteAmount,
                status: 'pending',
             requestedBy: 'foh',
             requestedByRole: 'platform',
+            actionComplete: false,
             notes: `Quote amount for project ${project?.projectName || 'Project'}`,
           },
         });
@@ -668,12 +673,14 @@ export class ProfessionalController {
         data: {
           projectId: projectProfessional.projectId,
           projectProfessionalId,
+          professionalId,
           type: 'advance_payment_request',
           description: `Advance payment request${body.requestType === 'percentage' ? ` (${body.percentage}%)` : ''}`,
           amount: decimalAmount,
           status: 'pending',
           requestedBy: professionalId,
           requestedByRole: 'professional',
+          actionComplete: false,  // Pending client approval
           notes: body.notes || `Advance payment request for upfront costs`,
         },
       });

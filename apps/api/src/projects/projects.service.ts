@@ -1050,21 +1050,30 @@ export class ProjectsService {
       data: {
         projectId,
         projectProfessionalId: transaction.projectProfessionalId,
+        professionalId: transaction.professionalId,
         type: 'escrow_deposit_confirmation',
         description: 'Client confirms deposit payment made to Fitout Hub escrow',
         amount: transaction.amount,
         status: 'awaiting_confirmation',
         requestedBy: transaction.requestedBy,
         requestedByRole: 'client',
+        actionBy: transaction.requestedBy,  // Populate with the approver info
+        actionByRole: 'client',
+        actionAt: new Date(),
+        actionComplete: true,  // Client has confirmed
         notes: `Confirmation for escrow deposit request ${transactionId}`,
       },
     });
 
-    // Update the original transaction status
+    // Update the original transaction status (client confirmed payment)
     await this.prisma.financialTransaction.update({
       where: { id: transactionId },
       data: {
         status: 'paid',
+        actionBy: transaction.requestedBy,
+        actionByRole: 'client',
+        actionAt: new Date(),
+        actionComplete: true,
         notes: `${transaction.notes || ''} | Client confirmed payment made`,
       },
     });
@@ -1138,17 +1147,19 @@ export class ProjectsService {
       : new Decimal(0);
 
     if (quoteAmount.greaterThan(0)) {
-      // Informational line: quotation accepted
+      // Informational line: quotation accepted (mark as complete since no action needed)
       await this.prisma.financialTransaction.create({
         data: {
           projectId,
           projectProfessionalId: awarded.id,
+          professionalId,
           type: 'quotation_accepted',
           description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
           amount: quoteAmount,
           status: 'info',
           requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
           requestedByRole: 'client',
+          actionComplete: true,  // Info transactions don't require action
         },
       });
 
@@ -1157,12 +1168,14 @@ export class ProjectsService {
         data: {
           projectId,
           projectProfessionalId: awarded.id,
+          professionalId,
           type: 'escrow_deposit_request',
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,
           status: 'pending',
           requestedBy: 'foh',
           requestedByRole: 'platform',
+          actionComplete: false,  // Pending client action
           notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
         },
       });

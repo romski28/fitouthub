@@ -195,17 +195,19 @@ export class ClientController {
     // Create financial transactions for accepted quotation
     const quoteAmount = pp.quoteAmount ? new Decimal(pp.quoteAmount.toString()) : new Decimal(0);
     if (quoteAmount.greaterThan(0)) {
-      // 1) Informational line: quotation accepted
+      // 1) Informational line: quotation accepted (mark complete)
       await (this.prisma as any).financialTransaction.create({
         data: {
           projectId: pp.projectId,
           projectProfessionalId,
+          professionalId: pp.professionalId,
           type: 'quotation_accepted',
           description: `Quotation accepted from ${pp.professional?.businessName || pp.professional?.fullName || 'Professional'}`,
           amount: quoteAmount,
           status: 'info',
           requestedBy: userId,
           requestedByRole: 'client',
+          actionComplete: true,
         },
       });
 
@@ -214,12 +216,14 @@ export class ClientController {
         data: {
           projectId: pp.projectId,
           projectProfessionalId,
+          professionalId: pp.professionalId,
           type: 'escrow_deposit_request',
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,
           status: 'pending',
           requestedBy: 'foh',
           requestedByRole: 'platform',
+          actionComplete: false,
           notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,
         },
       });
