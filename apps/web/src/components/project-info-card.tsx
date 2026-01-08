@@ -54,7 +54,7 @@ export default function ProjectInfoCard({
   const withdrawn = status === 'withdrawn';
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-border bg-surface shadow-sm">
       <div
         className={`px-5 py-4 text-white rounded-t-xl ${
           withdrawn ? 'bg-gradient-to-r from-slate-400 to-slate-300' : 'bg-gradient-to-r from-slate-900 to-slate-800'
@@ -89,7 +89,7 @@ export default function ProjectInfoCard({
       {(withdrawn || (showWithdrawButton && !withdrawn)) && (
         <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            {withdrawn && <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>}
+            {withdrawn && <span className="text-sm text-muted">Project withdrawn from bidding.</span>}
           </div>
           {showWithdrawButton && !withdrawn && (
             <button
@@ -105,10 +105,10 @@ export default function ProjectInfoCard({
 
       {notes && (
         <div className="p-5 space-y-4">
-          <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100">
-            <p className="font-semibold text-slate-800 mb-1">Project description</p>
-            <p className="text-slate-700 leading-relaxed">{notes}</p>
-            <div className="flex gap-4 mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500">
+          <div className="rounded-md bg-surface-muted px-3 py-2 text-sm border border-border">
+            <p className="font-semibold text-strong mb-1">Project description</p>
+            <p className="text-muted leading-relaxed">{notes}</p>
+            <div className="flex gap-4 mt-3 pt-2 border-t border-border text-xs text-muted">
               <span>Created: {formatDate(createdAt)}</span>
               {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
             </div>
