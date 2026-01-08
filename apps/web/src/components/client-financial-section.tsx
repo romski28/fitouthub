@@ -38,6 +38,58 @@ export default function ClientFinancialSection({
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleApprovePayment = async (transactionId: string) => {
+    try {
+      setSubmitting(true);
+      const res = await fetch(`${API_BASE_URL}/financial/${transactionId}/approve`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!res.ok) throw new Error('Failed to approve payment');
+      
+      toast.success('Payment request approved!');
+      
+      // Refresh summary
+      const newRes = await fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (newRes.ok) setSummary(await newRes.json());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to approve');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectPayment = async (transactionId: string) => {
+    try {
+      setSubmitting(true);
+      const res = await fetch(`${API_BASE_URL}/financial/${transactionId}/reject`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}` 
+        },
+        body: JSON.stringify({ reason: 'Declined by client' }),
+      });
+
+      if (!res.ok) throw new Error('Failed to decline payment');
+      
+      toast.success('Payment request declined.');
+      
+      // Refresh summary
+      const newRes = await fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (newRes.ok) setSummary(await newRes.json());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to decline');
+    } finally {
+      setSubmitting(false);
+    }
+  };
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -159,16 +211,18 @@ export default function ClientFinancialSection({
           </div>
           <div className="flex gap-3">
             <button
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition"
-              // onClick will be added once approval endpoint is ready
+              onClick={() => handleApprovePayment(pendingApproval.id)}
+              disabled={submitting}
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:bg-gray-400 transition"
             >
-              Approve
+              {submitting ? 'Processing...' : 'Approve'}
             </button>
             <button
-              className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-400 transition"
-              // onClick will be added for reject
+              onClick={() => handleRejectPayment(pendingApproval.id)}
+              disabled={submitting}
+              className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-400 disabled:bg-gray-400 transition"
             >
-              Decline
+              {submitting ? 'Processing...' : 'Decline'}
             </button>
           </div>
         </div>

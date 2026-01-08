@@ -209,7 +209,7 @@ export class ClientController {
         },
       });
 
-      // 2) Action line: request client deposit into escrow
+      // 2) Action line: request client deposit into escrow (from FOH/platform)
       await (this.prisma as any).financialTransaction.create({
         data: {
           projectId: pp.projectId,
@@ -218,8 +218,8 @@ export class ClientController {
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,
           status: 'pending',
-          requestedBy: userId,
-          requestedByRole: 'client',
+          requestedBy: 'foh',
+          requestedByRole: 'platform',
           notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,
         },
       });

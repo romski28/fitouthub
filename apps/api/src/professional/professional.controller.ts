@@ -424,7 +424,7 @@ export class ProfessionalController {
           },
         });
 
-            // Transaction 2: Escrow deposit request (pending until client confirms payment)
+            // Transaction 2: Escrow deposit request (pending until client confirms payment) - from FOH
         const project = projectProfessional.project;
         await (this.prisma as any).financialTransaction.create({
           data: {
@@ -433,8 +433,8 @@ export class ProfessionalController {
             description: `Request to deposit project fees to escrow`,
             amount: quoteAmount,
                status: 'pending',
-            requestedBy: project?.userId || project?.clientId,
-            requestedByRole: 'client',
+            requestedBy: 'foh',
+            requestedByRole: 'platform',
             notes: `Quote amount for project ${project?.projectName || 'Project'}`,
           },
         });
@@ -648,7 +648,7 @@ export class ProfessionalController {
         ? body.amount!
         : (quoteAmount * body.percentage!) / 100;
 
-      // Create advance payment request
+      // Create advance payment request in PaymentRequest table
       const paymentRequest = await (
         this.prisma as any
       ).paymentRequest.create({
@@ -659,6 +659,22 @@ export class ProfessionalController {
           requestPercentage: body.requestType === 'percentage' ? body.percentage : null,
           status: 'pending',
           notes: body.notes || null,
+        },
+      });
+
+      // Also create a FinancialTransaction for visibility in financials view
+      const decimalAmount = new Decimal(requestAmount.toString());
+      await (this.prisma as any).financialTransaction.create({
+        data: {
+          projectId: projectProfessional.projectId,
+          projectProfessionalId,
+          type: 'advance_payment_request',
+          description: `Advance payment request${body.requestType === 'percentage' ? ` (${body.percentage}%)` : ''}`,
+          amount: decimalAmount,
+          status: 'pending',
+          requestedBy: professionalId,
+          requestedByRole: 'professional',
+          notes: body.notes || `Advance payment request for upfront costs`,
         },
       });
 
