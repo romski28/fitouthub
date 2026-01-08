@@ -9,7 +9,7 @@ export class UpdatesController {
   @Get('summary')
   @UseGuards(CombinedAuthGuard)
   async getUpdatesSummary(@Req() req: any) {
-    const userId = req.user.id;
+    const userId = req.user?.id || req.user?.sub;
     const role = req.user?.isProfessional ? 'professional' : req.user.role || 'client';
 
     return this.updatesService.getUpdatesSummary(userId, role);
@@ -25,7 +25,7 @@ export class UpdatesController {
       threadId: string;
     },
   ) {
-    const userId = req.user.id;
+    const userId = req.user?.id || req.user?.sub;
     const role = req.user?.isProfessional ? 'professional' : req.user.role || 'client';
 
     return this.updatesService.markMessageGroupAsRead(userId, role, body);
