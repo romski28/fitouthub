@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards, Req } from '@nestjs/common';
 import { UpdatesService } from './updates.service';
-import { CombinedAuthGuard } from '../auth/combined-auth.guard';
+import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 @Controller('updates')
 export class UpdatesController {
