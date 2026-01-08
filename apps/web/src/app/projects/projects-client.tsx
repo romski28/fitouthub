@@ -12,6 +12,7 @@ import { ProjectForm, type ProjectFormData } from "@/components/project-form";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
+import { UpdatesButton } from "@/components/updates-button";
 import { useAuth } from "@/context/auth-context";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
 
@@ -539,6 +540,11 @@ export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
         }}
         onCancel={() => setShowDescriptionModal(false)}
       />
+
+      {/* Updates Button */}
+      <div className="flex justify-center">
+        <UpdatesButton />
+      </div>
 
       {/* Hero */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">

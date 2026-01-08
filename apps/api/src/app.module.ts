@@ -22,6 +22,7 @@ import { AssistRequestsService } from './assist/assist-requests.service';
 import { ChatModule } from './chat/chat.module';
 import { ChatService } from './chat/chat.service';
 import { FinancialModule } from './financial/financial.module';
+import { UpdatesModule } from './updates/updates.module';
 import { MagicLinkController } from './auth/magic-link.controller';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -39,6 +40,7 @@ import { JwtModule } from '@nestjs/jwt';
     TradesModule,
     ChatModule,
     FinancialModule,
+    UpdatesModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },

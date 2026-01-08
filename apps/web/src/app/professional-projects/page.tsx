@@ -6,6 +6,7 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
+import { UpdatesButton } from '@/components/updates-button';
 
 interface ProjectProfessional {
   id: string;
@@ -112,6 +113,11 @@ export default function ProfessionalProjectsPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+        {/* Updates Button */}
+        <div className="flex justify-center">
+          <UpdatesButton />
+        </div>
+
         {/* Hero (match client styling) */}
         <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

@@ -302,6 +302,8 @@ model PrivateChatMessage {
   content         String
   createdAt       DateTime @default(now())
   readByFohAt     DateTime?
+  readByUserAt    DateTime?
+  readByProAt     DateTime?
   thread          PrivateChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   userSender      User?    @relation("UserSender", fields: [senderUserId], references: [id], onDelete: SetNull)
   proSender       Professional? @relation("ProfessionalSender", fields: [senderProId], references: [id], onDelete: SetNull)
@@ -356,6 +358,9 @@ model ProjectChatMessage {
   senderProId     String?
   content         String
   createdAt       DateTime @default(now())
+  readByClientAt  DateTime?
+  readByProAt     DateTime?
+  readByFohAt     DateTime?
   thread          ProjectChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
