@@ -4,6 +4,7 @@ import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/config/api";
+import { UpdatesButton } from "@/components/updates-button";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -105,6 +106,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Updates Button */}
+      <div className="flex justify-center">
+        <UpdatesButton />
+      </div>
+
       {/* Hero */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
         <div className="space-y-1">
