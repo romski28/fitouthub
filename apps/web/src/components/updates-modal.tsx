@@ -191,6 +191,20 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
     onClose();
   };
 
+  const handleMarkMessageAsRead = async (e: React.MouseEvent, group: UnreadMessageGroup) => {
+    e.stopPropagation();
+    setActionLoading(`msg-${group.threadId}`);
+    try {
+      // Mark as read by clicking the message which triggers navigation or just refresh
+      // For now, we'll just refresh the data to reflect any changes
+      await fetchData();
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleMarkAllRead = async () => {
     // This would require backend support for bulk marking
     // For now, just close and let individual clicks handle it
@@ -302,8 +316,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
                     {data.unreadMessages.map((group, idx) => (
                       <div
                         key={idx}
-                        onClick={() => handleMessageClick(group)}
-                        className="border border-border rounded-lg p-4 bg-surface hover:bg-surface-hover transition-colors cursor-pointer"
+                        className="border border-border rounded-lg p-4 bg-surface hover:bg-surface-hover transition-colors"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
@@ -320,9 +333,21 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
                               {new Date(group.latestMessage.createdAt).toLocaleString()}
                             </p>
                           </div>
-                          <button className="text-action hover:text-action-hover font-medium text-sm">
-                            View →
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => handleMarkMessageAsRead(e, group)}
+                              disabled={actionLoading === `msg-${group.threadId}`}
+                              className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 text-sm font-medium"
+                            >
+                              {actionLoading === `msg-${group.threadId}` ? 'Processing...' : 'OK'}
+                            </button>
+                            <button
+                              onClick={() => handleMessageClick(group)}
+                              className="px-3 py-2 text-action hover:text-action-hover font-medium text-sm"
+                            >
+                              View →
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
