@@ -10,12 +10,17 @@ export type ProjectFinancialRole = 'client' | 'professional' | 'admin';
 interface Transaction {
   id: string;
   projectProfessionalId?: string | null;
+  professionalId?: string | null;
   type: string;
   description: string;
   amount: number | string;
   status: string;
   requestedBy?: string | null;
   requestedByRole?: string | null;
+  actionBy?: string | null;
+  actionByRole?: string | null;
+  actionAt?: string | null;
+  actionComplete?: boolean;
   approvedBy?: string | null;
   approvedAt?: string | null;
   notes?: string | null;
