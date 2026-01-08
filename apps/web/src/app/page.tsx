@@ -7,6 +7,7 @@ import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { ModalOverlay } from '@/components/modal-overlay';
 import { ProjectForm, ProjectFormData } from '@/components/project-form';
+import { UpdatesButton } from '@/components/updates-button';
 import { API_BASE_URL } from '@/config/api';
 
 export default function Home() {
@@ -162,6 +163,13 @@ export default function Home() {
 
   return (
     <div className="space-y-16">
+      {/* Updates Button - Only for logged-in users */}
+      {hydrated && isLoggedIn && (
+        <div className="flex justify-center pt-4">
+          <UpdatesButton />
+        </div>
+      )}
+
       {/* Search Flow */}
       <section className="relative -mx-6 -mt-10 bg-gradient-to-b from-emerald-50 to-white px-6 py-16">
         <div className="mx-auto max-w-2xl">
