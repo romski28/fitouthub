@@ -3,6 +3,24 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-primary: #0f172a;
+  --color-primary-muted: #1e293b;
+  --color-action: #2563eb;
+  --color-action-hover: #1d4ed8;
+  --color-success-bg: #ecfdf3;
+  --color-success: #059669;
+  --color-success-strong: #047857;
+  --color-warning-bg: #fef9c3;
+  --color-warning: #d97706;
+  --color-danger-bg: #fef2f2;
+  --color-danger: #dc2626;
+  --color-info-bg: #eff6ff;
+  --color-info: #2563eb;
+  --color-muted-text: #64748b;
+  --color-strong-text: #0f172a;
 }
 
 /* Custom slow pulse animation for floating action button */
