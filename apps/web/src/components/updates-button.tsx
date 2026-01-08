@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import { colors, radii, shadows } from '@/styles/theme';
 import { UpdatesModal } from './updates-modal';
 
 interface UpdatesButtonProps {
@@ -122,11 +123,14 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
     <>
       <button
         onClick={handleOpen}
+        style={{
+          backgroundColor: hasUpdates ? colors.primary : colors.successBg,
+          color: hasUpdates ? colors.background : colors.success,
+          borderColor: !hasUpdates ? colors.success : undefined,
+        }}
         className={`relative inline-flex items-center gap-3 px-6 py-3 ${
-          hasUpdates
-            ? 'bg-slate-900 text-white hover:bg-slate-800'
-            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-        } font-medium rounded-lg transition-colors shadow-sm ${className}`}
+          !hasUpdates ? 'border' : ''
+        } font-medium ${radii.md} transition-opacity hover:opacity-90 ${shadows.subtle} ${className}`}
       >
         <span className="text-lg">{hasUpdates ? '🔔' : '✨'}</span>
         <span>
@@ -141,7 +145,13 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
           )}
         </span>
         {hasUpdates && (
-          <span className="flex items-center justify-center min-w-[24px] h-6 px-2 bg-white text-slate-900 rounded-full text-sm font-bold">
+          <span
+            style={{
+              backgroundColor: colors.background,
+              color: colors.primary,
+            }}
+            className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-sm font-bold"
+          >
             {summary.totalCount}
           </span>
         )}
