@@ -344,6 +344,11 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
                                 {group.unreadCount}
                               </span>
                             </div>
+                            {group.latestMessage.senderName && (
+                              <p className="text-xs font-semibold text-strong mb-1">
+                                From: {group.latestMessage.senderName}
+                              </p>
+                            )}
                             <p className="text-sm text-sub line-clamp-2">
                               {group.latestMessage.content}
                             </p>

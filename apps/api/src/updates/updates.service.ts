@@ -23,6 +23,7 @@ export interface UnreadMessageGroup {
     content: string;
     createdAt: Date;
     senderType: string;
+    senderName?: string;
   };
   chatType: 'project-professional' | 'project-general' | 'assist' | 'private-foh';
   threadId?: string;
@@ -167,6 +168,8 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
+              senderName:
+                latestMessage.projectProfessional?.project?.clientName || 'Professional',
             },
             chatType: 'project-professional',
             threadId: group.projectProfessionalId,
@@ -217,6 +220,7 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
+              senderName: 'Project Team',
             },
             chatType: 'project-general',
             threadId: group.threadId,
@@ -267,6 +271,7 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
+              senderName: 'FOH Support',
             },
             chatType: 'assist',
             threadId: group.assistRequestId,
@@ -308,6 +313,7 @@ export class UpdatesService {
                 content: latestMessage.content,
                 createdAt: latestMessage.createdAt,
                 senderType: latestMessage.senderType,
+                senderName: 'FOH Support',
               },
               chatType: 'private-foh',
               threadId: privateChatThread.id,
@@ -375,6 +381,7 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
+              senderName: 'Client',
             },
             chatType: 'project-professional',
             threadId: group.projectProfessionalId,
@@ -427,6 +434,7 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
+              senderName: 'Project Team',
             },
             chatType: 'project-general',
             threadId: group.threadId,
@@ -468,6 +476,7 @@ export class UpdatesService {
                 content: latestMessage.content,
                 createdAt: latestMessage.createdAt,
                 senderType: latestMessage.senderType,
+                senderName: 'FOH Support',
               },
               chatType: 'private-foh',
               threadId: privateChatThread.id,
