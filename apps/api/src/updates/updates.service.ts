@@ -318,7 +318,9 @@ export class UpdatesService {
     } else if (role === 'professional') {
       // Get professional record
       const professional = await this.prisma.professional.findFirst({
-        where: { userId: userId },
+        where: {
+          OR: [{ userId }, { id: userId }],
+        },
       });
 
       if (!professional) {
