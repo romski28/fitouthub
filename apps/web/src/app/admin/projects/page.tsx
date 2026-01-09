@@ -58,12 +58,12 @@ function ProjectCard({ project, onEdit, onDelete }: { project: Project; onEdit: 
   return (
     <div key={project.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="rounded-t-xl bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
           <div className="space-y-1">
             <div className="text-base font-bold">{project.projectName}</div>
             <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{project.region}</div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
                 project.status === "approved"
