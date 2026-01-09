@@ -20,6 +20,8 @@ export class UpdatesController {
       role = 'admin';
     }
 
+    console.log('[getUpdatesSummary] User:', userId, 'Role:', role, 'req.user.role:', req.user?.role, 'isProfessional:', isProfessional, 'isAdmin:', isAdmin);
+
     return this.updatesService.getUpdatesSummary(userId, role);
   }
 
