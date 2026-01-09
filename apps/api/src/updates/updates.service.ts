@@ -153,6 +153,9 @@ export class UpdatesService {
                 project: {
                   select: { id: true, projectName: true, userId: true, clientName: true },
                 },
+                professional: {
+                  select: { id: true, businessName: true, fullName: true },
+                },
               },
             },
           },
@@ -170,7 +173,9 @@ export class UpdatesService {
               senderType: latestMessage.senderType,
               senderName:
                 latestMessage.senderType === 'professional'
-                  ? 'Professional'
+                  ? (latestMessage.projectProfessional?.professional?.businessName ||
+                     latestMessage.projectProfessional?.professional?.fullName ||
+                     'Professional')
                   : latestMessage.senderType === 'client'
                   ? 'Client'
                   : 'Sender',
@@ -388,6 +393,15 @@ export class UpdatesService {
             senderType: 'client',
           },
           orderBy: { createdAt: 'desc' },
+          include: {
+            projectProfessional: {
+              include: {
+                project: {
+                  select: { clientName: true },
+                },
+              },
+            },
+          },
         });
 
         if (latestMessage) {
@@ -402,7 +416,7 @@ export class UpdatesService {
               senderType: latestMessage.senderType,
               senderName:
                 latestMessage.senderType === 'client'
-                  ? 'Client'
+                  ? (latestMessage.projectProfessional?.project?.clientName || 'Client')
                   : latestMessage.senderType === 'professional'
                   ? 'Professional'
                   : 'Sender',
