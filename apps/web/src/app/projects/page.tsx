@@ -12,8 +12,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
   const { isLoggedIn, accessToken } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [clientId, setClientId] = useState<string | undefined>(undefined);
-  const [createNew, setCreateNew] = useState<boolean>(false);
+  const [params, setParams] = useState<{ clientId?: string; createNew?: string }>({});
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -24,12 +23,17 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
   }, [isLoggedIn, router]);
 
   useEffect(() => {
+    const loadParams = async () => {
+      const p = await searchParams;
+      setParams(p || {});
+    };
+    loadParams();
+  }, [searchParams]);
+
+  useEffect(() => {
     const loadProjects = async () => {
       if (!accessToken || !isLoggedIn) return;
       try {
-        const params = await searchParams;
-        setClientId(params?.clientId);
-        setCreateNew(params?.createNew === 'true');
         const response = await fetch(
           `${API_BASE_URL}/projects${params?.clientId ? `?clientId=${params.clientId}` : ''}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -46,11 +50,11 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
     };
 
     loadProjects();
-  }, [accessToken, isLoggedIn, searchParams]);
+  }, [accessToken, isLoggedIn, params.clientId]);
 
   if (isLoggedIn === undefined || isLoggedIn === false || loading) {
     return null;
   }
 
-  return <ProjectsClient projects={projects} clientId={clientId} initialShowCreateModal={createNew} />;
+  return <ProjectsClient projects={projects} clientId={params?.clientId} initialShowCreateModal={params?.createNew === 'true'} />;
 }
