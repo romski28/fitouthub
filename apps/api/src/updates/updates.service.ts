@@ -151,7 +151,7 @@ export class UpdatesService {
             projectProfessional: {
               include: {
                 project: {
-                  select: { id: true, projectName: true, userId: true },
+                  select: { id: true, projectName: true, userId: true, clientName: true },
                 },
               },
             },
