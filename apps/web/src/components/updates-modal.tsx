@@ -27,6 +27,7 @@ interface UnreadMessageGroup {
     content: string;
     createdAt: string;
     senderType: string;
+    senderName?: string;
   };
   chatType: 'project-professional' | 'project-general' | 'assist' | 'private-foh';
   threadId?: string;
