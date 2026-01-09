@@ -87,99 +87,8 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
       setLoading(true);
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, token]);
-
-  const handleApprovePayment = async (transactionId: string) => {
-    setActionLoading(transactionId);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${API_BASE_URL}/financial/${transactionId}/approve`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.ok) {
-        await fetchData();
-        onRefresh();
-      } else {
-        alert('Failed to approve payment');
-      }
-    } catch (error) {
-      console.error('Failed to approve payment:', error);
-      alert('Failed to approve payment');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleRejectPayment = async (transactionId: string) => {
-    setActionLoading(transactionId);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${API_BASE_URL}/financial/${transactionId}/reject`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.ok) {
-        await fetchData();
-        onRefresh();
-      } else {
-        alert('Failed to reject payment');
-      }
-    } catch (error) {
-      console.error('Failed to reject payment:', error);
-      alert('Failed to reject payment');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleConfirmDeposit = async (transactionId: string) => {
-    setActionLoading(transactionId);
-    try {
-      const token = localStorage.getItem('token');
-      const projectId = data?.financialActions.find((a) => a.id === transactionId)?.projectId;
-      
-      if (!projectId) return;
-
-      const response = await fetch(
-        `${API_BASE_URL}/projects/${projectId}/confirm-deposit`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ transactionId }),
-        }
-      );
-
-      if (response.ok) {
-        await fetchData();
-        onRefresh();
-      } else {
-        alert('Failed to confirm deposit');
-      }
-    } catch (error) {
-      console.error('Failed to confirm deposit:', error);
-      alert('Failed to confirm deposit');
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   const handleMessageClick = (group: UnreadMessageGroup) => {
     // Navigate to the appropriate chat and mark as read
@@ -190,6 +99,12 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
     } else {
       router.push(`/projects/${group.projectId}?tab=chat`);
     }
+    onClose();
+  };
+
+  const handleFinancialActionClick = (action: FinancialActionItem) => {
+    // Navigate to the project
+    router.push(`/projects/${action.projectId}`);
     onClose();
   };
 
@@ -287,33 +202,16 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
 
                           {/* Action Buttons */}
                           <div className="flex gap-2">
-                            {action.type === 'advance_payment_request' && action.status === 'pending' && (
-                              <>
-                                <button
-                                  onClick={() => handleApprovePayment(action.id)}
-                                  disabled={actionLoading === action.id}
-                                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
-                                >
-                                  {actionLoading === action.id ? 'Processing...' : 'Approve'}
-                                </button>
-                                <button
-                                  onClick={() => handleRejectPayment(action.id)}
-                                  disabled={actionLoading === action.id}
-                                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
-                                >
-                                  Reject
-                                </button>
-                              </>
-                            )}
-                            {action.type === 'escrow_deposit_request' && action.status === 'awaiting_confirmation' && (
-                              <button
-                                onClick={() => handleConfirmDeposit(action.id)}
-                                disabled={actionLoading === action.id}
-                                className="px-4 py-2 bg-action text-white rounded hover:bg-action-hover disabled:opacity-50 text-sm font-medium"
-                              >
-                                {actionLoading === action.id ? 'Processing...' : 'Confirm Paid'}
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleFinancialActionClick(action)}
+                              style={{
+                                backgroundColor: colors.action,
+                                color: colors.background,
+                              }}
+                              className={`px-4 py-2 font-medium text-sm ${radii.sm} transition-opacity hover:opacity-90`}
+                            >
+                              View
+                            </button>
                           </div>
                         </div>
                       </div>
