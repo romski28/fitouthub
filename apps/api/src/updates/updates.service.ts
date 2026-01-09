@@ -324,8 +324,11 @@ export class UpdatesService {
       });
 
       if (!professional) {
+        console.log('[UpdatesService.getUnreadMessages] Professional not found for userId:', userId);
         return [];
       }
+
+      console.log('[UpdatesService.getUnreadMessages] Found professional:', professional.id);
 
       // 1. ProjectProfessional messages (Message model)
       const unreadClientMessages = await this.prisma.$queryRaw<
@@ -349,6 +352,8 @@ export class UpdatesService {
           AND pp."professionalId" = ${professional.id}
         GROUP BY m."projectProfessionalId", p.id, p."projectName"
       `;
+
+      console.log('[UpdatesService.getUnreadMessages] Unread client messages found:', unreadClientMessages.length);
 
       for (const group of unreadClientMessages) {
         const latestMessage = await this.prisma.message.findFirst({

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import { colors } from '@/styles/theme';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
@@ -181,7 +182,15 @@ export default function ProfessionalProjectsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {projectProf.unreadCount && projectProf.unreadCount > 0 ? (
-                        <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white" title={`${projectProf.unreadCount} unread messages`}>
+                        <span 
+                          style={{
+                            backgroundColor: colors.successBg,
+                            color: colors.success,
+                            borderColor: colors.success,
+                          }}
+                          className="rounded-md border-2 px-2 py-0.5 text-xs font-bold" 
+                          title={`${projectProf.unreadCount} unread messages`}
+                        >
                           {projectProf.unreadCount} new
                         </span>
                       ) : null}
