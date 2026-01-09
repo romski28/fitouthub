@@ -562,6 +562,48 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    // Create invitation messages for each professional
+    if (professionals.length > 0 && project.professionals.length > 0) {
+      const messagePromises = project.professionals.map(async (projectProfessional) => {
+        const professional = professionals.find(p => p.id === projectProfessional.professionalId);
+        if (!professional) return;
+
+        const budgetText = project.budget 
+          ? `Budget: HK$${project.budget.toLocaleString()}`
+          : 'Budget: TBD';
+        
+        const tradesText = project.tradesRequired && project.tradesRequired.length > 0
+          ? `Trades Required: ${project.tradesRequired.join(', ')}`
+          : 'Trades: To be discussed';
+
+        const timelineText = project.endDate 
+          ? `Timeline: Needed by ${new Date(project.endDate).toLocaleDateString()}`
+          : 'Timeline: Flexible';
+
+        const invitationMessage = `📋 Project Invitation: ${project.projectName}
+
+You've been invited to submit a quote for this project.
+
+${budgetText}
+${tradesText}
+Region: ${project.region}
+${timelineText}
+
+Please review the project details and respond with your quote or decline the invitation.`;
+
+        return this.prisma.message.create({
+          data: {
+            projectProfessionalId: projectProfessional.id,
+            senderType: 'client',
+            senderClientId: project.userId || project.clientId,
+            content: invitationMessage,
+          },
+        });
+      });
+
+      await Promise.all(messagePromises);
+    }
+
     // Generate secure tokens and send invitation emails for each professional
     const tokenPromises: any[] = [];
     const emailPromises: any[] = [];
