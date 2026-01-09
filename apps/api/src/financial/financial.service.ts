@@ -296,7 +296,7 @@ export class FinancialService {
    */
   async releasePayment(transactionId: string, releasedBy: string) {
     return this.updateTransaction(transactionId, {
-      status: 'completed',
+      status: 'confirmed',
       actionBy: releasedBy,
       actionByRole: 'admin',
       actionAt: new Date(),
@@ -358,7 +358,7 @@ export class FinancialService {
           }
           break;
         case 'release_payment':
-          if (statusLower === 'completed') {
+          if (statusLower === 'confirmed') {
             summary.paymentsReleased = summary.paymentsReleased.plus(amount);
           }
           break;
