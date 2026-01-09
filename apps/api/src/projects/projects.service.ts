@@ -1142,10 +1142,10 @@ Please review the project details and respond with your quote or decline the inv
         status: 'pending',
         requestedBy: transaction.requestedBy,
         requestedByRole: 'client',
-        actionBy: transaction.requestedBy,  // Populate with the approver info
-        actionByRole: 'client',
+        actionBy: 'foh',  // Action required from FOH/platform admin team
+        actionByRole: 'platform',
         actionAt: new Date(),
-        actionComplete: true,  // Client has confirmed
+        actionComplete: false,  // Pending FOH admin confirmation
         notes: `Confirmation for escrow deposit request ${transactionId}`,
       },
     });
