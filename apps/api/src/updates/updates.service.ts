@@ -64,7 +64,7 @@ export class UpdatesService {
       // Client needs to see: advance payment requests to approve, escrow deposits to confirm
       whereClause.OR = [
         { type: 'advance_payment_request', status: 'pending' },
-        { type: 'escrow_deposit_request', status: 'awaiting_confirmation' },
+        { type: 'escrow_deposit_request', status: 'pending' },
       ];
       // Only show transactions from their projects
       whereClause.project = {
