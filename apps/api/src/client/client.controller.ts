@@ -207,6 +207,8 @@ export class ClientController {
           status: 'info',
           requestedBy: userId,
           requestedByRole: 'client',
+          actionBy: userId,
+          actionByRole: 'client',
           actionComplete: true,
         },
       });
@@ -223,6 +225,8 @@ export class ClientController {
           status: 'pending',
           requestedBy: 'foh',
           requestedByRole: 'platform',
+          actionBy: userId,
+          actionByRole: 'client',
           actionComplete: false,
           notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,
         },

@@ -43,54 +43,24 @@ export class UpdatesService {
 
   /**
    * Get financial transactions requiring action from the user
+   * Simplified: Use actionBy, actionByRole, and actionComplete fields
    */
   async getFinancialActions(
     userId: string,
     role: 'client' | 'professional' | 'admin',
   ): Promise<FinancialActionItem[]> {
-    // For clients: pending advance payment requests, escrow confirmations
-    // For professionals: approved advance payments, released payments
-    // For admins: all pending actions
-
-    const whereClause: any = {
-      actionComplete: false,
-      status: {
-        in: ['pending', 'awaiting_confirmation'],
-      },
-    };
-
-    // Role-specific filtering
-    if (role === 'client') {
-      // Client needs to see: advance payment requests to approve, escrow deposits to confirm
-      whereClause.OR = [
-        { type: 'advance_payment_request', status: 'pending' },
-        { type: 'escrow_deposit_request', status: 'pending' },
-      ];
-      // Only show transactions from their projects
-      whereClause.project = {
-        userId: userId,
-      };
-    } else if (role === 'professional') {
-      // Professional needs to see: approved advance payments, released payments
-      // Get professional record
-      const professional = await this.prisma.professional.findFirst({
-        where: { userId: userId },
-      });
-
-      if (!professional) {
-        return [];
-      }
-
-      whereClause.professionalId = professional.id;
-      whereClause.OR = [
-        { type: 'advance_payment_approval', status: 'pending' },
-        { type: 'release_payment', status: 'pending' },
-      ];
-    }
-    // Admin sees all pending actions (no additional filtering)
+    // Simple filter: transactions where this user needs to take action
+    // actionComplete=false means action is still required
+    // actionBy=userId and actionByRole=role means it's meant for this user in this role
 
     const transactions = await this.prisma.financialTransaction.findMany({
-      where: whereClause,
+      where: {
+        actionBy: userId,       // Needs action from this user
+        actionByRole: role,     // And they have the right role
+        actionComplete: {
+          equals: false,        // Action still needed
+        },
+      },
       include: {
         project: {
           select: {
@@ -110,7 +80,7 @@ export class UpdatesService {
       amount: t.amount.toString(),
       status: t.status,
       projectId: t.projectId,
-      projectName: t.project.projectName,
+      projectName: t.project?.projectName || 'Project',
       createdAt: t.createdAt,
       requestedBy: t.requestedBy || undefined,
       requestedByRole: t.requestedByRole || undefined,

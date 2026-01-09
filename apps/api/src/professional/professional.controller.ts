@@ -422,12 +422,15 @@ export class ProfessionalController {
             status: 'info', // informational, not actionable
             requestedBy: professionalId,
             requestedByRole: 'professional',
+            actionBy: professionalId,
+            actionByRole: 'professional',
             actionComplete: true,
           },
         });
 
             // Transaction 2: Escrow deposit request (pending until client confirms payment) - from FOH
         const project = projectProfessional.project;
+        const clientId = project?.clientId || project?.userId;
         await (this.prisma as any).financialTransaction.create({
           data: {
             projectId: projectProfessional.projectId,
@@ -439,6 +442,8 @@ export class ProfessionalController {
                status: 'pending',
             requestedBy: 'foh',
             requestedByRole: 'platform',
+            actionBy: clientId,
+            actionByRole: 'client',
             actionComplete: false,
             notes: `Quote amount for project ${project?.projectName || 'Project'}`,
           },
@@ -669,6 +674,7 @@ export class ProfessionalController {
 
       // Also create a FinancialTransaction for visibility in financials view
       const decimalAmount = new Decimal(requestAmount.toString());
+      const clientId = projectProfessional.project?.clientId || projectProfessional.project?.userId;
       await (this.prisma as any).financialTransaction.create({
         data: {
           projectId: projectProfessional.projectId,
@@ -680,6 +686,8 @@ export class ProfessionalController {
           status: 'pending',
           requestedBy: professionalId,
           requestedByRole: 'professional',
+          actionBy: clientId,
+          actionByRole: 'client',
           actionComplete: false,  // Pending client approval
           notes: body.notes || `Advance payment request for upfront costs`,
         },

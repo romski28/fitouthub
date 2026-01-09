@@ -872,6 +872,8 @@ Please review the project details and respond with your quote or decline the inv
         status: data.status,
         requestedBy: data.requestedBy,
         requestedByRole: data.requestedByRole,
+        actionBy: data.actionBy,
+        actionByRole: data.actionByRole,
       },
     });
   }
@@ -1229,6 +1231,7 @@ Please review the project details and respond with your quote or decline the inv
       : new Decimal(0);
 
     if (quoteAmount.greaterThan(0)) {
+      const clientId = projectProfessional.project?.clientId || projectProfessional.project?.userId;
       // Informational line: quotation accepted (mark as complete since no action needed)
       await this.prisma.financialTransaction.create({
         data: {
@@ -1239,8 +1242,10 @@ Please review the project details and respond with your quote or decline the inv
           description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
           amount: quoteAmount,
           status: 'info',
-          requestedBy: projectProfessional.project?.clientId || projectProfessional.project?.userId,
+          requestedBy: clientId,
           requestedByRole: 'client',
+          actionBy: clientId,
+          actionByRole: 'client',
           actionComplete: true,  // Info transactions don't require action
         },
       });
@@ -1257,6 +1262,8 @@ Please review the project details and respond with your quote or decline the inv
           status: 'pending',
           requestedBy: 'foh',
           requestedByRole: 'platform',
+          actionBy: clientId,
+          actionByRole: 'client',
           actionComplete: false,  // Pending client action
           notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
         },

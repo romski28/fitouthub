@@ -13,6 +13,8 @@ export interface CreateFinancialTransactionDto {
   amount: number | string;
   requestedBy?: string;
   requestedByRole?: 'client' | 'professional' | 'admin' | 'platform';
+  actionBy?: string;  // who needs to take action on this transaction
+  actionByRole?: 'client' | 'professional' | 'admin';
   actionComplete?: boolean;  // true for info transactions or completed items
   notes?: string;
 }
@@ -83,6 +85,8 @@ export class FinancialService {
           amount: new Decimal(data.amount.toString()),
           requestedBy: data.requestedBy,
           requestedByRole: data.requestedByRole,
+          actionBy: data.actionBy,
+          actionByRole: data.actionByRole,
           actionComplete: data.actionComplete ?? false,  // default to false for pending items
           notes: data.notes,
         },
