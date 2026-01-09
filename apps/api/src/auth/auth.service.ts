@@ -56,7 +56,7 @@ export class AuthService {
     });
 
     // Generate tokens
-    const tokens = this.generateTokens(user.id);
+    const tokens = this.generateTokens(user.id, user.role);
 
     return {
       success: true,
@@ -89,7 +89,7 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = this.generateTokens(user.id);
+    const tokens = this.generateTokens(user.id, user.role);
 
     return {
       success: true,
@@ -119,6 +119,7 @@ export class AuthService {
       // Verify user still exists
       const user = await (this.prisma as any).user.findUnique({
         where: { id: userId },
+        select: { id: true, role: true },
       });
 
       if (!user) {
@@ -126,7 +127,7 @@ export class AuthService {
       }
 
       // Generate new tokens
-      const tokens = this.generateTokens(userId);
+      const tokens = this.generateTokens(user.id, user.role);
 
       return {
         success: true,
@@ -138,18 +139,23 @@ export class AuthService {
     }
   }
 
-  private generateTokens(userId: string) {
+  private generateTokens(userId: string, role?: string) {
     const jwtSecret = process.env.JWT_SECRET || 'secret-key';
     const jwtRefreshSecret =
       process.env.JWT_REFRESH_SECRET || 'refresh-secret-key';
     const jwtExpiry = process.env.JWT_EXPIRY || '15m';
     const jwtRefreshExpiry = process.env.JWT_REFRESH_EXPIRY || '7d';
 
-    const accessToken = jwt.sign({ sub: userId }, jwtSecret, {
+    const payload: any = { sub: userId };
+    if (role) {
+      payload.role = role;
+    }
+
+    const accessToken = jwt.sign(payload, jwtSecret, {
       expiresIn: jwtExpiry,
     });
 
-    const refreshToken = jwt.sign({ sub: userId }, jwtRefreshSecret, {
+    const refreshToken = jwt.sign(payload, jwtRefreshSecret, {
       expiresIn: jwtRefreshExpiry,
     });
 
