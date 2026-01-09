@@ -52,15 +52,33 @@ export class UpdatesService {
     // Simple filter: transactions where this user needs to take action
     // actionComplete=false means action is still required
     // actionBy=userId and actionByRole=role means it's meant for this user in this role
+    // For admins: also include platform tasks (actionByRole='platform')
+
+    const whereClause: any = {
+      actionComplete: {
+        equals: false,        // Action still needed
+      },
+    };
+
+    // For admin role, include both admin tasks and platform tasks
+    if (role === 'admin') {
+      whereClause.OR = [
+        {
+          actionBy: userId,
+          actionByRole: 'admin',
+        },
+        {
+          actionByRole: 'platform',  // Platform tasks visible to all admins
+        },
+      ];
+    } else {
+      // For client/professional, match exact user and role
+      whereClause.actionBy = userId;
+      whereClause.actionByRole = role;
+    }
 
     const transactions = await this.prisma.financialTransaction.findMany({
-      where: {
-        actionBy: userId,       // Needs action from this user
-        actionByRole: role,     // And they have the right role
-        actionComplete: {
-          equals: false,        // Action still needed
-        },
-      },
+      where: whereClause,
       include: {
         project: {
           select: {
