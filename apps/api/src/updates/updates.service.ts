@@ -169,7 +169,11 @@ export class UpdatesService {
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
               senderName:
-                latestMessage.projectProfessional?.project?.clientName || 'Professional',
+                latestMessage.senderType === 'professional'
+                  ? 'Professional'
+                  : latestMessage.senderType === 'client'
+                  ? 'Client'
+                  : 'Sender',
             },
             chatType: 'project-professional',
             threadId: group.projectProfessionalId,
@@ -220,7 +224,12 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
-              senderName: 'Project Team',
+              senderName:
+                latestMessage.senderType === 'professional'
+                  ? 'Professional'
+                  : latestMessage.senderType === 'client'
+                  ? 'Client'
+                  : 'Project Team',
             },
             chatType: 'project-general',
             threadId: group.threadId,
@@ -271,7 +280,12 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
-              senderName: 'FOH Support',
+              senderName:
+                latestMessage.senderType === 'foh'
+                  ? 'FOH Support'
+                  : latestMessage.senderType === 'client'
+                  ? 'Client'
+                  : 'Sender',
             },
             chatType: 'assist',
             threadId: group.assistRequestId,
@@ -313,7 +327,12 @@ export class UpdatesService {
                 content: latestMessage.content,
                 createdAt: latestMessage.createdAt,
                 senderType: latestMessage.senderType,
-                senderName: 'FOH Support',
+                senderName:
+                  latestMessage.senderType === 'foh'
+                    ? 'FOH Support'
+                    : latestMessage.senderType === 'client'
+                    ? 'Client'
+                    : 'Sender',
               },
               chatType: 'private-foh',
               threadId: privateChatThread.id,
@@ -381,7 +400,12 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
-              senderName: 'Client',
+              senderName:
+                latestMessage.senderType === 'client'
+                  ? 'Client'
+                  : latestMessage.senderType === 'professional'
+                  ? 'Professional'
+                  : 'Sender',
             },
             chatType: 'project-professional',
             threadId: group.projectProfessionalId,
@@ -434,7 +458,12 @@ export class UpdatesService {
               content: latestMessage.content,
               createdAt: latestMessage.createdAt,
               senderType: latestMessage.senderType,
-              senderName: 'Project Team',
+              senderName:
+                latestMessage.senderType === 'professional'
+                  ? 'Professional'
+                  : latestMessage.senderType === 'client'
+                  ? 'Client'
+                  : 'Project Team',
             },
             chatType: 'project-general',
             threadId: group.threadId,
@@ -476,7 +505,12 @@ export class UpdatesService {
                 content: latestMessage.content,
                 createdAt: latestMessage.createdAt,
                 senderType: latestMessage.senderType,
-                senderName: 'FOH Support',
+                senderName:
+                  latestMessage.senderType === 'foh'
+                    ? 'FOH Support'
+                    : latestMessage.senderType === 'client'
+                    ? 'Client'
+                    : 'Sender',
               },
               chatType: 'private-foh',
               threadId: privateChatThread.id,
