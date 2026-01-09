@@ -640,7 +640,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 key={project.id}
                 className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <div className={`flex items-start justify-between gap-3 px-4 py-3 text-white ${
+                <div className={`flex flex-col md:flex-row md:items-start md:justify-between gap-3 px-4 py-3 text-white ${
                   project.status === 'withdrawn'
                     ? 'bg-gradient-to-r from-slate-400 to-slate-300'
                     : 'bg-gradient-to-r from-slate-900 to-slate-800'
@@ -657,7 +657,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       {project.region}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {unreadCount > 0 && (
                       <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white" title={`${unreadCount} unread messages`}>
                         {unreadCount} new

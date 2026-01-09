@@ -10,7 +10,15 @@ export class UpdatesController {
   @UseGuards(CombinedAuthGuard)
   async getUpdatesSummary(@Req() req: any) {
     const userId = req.user?.id || req.user?.sub;
-    const role = req.user?.isProfessional ? 'professional' : req.user.role || 'client';
+    const isProfessional = req.user?.isProfessional;
+    const isAdmin = req.user?.role === 'admin';
+    
+    let role: 'client' | 'professional' | 'admin' = 'client';
+    if (isProfessional) {
+      role = 'professional';
+    } else if (isAdmin) {
+      role = 'admin';
+    }
 
     return this.updatesService.getUpdatesSummary(userId, role);
   }
