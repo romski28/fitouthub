@@ -91,6 +91,18 @@ export class UpdatesService {
       },
     });
 
+    console.log(`[getFinancialActions] Role: ${role}, Found ${transactions.length} transactions`);
+    if (role === 'admin') {
+      console.log(`[getFinancialActions] Platform tasks:`, transactions.filter(t => t.actionByRole === 'platform').map(t => ({
+        id: t.id,
+        type: t.type,
+        actionByRole: t.actionByRole,
+        actionBy: t.actionBy,
+        actionComplete: t.actionComplete,
+        status: t.status,
+      })));
+    }
+
     return transactions.map((t) => ({
       id: t.id,
       type: t.type,
