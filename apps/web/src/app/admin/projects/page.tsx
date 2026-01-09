@@ -67,10 +67,10 @@ function ProjectCard({ project, onEdit, onDelete }: { project: Project; onEdit: 
             <span
               className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
                 project.status === "approved"
-                  ? "bg-emerald-500/20 text-emerald-200"
+                  ? "bg-emerald-100 text-emerald-800"
                   : project.status === "rejected"
-                    ? "bg-rose-500/20 text-rose-200"
-                    : "bg-amber-500/20 text-amber-100"
+                    ? "bg-slate-200 text-slate-800"
+                    : "bg-amber-100 text-amber-800"
               }`}
             >
               {project.status}
