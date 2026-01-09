@@ -6,162 +6,17 @@ import SearchFlow from '@/components/search-flow';
 import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
-import { ModalOverlay } from '@/components/modal-overlay';
-import { ProjectForm, ProjectFormData } from '@/components/project-form';
 import { UpdatesButton } from '@/components/updates-button';
-import { API_BASE_URL } from '@/config/api';
 
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
-  const [showProjectModal, setShowProjectModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
   }, []);
-
-  const handleProjectSubmit = async (data: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      // Upload pending files first if any
-      let photoUrls: string[] = [];
-      if (pendingFiles.length > 0) {
-        const uploadFormData = new FormData();
-        pendingFiles.forEach((f) => uploadFormData.append("files", f));
-        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
-          method: "POST",
-          body: uploadFormData,
-        });
-        if (!uploadRes.ok) {
-          const message = await uploadRes.text();
-          throw new Error(message || "Failed to upload files");
-        }
-        const uploadData = (await uploadRes.json()) as { urls: string[] };
-        photoUrls = uploadData.urls;
-      }
-
-      const clientName = user ? `${user.firstName} ${user.surname}`.trim() : data.clientName;
-      const locationLabel = [data.location?.primary, data.location?.secondary, data.location?.tertiary]
-        .filter(Boolean)
-        .join(", ");
-
-      const payload = {
-        projectName: data.projectName,
-        tradesRequired: data.tradesRequired,
-        clientName,
-        region: locationLabel || data.region || "Hong Kong",
-        budget: data.budget || undefined,
-        notes: data.notes,
-        status: "pending" as const,
-        userId: user?.id,
-        isEmergency: !!data.isEmergency,
-        endDate: data.endDate || undefined,
-        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
-      };
-
-      const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Failed to create project");
-      }
-
-      setShowProjectModal(false);
-      if (user?.id) {
-        router.push(`/projects?clientId=${encodeURIComponent(user.id)}`);
-      } else {
-        router.push("/projects");
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create project";
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleAssistRequest = async (data: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      // Upload pending files first if any
-      let photoUrls: string[] = [];
-      if (pendingFiles.length > 0) {
-        const uploadFormData = new FormData();
-        pendingFiles.forEach((f) => uploadFormData.append("files", f));
-        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
-          method: "POST",
-          body: uploadFormData,
-        });
-        if (!uploadRes.ok) {
-          const message = await uploadRes.text();
-          throw new Error(message || "Failed to upload files");
-        }
-        const uploadData = (await uploadRes.json()) as { urls: string[] };
-        photoUrls = uploadData.urls;
-      }
-
-      const clientName = user ? `${user.firstName} ${user.surname}`.trim() : data.clientName;
-      const locationLabel = [data.location?.primary, data.location?.secondary, data.location?.tertiary]
-        .filter(Boolean)
-        .join(", ");
-
-      const projectPayload = {
-        projectName: data.projectName,
-        tradesRequired: data.tradesRequired,
-        clientName,
-        region: locationLabel || data.region || "Hong Kong",
-        budget: data.budget || undefined,
-        notes: data.notes,
-        status: "pending" as const,
-        userId: user?.id,
-        isEmergency: !!data.isEmergency,
-        endDate: data.endDate || undefined,
-        professionalIds: [],
-        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
-      };
-
-      const createRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(projectPayload),
-      });
-      if (!createRes.ok) throw new Error(await createRes.text() || 'Failed to create project');
-      const project = await createRes.json();
-
-      const assistRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/assist-requests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId: project.id,
-          userId: user?.id,
-          clientName,
-          projectName: data.projectName,
-          notes: data.notes,
-        }),
-      });
-      if (!assistRes.ok) throw new Error(await assistRes.text() || 'Failed to request assistance');
-
-      setShowProjectModal(false);
-      router.push(`/projects/${encodeURIComponent(project.id)}`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to request assistance";
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="space-y-16">
@@ -189,7 +44,7 @@ export default function Home() {
           {hydrated && isLoggedIn && (
             <div className="mt-6">
               <button
-                onClick={() => setShowProjectModal(true)}
+                onClick={() => router.push('/projects?createNew=true')}
                 className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all duration-200 shadow-sm"
               >
                 ...or start a new project here
@@ -226,35 +81,6 @@ export default function Home() {
 
       {/* Features Section */}
       <InformationSection />
-
-      {/* Project Creation Modal */}
-      {hydrated && showProjectModal && (
-        <ModalOverlay isOpen={showProjectModal} onClose={() => setShowProjectModal(false)} maxWidth="max-w-3xl">
-          <div className="space-y-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase font-semibold tracking-[0.12em] text-emerald-600">New project</p>
-                <h2 className="text-2xl font-bold text-slate-900">Create Your Project</h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  Tell us about your project. You can invite professionals after creation.
-                </p>
-              </div>
-            </div>
-
-            <ProjectForm
-              mode="create"
-              onAssistRequest={handleAssistRequest}
-              onSubmit={handleProjectSubmit}
-              onCancel={() => setShowProjectModal(false)}
-              isSubmitting={isSubmitting}
-              error={error}
-              submitLabel="Create Project"
-              showBudget={true}
-              showService={true}
-            />
-          </div>
-        </ModalOverlay>
-      )}
     </div>
   );
 }

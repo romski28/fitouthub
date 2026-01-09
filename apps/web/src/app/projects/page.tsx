@@ -7,12 +7,13 @@ import { ProjectsClient } from "./projects-client";
 import { Project } from "@/lib/types";
 import { API_BASE_URL } from '@/config/api';
 
-export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string }> }) {
+export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string; createNew?: string }> }) {
   const router = useRouter();
   const { isLoggedIn, accessToken } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [clientId, setClientId] = useState<string | undefined>(undefined);
+  const [createNew, setCreateNew] = useState<boolean>(false);
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -28,6 +29,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
       try {
         const params = await searchParams;
         setClientId(params?.clientId);
+        setCreateNew(params?.createNew === 'true');
         const response = await fetch(
           `${API_BASE_URL}/projects${params?.clientId ? `?clientId=${params.clientId}` : ''}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -50,5 +52,5 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
     return null;
   }
 
-  return <ProjectsClient projects={projects} clientId={clientId} />;
+  return <ProjectsClient projects={projects} clientId={clientId} initialShowCreateModal={createNew} />;
 }

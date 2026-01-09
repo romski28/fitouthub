@@ -111,6 +111,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 type ProjectsClientProps = {
   projects: Project[];
   clientId?: string;
+  initialShowCreateModal?: boolean;
 };
 
 function extractPhotoUrls(notes?: string): string[] {
@@ -388,13 +389,13 @@ function EditProjectModal({
   );
 }
 
-export function ProjectsClient({ projects, clientId }: ProjectsClientProps) {
+export function ProjectsClient({ projects, clientId, initialShowCreateModal = false }: ProjectsClientProps) {
   const { isLoggedIn, accessToken, user } = useAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
-  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(initialShowCreateModal);
   const [items, setItems] = useState<ExtendedProject[]>(() => {
     // Map projects directly without consolidation - each project is unique by ID
     return projects.map(p => {
