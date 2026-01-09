@@ -86,7 +86,6 @@ model Professional {
   referenceProjects    ProfessionalReferenceProject[]
   privateChatThread    PrivateChatThread?
   privateChatMessagesSent PrivateChatMessage[] @relation("ProfessionalSender")
-  financialTransactions FinancialTransaction[]
 }
 
 model Project {
@@ -403,38 +402,31 @@ model PaymentRequest {
 model FinancialTransaction {
   id                    String       @id @default(cuid())
   projectId             String
-  projectProfessionalId String?      // null for escrow deposits
-  professionalId        String?      // direct link to professional for easier filtering
+  projectProfessionalId String?      // links to specific professional-project relationship
   type                  String       // "escrow_deposit_request" | "advance_payment_request" | "escrow_deposit_confirmation" | "release_payment" | etc
   description           String       // Human-readable description
   amount                Decimal      @db.Decimal(12, 2)
-  status                String       @default("pending") // pending | awaiting_confirmation | confirmed | completed | rejected | paid | info
+  status                String       @default("pending") // pending | confirmed | rejected | info
   
   // Request phase
   requestedBy           String?      // user_id or professional_id or "foh"
   requestedByRole       String?      // "client" | "professional" | "admin" | "platform"
   
   // Action phase (approval, rejection, completion)
-  actionBy              String?      // who took the action (clientId, adminId, professionalId)
+  actionBy              String?      // who needs to take action (clientId, adminId, professionalId)
   actionByRole          String?      // "client" | "admin" | "professional"
   actionAt              DateTime?    // when action was taken
   actionComplete        Boolean      @default(false)  // has the action been completed?
   
-  // Legacy fields (kept for backward compatibility, can be deprecated later)
-  approvedBy            String?      // deprecated - use actionBy instead
-  approvedAt            DateTime?    // deprecated - use actionAt instead
-  
-  notes                 String?
+  notes                 String?      // case-specific details
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
   
   project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  professional          Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
   projectProfessional   ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([projectProfessionalId])
-  @@index([professionalId])
   @@index([status])
   @@index([actionComplete])
   @@index([type])

@@ -24,9 +24,8 @@ export const statusToneFromStatus = (status?: string | null): StatusTone => {
   const key = normalizeStatus(status);
   switch (key) {
     case "pending":
-      return "warning";
     case "awaiting_confirmation":
-      return "primary";
+      return "warning";
     case "paid":
     case "confirmed":
     case "completed":

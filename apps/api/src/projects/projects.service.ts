@@ -1136,11 +1136,10 @@ Please review the project details and respond with your quote or decline the inv
       data: {
         projectId,
         projectProfessionalId: transaction.projectProfessionalId,
-        professionalId: transaction.professionalId,
         type: 'escrow_deposit_confirmation',
         description: 'Client confirms deposit payment made to Fitout Hub escrow',
         amount: transaction.amount,
-        status: 'awaiting_confirmation',
+        status: 'pending',
         requestedBy: transaction.requestedBy,
         requestedByRole: 'client',
         actionBy: transaction.requestedBy,  // Populate with the approver info
@@ -1239,7 +1238,6 @@ Please review the project details and respond with your quote or decline the inv
         data: {
           projectId,
           projectProfessionalId: awarded.id,
-          professionalId,
           type: 'quotation_accepted',
           description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
           amount: quoteAmount,
@@ -1257,7 +1255,6 @@ Please review the project details and respond with your quote or decline the inv
         data: {
           projectId,
           projectProfessionalId: awarded.id,
-          professionalId,
           type: 'escrow_deposit_request',
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,

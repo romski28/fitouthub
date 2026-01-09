@@ -7,7 +7,6 @@ import { ChatService } from '../chat/chat.service';
 export interface CreateFinancialTransactionDto {
   projectId: string;
   projectProfessionalId?: string;
-  professionalId?: string;  // direct link to professional
   type: 'escrow_deposit' | 'advance_payment_request' | 'advance_payment_approval' | 'advance_payment_rejection' | 'release_payment' | 'escrow_confirmation' | 'escrow_deposit_request' | 'escrow_deposit_confirmation' | 'quotation_accepted';
   description: string;
   amount: number | string;
@@ -20,12 +19,11 @@ export interface CreateFinancialTransactionDto {
 }
 
 export interface UpdateFinancialTransactionDto {
-  status?: 'pending' | 'confirmed' | 'completed' | 'rejected' | 'paid' | 'awaiting_confirmation' | 'info';
+  status?: 'pending' | 'confirmed' | 'rejected' | 'info';
   actionBy?: string;  // who took the action
   actionByRole?: 'client' | 'admin' | 'professional';
   actionAt?: Date;  // when action was taken
   actionComplete?: boolean;  // mark action complete
-  approvedBy?: string;  // deprecated, use actionBy
   notes?: string;
 }
 
@@ -79,7 +77,6 @@ export class FinancialService {
         data: {
           projectId: data.projectId,
           projectProfessionalId: data.projectProfessionalId,
-          professionalId: data.professionalId,
           type: data.type,
           description: data.description,
           amount: new Decimal(data.amount.toString()),
@@ -104,7 +101,6 @@ export class FinancialService {
         select: {
           id: true,
           projectProfessionalId: true,
-          professionalId: true,
           type: true,
           description: true,
           amount: true,
@@ -115,8 +111,6 @@ export class FinancialService {
           actionByRole: true,
           actionAt: true,
           actionComplete: true,
-          approvedBy: true,
-          approvedAt: true,
           notes: true,
           createdAt: true,
         },
@@ -150,7 +144,7 @@ export class FinancialService {
           actionByRole: data.actionByRole,
           actionAt: data.actionAt,
           actionComplete: data.actionComplete,
-          approvedBy: data.approvedBy,  // keep for backward compatibility
+
           notes: data.notes,
         },
       }),
@@ -208,7 +202,6 @@ export class FinancialService {
       actionByRole: approverRole,
       actionAt: new Date(),
       actionComplete: true,
-      approvedBy,  // keep for backward compatibility
     });
   }
 
@@ -222,7 +215,7 @@ export class FinancialService {
       actionByRole: approverRole,
       actionAt: new Date(),
       actionComplete: true,
-      approvedBy,  // keep for backward compatibility
+
       notes: reason,
     });
   }
@@ -254,7 +247,10 @@ export class FinancialService {
 
     const updated = await this.updateTransaction(transactionId, {
       status: 'confirmed',
-      approvedBy,
+      actionBy: approvedBy,
+      actionByRole: 'admin',
+      actionAt: new Date(),
+      actionComplete: true,
     });
 
     // Project chat announcement
@@ -301,7 +297,10 @@ export class FinancialService {
   async releasePayment(transactionId: string, releasedBy: string) {
     return this.updateTransaction(transactionId, {
       status: 'completed',
-      approvedBy: releasedBy,
+      actionBy: releasedBy,
+      actionByRole: 'admin',
+      actionAt: new Date(),
+      actionComplete: true,
     });
   }
 
@@ -346,7 +345,7 @@ export class FinancialService {
           break;
         case 'escrow_deposit_confirmation':
           // When client confirms escrow deposit, funds are secured
-          if (statusLower === 'awaiting_confirmation' || statusLower === 'confirmed') {
+          if (statusLower === 'pending' || statusLower === 'confirmed') {
             summary.escrowConfirmed = summary.escrowConfirmed.plus(amount);
           }
           break;

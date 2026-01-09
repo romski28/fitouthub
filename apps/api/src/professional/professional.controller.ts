@@ -415,7 +415,6 @@ export class ProfessionalController {
           data: {
             projectId: projectProfessional.projectId,
             projectProfessionalId,
-            professionalId,
             type: 'quotation_accepted',
             description: `Quotation accepted from ${projectProfessional.project?.contractorName || 'Professional'}`,
             amount: quoteAmount,
@@ -435,7 +434,6 @@ export class ProfessionalController {
           data: {
             projectId: projectProfessional.projectId,
             projectProfessionalId,
-            professionalId,
             type: 'escrow_deposit_request',
             description: `Request to deposit project fees to escrow`,
             amount: quoteAmount,
@@ -679,7 +677,6 @@ export class ProfessionalController {
         data: {
           projectId: projectProfessional.projectId,
           projectProfessionalId,
-          professionalId,
           type: 'advance_payment_request',
           description: `Advance payment request${body.requestType === 'percentage' ? ` (${body.percentage}%)` : ''}`,
           amount: decimalAmount,

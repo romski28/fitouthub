@@ -102,7 +102,7 @@ export default function ProjectFinancialsCard({
       .filter(
         (tx) =>
           (tx.type === 'escrow_deposit' && tx.status?.toLowerCase() === 'confirmed') ||
-          (tx.type === 'escrow_deposit_confirmation' && ['awaiting_confirmation', 'confirmed'].includes(tx.status?.toLowerCase() || ''))
+          (tx.type === 'escrow_deposit_confirmation' && ['pending', 'confirmed'].includes(tx.status?.toLowerCase() || ''))
       )
       .reduce((sum, tx) => sum + (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount), 0);
     
@@ -352,7 +352,7 @@ export default function ProjectFinancialsCard({
                   const canConfirmDeposit =
                     role === 'admin' &&
                     ((type === 'escrow_deposit' && statusKey === 'pending') ||
-                      (type === 'escrow_deposit_confirmation' && statusKey === 'awaiting_confirmation'));
+                      (type === 'escrow_deposit_confirmation' && statusKey === 'pending'));
                   const canApprove = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
                   const canRelease = role === 'admin' && type === 'advance_payment_request' && statusKey === 'confirmed';
                   const canReject = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';

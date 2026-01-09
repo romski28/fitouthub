@@ -200,7 +200,6 @@ export class ClientController {
         data: {
           projectId: pp.projectId,
           projectProfessionalId,
-          professionalId: pp.professionalId,
           type: 'quotation_accepted',
           description: `Quotation accepted from ${pp.professional?.businessName || pp.professional?.fullName || 'Professional'}`,
           amount: quoteAmount,
@@ -218,7 +217,6 @@ export class ClientController {
         data: {
           projectId: pp.projectId,
           projectProfessionalId,
-          professionalId: pp.professionalId,
           type: 'escrow_deposit_request',
           description: 'Request to deposit project fees to escrow',
           amount: quoteAmount,

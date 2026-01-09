@@ -75,10 +75,7 @@ export class FinancialController {
       throw new BadRequestException('Status is required');
     }
 
-    return this.financialService.updateTransaction(transactionId, {
-      ...body,
-      approvedBy: body.approvedBy || req.user.id,
-    });
+    return this.financialService.updateTransaction(transactionId, body);
   }
 
   /**
