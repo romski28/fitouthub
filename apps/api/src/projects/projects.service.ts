@@ -848,6 +848,8 @@ Please review the project details and respond with your quote or decline the inv
       status: string;
       requestedBy?: string;
       requestedByRole?: string;
+      actionBy?: string;
+      actionByRole?: string;
       projectProfessionalId?: string;
     },
   ) {
