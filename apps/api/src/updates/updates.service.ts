@@ -103,7 +103,7 @@ export class UpdatesService {
       })));
     }
 
-    return transactions.map((t) => ({
+    let actions = transactions.map((t) => ({
       id: t.id,
       type: t.type,
       description: t.description,
@@ -115,6 +115,62 @@ export class UpdatesService {
       requestedBy: t.requestedBy || undefined,
       requestedByRole: t.requestedByRole || undefined,
     }));
+
+    // For clients, also add pending quotations that need review
+    if (role === 'client') {
+      const pendingQuotations = await this.getPendingQuotations(userId);
+      actions = [...actions, ...pendingQuotations];
+      // Sort by creation date descending
+      actions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    return actions;
+  }
+
+  /**
+   * Get projects with pending quotations for a client (status='quoted', not yet accepted)
+   */
+  private async getPendingQuotations(clientId: string): Promise<FinancialActionItem[]> {
+    const projects = await this.prisma.project.findMany({
+      where: {
+        userId: clientId,
+        professionals: {
+          some: {
+            status: 'quoted',  // Professional has quoted but client hasn't accepted
+          },
+        },
+      },
+      include: {
+        professionals: {
+          where: {
+            status: 'quoted',
+          },
+          include: {
+            professional: {
+              select: {
+                businessName: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return projects.flatMap((project) =>
+      project.professionals.map((pp) => ({
+        id: `quotation-${pp.id}`,  // Synthetic ID for quotation items
+        type: 'quotation_review',
+        description: `Project quotation in progress, please review`,
+        amount: pp.quoteAmount?.toString() || '0',
+        status: 'pending',
+        projectId: project.id,
+        projectName: project.projectName || 'Project',
+        createdAt: pp.quotedAt || new Date(),
+        requestedBy: pp.professionalId,
+        requestedByRole: 'professional',
+      })),
+    );
   }
 
   /**
