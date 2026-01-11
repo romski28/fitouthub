@@ -97,7 +97,7 @@ model Project {
   userId                 String?
   budget                 Decimal?              @db.Decimal(12, 2)
   approvedBudget         Decimal?              @db.Decimal(12, 2)
-  approvedBudgetTxId     String?
+  approvedBudgetTxId     String?              @unique
   awardedProjectProfessionalId String?
   paymentCurrency        String                @default("HKD")
   escrowRequired         Decimal?              @db.Decimal(12, 2)
@@ -123,6 +123,7 @@ model Project {
   assistRequests         ProjectAssistRequest[]
   chatThread             ProjectChatThread?
   financialTransactions  FinancialTransaction[]
+  escrowLedgers          EscrowLedger[]
   approvedBudgetTransaction FinancialTransaction? @relation("ApprovedBudgetTx", fields: [approvedBudgetTxId], references: [id])
   awardedProjectProfessional ProjectProfessional? @relation("AwardedProjectProfessional", fields: [awardedProjectProfessionalId], references: [id])
 }
@@ -157,6 +158,8 @@ model ProjectProfessional {
   messages              Message[]
   paymentRequests       PaymentRequest[]
   financialTransactions FinancialTransaction[]
+  escrowLedgers         EscrowLedger[]
+  awardedInProject      Project?      @relation("AwardedProjectProfessional")
 
   @@unique([projectId, professionalId])
   @@index([projectId])
@@ -456,6 +459,7 @@ model FinancialTransaction {
   project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectProfessional   ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
   approvedBudgetProject Project?     @relation("ApprovedBudgetTx")
+  escrowLedgers         EscrowLedger[]
 
   @@index([projectId])
   @@index([projectProfessionalId])
