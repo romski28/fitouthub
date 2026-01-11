@@ -162,6 +162,7 @@ model ProjectProfessional {
   @@index([projectId])
   @@index([professionalId])
 
+}
 
 model EscrowLedger {
   id                    String       @id @default(uuid()) @db.Uuid
@@ -183,7 +184,6 @@ model EscrowLedger {
   @@index([projectId])
   @@index([projectProfessionalId])
   @@index([transactionId])
-}
 }
 
 model ProfessionalReferenceProject {
