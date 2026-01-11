@@ -116,11 +116,11 @@ export class UpdatesService {
       ...(t.requestedByRole && { requestedByRole: t.requestedByRole }),
     }));
 
-    // For clients, also add pending quotations that need review
-    if (role === 'client') {
-      console.log('[getFinancialActions] Client role detected, fetching pending quotations...');
+    // For clients (and admins who own projects), add pending quotations that need review
+    if (role === 'client' || role === 'admin') {
+      console.log(`[getFinancialActions] ${role} role detected, fetching pending quotations...`);
       const pendingQuotations = await this.getPendingQuotations(userId);
-      console.log(`[getFinancialActions] Found ${pendingQuotations.length} pending quotations`);
+      console.log(`[getFinancialActions] Found ${pendingQuotations.length} pending quotations for user ${userId}`);
       actions = [...actions, ...pendingQuotations];
       // Sort by creation date descending
       actions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
