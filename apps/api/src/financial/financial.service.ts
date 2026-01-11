@@ -245,12 +245,44 @@ export class FinancialService {
       throw new Error('This transaction is not an escrow deposit');
     }
 
-    const updated = await this.updateTransaction(transactionId, {
-      status: 'confirmed',
-      actionBy: approvedBy,
-      actionByRole: 'admin',
-      actionAt: new Date(),
-      actionComplete: true,
+    const updated = await this.prisma.$transaction(async (prisma) => {
+      const updatedTx = await prisma.financialTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: 'confirmed',
+          actionBy: approvedBy,
+          actionByRole: 'admin',
+          actionAt: new Date(),
+          actionComplete: true,
+        },
+      });
+
+      // Write ledger entry (credit)
+      await prisma.escrowLedger.create({
+        data: {
+          projectId: tx.projectId,
+          projectProfessionalId: tx.projectProfessionalId,
+          transactionId: tx.id,
+          direction: 'credit',
+          amount: tx.amount,
+          currency: 'HKD',
+          description: `Deposit confirmed: ${tx.description}`,
+          createdBy: approvedBy,
+        },
+      });
+
+      // Update escrowHeld on project
+      const project = await prisma.project.findUnique({ where: { id: tx.projectId }, select: { escrowHeld: true } });
+      const newHeld = (project?.escrowHeld || 0) + Number(tx.amount);
+      await prisma.project.update({
+        where: { id: tx.projectId },
+        data: {
+          escrowHeld: newHeld,
+          escrowHeldUpdatedAt: new Date(),
+        },
+      });
+
+      return updatedTx;
     });
 
     // Project chat announcement
@@ -295,9 +327,74 @@ export class FinancialService {
    * Release payment (after escrow or advance payment)
    */
   async releasePayment(transactionId: string, releasedBy: string) {
-    return this.updateTransaction(transactionId, {
-      status: 'confirmed',
-      actionBy: releasedBy,
+    const tx = await this.prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+    if (!tx) throw new Error('Transaction not found');
+
+    return this.prisma.$transaction(async (prisma) => {
+      const updated = await prisma.financialTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: 'confirmed',
+          actionBy: releasedBy,
+          actionByRole: 'admin',
+          actionAt: new Date(),
+          actionComplete: true,
+        },
+      });
+
+      // Write ledger entry (debit)
+      await prisma.escrowLedger.create({
+        data: {
+          projectId: tx.projectId,
+          projectProfessionalId: tx.projectProfessionalId,
+          transactionId: tx.id,
+          direction: 'debit',
+          amount: tx.amount,
+          currency: 'HKD',
+          description: `Payment released: ${tx.description}`,
+          createdBy: releasedBy,
+        },
+      });
+
+      // Update escrowHeld on project
+      const project = await prisma.project.findUnique({ where: { id: tx.projectId }, select: { escrowHeld: true } });
+      const newHeld = Math.max(0, (project?.escrowHeld || 0) - Number(tx.amount));
+      await prisma.project.update({
+        where: { id: tx.projectId },
+        data: {
+          escrowHeld: newHeld,
+          escrowHeldUpdatedAt: new Date(),
+        },
+      });
+
+      return updated;
+    });
+  }
+
+  /**
+   * Get escrow statement (ledger) for a project
+   */
+  async getEscrowStatement(projectId: string) {
+    const ledger = await this.prisma.escrowLedger.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        transaction: { select: { type: true, description: true } },
+      },
+    });
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { escrowHeld: true, escrowRequired: true, approvedBudget: true },
+    });
+
+    return {
+      ledger,
+      balance: project?.escrowHeld || 0,
+      required: project?.escrowRequired || 0,
+      approvedBudget: project?.approvedBudget || 0,
+    };
+  }
       actionByRole: 'admin',
       actionAt: new Date(),
       actionComplete: true,

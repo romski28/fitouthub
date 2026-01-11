@@ -29,6 +29,16 @@ export class FinancialController {
   }
 
   /**
+   * GET /financial/project/:projectId/statement - Get escrow statement (ledger) for a project
+   * Requires authentication
+   */
+  @Get('project/:projectId/statement')
+  @UseGuards(CombinedAuthGuard)
+  async getEscrowStatement(@Param('projectId') projectId: string) {
+    return this.financialService.getEscrowStatement(projectId);
+  }
+
+  /**
    * GET /financial/:transactionId - Get a single transaction
    * Requires authentication
    */

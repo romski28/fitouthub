@@ -99,6 +99,7 @@ export default function ProjectFinancialsCard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
@@ -512,13 +513,91 @@ export default function ProjectFinancialsCard({
                         <StatusPill status={tx.status} label={statusKey.replace('_', ' ')} tone={statusToneFromStatus(tx.status)} />
                       </td>
                       <td className="py-2 pr-4 text-right">
-                        {actionButton()}
+                        <div className="flex items-center gap-2 justify-end">
+                          {actionButton()}
+                          {!isInfo && (
+                            <button
+                              onClick={() => setSelectedTx(tx)}
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              Details
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Detail Modal */}
+      {selectedTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setSelectedTx(null)}>
+          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900">Transaction Details</h3>
+              <button onClick={() => setSelectedTx(null)} className="text-slate-400 hover:text-slate-600">
+                ✕
+              </button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-xs font-semibold text-slate-600 uppercase">Type</p>
+                <p className="text-slate-900">{getTypeLabel(selectedTx.type)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-600 uppercase">Description</p>
+                <p className="text-slate-900">{selectedTx.description}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-600 uppercase">Amount</p>
+                <p className="text-slate-900 font-semibold">{formatHKD(selectedTx.amount)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-600 uppercase">Status</p>
+                <StatusPill status={selectedTx.status} label={selectedTx.status} tone={statusToneFromStatus(selectedTx.status)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase">Requested By</p>
+                  <p className="text-slate-900 capitalize">{selectedTx.requestedByRole || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase">Action By</p>
+                  <p className="text-slate-900 capitalize">{selectedTx.actionByRole || '—'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase">Created</p>
+                  <p className="text-slate-700">{new Date(selectedTx.createdAt).toLocaleString('en-HK')}</p>
+                </div>
+                {selectedTx.actionAt && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600 uppercase">Action Taken</p>
+                    <p className="text-slate-700">{new Date(selectedTx.actionAt).toLocaleString('en-HK')}</p>
+                  </div>
+                )}
+              </div>
+              {selectedTx.notes && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase">Notes</p>
+                  <p className="text-slate-700">{selectedTx.notes}</p>
+                </div>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedTx(null)}
+                className="px-4 py-2 bg-slate-600 text-white rounded text-sm font-medium hover:bg-slate-700 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
