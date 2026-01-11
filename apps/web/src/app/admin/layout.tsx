@@ -96,12 +96,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 >
                   Logout
                 </button>
-                <Link
-                  href="/"
-                  className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
-                >
-                  Exit Admin
-                </Link>
               </div>
             </div>
 
@@ -198,13 +192,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 Logout
               </button>
-              <Link
-                href="/"
-                className="block rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Exit Admin
-              </Link>
             </div>
           </div>
         )}
