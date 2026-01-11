@@ -78,7 +78,7 @@ const getTypeLabel = (type: string) => {
     escrow_deposit_confirmation: 'Escrow Deposit Confirmation',
     escrow_deposit: 'Escrow Deposit',
     escrow_confirmation: 'Escrow Confirmed',
-    advance_payment_request: 'Advance Payment Request',
+    payment_request: 'Payment Request',
     advance_payment_approval: 'Advance Approved',
     advance_payment_rejection: 'Advance Rejected',
     release_payment: 'Payment Released',
@@ -152,7 +152,7 @@ export default function ProjectFinancialsCard({
 
   const paymentsReleasedTotal = useMemo(() => {
     return filteredTransactions
-      .filter((tx) => tx.type === 'release_payment' || (tx.type === 'advance_payment_request' && tx.status === 'completed'))
+      .filter((tx) => tx.type === 'release_payment' || (tx.type === 'payment_request' && tx.status === 'completed'))
       .reduce((sum, tx) => sum + (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount), 0);
   }, [filteredTransactions]);
 
@@ -451,11 +451,11 @@ export default function ProjectFinancialsCard({
                     actionByRole: tx.actionByRole,
                   });
                   const canApprove =
-                    resolvedRole === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
+                    resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
                   const canRelease =
-                    resolvedRole === 'admin' && type === 'advance_payment_request' && statusKey === 'confirmed';
+                    resolvedRole === 'admin' && type === 'payment_request' && statusKey === 'confirmed';
                   const canReject =
-                    resolvedRole === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
+                    resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
                   const canMarkPaid =
                     resolvedRole === 'client' && type === 'escrow_deposit_request' && statusKey === 'pending';
                   const actionRole = (tx.actionByRole || '').toLowerCase();

@@ -671,7 +671,7 @@ export class ProfessionalController {
         ? body.amount!
         : (quoteAmount * body.percentage!) / 100;
 
-      // Create advance payment request in PaymentRequest table
+      // Create payment request in PaymentRequest table
       const paymentRequest = await (
         this.prisma as any
       ).paymentRequest.create({
@@ -692,8 +692,8 @@ export class ProfessionalController {
         data: {
           projectId: projectProfessional.projectId,
           projectProfessionalId,
-          type: 'advance_payment_request',
-          description: `Advance payment request${body.requestType === 'percentage' ? ` (${body.percentage}%)` : ''}`,
+          type: 'payment_request',
+          description: `Payment request${body.requestType === 'percentage' ? ` (${body.percentage}%)` : ''}`,
           amount: decimalAmount,
           status: 'pending',
           requestedBy: professionalId,
@@ -701,7 +701,7 @@ export class ProfessionalController {
           actionBy: clientId,
           actionByRole: 'client',
           actionComplete: false,  // Pending client approval
-          notes: body.notes || `Advance payment request for upfront costs`,
+          notes: body.notes || `Payment request for upfront costs`,
         },
       });
 
@@ -732,7 +732,7 @@ export class ProfessionalController {
           projectProfessionalId,
           senderType: 'professional',
           senderProfessionalId: professionalId,
-          content: `💰 Advance payment requested: ${body.requestType === 'percentage' ? `${body.percentage}% (` : ''}$${requestAmount.toFixed(2)}${body.requestType === 'percentage' ? ')' : ''} for upfront costs. Fitout Hub will review and contact the client.`,
+          content: `💰 Payment requested: ${body.requestType === 'percentage' ? `${body.percentage}% (` : ''}$${requestAmount.toFixed(2)}${body.requestType === 'percentage' ? ')' : ''} for upfront costs. Fitout Hub will review and contact the client.`,
         },
       });
 

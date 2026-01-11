@@ -121,8 +121,8 @@ export class FinancialController {
       throw new BadRequestException('Transaction not found');
     }
 
-    if (transaction.type !== 'advance_payment_request') {
-      throw new BadRequestException('This transaction is not an advance payment request');
+    if (transaction.type !== 'payment_request') {
+      throw new BadRequestException('This transaction is not a payment request');
     }
 
     if (req.user.isProfessional) {
@@ -150,8 +150,8 @@ export class FinancialController {
       throw new BadRequestException('Transaction not found');
     }
 
-    if (transaction.type !== 'advance_payment_request') {
-      throw new BadRequestException('This transaction is not an advance payment request');
+    if (transaction.type !== 'payment_request') {
+      throw new BadRequestException('This transaction is not a payment request');
     }
 
     if (req.user.isProfessional) {

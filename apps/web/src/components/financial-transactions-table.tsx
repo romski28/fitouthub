@@ -38,7 +38,7 @@ const formatHKD = (value: number | string) => {
 const getTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
     escrow_deposit: 'Escrow Deposit',
-    advance_payment_request: 'Advance Payment Request',
+    payment_request: 'Payment Request',
     advance_payment_approval: 'Payment Approved',
     advance_payment_rejection: 'Payment Rejected',
     release_payment: 'Release Payment',

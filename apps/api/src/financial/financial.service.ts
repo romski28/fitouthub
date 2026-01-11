@@ -7,7 +7,7 @@ import { ChatService } from '../chat/chat.service';
 export interface CreateFinancialTransactionDto {
   projectId: string;
   projectProfessionalId?: string;
-  type: 'escrow_deposit' | 'advance_payment_request' | 'advance_payment_approval' | 'advance_payment_rejection' | 'release_payment' | 'escrow_confirmation' | 'escrow_deposit_request' | 'escrow_deposit_confirmation' | 'quotation_accepted';
+  type: 'escrow_deposit' | 'payment_request' | 'advance_payment_approval' | 'advance_payment_rejection' | 'release_payment' | 'escrow_confirmation' | 'escrow_deposit_request' | 'escrow_deposit_confirmation' | 'quotation_accepted';
   description: string;
   amount: number | string;
   requestedBy?: string;
@@ -175,20 +175,28 @@ export class FinancialService {
   ) {
     const projectProf = await this.prisma.projectProfessional.findUnique({
       where: { id: projectProfessionalId },
+      include: {
+        project: { select: { clientId: true, userId: true } },
+      },
     });
 
     if (!projectProf) {
       throw new Error('ProjectProfessional not found');
     }
 
+    const clientId = projectProf.project?.clientId || projectProf.project?.userId || undefined;
+
     return this.createTransaction({
       projectId: projectProf.projectId,
       projectProfessionalId,
-      type: 'advance_payment_request',
-      description: 'Advance payment request from professional',
+      type: 'payment_request',
+      description: 'Payment request from professional',
       amount,
       requestedBy,
       requestedByRole: 'professional',
+      actionBy: clientId,
+      actionByRole: clientId ? 'client' : undefined,
+      actionComplete: false,
     });
   }
 
@@ -443,7 +451,7 @@ export class FinancialService {
             summary.escrowConfirmed = summary.escrowConfirmed.plus(amount);
           }
           break;
-        case 'advance_payment_request':
+        case 'payment_request':
           summary.advancePaymentRequested = summary.advancePaymentRequested.plus(amount);
           break;
         case 'advance_payment_approval':

@@ -80,7 +80,7 @@ export default function FileUploader({
             <span className="font-semibold text-strong">Add photos</span>
             <span className="ml-2">(max {maxFiles}, {Math.round(maxFileSize / (1024 * 1024))}MB each)</span>
           </div>
-          <label className="rounded-md bg-action px-3 py-1.5 text-xs font-semibold text-white hover:bg-action-hover cursor-pointer transition">
+          <label className="rounded-md bg-action px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-action-hover cursor-pointer transition">
             Choose files
             <input type="file" accept={accept} multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
           </label>

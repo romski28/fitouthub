@@ -89,9 +89,9 @@ export default function ProfessionalFinancialSection({
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to request advance payment');
+      if (!res.ok) throw new Error('Failed to request payment');
 
-      toast.success('Advance payment requested successfully');
+      toast.success('Payment request submitted successfully');
       setShowRequestForm(false);
       setRequestAmount('');
 
@@ -101,9 +101,7 @@ export default function ProfessionalFinancialSection({
       });
       if (refreshRes.ok) {
         const data = await refreshRes.json();
-        setTransactions(data.filter((tx: Transaction) => 
-          tx.type.includes('advance_payment')
-        ));
+        setTransactions(data.filter((tx: Transaction) => tx.type === 'payment_request'));
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to request payment');
@@ -114,9 +112,9 @@ export default function ProfessionalFinancialSection({
 
   if (!isAwarded) return null;
 
-  const pendingRequest = transactions.find(tx => tx.status === 'pending');
+  const pendingRequest = transactions.find(tx => tx.type === 'payment_request' && tx.status === 'pending');
   const approvedPayments = transactions.filter(tx => 
-    tx.status === 'confirmed' && tx.type === 'advance_payment_request'
+    tx.type === 'payment_request' && tx.status === 'confirmed'
   );
 
   return (
@@ -135,7 +133,7 @@ export default function ProfessionalFinancialSection({
       {/* Pending Request */}
       {pendingRequest && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <p className="text-sm font-semibold text-amber-900 mb-1">⏳ Advance Payment Pending</p>
+          <p className="text-sm font-semibold text-amber-900 mb-1">⏳ Payment Request Pending</p>
           <p className="text-xs text-amber-700 mb-2">Waiting for client approval</p>
           <p className="text-lg font-bold text-amber-900">{formatHKD(pendingRequest.amount)}</p>
         </div>

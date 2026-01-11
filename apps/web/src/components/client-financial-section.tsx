@@ -156,7 +156,7 @@ export default function ClientFinancialSection({
 
   const escrowTx = summary.transactions.find(tx => tx.type === 'escrow_deposit');
   const pendingApproval = summary.transactions.find(
-    tx => tx.type === 'advance_payment_request' && tx.status === 'pending'
+    tx => tx.type === 'payment_request' && tx.status === 'pending'
   );
 
   return (

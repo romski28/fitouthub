@@ -162,8 +162,8 @@ export function ProjectForm({
   };
 
   const handleFilesChange = (files: File[]) => {
-    // Store new files in pendingFiles state, don't upload yet
-    setPendingFiles((prev) => [...prev, ...files]);
+    // Replace pendingFiles with the new array from FileUploader
+    setPendingFiles(files);
   };
 
   const handleRemoveExistingPhoto = (urlOrId: string) => {

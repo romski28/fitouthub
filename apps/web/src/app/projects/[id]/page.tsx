@@ -42,6 +42,7 @@ interface ProjectDetail {
   region: string;
   status?: string;
   budget?: string;
+  approvedBudget?: string;
   notes?: string;
   professionals?: ProjectProfessional[];
   startDate?: string;
@@ -137,6 +138,8 @@ export default function ClientProjectDetailPage() {
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
+  const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
+  const projectCostValue = Number(awardedPro?.quoteAmount || project?.approvedBudget || project?.budget || 0);
   const refreshRequestTemplate =
     'Thanks for your quotation — we have received other offers and would like to give you the opportunity to rebid with your best price.';
 
@@ -891,7 +894,7 @@ export default function ClientProjectDetailPage() {
               projectId={project.id}
               accessToken={accessToken}
               projectCost={projectCostValue}
-              originalBudget={project.budget}
+              originalBudget={project.approvedBudget || project.budget}
               role="client"
             />
           )}
