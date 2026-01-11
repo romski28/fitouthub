@@ -358,10 +358,10 @@ export default function ProjectFinancialsCard({
             View Statement
           </button>
         </div>
-        {(resolvedRole === 'client' || resolvedRole === 'admin') && approvedBudget && (
+        {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
           <div className="text-right">
-            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold">Approved Budget</p>
-            <p className="text-lg font-bold text-slate-900">{formatHKD(approvedBudget)}</p>
+            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold">Original Budget</p>
+            <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
           </div>
         )}
       </div>
