@@ -353,6 +353,15 @@ export default function ProjectFinancialsCard({
                     role === 'admin' &&
                     ((type === 'escrow_deposit' && statusKey === 'pending') ||
                       (type === 'escrow_deposit_confirmation' && statusKey === 'pending'));
+                  if (process.env.NODE_ENV !== 'production') {
+                    console.log('[ProjectFinancials] Action checks:', {
+                      id: tx.id,
+                      type,
+                      statusKey,
+                      role,
+                      canConfirmDeposit,
+                    });
+                  }
                   const canApprove = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
                   const canRelease = role === 'admin' && type === 'advance_payment_request' && statusKey === 'confirmed';
                   const canReject = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
