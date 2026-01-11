@@ -68,13 +68,6 @@ export default function AdminDashboard() {
       stats: "View all projects",
     },
     {
-      title: "Pattern Matching",
-      description: "Configure service mappings, location patterns, and trade synonyms for intelligent professional matching.",
-      href: "/admin/patterns",
-      icon: "🔍",
-      stats: "Configure patterns",
-    },
-    {
       title: "Professional Reports",
       description: "Review client-submitted reports about professionals before sharing with the community.",
       href: "/admin/reports",
