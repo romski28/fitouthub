@@ -9,6 +9,7 @@ import { GlobalAuthModal } from "@/components/global-auth-modal";
 import Footer from "@/components/footer";
 import CornerRibbon from "@/components/corner-ribbon";
 import FloatingChat from "@/components/floating-chat";
+import { MainWrapper } from "@/components/main-wrapper";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -46,7 +47,7 @@ export default function RootLayout({
               <Toaster position="top-right" />
               <div className="min-h-screen bg-slate-50 text-slate-900">
                 <NavbarWrapper />
-                <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+                <MainWrapper>{children}</MainWrapper>
                 <Footer />
                 {/* Version badge for quick deployment verification */}
                 <div className="fixed bottom-2 right-2 z-50 rounded bg-slate-900/80 px-2 py-1 text-[11px] font-medium text-slate-100">

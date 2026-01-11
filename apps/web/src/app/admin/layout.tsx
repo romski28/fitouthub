@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, logout } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,8 +34,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="border-b border-slate-200 bg-white">
+    <div className="fixed inset-0 flex flex-col bg-slate-50">
+      <nav className="flex-none border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo/Title */}
@@ -87,6 +87,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <span className="text-sm text-slate-600">
                   {user.firstName} {user.surname}
                 </span>
+                <button
+                  onClick={() => {
+                    logout();
+                    router.push('/');
+                  }}
+                  className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+                >
+                  Logout
+                </button>
                 <Link
                   href="/"
                   className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
@@ -180,6 +189,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 Patterns
               </Link>
               <hr className="my-2" />
+              <button
+                onClick={() => {
+                  logout();
+                  router.push('/');
+                }}
+                className="block w-full text-left rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Logout
+              </button>
               <Link
                 href="/"
                 className="block rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
@@ -191,7 +209,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         )}
       </nav>
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</div>
+      </main>
     </div>
   );
 }
