@@ -58,7 +58,7 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full', funds
   const awardedState: StepState = awardedProfessional(project) || project.status === 'awarded' ? 'done' : 'upcoming';
   const fundsState: StepState = fundsSecured ? 'done' : (isPaid(project) ? 'done' : 'upcoming');
   const startedState: StepState = project.startDate ? 'done' : 'upcoming';
-  const completedState: StepState = project.endDate || project.status === 'completed' ? 'done' : 'upcoming';
+  const completedState: StepState = (project.endDate || project.status === 'completed') && project.startDate ? 'done' : 'upcoming';
   const feedbackState: StepState = project.feedbackEntered ? 'done' : 'upcoming';
 
   const steps: Step[] = [
