@@ -139,7 +139,10 @@ export default function ClientProjectDetailPage() {
   // Derived values
   const projectStatus = project?.status ?? 'pending';
   const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
+  const isAwarded = projectStatus === 'awarded' || Boolean(awardedPro);
   const projectCostValue = Number(awardedPro?.quoteAmount || project?.approvedBudget || project?.budget || 0);
+  const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
+  const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
   const refreshRequestTemplate =
     'Thanks for your quotation — we have received other offers and would like to give you the opportunity to rebid with your best price.';
 
@@ -762,11 +765,7 @@ export default function ClientProjectDetailPage() {
     return null;
   }
 
-  const awardedPro = project?.professionals?.find((p) => p.status === 'awarded');
-  const isAwarded = project?.status === 'awarded' || Boolean(awardedPro);
-  const projectCostValue = project?.budget ?? 0;
-  const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
-  const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
+  // Values computed above in derived section
 
   if (error || !project) {
     return (
