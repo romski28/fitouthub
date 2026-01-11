@@ -98,7 +98,7 @@ model Project {
   budget                 Decimal?              @db.Decimal(12, 2)
   approvedBudget         Decimal?              @db.Decimal(12, 2)
   approvedBudgetTxId     String?              @unique
-  awardedProjectProfessionalId String?
+  awardedProjectProfessionalId String?              @unique
   paymentCurrency        String                @default("HKD")
   escrowRequired         Decimal?              @db.Decimal(12, 2)
   escrowHeld             Decimal               @db.Decimal(12, 2) @default(0)
