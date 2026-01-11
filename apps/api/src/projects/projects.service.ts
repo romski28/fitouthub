@@ -1197,77 +1197,90 @@ Please review the project details and respond with your quote or decline the inv
       throw new Error('Professional has not submitted a quote yet');
     }
 
-    // Update this professional's status to "awarded"
-    const awarded = await this.prisma.projectProfessional.update({
-      where: {
-        projectId_professionalId: {
-          projectId,
-          professionalId,
-        },
-      },
-      data: {
-        status: 'awarded',
-      },
-      include: {
-        professional: true,
-        project: {
-          include: {
-            client: true,
+    const { awarded } = await this.prisma.$transaction(async (tx) => {
+      // Update this professional's status to "awarded"
+      const awardedPP = await tx.projectProfessional.update({
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId,
           },
         },
-      },
-    });
-
-    // No invoice creation; payment requests are created by professional as needed
-
-    // Mark project as awarded for downstream views
-    await this.prisma.project.update({
-      where: { id: projectId },
-      data: { status: 'awarded' },
-    });
-
-    // Create financial transactions mirroring the client acceptance flow
-    const quoteAmount = projectProfessional.quoteAmount
-      ? new Decimal(projectProfessional.quoteAmount.toString())
-      : new Decimal(0);
-
-    if (quoteAmount.greaterThan(0)) {
-      const clientId = projectProfessional.project?.clientId || projectProfessional.project?.userId;
-      // Informational line: quotation accepted (mark as complete since no action needed)
-      await this.prisma.financialTransaction.create({
         data: {
-          projectId,
-          projectProfessionalId: awarded.id,
-          type: 'quotation_accepted',
-          description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
-          amount: quoteAmount,
-          status: 'info',
-          requestedBy: clientId,
-          requestedByRole: 'client',
-          actionBy: clientId,
-          actionByRole: 'client',
-          actionComplete: true,  // Info transactions don't require action
+          status: 'awarded',
+        },
+        include: {
+          professional: true,
+          project: {
+            include: {
+              client: true,
+            },
+          },
         },
       });
 
-      // Action line: request client deposit into escrow (from FOH/platform)
-      await this.prisma.financialTransaction.create({
-        data: {
-          projectId,
-          projectProfessionalId: awarded.id,
-          type: 'escrow_deposit_request',
-          description: 'Request to deposit project fees to escrow',
-          amount: quoteAmount,
-          status: 'pending',
-          requestedBy: 'foh',
-          requestedByRole: 'platform',
-          actionBy: clientId,
-          actionByRole: 'client',
-          actionComplete: false,  // Pending client action
-          notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
-        },
+      // Mark project as awarded for downstream views
+      await tx.project.update({
+        where: { id: projectId },
+        data: { status: 'awarded' },
       });
-    }
+
+      // Create financial transactions mirroring the client acceptance flow
+      const quoteAmount = projectProfessional.quoteAmount
+        ? new Decimal(projectProfessional.quoteAmount.toString())
+        : new Decimal(0);
+
+      if (quoteAmount.greaterThan(0)) {
+        const clientId = projectProfessional.project?.clientId || projectProfessional.project?.userId;
+        // Informational line: quotation accepted (mark as complete since no action needed)
+        const quoteTx = await tx.financialTransaction.create({
+          data: {
+            projectId,
+            projectProfessionalId: awardedPP.id,
+            type: 'quotation_accepted',
+            description: `Quotation accepted from ${projectProfessional.professional?.businessName || projectProfessional.professional?.fullName || 'Professional'}`,
+            amount: quoteAmount,
+            status: 'info',
+            requestedBy: clientId,
+            requestedByRole: 'client',
+            actionBy: clientId,
+            actionByRole: 'client',
+            actionComplete: true,  // Info transactions don't require action
+          },
+        });
+
+        // Persist approved budget + award pointers on project
+        await tx.project.update({
+          where: { id: projectId },
+          data: {
+            approvedBudget: quoteAmount,
+            approvedBudgetTxId: quoteTx.id,
+            awardedProjectProfessionalId: awardedPP.id,
+            escrowRequired: quoteAmount,
+          },
+        });
+
+        // Action line: request client deposit into escrow (from FOH/platform)
+        await tx.financialTransaction.create({
+          data: {
+            projectId,
+            projectProfessionalId: awardedPP.id,
+            type: 'escrow_deposit_request',
+            description: 'Request to deposit project fees to escrow',
+            amount: quoteAmount,
+            status: 'pending',
+            requestedBy: 'foh',
+            requestedByRole: 'platform',
+            actionBy: clientId,
+            actionByRole: 'client',
+            actionComplete: false,  // Pending client action
+            notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
+          },
+        });
+      }
+
+      return { awarded: awardedPP };
+    });
 
     const project = projectProfessional.project;
     const professionals = project.professionals;

@@ -31,6 +31,7 @@ interface ProjectDetail {
   contractorName?: string;
   region: string;
   budget?: number | string;
+  approvedBudget?: number | string;
   status: string;
   notes?: string;
   createdAt?: string;
@@ -148,7 +149,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
 
   const awardedPro = project.professionals?.find((p) => p.status === "awarded");
   const isAwarded = project.status === "awarded" || Boolean(awardedPro);
-  const projectCostValue = awardedPro?.quoteAmount ?? project.budget ?? 0;
+  const projectCostValue = project.approvedBudget ?? awardedPro?.quoteAmount ?? project.budget ?? 0;
   const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
   const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
 
@@ -198,7 +199,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
           projectId={project.id}
           accessToken={accessToken}
           projectCost={projectCostValue}
-          originalBudget={project.budget}
+          originalBudget={project.approvedBudget ?? project.budget}
           role="admin"
         />
       )}

@@ -179,57 +179,73 @@ export class ClientController {
       include: { professional: true, project: true },
     });
     if (!pp) throw new BadRequestException('Project not found');
-    const updated = await (this.prisma as any).projectProfessional.update({
-      where: { id: projectProfessionalId },
-      data: { status: 'awarded' },
-    });
-    await (this.prisma as any).message.create({
-      data: {
-        projectProfessionalId,
-        senderType: 'client',
-        senderClientId: userId,
-        content: 'We have accepted your quotation.',
-      },
-    });
+    const updated = await (this.prisma as any).$transaction(async (tx: any) => {
+      const updatedPP = await tx.projectProfessional.update({
+        where: { id: projectProfessionalId },
+        data: { status: 'awarded' },
+      });
 
-    // Create financial transactions for accepted quotation
-    const quoteAmount = pp.quoteAmount ? new Decimal(pp.quoteAmount.toString()) : new Decimal(0);
-    if (quoteAmount.greaterThan(0)) {
-      // 1) Informational line: quotation accepted (mark complete)
-      await (this.prisma as any).financialTransaction.create({
+      await tx.message.create({
         data: {
-          projectId: pp.projectId,
           projectProfessionalId,
-          type: 'quotation_accepted',
-          description: `Quotation accepted from ${pp.professional?.businessName || pp.professional?.fullName || 'Professional'}`,
-          amount: quoteAmount,
-          status: 'info',
-          requestedBy: userId,
-          requestedByRole: 'client',
-          actionBy: userId,
-          actionByRole: 'client',
-          actionComplete: true,
+          senderType: 'client',
+          senderClientId: userId,
+          content: 'We have accepted your quotation.',
         },
       });
 
-      // 2) Action line: request client deposit into escrow (from FOH/platform)
-      await (this.prisma as any).financialTransaction.create({
-        data: {
-          projectId: pp.projectId,
-          projectProfessionalId,
-          type: 'escrow_deposit_request',
-          description: 'Request to deposit project fees to escrow',
-          amount: quoteAmount,
-          status: 'pending',
-          requestedBy: 'foh',
-          requestedByRole: 'platform',
-          actionBy: userId,
-          actionByRole: 'client',
-          actionComplete: false,
-          notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,
-        },
-      });
-    }
+      // Create financial transactions for accepted quotation
+      const quoteAmount = pp.quoteAmount ? new Decimal(pp.quoteAmount.toString()) : new Decimal(0);
+      if (quoteAmount.greaterThan(0)) {
+        // 1) Informational line: quotation accepted (mark complete)
+        const quoteTx = await tx.financialTransaction.create({
+          data: {
+            projectId: pp.projectId,
+            projectProfessionalId,
+            type: 'quotation_accepted',
+            description: `Quotation accepted from ${pp.professional?.businessName || pp.professional?.fullName || 'Professional'}`,
+            amount: quoteAmount,
+            status: 'info',
+            requestedBy: userId,
+            requestedByRole: 'client',
+            actionBy: userId,
+            actionByRole: 'client',
+            actionComplete: true,
+          },
+        });
+
+        // Persist approved budget + award pointers on project
+        await tx.project.update({
+          where: { id: pp.projectId },
+          data: {
+            approvedBudget: quoteAmount,
+            approvedBudgetTxId: quoteTx.id,
+            awardedProjectProfessionalId: projectProfessionalId,
+            escrowRequired: quoteAmount,
+          },
+        });
+
+        // 2) Action line: request client deposit into escrow (from FOH/platform)
+        await tx.financialTransaction.create({
+          data: {
+            projectId: pp.projectId,
+            projectProfessionalId,
+            type: 'escrow_deposit_request',
+            description: 'Request to deposit project fees to escrow',
+            amount: quoteAmount,
+            status: 'pending',
+            requestedBy: 'foh',
+            requestedByRole: 'platform',
+            actionBy: userId,
+            actionByRole: 'client',
+            actionComplete: false,
+            notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,
+          },
+        });
+      }
+
+      return updatedPP;
+    });
 
     return { success: true, projectProfessional: updated };
   }

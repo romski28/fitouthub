@@ -392,61 +392,76 @@ export class ProfessionalController {
         throw new BadRequestException('Project not found');
       }
 
-      // Update project professional status
-      const updated = await (this.prisma as any).projectProfessional.update({
-        where: { id: projectProfessionalId },
-        data: {
-          status: 'accepted',
-          respondedAt: new Date(),
-        },
-        include: {
-          project: true,
-        },
+      const updated = await (this.prisma as any).$transaction(async (tx: any) => {
+        // Update project professional status
+        const updatedPP = await tx.projectProfessional.update({
+          where: { id: projectProfessionalId },
+          data: {
+            status: 'accepted',
+            respondedAt: new Date(),
+          },
+          include: {
+            project: true,
+          },
+        });
+
+        // Create financial transactions for quotation acceptance
+        const quoteAmount = projectProfessional.quoteAmount 
+          ? new Decimal(projectProfessional.quoteAmount.toString()) 
+          : new Decimal(0);
+
+        if (quoteAmount.greaterThan(0)) {
+          // Transaction 1: Quotation accepted notification (info status)
+          const quoteTx = await tx.financialTransaction.create({
+            data: {
+              projectId: projectProfessional.projectId,
+              projectProfessionalId,
+              type: 'quotation_accepted',
+              description: `Quotation accepted from ${projectProfessional.project?.contractorName || 'Professional'}`,
+              amount: quoteAmount,
+              status: 'info', // informational, not actionable
+              requestedBy: professionalId,
+              requestedByRole: 'professional',
+              actionBy: professionalId,
+              actionByRole: 'professional',
+              actionComplete: true,
+            },
+          });
+
+          // Persist approved budget + award pointers on project
+          await tx.project.update({
+            where: { id: projectProfessional.projectId },
+            data: {
+              approvedBudget: quoteAmount,
+              approvedBudgetTxId: quoteTx.id,
+              awardedProjectProfessionalId: projectProfessionalId,
+              escrowRequired: quoteAmount,
+            },
+          });
+
+          // Transaction 2: Escrow deposit request (pending until client confirms payment) - from FOH
+          const project = projectProfessional.project;
+          const clientId = project?.clientId || project?.userId;
+          await tx.financialTransaction.create({
+            data: {
+              projectId: projectProfessional.projectId,
+              projectProfessionalId,
+              type: 'escrow_deposit_request',
+              description: `Request to deposit project fees to escrow`,
+              amount: quoteAmount,
+              status: 'pending',
+              requestedBy: 'foh',
+              requestedByRole: 'platform',
+              actionBy: clientId,
+              actionByRole: 'client',
+              actionComplete: false,
+              notes: `Quote amount for project ${project?.projectName || 'Project'}`,
+            },
+          });
+        }
+
+        return updatedPP;
       });
-
-      // Create financial transactions for quotation acceptance
-      const quoteAmount = projectProfessional.quoteAmount 
-        ? new Decimal(projectProfessional.quoteAmount.toString()) 
-        : new Decimal(0);
-
-      if (quoteAmount.greaterThan(0)) {
-        // Transaction 1: Quotation accepted notification (info status)
-        await (this.prisma as any).financialTransaction.create({
-          data: {
-            projectId: projectProfessional.projectId,
-            projectProfessionalId,
-            type: 'quotation_accepted',
-            description: `Quotation accepted from ${projectProfessional.project?.contractorName || 'Professional'}`,
-            amount: quoteAmount,
-            status: 'info', // informational, not actionable
-            requestedBy: professionalId,
-            requestedByRole: 'professional',
-            actionBy: professionalId,
-            actionByRole: 'professional',
-            actionComplete: true,
-          },
-        });
-
-            // Transaction 2: Escrow deposit request (pending until client confirms payment) - from FOH
-        const project = projectProfessional.project;
-        const clientId = project?.clientId || project?.userId;
-        await (this.prisma as any).financialTransaction.create({
-          data: {
-            projectId: projectProfessional.projectId,
-            projectProfessionalId,
-            type: 'escrow_deposit_request',
-            description: `Request to deposit project fees to escrow`,
-            amount: quoteAmount,
-               status: 'pending',
-            requestedBy: 'foh',
-            requestedByRole: 'platform',
-            actionBy: clientId,
-            actionByRole: 'client',
-            actionComplete: false,
-            notes: `Quote amount for project ${project?.projectName || 'Project'}`,
-          },
-        });
-      }
 
       return {
         success: true,
