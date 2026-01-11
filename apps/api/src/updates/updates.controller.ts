@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Query } from '@nestjs/common';
 import { UpdatesService } from './updates.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
@@ -8,7 +8,7 @@ export class UpdatesController {
 
   @Get('summary')
   @UseGuards(CombinedAuthGuard)
-  async getUpdatesSummary(@Req() req: any) {
+  async getUpdatesSummary(@Req() req: any, @Query('actAs') actAs?: string, @Query('clientId') clientId?: string) {
     const userId = req.user?.id || req.user?.sub;
     const isProfessional = req.user?.isProfessional;
     const isAdmin = req.user?.role === 'admin';
@@ -20,7 +20,12 @@ export class UpdatesController {
       role = 'admin';
     }
 
-    console.log('[getUpdatesSummary] User:', userId, 'Role:', role, 'req.user.role:', req.user?.role, 'isProfessional:', isProfessional, 'isAdmin:', isAdmin);
+    console.log('[getUpdatesSummary] User:', userId, 'Role:', role, 'req.user.role:', req.user?.role, 'isProfessional:', isProfessional, 'isAdmin:', isAdmin, 'actAs:', actAs, 'clientId:', clientId);
+
+    // If admin is impersonating client, route to client view for the specified clientId
+    if (isAdmin && actAs === 'client' && clientId) {
+      return this.updatesService.getUpdatesSummary(clientId, 'client');
+    }
 
     return this.updatesService.getUpdatesSummary(userId, role);
   }

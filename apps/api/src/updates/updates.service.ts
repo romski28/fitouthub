@@ -116,8 +116,8 @@ export class UpdatesService {
       ...(t.requestedByRole && { requestedByRole: t.requestedByRole }),
     }));
 
-    // For clients (and admins who own projects), add pending quotations that need review
-    if (role === 'client' || role === 'admin') {
+    // For clients, add pending quotations that need review (admin impersonation handled at controller level)
+    if (role === 'client') {
       console.log(`[getFinancialActions] ${role} role detected, fetching pending quotations...`);
       const pendingQuotations = await this.getPendingQuotations(userId);
       console.log(`[getFinancialActions] Found ${pendingQuotations.length} pending quotations for user ${userId}`);
