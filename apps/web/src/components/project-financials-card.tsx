@@ -400,6 +400,7 @@ export default function ProjectFinancialsCard({
                     resolvedRole === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
                   const canMarkPaid =
                     resolvedRole === 'client' && type === 'escrow_deposit_request' && statusKey === 'pending';
+                  const isAdminTask = tx.actionByRole === 'admin' || tx.actionByRole === 'platform';
                   const isInfo = statusKey === 'info';
 
                   const actionButton = () => {
@@ -480,6 +481,11 @@ export default function ProjectFinancialsCard({
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-slate-900">{getTypeLabel(tx.type)}</span>
+                          {isAdminTask && (
+                            <span className="inline-flex items-center rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-700">
+                              Admin task
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-2 pr-4 text-slate-900 font-semibold">{formatHKD(tx.amount)}</td>
