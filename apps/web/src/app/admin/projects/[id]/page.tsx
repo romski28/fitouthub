@@ -77,7 +77,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const [error, setError] = useState<string | null>(null);
 
   // Enforce admin-only access
-  useRoleGuard(['admin'], { fallback: '/admin/projects' });
+  useRoleGuard(['admin'], { fallback: '/admin' });
 
   // Check if funds are secured via financial summary
   const fundsSecured = useFundsSecured(projectId, accessToken || undefined);

@@ -23,7 +23,7 @@ export default function Home() {
   useEffect(() => {
     if (!hydrated) return;
     if (user?.role === 'admin') {
-      router.replace('/admin/projects');
+      router.replace('/admin');
       return;
     }
     if (profIsLoggedIn && !user) {

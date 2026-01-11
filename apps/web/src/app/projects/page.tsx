@@ -16,7 +16,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
   const [params, setParams] = useState<{ clientId?: string; createNew?: string }>({});
 
   // Only clients can access this page
-  useRoleGuard(['client'], { fallback: '/admin/projects' });
+  useRoleGuard(['client'], { fallback: '/admin' });
 
   useEffect(() => {
     const loadParams = async () => {
