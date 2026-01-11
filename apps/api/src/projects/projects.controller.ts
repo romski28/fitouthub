@@ -28,8 +28,34 @@ export class ProjectsController {
   ) {}
 
   @Get()
-  async findAll() {
-    return this.projectsService.findAll();
+  @UseGuards(CombinedAuthGuard)
+  async findAll(@Request() req: any) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    const isProfessionalFlag = req.user?.isProfessional;
+
+    let role: 'client' | 'professional' | 'admin' = 'client';
+    if (tokenRole === 'admin') {
+      role = 'admin';
+    } else if (tokenRole === 'professional' || isProfessionalFlag) {
+      role = 'professional';
+    } else {
+      role = 'client';
+    }
+
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (role === 'admin') {
+      return this.projectsService.findAll();
+    }
+
+    if (role === 'client') {
+      return this.projectsService.findAllForClient(userId);
+    }
+
+    throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
   }
 
   @Get('canonical')
@@ -122,8 +148,34 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.projectsService.findOne(id);
+  @UseGuards(CombinedAuthGuard)
+  async findOne(@Param('id') id: string, @Request() req: any) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    const isProfessionalFlag = req.user?.isProfessional;
+
+    let role: 'client' | 'professional' | 'admin' = 'client';
+    if (tokenRole === 'admin') {
+      role = 'admin';
+    } else if (tokenRole === 'professional' || isProfessionalFlag) {
+      role = 'professional';
+    } else {
+      role = 'client';
+    }
+
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (role === 'admin') {
+      return this.projectsService.findOne(id);
+    }
+
+    if (role === 'client') {
+      return this.projectsService.findOneForClient(id, userId);
+    }
+
+    throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
   }
 
   @Get(':id/tokens')

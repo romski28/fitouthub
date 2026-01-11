@@ -202,10 +202,64 @@ export class ProjectsService {
       return [];
     }
   }
+  
+  async findAllForClient(clientId: string) {
+    try {
+      const projects = await this.prisma.project.findMany({
+        where: {
+          OR: [{ clientId }, { userId: clientId }],
+        },
+        include: {
+          client: true,
+          professionals: {
+            include: {
+              professional: true,
+            },
+          },
+          photos: true,
+        },
+      });
+
+      return projects.map((p: any) => ({
+        ...p,
+        professionals: this.dedupeProfessionals(p.professionals),
+      }));
+    } catch (error) {
+      console.error('[ProjectsService.findAllForClient] Database error:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+      });
+      throw error;
+    }
+  }
 
   async findOne(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
+      include: {
+        client: true,
+        professionals: {
+          include: {
+            professional: true,
+          },
+        },
+        photos: true,
+      },
+    });
+    if (!project) return null;
+    return {
+      ...project,
+      professionals: this.dedupeProfessionals((project as any).professionals),
+    } as any;
+  }
+
+  async findOneForClient(id: string, clientId: string) {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id,
+        OR: [{ clientId }, { userId: clientId }],
+      },
       include: {
         client: true,
         professionals: {

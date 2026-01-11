@@ -282,7 +282,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   onChange={(e) => setLoginEmail(e.target.value)}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="your@email.com"
                 />
               </div>
               <div>
@@ -295,7 +294,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="••••••••"
                 />
               </div>
               <button
@@ -346,7 +344,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setClientForm({ ...clientForm, nickname: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="username"
                     />
                   </div>
                   <div>
@@ -359,7 +356,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="your@email.com"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -373,7 +369,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onChange={(e) => setClientForm({ ...clientForm, firstName: e.target.value })}
                         required
                         className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                        placeholder="John"
                       />
                     </div>
                     <div>
@@ -386,7 +381,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onChange={(e) => setClientForm({ ...clientForm, surname: e.target.value })}
                         required
                         className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                        placeholder="Doe"
                       />
                     </div>
                   </div>
@@ -399,7 +393,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       value={clientForm.mobile}
                       onChange={(e) => setClientForm({ ...clientForm, mobile: e.target.value })}
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="+852 1234 5678"
                     />
                   </div>
                   <div>
@@ -412,7 +405,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setClientForm({ ...clientForm, password: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="••••••••"
                     />
                   </div>
                   <div>
@@ -425,7 +417,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setClientForm({ ...clientForm, confirmPassword: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="••••••••"
                     />
                   </div>
                   <button
@@ -448,7 +439,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setProfessionalForm({ ...professionalForm, businessName: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="Your Company Ltd."
                     />
                   </div>
                   <div>
@@ -461,7 +451,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setProfessionalForm({ ...professionalForm, contactName: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="John Smith"
                     />
                   </div>
                   <div>
@@ -474,7 +463,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setProfessionalForm({ ...professionalForm, email: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="business@email.com"
                     />
                   </div>
                   <div>
@@ -487,7 +475,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setProfessionalForm({ ...professionalForm, phone: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="+852 1234 5678"
                     />
                   </div>
                   <div>
@@ -500,7 +487,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setProfessionalForm({ ...professionalForm, password: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="••••••••"
                     />
                   </div>
                   <div>
@@ -513,7 +499,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setProfessionalForm({ ...professionalForm, confirmPassword: e.target.value })}
                       required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      placeholder="••••••••"
                     />
                   </div>
                   <button
