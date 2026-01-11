@@ -7,7 +7,6 @@ import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
-import { useEffect } from 'react';
 
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
