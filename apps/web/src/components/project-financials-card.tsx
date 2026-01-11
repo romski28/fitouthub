@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import StatusPill, { statusToneFromStatus } from './status-pill';
+import { useAuth } from '@/context/auth-context';
 
 export type ProjectFinancialRole = 'client' | 'professional' | 'admin';
 
@@ -68,6 +69,23 @@ const getTypeLabel = (type: string) => {
   return map[type] || type;
 };
 
+const deriveRoleFromToken = (token?: string | null): ProjectFinancialRole | null => {
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1] || '')) as {
+      role?: string;
+      isProfessional?: boolean;
+    };
+    if (payload.role === 'admin' || payload.role === 'client' || payload.role === 'professional') {
+      return payload.role as ProjectFinancialRole;
+    }
+    if (payload.isProfessional) return 'professional';
+  } catch {
+    // ignore decode failures; fall back to props
+  }
+  return null;
+};
+
 export default function ProjectFinancialsCard({
   projectId,
   projectProfessionalId,
@@ -76,6 +94,7 @@ export default function ProjectFinancialsCard({
   originalBudget,
   role,
 }: ProjectFinancialsCardProps) {
+  const { role: authRole } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,12 +103,24 @@ export default function ProjectFinancialsCard({
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
 
+  const resolvedRole = useMemo<ProjectFinancialRole>(() => {
+    if (authRole === 'admin' || authRole === 'client' || authRole === 'professional') {
+      return authRole as ProjectFinancialRole;
+    }
+    if (role === 'admin' || role === 'client' || role === 'professional') {
+      return role;
+    }
+    const tokenRole = deriveRoleFromToken(accessToken);
+    if (tokenRole) return tokenRole;
+    return 'client';
+  }, [authRole, role, accessToken]);
+
   const filteredTransactions = useMemo(() => {
-    if (role === 'professional' && projectProfessionalId) {
+    if (resolvedRole === 'professional' && projectProfessionalId) {
       return transactions.filter((tx) => tx.projectProfessionalId === projectProfessionalId);
     }
     return transactions;
-  }, [transactions, role, projectProfessionalId]);
+  }, [transactions, resolvedRole, projectProfessionalId]);
 
   const paymentsReleasedTotal = useMemo(() => {
     return filteredTransactions
@@ -163,7 +194,7 @@ export default function ProjectFinancialsCard({
     if (projectId && accessToken) {
       load();
     }
-  }, [projectId, accessToken, projectProfessionalId, role]);
+  }, [projectId, accessToken, projectProfessionalId, resolvedRole]);
 
   const handleConfirmDeposit = async (transactionId: string) => {
     try {
@@ -257,7 +288,7 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const budgetLabel = role === 'professional' ? 'Contract Value' : 'Project Budget';
+  const budgetLabel = resolvedRole === 'professional' ? 'Contract Value' : 'Project Budget';
   const paymentsLabel = 'Payments Released';
   const escrowActive = escrowConfirmed > 0;
   const budgetTitle = escrowActive ? `${budgetLabel} · In escrow` : budgetLabel;
@@ -269,7 +300,7 @@ export default function ProjectFinancialsCard({
         <div>
           <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
         </div>
-        {(role === 'client' || role === 'admin') && originalBudget && (
+        {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
           <div className="text-right">
             <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold">Original Budget</p>
             <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
@@ -286,13 +317,13 @@ export default function ProjectFinancialsCard({
           {/* Three Mini Cards */}
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Project Value Card - Show for all roles */}
-            {role === 'professional' && (
+            {resolvedRole === 'professional' && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
                 <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Project Value</p>
                 <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
               </div>
             )}
-            {(role === 'client' || role === 'admin') && (
+            {(resolvedRole === 'client' || resolvedRole === 'admin') && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
                 <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Approved Quote</p>
                 <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
@@ -350,20 +381,25 @@ export default function ProjectFinancialsCard({
                   const statusKey = status.replace(/\s+/g, '_');
                   const type = tx.type;
                   const canConfirmDeposit =
-                    role === 'admin' &&
+                    resolvedRole === 'admin' &&
                     ((type === 'escrow_deposit' && statusKey === 'pending') ||
                       (type === 'escrow_deposit_confirmation' && statusKey === 'pending'));
                   console.log('[ProjectFinancials] Action checks:', {
                     id: tx.id,
                     type,
                     statusKey,
-                    role,
+                    role: resolvedRole,
                     canConfirmDeposit,
+                    actionByRole: tx.actionByRole,
                   });
-                  const canApprove = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
-                  const canRelease = role === 'admin' && type === 'advance_payment_request' && statusKey === 'confirmed';
-                  const canReject = role === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
-                  const canMarkPaid = role === 'client' && type === 'escrow_deposit_request' && statusKey === 'pending';
+                  const canApprove =
+                    resolvedRole === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
+                  const canRelease =
+                    resolvedRole === 'admin' && type === 'advance_payment_request' && statusKey === 'confirmed';
+                  const canReject =
+                    resolvedRole === 'client' && type === 'advance_payment_request' && statusKey === 'pending';
+                  const canMarkPaid =
+                    resolvedRole === 'client' && type === 'escrow_deposit_request' && statusKey === 'pending';
                   const isInfo = statusKey === 'info';
 
                   const actionButton = () => {
