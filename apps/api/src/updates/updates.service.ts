@@ -118,12 +118,15 @@ export class UpdatesService {
 
     // For clients, also add pending quotations that need review
     if (role === 'client') {
+      console.log('[getFinancialActions] Client role detected, fetching pending quotations...');
       const pendingQuotations = await this.getPendingQuotations(userId);
+      console.log(`[getFinancialActions] Found ${pendingQuotations.length} pending quotations`);
       actions = [...actions, ...pendingQuotations];
       // Sort by creation date descending
       actions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
+    console.log(`[getFinancialActions] Returning ${actions.length} total actions`);
     return actions;
   }
 
@@ -797,10 +800,17 @@ export class UpdatesService {
     userId: string,
     role: 'client' | 'professional' | 'admin',
   ): Promise<UpdatesSummary> {
+    console.log(`[getUpdatesSummary] Starting for userId: ${userId}, role: ${role}`);
+    
     const [financialActions, unreadMessages] = await Promise.all([
       this.getFinancialActions(userId, role),
       this.getUnreadMessages(userId, role),
     ]);
+
+    console.log(`[getUpdatesSummary] financialActions count: ${financialActions.length}`);
+    if (financialActions.length > 0) {
+      console.log('[getUpdatesSummary] Financial actions:', financialActions.map(a => ({ id: a.id, type: a.type, description: a.description, projectId: a.projectId })));
+    }
 
     const financialCount = financialActions.length;
     const unreadCount = unreadMessages.reduce((sum, g) => sum + g.unreadCount, 0);
