@@ -45,9 +45,10 @@ interface UpdatesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRefresh: () => void;
+  actAsClientId?: string; // when present, admin views a client's updates
 }
 
-export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) {
+export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: UpdatesModalProps) {
   const router = useRouter();
   const { accessToken: clientToken } = useAuth();
   const { accessToken: profToken } = useProfessionalAuth();
@@ -65,7 +66,10 @@ export function UpdatesModal({ isOpen, onClose, onRefresh }: UpdatesModalProps) 
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/updates/summary`, {
+      const url = actAsClientId
+        ? `${API_BASE_URL}/updates/summary?actAs=client&clientId=${encodeURIComponent(actAsClientId)}`
+        : `${API_BASE_URL}/updates/summary`;
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

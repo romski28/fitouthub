@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@/config/api";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
 import ProjectInfoCard from "@/components/project-info-card";
 import { useAuth } from "@/context/auth-context";
+import { UpdatesModal } from "@/components/updates-modal";
 import ProjectFinancialsCard from "@/components/project-financials-card";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
 
@@ -27,6 +28,8 @@ interface ProjectProfessional {
 interface ProjectDetail {
   id: string;
   projectName: string;
+  userId?: string;
+  clientId?: string;
   clientName: string;
   contractorName?: string;
   region: string;
@@ -159,7 +162,9 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         <Link href="/admin/projects" className="text-sm text-blue-600 hover:underline">
           ← Back to admin projects
         </Link>
-        <span className="text-xs text-slate-500">ID: {project.id}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-500">ID: {project.id}</span>
+        </div>
       </div>
 
       <ProjectInfoCard
@@ -203,6 +208,15 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
           role="admin"
         />
       )}
+
+      {/* Admin View-As toggle */}
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">Admin Tools</h2>
+          <p className="text-sm text-slate-600">View the client's to-do list for this project.</p>
+        </div>
+        <ViewClientUpdatesButton ownerId={project.userId || project.clientId || ''} />
+      </div>
 
       {project.professionals && project.professionals.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -248,5 +262,22 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         </div>
       )}
     </div>
+  );
+}
+
+function ViewClientUpdatesButton({ ownerId }: { ownerId: string }) {
+  const [open, setOpen] = useState(false);
+  const { accessToken } = useAuth();
+  if (!ownerId || !accessToken) return null;
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+      >
+        View Client To-Dos
+      </button>
+      <UpdatesModal isOpen={open} onClose={() => setOpen(false)} onRefresh={() => void 0} actAsClientId={ownerId} />
+    </>
   );
 }
