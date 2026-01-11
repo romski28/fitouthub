@@ -103,7 +103,7 @@ export class UpdatesService {
       })));
     }
 
-    let actions = transactions.map((t) => ({
+    let actions: FinancialActionItem[] = transactions.map((t) => ({
       id: t.id,
       type: t.type,
       description: t.description,
@@ -112,8 +112,8 @@ export class UpdatesService {
       projectId: t.projectId,
       projectName: t.project?.projectName || 'Project',
       createdAt: t.createdAt,
-      requestedBy: t.requestedBy || undefined,
-      requestedByRole: t.requestedByRole || undefined,
+      ...(t.requestedBy && { requestedBy: t.requestedBy }),
+      ...(t.requestedByRole && { requestedByRole: t.requestedByRole }),
     }));
 
     // For clients, also add pending quotations that need review
