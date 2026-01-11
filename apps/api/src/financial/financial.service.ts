@@ -273,7 +273,8 @@ export class FinancialService {
 
       // Update escrowHeld on project
       const project = await prisma.project.findUnique({ where: { id: tx.projectId }, select: { escrowHeld: true } });
-      const newHeld = (project?.escrowHeld || 0) + Number(tx.amount);
+      const currentHeld = project?.escrowHeld ? Number(project.escrowHeld) : 0;
+      const newHeld = currentHeld + Number(tx.amount);
       await prisma.project.update({
         where: { id: tx.projectId },
         data: {
@@ -358,7 +359,8 @@ export class FinancialService {
 
       // Update escrowHeld on project
       const project = await prisma.project.findUnique({ where: { id: tx.projectId }, select: { escrowHeld: true } });
-      const newHeld = Math.max(0, (project?.escrowHeld || 0) - Number(tx.amount));
+      const currentHeld = project?.escrowHeld ? Number(project.escrowHeld) : 0;
+      const newHeld = Math.max(0, currentHeld - Number(tx.amount));
       await prisma.project.update({
         where: { id: tx.projectId },
         data: {
@@ -394,11 +396,6 @@ export class FinancialService {
       required: project?.escrowRequired || 0,
       approvedBudget: project?.approvedBudget || 0,
     };
-  }
-      actionByRole: 'admin',
-      actionAt: new Date(),
-      actionComplete: true,
-    });
   }
 
   /**
