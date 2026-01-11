@@ -37,6 +37,23 @@ interface Summary {
   transactions: Transaction[];
 }
 
+interface LedgerEntry {
+  id: string;
+  direction: string;
+  amount: number | string;
+  currency: string;
+  description: string | null;
+  createdAt: string;
+  transaction: { type: string; description: string } | null;
+}
+
+interface Statement {
+  ledger: LedgerEntry[];
+  balance: number | string;
+  required: number | string;
+  approvedBudget: number | string;
+}
+
 interface ProjectFinancialsCardProps {
   projectId: string;
   projectProfessionalId?: string;
@@ -100,6 +117,9 @@ export default function ProjectFinancialsCard({
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [showStatement, setShowStatement] = useState(false);
+  const [statement, setStatement] = useState<Statement | null>(null);
+  const [projectEscrowHeld, setProjectEscrowHeld] = useState<number | string>(0);
 
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
@@ -169,11 +189,14 @@ export default function ProjectFinancialsCard({
         setError(null);
 
         const combinedPromise = (async () => {
-          const [summaryRes, txRes] = await Promise.all([
+          const [summaryRes, txRes, projectRes] = await Promise.all([
             fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
             fetch(`${API_BASE_URL}/financial/project/${projectId}`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            fetch(`${API_BASE_URL}/projects/${projectId}`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
           ]);
@@ -184,6 +207,12 @@ export default function ProjectFinancialsCard({
 
           const summaryData: Summary = await summaryRes.json();
           const txData: Transaction[] = await txRes.json();
+          const projectData = projectRes.ok ? await projectRes.json() : null;
+          
+          if (projectData?.escrowHeld !== undefined) {
+            setProjectEscrowHeld(projectData.escrowHeld);
+          }
+          
           return [summaryData, txData] as const;
         })();
 
@@ -296,6 +325,27 @@ export default function ProjectFinancialsCard({
     }
   };
 
+  const handleViewStatement = async () => {
+    try {
+      setShowStatement(true);
+      const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/statement`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to load statement');
+      const data: Statement = await res.json();
+      setStatement(data);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load statement');
+      setShowStatement(false);
+    }
+  };
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to confirm deposit');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const budgetLabel = resolvedRole === 'professional' ? 'Contract Value' : 'Approved Budget';
   const paymentsLabel = 'Payments Released';
   const escrowActive = escrowConfirmed > 0;
@@ -307,6 +357,12 @@ export default function ProjectFinancialsCard({
       <div className="p-5 border-b border-slate-200 flex items-start justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
+          <button
+            onClick={handleViewStatement}
+            className="mt-1 text-xs text-blue-600 hover:underline"
+          >
+            View Statement
+          </button>
         </div>
         {(resolvedRole === 'client' || resolvedRole === 'admin') && approvedBudget && (
           <div className="text-right">
@@ -352,7 +408,7 @@ export default function ProjectFinancialsCard({
               <p className={`text-xl font-bold ${
                 escrowActive ? 'text-emerald-900' : 'text-slate-900'
               }`}>
-                {formatHKD(escrowConfirmed)}
+                {formatHKD(projectEscrowHeld || escrowConfirmed)}
               </p>
               {!escrowActive && <p className="text-xs text-slate-500 mt-1">Awaiting confirmation</p>}
             </div>
@@ -593,6 +649,75 @@ export default function ProjectFinancialsCard({
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setSelectedTx(null)}
+                className="px-4 py-2 bg-slate-600 text-white rounded text-sm font-medium hover:bg-slate-700 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Escrow Statement Modal */}
+      {showStatement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowStatement(false)}>
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Escrow Statement</h3>
+                {statement && (
+                  <p className="text-sm text-slate-600 mt-1">
+                    Current Balance: <span className="font-semibold text-emerald-600">{formatHKD(statement.balance)}</span>
+                    {' • '}
+                    Required: <span className="font-semibold">{formatHKD(statement.required)}</span>
+                  </p>
+                )}
+              </div>
+              <button onClick={() => setShowStatement(false)} className="text-slate-400 hover:text-slate-600">
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {!statement ? (
+                <p className="text-sm text-slate-500">Loading statement...</p>
+              ) : statement.ledger.length === 0 ? (
+                <p className="text-sm text-slate-500">No ledger entries yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {statement.ledger.map((entry, idx) => {
+                    const isCredit = entry.direction === 'credit';
+                    const runningBalance = statement.ledger
+                      .slice(0, idx + 1)
+                      .reduce((acc, e) => {
+                        const amt = typeof e.amount === 'string' ? parseFloat(e.amount) : e.amount;
+                        return acc + (e.direction === 'credit' ? amt : -amt);
+                      }, 0);
+                    return (
+                      <div key={entry.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50">
+                        <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          isCredit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {isCredit ? '+' : '−'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900">{entry.description || entry.transaction?.description || '—'}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{new Date(entry.createdAt).toLocaleString('en-HK')}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className={`text-sm font-semibold ${isCredit ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            {isCredit ? '+' : '−'}{formatHKD(entry.amount)}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5">Balance: {formatHKD(runningBalance)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setShowStatement(false)}
                 className="px-4 py-2 bg-slate-600 text-white rounded text-sm font-medium hover:bg-slate-700 transition"
               >
                 Close
