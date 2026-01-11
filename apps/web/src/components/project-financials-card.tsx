@@ -122,6 +122,13 @@ export default function ProjectFinancialsCard({
     return transactions;
   }, [transactions, resolvedRole, projectProfessionalId]);
 
+  const approvedBudget = useMemo(() => {
+    const approvedTx = transactions.find((tx) => tx.type === 'approved_budget');
+    if (approvedTx) return approvedTx.amount;
+    if (originalBudget !== undefined) return originalBudget;
+    return projectCost;
+  }, [transactions, originalBudget, projectCost]);
+
   const paymentsReleasedTotal = useMemo(() => {
     return filteredTransactions
       .filter((tx) => tx.type === 'release_payment' || (tx.type === 'advance_payment_request' && tx.status === 'completed'))
@@ -288,7 +295,7 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const budgetLabel = resolvedRole === 'professional' ? 'Contract Value' : 'Project Budget';
+  const budgetLabel = resolvedRole === 'professional' ? 'Contract Value' : 'Approved Budget';
   const paymentsLabel = 'Payments Released';
   const escrowActive = escrowConfirmed > 0;
   const budgetTitle = escrowActive ? `${budgetLabel} · In escrow` : budgetLabel;
@@ -300,10 +307,10 @@ export default function ProjectFinancialsCard({
         <div>
           <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
         </div>
-        {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
+        {(resolvedRole === 'client' || resolvedRole === 'admin') && approvedBudget && (
           <div className="text-right">
-            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold">Original Budget</p>
-            <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
+            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold">Approved Budget</p>
+            <p className="text-lg font-bold text-slate-900">{formatHKD(approvedBudget)}</p>
           </div>
         )}
       </div>
