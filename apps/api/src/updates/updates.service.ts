@@ -133,7 +133,10 @@ export class UpdatesService {
   private async getPendingQuotations(clientId: string): Promise<FinancialActionItem[]> {
     const projects = await this.prisma.project.findMany({
       where: {
-        userId: clientId,
+        OR: [
+          { userId: clientId },
+          { clientId: clientId },
+        ],
         professionals: {
           some: {
             status: 'quoted',  // Professional has quoted but client hasn't accepted
@@ -156,6 +159,15 @@ export class UpdatesService {
         },
       },
     });
+
+    console.log(`[getPendingQuotations] Found ${projects.length} projects with quoted professionals for client ${clientId}`);
+    if (projects.length > 0) {
+      console.log('[getPendingQuotations] Projects:', projects.map(p => ({
+        id: p.id,
+        name: p.projectName,
+        quotedProfessionals: p.professionals.length,
+      })));
+    }
 
     return projects.flatMap((project) =>
       project.professionals.map((pp) => ({
