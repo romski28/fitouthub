@@ -339,12 +339,6 @@ export default function ProjectFinancialsCard({
       setShowStatement(false);
     }
   };
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to confirm deposit');
-    } finally {
-      setProcessingId(null);
-    }
-  };
 
   const budgetLabel = resolvedRole === 'professional' ? 'Contract Value' : 'Approved Budget';
   const paymentsLabel = 'Payments Released';
