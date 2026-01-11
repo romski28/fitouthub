@@ -8,6 +8,7 @@ import { colors } from '@/styles/theme';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
+import { useRoleGuard } from '@/hooks/use-role-guard';
 
 interface ProjectProfessional {
   id: string;
@@ -33,6 +34,9 @@ export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
   const [projects, setProjects] = useState<ProjectProfessional[]>([]);
+
+  // Only professionals can access this page
+  useRoleGuard(['professional'], { fallback: '/' });
   const [visibleCount, setVisibleCount] = useState(30);
   const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);

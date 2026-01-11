@@ -10,6 +10,7 @@ import { useAuth } from "@/context/auth-context";
 import { UpdatesModal } from "@/components/updates-modal";
 import ProjectFinancialsCard from "@/components/project-financials-card";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 interface ProjectProfessional {
   id: string;
@@ -74,6 +75,9 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Enforce admin-only access
+  useRoleGuard(['admin'], { fallback: '/admin/projects' });
 
   // Check if funds are secured via financial summary
   const fundsSecured = useFundsSecured(projectId, accessToken || undefined);

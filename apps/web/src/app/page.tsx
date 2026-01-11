@@ -7,6 +7,7 @@ import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
+import { useEffect } from 'react';
 
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
@@ -17,6 +18,19 @@ export default function Home() {
   useEffect(() => {
     setHydrated(true);
   }, []);
+
+  // Redirect admins to admin area; professionals to their dashboard
+  useEffect(() => {
+    if (!hydrated) return;
+    if (user?.role === 'admin') {
+      router.replace('/admin/projects');
+      return;
+    }
+    if (profIsLoggedIn && !user) {
+      router.replace('/professional-projects');
+      return;
+    }
+  }, [hydrated, user, profIsLoggedIn, router]);
 
   return (
     <div className="space-y-16">

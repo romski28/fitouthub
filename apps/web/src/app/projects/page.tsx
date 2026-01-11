@@ -6,6 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { ProjectsClient } from "./projects-client";
 import { Project } from "@/lib/types";
 import { API_BASE_URL } from '@/config/api';
+import { useRoleGuard } from '@/hooks/use-role-guard';
 
 export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string; createNew?: string }> }) {
   const router = useRouter();
@@ -14,13 +15,8 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
   const [loading, setLoading] = useState(true);
   const [params, setParams] = useState<{ clientId?: string; createNew?: string }>({});
 
-  useEffect(() => {
-    // Redirect to login if not authenticated
-    if (isLoggedIn === false) {
-      router.push('/');
-      return;
-    }
-  }, [isLoggedIn, router]);
+  // Only clients can access this page
+  useRoleGuard(['client'], { fallback: '/admin/projects' });
 
   useEffect(() => {
     const loadParams = async () => {
