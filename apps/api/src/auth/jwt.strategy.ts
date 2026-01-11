@@ -28,6 +28,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       return null;
     }
 
-    return { id: user.id, email: user.email, sub: user.id };
+    // Include role so downstream can authorize correctly (client vs admin)
+    return {
+      id: user.id,
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      isProfessional: false,
+    };
   }
 }
