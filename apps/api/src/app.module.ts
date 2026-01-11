@@ -10,7 +10,6 @@ import { UploadsController } from './uploads/uploads.controller';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 import { UsersModule } from './users/users.module';
-import { PatternsModule } from './patterns/patterns.module';
 import { ProfessionalAuthModule } from './professional-auth/professional-auth.module';
 import { ProfessionalModule } from './professional/professional.module';
 import { ClientModule } from './client/client.module';
@@ -33,7 +32,6 @@ import { JwtModule } from '@nestjs/jwt';
     AuthModule,
     EmailModule,
     UsersModule,
-    PatternsModule,
     ProfessionalAuthModule,
     ProfessionalModule,
     ClientModule,

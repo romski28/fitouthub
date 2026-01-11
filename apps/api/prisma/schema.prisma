@@ -243,21 +243,6 @@ model Client {
   projects  Project[]
 }
 
-model Pattern {
-  id        String   @id @default(cuid())
-  name      String
-  pattern   String
-  matchType String
-  category  String
-  notes     String?
-  enabled   Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  mapsTo    String?
-
-  @@index([category])
-  @@index([matchType])
-}
 
 model Message {
   id                    String    @id @default(cuid())

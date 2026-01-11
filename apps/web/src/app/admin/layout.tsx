@@ -76,12 +76,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 >
                   Trades
                 </Link>
-                <Link
-                  href="/admin/patterns"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                >
-                  Patterns
-                </Link>
               </div>
               <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
                 <span className="text-sm text-slate-600">
@@ -174,13 +168,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Trades
-              </Link>
-              <Link
-                href="/admin/patterns"
-                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Patterns
               </Link>
               <hr className="my-2" />
               <button
