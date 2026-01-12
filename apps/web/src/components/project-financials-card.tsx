@@ -290,7 +290,7 @@ export default function ProjectFinancialsCard({
       // Clarify means opening a chat dialog with the professional
       // For now, just mark as needing clarification in the transaction
       // The UI will show a chat interface when this is triggered
-      toast.info('Opening chat to clarify payment request...');
+      toast.loading('Opening chat to clarify payment request...');
       // TODO: Implement chat dialog opening
       // This should focus on the project chat and potentially alert admin of dispute
     } catch (err) {
