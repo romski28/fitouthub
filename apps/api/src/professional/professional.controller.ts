@@ -81,6 +81,22 @@ export class ProfessionalController {
     return updated;
   }
 
+  @Put('me/password')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async updatePassword(@Request() req: any, @Body() body: { password?: string }) {
+    const professionalId = req.user.id || req.user.sub;
+    if (!body?.password || body.password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+    // MVP stores plaintext in passwordHash; replace with bcrypt in production
+    const updated = await (this.prisma as any).professional.update({
+      where: { id: professionalId },
+      data: { passwordHash: body.password },
+      select: { id: true, email: true, fullName: true, updatedAt: true },
+    });
+    return updated;
+  }
+
   @Get('projects')
   @UseGuards(AuthGuard('jwt-professional'))
   async getProfessionalProjects(@Request() req: any) {

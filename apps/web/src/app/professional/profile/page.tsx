@@ -63,6 +63,7 @@ export default function ProfessionalProfilePage() {
   );
   const [refSaving, setRefSaving] = useState(false);
   const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
+  const [password, setPassword] = useState('');
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -157,6 +158,20 @@ export default function ProfessionalProfilePage() {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
+
+      // Optional password update if provided
+      if (password && password.length >= 6) {
+        const pwRes = await fetch(`${API_BASE_URL}/professional/me/password`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ password }),
+        });
+        if (!pwRes.ok) throw new Error(await pwRes.text());
+        setPassword('');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
@@ -392,6 +407,18 @@ export default function ProfessionalProfilePage() {
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700">New Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              placeholder="Minimum 6 characters"
+            />
+            <p className="mt-1 text-xs text-slate-500">Leave blank to keep your current password</p>
           </div>
 
           <div className="grid gap-3">

@@ -24,6 +24,7 @@ import { FinancialModule } from './financial/financial.module';
 import { UpdatesModule } from './updates/updates.module';
 import { MagicLinkController } from './auth/magic-link.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { ActivityLogModule } from './activity-log/activity-log.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { JwtModule } from '@nestjs/jwt';
     ChatModule,
     FinancialModule,
     UpdatesModule,
+    ActivityLogModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },

@@ -29,6 +29,7 @@ model User {
   assistRequests      ProjectAssistRequest[] @relation("UserAssistRequests")
   privateChatThread   PrivateChatThread?
   privateChatMessagesSent PrivateChatMessage[] @relation("UserSender")
+  activityLogs        ActivityLog[]
 }
 
 model Tradesman {
@@ -86,6 +87,7 @@ model Professional {
   referenceProjects    ProfessionalReferenceProject[]
   privateChatThread    PrivateChatThread?
   privateChatMessagesSent PrivateChatMessage[] @relation("ProfessionalSender")
+  activityLogs         ActivityLog[]
 }
 
 model Project {
@@ -451,4 +453,31 @@ model FinancialTransaction {
   @@index([status])
   @@index([actionComplete])
   @@index([type])
+}
+
+model ActivityLog {
+  id              String    @id @default(cuid())
+  userId          String?
+  professionalId  String?
+  actorName       String
+  actorType       String    // 'user', 'professional', 'admin', 'system'
+  action          String    // 'account_created', 'login', 'logout', 'profile_updated', etc.
+  resource        String?   // e.g., 'User', 'Professional', 'Project', 'Quote'
+  resourceId      String?   // ID of the affected resource
+  details         String?   // Additional context or description
+  metadata        Json?     // Structured data (IP, user agent, etc.)
+  status          String    @default("info") // 'success', 'info', 'warning', 'danger'
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime  @default(now())
+  
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([professionalId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@index([actorType])
+  @@index([status])
 }

@@ -5,6 +5,7 @@ import { ProfessionalAuthService } from './professional-auth.service';
 import { ProfessionalAuthController } from './professional-auth.controller';
 import { JwtProfessionalStrategy } from './jwt-professional.strategy';
 import { PrismaService } from '../prisma.service';
+import { ActivityLogModule } from '../activity-log/activity-log.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PrismaService } from '../prisma.service';
         expiresIn: parseInt(process.env.JWT_EXPIRY || '900', 10), // 15m default in seconds
       },
     }),
+    ActivityLogModule,
   ],
   providers: [ProfessionalAuthService, JwtProfessionalStrategy, PrismaService],
   controllers: [ProfessionalAuthController],
