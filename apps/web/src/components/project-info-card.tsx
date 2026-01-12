@@ -105,6 +105,15 @@ export default function ProjectInfoCard({
           </div>
         </div>
       )}
+
+      {(createdAt || updatedAt) && !notes && (
+        <div className="p-5 border-t border-border">
+          <div className="flex gap-4 text-xs text-muted">
+            <span>Created: {formatDate(createdAt)}</span>
+            {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,6 +27,8 @@ interface ProjectDetail {
   quoteNotes?: string;
   quotedAt?: string;
   respondedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
   paymentRequests?: {
     id: string;
     requestType: string;
@@ -579,6 +581,8 @@ export default function ProjectDetailPage() {
             region={project!.project.region}
             status={project!.status}
             notes={project!.project.notes || undefined}
+            createdAt={project!.createdAt}
+            updatedAt={project!.updatedAt}
           />
 
           {/* Quote Form */}
