@@ -58,9 +58,6 @@ export class AuthService {
     // Generate tokens
     const tokens = this.generateTokens(user.id, user.role);
 
-    // Generate tokens
-    const tokens = this.generateTokens(user.id, user.role);
-
     return {
       success: true,
       accessToken: tokens.accessToken,

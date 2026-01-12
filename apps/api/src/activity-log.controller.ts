@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Inject } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from './prisma.service';
 
 @Controller('activity-log')
 export class ActivityLogController {
