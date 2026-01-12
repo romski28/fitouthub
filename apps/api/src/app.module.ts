@@ -24,8 +24,7 @@ import { FinancialModule } from './financial/financial.module';
 import { UpdatesModule } from './updates/updates.module';
 import { MagicLinkController } from './auth/magic-link.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { ActivityLogService } from './activity-log/activity-log.service';
-import { ActivityLogController } from './activity-log/activity-log.controller';
+import { ActivityLogController } from './activity-log.controller';
 
 @Module({
   imports: [
@@ -62,7 +61,6 @@ import { ActivityLogController } from './activity-log/activity-log.controller';
     ReportsService,
     AssistRequestsService,
     ChatService,
-    ActivityLogService,
   ],
   exports: [PrismaService],
 })
