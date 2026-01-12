@@ -353,7 +353,7 @@ export class FinancialService {
         'admin',
         null,
         null,
-        'Project funds are secure and the project can be started at any time.',
+        'Funds secure in escrow, project can commence.',
       );
     }
 
