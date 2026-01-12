@@ -47,7 +47,25 @@ export default function ActivityLogPage() {
   }, [page]);
 
   const loadLogs = async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      // Try without token first for debugging
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/activity-log?page=${page}&limit=50`);
+
+        if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+
+        const data = await res.json();
+        setLogs(data.logs);
+        setTotal(data.pagination.total);
+      } catch (err) {
+        console.error('Activity log error:', err);
+        toast.error('Failed to load activity log');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     
     setLoading(true);
     try {

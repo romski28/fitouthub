@@ -7,7 +7,6 @@ export class ActivityLogController {
   constructor(private readonly activityLogService: ActivityLogService) {}
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   async findAll(
     @Request() req: any,
     @Query('page') page?: string,
