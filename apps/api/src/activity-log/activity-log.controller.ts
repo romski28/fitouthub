@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ActivityLogService } from './activity-log.service';
 
@@ -9,6 +9,7 @@ export class ActivityLogController {
   @Get()
   @UseGuards(AuthGuard('jwt'))
   async findAll(
+    @Request() req: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('action') action?: string,

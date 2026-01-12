@@ -21,7 +21,7 @@ export class ActivityLogService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateActivityLogDto) {
-    return this.prisma.activityLog.create({
+    return (this.prisma as any).activityLog.create({
       data: {
         userId: data.userId,
         professionalId: data.professionalId,
@@ -46,7 +46,7 @@ export class ActivityLogService {
     orderBy?: any;
   }) {
     const { skip, take, where, orderBy } = params || {};
-    return this.prisma.activityLog.findMany({
+    return (this.prisma as any).activityLog.findMany({
       skip,
       take,
       where,
@@ -63,7 +63,7 @@ export class ActivityLogService {
   }
 
   async count(where?: any) {
-    return this.prisma.activityLog.count({ where });
+    return (this.prisma as any).activityLog.count({ where });
   }
 
   // Helper methods for common actions
