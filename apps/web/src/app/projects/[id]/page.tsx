@@ -893,7 +893,7 @@ export default function ClientProjectDetailPage() {
               projectId={project.id}
               accessToken={accessToken}
               projectCost={projectCostValue}
-              originalBudget={project.approvedBudget || project.budget}
+              originalBudget={project.budget}
               role="client"
               onClarify={(transactionId) => {
                 // Scroll to chat and focus input for clarification
