@@ -387,7 +387,12 @@ export class FinancialService {
    * Release payment (after escrow or advance payment)
    */
   async releasePayment(transactionId: string, releasedBy: string) {
-    const tx = await this.prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+    const tx = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        project: { select: { projectName: true } },
+      },
+    });
     if (!tx) throw new Error('Transaction not found');
 
     return this.prisma.$transaction(async (prisma) => {
@@ -428,6 +433,30 @@ export class FinancialService {
         },
       });
 
+      // Notify professional via project chat
+      try {
+        const formatter = new Intl.NumberFormat('en-HK', {
+          style: 'currency',
+          currency: 'HKD',
+          minimumFractionDigits: 0,
+        });
+
+        const formattedAmount = formatter.format(Number(tx.amount));
+        const projectName = tx.project?.projectName || 'Project';
+
+        const thread = await this.chatService.getOrCreateProjectThread(tx.projectId);
+        await this.chatService.addProjectMessage(
+          (thread as any).id || (thread as any).threadId,
+          'admin',
+          null,
+          null,
+          `${projectName} — Your payment request for ${formattedAmount} has been released. Please check your account; if you don't see funds within 3 days, reply here or contact FOH at once.`,
+        );
+      } catch (error) {
+        // Do not fail payment release if chat post fails
+        // eslint-disable-next-line no-console
+        console.warn('Failed to post release message to chat', error);
+      }
       return updated;
     });
   }
