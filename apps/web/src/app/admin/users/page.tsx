@@ -90,6 +90,17 @@ export default function AdminUsersPage() {
     });
 
     if (!res.ok) throw new Error(await res.text());
+
+    // Optional password update if provided
+    if (data.password && String(data.password).length >= 6) {
+      const pwRes = await fetch(`${API_BASE_URL}/users/${editingUser.id}/password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: String(data.password) }),
+      });
+      if (!pwRes.ok) throw new Error(await pwRes.text());
+    }
+
     await fetchUsers();
   };
 
@@ -150,6 +161,7 @@ export default function AdminUsersPage() {
           ],
           required: true,
         },
+        { name: "password", label: "New Password", type: "password", value: "", placeholder: "Leave blank to keep as-is" },
       ]
     : [];
 

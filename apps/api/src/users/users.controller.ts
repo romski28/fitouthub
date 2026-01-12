@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Body, Param, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -24,5 +24,13 @@ export class UsersController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Put(':id/password')
+  async updatePassword(@Param('id') id: string, @Body() body: { password?: string }) {
+    if (!body?.password || body.password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+    return this.usersService.updatePassword(id, body.password);
   }
 }

@@ -6,7 +6,7 @@ import { ModalOverlay } from "./modal-overlay";
 export type FieldDefinition = {
   name: string;
   label: string;
-  type: "text" | "email" | "number" | "select" | "date" | "textarea" | "json";
+  type: "text" | "email" | "number" | "select" | "date" | "textarea" | "json" | "password";
   value: any;
   options?: { label: string; value: string }[];
   placeholder?: string;

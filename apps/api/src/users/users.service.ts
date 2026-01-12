@@ -78,4 +78,20 @@ export class UsersService {
       where: { id },
     });
   }
+
+  async updatePassword(id: string, password: string) {
+    // MVP stores plaintext in passwordHash; replace with bcrypt in production
+    return this.prisma.user.update({
+      where: { id },
+      data: { passwordHash: password },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        surname: true,
+        role: true,
+        updatedAt: true,
+      },
+    });
+  }
 }
