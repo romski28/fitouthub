@@ -1,21 +1,12 @@
-import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ActivityLogService } from './activity-log.service';
 
 @Controller('activity-log')
 export class ActivityLogController {
-  constructor(private readonly activityLogService: ActivityLogService) {
-    console.log('ActivityLogController initialized');
-  }
-
-  @Get('test')
-  async test() {
-    return { message: 'Activity log endpoint is working' };
-  }
+  constructor(private readonly activityLogService: ActivityLogService) {}
 
   @Get()
   async findAll(
-    @Request() req: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('action') action?: string,

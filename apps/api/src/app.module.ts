@@ -24,7 +24,8 @@ import { FinancialModule } from './financial/financial.module';
 import { UpdatesModule } from './updates/updates.module';
 import { MagicLinkController } from './auth/magic-link.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { ActivityLogModule } from './activity-log/activity-log.module';
+import { ActivityLogService } from './activity-log/activity-log.service';
+import { ActivityLogController } from './activity-log/activity-log.controller';
 
 @Module({
   imports: [
@@ -40,7 +41,6 @@ import { ActivityLogModule } from './activity-log/activity-log.module';
     ChatModule,
     FinancialModule,
     UpdatesModule,
-    ActivityLogModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },
@@ -53,6 +53,7 @@ import { ActivityLogModule } from './activity-log/activity-log.module';
     ReportsController,
     AssistRequestsController,
     MagicLinkController,
+    ActivityLogController,
   ],
   providers: [
     AppService,
@@ -61,6 +62,7 @@ import { ActivityLogModule } from './activity-log/activity-log.module';
     ReportsService,
     AssistRequestsService,
     ChatService,
+    ActivityLogService,
   ],
   exports: [PrismaService],
 })
