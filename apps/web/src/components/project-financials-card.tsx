@@ -263,7 +263,7 @@ export default function ProjectFinancialsCard({
       });
       if (!res.ok) throw new Error('Failed to release payment');
       toast.success('Payment released');
-      setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'completed' } : t)));
+      setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'confirmed' } : t)));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to release payment');
     } finally {
@@ -466,7 +466,7 @@ export default function ProjectFinancialsCard({
                   const canApprove =
                     resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
                   const canRelease =
-                    resolvedRole === 'admin' && type === 'payment_request' && statusKey === 'confirmed';
+                    resolvedRole === 'admin' && type === 'release_payment' && statusKey === 'pending';
                   const canReject =
                     resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
                   const canMarkPaid =
