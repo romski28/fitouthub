@@ -242,8 +242,8 @@ export class FinancialService {
           status: 'pending',
           requestedBy: approvedBy,
           requestedByRole: approverRole,
-          actionBy: 'admin',
-          actionByRole: 'admin',
+          actionBy: null,  // No specific admin assigned; visible to all admins as platform task
+          actionByRole: 'platform',  // Platform task visible to all admins
           actionComplete: false,
           notes: `Client approval for ${tx.description}`,
         },
