@@ -284,18 +284,17 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const handleRejectPayment = async (transactionId: string) => {
+  const handleClarifyPayment = async (transactionId: string) => {
     try {
       setProcessingId(transactionId);
-      const res = await fetch(`${API_BASE_URL}/financial/${transactionId}/reject`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) throw new Error('Failed to reject payment');
-      toast.success('Payment rejected');
-      setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'rejected', type: 'advance_payment_rejection' } : t)));
+      // Clarify means opening a chat dialog with the professional
+      // For now, just mark as needing clarification in the transaction
+      // The UI will show a chat interface when this is triggered
+      toast.info('Opening chat to clarify payment request...');
+      // TODO: Implement chat dialog opening
+      // This should focus on the project chat and potentially alert admin of dispute
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to reject payment');
+      toast.error(err instanceof Error ? err.message : 'Failed to clarify payment');
     } finally {
       setProcessingId(null);
     }
@@ -517,11 +516,11 @@ export default function ProjectFinancialsCard({
                             {processingId === tx.id ? 'Approving...' : 'Approve'}
                           </button>
                           <button
-                            onClick={() => handleRejectPayment(tx.id)}
+                            onClick={() => handleClarifyPayment(tx.id)}
                             disabled={processingId === tx.id}
-                            className="px-3 py-1 bg-rose-600 text-white rounded text-xs font-medium hover:bg-rose-700 disabled:bg-slate-400 transition"
+                            className="px-3 py-1 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 disabled:bg-slate-400 transition"
                           >
-                            {processingId === tx.id ? 'Rejecting...' : 'Reject'}
+                            {processingId === tx.id ? 'Processing...' : 'Clarify'}
                           </button>
                         </div>
                       );
@@ -529,11 +528,11 @@ export default function ProjectFinancialsCard({
                     if (canReject) {
                       return (
                         <button
-                          onClick={() => handleRejectPayment(tx.id)}
+                          onClick={() => handleClarifyPayment(tx.id)}
                           disabled={processingId === tx.id}
-                          className="px-3 py-1 bg-rose-600 text-white rounded text-xs font-medium hover:bg-rose-700 disabled:bg-slate-400 transition"
+                          className="px-3 py-1 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 disabled:bg-slate-400 transition"
                         >
-                          {processingId === tx.id ? 'Rejecting...' : 'Reject'}
+                          {processingId === tx.id ? 'Processing...' : 'Clarify'}
                         </button>
                       );
                     }

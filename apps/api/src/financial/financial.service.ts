@@ -201,15 +201,66 @@ export class FinancialService {
   }
 
   /**
-   * Approve advance payment request
+   * Approve advance payment request (client approves, creates release_payment for admin)
    */
   async approveAdvancePayment(transactionId: string, approvedBy: string, approverRole: 'client' | 'admin' = 'client') {
-    return this.updateTransaction(transactionId, {
-      status: 'confirmed',
-      actionBy: approvedBy,
-      actionByRole: approverRole,
-      actionAt: new Date(),
-      actionComplete: true,
+    const tx = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        projectProfessional: {
+          include: {
+            professional: true,
+            project: true,
+          },
+        },
+      },
+    });
+
+    if (!tx) throw new Error('Transaction not found');
+
+    return this.prisma.$transaction(async (prisma) => {
+      // Update original payment_request to approved
+      const updated = await prisma.financialTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: 'confirmed',
+          actionBy: approvedBy,
+          actionByRole: approverRole,
+          actionAt: new Date(),
+          actionComplete: true,
+        },
+      });
+
+      // Create new release_payment transaction for admin to action
+      const releasePaymentTx = await prisma.financialTransaction.create({
+        data: {
+          projectId: tx.projectId,
+          projectProfessionalId: tx.projectProfessionalId,
+          type: 'release_payment',
+          description: `Client approved payment request: ${tx.description}`,
+          amount: tx.amount,
+          status: 'pending',
+          requestedBy: approvedBy,
+          requestedByRole: approverRole,
+          actionBy: 'admin',
+          actionByRole: 'admin',
+          actionComplete: false,
+          notes: `Client approval for ${tx.description}`,
+        },
+      });
+
+      // Send message to professional
+      if (tx.projectProfessionalId) {
+        await prisma.message.create({
+          data: {
+            projectProfessionalId: tx.projectProfessionalId,
+            senderType: 'client',
+            content: 'Client has approved your payment request.',
+          },
+        }).catch(() => void 0); // Don't fail if message creation fails
+      }
+
+      return { updated, releasePaymentTx };
     });
   }
 
@@ -446,8 +497,9 @@ export class FinancialService {
           }
           break;
         case 'escrow_deposit_confirmation':
-          // When client confirms escrow deposit, funds are secured
-          if (statusLower === 'pending' || statusLower === 'confirmed') {
+          // Only count as confirmed when admin has confirmed it (status='confirmed')
+          // Pending confirmations do NOT secure funds yet
+          if (statusLower === 'confirmed') {
             summary.escrowConfirmed = summary.escrowConfirmed.plus(amount);
           }
           break;
