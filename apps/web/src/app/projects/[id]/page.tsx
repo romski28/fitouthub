@@ -895,6 +895,20 @@ export default function ClientProjectDetailPage() {
               projectCost={projectCostValue}
               originalBudget={project.approvedBudget || project.budget}
               role="client"
+              onClarify={(transactionId) => {
+                // Scroll to chat and focus input for clarification
+                const chatElement = document.getElementById('project-chat');
+                if (chatElement) {
+                  chatElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  setTimeout(() => {
+                    const inputElement = chatElement.querySelector('input[type="text"]') || 
+                                        chatElement.querySelector('textarea');
+                    if (inputElement instanceof HTMLInputElement || inputElement instanceof HTMLTextAreaElement) {
+                      inputElement.focus();
+                    }
+                  }, 500);
+                }
+              }}
             />
           )}
 

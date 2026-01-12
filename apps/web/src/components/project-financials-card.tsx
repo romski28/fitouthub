@@ -61,6 +61,7 @@ interface ProjectFinancialsCardProps {
   projectCost: number | string; // The approved quote
   originalBudget?: number | string; // Original project budget (for client/admin)
   role: ProjectFinancialRole;
+  onClarify?: (transactionId: string) => void; // Callback when client clicks Clarify
 }
 
 const formatHKD = (value: number | string) => {
@@ -110,6 +111,7 @@ export default function ProjectFinancialsCard({
   projectCost,
   originalBudget,
   role,
+  onClarify,
 }: ProjectFinancialsCardProps) {
   const { role: authRole, user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -286,17 +288,27 @@ export default function ProjectFinancialsCard({
 
   const handleClarifyPayment = async (transactionId: string) => {
     try {
-      setProcessingId(transactionId);
-      // Clarify means opening a chat dialog with the professional
-      // For now, just mark as needing clarification in the transaction
-      // The UI will show a chat interface when this is triggered
-      toast.loading('Opening chat to clarify payment request...');
-      // TODO: Implement chat dialog opening
-      // This should focus on the project chat and potentially alert admin of dispute
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to clarify payment');
-    } finally {
       setProcessingId(null);
+      // If callback provided (client view), use it to coordinate with chat
+      if (onClarify) {
+        onClarify(transactionId);
+        toast.success('Scroll to chat to clarify with professional');
+      } else {
+        // Professional view: scroll to chat on page
+        const chatElement = document.getElementById('project-chat');
+        if (chatElement) {
+          chatElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(() => {
+            const inputElement = chatElement.querySelector('input[type="text"]');
+            if (inputElement instanceof HTMLInputElement) {
+              inputElement.focus();
+            }
+          }, 500);
+        }
+        toast.success('Scroll to chat to clarify payment request with professional');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to navigate to chat');
     }
   };
 
