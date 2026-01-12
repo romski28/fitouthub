@@ -153,8 +153,10 @@ export default function ProjectFinancialsCard({
   }, [transactions, originalBudget, projectCost]);
 
   const paymentsReleasedTotal = useMemo(() => {
+    // Only count release_payment transactions with confirmed status
+    // payment_request with approved status is pending admin release, not yet paid
     return filteredTransactions
-      .filter((tx) => tx.type === 'release_payment' || (tx.type === 'payment_request' && tx.status === 'completed'))
+      .filter((tx) => tx.type === 'release_payment' && tx.status?.toLowerCase() === 'confirmed')
       .reduce((sum, tx) => sum + (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount), 0);
   }, [filteredTransactions]);
 
@@ -163,7 +165,7 @@ export default function ProjectFinancialsCard({
       .filter(
         (tx) =>
           (tx.type === 'escrow_deposit' && tx.status?.toLowerCase() === 'confirmed') ||
-          (tx.type === 'escrow_deposit_confirmation' && ['pending', 'confirmed'].includes(tx.status?.toLowerCase() || ''))
+          (tx.type === 'escrow_deposit_confirmation' && tx.status?.toLowerCase() === 'confirmed')
       )
       .reduce((sum, tx) => sum + (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount), 0);
     
