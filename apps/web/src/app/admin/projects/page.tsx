@@ -197,6 +197,7 @@ function ProjectCard({ project, onEdit, onDelete }: { project: Project; onEdit: 
 }
 
 export default function AdminProjectsPage() {
+  const { accessToken } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -214,11 +215,15 @@ export default function AdminProjectsPage() {
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [accessToken]);
 
   const fetchProjects = async () => {
+    if (!accessToken) return;
+
     try {
-      const res = await fetch(`${API_BASE_URL}/projects`);
+      const res = await fetch(`${API_BASE_URL}/projects`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (!res.ok) {
         console.warn(`Projects endpoint returned ${res.status}, loading with empty state`);
         setProjects([]);
@@ -236,7 +241,7 @@ export default function AdminProjectsPage() {
   };
 
   const handleSave = async (data: Record<string, any>) => {
-    if (!editingProject) return;
+    if (!editingProject || !accessToken) return;
 
     const payload = {
       projectName: data.projectName,
@@ -250,7 +255,10 @@ export default function AdminProjectsPage() {
 
     const res = await fetch(`${API_BASE_URL}/projects/${editingProject.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
       body: JSON.stringify(payload),
     });
 
@@ -259,10 +267,13 @@ export default function AdminProjectsPage() {
   };
 
   const handleDelete = async () => {
-    if (!deletingId) return;
+    if (!deletingId || !accessToken) return;
 
     const res = await fetch(`${API_BASE_URL}/projects/${deletingId}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     });
 
     if (!res.ok) throw new Error(await res.text());
