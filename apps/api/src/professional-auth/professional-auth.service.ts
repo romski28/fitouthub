@@ -8,14 +8,12 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
 import { ProfessionalLoginDto, ProfessionalRegisterDto } from './dto';
-import { ActivityLogService } from '../activity-log/activity-log.service';
 
 @Injectable()
 export class ProfessionalAuthService {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
-    private activityLogService: ActivityLogService,
   ) {}
 
   async register(dto: ProfessionalRegisterDto) {
@@ -56,13 +54,6 @@ export class ProfessionalAuthService {
     // Generate tokens
     const tokens = this.generateTokens(professional.id);
 
-    // Log account creation
-    await this.activityLogService.logAccountCreated(
-      professional.id,
-      professional.fullName || professional.email,
-      'professional',
-    );
-
     return {
       success: true,
       accessToken: tokens.accessToken,
@@ -101,20 +92,11 @@ export class ProfessionalAuthService {
     );
 
     if (!isPasswordValid) {
-      // Log failed login attempt
-      await this.activityLogService.logLoginFailed(dto.email);
       throw new UnauthorizedException('Invalid email or password');
     }
 
     // Generate tokens
     const tokens = this.generateTokens(professional.id);
-
-    // Log successful login
-    await this.activityLogService.logLogin(
-      professional.id,
-      professional.fullName || professional.email,
-      'professional',
-    );
 
     return {
       success: true,

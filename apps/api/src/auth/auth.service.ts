@@ -7,14 +7,12 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { RegisterDto, LoginDto } from './dto';
 import * as jwt from 'jsonwebtoken';
-import { ActivityLogService } from '../activity-log/activity-log.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
-    private activityLogService: ActivityLogService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -60,12 +58,8 @@ export class AuthService {
     // Generate tokens
     const tokens = this.generateTokens(user.id, user.role);
 
-    // Log account creation
-    await this.activityLogService.logAccountCreated(
-      user.id,
-      `${user.firstName} ${user.surname}`,
-      'user',
-    );
+    // Generate tokens
+    const tokens = this.generateTokens(user.id, user.role);
 
     return {
       success: true,
@@ -94,21 +88,11 @@ export class AuthService {
 
     // Compare passwords (plaintext comparison for MVP)
     if (user.passwordHash !== dto.password) {
-      // Log failed login attempt
-      await this.activityLogService.logLoginFailed(dto.email);
       throw new UnauthorizedException('Invalid email or password');
     }
 
     // Generate tokens
     const tokens = this.generateTokens(user.id, user.role);
-
-    // Log successful login
-    const actorType = user.role === 'admin' ? 'admin' : 'user';
-    await this.activityLogService.logLogin(
-      user.id,
-      `${user.firstName} ${user.surname}`,
-      actorType,
-    );
 
     return {
       success: true,

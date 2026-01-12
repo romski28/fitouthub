@@ -5,7 +5,6 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../prisma.service';
-import { ActivityLogModule } from '../activity-log/activity-log.module';
 
 @Module({
   imports: [
@@ -16,7 +15,6 @@ import { ActivityLogModule } from '../activity-log/activity-log.module';
         expiresIn: parseInt(process.env.JWT_EXPIRY || '900', 10), // 15m default in seconds
       },
     }),
-    ActivityLogModule,
   ],
   providers: [AuthService, JwtStrategy, PrismaService],
   controllers: [AuthController],
