@@ -42,7 +42,7 @@ export default function AdminMessagingPage() {
   const { accessToken } = useAuth();
   const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all'>('all');
   const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">("open");
-  const [typeFilter, setTypeFilter] = useState<'all' | 'private' | 'anonymous' | 'project'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'support' | 'supplier-client' | 'anonymous' | 'project'>('all');
   
   // Assist requests state
   const [requests, setRequests] = useState<AssistRequest[]>([]);
@@ -219,7 +219,12 @@ export default function AdminMessagingPage() {
 
   const getThreadLabel = (thread: ChatThread) => {
     if (thread.type === 'private') {
-      return thread.userName || thread.professionalName || 'Private Chat';
+      // Distinguish between support requests and professional chats
+      if (thread.userId) {
+        return thread.userName || 'Support Request';
+      } else {
+        return thread.professionalName || 'Professional Chat';
+      }
     } else if (thread.type === 'anonymous') {
       return `Anonymous (${thread.sessionId?.slice(0, 8)})`;
     } else if (thread.type === 'project') {
@@ -230,7 +235,11 @@ export default function AdminMessagingPage() {
 
   const getThreadSubtext = (thread: ChatThread) => {
     if (thread.type === 'private') {
-      return thread.userName ? 'Client Support' : 'Professional Support';
+      if (thread.userId) {
+        return 'User Support';
+      } else {
+        return 'Client-Professional';
+      }
     } else if (thread.type === 'anonymous') {
       return 'Anonymous Support';
     } else if (thread.type === 'project') {
@@ -239,34 +248,56 @@ export default function AdminMessagingPage() {
     return '';
   };
 
-  const getTypeColor = (type: 'private' | 'anonymous' | 'project' | 'assist') => {
-    switch (type) {
-      case 'private':
-        return 'bg-green-100 text-green-800';
-      case 'anonymous':
-        return 'bg-gray-100 text-gray-800';
-      case 'project':
-        return 'bg-purple-100 text-purple-800';
-      case 'assist':
-        return 'bg-emerald-100 text-emerald-800';
-      default:
-        return 'bg-slate-100 text-slate-800';
+  const getChatMessageType = (thread: ChatThread): string => {
+    if (thread.type === 'private') {
+      return thread.userId ? 'support' : 'supplier-client';
     }
+    return thread.type;
   };
 
-  const getTypeEmoji = (type: 'private' | 'anonymous' | 'project' | 'assist') => {
-    switch (type) {
-      case 'private':
-        return '🔒';
-      case 'anonymous':
-        return '👤';
-      case 'project':
-        return '🏗️';
-      case 'assist':
-        return '📋';
-      default:
-        return '💬';
+  const getTypeColor = (type: 'private' | 'anonymous' | 'project' | 'assist' | string) => {
+    if (type === 'assist') {
+      return 'bg-emerald-100 text-emerald-800';
+    } else if (type === 'support') {
+      return 'bg-blue-100 text-blue-800';
+    } else if (type === 'supplier-client') {
+      return 'bg-indigo-100 text-indigo-800';
+    } else if (type === 'anonymous') {
+      return 'bg-gray-100 text-gray-800';
+    } else if (type === 'project') {
+      return 'bg-purple-100 text-purple-800';
     }
+    return 'bg-slate-100 text-slate-800';
+  };
+
+  const getTypeEmoji = (type: 'private' | 'anonymous' | 'project' | 'assist' | string) => {
+    if (type === 'assist') {
+      return '📋';
+    } else if (type === 'support') {
+      return '🆘';
+    } else if (type === 'supplier-client') {
+      return '🤝';
+    } else if (type === 'anonymous') {
+      return '👤';
+    } else if (type === 'project') {
+      return '🏗️';
+    }
+    return '💬';
+  };
+
+  const getTypeLabel = (type: 'private' | 'anonymous' | 'project' | 'assist' | string) => {
+    if (type === 'assist') {
+      return 'Assist Request';
+    } else if (type === 'support') {
+      return 'Support Request';
+    } else if (type === 'supplier-client') {
+      return 'Supplier/Client';
+    } else if (type === 'anonymous') {
+      return 'Anonymous';
+    } else if (type === 'project') {
+      return 'Project';
+    }
+    return 'Unknown';
   };
 
   return (
@@ -330,14 +361,24 @@ export default function AdminMessagingPage() {
             All Types
           </button>
           <button
-            onClick={() => setTypeFilter('private')}
+            onClick={() => setTypeFilter('support')}
             className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
-              typeFilter === 'private'
-                ? 'bg-green-600 text-white border-green-700'
-                : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
+              typeFilter === 'support'
+                ? 'bg-blue-600 text-white border-blue-700'
+                : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'
             }`}
           >
-            🔒 Private Support
+            🆘 Support Requests
+          </button>
+          <button
+            onClick={() => setTypeFilter('supplier-client')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              typeFilter === 'supplier-client'
+                ? 'bg-indigo-600 text-white border-indigo-700'
+                : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50'
+            }`}
+          >
+            🤝 Supplier/Client
           </button>
           <button
             onClick={() => setTypeFilter('anonymous')}
@@ -363,21 +404,22 @@ export default function AdminMessagingPage() {
       )}
 
       {/* Assist Requests View */}
-      {viewMode === 'assist' && (
+      {(viewMode === 'assist' || viewMode === 'all') && (
         <>
-          {/* Status Tabs */}
-          <div className="flex gap-2">
+          {/* Status Tabs for Assist Requests */}
+          <div className="flex gap-2 items-center">
+            <span className="text-sm font-medium text-slate-600">Assist Request Status:</span>
             {(['open', 'in_progress', 'closed'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusTab(status)}
-                className={`rounded-md px-3 py-1.5 text-sm font-semibold border ${
+                className={`rounded-md px-3 py-1.5 text-sm font-semibold border transition ${
                   statusTab === status
-                    ? 'bg-blue-600 text-white border-blue-700'
+                    ? 'bg-emerald-600 text-white border-emerald-700'
                     : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                {status.replace('_', ' ')}
+                {status === 'open' ? '📖 Open' : status === 'in_progress' ? '⏳ In Progress' : '✅ Closed'}
               </button>
             ))}
             <div className="ml-auto text-sm text-slate-600">
@@ -410,8 +452,8 @@ export default function AdminMessagingPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                            📋 Assist Request
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor('assist')}`}>
+                            {getTypeEmoji('assist')} {getTypeLabel('assist')}
                           </span>
                         </div>
                         <div className="text-sm font-semibold text-slate-900">
@@ -562,47 +604,53 @@ export default function AdminMessagingPage() {
               </div>
             ) : (
               threads
-                .filter((thread) => typeFilter === 'all' || thread.type === typeFilter)
-                .map((thread) => (
-                <div
-                  key={thread.id}
-                  className={`rounded-lg border ${
-                    activeId === thread.id && activeType === thread.type
-                      ? 'border-blue-300 ring-2 ring-blue-100'
-                      : 'border-slate-200'
-                  } bg-white p-4 shadow-sm cursor-pointer hover:border-slate-300 transition`}
-                  onClick={() => openChatThread(thread)}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(thread.type)}`}
-                        >
-                          {getTypeEmoji(thread.type)} {thread.type === 'private' ? 'Private' : thread.type === 'anonymous' ? 'Anonymous' : 'Project'}
-                        </span>
-                        {thread.unreadCount > 0 && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
-                            {thread.unreadCount} unread
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        {getThreadLabel(thread)}
-                      </div>
-                      <div className="text-xs text-slate-600">{getThreadSubtext(thread)}</div>
-                      {thread.lastMessage && (
-                        <p className="mt-1 text-xs text-slate-700 line-clamp-2">
-                          {thread.lastMessage}
-                        </p>
-                      )}
-                      <div className="mt-1 text-xs text-slate-500">
-                        Last updated: {new Date(thread.updatedAt).toLocaleString()}
+                .filter((thread) => {
+                  const msgType = getChatMessageType(thread);
+                  return typeFilter === 'all' || msgType === typeFilter;
+                })
+                .map((thread) => {
+                  const msgType = getChatMessageType(thread);
+                  return (
+                    <div
+                      key={thread.id}
+                      className={`rounded-lg border ${
+                        activeId === thread.id && activeType === thread.type
+                          ? 'border-blue-300 ring-2 ring-blue-100'
+                          : 'border-slate-200'
+                      } bg-white p-4 shadow-sm cursor-pointer hover:border-slate-300 transition`}
+                      onClick={() => openChatThread(thread)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(msgType)}`}
+                            >
+                              {getTypeEmoji(msgType)} {getTypeLabel(msgType)}
+                            </span>
+                            {thread.unreadCount > 0 && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                                {thread.unreadCount} unread
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            {getThreadLabel(thread)}
+                          </div>
+                          <div className="text-xs text-slate-600">{getThreadSubtext(thread)}</div>
+                          {thread.lastMessage && (
+                            <p className="mt-1 text-xs text-slate-700 line-clamp-2">
+                              {thread.lastMessage}
+                            </p>
+                          )}
+                          <div className="mt-1 text-xs text-slate-500">
+                            Last updated: {new Date(thread.updatedAt).toLocaleString()}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))
+                  );
+                })
             )}
           </div>
 
