@@ -97,7 +97,12 @@ export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: Upda
   const handleMessageClick = (group: UnreadMessageGroup) => {
     // Navigate to the appropriate chat and mark as read
     if (group.chatType === 'private-foh') {
-      router.push('/support');
+      // Check if this is an admin viewing support messages
+      if (group.projectId === 'admin-support') {
+        router.push('/admin/messaging?tab=support');
+      } else {
+        router.push('/support');
+      }
     } else if (group.chatType === 'assist') {
       router.push(`/projects/${group.projectId}?tab=assist`);
     } else {

@@ -603,8 +603,97 @@ export class UpdatesService {
           }
         }
       }
+    } else if (role === 'admin') {
+      // Admin sees unread support messages from PrivateChatThread and AnonymousChatThread
+      
+      // 1. Private support threads - with readByFohAt tracking
+      const unreadPrivateThreads = await this.prisma.privateChatThread.findMany({
+        include: {
+          messages: {
+            where: {
+              readByFohAt: null,
+              senderType: { not: 'foh' },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+          user: {
+            select: { firstName: true, surname: true },
+          },
+          professional: {
+            select: { businessName: true },
+          },
+        },
+      });
+
+      for (const thread of unreadPrivateThreads) {
+        if (thread.messages.length > 0) {
+          const latestMessage = thread.messages[0];
+          const userName = thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined;
+          const professionalName = thread.professional?.businessName;
+          const senderName = userName || professionalName || 'User';
+
+          groups.push({
+            projectId: 'admin-support',
+            projectName: 'Support Messages',
+            unreadCount: thread.messages.length,
+            latestMessage: {
+              id: latestMessage.id,
+              content: latestMessage.content,
+              createdAt: latestMessage.createdAt,
+              senderType: latestMessage.senderType,
+              senderName,
+            },
+            chatType: 'private-foh',
+            threadId: thread.id,
+          });
+        }
+      }
+
+      // 2. Anonymous support threads - no read tracking, show all non-FOH messages
+      const anonymousThreads = await this.prisma.anonymousChatThread.findMany({
+        include: {
+          messages: {
+            where: {
+              senderType: { not: 'foh' },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1, // Only get latest message for grouping
+          },
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      for (const thread of anonymousThreads) {
+        if (thread.messages.length > 0) {
+          const latestMessage = thread.messages[0];
+          
+          // Count all messages from anonymous users (not FOH)
+          const messageCount = await this.prisma.anonymousChatMessage.count({
+            where: {
+              threadId: thread.id,
+              senderType: { not: 'foh' },
+            },
+          });
+
+          if (messageCount > 0) {
+            groups.push({
+              projectId: 'admin-support',
+              projectName: 'Support Messages',
+              unreadCount: messageCount,
+              latestMessage: {
+                id: latestMessage.id,
+                content: latestMessage.content,
+                createdAt: latestMessage.createdAt,
+                senderType: latestMessage.senderType,
+                senderName: 'Anonymous User',
+              },
+              chatType: 'private-foh',
+              threadId: thread.id,
+            });
+          }
+        }
+      }
     }
-    // Admin role would have different logic (FOH inbox)
 
     return groups.sort(
       (a, b) =>

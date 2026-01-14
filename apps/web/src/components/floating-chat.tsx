@@ -82,7 +82,8 @@ export default function FloatingChat() {
             if (res.ok) {
               const data = await res.json();
               console.log('[FloatingChat] Fetched thread:', data);
-              setThreadId(data.threadId || data.id);
+              const realThreadId = data.threadId || data.id;
+              setThreadId(realThreadId);
               setMessages(data.messages || []);
               setUnreadCount(data.unreadCount || 0);
               return;
@@ -98,8 +99,9 @@ export default function FloatingChat() {
               });
               if (createRes.ok) {
                 const data = await createRes.json();
-                console.log('[FloatingChat] Created new thread:', data);
-                setThreadId(data.threadId || data.id);
+                const realThreadId = data.threadId || data.id;
+                console.log('[FloatingChat] Created new thread:', realThreadId);
+                setThreadId(realThreadId);
                 setMessages([]);
                 return;
               }
@@ -108,7 +110,7 @@ export default function FloatingChat() {
             console.warn('[FloatingChat] Private chat endpoint error:', e);
           }
           // Fallback: use a stub thread ID based on user
-          const stubId = `stub-${userRole}`;
+          const stubId = `stub-${userRole}-${Date.now()}`;
           console.log('[FloatingChat] Using fallback stub threadId:', stubId);
           setThreadId(stubId);
           setMessages([]);
@@ -177,23 +179,37 @@ export default function FloatingChat() {
 
   // Poll for new messages when modal is closed
   useEffect(() => {
-    if (!isOpen || !threadId || threadId.startsWith('stub-') || !isLoggedIn || !accessToken) return;
+    // Only poll if:
+    // 1. Chat is NOT open (we're checking for unread messages)
+    // 2. ThreadId exists and is NOT a stub
+    // 3. User is logged in with a valid token
+    if (isOpen || !threadId || threadId.startsWith('stub-') || !isLoggedIn || !accessToken) return;
 
     const pollInterval = setInterval(() => {
       fetch(`${API_BASE_URL}/chat/private/${threadId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
-        .then((res) => res.ok && res.json())
+        .then((res) => {
+          if (res.status === 404) {
+            // Thread doesn't exist, clear it
+            console.warn('[FloatingChat] Thread not found (404), clearing thread ID');
+            setThreadId(null);
+            return null;
+          }
+          return res.ok ? res.json() : null;
+        })
         .then((data) => {
-          if (data) {
-            setMessages(data.messages || []);
-            // Only update unreadCount if modal is closed
+          if (data && data.messages) {
+            setMessages(data.messages);
+            // Update unreadCount when modal is closed
             if (!isOpen) {
               setUnreadCount(data.unreadCount || 0);
             }
           }
         })
-        .catch((e) => console.warn('[FloatingChat] Poll error:', e));
+        .catch((e) => {
+          console.warn('[FloatingChat] Poll error:', e);
+        });
     }, 3000); // Poll every 3 seconds
 
     return () => clearInterval(pollInterval);

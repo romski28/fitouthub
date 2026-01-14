@@ -188,7 +188,7 @@ export default function AdminMessagingPage() {
     if (!activeId || !msgText.trim() || !activeType || !accessToken) return;
     setMsgSubmitting(true);
     try {
-      const url = `${API_BASE_URL.replace(/\/$/, "")}/chat/admin/${encodeURIComponent(activeId)}/reply`;
+      const url = `${API_BASE_URL.replace(/\/$/, "")}/chat/admin/threads/${encodeURIComponent(activeId)}/reply`;
       const res = await fetch(url, {
         method: "POST",
         headers: { 
@@ -386,19 +386,19 @@ export default function AdminMessagingPage() {
                             )}
                             <div className="whitespace-pre-wrap">{msg.content}</div>
                             {msg.attachments && msg.attachments.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-2">
+                              <div className="mt-2 flex gap-2 overflow-x-auto">
                                 {msg.attachments.map((att, i) => (
                                   <a
                                     key={i}
                                     href={att.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-block"
+                                    className="inline-block flex-shrink-0 bg-white p-1 rounded"
                                   >
                                     <img
                                       src={att.url}
                                       alt={att.filename}
-                                      className="w-16 h-16 rounded border border-slate-200 hover:opacity-80 transition object-cover"
+                                      className="w-16 h-16 min-w-[64px] rounded border border-slate-200 hover:opacity-80 transition object-cover"
                                       title={att.filename}
                                     />
                                   </a>
@@ -536,19 +536,19 @@ export default function AdminMessagingPage() {
                           )}
                           <div className="whitespace-pre-wrap">{msg.content}</div>
                           {msg.attachments && msg.attachments.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <div className="mt-2 flex gap-2 overflow-x-auto">
                               {msg.attachments.map((att, i) => (
                                 <a
                                   key={i}
                                   href={att.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-block"
+                                  className="inline-block flex-shrink-0 bg-white p-1 rounded"
                                 >
                                   <img
                                     src={att.url}
                                     alt={att.filename}
-                                    className="w-16 h-16 rounded border border-slate-200 hover:opacity-80 transition object-cover"
+                                    className="w-16 h-16 min-w-[64px] rounded border border-slate-200 hover:opacity-80 transition object-cover"
                                     title={att.filename}
                                   />
                                 </a>
