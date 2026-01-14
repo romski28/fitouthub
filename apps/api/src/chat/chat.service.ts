@@ -296,6 +296,7 @@ export class ChatService {
       senderUserId: message.senderUserId,
       senderProId: message.senderProId,
       content: message.content,
+      attachments: message.attachments || [],
       createdAt: message.createdAt.toISOString(),
       readByFohAt: message.readByFohAt?.toISOString(),
     };
@@ -318,6 +319,7 @@ export class ChatService {
       threadId: message.threadId,
       senderType: message.senderType,
       content: message.content,
+      attachments: message.attachments || [],
       createdAt: message.createdAt.toISOString(),
     };
   }
@@ -342,6 +344,7 @@ export class ChatService {
       senderUserId: message.senderUserId,
       senderProId: message.senderProId,
       content: message.content,
+      attachments: message.attachments || [],
       createdAt: message.createdAt.toISOString(),
     };
   }

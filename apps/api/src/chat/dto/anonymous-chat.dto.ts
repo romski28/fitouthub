@@ -8,6 +8,7 @@ export class AnonymousChatMessageDto {
   threadId: string;
   senderType: 'anonymous' | 'foh';
   content: string;
+  attachments?: any[];
   createdAt: string;
 }
 

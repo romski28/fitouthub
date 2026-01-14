@@ -9,6 +9,7 @@ export class ProjectChatMessageDto {
   senderUserId?: string;
   senderProId?: string;
   content: string;
+  attachments?: any[];
   createdAt: string;
 }
 

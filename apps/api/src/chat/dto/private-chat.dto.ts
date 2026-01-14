@@ -5,6 +5,7 @@ export class PrivateChatMessageDto {
   senderUserId?: string;
   senderProId?: string;
   content: string;
+  attachments?: any[];
   createdAt: string;
   readByFohAt?: string;
 }
