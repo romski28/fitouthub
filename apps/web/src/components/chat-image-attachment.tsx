@@ -39,7 +39,7 @@ export default function ChatImageAttachment({
           src={url}
           alt={filename}
           onError={() => setImageError(true)}
-          className="max-w-[200px] max-h-[200px] rounded-lg border border-slate-200 hover:opacity-90 transition object-cover"
+          className="w-16 h-16 rounded-lg border border-slate-200 hover:opacity-90 transition object-cover"
         />
         <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">
           Click to enlarge

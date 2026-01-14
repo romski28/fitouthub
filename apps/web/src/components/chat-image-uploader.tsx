@@ -7,12 +7,14 @@ interface ChatImageUploaderProps {
   onImagesUploaded: (images: { url: string; filename: string }[]) => void;
   maxImages?: number;
   disabled?: boolean;
+  projectId?: string;
 }
 
 export default function ChatImageUploader({
   onImagesUploaded,
   maxImages = 3,
   disabled = false,
+  projectId,
 }: ChatImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +62,9 @@ export default function ChatImageUploader({
     try {
       const formData = new FormData();
       previewFiles.forEach((file) => formData.append('files', file));
+      if (projectId) {
+        formData.append('projectId', projectId);
+      }
 
       const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
         method: 'POST',
@@ -108,11 +113,11 @@ export default function ChatImageUploader({
     <div className="space-y-2">
       {/* File input button */}
       <div className="flex items-center gap-2">
-        <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+        <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span>Add images</span>
+          <span>📎 Add images</span>
           <input
             type="file"
             multiple
@@ -124,7 +129,7 @@ export default function ChatImageUploader({
         </label>
 
         {previewFiles.length > 0 && (
-          <span className="text-xs text-slate-600">
+          <span className="text-xs text-slate-600 ml-2">
             {previewFiles.length} image{previewFiles.length > 1 ? 's' : ''} selected
           </span>
         )}

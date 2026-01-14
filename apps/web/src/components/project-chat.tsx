@@ -228,6 +228,7 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
             onImagesUploaded={(images) => setPendingAttachments((prev) => [...prev, ...images])}
             maxImages={3}
             disabled={sending || loading}
+            projectId={projectId}
           />
         </div>
 
