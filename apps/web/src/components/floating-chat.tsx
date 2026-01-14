@@ -205,9 +205,33 @@ export default function FloatingChat() {
 
     setSending(true);
     try {
-      // For stub threads, just add message locally
-      if (threadId.startsWith('stub-')) {
-        console.log('[FloatingChat] Sending to stub thread:', threadId);
+      // For stub threads with logged-in users, try to create a real thread first
+      let actualThreadId = threadId;
+      if (threadId.startsWith('stub-') && isLoggedIn && accessToken) {
+        console.log('[FloatingChat] Stub thread detected, attempting to create real thread...');
+        try {
+          const createRes = await fetch(`${API_BASE_URL}/chat/private`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (createRes.ok) {
+            const data = await createRes.json();
+            actualThreadId = data.threadId || data.id;
+            console.log('[FloatingChat] Created real thread, using:', actualThreadId);
+            setThreadId(actualThreadId);
+          }
+        } catch (e) {
+          console.warn('[FloatingChat] Failed to create real thread:', e);
+          // Fall through and try with stub anyway
+        }
+      }
+
+      // For stub threads, just add message locally (for offline UX)
+      if (actualThreadId.startsWith('stub-')) {
+        console.log('[FloatingChat] Sending to stub thread:', actualThreadId);
         setMessages((prev) => [...prev, {
           id: Date.now().toString(),
           senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
@@ -221,13 +245,13 @@ export default function FloatingChat() {
       }
 
       const endpoint = isLoggedIn && accessToken
-        ? `${API_BASE_URL}/chat/private/${threadId}/messages`
-        : `${API_BASE_URL}/chat/anonymous/${threadId}/messages`;
+        ? `${API_BASE_URL}/chat/private/${actualThreadId}/messages`
+        : `${API_BASE_URL}/chat/anonymous/${actualThreadId}/messages`;
       
       const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
-      console.log('[FloatingChat] Sending message to endpoint:', endpoint, 'Thread:', threadId, 'User role:', userRole);
+      console.log('[FloatingChat] Sending message to endpoint:', endpoint, 'Thread:', actualThreadId, 'User role:', userRole);
       const res = await fetch(endpoint, {
         method: 'POST',
         headers,

@@ -369,7 +369,7 @@ export default function AdminMessagingPage() {
                             )}
                             <div className="whitespace-pre-wrap">{msg.content}</div>
                             {msg.attachments && msg.attachments.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-2">
+                              <div className="mt-2 flex flex-wrap gap-3">
                                 {msg.attachments.map((att, i) => (
                                   <a
                                     key={i}
@@ -381,7 +381,7 @@ export default function AdminMessagingPage() {
                                     <img
                                       src={att.url}
                                       alt={att.filename}
-                                      className="w-16 h-16 rounded border border-slate-200 hover:opacity-80 transition object-cover"
+                                      className="w-40 h-40 rounded border border-slate-200 hover:opacity-80 transition object-cover"
                                       title={att.filename}
                                     />
                                   </a>
@@ -519,7 +519,7 @@ export default function AdminMessagingPage() {
                           )}
                           <div className="whitespace-pre-wrap">{msg.content}</div>
                           {msg.attachments && msg.attachments.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <div className="mt-2 flex flex-wrap gap-3">
                               {msg.attachments.map((att, i) => (
                                 <a
                                   key={i}
@@ -531,7 +531,7 @@ export default function AdminMessagingPage() {
                                   <img
                                     src={att.url}
                                     alt={att.filename}
-                                    className="w-16 h-16 rounded border border-slate-200 hover:opacity-80 transition object-cover"
+                                    className="w-40 h-40 rounded border border-slate-200 hover:opacity-80 transition object-cover"
                                     title={att.filename}
                                   />
                                 </a>

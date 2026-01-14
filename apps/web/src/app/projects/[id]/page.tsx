@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
 import ProjectChat from '@/components/project-chat';
+import ChatImageUploader from '@/components/chat-image-uploader';
 import ProjectFinancialsCard from '@/components/project-financials-card';
 import { useFundsSecured } from '@/hooks/use-funds-secured';
 import { ProjectImagesCard } from '@/components/project-images-card';
@@ -59,6 +60,7 @@ interface Message {
   projectProfessionalId: string;
   senderType: 'professional' | 'client' | string;
   content: string;
+  attachments?: { url: string; filename: string }[];
   createdAt: string;
 }
 
@@ -103,6 +105,7 @@ export default function ClientProjectDetailPage() {
   const [selectedProfessional, setSelectedProfessional] = useState<ProjectProfessional | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [pendingAttachments, setPendingAttachments] = useState<{ url: string; filename: string }[]>([]);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
@@ -385,7 +388,7 @@ export default function ClientProjectDetailPage() {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedProfessional || !accessToken) return;
+    if ((!newMessage.trim() && pendingAttachments.length === 0) || !selectedProfessional || !accessToken) return;
 
     try {
       setSending(true);
@@ -398,7 +401,10 @@ export default function ClientProjectDetailPage() {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ content: newMessage.trim() }),
+          body: JSON.stringify({ 
+            content: newMessage.trim(),
+            attachments: pendingAttachments,
+          }),
         },
       );
 
@@ -419,6 +425,7 @@ export default function ClientProjectDetailPage() {
       const data = await res.json();
       setMessages((prev) => [...prev, data.message]);
       setNewMessage('');
+      setPendingAttachments([]);
     } catch (err) {
       console.error('Error sending message:', err);
       setMessageError('Failed to send message');
@@ -1436,7 +1443,27 @@ export default function ClientProjectDetailPage() {
                                     : 'bg-slate-100 border border-slate-200 text-slate-800'
                                 }`}
                               >
-                                <p>{msg.content}</p>
+                                {msg.content && <p>{msg.content}</p>}
+                                {msg.attachments && msg.attachments.length > 0 && (
+                                  <div className={`${msg.content ? 'mt-2' : ''} flex flex-wrap gap-2`}>
+                                    {msg.attachments.map((att, i) => (
+                                      <a
+                                        key={i}
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-block"
+                                      >
+                                        <img
+                                          src={att.url}
+                                          alt={att.filename}
+                                          className="w-24 h-24 rounded border border-slate-300 hover:opacity-80 transition object-cover"
+                                          title={att.filename}
+                                        />
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
                                 <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-blue-100' : 'text-slate-500'}`}>
                                   {new Date(msg.createdAt).toLocaleString()}
                                 </p>
@@ -1452,27 +1479,67 @@ export default function ClientProjectDetailPage() {
                           This professional has declined the project. This chat is read-only.
                         </div>
                       ) : (
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !sending) {
-                                handleSendMessage();
-                              }
-                            }}
-                            placeholder="Type your message..."
-                            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            disabled={sending}
-                          />
-                          <button
-                            onClick={handleSendMessage}
-                            disabled={sending || !newMessage.trim()}
-                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                          >
-                            {sending ? 'Sending...' : 'Send'}
-                          </button>
+                        <div className="space-y-3">
+                          {/* Image uploader */}
+                          <div>
+                            <ChatImageUploader
+                              onImagesUploaded={(images) => setPendingAttachments((prev) => [...prev, ...images])}
+                              maxImages={3}
+                              disabled={sending || loadingMessages}
+                              projectId={projectId}
+                            />
+                          </div>
+
+                          {/* Show pending attachments */}
+                          {pendingAttachments.length > 0 && (
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-200">
+                              <div className="text-xs text-slate-600 mb-2 font-medium">
+                                {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {pendingAttachments.map((att, i) => (
+                                  <div key={i} className="relative group">
+                                    <img 
+                                      src={att.url} 
+                                      alt={att.filename} 
+                                      className="w-16 h-16 object-cover rounded border border-slate-300"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs hover:bg-red-600 shadow-md"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newMessage}
+                              onChange={(e) => setNewMessage(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !sending) {
+                                  handleSendMessage();
+                                }
+                              }}
+                              placeholder="Type your message..."
+                              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              disabled={sending}
+                            />
+                            <button
+                              onClick={handleSendMessage}
+                              disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending}
+                              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                              {sending ? 'Sending...' : 'Send'}
+                            </button>
+                          </div>
+                        </div>
                         </div>
                       )}
                     </div>
