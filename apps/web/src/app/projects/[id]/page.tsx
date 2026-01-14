@@ -1540,7 +1540,6 @@ export default function ClientProjectDetailPage() {
                             </button>
                           </div>
                         </div>
-                        </div>
                       )}
                     </div>
                   </div>
