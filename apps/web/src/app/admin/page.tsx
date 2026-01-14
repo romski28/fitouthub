@@ -75,10 +75,10 @@ export default function AdminDashboard() {
       stats: `${outstandingReports} outstanding`,
     },
     {
-      title: "Assist Requests",
-      description: "Projects requesting FOH assistance. Review notes, message the client, and track progress.",
-      href: "/admin/assist",
-      icon: "🤝",
+      title: "Messaging",
+      description: "Handle assist requests and support chat threads. Respond to client questions and manage communications.",
+      href: "/admin/messaging",
+      icon: "💬",
       stats: `${openAssist} open`,
     },
     {
