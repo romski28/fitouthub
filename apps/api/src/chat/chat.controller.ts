@@ -69,8 +69,8 @@ export class ChatController {
     @Body() dto: CreatePrivateMessageDto,
     @Request() req: any,
   ) {
-    if (!dto.content || !dto.content.trim()) {
-      throw new BadRequestException('Message content cannot be empty');
+    if (!dto.content?.trim() && (!dto.attachments || dto.attachments.length === 0)) {
+      throw new BadRequestException('Message must have content or attachments');
     }
 
     // Determine sender type (user or professional)
@@ -80,7 +80,8 @@ export class ChatController {
       senderType,
       req.user.isProfessional ? null : req.user.id,
       req.user.isProfessional ? req.user.id : null,
-      dto.content,
+      dto.content || '',
+      dto.attachments,
     );
 
     return { message };
@@ -124,14 +125,15 @@ export class ChatController {
     @Param('threadId') threadId: string,
     @Body() dto: CreateAnonymousMessageDto,
   ) {
-    if (!dto.content || !dto.content.trim()) {
-      throw new BadRequestException('Message content cannot be empty');
+    if (!dto.content?.trim() && (!dto.attachments || dto.attachments.length === 0)) {
+      throw new BadRequestException('Message must have content or attachments');
     }
 
     const message = await this.chatService.addAnonymousMessage(
       threadId,
       'anonymous',
-      dto.content,
+      dto.content || '',
+      dto.attachments,
     );
 
     return { message };
@@ -204,6 +206,7 @@ export class ChatController {
         null,
         null,
         body.content,
+        undefined,
       );
       return { success: true, message };
     } catch (e) {
@@ -217,6 +220,7 @@ export class ChatController {
         threadId,
         'foh',
         body.content,
+        undefined,
       );
       return { success: true, message };
     } catch (e) {

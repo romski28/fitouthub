@@ -421,11 +421,11 @@ export class ProjectsController {
   @UseGuards(CombinedAuthGuard)
   async addProjectMessage(
     @Param('projectId') projectId: string,
-    @Body() body: { content: string },
+    @Body() body: { content: string; attachments?: any[] },
     @Request() req: any,
   ) {
-    if (!body.content || !body.content.trim()) {
-      throw new BadRequestException('Message content cannot be empty');
+    if (!body.content?.trim() && (!body.attachments || body.attachments.length === 0)) {
+      throw new BadRequestException('Message must have content or attachments');
     }
 
     // Get the thread first
@@ -438,7 +438,8 @@ export class ProjectsController {
       senderType,
       req.user.isProfessional ? null : req.user.id,
       req.user.isProfessional ? req.user.id : null,
-      body.content,
+      body.content || '',
+      body.attachments,
     );
 
     return { message };

@@ -2,12 +2,15 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { API_BASE_URL } from '@/config/api';
+import ChatImageAttachment from './chat-image-attachment';
+import ChatImageUploader from './chat-image-uploader';
 
 interface ChatMessage {
   id: string;
   senderType: 'client' | 'professional' | 'foh';
   senderName?: string;
   content: string;
+  attachments?: { url: string; filename: string }[];
   createdAt: string;
 }
 
@@ -21,6 +24,7 @@ interface ProjectChatProps {
 export default function ProjectChat({ projectId, accessToken, currentUserRole, className = '' }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [pendingAttachments, setPendingAttachments] = useState<{ url: string; filename: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +85,7 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || sending) return;
+    if ((!newMessage.trim() && pendingAttachments.length === 0) || sending) return;
 
     setSending(true);
     setError(null);
@@ -93,7 +97,10 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: newMessage.trim() }),
+        body: JSON.stringify({ 
+          content: newMessage.trim(),
+          attachments: pendingAttachments,
+        }),
       });
 
       if (!res.ok) {
@@ -103,6 +110,7 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
       const data = await res.json();
       setMessages((prev) => [...prev, data.message]);
       setNewMessage('');
+      setPendingAttachments([]);
     } catch (err) {
       console.error('Error sending message:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -172,7 +180,25 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
                       {getSenderLabel(msg)}
                     </div>
                   )}
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  
+                  {/* Message content */}
+                  {msg.content && (
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  )}
+                  
+                  {/* Image attachments */}
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className={`${msg.content ? 'mt-2' : ''} space-y-2`}>
+                      {msg.attachments.map((att, i) => (
+                        <ChatImageAttachment 
+                          key={i} 
+                          url={att.url} 
+                          filename={att.filename}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  
                   <div className={`text-xs mt-1 ${isCurrent ? 'text-blue-100' : 'text-slate-500'}`}>
                     {new Date(msg.createdAt).toLocaleString('en-GB', {
                       day: '2-digit',
@@ -195,6 +221,46 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
             {error}
           </div>
         )}
+        
+        {/* Image uploader */}
+        <div className="mb-3">
+          <ChatImageUploader
+            onImagesUploaded={(images) => setPendingAttachments((prev) => [...prev, ...images])}
+            maxImages={3}
+            disabled={sending || loading}
+          />
+        </div>
+
+        {/* Show pending attachments */}
+        {pendingAttachments.length > 0 && (
+          <div className="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="text-xs text-slate-600 mb-2 font-medium">
+              {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {pendingAttachments.map((att, i) => (
+                <div key={i} className="relative group">
+                  <img 
+                    src={att.url} 
+                    alt={att.filename} 
+                    className="w-16 h-16 object-cover rounded border border-slate-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs hover:bg-red-600 shadow-md"
+                  >
+                    ×
+                  </button>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 truncate opacity-0 group-hover:opacity-100 transition">
+                    {att.filename}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <div className="flex gap-2">
           <input
             type="text"
@@ -206,7 +272,7 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
           />
           <button
             type="submit"
-            disabled={!newMessage.trim() || sending || loading}
+            disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending || loading}
             className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
           >
             {sending ? 'Sending...' : 'Send'}

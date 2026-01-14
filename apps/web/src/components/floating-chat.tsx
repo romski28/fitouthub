@@ -5,11 +5,14 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import ChatImageAttachment from './chat-image-attachment';
+import ChatImageUploader from './chat-image-uploader';
 
 interface ChatMessage {
   id: string;
   senderType: 'user' | 'foh' | 'client' | 'professional' | 'anonymous';
   content: string;
+  attachments?: { url: string; filename: string }[];
   createdAt: string;
 }
 
@@ -21,6 +24,7 @@ export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<{ url: string; filename: string }[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -197,7 +201,7 @@ export default function FloatingChat() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !threadId || sending) return;
+    if ((!message.trim() && pendingAttachments.length === 0) || !threadId || sending) return;
 
     setSending(true);
     try {
@@ -208,9 +212,11 @@ export default function FloatingChat() {
           id: Date.now().toString(),
           senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
           content: message.trim(),
+          attachments: pendingAttachments,
           createdAt: new Date().toISOString(),
         }]);
         setMessage('');
+        setPendingAttachments([]);
         return;
       }
 
@@ -225,7 +231,10 @@ export default function FloatingChat() {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ content: message.trim() }),
+        body: JSON.stringify({ 
+          content: message.trim(),
+          attachments: pendingAttachments,
+        }),
       });
 
       console.log('[FloatingChat] Response status:', res.status);
@@ -236,9 +245,11 @@ export default function FloatingChat() {
           id: Date.now().toString(),
           senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
           content: message.trim(),
+          attachments: pendingAttachments,
           createdAt: new Date().toISOString(),
         }]);
         setMessage('');
+        setPendingAttachments([]);
       } else {
         const errorText = await res.text();
         console.error('[FloatingChat] Failed to send message:', res.status, errorText);
@@ -306,7 +317,25 @@ export default function FloatingChat() {
                           {isFoh ? 'Fitout Hub' : 'Support'}
                         </div>
                       )}
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                      
+                      {/* Message content */}
+                      {msg.content && (
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                      )}
+                      
+                      {/* Image attachments */}
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className={`${msg.content ? 'mt-2' : ''} space-y-2`}>
+                          {msg.attachments.map((att, i) => (
+                            <ChatImageAttachment 
+                              key={i} 
+                              url={att.url} 
+                              filename={att.filename}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      
                       <div className="text-xs opacity-60 mt-1">
                         {new Date(msg.createdAt).toLocaleTimeString('en-GB', {
                           hour: '2-digit',
@@ -322,6 +351,45 @@ export default function FloatingChat() {
 
           {/* Input */}
           <form onSubmit={handleSend} className="border-t border-slate-200 p-4">
+            {/* Image uploader */}
+            <div className="mb-3">
+              <ChatImageUploader
+                onImagesUploaded={(images) => setPendingAttachments((prev) => [...prev, ...images])}
+                maxImages={3}
+                disabled={sending || loading || !threadId}
+              />
+            </div>
+
+            {/* Show pending attachments */}
+            {pendingAttachments.length > 0 && (
+              <div className="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="text-xs text-slate-600 mb-2 font-medium">
+                  {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {pendingAttachments.map((att, i) => (
+                    <div key={i} className="relative group">
+                      <img 
+                        src={att.url} 
+                        alt={att.filename} 
+                        className="w-16 h-16 object-cover rounded border border-slate-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs hover:bg-red-600 shadow-md"
+                      >
+                        ×
+                      </button>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 truncate opacity-0 group-hover:opacity-100 transition">
+                        {att.filename}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div className="flex gap-2">
               <input
                 type="text"
@@ -333,7 +401,7 @@ export default function FloatingChat() {
               />
               <button
                 type="submit"
-                disabled={!message.trim() || sending || loading || !threadId}
+                disabled={(!message.trim() && pendingAttachments.length === 0) || sending || loading || !threadId}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
               >
                 {sending ? '...' : 'Send'}

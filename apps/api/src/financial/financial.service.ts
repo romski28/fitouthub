@@ -354,6 +354,7 @@ export class FinancialService {
         null,
         null,
         'Funds secure in escrow, project can commence.',
+        undefined,
       );
     }
 
@@ -451,6 +452,7 @@ export class FinancialService {
           null,
           null,
           `${projectName} — Your payment request for ${formattedAmount} has been released. Please check your account; if you don't see funds within 3 days, reply here or contact FOH at once.`,
+          undefined,
         );
       } catch (error) {
         // Do not fail payment release if chat post fails

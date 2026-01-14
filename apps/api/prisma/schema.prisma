@@ -3,33 +3,33 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                  String        @id @default(cuid())
-  nickname            String        @unique
-  firstName           String
-  surname             String
-  chineseName         String?
-  email               String        @unique
-  mobile              String?
-  passwordHash        String
-  passwordResetToken  String?
-  passwordResetExpiry DateTime?
-  emailVerified       Boolean       @default(false)
-  verificationToken   String?
-  role                String        @default("client")
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  professional        Professional?
-  projects            Project[]
-  assistRequests      ProjectAssistRequest[] @relation("UserAssistRequests")
-  privateChatThread   PrivateChatThread?
-  privateChatMessagesSent PrivateChatMessage[] @relation("UserSender")
-  activityLogs        ActivityLog[]
+  id                      String                 @id @default(cuid())
+  nickname                String                 @unique
+  firstName               String
+  surname                 String
+  chineseName             String?
+  email                   String                 @unique
+  mobile                  String?
+  passwordHash            String
+  passwordResetToken      String?
+  passwordResetExpiry     DateTime?
+  emailVerified           Boolean                @default(false)
+  verificationToken       String?
+  role                    String                 @default("client")
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  professional            Professional?
+  projects                Project[]
+  assistRequests          ProjectAssistRequest[] @relation("UserAssistRequests")
+  privateChatThread       PrivateChatThread?
+  privateChatMessagesSent PrivateChatMessage[]   @relation("UserSender")
+  activityLogs            ActivityLog[]
 }
 
 model Tradesman {
@@ -56,135 +56,134 @@ model Tradesman {
 }
 
 model Professional {
-  id                   String                @id @default(cuid())
-  userId               String?               @unique
-  status               String                @default("pending")
-  rating               Float                 @default(0)
-  registrationDate     DateTime              @default(now())
-  fullName             String?
-  businessName         String?
-  serviceArea          String?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  email                String                @unique
-  phone                String
-  professionType       String
-  additionalData       Json?
-  locationPrimary      String?
-  locationSecondary    String?
-  locationTertiary     String?
-  servicePrimaries     String[]              @default([])
-  serviceSecondaries   String[]              @default([])
-  primaryTrade         String?
-  profileImages        String[]              @default([])
-  suppliesOffered      String[]              @default([])
-  tradesOffered        String[]              @default([])
-  passwordHash         String?
-  emailTokens          EmailToken[]
-  user                 User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectProfessionals ProjectProfessional[]
-  reports              ProfessionalReport[]
-  referenceProjects    ProfessionalReferenceProject[]
-  privateChatThread    PrivateChatThread?
-  privateChatMessagesSent PrivateChatMessage[] @relation("ProfessionalSender")
-  activityLogs         ActivityLog[]
+  id                      String                         @id @default(cuid())
+  userId                  String?                        @unique
+  status                  String                         @default("pending")
+  rating                  Float                          @default(0)
+  registrationDate        DateTime                       @default(now())
+  fullName                String?
+  businessName            String?
+  serviceArea             String?
+  createdAt               DateTime                       @default(now())
+  updatedAt               DateTime                       @updatedAt
+  email                   String                         @unique
+  phone                   String
+  professionType          String
+  additionalData          Json?
+  locationPrimary         String?
+  locationSecondary       String?
+  locationTertiary        String?
+  servicePrimaries        String[]                       @default([])
+  serviceSecondaries      String[]                       @default([])
+  primaryTrade            String?
+  profileImages           String[]                       @default([])
+  suppliesOffered         String[]                       @default([])
+  tradesOffered           String[]                       @default([])
+  passwordHash            String?
+  emailTokens             EmailToken[]
+  user                    User?                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectProfessionals    ProjectProfessional[]
+  reports                 ProfessionalReport[]
+  referenceProjects       ProfessionalReferenceProject[]
+  privateChatThread       PrivateChatThread?
+  privateChatMessagesSent PrivateChatMessage[]           @relation("ProfessionalSender")
+  activityLogs            ActivityLog[]
 }
 
 model Project {
-  id                     String                @id @default(cuid())
-  status                 String                @default("pending")
-  clientId               String?
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime              @updatedAt
-  userId                 String?
-  budget                 Decimal?              @db.Decimal(12, 2)
-  approvedBudget         Decimal?              @db.Decimal(12, 2)
-  approvedBudgetTxId     String?              @unique
-  awardedProjectProfessionalId String?              @unique
-  paymentCurrency        String                @default("HKD")
-  escrowRequired         Decimal?              @db.Decimal(12, 2)
-  escrowHeld             Decimal               @db.Decimal(12, 2) @default(0)
-  escrowHeldUpdatedAt    DateTime?
-  clientName             String
-  contractorName         String?
-  notes                  String?
-  projectName            String
-  tradesRequired         String[]              @default([])
-  region                 String
-  startDate              DateTime?
-  endDate                DateTime?
-  isEmergency            Boolean               @default(false)
-  contractorContactName  String?
-  contractorContactPhone String?
-  contractorContactEmail String?
-  emailTokens            EmailToken[]
-  client                 Client?               @relation(fields: [clientId], references: [id])
-  user                   User?                 @relation(fields: [userId], references: [id])
-  photos                 ProjectPhoto[]
-  professionals          ProjectProfessional[]
-  assistRequests         ProjectAssistRequest[]
-  chatThread             ProjectChatThread?
-  financialTransactions  FinancialTransaction[]
-  escrowLedgers          EscrowLedger[]
-  approvedBudgetTransaction FinancialTransaction? @relation("ApprovedBudgetTx", fields: [approvedBudgetTxId], references: [id])
-  awardedProjectProfessional ProjectProfessional? @relation("AwardedProjectProfessional", fields: [awardedProjectProfessionalId], references: [id])
+  id                           String                 @id @default(cuid())
+  status                       String                 @default("pending")
+  clientId                     String?
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @updatedAt
+  userId                       String?
+  budget                       Decimal?               @db.Decimal(12, 2)
+  approvedBudget               Decimal?               @db.Decimal(12, 2)
+  approvedBudgetTxId           String?                @unique
+  awardedProjectProfessionalId String?                @unique
+  paymentCurrency              String                 @default("HKD")
+  escrowRequired               Decimal?               @db.Decimal(12, 2)
+  escrowHeld                   Decimal                @default(0) @db.Decimal(12, 2)
+  escrowHeldUpdatedAt          DateTime?
+  clientName                   String
+  contractorName               String?
+  notes                        String?
+  projectName                  String
+  tradesRequired               String[]               @default([])
+  region                       String
+  startDate                    DateTime?
+  endDate                      DateTime?
+  isEmergency                  Boolean                @default(false)
+  contractorContactName        String?
+  contractorContactPhone       String?
+  contractorContactEmail       String?
+  emailTokens                  EmailToken[]
+  client                       Client?                @relation(fields: [clientId], references: [id])
+  user                         User?                  @relation(fields: [userId], references: [id])
+  photos                       ProjectPhoto[]
+  professionals                ProjectProfessional[]
+  assistRequests               ProjectAssistRequest[]
+  chatThread                   ProjectChatThread?
+  financialTransactions        FinancialTransaction[]
+  escrowLedgers                EscrowLedger[]
+  approvedBudgetTransaction    FinancialTransaction?  @relation("ApprovedBudgetTx", fields: [approvedBudgetTxId], references: [id])
+  awardedProjectProfessional   ProjectProfessional?   @relation("AwardedProjectProfessional", fields: [awardedProjectProfessionalId], references: [id])
 }
 
 model ProjectPhoto {
-  id         String   @id @default(cuid())
-  projectId  String
-  url        String
-  note       String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  projectId String
+  url       String
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }
 
 model ProjectProfessional {
-  id                    String       @id @default(cuid())
+  id                    String                 @id @default(cuid())
   projectId             String
   professionalId        String
-  status                String       @default("pending")
+  status                String                 @default("pending")
   respondedAt           DateTime?
-  quoteAmount           Decimal?     @db.Decimal(12, 2)
+  quoteAmount           Decimal?               @db.Decimal(12, 2)
   quoteNotes            String?
   quotedAt              DateTime?
-  directContactShared   Boolean      @default(false)
+  directContactShared   Boolean                @default(false)
   directContactSharedAt DateTime?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  professional          Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-  project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  professional          Professional           @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  project               Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   messages              Message[]
   paymentRequests       PaymentRequest[]
   financialTransactions FinancialTransaction[]
   escrowLedgers         EscrowLedger[]
-  awardedInProject      Project?      @relation("AwardedProjectProfessional")
+  awardedInProject      Project?               @relation("AwardedProjectProfessional")
 
   @@unique([projectId, professionalId])
   @@index([projectId])
   @@index([professionalId])
-
 }
 
 model EscrowLedger {
-  id                    String       @id @default(uuid()) @db.Uuid
+  id                    String   @id @default(uuid()) @db.Uuid
   projectId             String
   projectProfessionalId String?
   transactionId         String?
-  direction             String       // 'credit' | 'debit'
-  amount                Decimal      @db.Decimal(12, 2)
-  currency              String       @default("HKD")
+  direction             String // 'credit' | 'debit'
+  amount                Decimal  @db.Decimal(12, 2)
+  currency              String   @default("HKD")
   description           String?
-  createdAt             DateTime     @default(now())
+  createdAt             DateTime @default(now())
   createdBy             String?
-  meta                  Json         @default("{}")
+  meta                  Json     @default("{}")
 
-  project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectProfessional   ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: SetNull)
-  transaction           FinancialTransaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  project             Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectProfessional ProjectProfessional?  @relation(fields: [projectProfessionalId], references: [id], onDelete: SetNull)
+  transaction         FinancialTransaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([projectProfessionalId])
@@ -200,20 +199,20 @@ model ProfessionalReferenceProject {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@index([professionalId])
 }
 
 model ProfessionalReport {
-  id              String       @id @default(cuid())
-  professionalId  String
-  reporterUserId  String?
-  comments        String
-  status          String       @default("new") // new | reviewed | resolved
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  professionalId String
+  reporterUserId String?
+  comments       String
+  status         String       @default("new") // new | reviewed | resolved
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@index([professionalId])
   @@index([status])
@@ -245,7 +244,6 @@ model Client {
   projects  Project[]
 }
 
-
 model Message {
   id                    String    @id @default(cuid())
   projectProfessionalId String
@@ -265,31 +263,31 @@ model Message {
 }
 
 model ProjectAssistRequest {
-  id         String   @id @default(cuid())
-  projectId  String
-  userId     String?
-  status     String   @default("open") // open | in_progress | closed
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user       User?    @relation("UserAssistRequests", fields: [userId], references: [id], onDelete: SetNull)
-  messages   AssistMessage[]
+  id        String          @id @default(cuid())
+  projectId String
+  userId    String?
+  status    String          @default("open") // open | in_progress | closed
+  notes     String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User?           @relation("UserAssistRequests", fields: [userId], references: [id], onDelete: SetNull)
+  messages  AssistMessage[]
 
   @@index([projectId])
   @@index([status])
 }
 
 model AssistMessage {
-  id               String   @id @default(cuid())
-  assistRequestId  String
-  senderType       String   // client | foh
-  senderUserId     String?
-  content          String
-  createdAt        DateTime @default(now())
-  readByFohAt      DateTime?
-  readByClientAt   DateTime?
-  assistRequest    ProjectAssistRequest @relation(fields: [assistRequestId], references: [id], onDelete: Cascade)
+  id              String               @id @default(cuid())
+  assistRequestId String
+  senderType      String // client | foh
+  senderUserId    String?
+  content         String
+  createdAt       DateTime             @default(now())
+  readByFohAt     DateTime?
+  readByClientAt  DateTime?
+  assistRequest   ProjectAssistRequest @relation(fields: [assistRequestId], references: [id], onDelete: Cascade)
 
   @@index([assistRequestId])
   @@index([senderType])
@@ -298,15 +296,15 @@ model AssistMessage {
 
 // FOH Private Support Threads (logged-in users & professionals)
 model PrivateChatThread {
-  id              String   @id @default(cuid())
-  userId          String?  @unique // null for professionals
-  professionalId  String?  @unique // null for clients
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  messages        PrivateChatMessage[]
+  id             String               @id @default(cuid())
+  userId         String?              @unique // null for professionals
+  professionalId String?              @unique // null for clients
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  messages       PrivateChatMessage[]
 
-  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  professional Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([professionalId])
@@ -314,19 +312,20 @@ model PrivateChatThread {
 }
 
 model PrivateChatMessage {
-  id              String   @id @default(cuid())
-  threadId        String
-  senderType      String   // 'user' | 'professional' | 'foh'
-  senderUserId    String?
-  senderProId     String?
-  content         String
-  createdAt       DateTime @default(now())
-  readByFohAt     DateTime?
-  readByUserAt    DateTime?
-  readByProAt     DateTime?
-  thread          PrivateChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  userSender      User?    @relation("UserSender", fields: [senderUserId], references: [id], onDelete: SetNull)
-  proSender       Professional? @relation("ProfessionalSender", fields: [senderProId], references: [id], onDelete: SetNull)
+  id           String            @id @default(cuid())
+  threadId     String
+  senderType   String // 'user' | 'professional' | 'foh'
+  senderUserId String?
+  senderProId  String?
+  content      String
+  attachments  Json?             @default("[]")
+  createdAt    DateTime          @default(now())
+  readByFohAt  DateTime?
+  readByUserAt DateTime?
+  readByProAt  DateTime?
+  thread       PrivateChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userSender   User?             @relation("UserSender", fields: [senderUserId], references: [id], onDelete: SetNull)
+  proSender    Professional?     @relation("ProfessionalSender", fields: [senderProId], references: [id], onDelete: SetNull)
 
   @@index([threadId])
   @@index([senderType])
@@ -335,22 +334,23 @@ model PrivateChatMessage {
 
 // Anonymous FOH Support Threads
 model AnonymousChatThread {
-  id              String   @id @default(cuid())
-  sessionId       String   @unique // Anonymous session ID
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  messages        AnonymousChatMessage[]
+  id        String                 @id @default(cuid())
+  sessionId String                 @unique // Anonymous session ID
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  messages  AnonymousChatMessage[]
 
   @@index([createdAt])
 }
 
 model AnonymousChatMessage {
-  id              String   @id @default(cuid())
-  threadId        String
-  senderType      String   // 'anonymous' | 'foh'
-  content         String
-  createdAt       DateTime @default(now())
-  thread          AnonymousChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  id          String              @id @default(cuid())
+  threadId    String
+  senderType  String // 'anonymous' | 'foh'
+  content     String
+  attachments Json?               @default("[]")
+  createdAt   DateTime            @default(now())
+  thread      AnonymousChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
   @@index([createdAt])
@@ -358,12 +358,12 @@ model AnonymousChatMessage {
 
 // Project Chat Threads (post-award shared team chat)
 model ProjectChatThread {
-  id              String   @id @default(cuid())
-  projectId       String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  messages        ProjectChatMessage[]
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String               @id @default(cuid())
+  projectId String
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  messages  ProjectChatMessage[]
+  project   Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId])
   @@index([projectId])
@@ -371,17 +371,18 @@ model ProjectChatThread {
 }
 
 model ProjectChatMessage {
-  id              String   @id @default(cuid())
-  threadId        String
-  senderType      String   // 'client' | 'professional' | 'foh'
-  senderUserId    String?
-  senderProId     String?
-  content         String
-  createdAt       DateTime @default(now())
-  readByClientAt  DateTime?
-  readByProAt     DateTime?
-  readByFohAt     DateTime?
-  thread          ProjectChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  id             String            @id @default(cuid())
+  threadId       String
+  senderType     String // 'client' | 'professional' | 'foh'
+  senderUserId   String?
+  senderProId    String?
+  content        String
+  attachments    Json?             @default("[]")
+  createdAt      DateTime          @default(now())
+  readByClientAt DateTime?
+  readByProAt    DateTime?
+  readByFohAt    DateTime?
+  thread         ProjectChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
   @@index([senderType])
@@ -389,63 +390,64 @@ model ProjectChatMessage {
 }
 
 model ServiceMapping {
-  id         String   @id @default(cuid())
-  keyword    String   @unique // e.g., "leaky pipe", "fix toilet"
+  id         String    @id @default(cuid())
+  keyword    String    @unique // e.g., "leaky pipe", "fix toilet"
   tradeId    String
-  confidence Int      @default(100) // 0-100, for fuzzy matching confidence
-  enabled    Boolean  @default(true)
-  usageCount Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  confidence Int       @default(100) // 0-100, for fuzzy matching confidence
+  enabled    Boolean   @default(true)
+  usageCount Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   trade      Tradesman @relation(fields: [tradeId], references: [id], onDelete: Cascade)
 
   @@index([keyword])
   @@index([tradeId])
   @@index([enabled])
 }
+
 model PaymentRequest {
-  id                    String       @id @default(cuid())
+  id                    String              @id @default(cuid())
   projectProfessionalId String
-  requestType           String       // "fixed" (amount) or "percentage"
-  requestAmount         Decimal      @db.Decimal(12, 2) // dollar amount
-  requestPercentage     Float?       // percentage of quote amount (0-100)
-  status                String       @default("pending") // pending | approved | rejected
-  approvedAmount        Decimal?     @db.Decimal(12, 2)
+  requestType           String // "fixed" (amount) or "percentage"
+  requestAmount         Decimal             @db.Decimal(12, 2) // dollar amount
+  requestPercentage     Float? // percentage of quote amount (0-100)
+  status                String              @default("pending") // pending | approved | rejected
+  approvedAmount        Decimal?            @db.Decimal(12, 2)
   rejectionReason       String?
   notes                 String?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
   projectProfessional   ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
 
   @@index([status])
 }
 
 model FinancialTransaction {
-  id                    String       @id @default(cuid())
+  id                    String  @id @default(cuid())
   projectId             String
-  projectProfessionalId String?      // links to specific professional-project relationship
-  type                  String       // "escrow_deposit_request" | "advance_payment_request" | "escrow_deposit_confirmation" | "release_payment" | etc
-  description           String       // Human-readable description
-  amount                Decimal      @db.Decimal(12, 2)
-  status                String       @default("pending") // pending | confirmed | rejected | info
-  
+  projectProfessionalId String? // links to specific professional-project relationship
+  type                  String // "escrow_deposit_request" | "advance_payment_request" | "escrow_deposit_confirmation" | "release_payment" | etc
+  description           String // Human-readable description
+  amount                Decimal @db.Decimal(12, 2)
+  status                String  @default("pending") // pending | confirmed | rejected | info
+
   // Request phase
-  requestedBy           String?      // user_id or professional_id or "foh"
-  requestedByRole       String?      // "client" | "professional" | "admin" | "platform"
-  
+  requestedBy     String? // user_id or professional_id or "foh"
+  requestedByRole String? // "client" | "professional" | "admin" | "platform"
+
   // Action phase (approval, rejection, completion)
-  actionBy              String?      // who needs to take action (clientId, adminId, professionalId)
-  actionByRole          String?      // "client" | "admin" | "professional"
-  actionAt              DateTime?    // when action was taken
-  actionComplete        Boolean      @default(false)  // has the action been completed?
-  
-  notes                 String?      // case-specific details
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  
-  project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actionBy       String? // who needs to take action (clientId, adminId, professionalId)
+  actionByRole   String? // "client" | "admin" | "professional"
+  actionAt       DateTime? // when action was taken
+  actionComplete Boolean   @default(false) // has the action been completed?
+
+  notes     String? // case-specific details
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project               Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectProfessional   ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
-  approvedBudgetProject Project?     @relation("ApprovedBudgetTx")
+  approvedBudgetProject Project?             @relation("ApprovedBudgetTx")
   escrowLedgers         EscrowLedger[]
 
   @@index([projectId])
@@ -456,24 +458,24 @@ model FinancialTransaction {
 }
 
 model ActivityLog {
-  id              String    @id @default(cuid())
-  userId          String?
-  professionalId  String?
-  actorName       String
-  actorType       String    // 'user', 'professional', 'admin', 'system'
-  action          String    // 'account_created', 'login', 'logout', 'profile_updated', etc.
-  resource        String?   // e.g., 'User', 'Professional', 'Project', 'Quote'
-  resourceId      String?   // ID of the affected resource
-  details         String?   // Additional context or description
-  metadata        Json?     // Structured data (IP, user agent, etc.)
-  status          String    @default("info") // 'success', 'info', 'warning', 'danger'
-  ipAddress       String?
-  userAgent       String?
-  createdAt       DateTime  @default(now())
-  
-  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
-  
+  id             String   @id @default(cuid())
+  userId         String?
+  professionalId String?
+  actorName      String
+  actorType      String // 'user', 'professional', 'admin', 'system'
+  action         String // 'account_created', 'login', 'logout', 'profile_updated', etc.
+  resource       String? // e.g., 'User', 'Professional', 'Project', 'Quote'
+  resourceId     String? // ID of the affected resource
+  details        String? // Additional context or description
+  metadata       Json? // Structured data (IP, user agent, etc.)
+  status         String   @default("info") // 'success', 'info', 'warning', 'danger'
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  professional Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@index([professionalId])
   @@index([action])

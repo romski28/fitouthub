@@ -81,6 +81,7 @@ export class ChatService {
     senderUserId: string | null,
     senderProId: string | null,
     content: string,
+    attachments?: any[],
   ): Promise<PrivateChatMessageDto> {
     const thread = await this.prisma.privateChatThread.findUnique({
       where: { id: threadId },
@@ -97,6 +98,7 @@ export class ChatService {
         senderUserId,
         senderProId,
         content,
+        attachments: attachments || [],
       },
     });
 
@@ -156,6 +158,7 @@ export class ChatService {
     threadId: string,
     senderType: string,
     content: string,
+    attachments?: any[],
   ): Promise<AnonymousChatMessageDto> {
     const thread = await this.prisma.anonymousChatThread.findUnique({
       where: { id: threadId },
@@ -170,6 +173,7 @@ export class ChatService {
         threadId,
         senderType,
         content,
+        attachments: attachments || [],
       },
     });
 
@@ -237,6 +241,7 @@ export class ChatService {
     senderUserId: string | null,
     senderProId: string | null,
     content: string,
+    attachments?: any[],
   ): Promise<ProjectChatMessageDto> {
     const thread = await this.prisma.projectChatThread.findUnique({
       where: { id: threadId },
@@ -253,6 +258,7 @@ export class ChatService {
         senderUserId,
         senderProId,
         content,
+        attachments: attachments || [],
       },
     });
 

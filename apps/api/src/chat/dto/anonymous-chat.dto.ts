@@ -1,5 +1,6 @@
 export class CreateAnonymousMessageDto {
   content: string;
+  attachments?: { url: string; filename: string }[];
 }
 
 export class AnonymousChatMessageDto {
