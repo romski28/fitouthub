@@ -28,6 +28,7 @@ type ChatThread = {
   updatedAt: string;
   unreadCount: number;
   lastMessage?: string;
+  status?: 'open' | 'in_progress' | 'closed' | string;
 };
 
 type Message = {
@@ -43,6 +44,7 @@ export default function AdminMessagingPage() {
   const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all'>('all');
   const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">("open");
   const [typeFilter, setTypeFilter] = useState<'all' | 'support' | 'supplier-client' | 'anonymous' | 'project'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closed'>('all');
   
   // Assist requests state
   const [requests, setRequests] = useState<AssistRequest[]>([]);
@@ -300,6 +302,8 @@ export default function AdminMessagingPage() {
     return 'Unknown';
   };
 
+  const statusEligible = (msgType: string) => ['support', 'supplier-client', 'anonymous'].includes(msgType);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -399,6 +403,52 @@ export default function AdminMessagingPage() {
             }`}
           >
             🏗️ Project Chat
+          </button>
+        </div>
+      )}
+
+      {/* Status Filters for support / anonymous / professional-client */}
+      {(viewMode === 'general' || viewMode === 'all') && (typeFilter === 'all' || typeFilter === 'support' || typeFilter === 'supplier-client' || typeFilter === 'anonymous') && (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              statusFilter === 'all'
+                ? 'bg-slate-900 text-white border-slate-950'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            All Statuses
+          </button>
+          <button
+            onClick={() => setStatusFilter('open')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              statusFilter === 'open'
+                ? 'bg-emerald-600 text-white border-emerald-700'
+                : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+            }`}
+          >
+            📖 Open
+          </button>
+          <button
+            onClick={() => setStatusFilter('in_progress')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              statusFilter === 'in_progress'
+                ? 'bg-amber-600 text-white border-amber-700'
+                : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
+            }`}
+          >
+            ⏳ In Progress
+          </button>
+          <button
+            onClick={() => setStatusFilter('closed')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              statusFilter === 'closed'
+                ? 'bg-slate-700 text-white border-slate-800'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            ✅ Closed
           </button>
         </div>
       )}
@@ -606,7 +656,12 @@ export default function AdminMessagingPage() {
               threads
                 .filter((thread) => {
                   const msgType = getChatMessageType(thread);
-                  return typeFilter === 'all' || msgType === typeFilter;
+                  if (typeFilter !== 'all' && msgType !== typeFilter) return false;
+                  if (statusFilter !== 'all' && statusEligible(msgType)) {
+                    const statusValue = thread.status || 'open';
+                    return statusValue === statusFilter;
+                  }
+                  return true;
                 })
                 .map((thread) => {
                   const msgType = getChatMessageType(thread);

@@ -299,6 +299,7 @@ model PrivateChatThread {
   id             String               @id @default(cuid())
   userId         String?              @unique // null for professionals
   professionalId String?              @unique // null for clients
+  status         String               @default("open") // 'open' | 'in_progress' | 'closed'
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
   messages       PrivateChatMessage[]
@@ -336,6 +337,7 @@ model PrivateChatMessage {
 model AnonymousChatThread {
   id        String                 @id @default(cuid())
   sessionId String                 @unique // Anonymous session ID
+  status    String                 @default("open") // 'open' | 'in_progress' | 'closed'
   createdAt DateTime               @default(now())
   updatedAt DateTime               @updatedAt
   messages  AnonymousChatMessage[]

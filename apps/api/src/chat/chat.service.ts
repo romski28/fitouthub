@@ -424,6 +424,7 @@ export class ChatService {
         professionalId: thread.professionalId,
         userName: thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined,
         professionalName: thread.professional?.businessName,
+        status: thread.status || 'open',
         updatedAt: thread.updatedAt.toISOString(),
         unreadCount: unreadMap[thread.id] || 0,
         lastMessage: thread.messages[0]?.content,
@@ -432,6 +433,7 @@ export class ChatService {
         id: thread.id,
         type: 'anonymous' as const,
         sessionId: thread.sessionId,
+        status: thread.status || 'open',
         updatedAt: thread.updatedAt.toISOString(),
         unreadCount: 0, // Anonymous threads don't track read status yet
         lastMessage: thread.messages[0]?.content,
