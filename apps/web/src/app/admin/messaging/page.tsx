@@ -353,7 +353,7 @@ export default function AdminMessagingPage() {
 
       {/* Message Type Filters (for chat view) */}
       {(viewMode === 'general' || viewMode === 'all') && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 overflow-x-auto pb-1 whitespace-nowrap">
           <button
             onClick={() => setTypeFilter('all')}
             className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
@@ -376,7 +376,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setTypeFilter('supplier-client')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
               typeFilter === 'supplier-client'
                 ? 'bg-indigo-600 text-white border-indigo-700'
                 : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50'
@@ -386,7 +386,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setTypeFilter('anonymous')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
               typeFilter === 'anonymous'
                 ? 'bg-gray-600 text-white border-gray-700'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -396,7 +396,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setTypeFilter('project')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
               typeFilter === 'project'
                 ? 'bg-purple-600 text-white border-purple-700'
                 : 'bg-white text-purple-700 border-purple-300 hover:bg-purple-50'
@@ -408,7 +408,7 @@ export default function AdminMessagingPage() {
       )}
 
       {/* Status Filters for support / anonymous / professional-client */}
-      {(viewMode === 'general' || viewMode === 'all') && (typeFilter === 'all' || typeFilter === 'support' || typeFilter === 'supplier-client' || typeFilter === 'anonymous') && (
+      {(viewMode === 'general' || viewMode === 'all') && statusEligible(typeFilter) && (
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setStatusFilter('all')}
