@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
 
@@ -38,6 +39,7 @@ type Message = {
 };
 
 export default function AdminMessagingPage() {
+  const { accessToken } = useAuth();
   const [viewMode, setViewMode] = useState<'assist' | 'general'>('assist');
   const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">("open");
   
@@ -78,10 +80,13 @@ export default function AdminMessagingPage() {
 
   // Fetch general chat threads
   const fetchChatThreads = async () => {
+    if (!accessToken) return;
     setThreadsLoading(true);
     try {
       const url = `${API_BASE_URL.replace(/\/$/, "")}/chat/admin/inbox`;
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setThreads(data.threads || []);
@@ -102,6 +107,7 @@ export default function AdminMessagingPage() {
 
   // Open assist request thread
   const openAssistThread = async (id: string) => {
+    if (!accessToken) return;
     setActiveId(id);
     setActiveType('assist');
     setMsgText("");
@@ -109,7 +115,9 @@ export default function AdminMessagingPage() {
     setMsgLoading(true);
     try {
       const url = `${API_BASE_URL.replace(/\/$/, "")}/assist-requests/${encodeURIComponent(id)}/messages?limit=200`;
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setMessages(data || []);
@@ -122,6 +130,7 @@ export default function AdminMessagingPage() {
 
   // Open general chat thread
   const openChatThread = async (thread: ChatThread) => {
+    if (!accessToken) return;
     setActiveId(thread.id);
     setActiveType(thread.type);
     setMsgText("");
@@ -137,7 +146,9 @@ export default function AdminMessagingPage() {
         url = `${API_BASE_URL.replace(/\/$/, "")}/chat/projects/${encodeURIComponent(thread.projectId!)}/thread`;
       }
       
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setMessages(data.messages || []);
@@ -150,13 +161,16 @@ export default function AdminMessagingPage() {
 
   // Send message to assist request
   const sendAssistMessage = async () => {
-    if (!activeId || !msgText.trim()) return;
+    if (!activeId || !msgText.trim() || !accessToken) return;
     setMsgSubmitting(true);
     try {
       const url = `${API_BASE_URL.replace(/\/$/, "")}/assist-requests/${encodeURIComponent(activeId)}/messages`;
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ sender: "foh", content: msgText.trim() }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -171,13 +185,16 @@ export default function AdminMessagingPage() {
 
   // Send message to general chat thread
   const sendChatMessage = async () => {
-    if (!activeId || !msgText.trim() || !activeType) return;
+    if (!activeId || !msgText.trim() || !activeType || !accessToken) return;
     setMsgSubmitting(true);
     try {
       const url = `${API_BASE_URL.replace(/\/$/, "")}/chat/admin/${encodeURIComponent(activeId)}/reply`;
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ content: msgText.trim() }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -369,7 +386,7 @@ export default function AdminMessagingPage() {
                             )}
                             <div className="whitespace-pre-wrap">{msg.content}</div>
                             {msg.attachments && msg.attachments.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-3">
+                              <div className="mt-2 flex flex-wrap gap-2">
                                 {msg.attachments.map((att, i) => (
                                   <a
                                     key={i}
@@ -381,7 +398,7 @@ export default function AdminMessagingPage() {
                                     <img
                                       src={att.url}
                                       alt={att.filename}
-                                      className="w-40 h-40 rounded border border-slate-200 hover:opacity-80 transition object-cover"
+                                      className="w-16 h-16 rounded border border-slate-200 hover:opacity-80 transition object-cover"
                                       title={att.filename}
                                     />
                                   </a>
@@ -519,7 +536,7 @@ export default function AdminMessagingPage() {
                           )}
                           <div className="whitespace-pre-wrap">{msg.content}</div>
                           {msg.attachments && msg.attachments.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-3">
+                            <div className="mt-2 flex flex-wrap gap-2">
                               {msg.attachments.map((att, i) => (
                                 <a
                                   key={i}
@@ -531,7 +548,7 @@ export default function AdminMessagingPage() {
                                   <img
                                     src={att.url}
                                     alt={att.filename}
-                                    className="w-40 h-40 rounded border border-slate-200 hover:opacity-80 transition object-cover"
+                                    className="w-16 h-16 rounded border border-slate-200 hover:opacity-80 transition object-cover"
                                     title={att.filename}
                                   />
                                 </a>
