@@ -40,8 +40,9 @@ type Message = {
 
 export default function AdminMessagingPage() {
   const { accessToken } = useAuth();
-  const [viewMode, setViewMode] = useState<'assist' | 'general'>('assist');
+  const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all'>('all');
   const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">("open");
+  const [typeFilter, setTypeFilter] = useState<'all' | 'private' | 'anonymous' | 'project'>('all');
   
   // Assist requests state
   const [requests, setRequests] = useState<AssistRequest[]>([]);
@@ -98,11 +99,13 @@ export default function AdminMessagingPage() {
   };
 
   useEffect(() => {
-    if (viewMode === 'assist') {
+    if (viewMode === 'assist' || viewMode === 'all') {
       fetchAssistRequests();
-    } else {
+    }
+    if (viewMode === 'general' || viewMode === 'all') {
       fetchChatThreads();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, statusTab]);
 
   // Open assist request thread
@@ -236,6 +239,36 @@ export default function AdminMessagingPage() {
     return '';
   };
 
+  const getTypeColor = (type: 'private' | 'anonymous' | 'project' | 'assist') => {
+    switch (type) {
+      case 'private':
+        return 'bg-green-100 text-green-800';
+      case 'anonymous':
+        return 'bg-gray-100 text-gray-800';
+      case 'project':
+        return 'bg-purple-100 text-purple-800';
+      case 'assist':
+        return 'bg-emerald-100 text-emerald-800';
+      default:
+        return 'bg-slate-100 text-slate-800';
+    }
+  };
+
+  const getTypeEmoji = (type: 'private' | 'anonymous' | 'project' | 'assist') => {
+    switch (type) {
+      case 'private':
+        return '🔒';
+      case 'anonymous':
+        return '👤';
+      case 'project':
+        return '🏗️';
+      case 'assist':
+        return '📋';
+      default:
+        return '💬';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -250,7 +283,17 @@ export default function AdminMessagingPage() {
       </div>
 
       {/* View Mode Toggle */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => setViewMode('all')}
+          className={`rounded-md px-4 py-2 text-sm font-semibold border transition ${
+            viewMode === 'all'
+              ? 'bg-slate-900 text-white border-slate-950'
+              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          🔔 All Messages
+        </button>
         <button
           onClick={() => setViewMode('assist')}
           className={`rounded-md px-4 py-2 text-sm font-semibold border transition ${
@@ -265,13 +308,59 @@ export default function AdminMessagingPage() {
           onClick={() => setViewMode('general')}
           className={`rounded-md px-4 py-2 text-sm font-semibold border transition ${
             viewMode === 'general'
-              ? 'bg-emerald-600 text-white border-emerald-700'
+              ? 'bg-blue-600 text-white border-blue-700'
               : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
           }`}
         >
           💬 Support Chat
         </button>
       </div>
+
+      {/* Message Type Filters (for chat view) */}
+      {(viewMode === 'general' || viewMode === 'all') && (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setTypeFilter('all')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              typeFilter === 'all'
+                ? 'bg-slate-900 text-white border-slate-950'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            All Types
+          </button>
+          <button
+            onClick={() => setTypeFilter('private')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              typeFilter === 'private'
+                ? 'bg-green-600 text-white border-green-700'
+                : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
+            }`}
+          >
+            🔒 Private Support
+          </button>
+          <button
+            onClick={() => setTypeFilter('anonymous')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              typeFilter === 'anonymous'
+                ? 'bg-gray-600 text-white border-gray-700'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            👤 Anonymous
+          </button>
+          <button
+            onClick={() => setTypeFilter('project')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+              typeFilter === 'project'
+                ? 'bg-purple-600 text-white border-purple-700'
+                : 'bg-white text-purple-700 border-purple-300 hover:bg-purple-50'
+            }`}
+          >
+            🏗️ Project Chat
+          </button>
+        </div>
+      )}
 
       {/* Assist Requests View */}
       {viewMode === 'assist' && (
@@ -320,6 +409,11 @@ export default function AdminMessagingPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            📋 Assist Request
+                          </span>
+                        </div>
                         <div className="text-sm font-semibold text-slate-900">
                           {req.project.projectName}
                         </div>
@@ -467,7 +561,9 @@ export default function AdminMessagingPage() {
                 No support threads yet.
               </div>
             ) : (
-              threads.map((thread) => (
+              threads
+                .filter((thread) => typeFilter === 'all' || thread.type === typeFilter)
+                .map((thread) => (
                 <div
                   key={thread.id}
                   className={`rounded-lg border ${
@@ -479,6 +575,18 @@ export default function AdminMessagingPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(thread.type)}`}
+                        >
+                          {getTypeEmoji(thread.type)} {thread.type === 'private' ? 'Private' : thread.type === 'anonymous' ? 'Anonymous' : 'Project'}
+                        </span>
+                        {thread.unreadCount > 0 && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                            {thread.unreadCount} unread
+                          </span>
+                        )}
+                      </div>
                       <div className="text-sm font-semibold text-slate-900">
                         {getThreadLabel(thread)}
                       </div>
@@ -492,11 +600,6 @@ export default function AdminMessagingPage() {
                         Last updated: {new Date(thread.updatedAt).toLocaleString()}
                       </div>
                     </div>
-                    {thread.unreadCount > 0 && (
-                      <span className="inline-block rounded-full bg-red-500 text-white px-2 py-0.5 text-xs font-bold">
-                        {thread.unreadCount}
-                      </span>
-                    )}
                   </div>
                 </div>
               ))
