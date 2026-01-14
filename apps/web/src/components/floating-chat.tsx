@@ -365,12 +365,13 @@ export default function FloatingChat() {
                       
                       {/* Image attachments */}
                       {msg.attachments && msg.attachments.length > 0 && (
-                        <div className={`${msg.content ? 'mt-2' : ''} space-y-2`}>
+                        <div className={`${msg.content ? 'mt-2' : ''} flex gap-2 overflow-x-auto`}>
                           {msg.attachments.map((att, i) => (
                             <ChatImageAttachment 
                               key={i} 
                               url={att.url} 
                               filename={att.filename}
+                              className="flex-shrink-0 bg-white p-1 rounded"
                             />
                           ))}
                         </div>
