@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "loading": "載入中...",
     "error": "錯誤",
@@ -35,276 +35,76 @@
     "admin": "管理員",
     "messaging": "訊息"
   },
-  "home": {
-    "hero": {
-      "tagline": "歡迎來到裝修平台",
-      "title": "尋找合適嘅裝修專業人士",
-      "description": "與值得信賴嘅承建商、公司同經銷商聯繫。輕鬆管理您嘅裝修項目。"
-    },
-    "quickStart": {
-      "tagline": "快速開始",
-      "title": "話畀我哋知您需要啲乜",
-      "newProjectButton": "...或者喺度直接建立新項目"
-    },
-    "features": {
-      "tabs": {
-        "why": "點解選擇裝修平台",
-        "how": "運作方式",
-        "who": "我哋服務邊啲人",
-        "choose": "選擇我哋嘅原因"
-      },
-      "why": {
-        "title": "點解選擇裝修平台",
-        "description": "唔似傳統裝修過程經常導致溝通不良、延誤同糾紛，裝修平台提供：",
-        "secure": {
-          "title": "安全嘅託管付款",
-          "description": "資金由第三方託管，只有喺完成驗收里程碑後先會釋放。"
-        },
-        "contracts": {
-          "title": "清晰嘅合約同範圍",
-          "description": "冇隱藏條款 — 所有條款由各方事先透明協議。"
-        },
-        "oversight": {
-          "title": "獨立監督",
-          "description": "項目經理監察進度、驗證工作，及早解決問題。"
-        },
-        "collaboration": {
-          "title": "無摩擦協作",
-          "description": "客戶、承建商同供應商喺同一平台上合作。"
-        }
-      },
-      "how": {
-        "title": "運作方式",
-        "plan": {
-          "title": "計劃",
-          "description": "透過專家指導界定您嘅項目範圍。"
-        },
-        "match": {
-          "title": "配對",
-          "description": "與經過審核嘅承建商、供應商同專業人士聯繫。"
-        },
-        "manage": {
-          "title": "管理",
-          "description": "喺一個地方追蹤進度、付款同文件。"
-        },
-        "complete": {
-          "title": "完成",
-          "description": "享受順暢、無糾紛嘅交接。"
-        }
-      },
-      "who": {
-        "title": "我哋服務邊啲人",
-        "clients": {
-          "title": "客戶及物業業主",
-          "description": "透過安全付款、經審核嘅專業人士同主動監督獲得安心。"
-        },
-        "contractors": {
-          "title": "承建商及建築商",
-          "description": "公平嘅合約、準時嘅付款，同更少嘅糾紛。"
-        },
-        "suppliers": {
-          "title": "供應商",
-          "description": "透明嘅條款同活躍項目中嘅新機會。"
-        },
-        "designers": {
-          "title": "設計專業人士",
-          "description": "喺結構化環境中與承建商同客戶無縫協作。"
-        }
-      },
-      "choose": {
-        "title": "選擇我哋嘅原因",
-        "description": "唔似傳統裝修過程經常導致溝通不良、延誤同糾紛，裝修平台提供：",
-        "pm": {
-          "title": "專業項目管理",
-          "description": "中立、專業嘅項目管理，確保工作順利進行，問題得到控制。"
-        },
-        "communication": {
-          "title": "透明溝通",
-          "description": "每個階段都透明溝通，並附有記錄嘅里程碑同證據。"
-        },
-        "platform": {
-          "title": "統一平台",
-          "description": "為所有持份者提供單一平台，統一範圍、進度表同付款。"
-        },
-        "risk": {
-          "title": "降低風險",
-          "description": "透過清晰嘅期望同公平嘅解決途徑，減少風險同壓力。"
-        }
-      }
-    }
-  },
   "auth": {
     "login": {
       "title": "登入",
       "email": "電郵地址",
       "password": "密碼",
       "submit": "登入",
-      "noAccount": "還未有帳戶？",
-      "forgotPassword": "忘記密碼？",
-      "professional": "專業人士登入"
+      "noAccount": "還未有帳戶?",
+      "forgotPassword": "忘記密碼?",
+      "success": "歡迎返回!"
     },
     "signup": {
       "title": "建立帳戶",
-      "firstName": "名",
-      "surname": "姓",
-      "email": "電郵地址",
-      "password": "密碼",
-      "confirmPassword": "確認密碼",
+      "firstName": "名字",
+      "email": "電郵",
       "submit": "建立帳戶",
-      "haveAccount": "已有帳戶？"
-    },
-    "logout": {
-      "confirm": "確定要登出嗎？"
+      "haveAccount": "已有帳戶?"
     }
   },
   "project": {
     "create": {
       "title": "建立項目",
-      "heading": "開始您的裝修項目",
-      "description": "告訴我們您的項目需求，我們會為您聯繫合資格的專業人士",
+      "heading": "開始您的項目",
       "projectName": "項目名稱",
-      "projectNamePlaceholder": "例如：廚房裝修",
       "location": "地點",
       "budget": "預算 (港幣)",
-      "budgetPlaceholder": "輸入您的預算",
-      "notes": "項目詳情",
-      "notesPlaceholder": "描述您需要的服務...",
-      "submit": "建立項目",
-      "success": "項目建立成功！"
+      "submit": "建立",
+      "success": "建立成功!"
     },
     "list": {
       "title": "我的項目",
-      "empty": "暫無項目",
-      "createFirst": "建立您的第一個項目",
-      "status": {
-        "draft": "草稿",
-        "open": "進行中",
-        "awarded": "已批出",
-        "in_progress": "施工中",
-        "completed": "已完成"
-      }
-    },
-    "detail": {
-      "overview": "概覽",
-      "quotes": "報價",
-      "messages": "訊息",
-      "financials": "財務",
-      "budget": "預算",
-      "location": "地點",
-      "status": "狀態",
-      "client": "客戶",
-      "professional": "專業人士",
-      "awarded": "已批出",
-      "inviteProfessional": "邀請專業人士"
-    },
-    "quote": {
-      "amount": "報價金額",
-      "notes": "備註",
-      "submit": "提交報價",
-      "accept": "接受報價",
-      "reject": "拒絕報價",
-      "pending": "待處理",
-      "accepted": "已接受",
-      "rejected": "已拒絕"
+      "empty": "暫無項目"
     }
   },
   "professional": {
     "dashboard": {
       "title": "專業人士儀錶板",
       "myProjects": "我的項目",
-      "pendingQuotes": "待處理報價",
-      "activeProjects": "活躍項目"
+      "pendingQuotes": "待處理報價"
     },
     "profile": {
       "title": "專業人士資料",
-      "businessName": "公司名稱",
-      "services": "提供服務",
-      "serviceArea": "服務範圍",
-      "rating": "評分",
-      "projects": "已完成項目"
-    },
-    "quote": {
-      "submit": "提交報價",
-      "amount": "報價金額",
-      "notes": "報價備註",
-      "success": "報價提交成功！",
-      "error": "報價提交失敗"
+      "businessName": "公司名稱"
     }
   },
   "financial": {
-    "status": "財務狀況",
     "escrow": {
-      "title": "第三方託管",
-      "inEscrow": "託管中",
-      "deposit": "需要存款",
-      "confirmed": "託管已確認",
-      "amount": "託管金額",
-      "confirm": "確認已存款"
+      "title": "託管",
+      "amount": "金額 (港幣)"
     },
     "payment": {
+      "title": "付款",
       "request": "付款要求",
-      "requestAdvance": "要求預付款",
-      "pending": "付款要求待處理",
-      "approved": "已批准（待發放）",
-      "paid": "已付款",
-      "amount": "付款金額",
-      "approve": "批准",
-      "decline": "拒絕",
-      "release": "發放付款"
-    },
-    "transaction": {
-      "type": "類型",
-      "amount": "金額",
-      "status": "狀態",
-      "date": "日期",
-      "description": "描述"
+      "approved": "已批准",
+      "paid": "已付款"
     }
   },
   "admin": {
     "dashboard": "管理員儀錶板",
     "messaging": {
-      "title": "訊息及支援",
-      "allMessages": "所有訊息",
-      "assistRequests": "協助要求",
-      "supportChat": "支援對話",
-      "allTypes": "所有類型",
-      "supportRequests": "支援要求",
-      "supplierClient": "供應商/客戶",
-      "anonymous": "匿名",
-      "projectChat": "項目對話",
-      "allStatuses": "所有狀態",
-      "open": "進行中",
-      "inProgress": "處理中",
-      "closed": "已關閉",
-      "markRead": "標記為已讀",
-      "closeThread": "關閉對話"
-    },
-    "financials": {
-      "confirmDeposit": "確認存款",
-      "releasePayment": "發放付款",
-      "transactions": "交易記錄"
+      "title": "訊息"
     }
   },
   "chat": {
     "title": "訊息",
-    "typeMessage": "輸入訊息...",
-    "send": "傳送",
-    "noMessages": "暫無訊息",
-    "startConversation": "開始對話"
+    "send": "傳送"
   },
   "errors": {
-    "generic": "發生錯誤",
-    "notFound": "找不到",
-    "unauthorized": "未授權",
-    "networkError": "網絡錯誤，請重試。",
-    "validationError": "請檢查您的輸入"
+    "generic": "發生錯誤"
   },
   "validation": {
-    "required": "此欄為必填",
-    "email": "請輸入有效的電郵地址",
-    "minLength": "至少需要 {min} 個字符",
-    "maxLength": "最多 {max} 個字符",
-    "numeric": "必須為數字",
-    "positive": "必須大於 0"
+    "required": "此欄為必填"
   }
 }

@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "loading": "Loading...",
     "error": "Error",
@@ -35,276 +35,76 @@
     "admin": "Admin",
     "messaging": "Messaging"
   },
-  "home": {
-    "hero": {
-      "tagline": "Welcome to Fitout Hub",
-      "title": "Find the Right Professionals for Your Fitout",
-      "description": "Connect with trusted contractors, companies, and resellers. Manage your renovation projects with ease and confidence."
-    },
-    "quickStart": {
-      "tagline": "Quick Start",
-      "title": "Tell us what you need",
-      "newProjectButton": "...or start a new project here"
-    },
-    "features": {
-      "tabs": {
-        "why": "Why FitOut Hub",
-        "how": "How it works",
-        "who": "Who we help",
-        "choose": "Why choose us"
-      },
-      "why": {
-        "title": "Why FitOut Hub",
-        "description": "Unlike traditional renovation processes that often lead to miscommunication, delays, and disputes, FitOut Hub provides:",
-        "secure": {
-          "title": "Secure payments in escrow",
-          "description": "Funds are held in escrow and released only when milestones are verified."
-        },
-        "contracts": {
-          "title": "Clear contracts & scope",
-          "description": "No hidden clauses — transparent terms agreed up front by all parties."
-        },
-        "oversight": {
-          "title": "Independent oversight",
-          "description": "Project managers monitor progress, verify work, and resolve issues early."
-        },
-        "collaboration": {
-          "title": "Collaboration without friction",
-          "description": "Clients, contractors, and suppliers work together on one platform."
-        }
-      },
-      "how": {
-        "title": "How it works",
-        "plan": {
-          "title": "Plan",
-          "description": "Define your project scope with expert guidance."
-        },
-        "match": {
-          "title": "Match",
-          "description": "Connect with vetted contractors, suppliers, and professionals."
-        },
-        "manage": {
-          "title": "Manage",
-          "description": "Track progress, payments, and documentation in one place."
-        },
-        "complete": {
-          "title": "Complete",
-          "description": "Enjoy a smooth, dispute‑free handover."
-        }
-      },
-      "who": {
-        "title": "Who we help",
-        "clients": {
-          "title": "Clients & property owners",
-          "description": "Peace of mind with secure payments, vetted professionals, and proactive oversight."
-        },
-        "contractors": {
-          "title": "Contractors & builders",
-          "description": "Fair contracts, timely payments, and fewer disputes."
-        },
-        "suppliers": {
-          "title": "Suppliers",
-          "description": "Transparent terms and new opportunities across active projects."
-        },
-        "designers": {
-          "title": "Design professionals",
-          "description": "Seamless collaboration with contractors and clients in a structured environment."
-        }
-      },
-      "choose": {
-        "title": "Why choose us",
-        "description": "Unlike traditional renovation processes that often lead to miscommunication, delays, and disputes, FitOut Hub provides:",
-        "pm": {
-          "title": "Professional project management",
-          "description": "Neutral, professional project management that keeps work moving and issues contained."
-        },
-        "communication": {
-          "title": "Transparent communication",
-          "description": "Transparent communication at every stage, with documented milestones and evidence."
-        },
-        "platform": {
-          "title": "Unified platform",
-          "description": "A single platform for all stakeholders, unifying scope, schedule, and payments."
-        },
-        "risk": {
-          "title": "Risk reduction",
-          "description": "Reduced risk and stress with clear expectations and fair resolution paths."
-        }
-      }
-    }
-  },
   "auth": {
     "login": {
       "title": "Login",
-      "email": "Email",
+      "email": "Email Address",
       "password": "Password",
       "submit": "Sign In",
-      "noAccount": "Don't have an account?",
+      "noAccount": "Don'\''t have an account?",
       "forgotPassword": "Forgot password?",
-      "professional": "Professional Login"
+      "success": "Welcome back!"
     },
     "signup": {
       "title": "Create Account",
       "firstName": "First Name",
-      "surname": "Surname",
       "email": "Email",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
       "submit": "Create Account",
       "haveAccount": "Already have an account?"
-    },
-    "logout": {
-      "confirm": "Are you sure you want to logout?"
     }
   },
   "project": {
     "create": {
       "title": "Create Project",
-      "heading": "Start Your Renovation Project",
-      "description": "Tell us about your project and we'll connect you with qualified professionals",
+      "heading": "Start Your Project",
       "projectName": "Project Name",
-      "projectNamePlaceholder": "e.g., Kitchen Renovation",
       "location": "Location",
       "budget": "Budget (HKD)",
-      "budgetPlaceholder": "Enter your budget",
-      "notes": "Project Details",
-      "notesPlaceholder": "Describe what you need...",
-      "submit": "Create Project",
-      "success": "Project created successfully!"
+      "submit": "Create",
+      "success": "Created successfully!"
     },
     "list": {
       "title": "My Projects",
-      "empty": "No projects yet",
-      "createFirst": "Create your first project",
-      "status": {
-        "draft": "Draft",
-        "open": "Open",
-        "awarded": "Awarded",
-        "in_progress": "In Progress",
-        "completed": "Completed"
-      }
-    },
-    "detail": {
-      "overview": "Overview",
-      "quotes": "Quotes",
-      "messages": "Messages",
-      "financials": "Financials",
-      "budget": "Budget",
-      "location": "Location",
-      "status": "Status",
-      "client": "Client",
-      "professional": "Professional",
-      "awarded": "Awarded",
-      "inviteProfessional": "Invite Professional"
-    },
-    "quote": {
-      "amount": "Quote Amount",
-      "notes": "Notes",
-      "submit": "Submit Quote",
-      "accept": "Accept Quote",
-      "reject": "Reject Quote",
-      "pending": "Pending",
-      "accepted": "Accepted",
-      "rejected": "Rejected"
+      "empty": "No projects yet"
     }
   },
   "professional": {
     "dashboard": {
       "title": "Professional Dashboard",
       "myProjects": "My Projects",
-      "pendingQuotes": "Pending Quotes",
-      "activeProjects": "Active Projects"
+      "pendingQuotes": "Pending Quotes"
     },
     "profile": {
       "title": "Professional Profile",
-      "businessName": "Business Name",
-      "services": "Services Offered",
-      "serviceArea": "Service Area",
-      "rating": "Rating",
-      "projects": "Completed Projects"
-    },
-    "quote": {
-      "submit": "Submit Quote",
-      "amount": "Quote Amount",
-      "notes": "Quote Notes",
-      "success": "Quote submitted successfully!",
-      "error": "Failed to submit quote"
+      "businessName": "Business Name"
     }
   },
   "financial": {
-    "status": "Financial Status",
     "escrow": {
       "title": "Escrow",
-      "inEscrow": "In Escrow",
-      "deposit": "Deposit Required",
-      "confirmed": "Escrow Confirmed",
-      "amount": "Escrow Amount",
-      "confirm": "Confirm Deposit Made"
+      "amount": "Amount (HKD)"
     },
     "payment": {
+      "title": "Payment",
       "request": "Payment Request",
-      "requestAdvance": "Request Advance Payment",
-      "pending": "Payment Request Pending",
-      "approved": "Approved (Awaiting Release)",
-      "paid": "Paid",
-      "amount": "Payment Amount",
-      "approve": "Approve",
-      "decline": "Decline",
-      "release": "Release Payment"
-    },
-    "transaction": {
-      "type": "Type",
-      "amount": "Amount",
-      "status": "Status",
-      "date": "Date",
-      "description": "Description"
+      "approved": "Approved",
+      "paid": "Paid"
     }
   },
   "admin": {
     "dashboard": "Admin Dashboard",
     "messaging": {
-      "title": "Messaging & Support",
-      "allMessages": "All Messages",
-      "assistRequests": "Assist Requests",
-      "supportChat": "Support Chat",
-      "allTypes": "All Types",
-      "supportRequests": "Support Requests",
-      "supplierClient": "Supplier/Client",
-      "anonymous": "Anonymous",
-      "projectChat": "Project Chat",
-      "allStatuses": "All Statuses",
-      "open": "Open",
-      "inProgress": "In Progress",
-      "closed": "Closed",
-      "markRead": "Mark Read",
-      "closeThread": "Close Thread"
-    },
-    "financials": {
-      "confirmDeposit": "Confirm Deposit",
-      "releasePayment": "Release Payment",
-      "transactions": "Transactions"
+      "title": "Messaging"
     }
   },
   "chat": {
     "title": "Messages",
-    "typeMessage": "Type a message...",
-    "send": "Send",
-    "noMessages": "No messages yet",
-    "startConversation": "Start a conversation"
+    "send": "Send"
   },
   "errors": {
-    "generic": "Something went wrong",
-    "notFound": "Not found",
-    "unauthorized": "Unauthorized",
-    "networkError": "Network error. Please try again.",
-    "validationError": "Please check your input"
+    "generic": "Something went wrong"
   },
   "validation": {
-    "required": "This field is required",
-    "email": "Please enter a valid email",
-    "minLength": "Must be at least {min} characters",
-    "maxLength": "Must be at most {max} characters",
-    "numeric": "Must be a number",
-    "positive": "Must be greater than 0"
+    "required": "This field is required"
   }
 }
