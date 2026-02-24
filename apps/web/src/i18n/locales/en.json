@@ -1,4 +1,4 @@
-﻿{
+{
   "common": {
     "loading": "Loading...",
     "error": "Error",
@@ -41,7 +41,7 @@
       "email": "Email Address",
       "password": "Password",
       "submit": "Sign In",
-      "noAccount": "Don'\''t have an account?",
+      "noAccount": "Don't have an account?",
       "forgotPassword": "Forgot password?",
       "success": "Welcome back!"
     },
