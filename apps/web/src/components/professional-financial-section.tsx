@@ -128,6 +128,9 @@ export default function ProfessionalFinancialSection({
   const approvedPayments = transactions.filter(tx => 
     tx.type === 'payment_request' && tx.status === 'confirmed'
   );
+  const paidPayments = transactions.filter(tx => 
+    tx.type === 'payment_request' && tx.status === 'info'
+  );
 
   return (
     <div className="rounded-xl border border-blue-100 bg-blue-50 shadow-sm p-4 space-y-4">
@@ -153,9 +156,21 @@ export default function ProfessionalFinancialSection({
 
       {/* Approved Payments */}
       {approvedPayments.length > 0 && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-          <p className="text-sm font-semibold text-green-900 mb-2">✓ Approved Payments</p>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+          <p className="text-sm font-semibold text-blue-900 mb-2">✓ Approved (Awaiting Release)</p>
           {approvedPayments.map(tx => (
+            <div key={tx.id} className="text-xs text-blue-700">
+              {formatHKD(tx.amount)} - {new Date(tx.createdAt).toLocaleDateString('en-HK')}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Paid Payments */}
+      {paidPayments.length > 0 && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+          <p className="text-sm font-semibold text-green-900 mb-2">💰 Paid</p>
+          {paidPayments.map(tx => (
             <div key={tx.id} className="text-xs text-green-700">
               {formatHKD(tx.amount)} - {new Date(tx.createdAt).toLocaleDateString('en-HK')}
             </div>

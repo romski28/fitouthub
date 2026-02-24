@@ -412,6 +412,32 @@ export class FinancialService {
         },
       });
 
+      // If this is a release_payment transaction, also update the original payment_request to 'info' status
+      // to indicate it has been fully processed and paid
+      if (tx.type === 'release_payment') {
+        // Find the matching payment_request
+        const matchingRequests = await prisma.financialTransaction.findMany({
+          where: {
+            projectId: tx.projectId,
+            projectProfessionalId: tx.projectProfessionalId,
+            type: 'payment_request',
+            amount: tx.amount,
+            status: 'confirmed', // Only update if it was approved
+          },
+        });
+
+        // Update each matching request
+        for (const req of matchingRequests) {
+          await prisma.financialTransaction.update({
+            where: { id: req.id },
+            data: {
+              status: 'info', // Mark as informational/completed/paid
+              notes: req.notes ? `${req.notes} [PAID]` : '[PAID]',
+            },
+          });
+        }
+      }
+
       // Write ledger entry (debit)
       await prisma.escrowLedger.create({
         data: {
