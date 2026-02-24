@@ -8,10 +8,10 @@ export default createMiddleware({
   defaultLocale: 'en',
   
   // Don't use locale prefixes in URLs (cleaner URLs)
-  localePrefix: 'as-needed'
+  localePrefix: 'never'
 });
  
 export const config = {
-  // Match only internationalized pathnames
-  matcher: ['/', '/(zh-HK|en)/:path*']
+  // Skip all paths that should not be internationalized
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
