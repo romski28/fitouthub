@@ -45,6 +45,92 @@
       "tagline": "Quick Start",
       "title": "Tell us what you need",
       "newProjectButton": "...or start a new project here"
+    },
+    "features": {
+      "tabs": {
+        "why": "Why FitOut Hub",
+        "how": "How it works",
+        "who": "Who we help",
+        "choose": "Why choose us"
+      },
+      "why": {
+        "title": "Why FitOut Hub",
+        "description": "Unlike traditional renovation processes that often lead to miscommunication, delays, and disputes, FitOut Hub provides:",
+        "secure": {
+          "title": "Secure payments in escrow",
+          "description": "Funds are held in escrow and released only when milestones are verified."
+        },
+        "contracts": {
+          "title": "Clear contracts & scope",
+          "description": "No hidden clauses — transparent terms agreed up front by all parties."
+        },
+        "oversight": {
+          "title": "Independent oversight",
+          "description": "Project managers monitor progress, verify work, and resolve issues early."
+        },
+        "collaboration": {
+          "title": "Collaboration without friction",
+          "description": "Clients, contractors, and suppliers work together on one platform."
+        }
+      },
+      "how": {
+        "title": "How it works",
+        "plan": {
+          "title": "Plan",
+          "description": "Define your project scope with expert guidance."
+        },
+        "match": {
+          "title": "Match",
+          "description": "Connect with vetted contractors, suppliers, and professionals."
+        },
+        "manage": {
+          "title": "Manage",
+          "description": "Track progress, payments, and documentation in one place."
+        },
+        "complete": {
+          "title": "Complete",
+          "description": "Enjoy a smooth, dispute‑free handover."
+        }
+      },
+      "who": {
+        "title": "Who we help",
+        "clients": {
+          "title": "Clients & property owners",
+          "description": "Peace of mind with secure payments, vetted professionals, and proactive oversight."
+        },
+        "contractors": {
+          "title": "Contractors & builders",
+          "description": "Fair contracts, timely payments, and fewer disputes."
+        },
+        "suppliers": {
+          "title": "Suppliers",
+          "description": "Transparent terms and new opportunities across active projects."
+        },
+        "designers": {
+          "title": "Design professionals",
+          "description": "Seamless collaboration with contractors and clients in a structured environment."
+        }
+      },
+      "choose": {
+        "title": "Why choose us",
+        "description": "Unlike traditional renovation processes that often lead to miscommunication, delays, and disputes, FitOut Hub provides:",
+        "pm": {
+          "title": "Professional project management",
+          "description": "Neutral, professional project management that keeps work moving and issues contained."
+        },
+        "communication": {
+          "title": "Transparent communication",
+          "description": "Transparent communication at every stage, with documented milestones and evidence."
+        },
+        "platform": {
+          "title": "Unified platform",
+          "description": "A single platform for all stakeholders, unifying scope, schedule, and payments."
+        },
+        "risk": {
+          "title": "Risk reduction",
+          "description": "Reduced risk and stress with clear expectations and fair resolution paths."
+        }
+      }
     }
   },
   "auth": {

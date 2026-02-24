@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type TabType = 'why' | 'how' | 'who' | 'choose';
 
@@ -22,102 +23,103 @@ type ContentMap = {
 
 export default function InformationSection() {
   const [activeTab, setActiveTab] = useState<TabType>('why');
+  const t = useTranslations('home.features');
 
   const tabs = [
-    { id: 'why' as TabType, label: 'Why FitOut Hub' },
-    { id: 'how' as TabType, label: 'How it works' },
-    { id: 'who' as TabType, label: 'Who we help' },
-    { id: 'choose' as TabType, label: 'Why choose us' },
+    { id: 'why' as TabType, label: t('tabs.why') },
+    { id: 'how' as TabType, label: t('tabs.how') },
+    { id: 'who' as TabType, label: t('tabs.who') },
+    { id: 'choose' as TabType, label: t('tabs.choose') },
   ];
 
   const content: ContentMap = {
     why: {
-      title: 'Why FitOut Hub',
-      description: 'Unlike traditional renovation processes that often lead to miscommunication, delays, and disputes, FitOut Hub provides:',
+      title: t('why.title'),
+      description: t('why.description'),
       cards: [
         {
-          title: 'Secure payments in escrow',
-          description: 'Funds are held in escrow and released only when milestones are verified.',
+          title: t('why.secure.title'),
+          description: t('why.secure.description'),
         },
         {
-          title: 'Clear contracts & scope',
-          description: 'No hidden clauses — transparent terms agreed up front by all parties.',
+          title: t('why.contracts.title'),
+          description: t('why.contracts.description'),
         },
         {
-          title: 'Independent oversight',
-          description: 'Project managers monitor progress, verify work, and resolve issues early.',
+          title: t('why.oversight.title'),
+          description: t('why.oversight.description'),
         },
         {
-          title: 'Collaboration without friction',
-          description: 'Clients, contractors, and suppliers work together on one platform.',
+          title: t('why.collaboration.title'),
+          description: t('why.collaboration.description'),
         },
       ],
     },
     how: {
-      title: 'How it works',
+      title: t('how.title'),
       cards: [
         {
           number: '1',
-          title: 'Plan',
-          description: 'Define your project scope with expert guidance.',
+          title: t('how.plan.title'),
+          description: t('how.plan.description'),
         },
         {
           number: '2',
-          title: 'Match',
-          description: 'Connect with vetted contractors, suppliers, and professionals.',
+          title: t('how.match.title'),
+          description: t('how.match.description'),
         },
         {
           number: '3',
-          title: 'Manage',
-          description: 'Track progress, payments, and documentation in one place.',
+          title: t('how.manage.title'),
+          description: t('how.manage.description'),
         },
         {
           number: '4',
-          title: 'Complete',
-          description: 'Enjoy a smooth, dispute‑free handover.',
+          title: t('how.complete.title'),
+          description: t('how.complete.description'),
         },
       ],
     },
     who: {
-      title: 'Who we help',
+      title: t('who.title'),
       cards: [
         {
-          title: 'Clients & property owners',
-          description: 'Peace of mind with secure payments, vetted professionals, and proactive oversight.',
+          title: t('who.clients.title'),
+          description: t('who.clients.description'),
         },
         {
-          title: 'Contractors & builders',
-          description: 'Fair contracts, timely payments, and fewer disputes.',
+          title: t('who.contractors.title'),
+          description: t('who.contractors.description'),
         },
         {
-          title: 'Suppliers',
-          description: 'Transparent terms and new opportunities across active projects.',
+          title: t('who.suppliers.title'),
+          description: t('who.suppliers.description'),
         },
         {
-          title: 'Design professionals',
-          description: 'Seamless collaboration with contractors and clients in a structured environment.',
+          title: t('who.designers.title'),
+          description: t('who.designers.description'),
         },
       ],
     },
     choose: {
-      title: 'Why choose us',
-      description: 'Unlike traditional renovation processes that often lead to miscommunication, delays, and disputes, FitOut Hub provides:',
+      title: t('choose.title'),
+      description: t('choose.description'),
       cards: [
         {
-          title: 'Professional project management',
-          description: 'Neutral, professional project management that keeps work moving and issues contained.',
+          title: t('choose.pm.title'),
+          description: t('choose.pm.description'),
         },
         {
-          title: 'Transparent communication',
-          description: 'Transparent communication at every stage, with documented milestones and evidence.',
+          title: t('choose.communication.title'),
+          description: t('choose.communication.description'),
         },
         {
-          title: 'Unified platform',
-          description: 'A single platform for all stakeholders, unifying scope, schedule, and payments.',
+          title: t('choose.platform.title'),
+          description: t('choose.platform.description'),
         },
         {
-          title: 'Risk reduction',
-          description: 'Reduced risk and stress with clear expectations and fair resolution paths.',
+          title: t('choose.risk.title'),
+          description: t('choose.risk.description'),
         },
       ],
     },

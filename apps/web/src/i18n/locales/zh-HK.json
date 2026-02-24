@@ -45,6 +45,92 @@
       "tagline": "快速開始",
       "title": "話畀我哋知您需要啲乜",
       "newProjectButton": "...或者喺度直接建立新項目"
+    },
+    "features": {
+      "tabs": {
+        "why": "點解選擇裝修平台",
+        "how": "運作方式",
+        "who": "我哋服務邊啲人",
+        "choose": "選擇我哋嘅原因"
+      },
+      "why": {
+        "title": "點解選擇裝修平台",
+        "description": "唔似傳統裝修過程經常導致溝通不良、延誤同糾紛，裝修平台提供：",
+        "secure": {
+          "title": "安全嘅託管付款",
+          "description": "資金由第三方託管，只有喺完成驗收里程碑後先會釋放。"
+        },
+        "contracts": {
+          "title": "清晰嘅合約同範圍",
+          "description": "冇隱藏條款 — 所有條款由各方事先透明協議。"
+        },
+        "oversight": {
+          "title": "獨立監督",
+          "description": "項目經理監察進度、驗證工作，及早解決問題。"
+        },
+        "collaboration": {
+          "title": "無摩擦協作",
+          "description": "客戶、承建商同供應商喺同一平台上合作。"
+        }
+      },
+      "how": {
+        "title": "運作方式",
+        "plan": {
+          "title": "計劃",
+          "description": "透過專家指導界定您嘅項目範圍。"
+        },
+        "match": {
+          "title": "配對",
+          "description": "與經過審核嘅承建商、供應商同專業人士聯繫。"
+        },
+        "manage": {
+          "title": "管理",
+          "description": "喺一個地方追蹤進度、付款同文件。"
+        },
+        "complete": {
+          "title": "完成",
+          "description": "享受順暢、無糾紛嘅交接。"
+        }
+      },
+      "who": {
+        "title": "我哋服務邊啲人",
+        "clients": {
+          "title": "客戶及物業業主",
+          "description": "透過安全付款、經審核嘅專業人士同主動監督獲得安心。"
+        },
+        "contractors": {
+          "title": "承建商及建築商",
+          "description": "公平嘅合約、準時嘅付款，同更少嘅糾紛。"
+        },
+        "suppliers": {
+          "title": "供應商",
+          "description": "透明嘅條款同活躍項目中嘅新機會。"
+        },
+        "designers": {
+          "title": "設計專業人士",
+          "description": "喺結構化環境中與承建商同客戶無縫協作。"
+        }
+      },
+      "choose": {
+        "title": "選擇我哋嘅原因",
+        "description": "唔似傳統裝修過程經常導致溝通不良、延誤同糾紛，裝修平台提供：",
+        "pm": {
+          "title": "專業項目管理",
+          "description": "中立、專業嘅項目管理，確保工作順利進行，問題得到控制。"
+        },
+        "communication": {
+          "title": "透明溝通",
+          "description": "每個階段都透明溝通，並附有記錄嘅里程碑同證據。"
+        },
+        "platform": {
+          "title": "統一平台",
+          "description": "為所有持份者提供單一平台，統一範圍、進度表同付款。"
+        },
+        "risk": {
+          "title": "降低風險",
+          "description": "透過清晰嘅期望同公平嘅解決途徑，減少風險同壓力。"
+        }
+      }
     }
   },
   "auth": {
