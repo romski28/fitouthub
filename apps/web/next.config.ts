@@ -1,11 +1,7 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 
-// Use 'never' locale prefix (cookie/header-based, no URL prefixes)
-const withNextIntl = createNextIntlPlugin({
-  requestPath: './src/i18n/request.ts',
-  localePrefix: 'never',
-});
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   reactCompiler: true,

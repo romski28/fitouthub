@@ -250,5 +250,8 @@ export default getRequestConfig(async () => {
   return {
     locale,
     messages: messages[locale],
+    routing: {
+      localePrefix: 'never',
+    },
   };
 });
