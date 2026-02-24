@@ -759,12 +759,15 @@ export default function ClientProjectDetailPage() {
 
   if (loading || isLoggedIn === undefined) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-4 text-gray-600">Loading project...</p>
+      <>
+        <Toaster position="top-right" />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="mt-4 text-gray-600">Loading project...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -776,14 +779,17 @@ export default function ClientProjectDetailPage() {
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="rounded-lg bg-red-50 border border-red-200 p-6 max-w-md w-full text-center">
-          <p className="text-red-800 font-medium">{error || 'Project not found'}</p>
-          <Link href="/projects" className="mt-4 inline-block text-blue-600 hover:underline">
-            ← Back to projects
-          </Link>
+      <>
+        <Toaster position="top-right" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+          <div className="rounded-lg bg-red-50 border border-red-200 p-6 max-w-md w-full text-center">
+            <p className="text-red-800 font-medium">{error || 'Project not found'}</p>
+            <Link href="/projects" className="mt-4 inline-block text-blue-600 hover:underline">
+              ← Back to projects
+            </Link>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 

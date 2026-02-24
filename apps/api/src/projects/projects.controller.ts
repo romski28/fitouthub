@@ -189,7 +189,12 @@ export class ProjectsController {
   }
 
   @Post()
-  async create(@Body() createProjectDto: CreateProjectDto) {
+  @UseGuards(CombinedAuthGuard)
+  async create(@Body() createProjectDto: CreateProjectDto, @Request() req: any) {
+    const userId = req.user?.id || req.user?.sub;
+    if (userId) {
+      createProjectDto.userId = userId;
+    }
     return this.projectsService.create(createProjectDto);
   }
 

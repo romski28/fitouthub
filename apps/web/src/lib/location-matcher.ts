@@ -2,7 +2,7 @@ import { LOCATIONS } from '../../../../packages/schemas/locations';
 
 export interface LocationMatchResult {
   primary: string;
-  secondary: string;
+  secondary?: string;
   tertiary?: string;
   granularity: 'primary' | 'secondary' | 'tertiary';
   display: string; // Friendly label for UI
@@ -51,12 +51,18 @@ const INDEX: Map<string, LocationMatchResult> = new Map();
       const key = normalize(name);
       const granularity = loc.tertiary && name === loc.tertiary ? 'tertiary' : name === loc.secondary ? 'secondary' : 'primary';
       const confidence = granularity === 'tertiary' ? 0.95 : granularity === 'secondary' ? 0.9 : 0.85;
+      const display =
+        granularity === 'tertiary'
+          ? (loc.tertiary || loc.secondary)
+          : granularity === 'secondary'
+            ? loc.secondary
+            : loc.primary;
       INDEX.set(key, {
         primary: loc.primary,
-        secondary: loc.secondary,
-        tertiary: loc.tertiary,
+        secondary: granularity === 'primary' ? undefined : loc.secondary,
+        tertiary: granularity === 'tertiary' ? loc.tertiary : undefined,
         granularity,
-        display: loc.tertiary || loc.secondary,
+        display,
         confidence,
       });
 
@@ -65,10 +71,10 @@ const INDEX: Map<string, LocationMatchResult> = new Map();
         for (const alias of aliases) {
           INDEX.set(normalize(alias), {
             primary: loc.primary,
-            secondary: loc.secondary,
-            tertiary: loc.tertiary,
+            secondary: granularity === 'primary' ? undefined : loc.secondary,
+            tertiary: granularity === 'tertiary' ? loc.tertiary : undefined,
             granularity,
-            display: loc.tertiary || loc.secondary,
+            display,
             confidence: Math.max(confidence - 0.05, 0.8),
           });
         }

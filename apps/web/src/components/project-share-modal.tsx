@@ -18,7 +18,7 @@ interface ProjectShareModalProps {
 
 export function ProjectShareModal({ isOpen, onClose, professionals, projectId, initialData }: ProjectShareModalProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>(initialData?.photoUrls || []);
@@ -96,9 +96,14 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     const normalizedPhotos = photoUrls.map(toAbsolute);
     const { payload, defaultTitle } = buildPayload(formData, normalizedPhotos, invitePros);
 
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
     const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     });
 

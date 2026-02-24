@@ -16,7 +16,7 @@ interface ProjectRequestModalProps {
 
 export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRequestModalProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
@@ -86,9 +86,14 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
     };
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/projects`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(payload),
       });
 

@@ -421,7 +421,9 @@ export default function ProjectDetailPage() {
       }
 
       toast.success('Project rejected');
-      router.push('/professional-projects');
+      setTimeout(() => {
+        router.push('/professional-projects');
+      }, 800);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to reject project';
       setError(message);
