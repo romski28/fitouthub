@@ -8,6 +8,7 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { useAuthModalControl } from '@/context/auth-modal-control';
+import { LanguageSwitcher } from './language-switcher';
 
 export const Navbar: React.FC = () => {
   const { isLoggedIn, user, accessToken, logout } = useAuth();
@@ -75,6 +76,9 @@ export const Navbar: React.FC = () => {
                 My Projects
               </a>
             ) : null}
+
+            {/* Language Switcher */}
+            <LanguageSwitcher />
 
             {/* Desktop Auth buttons */}
             <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6">

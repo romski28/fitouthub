@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 import { AuthProvider } from "@/context/auth-context";
 import { ProfessionalAuthProvider } from "@/context/professional-auth-context";
 import { AuthModalControlProvider } from "@/context/auth-modal-control";
@@ -31,36 +33,40 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const commitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_COMMIT_SHA || "";
   const appVersion = (pkg as any)?.version ?? "0.0.0";
+  const messages = await getMessages();
+  
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <ProfessionalAuthProvider>
-            <AuthModalControlProvider>
-              <Toaster position="top-right" />
-              <div className="min-h-screen bg-slate-50 text-slate-900">
-                <NavbarWrapper />
-                <MainWrapper>{children}</MainWrapper>
-                <Footer />
-                {/* Version badge for quick deployment verification */}
-                <div className="fixed bottom-2 right-2 z-50 rounded bg-slate-900/80 px-2 py-1 text-[11px] font-medium text-slate-100">
-                  <span>web v{appVersion}</span>
-                  {commitSha ? <span className="ml-2">commit {commitSha.slice(0, 7)}</span> : null}
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider>
+            <ProfessionalAuthProvider>
+              <AuthModalControlProvider>
+                <Toaster position="top-right" />
+                <div className="min-h-screen bg-slate-50 text-slate-900">
+                  <NavbarWrapper />
+                  <MainWrapper>{children}</MainWrapper>
+                  <Footer />
+                  {/* Version badge for quick deployment verification */}
+                  <div className="fixed bottom-2 right-2 z-50 rounded bg-slate-900/80 px-2 py-1 text-[11px] font-medium text-slate-100">
+                    <span>web v{appVersion}</span>
+                    {commitSha ? <span className="ml-2">commit {commitSha.slice(0, 7)}</span> : null}
+                  </div>
                 </div>
-              </div>
-              <GlobalAuthModal />
-              <CornerRibbon />
-              <FloatingChat />
-            </AuthModalControlProvider>
-          </ProfessionalAuthProvider>
-        </AuthProvider>
+                <GlobalAuthModal />
+                <CornerRibbon />
+                <FloatingChat />
+              </AuthModalControlProvider>
+            </ProfessionalAuthProvider>
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

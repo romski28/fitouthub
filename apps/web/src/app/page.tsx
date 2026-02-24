@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import SearchFlow from '@/components/search-flow';
 import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
@@ -13,6 +14,8 @@ export default function Home() {
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
+  
+  const t = useTranslations('home');
 
   useEffect(() => {
     setHydrated(true);
@@ -45,10 +48,10 @@ export default function Home() {
         <div className="mx-auto max-w-2xl">
           <div className="text-center mb-8">
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-600 mb-2">
-              Quick Start
+              {t('quickStart.tagline')}
             </p>
             <h2 className="text-2xl font-bold text-slate-900">
-              Tell us what you need
+              {t('quickStart.title')}
             </h2>
           </div>
           <SearchFlow />
@@ -60,7 +63,7 @@ export default function Home() {
                 onClick={() => router.push('/projects?createNew=true')}
                 className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all duration-200 shadow-sm"
               >
-                ...or start a new project here
+                {t('quickStart.newProjectButton')}
               </button>
             </div>
           )}
@@ -74,14 +77,14 @@ export default function Home() {
           <div className="p-8 lg:p-12 space-y-6">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-400 mb-2">
-                Welcome to Fitout Hub
+                {t('hero.tagline')}
               </p>
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                Find the Right Professionals for Your Fitout
+                {t('hero.title')}
               </h1>
             </div>
             <p className="text-lg text-slate-300">
-              Connect with trusted contractors, companies, and resellers. Manage your renovation projects with ease and confidence.
+              {t('hero.description')}
             </p>
           </div>
 

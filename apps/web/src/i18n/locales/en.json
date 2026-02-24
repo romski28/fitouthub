@@ -1,0 +1,224 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "all": "All",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No",
+    "optional": "Optional",
+    "required": "Required"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "professionals": "Professionals",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign Up",
+    "admin": "Admin",
+    "messaging": "Messaging"
+  },
+  "home": {
+    "hero": {
+      "tagline": "Welcome to Fitout Hub",
+      "title": "Find the Right Professionals for Your Fitout",
+      "description": "Connect with trusted contractors, companies, and resellers. Manage your renovation projects with ease and confidence."
+    },
+    "quickStart": {
+      "tagline": "Quick Start",
+      "title": "Tell us what you need",
+      "newProjectButton": "...or start a new project here"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account?",
+      "forgotPassword": "Forgot password?",
+      "professional": "Professional Login"
+    },
+    "signup": {
+      "title": "Create Account",
+      "firstName": "First Name",
+      "surname": "Surname",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Create Account",
+      "haveAccount": "Already have an account?"
+    },
+    "logout": {
+      "confirm": "Are you sure you want to logout?"
+    }
+  },
+  "project": {
+    "create": {
+      "title": "Create Project",
+      "heading": "Start Your Renovation Project",
+      "description": "Tell us about your project and we'll connect you with qualified professionals",
+      "projectName": "Project Name",
+      "projectNamePlaceholder": "e.g., Kitchen Renovation",
+      "location": "Location",
+      "budget": "Budget (HKD)",
+      "budgetPlaceholder": "Enter your budget",
+      "notes": "Project Details",
+      "notesPlaceholder": "Describe what you need...",
+      "submit": "Create Project",
+      "success": "Project created successfully!"
+    },
+    "list": {
+      "title": "My Projects",
+      "empty": "No projects yet",
+      "createFirst": "Create your first project",
+      "status": {
+        "draft": "Draft",
+        "open": "Open",
+        "awarded": "Awarded",
+        "in_progress": "In Progress",
+        "completed": "Completed"
+      }
+    },
+    "detail": {
+      "overview": "Overview",
+      "quotes": "Quotes",
+      "messages": "Messages",
+      "financials": "Financials",
+      "budget": "Budget",
+      "location": "Location",
+      "status": "Status",
+      "client": "Client",
+      "professional": "Professional",
+      "awarded": "Awarded",
+      "inviteProfessional": "Invite Professional"
+    },
+    "quote": {
+      "amount": "Quote Amount",
+      "notes": "Notes",
+      "submit": "Submit Quote",
+      "accept": "Accept Quote",
+      "reject": "Reject Quote",
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    }
+  },
+  "professional": {
+    "dashboard": {
+      "title": "Professional Dashboard",
+      "myProjects": "My Projects",
+      "pendingQuotes": "Pending Quotes",
+      "activeProjects": "Active Projects"
+    },
+    "profile": {
+      "title": "Professional Profile",
+      "businessName": "Business Name",
+      "services": "Services Offered",
+      "serviceArea": "Service Area",
+      "rating": "Rating",
+      "projects": "Completed Projects"
+    },
+    "quote": {
+      "submit": "Submit Quote",
+      "amount": "Quote Amount",
+      "notes": "Quote Notes",
+      "success": "Quote submitted successfully!",
+      "error": "Failed to submit quote"
+    }
+  },
+  "financial": {
+    "status": "Financial Status",
+    "escrow": {
+      "title": "Escrow",
+      "inEscrow": "In Escrow",
+      "deposit": "Deposit Required",
+      "confirmed": "Escrow Confirmed",
+      "amount": "Escrow Amount",
+      "confirm": "Confirm Deposit Made"
+    },
+    "payment": {
+      "request": "Payment Request",
+      "requestAdvance": "Request Advance Payment",
+      "pending": "Payment Request Pending",
+      "approved": "Approved (Awaiting Release)",
+      "paid": "Paid",
+      "amount": "Payment Amount",
+      "approve": "Approve",
+      "decline": "Decline",
+      "release": "Release Payment"
+    },
+    "transaction": {
+      "type": "Type",
+      "amount": "Amount",
+      "status": "Status",
+      "date": "Date",
+      "description": "Description"
+    }
+  },
+  "admin": {
+    "dashboard": "Admin Dashboard",
+    "messaging": {
+      "title": "Messaging & Support",
+      "allMessages": "All Messages",
+      "assistRequests": "Assist Requests",
+      "supportChat": "Support Chat",
+      "allTypes": "All Types",
+      "supportRequests": "Support Requests",
+      "supplierClient": "Supplier/Client",
+      "anonymous": "Anonymous",
+      "projectChat": "Project Chat",
+      "allStatuses": "All Statuses",
+      "open": "Open",
+      "inProgress": "In Progress",
+      "closed": "Closed",
+      "markRead": "Mark Read",
+      "closeThread": "Close Thread"
+    },
+    "financials": {
+      "confirmDeposit": "Confirm Deposit",
+      "releasePayment": "Release Payment",
+      "transactions": "Transactions"
+    }
+  },
+  "chat": {
+    "title": "Messages",
+    "typeMessage": "Type a message...",
+    "send": "Send",
+    "noMessages": "No messages yet",
+    "startConversation": "Start a conversation"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized",
+    "networkError": "Network error. Please try again.",
+    "validationError": "Please check your input"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must be at most {max} characters",
+    "numeric": "Must be a number",
+    "positive": "Must be greater than 0"
+  }
+}
