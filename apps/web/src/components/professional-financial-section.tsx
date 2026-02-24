@@ -89,7 +89,18 @@ export default function ProfessionalFinancialSection({
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to request payment');
+      if (!res.ok) {
+        const errorData = await res.text();
+        console.error('Payment request error:', errorData);
+        let errorMessage = 'Failed to request payment';
+        try {
+          const parsed = JSON.parse(errorData);
+          errorMessage = parsed.message || errorMessage;
+        } catch {
+          errorMessage = errorData || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
 
       toast.success('Payment request submitted successfully');
       setShowRequestForm(false);
@@ -104,6 +115,7 @@ export default function ProfessionalFinancialSection({
         setTransactions(data.filter((tx: Transaction) => tx.type === 'payment_request'));
       }
     } catch (err) {
+      console.error('Payment request exception:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to request payment');
     } finally {
       setSubmitting(false);

@@ -7,7 +7,7 @@ import { ChatService } from '../chat/chat.service';
 export interface CreateFinancialTransactionDto {
   projectId: string;
   projectProfessionalId?: string;
-  type: 'escrow_deposit' | 'payment_request' | 'advance_payment_approval' | 'advance_payment_rejection' | 'release_payment' | 'escrow_confirmation' | 'escrow_deposit_request' | 'escrow_deposit_confirmation' | 'quotation_accepted';
+  type: 'escrow_deposit' | 'payment_request' | 'advance_payment_approval' | 'advance_payment_rejection' | 'release_payment' | 'escrow_confirmation' | 'escrow_deposit_request' | 'escrow_deposit_confirmation' | 'quotation_accepted' | string;
   description: string;
   amount: number | string;
   requestedBy?: string;
@@ -181,10 +181,14 @@ export class FinancialService {
     });
 
     if (!projectProf) {
-      throw new Error('ProjectProfessional not found');
+      throw new Error(`ProjectProfessional not found with id: ${projectProfessionalId}`);
     }
 
     const clientId = projectProf.project?.clientId || projectProf.project?.userId || undefined;
+
+    if (!clientId) {
+      throw new Error('Could not determine clientId from project');
+    }
 
     return this.createTransaction({
       projectId: projectProf.projectId,
@@ -195,7 +199,7 @@ export class FinancialService {
       requestedBy,
       requestedByRole: 'professional',
       actionBy: clientId,
-      actionByRole: clientId ? 'client' : undefined,
+      actionByRole: 'client',
       actionComplete: false,
     });
   }
