@@ -664,13 +664,15 @@ export class ProfessionalController {
       // Allow multiple payment requests; no invoice dependency
 
       // Validate request
+      const quoteAmount = Number(projectProfessional.quoteAmount || 0);
+      
       if (body.requestType === 'fixed') {
         if (!body.amount || body.amount <= 0) {
           throw new BadRequestException('Invalid amount');
         }
-        if (body.amount > Number(projectProfessional.invoice.amount)) {
+        if (quoteAmount > 0 && body.amount > quoteAmount) {
           throw new BadRequestException(
-            'Amount cannot exceed invoice total',
+            'Amount cannot exceed quote total',
           );
         }
       } else if (body.requestType === 'percentage') {
@@ -682,7 +684,6 @@ export class ProfessionalController {
       }
 
       // Calculate request amount
-      const quoteAmount = Number(projectProfessional.quoteAmount || 0);
       const requestAmount = body.requestType === 'fixed'
         ? body.amount!
         : (quoteAmount * body.percentage!) / 100;

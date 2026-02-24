@@ -475,8 +475,16 @@ export default function ProjectDetailPage() {
       );
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to submit advance payment request');
+        const errorText = await response.text();
+        console.error('Payment request error:', errorText);
+        let errorMessage = 'Failed to submit advance payment request';
+        try {
+          const data = JSON.parse(errorText);
+          errorMessage = data.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       toast.success('Payment request submitted! Client will be notified.');
@@ -486,6 +494,7 @@ export default function ProjectDetailPage() {
       // Refresh project data
       window.location.reload();
     } catch (err) {
+      console.error('Payment request exception:', err);
       const message = err instanceof Error ? err.message : 'Failed to submit request';
       toast.error(message);
     } finally {
