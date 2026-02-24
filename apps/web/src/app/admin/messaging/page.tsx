@@ -219,6 +219,50 @@ export default function AdminMessagingPage() {
 
   const sendMessage = activeType === 'assist' ? sendAssistMessage : sendChatMessage;
 
+  // Mark thread as read
+  const markThreadAsRead = async () => {
+    if (!activeId || !accessToken || activeType === 'assist') return;
+    setMsgSubmitting(true);
+    try {
+      const url = `${API_BASE_URL.replace(/\/$/, "")}/chat/${activeType}/${encodeURIComponent(activeId)}/read`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to mark thread as read');
+      // Refresh thread list to update unread counts
+      await fetchChatThreads();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to mark thread as read");
+    } finally {
+      setMsgSubmitting(false);
+    }
+  };
+
+  // Close thread
+  const closeThread = async () => {
+    if (!activeId || !accessToken || activeType === 'assist') return;
+    setMsgSubmitting(true);
+    try {
+      const url = `${API_BASE_URL.replace(/\/$/, "")}/chat/${activeType}/${encodeURIComponent(activeId)}/close`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to close thread');
+      // Refresh thread list to update status
+      await fetchChatThreads();
+      // Update local messages display if needed
+      setMessages([]);
+      setActiveId(null);
+      setActiveType(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to close thread");
+    } finally {
+      setMsgSubmitting(false);
+    }
+  };
+
   const getThreadLabel = (thread: ChatThread) => {
     if (thread.type === 'private') {
       // Distinguish between support requests and professional chats
@@ -303,6 +347,10 @@ export default function AdminMessagingPage() {
   };
 
   const statusEligible = (msgType: string) => ['support', 'supplier-client', 'anonymous'].includes(msgType);
+  const filterButtonBase = 'min-w-[150px] h-10 rounded-md px-4 text-sm font-semibold border transition flex items-center justify-center gap-2';
+  const smallFilterButtonBase = 'min-w-[150px] h-9 rounded-md px-3 text-sm font-semibold border transition flex items-center justify-center gap-2';
+  const effectiveTypeFilter = viewMode === 'all' ? 'all' : typeFilter;
+  const effectiveStatusFilter = viewMode === 'all' ? 'all' : statusFilter;
 
   return (
     <div className="space-y-6">
@@ -321,7 +369,7 @@ export default function AdminMessagingPage() {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setViewMode('all')}
-          className={`rounded-md px-4 py-2 text-sm font-semibold border transition ${
+          className={`${filterButtonBase} ${
             viewMode === 'all'
               ? 'bg-slate-900 text-white border-slate-950'
               : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -331,7 +379,7 @@ export default function AdminMessagingPage() {
         </button>
         <button
           onClick={() => setViewMode('assist')}
-          className={`rounded-md px-4 py-2 text-sm font-semibold border transition ${
+          className={`${filterButtonBase} ${
             viewMode === 'assist'
               ? 'bg-emerald-600 text-white border-emerald-700'
               : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -341,7 +389,7 @@ export default function AdminMessagingPage() {
         </button>
         <button
           onClick={() => setViewMode('general')}
-          className={`rounded-md px-4 py-2 text-sm font-semibold border transition ${
+          className={`${filterButtonBase} ${
             viewMode === 'general'
               ? 'bg-blue-600 text-white border-blue-700'
               : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -356,7 +404,7 @@ export default function AdminMessagingPage() {
         <div className="flex gap-2 overflow-x-auto pb-1 whitespace-nowrap">
           <button
             onClick={() => setTypeFilter('all')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} ${
               typeFilter === 'all'
                 ? 'bg-slate-900 text-white border-slate-950'
                 : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -366,7 +414,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setTypeFilter('support')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} ${
               typeFilter === 'support'
                 ? 'bg-blue-600 text-white border-blue-700'
                 : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'
@@ -376,7 +424,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setTypeFilter('supplier-client')}
-            className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} flex-shrink-0 ${
               typeFilter === 'supplier-client'
                 ? 'bg-indigo-600 text-white border-indigo-700'
                 : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50'
@@ -386,7 +434,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setTypeFilter('anonymous')}
-            className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} flex-shrink-0 ${
               typeFilter === 'anonymous'
                 ? 'bg-gray-600 text-white border-gray-700'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -396,7 +444,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setTypeFilter('project')}
-            className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} flex-shrink-0 ${
               typeFilter === 'project'
                 ? 'bg-purple-600 text-white border-purple-700'
                 : 'bg-white text-purple-700 border-purple-300 hover:bg-purple-50'
@@ -408,11 +456,11 @@ export default function AdminMessagingPage() {
       )}
 
       {/* Status Filters for support / anonymous / professional-client */}
-      {(viewMode === 'general' || viewMode === 'all') && statusEligible(typeFilter) && (
+      {(viewMode === 'general' || viewMode === 'all') && statusEligible(effectiveTypeFilter) && (
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} ${
               statusFilter === 'all'
                 ? 'bg-slate-900 text-white border-slate-950'
                 : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -422,7 +470,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setStatusFilter('open')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} ${
               statusFilter === 'open'
                 ? 'bg-emerald-600 text-white border-emerald-700'
                 : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50'
@@ -432,7 +480,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setStatusFilter('in_progress')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} ${
               statusFilter === 'in_progress'
                 ? 'bg-amber-600 text-white border-amber-700'
                 : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
@@ -442,7 +490,7 @@ export default function AdminMessagingPage() {
           </button>
           <button
             onClick={() => setStatusFilter('closed')}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold border transition ${
+            className={`${smallFilterButtonBase} ${
               statusFilter === 'closed'
                 ? 'bg-slate-700 text-white border-slate-800'
                 : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -463,7 +511,7 @@ export default function AdminMessagingPage() {
               <button
                 key={status}
                 onClick={() => setStatusTab(status)}
-                className={`rounded-md px-3 py-1.5 text-sm font-semibold border transition ${
+                className={`${smallFilterButtonBase} ${
                   statusTab === status
                     ? 'bg-emerald-600 text-white border-emerald-700'
                     : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -641,7 +689,7 @@ export default function AdminMessagingPage() {
       )}
 
       {/* General Chat Threads View */}
-      {viewMode === 'general' && (
+      {(viewMode === 'general' || viewMode === 'all') && (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-3">
             {threadsLoading ? (
@@ -656,10 +704,10 @@ export default function AdminMessagingPage() {
               threads
                 .filter((thread) => {
                   const msgType = getChatMessageType(thread);
-                  if (typeFilter !== 'all' && msgType !== typeFilter) return false;
-                  if (statusFilter !== 'all' && statusEligible(msgType)) {
+                  if (effectiveTypeFilter !== 'all' && msgType !== effectiveTypeFilter) return false;
+                  if (effectiveStatusFilter !== 'all' && statusEligible(msgType)) {
                     const statusValue = thread.status || 'open';
-                    return statusValue === statusFilter;
+                    return statusValue === effectiveStatusFilter;
                   }
                   return true;
                 })
@@ -785,6 +833,27 @@ export default function AdminMessagingPage() {
                     {error}
                   </div>
                 )}
+                
+                {/* Thread Control Buttons */}
+                {activeId && (activeType === 'private' || activeType === 'anonymous' || activeType === 'project') && (
+                  <div className="mb-3 flex gap-2">
+                    <button
+                      onClick={() => markThreadAsRead()}
+                      disabled={msgSubmitting}
+                      className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+                    >
+                      ✓ Mark Read
+                    </button>
+                    <button
+                      onClick={() => closeThread()}
+                      disabled={msgSubmitting}
+                      className="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-xs font-medium hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+                    >
+                      🔒 Close Thread
+                    </button>
+                  </div>
+                )}
+                
                 <div className="flex gap-2">
                   <input
                     type="text"

@@ -98,6 +98,17 @@ export class ChatController {
     return { success: true };
   }
 
+  /**
+   * POST /chat/private/:threadId/close - Close a private thread
+   * Requires authentication (FOH admin only)
+   */
+  @Post('private/:threadId/close')
+  @UseGuards(CombinedAuthGuard)
+  async closePrivateThread(@Param('threadId') threadId: string) {
+    await this.chatService.closePrivateThread(threadId);
+    return { success: true };
+  }
+
   // ===== ANONYMOUS CHAT ENDPOINTS =====
 
   /**
@@ -137,6 +148,17 @@ export class ChatController {
     );
 
     return { message };
+  }
+
+  /**
+   * POST /chat/anonymous/:threadId/close - Close an anonymous thread
+   * Requires authentication (FOH admin only)
+   */
+  @Post('anonymous/:threadId/close')
+  @UseGuards(CombinedAuthGuard)
+  async closeAnonymousThread(@Param('threadId') threadId: string) {
+    await this.chatService.closeAnonymousThread(threadId);
+    return { success: true };
   }
 
   // ===== ADMIN ENDPOINTS =====

@@ -121,6 +121,16 @@ export class ChatService {
     });
   }
 
+  /**
+   * Close a private thread
+   */
+  async closePrivateThread(threadId: string): Promise<void> {
+    await this.prisma.privateChatThread.update({
+      where: { id: threadId },
+      data: { status: 'closed', updatedAt: new Date() },
+    });
+  }
+
   // ===== ANONYMOUS CHAT =====
 
   /**
@@ -184,6 +194,16 @@ export class ChatService {
     });
 
     return this.mapAnonymousMessageDto(message);
+  }
+
+  /**
+   * Close an anonymous thread
+   */
+  async closeAnonymousThread(threadId: string): Promise<void> {
+    await this.prisma.anonymousChatThread.update({
+      where: { id: threadId },
+      data: { status: 'closed', updatedAt: new Date() },
+    });
   }
 
   // ===== PROJECT CHAT (Post-Award Team Chat) =====
