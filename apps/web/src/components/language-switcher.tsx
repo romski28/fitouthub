@@ -1,21 +1,28 @@
 'use client';
 
-import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export function LanguageSwitcher() {
   const router = useRouter();
-  const pathname = usePathname();
   const [locale, setLocale] = useState<string>('en');
+
+  // Initialize from cookie
+  useEffect(() => {
+    const cookieLocale = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('NEXT_LOCALE='))
+      ?.split('=')[1];
+    if (cookieLocale) {
+      setLocale(cookieLocale);
+    }
+  }, []);
 
   const handleLocaleChange = (newLocale: string) => {
     setLocale(newLocale);
     
-    // Store preference in localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('preferred-locale', newLocale);
-      document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`;
-    }
+    // Store preference in cookie
+    document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`;
     
     // Refresh page to apply new locale
     router.refresh();

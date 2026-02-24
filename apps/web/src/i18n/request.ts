@@ -1,16 +1,21 @@
 import { getRequestConfig } from 'next-intl/server';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 export default getRequestConfig(async () => {
-  // Get locale from cookie or Accept-Language header
+  // Get locale from cookie first, then Accept-Language header
+  const cookieStore = await cookies();
   const headersList = await headers();
+  
+  const localeCookie = cookieStore.get('NEXT_LOCALE')?.value;
   const acceptLanguage = headersList.get('accept-language');
   
   // Default to English, support Cantonese (zh-HK)
   let locale = 'en';
   
-  // Check for zh/zh-HK/zh-CN in accept-language
-  if (acceptLanguage?.includes('zh')) {
+  // Priority: cookie > accept-language header
+  if (localeCookie && ['en', 'zh-HK'].includes(localeCookie)) {
+    locale = localeCookie;
+  } else if (acceptLanguage?.includes('zh')) {
     locale = 'zh-HK';
   }
 
