@@ -102,9 +102,11 @@
     "send": "傳送"
   },
   "errors": {
-    "generic": "發生錯誤"
+    "generic": "發生錯誤",
+    "registrationFailed": "註冊失敗"
   },
   "validation": {
-    "required": "此欄為必填"
+    "required": "此欄為必填",
+    "passwordMismatch": "密碼不相符"
   }
 }

@@ -102,9 +102,11 @@
     "send": "Send"
   },
   "errors": {
-    "generic": "Something went wrong"
+    "generic": "Something went wrong",
+    "registrationFailed": "Registration failed"
   },
   "validation": {
-    "required": "This field is required"
+    "required": "This field is required",
+    "passwordMismatch": "Passwords do not match"
   }
 }

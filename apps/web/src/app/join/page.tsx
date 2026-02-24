@@ -3,10 +3,12 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ProfessionRegistrationModal } from '@/components/profession-registration-modal';
 
 export default function JoinPage() {
   const router = useRouter();
+  const t = useTranslations('auth');
   const [showClientFlow, setShowClientFlow] = useState(false);
   const [showProfessionalFlow, setShowProfessionalFlow] = useState(false);
 
@@ -62,9 +64,9 @@ export default function JoinPage() {
           </div>
 
           <div className="text-center text-sm text-slate-600">
-            Already have an account?{' '}
+            {t('login.haveAccount')}{' '}
             <Link href="/login" className="font-semibold text-blue-600 hover:underline">
-              Log in
+              {t('nav.login')}
             </Link>
           </div>
         </div>
@@ -75,6 +77,7 @@ export default function JoinPage() {
 
 function ClientSignupFlow() {
   const router = useRouter();
+  const t = useTranslations('auth');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -92,7 +95,7 @@ function ClientSignupFlow() {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('validation.passwordMismatch'));
       return;
     }
 
@@ -114,12 +117,12 @@ function ClientSignupFlow() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || t('errors.registrationFailed'));
       }
 
       router.push('/projects');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : t('errors.registrationFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +133,7 @@ function ClientSignupFlow() {
       <div className="w-full max-w-md">
         <div className="rounded-xl border border-blue-200 bg-white shadow-lg p-8 space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-slate-900">Create Client Account</h1>
+            <h1 className="text-3xl font-bold text-slate-900">{t('signup.title')}</h1>
             <p className="text-slate-600">Get started with your fitout project</p>
           </div>
 
@@ -148,7 +151,7 @@ function ClientSignupFlow() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.firstName')}</label>
                 <input
                   type="text"
                   required
@@ -170,7 +173,7 @@ function ClientSignupFlow() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.email')}</label>
               <input
                 type="email"
                 required
@@ -181,7 +184,7 @@ function ClientSignupFlow() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Mobile (Optional)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Mobile ({t('common.optional')})</label>
               <input
                 type="tel"
                 value={formData.mobile}
@@ -191,7 +194,7 @@ function ClientSignupFlow() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('login.password')}</label>
               <input
                 type="password"
                 required
@@ -219,14 +222,14 @@ function ClientSignupFlow() {
               disabled={isSubmitting}
               className="w-full rounded-lg bg-blue-600 text-white font-semibold py-2.5 hover:bg-blue-700 disabled:opacity-50 transition"
             >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              {isSubmitting ? t('common.loading') : t('signup.submit')}
             </button>
           </form>
 
           <div className="text-center text-sm text-slate-600">
-            Already have an account?{' '}
+            {t('login.haveAccount')}{' '}
             <Link href="/login" className="font-semibold text-blue-600 hover:underline">
-              Log in
+              {t('nav.login')}
             </Link>
           </div>
         </div>
