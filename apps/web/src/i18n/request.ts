@@ -106,6 +106,70 @@ const messages = {
       "title": "Messages",
       "send": "Send"
     },
+    "home": {
+      "hero": {
+        "tagline": "Professional Fitout Management Platform",
+        "title": "Transform Your Space with Fitout Hub",
+        "description": "Connect with trusted professionals, manage projects, and complete fitouts on time and budget"
+      },
+      "quickStart": {
+        "tagline": "Get Started in 3 Steps",
+        "title": "Post a Project & Get Quotes",
+        "newProjectButton": "Create Your First Project"
+      },
+      "features": {
+        "tabs": {
+          "why": "Why Fitout Hub",
+          "how": "How It Works",
+          "who": "Who We Are",
+          "choose": "Choose Fitout Hub"
+        },
+        "why": {
+          "title": "Why Choose Fitout Hub?",
+          "description": "The complete solution for managing your fitout projects",
+          "secure": {
+            "title": "Secure Transactions",
+            "description": "Protected escrow payments and verified contractors"
+          },
+          "contracts": {
+            "title": "Smart Contracts",
+            "description": "Automated agreements and milestone payments"
+          },
+          "oversight": {
+            "title": "Project Oversight",
+            "description": "Real-time tracking and professional management"
+          },
+          "collaboration": {
+            "title": "Easy Collaboration",
+            "description": "Integrated messaging and document sharing"
+          }
+        },
+        "how": {
+          "title": "How It Works",
+          "description": "Simple steps to get your project started",
+          "plan": {
+            "title": "1. Plan Your Project",
+            "description": "Describe your fitout needs and budget requirements"
+          },
+          "match": {
+            "title": "2. Match with Professionals",
+            "description": "Receive quotes from verified contractors in your area"
+          },
+          "manage": {
+            "title": "3. Manage & Complete",
+            "description": "Track progress, manage payments, and communicate seamlessly"
+          }
+        },
+        "who": {
+          "title": "Who We Are",
+          "description": "Transforming the fitout industry with technology"
+        },
+        "choose": {
+          "title": "Why Choose Fitout Hub?",
+          "description": "Join hundreds of satisfied clients and professionals"
+        }
+      }
+    },
     "errors": {
       "generic": "Something went wrong",
       "registrationFailed": "Registration failed"
@@ -217,6 +281,70 @@ const messages = {
     "chat": {
       "title": "訊息",
       "send": "傳送"
+    },
+    "home": {
+      "hero": {
+        "tagline": "專業裝修管理平台",
+        "title": "使用 Fitout Hub 改造您的空間",
+        "description": "連接信任的專業人士、管理項目、按時間和預算完成裝修"
+      },
+      "quickStart": {
+        "tagline": "3個步驟快速開始",
+        "title": "發佈項目並獲取報價",
+        "newProjectButton": "建立您的首個項目"
+      },
+      "features": {
+        "tabs": {
+          "why": "為什麼選擇Fitout Hub",
+          "how": "運作方式",
+          "who": "我們是誰",
+          "choose": "選擇Fitout Hub"
+        },
+        "why": {
+          "title": "為什麼選擇Fitout Hub？",
+          "description": "完整的裝修項目管理方案",
+          "secure": {
+            "title": "安全交易",
+            "description": "受保護的託管付款和認證承包商"
+          },
+          "contracts": {
+            "title": "智能合約",
+            "description": "自動化協議和里程碑付款"
+          },
+          "oversight": {
+            "title": "項目監督",
+            "description": "實時追蹤和專業管理"
+          },
+          "collaboration": {
+            "title": "輕鬆協作",
+            "description": "集成通訊和文件共享"
+          }
+        },
+        "how": {
+          "title": "運作方式",
+          "description": "簡單步驟開始您的項目",
+          "plan": {
+            "title": "1. 規劃項目",
+            "description": "描述您的裝修需求和預算要求"
+          },
+          "match": {
+            "title": "2. 配對專業人士",
+            "description": "從您所在地區的認證承包商獲取報價"
+          },
+          "manage": {
+            "title": "3. 管理和完成",
+            "description": "追蹤進度、管理付款、無縫溝通"
+          }
+        },
+        "who": {
+          "title": "我們是誰",
+          "description": "用技術改造裝修行業"
+        },
+        "choose": {
+          "title": "為什麼選擇Fitout Hub？",
+          "description": "加入數百名滿意的客戶和專業人士"
+        }
+      }
     },
     "errors": {
       "generic": "發生錯誤",
