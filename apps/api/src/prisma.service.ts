@@ -14,11 +14,16 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    // Ensure a conservative connection footprint for pooled environments (e.g., Render with PgBouncer)
     const rawUrl = process.env.DATABASE_URL || '';
     const urlHasQuery = rawUrl.includes('?');
-    const extraParams = 'pgbouncer=true&connection_limit=1&pool_timeout=30';
-    const configuredUrl = rawUrl
+    
+    // Only add pgbouncer params if using Supabase pooler, not direct connection
+    const isPooler = rawUrl.includes('.pooler.supabase.com');
+    const extraParams = isPooler
+      ? 'pgbouncer=true&connection_limit=1&pool_timeout=30'
+      : '';
+    
+    const configuredUrl = rawUrl && extraParams
       ? `${rawUrl}${urlHasQuery ? '&' : '?'}${extraParams}`
       : rawUrl;
     super({
