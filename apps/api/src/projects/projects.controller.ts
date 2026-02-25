@@ -24,12 +24,14 @@ import { ConfirmSiteVisitDto } from './dto/confirm-site-visit.dto';
 import { ProjectLocationDetailsDto } from './dto/project-location-details.dto';
 import { ChatService } from '../chat/chat.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
+import { PrismaService } from '../prisma.service';
 
 @Controller('projects')
 export class ProjectsController {
   constructor(
     private readonly projectsService: ProjectsService,
     private readonly chatService: ChatService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get()
@@ -91,20 +93,39 @@ export class ProjectsController {
     const userId = req.user?.id || req.user?.sub;
     console.log('[DEBUG] User from token:', JSON.stringify(req.user, null, 2));
     
-    // Query all projects to see what exists
-    const allProjects = await this.projectsService.findAll();
+    // Direct query to check what's in the database
+    const allProjects = await this.prisma.project.findMany({
+      take: 10,
+      select: {
+        id: true,
+        projectName: true,
+        clientId: true,
+        userId: true,
+      },
+    });
     console.log('[DEBUG] Total projects in DB:', allProjects.length);
+    console.log('[DEBUG] Sample projects:', JSON.stringify(allProjects.slice(0, 3), null, 2));
     
     // Query for this user
-    const userProjects = await this.projectsService.findAllForClient(userId);
-    console.log('[DEBUG] Projects for userId', userId, ':', userProjects.length);
+    const userProjects = await this.prisma.project.findMany({
+      where: {
+        userId: userId,
+      },
+      select: {
+        id: true,
+        projectName: true,
+        clientId: true,
+        userId: true,
+      },
+    });
+    console.log('[DEBUG] Projects where userId =', userId, ':', userProjects.length);
     
     return {
-      userId,
+      authenticatedUserId: userId,
       totalProjectsInDb: allProjects.length,
-      userProjectsFound: userProjects.length,
-      userProjects: userProjects.map(p => ({ id: p.id, projectName: p.projectName, clientId: p.clientId, userId: p.userId })),
-      allProjectSampleIds: allProjects.slice(0, 5).map(p => ({ id: p.id, projectName: p.projectName, clientId: p.clientId, userId: p.userId })),
+      sampleProjects: allProjects,
+      projectsForThisUser: userProjects.length,
+      matchingProjects: userProjects,
     };
   }
 
