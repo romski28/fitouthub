@@ -87,6 +87,29 @@ export class ProjectsController {
     return this.projectsService.findCanonical(clientId);
   }
 
+  // TEMPORARY: Public debug endpoint to check database
+  @Get('debug-public')
+  async debugPublic() {
+    const allProjects = await this.prisma.project.findMany({
+      take: 20,
+      select: {
+        id: true,
+        projectName: true,
+        clientId: true,
+        userId: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    return {
+      totalProjects: allProjects.length,
+      projects: allProjects,
+      note: 'This is a temporary debug endpoint. Shows all projects with userId field.',
+    };
+  }
+
   @Get('debug')
   @UseGuards(CombinedAuthGuard)
   async debugProjects(@Request() req: any) {
