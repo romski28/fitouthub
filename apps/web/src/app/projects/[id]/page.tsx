@@ -230,6 +230,16 @@ export default function ClientProjectDetailPage() {
     return () => clearTimeout(scrollTimer);
   }, [projectId]);
 
+  const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
+    const text = await response.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return null;
+    }
+  };
+
   // Helper: fetch project details (reusable)
   const fetchProject = async () => {
     if (!accessToken || !projectId) return;
@@ -251,7 +261,10 @@ export default function ClientProjectDetailPage() {
         throw new Error('Failed to fetch project');
       }
 
-      const data = await response.json();
+      const data = await parseJsonResponse<ProjectDetail>(response);
+      if (!data) {
+        throw new Error('Empty response from server');
+      }
       setProject(data);
 
       // Auto-select first professional if available
@@ -289,7 +302,10 @@ export default function ClientProjectDetailPage() {
         throw new Error(data.message || 'Failed to load site access requests');
       }
 
-      const data = await response.json();
+      const data = await parseJsonResponse<{ requests?: SiteAccessRequest[]; siteAccessData?: SiteAccessData | null }>(response);
+      if (!data) {
+        throw new Error('Empty response from server');
+      }
       setSiteAccessRequests(data.requests || []);
       setSiteAccessData(data.siteAccessData || null);
     } catch (err) {
@@ -481,7 +497,10 @@ export default function ClientProjectDetailPage() {
           throw new Error('Failed to fetch messages');
         }
 
-        const data = await res.json();
+        const data = await parseJsonResponse<{ messages?: Message[] }>(res);
+        if (!data) {
+          throw new Error('Empty response from server');
+        }
         setMessages(data.messages || []);
 
         // Mark messages as read
@@ -522,7 +541,7 @@ export default function ClientProjectDetailPage() {
           const text = await res.text();
           throw new Error(text || 'Failed to load assistance');
         }
-        const data = await res.json();
+        const data = await parseJsonResponse<{ assist?: { id?: string } }>(res);
         const assist = data?.assist;
         if (assist?.id) {
           setAssistRequestId(assist.id);
@@ -531,8 +550,8 @@ export default function ClientProjectDetailPage() {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
           if (mres.ok) {
-            const msgs = await mres.json();
-            const normalized = Array.isArray(msgs) ? msgs : (msgs.messages || []);
+            const msgs = await parseJsonResponse<any>(mres);
+            const normalized = Array.isArray(msgs) ? msgs : (msgs?.messages || []);
             // Map to Message shape
             const mapped: Message[] = normalized.map((m: any) => ({
               id: m.id,
