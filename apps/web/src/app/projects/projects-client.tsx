@@ -427,11 +427,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [search, setSearch] = useState("");
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
 
+  console.log('[ProjectsClient] Render - projects.length:', projects.length, 'items.length:', items.length);
+
   useEffect(() => {
     setHydrated(true);
   }, []);
 
   useEffect(() => {
+    console.log('[ProjectsClient] projects prop changed, length:', projects.length);
     setItems(mapProjectsToItems(projects));
   }, [projects]);
 
