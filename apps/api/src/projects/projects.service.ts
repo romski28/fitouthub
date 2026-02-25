@@ -205,6 +205,7 @@ export class ProjectsService {
   }
   
   async findAllForClient(clientId: string) {
+    console.log('[ProjectsService.findAllForClient] Looking for projects for clientId:', clientId);
     try {
       const projects = await this.prisma.project.findMany({
         where: {
@@ -220,6 +221,8 @@ export class ProjectsService {
           photos: true,
         },
       });
+
+      console.log('[ProjectsService.findAllForClient] Query returned', projects.length, 'projects');
 
       return projects.map((p: any) => ({
         ...p,
@@ -993,6 +996,16 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    const projectProfessional = await this.prisma.projectProfessional.findUnique({
+      where: {
+        projectId_professionalId: {
+          projectId: emailToken.projectId,
+          professionalId: emailToken.professionalId,
+        },
+      },
+      select: { id: true },
+    });
+
     // Send follow-up email if accepted
     if (action === 'accept') {
       const professionalName =
@@ -1021,6 +1034,7 @@ Please review the project details and respond with your quote or decline the inv
           : 'Project declined. Thank you for your response.',
       projectId: emailToken.projectId,
       professionalId: emailToken.professionalId,
+      projectProfessionalId: projectProfessional?.id,
     };
   }
 

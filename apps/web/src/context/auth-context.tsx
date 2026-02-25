@@ -148,6 +148,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const result = await response.json();
 
+    console.log('[AuthContext.login] Login successful:', {
+      user: result.user,
+      hasAccessToken: !!result.accessToken,
+    });
+
     // Save tokens and user to localStorage
     localStorage.setItem('accessToken', result.accessToken);
     localStorage.setItem('refreshToken', result.refreshToken);

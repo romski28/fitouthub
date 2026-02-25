@@ -105,6 +105,31 @@ function dedupeProfessionals(list: NonNullable<ExtendedProject["professionals"]>
   return Array.from(map.values());
 }
 
+function mapProjectsToItems(projects: Project[]): ExtendedProject[] {
+  return projects.map((p) => {
+    const relationPhotos = Array.isArray((p as any).photos)
+      ? (p as any).photos.map((ph: any) => ph?.url).filter(Boolean)
+      : [];
+    const legacyPhotoUrls = Array.isArray((p as any).photoUrls)
+      ? (p as any).photoUrls.filter(Boolean)
+      : [];
+    const extracted = extractPhotoUrls((p as any).notes);
+    const photos = relationPhotos.length > 0
+      ? relationPhotos
+      : (legacyPhotoUrls.length > 0 ? legacyPhotoUrls : extracted);
+    const base: ExtendedProject = {
+      ...(p as any),
+      photos,
+      professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
+      sourceIds: [String((p as any).id)],
+    };
+    if (base.professionals) {
+      base.professionals = dedupeProfessionals(base.professionals);
+    }
+    return base;
+  });
+}
+
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -396,30 +421,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
   const [showDescriptionModal, setShowDescriptionModal] = useState(initialShowCreateModal);
-  const [items, setItems] = useState<ExtendedProject[]>(() => {
-    // Map projects directly without consolidation - each project is unique by ID
-    return projects.map(p => {
-      const relationPhotos = Array.isArray((p as any).photos)
-        ? (p as any).photos.map((ph: any) => ph?.url).filter(Boolean)
-        : [];
-      const legacyPhotoUrls = Array.isArray((p as any).photoUrls) ? (p as any).photoUrls.filter(Boolean) : [];
-      const extracted = extractPhotoUrls((p as any).notes);
-      const photos = relationPhotos.length > 0
-        ? relationPhotos
-        : (legacyPhotoUrls.length > 0 ? legacyPhotoUrls : extracted);
-      const base: ExtendedProject = {
-        ...(p as any),
-        photos,
-        professionals: ((p as any).professionals ?? []) as ExtendedProject['professionals'],
-        sourceIds: [String((p as any).id)],
-      };
-      // Deduplicate professionals within each project
-      if (base.professionals) {
-        base.professionals = dedupeProfessionals(base.professionals);
-      }
-      return base;
-    });
-  });
+  const [items, setItems] = useState<ExtendedProject[]>(() => mapProjectsToItems(projects));
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [search, setSearch] = useState("");
@@ -428,6 +430,10 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   useEffect(() => {
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    setItems(mapProjectsToItems(projects));
+  }, [projects]);
 
   const subtitle = useMemo(
     () => (clientId ? `Showing projects for client ${clientId}` : "Live data from the Nest API at /projects."),

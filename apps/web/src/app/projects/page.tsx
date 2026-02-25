@@ -28,18 +28,38 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
 
   useEffect(() => {
     const loadProjects = async () => {
-      if (!accessToken || !isLoggedIn) return;
+      if (!accessToken || !isLoggedIn) {
+        console.log('[ProjectsPage] Skipping fetch: accessToken or isLoggedIn not ready', { 
+          hasToken: !!accessToken, 
+          isLoggedIn 
+        });
+        return;
+      }
+      
+      const url = `${API_BASE_URL}/projects${params?.clientId ? `?clientId=${params.clientId}` : ''}`;
+      console.log('[ProjectsPage] Fetching projects from:', url);
+      
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/projects${params?.clientId ? `?clientId=${params.clientId}` : ''}`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
+        const response = await fetch(url, { 
+          headers: { Authorization: `Bearer ${accessToken}` } 
+        });
+        
+        console.log('[ProjectsPage] Response status:', response.status, response.statusText);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('[ProjectsPage] Successfully loaded', data?.length || 0, 'projects');
           setProjects(data);
+        } else {
+          const errorText = await response.text();
+          console.error('[ProjectsPage] Non-ok response:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+          });
         }
       } catch (err) {
-        console.error('Failed to load projects', err);
+        console.error('[ProjectsPage] Fetch failed with exception:', err);
       } finally {
         setLoading(false);
       }

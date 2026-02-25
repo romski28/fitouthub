@@ -39,6 +39,13 @@ export class ProjectsController {
     const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
     const isProfessionalFlag = req.user?.isProfessional;
 
+    console.log('[ProjectsController.findAll] Request received:', {
+      userId,
+      tokenRole,
+      isProfessionalFlag,
+      userKeys: Object.keys(req.user || {}),
+    });
+
     let role: 'client' | 'professional' | 'admin' = 'client';
     if (tokenRole === 'admin') {
       role = 'admin';
@@ -47,6 +54,8 @@ export class ProjectsController {
     } else {
       role = 'client';
     }
+
+    console.log('[ProjectsController.findAll] Determined role:', role);
 
     if (!userId) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -57,7 +66,10 @@ export class ProjectsController {
     }
 
     if (role === 'client') {
-      return this.projectsService.findAllForClient(userId);
+      console.log('[ProjectsController.findAll] Calling findAllForClient with userId:', userId);
+      const result = await this.projectsService.findAllForClient(userId);
+      console.log('[ProjectsController.findAll] Found', result?.length || 0, 'projects');
+      return result;
     }
 
     throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
@@ -100,6 +112,7 @@ export class ProjectsController {
         webBaseUrl,
         projectId: result.projectId,
         professionalId: result.professionalId,
+        projectProfessionalId: result.projectProfessionalId,
       });
     } catch (error) {
       // Gracefully show a user-facing page instead of a raw 400
@@ -120,12 +133,15 @@ export class ProjectsController {
     webBaseUrl: string;
     projectId?: string;
     professionalId?: string;
+    projectProfessionalId?: string;
   }) {
-    const { title, message, action, webBaseUrl, projectId, professionalId } = params;
+    const { title, message, action, webBaseUrl, projectId, professionalId, projectProfessionalId } = params;
     const buttonHtml =
-      action === 'accept' && projectId && professionalId
-        ? `<a href="${webBaseUrl}/professional-projects/${projectId}?pro=${professionalId}">View Project & Submit Quote</a>`
-        : `<p style="color: #6b7280; margin-top: 20px; font-weight: 500;">You may now close this window or return to your dashboard.</p><a href="${webBaseUrl}/" style="margin-top: 10px;">Return to Dashboard</a>`;
+      action === 'accept' && projectProfessionalId
+        ? `<a href="${webBaseUrl}/professional-projects/${projectProfessionalId}">View Project & Submit Quote</a>`
+        : action === 'accept' && projectId && professionalId
+          ? `<a href="${webBaseUrl}/professional-projects/${projectId}?pro=${professionalId}">View Project & Submit Quote</a>`
+          : `<p style="color: #6b7280; margin-top: 20px; font-weight: 500;">You may now close this window or return to your dashboard.</p><a href="${webBaseUrl}/" style="margin-top: 10px;">Return to Dashboard</a>`;
 
     return `
       <!DOCTYPE html>
