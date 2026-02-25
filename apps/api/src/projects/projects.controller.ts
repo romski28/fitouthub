@@ -35,44 +35,49 @@ export class ProjectsController {
   @Get()
   @UseGuards(CombinedAuthGuard)
   async findAll(@Request() req: any) {
-    const userId = req.user?.id || req.user?.sub;
-    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
-    const isProfessionalFlag = req.user?.isProfessional;
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+      const isProfessionalFlag = req.user?.isProfessional;
 
-    console.log('[ProjectsController.findAll] Request received:', {
-      userId,
-      tokenRole,
-      isProfessionalFlag,
-      userKeys: Object.keys(req.user || {}),
-    });
+      console.log('[ProjectsController.findAll] Request received:', {
+        userId,
+        tokenRole,
+        isProfessionalFlag,
+        userKeys: Object.keys(req.user || {}),
+      });
 
-    let role: 'client' | 'professional' | 'admin' = 'client';
-    if (tokenRole === 'admin') {
-      role = 'admin';
-    } else if (tokenRole === 'professional' || isProfessionalFlag) {
-      role = 'professional';
-    } else {
-      role = 'client';
+      let role: 'client' | 'professional' | 'admin' = 'client';
+      if (tokenRole === 'admin') {
+        role = 'admin';
+      } else if (tokenRole === 'professional' || isProfessionalFlag) {
+        role = 'professional';
+      } else {
+        role = 'client';
+      }
+
+      console.log('[ProjectsController.findAll] Determined role:', role);
+
+      if (!userId) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      if (role === 'admin') {
+        return this.projectsService.findAll();
+      }
+
+      if (role === 'client') {
+        console.log('[ProjectsController.findAll] Calling findAllForClient with userId:', userId);
+        const result = await this.projectsService.findAllForClient(userId);
+        console.log('[ProjectsController.findAll] Found', result?.length || 0, 'projects');
+        return result;
+      }
+
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    } catch (error) {
+      console.error('[ProjectsController.findAll] Error:', error?.message, error?.stack);
+      throw error;
     }
-
-    console.log('[ProjectsController.findAll] Determined role:', role);
-
-    if (!userId) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-
-    if (role === 'admin') {
-      return this.projectsService.findAll();
-    }
-
-    if (role === 'client') {
-      console.log('[ProjectsController.findAll] Calling findAllForClient with userId:', userId);
-      const result = await this.projectsService.findAllForClient(userId);
-      console.log('[ProjectsController.findAll] Found', result?.length || 0, 'projects');
-      return result;
-    }
-
-    throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
   }
 
   @Get('canonical')

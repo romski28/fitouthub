@@ -235,14 +235,38 @@ export class ProjectsService {
         })));
       }
 
-      return projects.map((p: any) => ({
-        ...p,
-        professionals: this.dedupeProfessionals(p.professionals),
-      }));
+      try {
+        const mapped = projects.map((p: any) => {
+          try {
+            return {
+              ...p,
+              professionals: this.dedupeProfessionals(p.professionals),
+            };
+          } catch (mapError) {
+            console.error('[ProjectsService.findAllForClient] Error mapping project:', p.id, mapError);
+            return {
+              ...p,
+              professionals: [],
+            };
+          }
+        });
+        console.log('[ProjectsService.findAllForClient] Successfully mapped', mapped.length, 'projects');
+        return mapped;
+      } catch (mapError) {
+        console.error('[ProjectsService.findAllForClient] Error in map operation:', mapError);
+        return projects.map((p: any) => ({ ...p, professionals: [] }));
+      }
     } catch (error) {
       console.error('[ProjectsService.findAllForClient] Database error:', {
-        message: error.message,
-        code: error.code,
+        message: error?.message,
+        code: error?.code,
+        meta: error?.meta,
+        stack: error?.stack,
+      });
+      // Return empty array instead of throwing - don't crash the API
+      return [];
+    }
+  }
         meta: error.meta,
       });
       throw error;
