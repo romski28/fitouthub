@@ -274,46 +274,58 @@ export class ProjectsService {
   }
 
   async findOne(id: string) {
-    const project = await this.prisma.project.findUnique({
-      where: { id },
-      include: {
-        client: true,
-        professionals: {
-          include: {
-            professional: true,
+    try {
+      const project = await this.prisma.project.findUnique({
+        where: { id },
+        include: {
+          client: true,
+          professionals: {
+            include: {
+              professional: true,
+            },
           },
+          photos: true,
         },
-        photos: true,
-      },
-    });
-    if (!project) return null;
-    return {
-      ...project,
-      professionals: this.dedupeProfessionals((project as any).professionals),
-    } as any;
+      });
+      if (!project) return null;
+      return {
+        ...project,
+        professionals: this.dedupeProfessionals((project as any).professionals),
+      } as any;
+    } catch (error) {
+      console.error('[ProjectsService.findOne] Error:', error?.message, error?.stack);
+      return null;
+    }
   }
 
   async findOneForClient(id: string, clientId: string) {
-    const project = await this.prisma.project.findFirst({
-      where: {
-        id,
-        OR: [{ clientId }, { userId: clientId }],
-      },
-      include: {
-        client: true,
-        professionals: {
-          include: {
-            professional: true,
-          },
+    try {
+      console.log('[ProjectsService.findOneForClient] Fetching project:', id, 'for userId:', clientId);
+      const project = await this.prisma.project.findFirst({
+        where: {
+          id,
+          OR: [{ clientId }, { userId: clientId }],
         },
-        photos: true,
-      },
-    });
-    if (!project) return null;
-    return {
-      ...project,
-      professionals: this.dedupeProfessionals((project as any).professionals),
-    } as any;
+        include: {
+          client: true,
+          professionals: {
+            include: {
+              professional: true,
+            },
+          },
+          photos: true,
+        },
+      });
+      console.log('[ProjectsService.findOneForClient] Project found:', !!project);
+      if (!project) return null;
+      return {
+        ...project,
+        professionals: this.dedupeProfessionals((project as any).professionals),
+      } as any;
+    } catch (error) {
+      console.error('[ProjectsService.findOneForClient] Error:', error?.message, error?.stack);
+      return null;
+    }
   }
 
   async getEmailTokens(projectId: string) {

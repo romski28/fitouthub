@@ -199,32 +199,43 @@ export class ProjectsController {
   @Get(':id')
   @UseGuards(CombinedAuthGuard)
   async findOne(@Param('id') id: string, @Request() req: any) {
-    const userId = req.user?.id || req.user?.sub;
-    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
-    const isProfessionalFlag = req.user?.isProfessional;
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+      const isProfessionalFlag = req.user?.isProfessional;
 
-    let role: 'client' | 'professional' | 'admin' = 'client';
-    if (tokenRole === 'admin') {
-      role = 'admin';
-    } else if (tokenRole === 'professional' || isProfessionalFlag) {
-      role = 'professional';
-    } else {
-      role = 'client';
+      console.log('[ProjectsController.findOne] Request for project:', id, 'userId:', userId, 'role:', tokenRole);
+
+      let role: 'client' | 'professional' | 'admin' = 'client';
+      if (tokenRole === 'admin') {
+        role = 'admin';
+      } else if (tokenRole === 'professional' || isProfessionalFlag) {
+        role = 'professional';
+      } else {
+        role = 'client';
+      }
+
+      if (!userId) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      if (role === 'admin') {
+        const project = await this.projectsService.findOne(id);
+        console.log('[ProjectsController.findOne] Found project for admin:', !!project);
+        return project;
+      }
+
+      if (role === 'client') {
+        const project = await this.projectsService.findOneForClient(id, userId);
+        console.log('[ProjectsController.findOne] Found project for client:', !!project);
+        return project;
+      }
+
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    } catch (error) {
+      console.error('[ProjectsController.findOne] Error fetching project:', id, error?.message, error?.stack);
+      throw error;
     }
-
-    if (!userId) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-
-    if (role === 'admin') {
-      return this.projectsService.findOne(id);
-    }
-
-    if (role === 'client') {
-      return this.projectsService.findOneForClient(id, userId);
-    }
-
-    throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
   }
 
   @Get(':id/tokens')
