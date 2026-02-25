@@ -35,6 +35,52 @@
     "admin": "Admin",
     "messaging": "Messaging"
   },
+  "home": {
+    "features": {
+      "how": {
+        "complete": {
+          "title": "Complete Your Project",
+          "description": "Track progress and complete your renovation with confidence"
+        }
+      },
+      "who": {
+        "clients": {
+          "title": "For Clients",
+          "description": "Manage your renovation project with ease and transparency"
+        },
+        "contractors": {
+          "title": "For Contractors",
+          "description": "Find quality leads and grow your business"
+        },
+        "suppliers": {
+          "title": "For Suppliers",
+          "description": "Connect with projects and expand your reach"
+        },
+        "designers": {
+          "title": "For Designers",
+          "description": "Collaborate seamlessly on renovation projects"
+        }
+      },
+      "choose": {
+        "pm": {
+          "title": "Project Management",
+          "description": "Comprehensive tools to manage every aspect of your renovation"
+        },
+        "communication": {
+          "title": "Clear Communication",
+          "description": "Stay connected with all stakeholders in real-time"
+        },
+        "platform": {
+          "title": "All-in-One Platform",
+          "description": "Everything you need in one place"
+        },
+        "risk": {
+          "title": "Risk Protection",
+          "description": "Secure payments and verified professionals"
+        }
+      }
+    }
+  },
   "auth": {
     "login": {
       "title": "Login",
