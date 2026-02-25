@@ -1114,6 +1114,29 @@ Please review the project details and respond with your quote or decline the inv
       throw new Error('You have already submitted a quote for this project');
     }
 
+    const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectProfessionalId: projectProfessional.id,
+      },
+      orderBy: {
+        requestedAt: 'desc',
+      },
+    });
+
+    const approvedStatuses = [
+      'approved_no_visit',
+      'approved_visit_scheduled',
+      'visited',
+    ];
+    const hasApprovedAccess =
+      !!latestAccessRequest && approvedStatuses.includes(latestAccessRequest.status);
+    const isVisitScheduled =
+      latestAccessRequest?.status === 'approved_visit_scheduled';
+    const hasVisited =
+      !!latestAccessRequest?.visitedAt || latestAccessRequest?.status === 'visited';
+    const isRemoteQuote = !hasApprovedAccess || (isVisitScheduled && !hasVisited);
+    const visitApprovedButNotDone = isVisitScheduled && !hasVisited;
+
     // Update ProjectProfessional with quote
     await this.prisma.projectProfessional.update({
       where: {
@@ -1127,8 +1150,19 @@ Please review the project details and respond with your quote or decline the inv
         quoteAmount,
         quoteNotes,
         quotedAt: new Date(),
+        visitApprovedButNotDone,
       },
     });
+
+    if (latestAccessRequest) {
+      await this.prisma.siteAccessRequest.update({
+        where: { id: latestAccessRequest.id },
+        data: {
+          quoteCreatedAfterAccess: true,
+          quoteIsRemote: isRemoteQuote,
+        },
+      });
+    }
 
     // Notify client
     const clientEmail =
@@ -1153,6 +1187,439 @@ Please review the project details and respond with your quote or decline the inv
       success: true,
       message: 'Quote submitted successfully',
       quoteAmount,
+      quoteIsRemote: isRemoteQuote,
+    };
+  }
+
+  private async assertClientProjectAccess(projectId: string, userId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const isOwner =
+      (project.userId && project.userId === userId) ||
+      (project.clientId && project.clientId === userId) ||
+      (!project.userId && !project.clientId);
+
+    if (!isOwner) {
+      throw new BadRequestException('You do not have access to this project');
+    }
+
+    return project;
+  }
+
+  async requestSiteAccess(projectId: string, professionalId: string) {
+    const projectProfessional =
+      await this.prisma.projectProfessional.findUnique({
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId,
+          },
+        },
+      });
+
+    if (!projectProfessional) {
+      throw new BadRequestException('Professional is not linked to this project');
+    }
+
+    if (!['accepted', 'quoted'].includes(projectProfessional.status)) {
+      throw new BadRequestException('Project must be accepted before requesting access');
+    }
+
+    const existingRequest = await this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectProfessionalId: projectProfessional.id,
+        status: {
+          in: ['pending', 'approved_visit_scheduled'],
+        },
+      },
+      orderBy: {
+        requestedAt: 'desc',
+      },
+    });
+
+    if (existingRequest) {
+      return {
+        success: true,
+        request: existingRequest,
+        message: 'A site access request is already pending',
+      };
+    }
+
+    const request = await this.prisma.siteAccessRequest.create({
+      data: {
+        projectId,
+        projectProfessionalId: projectProfessional.id,
+        professionalId,
+        status: 'pending',
+      },
+    });
+
+    return {
+      success: true,
+      request,
+    };
+  }
+
+  async submitSiteAccessData(
+    projectId: string,
+    userId: string,
+    body: {
+      addressFull: string;
+      unitNumber?: string;
+      floorLevel?: string;
+      accessDetails?: string;
+      onSiteContactName?: string;
+      onSiteContactPhone?: string;
+    },
+  ) {
+    await this.assertClientProjectAccess(projectId, userId);
+
+    if (!body.addressFull) {
+      throw new BadRequestException('Address is required');
+    }
+
+    const data = await this.prisma.siteAccessData.upsert({
+      where: { projectId },
+      create: {
+        projectId,
+        addressFull: body.addressFull,
+        unitNumber: body.unitNumber,
+        floorLevel: body.floorLevel,
+        accessDetails: body.accessDetails,
+        onSiteContactName: body.onSiteContactName,
+        onSiteContactPhone: body.onSiteContactPhone,
+        submittedBy: userId,
+      },
+      update: {
+        addressFull: body.addressFull,
+        unitNumber: body.unitNumber,
+        floorLevel: body.floorLevel,
+        accessDetails: body.accessDetails,
+        onSiteContactName: body.onSiteContactName,
+        onSiteContactPhone: body.onSiteContactPhone,
+        lastUpdatedBy: userId,
+      },
+    });
+
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        siteAccessDataCollected: true,
+        siteAccessDataCollectedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  async respondToSiteAccessRequest(
+    requestId: string,
+    userId: string,
+    body: {
+      status: 'approved_no_visit' | 'approved_visit_scheduled' | 'denied';
+      visitScheduledFor?: string;
+      reasonDenied?: string;
+      addressFull?: string;
+      unitNumber?: string;
+      floorLevel?: string;
+      accessDetails?: string;
+      onSiteContactName?: string;
+      onSiteContactPhone?: string;
+    },
+  ) {
+    const request = await this.prisma.siteAccessRequest.findUnique({
+      where: { id: requestId },
+      include: { project: true },
+    });
+
+    if (!request) {
+      throw new BadRequestException('Site access request not found');
+    }
+
+    await this.assertClientProjectAccess(request.projectId, userId);
+
+    if (body.status === 'approved_visit_scheduled' && !body.visitScheduledFor) {
+      throw new BadRequestException('visitScheduledFor is required for scheduled visits');
+    }
+
+    if (body.status === 'denied') {
+      const denied = await this.prisma.siteAccessRequest.update({
+        where: { id: requestId },
+        data: {
+          status: 'denied',
+          respondedAt: new Date(),
+          clientApprovedBy: userId,
+          reasonDenied: body.reasonDenied,
+        },
+      });
+
+      return {
+        success: true,
+        request: denied,
+      };
+    }
+
+    const existingData = await this.prisma.siteAccessData.findUnique({
+      where: { projectId: request.projectId },
+    });
+
+    if (!existingData && !body.addressFull) {
+      throw new BadRequestException('Address is required to approve site access');
+    }
+
+    if (body.addressFull) {
+      await this.prisma.siteAccessData.upsert({
+        where: { projectId: request.projectId },
+        create: {
+          projectId: request.projectId,
+          addressFull: body.addressFull,
+          unitNumber: body.unitNumber,
+          floorLevel: body.floorLevel,
+          accessDetails: body.accessDetails,
+          onSiteContactName: body.onSiteContactName,
+          onSiteContactPhone: body.onSiteContactPhone,
+          submittedBy: userId,
+        },
+        update: {
+          addressFull: body.addressFull,
+          unitNumber: body.unitNumber,
+          floorLevel: body.floorLevel,
+          accessDetails: body.accessDetails,
+          onSiteContactName: body.onSiteContactName,
+          onSiteContactPhone: body.onSiteContactPhone,
+          lastUpdatedBy: userId,
+        },
+      });
+
+      await this.prisma.project.update({
+        where: { id: request.projectId },
+        data: {
+          siteAccessDataCollected: true,
+          siteAccessDataCollectedAt: new Date(),
+        },
+      });
+    }
+
+    const approved = await this.prisma.siteAccessRequest.update({
+      where: { id: requestId },
+      data: {
+        status: body.status,
+        respondedAt: new Date(),
+        clientApprovedBy: userId,
+        reasonDenied: body.reasonDenied,
+        visitScheduledFor: body.visitScheduledFor
+          ? new Date(body.visitScheduledFor)
+          : null,
+      },
+    });
+
+    return {
+      success: true,
+      request: approved,
+    };
+  }
+
+  async confirmSiteVisit(
+    requestId: string,
+    professionalId: string,
+    body: { visitDetails?: string },
+  ) {
+    const request = await this.prisma.siteAccessRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new BadRequestException('Site access request not found');
+    }
+
+    if (request.professionalId !== professionalId) {
+      throw new BadRequestException('You do not have access to this request');
+    }
+
+    if (!['approved_visit_scheduled', 'approved_no_visit', 'visited'].includes(request.status)) {
+      throw new BadRequestException('Site visit cannot be confirmed for this request');
+    }
+
+    const updatedRequest = await this.prisma.siteAccessRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'visited',
+        visitedAt: new Date(),
+        visitDetails: body.visitDetails,
+      },
+    });
+
+    await this.prisma.projectProfessional.update({
+      where: { id: request.projectProfessionalId },
+      data: {
+        siteVisitedAt: new Date(),
+        visitNotes: body.visitDetails,
+        visitApprovedButNotDone: false,
+      },
+    });
+
+    return {
+      success: true,
+      request: updatedRequest,
+    };
+  }
+
+  async getSiteAccessStatus(projectId: string, professionalId: string) {
+    const projectProfessional =
+      await this.prisma.projectProfessional.findUnique({
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId,
+          },
+        },
+      });
+
+    if (!projectProfessional) {
+      throw new BadRequestException('Professional is not linked to this project');
+    }
+
+    const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectProfessionalId: projectProfessional.id,
+      },
+      orderBy: {
+        requestedAt: 'desc',
+      },
+    });
+
+    const approvedStatuses = [
+      'approved_no_visit',
+      'approved_visit_scheduled',
+      'visited',
+    ];
+    const hasAccess =
+      !!latestAccessRequest && approvedStatuses.includes(latestAccessRequest.status);
+
+    const siteAccessData = hasAccess
+      ? await this.prisma.siteAccessData.findUnique({
+          where: { projectId },
+        })
+      : null;
+
+    return {
+      success: true,
+      requestStatus: latestAccessRequest?.status || 'none',
+      visitScheduledFor: latestAccessRequest?.visitScheduledFor || null,
+      visitedAt: latestAccessRequest?.visitedAt || null,
+      reasonDenied: latestAccessRequest?.reasonDenied || null,
+      hasAccess,
+      siteAccessData,
+    };
+  }
+
+  async submitLocationDetails(
+    projectId: string,
+    userId: string,
+    body: {
+      addressFull: string;
+      postalCode?: string;
+      gpsCoordinates?: { lat: number; lng: number };
+      unitNumber?: string;
+      floorLevel?: string;
+      propertyType?: string;
+      propertySize?: string;
+      propertyAge?: string;
+      accessDetails?: string;
+      existingConditions?: string;
+      specialRequirements?: Array<string> | Record<string, unknown>;
+      onSiteContactName?: string;
+      onSiteContactPhone?: string;
+      accessHoursDescription?: string;
+      desiredStartDate?: string;
+      photoUrls?: string[];
+    },
+  ) {
+    const project = await this.assertClientProjectAccess(projectId, userId);
+
+    if (!body.addressFull) {
+      throw new BadRequestException('Address is required');
+    }
+
+    if (
+      project.escrowRequired &&
+      project.escrowHeld &&
+      new Decimal(project.escrowHeld.toString()).lessThan(
+        new Decimal(project.escrowRequired.toString()),
+      )
+    ) {
+      throw new BadRequestException('Escrow must be confirmed before submitting location details');
+    }
+
+    const details = await this.prisma.projectLocationDetails.upsert({
+      where: { projectId },
+      create: {
+        projectId,
+        addressFull: body.addressFull,
+        postalCode: body.postalCode,
+        gpsCoordinates: body.gpsCoordinates || undefined,
+        unitNumber: body.unitNumber,
+        floorLevel: body.floorLevel,
+        propertyType: body.propertyType,
+        propertySize: body.propertySize,
+        propertyAge: body.propertyAge,
+        accessDetails: body.accessDetails,
+        existingConditions: body.existingConditions,
+        specialRequirements: body.specialRequirements || undefined,
+        onSiteContactName: body.onSiteContactName,
+        onSiteContactPhone: body.onSiteContactPhone,
+        accessHoursDescription: body.accessHoursDescription,
+        desiredStartDate: body.desiredStartDate
+          ? new Date(body.desiredStartDate)
+          : undefined,
+        photoUrls: body.photoUrls || [],
+        status: 'submitted',
+        submittedBy: userId,
+      },
+      update: {
+        addressFull: body.addressFull,
+        postalCode: body.postalCode,
+        gpsCoordinates: body.gpsCoordinates || undefined,
+        unitNumber: body.unitNumber,
+        floorLevel: body.floorLevel,
+        propertyType: body.propertyType,
+        propertySize: body.propertySize,
+        propertyAge: body.propertyAge,
+        accessDetails: body.accessDetails,
+        existingConditions: body.existingConditions,
+        specialRequirements: body.specialRequirements || undefined,
+        onSiteContactName: body.onSiteContactName,
+        onSiteContactPhone: body.onSiteContactPhone,
+        accessHoursDescription: body.accessHoursDescription,
+        desiredStartDate: body.desiredStartDate
+          ? new Date(body.desiredStartDate)
+          : undefined,
+        photoUrls: body.photoUrls || [],
+        status: 'submitted',
+      },
+    });
+
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        locationDetailsStatus: 'submitted',
+        locationDetailsProvidedAt: new Date(),
+        locationDetailsRequiredAt: project.locationDetailsRequiredAt || new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      details,
     };
   }
 

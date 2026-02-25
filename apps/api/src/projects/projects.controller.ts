@@ -17,6 +17,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { RequestSiteAccessDto } from './dto/request-site-access.dto';
+import { RespondSiteAccessRequestDto } from './dto/respond-site-access-request.dto';
+import { SiteAccessDataDto } from './dto/site-access-data.dto';
+import { ConfirmSiteVisitDto } from './dto/confirm-site-visit.dto';
+import { ProjectLocationDetailsDto } from './dto/project-location-details.dto';
 import { ChatService } from '../chat/chat.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
@@ -245,6 +250,119 @@ export class ProjectsController {
     @Param('professionalId') professionalId: string,
   ) {
     return this.projectsService.awardQuote(projectId, professionalId);
+  }
+
+  @Post(':id/site-access/request')
+  @UseGuards(CombinedAuthGuard)
+  async requestSiteAccess(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: RequestSiteAccessDto,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can request site access', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = body.professionalId || req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Professional not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.requestSiteAccess(projectId, professionalId);
+  }
+
+  @Post(':id/site-access-data')
+  @UseGuards(CombinedAuthGuard)
+  async submitSiteAccessData(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: SiteAccessDataDto,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only clients can submit site access data', HttpStatus.FORBIDDEN);
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.submitSiteAccessData(projectId, userId, body);
+  }
+
+  @Put('site-access-requests/:requestId/respond')
+  @UseGuards(CombinedAuthGuard)
+  async respondToSiteAccessRequest(
+    @Param('requestId') requestId: string,
+    @Request() req: any,
+    @Body() body: RespondSiteAccessRequestDto,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only clients can respond to site access requests', HttpStatus.FORBIDDEN);
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.respondToSiteAccessRequest(requestId, userId, body);
+  }
+
+  @Put('site-access-requests/:requestId/confirm-visit')
+  @UseGuards(CombinedAuthGuard)
+  async confirmSiteVisit(
+    @Param('requestId') requestId: string,
+    @Request() req: any,
+    @Body() body: ConfirmSiteVisitDto,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can confirm site visits', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.confirmSiteVisit(requestId, professionalId, body);
+  }
+
+  @Get(':id/site-access/status')
+  @UseGuards(CombinedAuthGuard)
+  async getSiteAccessStatus(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can view site access status', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.getSiteAccessStatus(projectId, professionalId);
+  }
+
+  @Post(':id/location-details')
+  @UseGuards(CombinedAuthGuard)
+  async submitLocationDetails(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: ProjectLocationDetailsDto,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only clients can submit location details', HttpStatus.FORBIDDEN);
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.submitLocationDetails(projectId, userId, body);
   }
 
   @Post(':id/transactions/:transactionId/confirm-deposit')
