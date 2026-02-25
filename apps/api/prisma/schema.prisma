@@ -8,6 +8,22 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum SiteAccessRequestStatus {
+  pending
+  approved_no_visit
+  approved_visit_scheduled
+  visited
+  denied
+  cancelled
+}
+
+enum LocationDetailsStatus {
+  pending
+  submitted
+  reviewed
+  approved
+}
+
 model User {
   id                              String                   @id @default(cuid())
   nickname                        String                   @unique
@@ -125,7 +141,7 @@ model Project {
   contractorContactEmail       String?
   siteAccessDataCollected      Boolean                 @default(false)
   siteAccessDataCollectedAt    DateTime?
-  locationDetailsStatus        String?                 @default("pending")
+  locationDetailsStatus        LocationDetailsStatus?  @default(pending)
   locationDetailsRequiredAt    DateTime?
   locationDetailsProvidedAt    DateTime?
   emailTokens                  EmailToken[]
@@ -510,7 +526,7 @@ model SiteAccessRequest {
   projectId               String
   projectProfessionalId   String
   professionalId          String
-  status                  String    @default("pending") // pending | approved_no_visit | approved_visit_scheduled | visited | denied | cancelled
+  status                  SiteAccessRequestStatus @default(pending)
   requestedAt             DateTime  @default(now())
   respondedAt             DateTime?
   visitScheduledFor       DateTime? @db.Date
@@ -576,7 +592,7 @@ model ProjectLocationDetails {
   accessHoursDescription String?
   desiredStartDate       DateTime? @db.Date
   photoUrls              String[]  @default([])
-  status                 String    @default("pending") // pending | submitted | reviewed | approved
+  status                 LocationDetailsStatus @default(pending)
   submittedAt            DateTime  @default(now())
   submittedBy            String
   reviewedAt             DateTime?
