@@ -74,7 +74,8 @@ export class ProjectsController {
       if (role === 'client') {
         console.log('[ProjectsController.findAll] Client role - calling findAllForClient with userId:', userId);
         const result = await this.projectsService.findAllForClient(userId);
-        console.log('[ProjectsController.findAll] Result from findAllForClient:', result?.length || 0, 'projects');
+        console.log('[ProjectsController.findAll] Received from service:', result?.length || 0, 'projects');
+        console.log('[ProjectsController.findAll] RETURNING to frontend:', result?.length || 0, 'projects');
         return result;
       }
 

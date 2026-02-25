@@ -234,24 +234,38 @@ export class ProjectsService {
       }
 
       // Step 2: Now fetch full projects with includes
-      const projects = await this.prisma.project.findMany({
-        where: {
-          id: { in: basicProjects.map(p => p.id) },
-        },
-        include: {
-          client: true,
-          professionals: {
-            include: {
-              professional: true,
-            },
+      console.log('[ProjectsService.findAllForClient] Step 2: Fetching full projects with includes for IDs:', basicProjects.map(p => p.id));
+      
+      let projects;
+      try {
+        projects = await this.prisma.project.findMany({
+          where: {
+            id: { in: basicProjects.map(p => p.id) },
           },
-          photos: true,
-        },
-      });
-
-      console.log('[ProjectsService.findAllForClient] Full query returned', projects.length, 'projects with includes');
+          include: {
+            client: true,
+            professionals: {
+              include: {
+                professional: true,
+              },
+            },
+            photos: true,
+          },
+        });
+        console.log('[ProjectsService.findAllForClient] Full query returned', projects.length, 'projects with includes');
+      } catch (includesError) {
+        console.error('[ProjectsService.findAllForClient] ERROR in includes query:', {
+          message: includesError?.message,
+          code: includesError?.code,
+          meta: includesError?.meta,
+          stack: includesError?.stack?.substring(0, 500),
+        });
+        console.log('[ProjectsService.findAllForClient] Falling back to basic projects without includes');
+        projects = basicProjects;
+      }
 
       try {
+        console.log('[ProjectsService.findAllForClient] Step 3: Mapping', projects.length, 'projects');
         const mapped = projects.map((p: any) => {
           try {
             return {
@@ -267,10 +281,15 @@ export class ProjectsService {
           }
         });
         console.log('[ProjectsService.findAllForClient] Successfully mapped', mapped.length, 'projects');
+        console.log('[ProjectsService.findAllForClient] RETURNING', mapped.length, 'projects to controller');
         return mapped;
       } catch (mapError) {
-        console.error('[ProjectsService.findAllForClient] Error in map operation:', mapError);
-        return projects.map((p: any) => ({ ...p, professionals: [] }));
+        console.error('[ProjectsService.findAllForClient] ERROR in map operation:', {
+          message: mapError?.message,
+          stack: mapError?.stack?.substring(0, 500),
+        });
+        console.log('[ProjectsService.findAllForClient] Fallback: returning projects without dedup');
+        return projects as any[];
       }
     } catch (error) {
       console.error('[ProjectsService.findAllForClient] Database error:', {
