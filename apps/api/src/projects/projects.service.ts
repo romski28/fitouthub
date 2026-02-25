@@ -7,6 +7,7 @@ import { resolve } from 'path';
 import { promises as fs } from 'fs';
 import { createId } from '@paralleldrive/cuid2';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProjectsService {
@@ -1575,7 +1576,7 @@ Please review the project details and respond with your quote or decline the inv
         propertyAge: body.propertyAge,
         accessDetails: body.accessDetails,
         existingConditions: body.existingConditions,
-        specialRequirements: body.specialRequirements || undefined,
+        specialRequirements: (body.specialRequirements as Prisma.InputJsonValue) || undefined,
         onSiteContactName: body.onSiteContactName,
         onSiteContactPhone: body.onSiteContactPhone,
         accessHoursDescription: body.accessHoursDescription,
@@ -1597,7 +1598,7 @@ Please review the project details and respond with your quote or decline the inv
         propertyAge: body.propertyAge,
         accessDetails: body.accessDetails,
         existingConditions: body.existingConditions,
-        specialRequirements: body.specialRequirements || undefined,
+        specialRequirements: (body.specialRequirements as Prisma.InputJsonValue) || undefined,
         onSiteContactName: body.onSiteContactName,
         onSiteContactPhone: body.onSiteContactPhone,
         accessHoursDescription: body.accessHoursDescription,
