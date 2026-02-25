@@ -80,69 +80,6 @@ export class ProjectsController {
     }
   }
 
-  @Get('debug')
-  @UseGuards(CombinedAuthGuard)
-  async debugProjects(@Request() req: any) {
-    const userId = req.user?.id || req.user?.sub;
-    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
-    
-    console.log('[DEBUG] User from token:', { userId, tokenRole });
-    
-    try {
-      // Query 1: All projects in database (limit 10)
-      const allProjects = await this.prisma.project.findMany({
-        take: 10,
-        select: {
-          id: true,
-          projectName: true,
-          clientId: true,
-          userId: true,
-        },
-      });
-      
-      // Query 2: Projects matching this userId
-      const userProjects = await this.prisma.project.findMany({
-        where: {
-          OR: [
-            { clientId: userId },
-            { userId: userId },
-          ],
-        },
-        select: {
-          id: true,
-          projectName: true,
-          clientId: true,
-          userId: true,
-        },
-      });
-      
-      // Query 3: Count by userId values in DB
-      const projectStats = await this.prisma.project.groupBy({
-        by: ['userId'],
-        _count: true,
-      });
-      
-      return {
-        authenticatedUserId: userId,
-        tokenRole,
-        totalProjectsInDb: allProjects.length,
-        sampleProjects: allProjects.map(p => ({
-          ...p,
-          userIdMatches: p.userId === userId,
-          clientIdMatches: p.clientId === userId,
-        })),
-        projectsForThisUser: userProjects.length,
-        matchingProjects: userProjects,
-        projectsByUserId: projectStats.map(s => ({ userId: s.userId, count: s._count, matchesAuth: s.userId === userId })),
-      };
-    } catch (error) {
-      return {
-        error: error?.message,
-        stack: error?.stack,
-      };
-    }
-  }
-
   @Get('canonical')
   async findCanonical(@Query('clientId') clientId?: string) {
     return this.projectsService.findCanonical(clientId);
