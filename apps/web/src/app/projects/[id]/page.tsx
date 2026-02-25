@@ -45,6 +45,11 @@ interface ProjectDetail {
   budget?: string;
   approvedBudget?: string;
   notes?: string;
+  siteAccessDataCollected?: boolean;
+  siteAccessDataCollectedAt?: string;
+  locationDetailsStatus?: string;
+  locationDetailsRequiredAt?: string;
+  locationDetailsProvidedAt?: string;
   professionals?: ProjectProfessional[];
   startDate?: string;
   endDate?: string;
@@ -62,6 +67,37 @@ interface Message {
   content: string;
   attachments?: { url: string; filename: string }[];
   createdAt: string;
+}
+
+interface SiteAccessData {
+  addressFull: string;
+  unitNumber?: string;
+  floorLevel?: string;
+  accessDetails?: string;
+  onSiteContactName?: string;
+  onSiteContactPhone?: string;
+}
+
+interface SiteAccessRequest {
+  id: string;
+  status: string;
+  requestedAt: string;
+  respondedAt?: string;
+  visitScheduledFor?: string | null;
+  reasonDenied?: string | null;
+  professional: {
+    id: string;
+    fullName?: string;
+    businessName?: string;
+    email?: string;
+    phone?: string;
+  };
+  projectProfessional?: {
+    id: string;
+    status: string;
+    quoteAmount?: string | number | null;
+    quotedAt?: string | null;
+  };
 }
 
 const projectStatusBadge: Record<string, string> = {
@@ -138,6 +174,42 @@ export default function ClientProjectDetailPage() {
   const [assistNewMessage, setAssistNewMessage] = useState('');
   const [assistSending, setAssistSending] = useState(false);
   const [viewingAssistChat, setViewingAssistChat] = useState(false);
+  const [siteAccessRequests, setSiteAccessRequests] = useState<SiteAccessRequest[]>([]);
+  const [siteAccessData, setSiteAccessData] = useState<SiteAccessData | null>(null);
+  const [siteAccessLoading, setSiteAccessLoading] = useState(false);
+  const [siteAccessError, setSiteAccessError] = useState<string | null>(null);
+  const [submittingSiteAccess, setSubmittingSiteAccess] = useState<string | null>(null);
+  const [siteAccessForms, setSiteAccessForms] = useState<Record<string, {
+    status: 'approved_no_visit' | 'approved_visit_scheduled' | 'denied';
+    visitScheduledFor?: string;
+    reasonDenied?: string;
+    addressFull?: string;
+    unitNumber?: string;
+    floorLevel?: string;
+    accessDetails?: string;
+    onSiteContactName?: string;
+    onSiteContactPhone?: string;
+  }>>({});
+  const [locationDetailsForm, setLocationDetailsForm] = useState({
+    addressFull: '',
+    postalCode: '',
+    unitNumber: '',
+    floorLevel: '',
+    propertyType: '',
+    propertySize: '',
+    propertyAge: '',
+    accessDetails: '',
+    existingConditions: '',
+    specialRequirements: '',
+    onSiteContactName: '',
+    onSiteContactPhone: '',
+    accessHoursDescription: '',
+    desiredStartDate: '',
+    photoUrls: '' as string,
+  });
+  const [submittingLocationDetails, setSubmittingLocationDetails] = useState(false);
+  const [locationDetailsError, setLocationDetailsError] = useState<string | null>(null);
+  const [locationDetailsSuccess, setLocationDetailsSuccess] = useState(false);
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
@@ -196,6 +268,162 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const fetchSiteAccessRequests = async () => {
+    if (!accessToken || !projectId) return;
+    setSiteAccessLoading(true);
+    setSiteAccessError(null);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/site-access/requests`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to load site access requests');
+      }
+
+      const data = await response.json();
+      setSiteAccessRequests(data.requests || []);
+      setSiteAccessData(data.siteAccessData || null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load site access requests';
+      setSiteAccessError(message);
+    } finally {
+      setSiteAccessLoading(false);
+    }
+  };
+
+  const handleRespondToSiteAccessRequest = async (requestId: string) => {
+    if (!accessToken) return;
+    const form = siteAccessForms[requestId];
+    if (!form) return;
+
+    if (form.status === 'approved_visit_scheduled' && !form.visitScheduledFor) {
+      toast.error('Please select a visit date');
+      return;
+    }
+
+    if (form.status === 'denied' && !form.reasonDenied) {
+      toast.error('Please provide a reason for denial');
+      return;
+    }
+
+    if (form.status !== 'denied' && !form.addressFull && !siteAccessData?.addressFull) {
+      toast.error('Address is required to approve site access');
+      return;
+    }
+
+    setSubmittingSiteAccess(requestId);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/site-access-requests/${requestId}/respond`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: form.status,
+            visitScheduledFor: form.visitScheduledFor || undefined,
+            reasonDenied: form.reasonDenied || undefined,
+            addressFull: form.addressFull || siteAccessData?.addressFull,
+            unitNumber: form.unitNumber || siteAccessData?.unitNumber,
+            floorLevel: form.floorLevel || siteAccessData?.floorLevel,
+            accessDetails: form.accessDetails || siteAccessData?.accessDetails,
+            onSiteContactName: form.onSiteContactName || siteAccessData?.onSiteContactName,
+            onSiteContactPhone: form.onSiteContactPhone || siteAccessData?.onSiteContactPhone,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to respond to request');
+      }
+
+      toast.success('Response sent to the professional.');
+      await fetchSiteAccessRequests();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to respond to request';
+      toast.error(message);
+    } finally {
+      setSubmittingSiteAccess(null);
+    }
+  };
+
+  const handleSubmitLocationDetails = async () => {
+    if (!accessToken || !projectId) return;
+    setSubmittingLocationDetails(true);
+    setLocationDetailsError(null);
+    setLocationDetailsSuccess(false);
+
+    try {
+      if (!locationDetailsForm.addressFull) {
+        throw new Error('Address is required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/location-details`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            addressFull: locationDetailsForm.addressFull,
+            postalCode: locationDetailsForm.postalCode || undefined,
+            unitNumber: locationDetailsForm.unitNumber || undefined,
+            floorLevel: locationDetailsForm.floorLevel || undefined,
+            propertyType: locationDetailsForm.propertyType || undefined,
+            propertySize: locationDetailsForm.propertySize || undefined,
+            propertyAge: locationDetailsForm.propertyAge || undefined,
+            accessDetails: locationDetailsForm.accessDetails || undefined,
+            existingConditions: locationDetailsForm.existingConditions || undefined,
+            specialRequirements: locationDetailsForm.specialRequirements
+              ? locationDetailsForm.specialRequirements
+                  .split(',')
+                  .map((entry) => entry.trim())
+                  .filter(Boolean)
+              : undefined,
+            onSiteContactName: locationDetailsForm.onSiteContactName || undefined,
+            onSiteContactPhone: locationDetailsForm.onSiteContactPhone || undefined,
+            accessHoursDescription: locationDetailsForm.accessHoursDescription || undefined,
+            desiredStartDate: locationDetailsForm.desiredStartDate || undefined,
+            photoUrls: locationDetailsForm.photoUrls
+              ? locationDetailsForm.photoUrls
+                  .split(',')
+                  .map((entry) => entry.trim())
+                  .filter(Boolean)
+              : undefined,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to submit location details');
+      }
+
+      setLocationDetailsSuccess(true);
+      toast.success('Location details submitted.');
+      await fetchProject();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit location details';
+      setLocationDetailsError(message);
+    } finally {
+      setSubmittingLocationDetails(false);
+    }
+  };
+
   useEffect(() => {
     if (isLoggedIn === false) {
       router.push('/');
@@ -207,7 +435,21 @@ export default function ClientProjectDetailPage() {
     }
 
     fetchProject();
+    fetchSiteAccessRequests();
   }, [isLoggedIn, accessToken, projectId, router]);
+
+  useEffect(() => {
+    if (!siteAccessData) return;
+    setLocationDetailsForm((prev) => ({
+      ...prev,
+      addressFull: prev.addressFull || siteAccessData.addressFull || '',
+      unitNumber: prev.unitNumber || siteAccessData.unitNumber || '',
+      floorLevel: prev.floorLevel || siteAccessData.floorLevel || '',
+      accessDetails: prev.accessDetails || siteAccessData.accessDetails || '',
+      onSiteContactName: prev.onSiteContactName || siteAccessData.onSiteContactName || '',
+      onSiteContactPhone: prev.onSiteContactPhone || siteAccessData.onSiteContactPhone || '',
+    }));
+  }, [siteAccessData]);
 
   // Fetch messages when professional is selected
   useEffect(() => {
@@ -924,6 +1166,389 @@ export default function ClientProjectDetailPage() {
               }}
             />
           )}
+
+          {/* Site Access Requests */}
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Site Access Requests</h2>
+                <p className="text-sm text-slate-600">Approve or deny professional requests for site access.</p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchSiteAccessRequests}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Refresh
+              </button>
+            </div>
+
+            {siteAccessError && (
+              <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {siteAccessError}
+              </div>
+            )}
+
+            {siteAccessLoading ? (
+              <p className="mt-4 text-sm text-slate-600">Loading requests...</p>
+            ) : siteAccessRequests.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-600">No site access requests yet.</p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {siteAccessRequests.map((request) => {
+                  const displayName = request.professional.fullName || request.professional.businessName || request.professional.email || 'Professional';
+                  const form = siteAccessForms[request.id] || {
+                    status: 'approved_no_visit' as const,
+                    addressFull: siteAccessData?.addressFull || '',
+                    unitNumber: siteAccessData?.unitNumber || '',
+                    floorLevel: siteAccessData?.floorLevel || '',
+                    accessDetails: siteAccessData?.accessDetails || '',
+                    onSiteContactName: siteAccessData?.onSiteContactName || '',
+                    onSiteContactPhone: siteAccessData?.onSiteContactPhone || '',
+                  };
+
+                  const updateForm = (patch: Partial<typeof form>) => {
+                    setSiteAccessForms((prev) => ({
+                      ...prev,
+                      [request.id]: { ...form, ...patch },
+                    }));
+                  };
+
+                  return (
+                    <div key={request.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-slate-900">{displayName}</p>
+                          <p className="text-xs text-slate-500">
+                            Requested {new Date(request.requestedAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 capitalize">
+                          {request.status.replace('_', ' ')}
+                        </span>
+                      </div>
+
+                      {request.status === 'pending' ? (
+                        <div className="mt-4 space-y-3">
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600">Address *</label>
+                              <input
+                                value={form.addressFull || ''}
+                                onChange={(e) => updateForm({ addressFull: e.target.value })}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                placeholder="Full address"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600">Unit / Floor</label>
+                              <div className="mt-1 grid gap-2 grid-cols-2">
+                                <input
+                                  value={form.unitNumber || ''}
+                                  onChange={(e) => updateForm({ unitNumber: e.target.value })}
+                                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                  placeholder="Unit"
+                                />
+                                <input
+                                  value={form.floorLevel || ''}
+                                  onChange={(e) => updateForm({ floorLevel: e.target.value })}
+                                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                  placeholder="Floor"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600">Access Details</label>
+                            <input
+                              value={form.accessDetails || ''}
+                              onChange={(e) => updateForm({ accessDetails: e.target.value })}
+                              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                              placeholder="Entry, parking, intercom, etc."
+                            />
+                          </div>
+
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600">On-site Contact</label>
+                              <input
+                                value={form.onSiteContactName || ''}
+                                onChange={(e) => updateForm({ onSiteContactName: e.target.value })}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                placeholder="Name"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600">Contact Phone</label>
+                              <input
+                                value={form.onSiteContactPhone || ''}
+                                onChange={(e) => updateForm({ onSiteContactPhone: e.target.value })}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                placeholder="Phone"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600">Decision</label>
+                              <select
+                                value={form.status}
+                                onChange={(e) => updateForm({ status: e.target.value as typeof form.status })}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                              >
+                                <option value="approved_no_visit">Approve (no visit required)</option>
+                                <option value="approved_visit_scheduled">Approve with visit schedule</option>
+                                <option value="denied">Deny request</option>
+                              </select>
+                            </div>
+                            {form.status === 'approved_visit_scheduled' && (
+                              <div>
+                                <label className="block text-xs font-semibold text-slate-600">Visit Date</label>
+                                <input
+                                  type="date"
+                                  value={form.visitScheduledFor || ''}
+                                  onChange={(e) => updateForm({ visitScheduledFor: e.target.value })}
+                                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {form.status === 'denied' && (
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-600">Reason for denial</label>
+                              <input
+                                value={form.reasonDenied || ''}
+                                onChange={(e) => updateForm({ reasonDenied: e.target.value })}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                placeholder="Explain why"
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleRespondToSiteAccessRequest(request.id)}
+                              disabled={submittingSiteAccess === request.id}
+                              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                              {submittingSiteAccess === request.id ? 'Sending...' : 'Send Response'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-3 text-sm text-slate-600">
+                          {request.status === 'denied' && request.reasonDenied
+                            ? `Denied: ${request.reasonDenied}`
+                            : 'Response recorded.'}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Location Details (Post-Escrow) */}
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Project Location Details</h2>
+                <p className="text-sm text-slate-600">
+                  Provide formal site details once escrow is confirmed.
+                </p>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${fundsSecured ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>
+                {fundsSecured ? 'Escrow confirmed' : 'Awaiting escrow'}
+              </span>
+            </div>
+
+            {!fundsSecured && (
+              <p className="mt-4 text-sm text-slate-600">
+                Location details will be required after escrow is confirmed.
+              </p>
+            )}
+
+            {fundsSecured && project?.locationDetailsStatus && project.locationDetailsStatus !== 'pending' && (
+              <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                Location details submitted (status: {project.locationDetailsStatus}).
+              </div>
+            )}
+
+            {fundsSecured && (!project?.locationDetailsStatus || project.locationDetailsStatus === 'pending') && (
+              <div className="mt-4 space-y-4">
+                {locationDetailsError && (
+                  <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    {locationDetailsError}
+                  </div>
+                )}
+                {locationDetailsSuccess && (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                    Location details submitted successfully.
+                  </div>
+                )}
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Address *</label>
+                    <input
+                      value={locationDetailsForm.addressFull}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, addressFull: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Postal Code</label>
+                    <input
+                      value={locationDetailsForm.postalCode}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, postalCode: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Unit</label>
+                    <input
+                      value={locationDetailsForm.unitNumber}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, unitNumber: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Floor</label>
+                    <input
+                      value={locationDetailsForm.floorLevel}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, floorLevel: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Property Type</label>
+                    <input
+                      value={locationDetailsForm.propertyType}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, propertyType: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      placeholder="Residential, Commercial..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Property Size</label>
+                    <input
+                      value={locationDetailsForm.propertySize}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, propertySize: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      placeholder="e.g. 1200 sq ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Property Age</label>
+                    <input
+                      value={locationDetailsForm.propertyAge}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, propertyAge: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600">Access Details</label>
+                  <input
+                    value={locationDetailsForm.accessDetails}
+                    onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, accessDetails: e.target.value })}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600">Existing Conditions</label>
+                  <textarea
+                    value={locationDetailsForm.existingConditions}
+                    onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, existingConditions: e.target.value })}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600">Special Requirements (comma-separated)</label>
+                  <input
+                    value={locationDetailsForm.specialRequirements}
+                    onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, specialRequirements: e.target.value })}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">On-site Contact</label>
+                    <input
+                      value={locationDetailsForm.onSiteContactName}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, onSiteContactName: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Contact Phone</label>
+                    <input
+                      value={locationDetailsForm.onSiteContactPhone}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, onSiteContactPhone: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Access Hours</label>
+                    <input
+                      value={locationDetailsForm.accessHoursDescription}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, accessHoursDescription: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Desired Start Date</label>
+                    <input
+                      type="date"
+                      value={locationDetailsForm.desiredStartDate}
+                      onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, desiredStartDate: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600">Photo URLs (comma-separated)</label>
+                  <input
+                    value={locationDetailsForm.photoUrls}
+                    onChange={(e) => setLocationDetailsForm({ ...locationDetailsForm, photoUrls: e.target.value })}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSubmitLocationDetails}
+                    disabled={submittingLocationDetails}
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {submittingLocationDetails ? 'Submitting...' : 'Submit Location Details'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Bidding Card - Show when professionals are invited but not awarded */}
           {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (

@@ -48,6 +48,25 @@ interface Message {
   createdAt: string;
 }
 
+interface SiteAccessData {
+  addressFull: string;
+  unitNumber?: string;
+  floorLevel?: string;
+  accessDetails?: string;
+  onSiteContactName?: string;
+  onSiteContactPhone?: string;
+}
+
+interface SiteAccessStatus {
+  requestId: string | null;
+  requestStatus: string;
+  visitScheduledFor: string | null;
+  visitedAt: string | null;
+  reasonDenied: string | null;
+  hasAccess: boolean;
+  siteAccessData: SiteAccessData | null;
+}
+
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -74,6 +93,11 @@ export default function ProjectDetailPage() {
     notes: '',
   });
   const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
+  const [siteAccessStatus, setSiteAccessStatus] = useState<SiteAccessStatus | null>(null);
+  const [siteAccessLoading, setSiteAccessLoading] = useState(false);
+  const [siteAccessError, setSiteAccessError] = useState<string | null>(null);
+  const [siteAccessActionLoading, setSiteAccessActionLoading] = useState(false);
+  const [visitNotes, setVisitNotes] = useState('');
 
   // Scroll to top on page load
   useEffect(() => {
@@ -171,6 +195,123 @@ export default function ProjectDetailPage() {
       fetchMessages();
     }
   }, [isLoggedIn, accessToken, projectProfessionalId, router]);
+
+  useEffect(() => {
+    const fetchSiteAccessStatus = async () => {
+      if (!accessToken || !project?.project?.id) {
+        return;
+      }
+
+      setSiteAccessLoading(true);
+      setSiteAccessError(null);
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/projects/${project.project.id}/site-access/status`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || 'Failed to load site access status');
+        }
+
+        const data = await response.json();
+        setSiteAccessStatus(data);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load site access status';
+        setSiteAccessError(message);
+      } finally {
+        setSiteAccessLoading(false);
+      }
+    };
+
+    fetchSiteAccessStatus();
+  }, [accessToken, project?.project?.id]);
+
+  const handleRequestSiteAccess = async () => {
+    if (!accessToken || !project?.project?.id) return;
+    setSiteAccessActionLoading(true);
+    setSiteAccessError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${project.project.id}/site-access/request`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to request site access');
+      }
+
+      toast.success('Site access request sent to the client.');
+      const data = await response.json();
+      setSiteAccessStatus((prev) => ({
+        requestId: data.request?.id || prev?.requestId || null,
+        requestStatus: data.request?.status || 'pending',
+        visitScheduledFor: prev?.visitScheduledFor || null,
+        visitedAt: prev?.visitedAt || null,
+        reasonDenied: prev?.reasonDenied || null,
+        hasAccess: prev?.hasAccess || false,
+        siteAccessData: prev?.siteAccessData || null,
+      }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to request site access';
+      setSiteAccessError(message);
+    } finally {
+      setSiteAccessActionLoading(false);
+    }
+  };
+
+  const handleConfirmSiteVisit = async () => {
+    if (!accessToken || !siteAccessStatus?.requestId) return;
+    setSiteAccessActionLoading(true);
+    setSiteAccessError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/site-access-requests/${siteAccessStatus.requestId}/confirm-visit`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            visitDetails: visitNotes || undefined,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to confirm site visit');
+      }
+
+      const data = await response.json();
+      toast.success('Site visit confirmed.');
+      setSiteAccessStatus((prev) => prev ? { ...prev, requestStatus: data.request?.status || 'visited', visitedAt: data.request?.visitedAt || new Date().toISOString() } : prev);
+      setVisitNotes('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to confirm site visit';
+      setSiteAccessError(message);
+    } finally {
+      setSiteAccessActionLoading(false);
+    }
+  };
 
   const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -595,6 +736,131 @@ export default function ProjectDetailPage() {
             createdAt={project!.createdAt}
             updatedAt={project!.updatedAt}
           />
+
+          {/* Site Access */}
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Site Access</h2>
+                <p className="text-sm text-slate-600">
+                  Request the client to share site details for a visit or better estimation.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRequestSiteAccess}
+                disabled={siteAccessActionLoading || siteAccessStatus?.requestStatus === 'pending'}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
+              </button>
+            </div>
+
+            {siteAccessError && (
+              <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {siteAccessError}
+              </div>
+            )}
+
+            {siteAccessLoading && (
+              <div className="mt-4 text-sm text-slate-600">Loading site access status...</div>
+            )}
+
+            {siteAccessStatus && !siteAccessLoading && (
+              <div className="mt-4 space-y-3">
+                <div className="text-sm text-slate-700">
+                  <span className="font-semibold">Status:</span>{' '}
+                  {siteAccessStatus.requestStatus === 'none'
+                    ? 'No request yet'
+                    : siteAccessStatus.requestStatus.replace('_', ' ')}
+                </div>
+
+                {siteAccessStatus.requestStatus === 'pending' && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    Awaiting client approval. You can still submit a quote without site access.
+                  </div>
+                )}
+
+                {siteAccessStatus.requestStatus === 'denied' && (
+                  <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    Site access denied{siteAccessStatus.reasonDenied ? `: ${siteAccessStatus.reasonDenied}` : '.'}
+                  </div>
+                )}
+
+                {siteAccessStatus.requestStatus === 'approved_visit_scheduled' && (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                    Visit approved{siteAccessStatus.visitScheduledFor ? ` for ${new Date(siteAccessStatus.visitScheduledFor).toLocaleDateString()}` : '.'}
+                  </div>
+                )}
+
+                {siteAccessStatus.requestStatus === 'visited' && (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                    Site visited{siteAccessStatus.visitedAt ? ` on ${new Date(siteAccessStatus.visitedAt).toLocaleDateString()}` : '.'}
+                  </div>
+                )}
+
+                {siteAccessStatus.hasAccess && siteAccessStatus.siteAccessData && (
+                  <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Address</p>
+                      <p className="font-medium text-slate-900">{siteAccessStatus.siteAccessData.addressFull}</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Unit / Floor</p>
+                        <p className="text-slate-800">
+                          {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
+                            .filter(Boolean)
+                            .join(' / ') || '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Access</p>
+                        <p className="text-slate-800">
+                          {siteAccessStatus.siteAccessData.accessDetails || '—'}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">On-site Contact</p>
+                      <p className="text-slate-800">
+                        {[siteAccessStatus.siteAccessData.onSiteContactName, siteAccessStatus.siteAccessData.onSiteContactPhone]
+                          .filter(Boolean)
+                          .join(' · ') || '—'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {siteAccessStatus.requestStatus === 'approved_visit_scheduled' && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Visit notes (optional)
+                    </label>
+                    <textarea
+                      value={visitNotes}
+                      onChange={(e) => setVisitNotes(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                      placeholder="Add any notes from the site visit"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleConfirmSiteVisit}
+                      disabled={siteAccessActionLoading}
+                      className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {siteAccessActionLoading ? 'Confirming...' : 'Confirm Site Visit'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <p className="mt-4 text-xs text-slate-500">
+              Quotes can still be submitted without site access. Those quotes will be marked as remote.
+            </p>
+          </div>
 
           {/* Quote Form */}
           {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && !(project.status === 'declined' || project.status === 'rejected') ? (
