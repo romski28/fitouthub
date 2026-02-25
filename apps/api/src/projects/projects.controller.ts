@@ -37,17 +37,18 @@ export class ProjectsController {
   @Get()
   @UseGuards(CombinedAuthGuard)
   async findAll(@Request() req: any) {
+    console.log('[ProjectsController.findAll] ===== START =====');
+    console.log('[ProjectsController.findAll] req.user keys:', Object.keys(req.user || {}));
+    console.log('[ProjectsController.findAll] req.user:', JSON.stringify(req.user, null, 2));
+    
     try {
       const userId = req.user?.id || req.user?.sub;
       const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
       const isProfessionalFlag = req.user?.isProfessional;
 
-      console.log('[ProjectsController.findAll] Request received:', {
-        userId,
-        tokenRole,
-        isProfessionalFlag,
-        userKeys: Object.keys(req.user || {}),
-      });
+      console.log('[ProjectsController.findAll] userId:', userId);
+      console.log('[ProjectsController.findAll] tokenRole:', tokenRole);
+      console.log('[ProjectsController.findAll] isProfessionalFlag:', isProfessionalFlag);
 
       let role: 'client' | 'professional' | 'admin' = 'client';
       if (tokenRole === 'admin') {
@@ -61,23 +62,30 @@ export class ProjectsController {
       console.log('[ProjectsController.findAll] Determined role:', role);
 
       if (!userId) {
+        console.log('[ProjectsController.findAll] No userId - throwing unauthorized');
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
 
       if (role === 'admin') {
+        console.log('[ProjectsController.findAll] Admin role - calling findAll()');
         return this.projectsService.findAll();
       }
 
       if (role === 'client') {
-        console.log('[ProjectsController.findAll] Calling findAllForClient with userId:', userId);
+        console.log('[ProjectsController.findAll] Client role - calling findAllForClient with userId:', userId);
         const result = await this.projectsService.findAllForClient(userId);
-        console.log('[ProjectsController.findAll] Found', result?.length || 0, 'projects');
+        console.log('[ProjectsController.findAll] Result from findAllForClient:', result?.length || 0, 'projects');
         return result;
       }
 
+      console.log('[ProjectsController.findAll] Role is neither admin nor client - throwing forbidden');
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     } catch (error) {
-      console.error('[ProjectsController.findAll] Error:', error?.message, error?.stack);
+      console.error('[ProjectsController.findAll] ERROR:', {
+        message: error?.message,
+        status: error?.status,
+        stack: error?.stack?.substring(0, 500),
+      });
       throw error;
     }
   }
