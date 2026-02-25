@@ -206,6 +206,8 @@ export class ProjectsService {
   
   async findAllForClient(clientId: string) {
     console.log('[ProjectsService.findAllForClient] Looking for projects for clientId:', clientId);
+    console.log('[ProjectsService.findAllForClient] Query will be: { OR: [{ clientId: "' + clientId + '" }, { userId: "' + clientId + '" }] }');
+    
     try {
       const projects = await this.prisma.project.findMany({
         where: {
@@ -223,6 +225,15 @@ export class ProjectsService {
       });
 
       console.log('[ProjectsService.findAllForClient] Query returned', projects.length, 'projects');
+      
+      if (projects.length > 0) {
+        console.log('[ProjectsService.findAllForClient] Sample project IDs:', projects.slice(0, 3).map(p => ({ 
+          id: p.id, 
+          projectName: p.projectName,
+          clientId: p.clientId, 
+          userId: p.userId 
+        })));
+      }
 
       return projects.map((p: any) => ({
         ...p,
