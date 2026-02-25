@@ -9,6 +9,7 @@ import { ProfessionRegistrationModal } from '@/components/profession-registratio
 export default function JoinPage() {
   const router = useRouter();
   const t = useTranslations('auth');
+  const navT = useTranslations('nav');
   const [showClientFlow, setShowClientFlow] = useState(false);
   const [showProfessionalFlow, setShowProfessionalFlow] = useState(false);
 
@@ -37,8 +38,8 @@ export default function JoinPage() {
       <div className="w-full max-w-md">
         <div className="rounded-xl border border-slate-200 bg-white shadow-lg p-8 space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-slate-900">Join Fitout Hub</h1>
-            <p className="text-slate-600">Choose how you'd like to get started</p>
+            <h1 className="text-3xl font-bold text-slate-900">{t('join.title')}</h1>
+            <p className="text-slate-600">{t('join.subtitle')}</p>
           </div>
 
           <div className="space-y-4">
@@ -48,8 +49,8 @@ export default function JoinPage() {
               className="w-full rounded-lg border-2 border-blue-200 bg-blue-50 p-6 text-center transition hover:border-blue-400 hover:bg-blue-100"
             >
               <div className="text-3xl mb-2">👤</div>
-              <h2 className="text-lg font-semibold text-blue-900 mb-1">Join as Client</h2>
-              <p className="text-sm text-blue-800">Find professionals for your fitout project. Post projects and get quotes from verified contractors.</p>
+              <h2 className="text-lg font-semibold text-blue-900 mb-1">{t('join.clientTitle')}</h2>
+              <p className="text-sm text-blue-800">{t('join.clientDescription')}</p>
             </button>
 
             {/* Professional Signup */}
@@ -58,15 +59,15 @@ export default function JoinPage() {
               className="w-full rounded-lg border-2 border-purple-200 bg-purple-50 p-6 text-center transition hover:border-purple-400 hover:bg-purple-100"
             >
               <div className="text-3xl mb-2">👷</div>
-              <h2 className="text-lg font-semibold text-purple-900 mb-1">Join as Professional</h2>
-              <p className="text-sm text-purple-800">Register your business and connect with clients. Bid on projects and grow your client base.</p>
+              <h2 className="text-lg font-semibold text-purple-900 mb-1">{t('join.professionalTitle')}</h2>
+              <p className="text-sm text-purple-800">{t('join.professionalDescription')}</p>
             </button>
           </div>
 
           <div className="text-center text-sm text-slate-600">
-            {t('login.haveAccount')}{' '}
+            {t('signup.haveAccount')}{' '}
             <Link href="/login" className="font-semibold text-blue-600 hover:underline">
-              {t('nav.login')}
+              {navT('login')}
             </Link>
           </div>
         </div>
@@ -78,6 +79,7 @@ export default function JoinPage() {
 function ClientSignupFlow() {
   const router = useRouter();
   const t = useTranslations('auth');
+  const commonT = useTranslations('common');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -134,14 +136,15 @@ function ClientSignupFlow() {
         <div className="rounded-xl border border-blue-200 bg-white shadow-lg p-8 space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-slate-900">{t('signup.title')}</h1>
-            <p className="text-slate-600">Get started with your fitout project</p>
+            <p className="text-slate-600">{t('signup.intro')}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.username')}</label>
               <input
                 type="text"
+                autoComplete="off"
                 required
                 value={formData.nickname}
                 onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
@@ -154,6 +157,7 @@ function ClientSignupFlow() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.firstName')}</label>
                 <input
                   type="text"
+                  autoComplete="off"
                   required
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
@@ -161,9 +165,10 @@ function ClientSignupFlow() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.lastName')}</label>
                 <input
                   type="text"
+                  autoComplete="off"
                   required
                   value={formData.surname}
                   onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
@@ -176,6 +181,7 @@ function ClientSignupFlow() {
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.email')}</label>
               <input
                 type="email"
+                autoComplete="off"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -184,9 +190,12 @@ function ClientSignupFlow() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Mobile ({t('common.optional')})</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {t('signup.mobile')} ({commonT('optional')})
+              </label>
               <input
                 type="tel"
+                autoComplete="off"
                 value={formData.mobile}
                 onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
@@ -197,6 +206,7 @@ function ClientSignupFlow() {
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('login.password')}</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -205,9 +215,10 @@ function ClientSignupFlow() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.confirmPassword')}</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 required
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}

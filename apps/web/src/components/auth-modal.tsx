@@ -333,7 +333,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               {userType === 'client' ? (
-                <form onSubmit={handleClientRegister} className="space-y-4 max-h-96 overflow-y-auto">
+                <form
+                  onSubmit={handleClientRegister}
+                  className="space-y-4 max-h-96 overflow-y-auto"
+                  autoComplete="off"
+                >
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Username
@@ -401,6 +405,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </label>
                     <input
                       type="password"
+                      autoComplete="new-password"
                       value={clientForm.password}
                       onChange={(e) => setClientForm({ ...clientForm, password: e.target.value })}
                       required
@@ -413,6 +418,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </label>
                     <input
                       type="password"
+                      autoComplete="new-password"
                       value={clientForm.confirmPassword}
                       onChange={(e) => setClientForm({ ...clientForm, confirmPassword: e.target.value })}
                       required
@@ -428,7 +434,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </button>
                 </form>
               ) : (
-                <form onSubmit={handleProfessionalRegister} className="space-y-4 max-h-96 overflow-y-auto">
+                <form
+                  onSubmit={handleProfessionalRegister}
+                  className="space-y-4 max-h-96 overflow-y-auto"
+                  autoComplete="off"
+                >
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Company Name
@@ -483,6 +493,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </label>
                     <input
                       type="password"
+                      autoComplete="new-password"
                       value={professionalForm.password}
                       onChange={(e) => setProfessionalForm({ ...professionalForm, password: e.target.value })}
                       required
@@ -495,6 +506,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </label>
                     <input
                       type="password"
+                      autoComplete="new-password"
                       value={professionalForm.confirmPassword}
                       onChange={(e) => setProfessionalForm({ ...professionalForm, confirmPassword: e.target.value })}
                       required

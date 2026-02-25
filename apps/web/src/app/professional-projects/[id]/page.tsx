@@ -106,7 +106,7 @@ export default function ProjectDetailPage() {
 
         if (!response.ok) {
           if (response.status === 401) {
-            router.push('/professional-login');
+            router.push('/login');
             return;
           }
           throw new Error('Failed to fetch project');

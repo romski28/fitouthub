@@ -47,6 +47,14 @@ const messages = {
       "messaging": "Messaging"
     },
     "auth": {
+      "join": {
+        "title": "Join Fitout Hub",
+        "subtitle": "Choose how you'd like to get started",
+        "clientTitle": "Join as Client",
+        "clientDescription": "Find professionals for your fitout project. Post projects and get quotes from verified contractors.",
+        "professionalTitle": "Join as Professional",
+        "professionalDescription": "Register your business and connect with clients. Bid on projects and grow your client base."
+      },
       "login": {
         "title": "Login",
         "email": "Email Address",
@@ -58,8 +66,13 @@ const messages = {
       },
       "signup": {
         "title": "Create Account",
+        "intro": "Get started with your fitout project",
+        "username": "Username",
         "firstName": "First Name",
+        "lastName": "Last Name",
         "email": "Email",
+        "mobile": "Mobile",
+        "confirmPassword": "Confirm Password",
         "submit": "Create Account",
         "haveAccount": "Already have an account?"
       }
@@ -245,6 +258,14 @@ const messages = {
       "messaging": "訊息"
     },
     "auth": {
+      "join": {
+        "title": "加入 Fitout Hub",
+        "subtitle": "選擇您想如何開始",
+        "clientTitle": "以客戶身份加入",
+        "clientDescription": "為您的裝修項目尋找專業人士。發佈項目並獲取已認證承辦商報價。",
+        "professionalTitle": "以專業人士身份加入",
+        "professionalDescription": "註冊您的業務並連結客戶。投標項目並擴展客戶群。"
+      },
       "login": {
         "title": "登入",
         "email": "電郵地址",
@@ -256,8 +277,13 @@ const messages = {
       },
       "signup": {
         "title": "建立帳戶",
+        "intro": "開始您的裝修項目",
+        "username": "用戶名稱",
         "firstName": "名字",
+        "lastName": "姓氏",
         "email": "電郵",
+        "mobile": "手機",
+        "confirmPassword": "確認密碼",
         "submit": "建立帳戶",
         "haveAccount": "已有帳戶?"
       }
