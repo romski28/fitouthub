@@ -37,18 +37,10 @@ export class ProjectsController {
   @Get()
   @UseGuards(CombinedAuthGuard)
   async findAll(@Request() req: any) {
-    console.log('[ProjectsController.findAll] ===== START =====');
-    console.log('[ProjectsController.findAll] req.user keys:', Object.keys(req.user || {}));
-    console.log('[ProjectsController.findAll] req.user:', JSON.stringify(req.user, null, 2));
-    
     try {
       const userId = req.user?.id || req.user?.sub;
       const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
       const isProfessionalFlag = req.user?.isProfessional;
-
-      console.log('[ProjectsController.findAll] userId:', userId);
-      console.log('[ProjectsController.findAll] tokenRole:', tokenRole);
-      console.log('[ProjectsController.findAll] isProfessionalFlag:', isProfessionalFlag);
 
       let role: 'client' | 'professional' | 'admin' = 'client';
       if (tokenRole === 'admin') {
@@ -59,34 +51,21 @@ export class ProjectsController {
         role = 'client';
       }
 
-      console.log('[ProjectsController.findAll] Determined role:', role);
-
       if (!userId) {
-        console.log('[ProjectsController.findAll] No userId - throwing unauthorized');
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
 
       if (role === 'admin') {
-        console.log('[ProjectsController.findAll] Admin role - calling findAll()');
         return this.projectsService.findAll();
       }
 
       if (role === 'client') {
-        console.log('[ProjectsController.findAll] Client role - calling findAllForClient with userId:', userId);
-        const result = await this.projectsService.findAllForClient(userId);
-        console.log('[ProjectsController.findAll] Received from service:', result?.length || 0, 'projects');
-        console.log('[ProjectsController.findAll] RETURNING to frontend:', result?.length || 0, 'projects');
-        return result;
+        return await this.projectsService.findAllForClient(userId);
       }
 
-      console.log('[ProjectsController.findAll] Role is neither admin nor client - throwing forbidden');
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     } catch (error) {
-      console.error('[ProjectsController.findAll] ERROR:', {
-        message: error?.message,
-        status: error?.status,
-        stack: error?.stack?.substring(0, 500),
-      });
+      console.error('[ProjectsController.findAll] Error:', error?.message);
       throw error;
     }
   }
@@ -94,71 +73,6 @@ export class ProjectsController {
   @Get('canonical')
   async findCanonical(@Query('clientId') clientId?: string) {
     return this.projectsService.findCanonical(clientId);
-  }
-
-  // TEMPORARY: Public debug endpoint to check database
-  @Get('debug-public')
-  async debugPublic() {
-    const allProjects = await this.prisma.project.findMany({
-      take: 20,
-      select: {
-        id: true,
-        projectName: true,
-        clientId: true,
-        userId: true,
-        status: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    
-    return {
-      totalProjects: allProjects.length,
-      projects: allProjects,
-      note: 'This is a temporary debug endpoint. Shows all projects with userId field.',
-    };
-  }
-
-  @Get('debug')
-  @UseGuards(CombinedAuthGuard)
-  async debugProjects(@Request() req: any) {
-    const userId = req.user?.id || req.user?.sub;
-    console.log('[DEBUG] User from token:', JSON.stringify(req.user, null, 2));
-    
-    // Direct query to check what's in the database
-    const allProjects = await this.prisma.project.findMany({
-      take: 10,
-      select: {
-        id: true,
-        projectName: true,
-        clientId: true,
-        userId: true,
-      },
-    });
-    console.log('[DEBUG] Total projects in DB:', allProjects.length);
-    console.log('[DEBUG] Sample projects:', JSON.stringify(allProjects.slice(0, 3), null, 2));
-    
-    // Query for this user
-    const userProjects = await this.prisma.project.findMany({
-      where: {
-        userId: userId,
-      },
-      select: {
-        id: true,
-        projectName: true,
-        clientId: true,
-        userId: true,
-      },
-    });
-    console.log('[DEBUG] Projects where userId =', userId, ':', userProjects.length);
-    
-    return {
-      authenticatedUserId: userId,
-      totalProjectsInDb: allProjects.length,
-      sampleProjects: allProjects,
-      projectsForThisUser: userProjects.length,
-      matchingProjects: userProjects,
-    };
   }
 
   @Get('respond')

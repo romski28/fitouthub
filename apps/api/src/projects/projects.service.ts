@@ -205,8 +205,6 @@ export class ProjectsService {
   }
   
   async findAllForClient(userId: string) {
-    console.log('[ProjectsService.findAllForClient] START - Looking for projects for userId:', userId);
-    
     try {
       // Step 1: Basic query without includes (to check if data exists)
       // NOTE: Only checking userId now (clientId is legacy and never set for new projects)
@@ -223,19 +221,11 @@ export class ProjectsService {
         },
       });
 
-      console.log('[ProjectsService.findAllForClient] Basic query returned', basicProjects.length, 'projects');
-      if (basicProjects.length > 0) {
-        console.log('[ProjectsService.findAllForClient] First project:', JSON.stringify(basicProjects[0]));
-      }
-      
       if (basicProjects.length === 0) {
-        console.log('[ProjectsService.findAllForClient] No projects found, returning empty array');
         return [];
       }
 
       // Step 2: Now fetch full projects with includes
-      console.log('[ProjectsService.findAllForClient] Step 2: Fetching full projects with includes for IDs:', basicProjects.map(p => p.id));
-      
       let projects;
       try {
         projects = await this.prisma.project.findMany({
@@ -252,20 +242,13 @@ export class ProjectsService {
             photos: true,
           },
         });
-        console.log('[ProjectsService.findAllForClient] Full query returned', projects.length, 'projects with includes');
       } catch (includesError) {
-        console.error('[ProjectsService.findAllForClient] ERROR in includes query:', {
-          message: includesError?.message,
-          code: includesError?.code,
-          meta: includesError?.meta,
-          stack: includesError?.stack?.substring(0, 500),
-        });
-        console.log('[ProjectsService.findAllForClient] Falling back to basic projects without includes');
+        // Fallback to basic projects if includes fail (handles schema mismatch issues)
+        console.error('[ProjectsService.findAllForClient] Warning: includes query failed, returning basic projects:', includesError?.message);
         projects = basicProjects;
       }
 
       try {
-        console.log('[ProjectsService.findAllForClient] Step 3: Mapping', projects.length, 'projects');
         const mapped = projects.map((p: any) => {
           try {
             return {
@@ -273,32 +256,19 @@ export class ProjectsService {
               professionals: this.dedupeProfessionals(p.professionals),
             };
           } catch (mapError) {
-            console.error('[ProjectsService.findAllForClient] Error mapping project:', p.id, mapError);
             return {
               ...p,
               professionals: [],
             };
           }
         });
-        console.log('[ProjectsService.findAllForClient] Successfully mapped', mapped.length, 'projects');
-        console.log('[ProjectsService.findAllForClient] RETURNING', mapped.length, 'projects to controller');
         return mapped;
       } catch (mapError) {
-        console.error('[ProjectsService.findAllForClient] ERROR in map operation:', {
-          message: mapError?.message,
-          stack: mapError?.stack?.substring(0, 500),
-        });
-        console.log('[ProjectsService.findAllForClient] Fallback: returning projects without dedup');
+        console.error('[ProjectsService.findAllForClient] Error in map operation:', mapError?.message);
         return projects as any[];
       }
     } catch (error) {
-      console.error('[ProjectsService.findAllForClient] Database error:', {
-        message: error?.message,
-        code: error?.code,
-        meta: error?.meta,
-        stack: error?.stack,
-      });
-      // Return empty array instead of throwing - don't crash the API
+      console.error('[ProjectsService.findAllForClient] Database error:', error?.message);
       return [];
     }
   }
