@@ -31,13 +31,19 @@ const messages = {
     },
     "nav": {
       "home": "Home",
-      "projects": "Projects",
+      "projects": "My Projects",
       "professionals": "Professionals",
+      "tradesmen": "Tradesmen",
+      "docs": "Docs",
       "profile": "Profile",
       "logout": "Logout",
       "login": "Login",
+      "join": "Join",
       "signup": "Sign Up",
       "admin": "Admin",
+      "adminPortal": "Admin Portal",
+      "professional": "Professional",
+      "editProfessional": "Edit Professional Info",
       "messaging": "Messaging"
     },
     "auth": {
@@ -170,6 +176,22 @@ const messages = {
         }
       }
     },
+    "footer": {
+      "description": "Connect with trusted professionals and manage your fitout projects seamlessly.",
+      "browse": "Browse",
+      "forClients": "For Clients",
+      "account": "Account",
+      "professionals": "Professionals",
+      "tradesmen": "Tradesmen",
+      "getStarted": "Get Started",
+      "createProject": "Create Project",
+      "login": "Login",
+      "join": "Join",
+      "copyright": "© {year} Fitout Hub. All rights reserved.",
+      "twitter": "Twitter",
+      "linkedin": "LinkedIn",
+      "instagram": "Instagram"
+    },
     "errors": {
       "generic": "Something went wrong",
       "registrationFailed": "Registration failed"
@@ -207,13 +229,19 @@ const messages = {
     },
     "nav": {
       "home": "首頁",
-      "projects": "項目",
+      "projects": "我的項目",
       "professionals": "專業人士",
+      "tradesmen": "技工",
+      "docs": "文檔",
       "profile": "個人資料",
       "logout": "登出",
       "login": "登入",
+      "join": "加入",
       "signup": "註冊",
       "admin": "管理員",
+      "adminPortal": "管理員入口",
+      "professional": "專業人士",
+      "editProfessional": "編輯專業人士資料",
       "messaging": "訊息"
     },
     "auth": {
@@ -345,6 +373,22 @@ const messages = {
           "description": "加入數百名滿意的客戶和專業人士"
         }
       }
+    },
+    "footer": {
+      "description": "連接信任的專業人士、管理項目、無縫完成裝修項目。",
+      "browse": "瀏覽",
+      "forClients": "客戶",
+      "account": "帳戶",
+      "professionals": "專業人士",
+      "tradesmen": "技工",
+      "getStarted": "開始使用",
+      "createProject": "建立項目",
+      "login": "登入",
+      "join": "加入",
+      "copyright": "© {year} Fitout Hub。版權所有。",
+      "twitter": "Twitter",
+      "linkedin": "LinkedIn",
+      "instagram": "Instagram"
     },
     "errors": {
       "generic": "發生錯誤",

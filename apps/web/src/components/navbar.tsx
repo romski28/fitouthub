@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -11,6 +12,7 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 import { LanguageSwitcher } from './language-switcher';
 
 export const Navbar: React.FC = () => {
+  const t = useTranslations('nav');
   const { isLoggedIn, user, accessToken, logout } = useAuth();
   const {
     isLoggedIn: profIsLoggedIn,
@@ -58,22 +60,22 @@ export const Navbar: React.FC = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
             <a className="hover:text-slate-900" href="/tradesmen">
-              Tradesmen
+              {t('tradesmen')}
             </a>
             <a className="hover:text-slate-900" href="/professionals">
-              Professionals
+              {t('professionals')}
             </a>
             <a className="hover:text-slate-900" href="/docs">
-              Docs
+              {t('docs')}
             </a>
             {showProjectsLink ? (
               <a className="hover:text-slate-900" href="/projects">
-                My Projects
+                {t('projects')}
               </a>
             ) : null}
             {showProfessionalProjectsLink ? (
               <a className="hover:text-slate-900" href="/professional-projects">
-                My Projects
+                {t('projects')}
               </a>
             ) : null}
 
@@ -111,14 +113,14 @@ export const Navbar: React.FC = () => {
                         href="/profile"
                         className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                       >
-                        Profile
+                        {t('profile')}
                       </a>
                       {user.role === 'professional' && (
                         <a
                           href="/professional/edit"
                           className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                         >
-                          Edit Professional Info
+                          {t('editProfessional')}
                         </a>
                       )}
                       <button
@@ -129,7 +131,7 @@ export const Navbar: React.FC = () => {
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
                       >
-                        Logout
+                        {t('logout')}
                       </button>
                     </div>
                   )}
@@ -142,7 +144,7 @@ export const Navbar: React.FC = () => {
                   >
                     <span className="text-slate-900 font-medium">{professional.fullName || professional.email}</span>
                     <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                      Professional
+                      {t('professional')}
                     </span>
                   </button>
 
@@ -153,7 +155,7 @@ export const Navbar: React.FC = () => {
                         href="/professional/profile"
                         className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                       >
-                        Profile
+                        {t('profile')}
                       </a>
                       <button
                         onClick={() => {
@@ -163,7 +165,7 @@ export const Navbar: React.FC = () => {
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
                       >
-                        Logout
+                        {t('logout')}
                       </button>
                     </div>
                   )}
@@ -175,13 +177,13 @@ export const Navbar: React.FC = () => {
                     onClick={openLoginModal}
                     className="text-slate-700 hover:text-slate-900 font-medium"
                   >
-                    Login
+                    {t('login')}
                   </button>
                   <button
                     onClick={openJoinModal}
                     className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
                   >
-                    Join
+                    {t('join')}
                   </button>
                 </div>
               )}
@@ -211,13 +213,13 @@ export const Navbar: React.FC = () => {
                   onClick={openLoginModal}
                   className="text-slate-700 hover:text-slate-900 font-medium text-sm"
                 >
-                  Login
+                  {t('login')}
                 </button>
                 <button
                   onClick={openJoinModal}
                   className="rounded-md bg-blue-600 px-3 py-1.5 text-white font-medium text-sm hover:bg-blue-700"
                 >
-                  Join
+                  {t('join')}
                 </button>
               </div>
             )}
@@ -263,21 +265,21 @@ export const Navbar: React.FC = () => {
                 href="/tradesmen"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Tradesmen
+                {t('tradesmen')}
               </a>
               <a
                 className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                 href="/professionals"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Professionals
+                {t('professionals')}
               </a>
               <a
                 className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                 href="/docs"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Docs
+                {t('docs')}
               </a>
               {showProjectsLink ? (
                 <a
@@ -285,7 +287,7 @@ export const Navbar: React.FC = () => {
                   href="/projects"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  My Projects
+                  {t('projects')}
                 </a>
               ) : null}
               {showProfessionalProjectsLink ? (
@@ -294,7 +296,7 @@ export const Navbar: React.FC = () => {
                   href="/professional-projects"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  My Projects
+                  {t('projects')}
                 </a>
               ) : null}
 
@@ -307,7 +309,7 @@ export const Navbar: React.FC = () => {
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Profile
+                    {t('profile')}
                   </a>
                   {user.role === 'admin' ? (
                     <Link
@@ -315,7 +317,7 @@ export const Navbar: React.FC = () => {
                       className="px-3 py-2 rounded hover:bg-slate-100 text-amber-800 font-semibold"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Admin Portal
+                      {t('adminPortal')}
                     </Link>
                   ) : null}
                   {user.role === 'professional' && (
@@ -324,7 +326,7 @@ export const Navbar: React.FC = () => {
                       className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Edit Professional Info
+                      {t('editProfessional')}
                     </a>
                   )}
                   <button
@@ -335,7 +337,7 @@ export const Navbar: React.FC = () => {
                     }}
                     className="w-full text-left px-3 py-2 rounded hover:bg-slate-100 text-red-600"
                   >
-                    Logout
+                    {t('logout')}
                   </button>
                 </>
               )}
@@ -348,7 +350,7 @@ export const Navbar: React.FC = () => {
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Profile
+                    {t('profile')}
                   </a>
                   <button
                     onClick={() => {
@@ -358,7 +360,7 @@ export const Navbar: React.FC = () => {
                     }}
                     className="w-full text-left px-3 py-2 rounded hover:bg-slate-100 text-red-600"
                   >
-                    Logout
+                    {t('logout')}
                   </button>
                 </>
               )}
