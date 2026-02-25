@@ -346,6 +346,24 @@ export class ProjectsController {
     return this.projectsService.getSiteAccessStatus(projectId, professionalId);
   }
 
+  @Get(':id/site-access/requests')
+  @UseGuards(CombinedAuthGuard)
+  async getSiteAccessRequests(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only clients can view site access requests', HttpStatus.FORBIDDEN);
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.getSiteAccessRequests(projectId, userId);
+  }
+
   @Post(':id/location-details')
   @UseGuards(CombinedAuthGuard)
   async submitLocationDetails(

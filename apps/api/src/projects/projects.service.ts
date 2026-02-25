@@ -1513,6 +1513,7 @@ Please review the project details and respond with your quote or decline the inv
 
     return {
       success: true,
+      requestId: latestAccessRequest?.id || null,
       requestStatus: latestAccessRequest?.status || 'none',
       visitScheduledFor: latestAccessRequest?.visitScheduledFor || null,
       visitedAt: latestAccessRequest?.visitedAt || null,
@@ -1620,6 +1621,44 @@ Please review the project details and respond with your quote or decline the inv
     return {
       success: true,
       details,
+    };
+  }
+
+  async getSiteAccessRequests(projectId: string, userId: string) {
+    await this.assertClientProjectAccess(projectId, userId);
+
+    const requests = await this.prisma.siteAccessRequest.findMany({
+      where: { projectId },
+      include: {
+        professional: {
+          select: {
+            id: true,
+            fullName: true,
+            businessName: true,
+            email: true,
+            phone: true,
+          },
+        },
+        projectProfessional: {
+          select: {
+            id: true,
+            status: true,
+            quoteAmount: true,
+            quotedAt: true,
+          },
+        },
+      },
+      orderBy: { requestedAt: 'desc' },
+    });
+
+    const siteAccessData = await this.prisma.siteAccessData.findUnique({
+      where: { projectId },
+    });
+
+    return {
+      success: true,
+      requests,
+      siteAccessData,
     };
   }
 
