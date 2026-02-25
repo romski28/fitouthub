@@ -80,6 +80,29 @@ export class ProjectsController {
     return this.projectsService.findCanonical(clientId);
   }
 
+  @Get('debug')
+  @UseGuards(CombinedAuthGuard)
+  async debugProjects(@Request() req: any) {
+    const userId = req.user?.id || req.user?.sub;
+    console.log('[DEBUG] User from token:', JSON.stringify(req.user, null, 2));
+    
+    // Query all projects to see what exists
+    const allProjects = await this.projectsService.findAll();
+    console.log('[DEBUG] Total projects in DB:', allProjects.length);
+    
+    // Query for this user
+    const userProjects = await this.projectsService.findAllForClient(userId);
+    console.log('[DEBUG] Projects for userId', userId, ':', userProjects.length);
+    
+    return {
+      userId,
+      totalProjectsInDb: allProjects.length,
+      userProjectsFound: userProjects.length,
+      userProjects: userProjects.map(p => ({ id: p.id, projectName: p.projectName, clientId: p.clientId, userId: p.userId })),
+      allProjectSampleIds: allProjects.slice(0, 5).map(p => ({ id: p.id, projectName: p.projectName, clientId: p.clientId, userId: p.userId })),
+    };
+  }
+
   @Get('respond')
   async respond(
     @Query('token') token: string,

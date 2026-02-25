@@ -10,13 +10,15 @@ import { useRoleGuard } from '@/hooks/use-role-guard';
 
 export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string; createNew?: string }> }) {
   const router = useRouter();
-  const { isLoggedIn, accessToken } = useAuth();
+  const { isLoggedIn, accessToken, user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [params, setParams] = useState<{ clientId?: string; createNew?: string }>({});
 
+  console.log('[ProjectsPage] Render - isLoggedIn:', isLoggedIn, 'hasToken:', !!accessToken, 'user:', user);
+
   // Only clients can access this page
-  useRoleGuard(['client'], { fallback: '/admin' });
+  // useRoleGuard(['client'], { fallback: '/admin' }); // TEMPORARILY DISABLED FOR DEBUGGING
 
   useEffect(() => {
     const loadParams = async () => {
