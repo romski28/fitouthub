@@ -110,14 +110,14 @@ export class ProjectsService {
     return result;
   }
 
-  async findCanonical(clientId?: string) {
+  async findCanonical(userId?: string) {
     try {
       const projects = (await this.prisma.project.findMany({
-        // Frontend passes the authenticated user's id via `clientId`
-        // Include projects where either `clientId` or `userId` matches
-        where: clientId
+        // Frontend passes the authenticated user's id
+        // Only check userId (clientId is legacy)
+        where: userId
           ? {
-              OR: [{ clientId: clientId }, { userId: clientId }],
+              userId: userId,
             }
           : undefined,
         include: {
@@ -132,8 +132,8 @@ export class ProjectsService {
       const byKey = new Map<string, unknown>();
       for (const p of projects) {
         const proj = p;
-        const key = clientId
-          ? `${clientId}|${this.canon(proj.projectName)}`
+        const key = userId
+          ? `${userId}|${this.canon(proj.projectName)}`
           : `${this.canon(proj.clientName)}|${this.canon(proj.projectName)}`;
         const existing = byKey.get(key);
         if (!existing) {
@@ -204,16 +204,15 @@ export class ProjectsService {
     }
   }
   
-  async findAllForClient(clientId: string) {
-    console.log('[ProjectsService.findAllForClient] START - Looking for projects');
-    console.log('[ProjectsService.findAllForClient] Parameter clientId:', clientId);
-    console.log('[ProjectsService.findAllForClient] Query WHERE:', JSON.stringify({ OR: [{ clientId }, { userId: clientId }] }));
+  async findAllForClient(userId: string) {
+    console.log('[ProjectsService.findAllForClient] START - Looking for projects for userId:', userId);
     
     try {
       // Step 1: Basic query without includes (to check if data exists)
+      // NOTE: Only checking userId now (clientId is legacy and never set for new projects)
       const basicProjects = await this.prisma.project.findMany({
         where: {
-          OR: [{ clientId }, { userId: clientId }],
+          userId: userId,
         },
         select: {
           id: true,
@@ -310,13 +309,13 @@ export class ProjectsService {
     }
   }
 
-  async findOneForClient(id: string, clientId: string) {
+  async findOneForClient(id: string, userId: string) {
     try {
-      console.log('[ProjectsService.findOneForClient] Fetching project:', id, 'for userId:', clientId);
+      console.log('[ProjectsService.findOneForClient] Fetching project:', id, 'for userId:', userId);
       const project = await this.prisma.project.findFirst({
         where: {
           id,
-          OR: [{ clientId }, { userId: clientId }],
+          userId: userId,
         },
         include: {
           client: true,
