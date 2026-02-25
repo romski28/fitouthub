@@ -206,12 +206,33 @@ export class ProjectsService {
   
   async findAllForClient(clientId: string) {
     console.log('[ProjectsService.findAllForClient] Looking for projects for clientId:', clientId);
-    console.log('[ProjectsService.findAllForClient] Query will be: { OR: [{ clientId: "' + clientId + '" }, { userId: "' + clientId + '" }] }');
     
     try {
-      const projects = await this.prisma.project.findMany({
+      // Step 1: Basic query without includes (to check if data exists)
+      const basicProjects = await this.prisma.project.findMany({
         where: {
           OR: [{ clientId }, { userId: clientId }],
+        },
+        select: {
+          id: true,
+          projectName: true,
+          clientId: true,
+          userId: true,
+          status: true,
+        },
+      });
+
+      console.log('[ProjectsService.findAllForClient] Basic query returned', basicProjects.length, 'projects');
+      
+      if (basicProjects.length === 0) {
+        console.log('[ProjectsService.findAllForClient] No projects found, returning empty array');
+        return [];
+      }
+
+      // Step 2: Now fetch full projects with includes
+      const projects = await this.prisma.project.findMany({
+        where: {
+          id: { in: basicProjects.map(p => p.id) },
         },
         include: {
           client: true,
@@ -224,16 +245,7 @@ export class ProjectsService {
         },
       });
 
-      console.log('[ProjectsService.findAllForClient] Query returned', projects.length, 'projects');
-      
-      if (projects.length > 0) {
-        console.log('[ProjectsService.findAllForClient] Sample project IDs:', projects.slice(0, 3).map(p => ({ 
-          id: p.id, 
-          projectName: p.projectName,
-          clientId: p.clientId, 
-          userId: p.userId 
-        })));
-      }
+      console.log('[ProjectsService.findAllForClient] Full query returned', projects.length, 'projects with includes');
 
       try {
         const mapped = projects.map((p: any) => {
