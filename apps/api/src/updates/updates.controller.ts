@@ -9,44 +9,49 @@ export class UpdatesController {
   @Get('summary')
   @UseGuards(CombinedAuthGuard)
   async getUpdatesSummary(@Req() req: any, @Query('actAs') actAs?: string, @Query('clientId') clientId?: string) {
-    const userId = req.user?.id || req.user?.sub;
-    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
-    const isProfessionalFlag = req.user?.isProfessional;
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+      const isProfessionalFlag = req.user?.isProfessional;
 
-    // Derive a single role from token; no fallbacks that blend roles
-    let role: 'client' | 'professional' | 'admin' = 'client';
-    if (tokenRole === 'admin') {
-      role = 'admin';
-    } else if (tokenRole === 'professional' || isProfessionalFlag) {
-      role = 'professional';
-    } else {
-      role = 'client';
-    }
+      // Derive a single role from token; no fallbacks that blend roles
+      let role: 'client' | 'professional' | 'admin' = 'client';
+      if (tokenRole === 'admin') {
+        role = 'admin';
+      } else if (tokenRole === 'professional' || isProfessionalFlag) {
+        role = 'professional';
+      } else {
+        role = 'client';
+      }
 
-    // Warn if token claims conflicting flags
-    if (tokenRole === 'admin' && isProfessionalFlag) {
-      console.warn('[getUpdatesSummary] Conflicting token flags: admin + isProfessional=true for user', userId);
-    }
+      // Warn if token claims conflicting flags
+      if (tokenRole === 'admin' && isProfessionalFlag) {
+        console.warn('[getUpdatesSummary] Conflicting token flags: admin + isProfessional=true for user', userId);
+      }
 
-    // actAs is only allowed for admin
-    if (actAs && actAs !== 'client') {
-      throw new BadRequestException('Unsupported actAs value');
-    }
-    if (actAs && !clientId) {
-      throw new BadRequestException('clientId is required when actAs is provided');
-    }
-    if (actAs && role !== 'admin') {
-      throw new BadRequestException('actAs is only permitted for admin');
-    }
+      // actAs is only allowed for admin
+      if (actAs && actAs !== 'client') {
+        throw new BadRequestException('Unsupported actAs value');
+      }
+      if (actAs && !clientId) {
+        throw new BadRequestException('clientId is required when actAs is provided');
+      }
+      if (actAs && role !== 'admin') {
+        throw new BadRequestException('actAs is only permitted for admin');
+      }
 
-    console.log('[getUpdatesSummary] User:', userId, 'Role:', role, 'tokenRole:', tokenRole, 'isProfessionalFlag:', isProfessionalFlag, 'actAs:', actAs, 'clientId:', clientId);
+      console.log('[getUpdatesSummary] User:', userId, 'Role:', role, 'tokenRole:', tokenRole, 'isProfessionalFlag:', isProfessionalFlag, 'actAs:', actAs, 'clientId:', clientId);
 
-    // Admin impersonation of client
-    if (role === 'admin' && actAs === 'client' && clientId) {
-      return this.updatesService.getUpdatesSummary(clientId, 'client');
+      // Admin impersonation of client
+      if (role === 'admin' && actAs === 'client' && clientId) {
+        return this.updatesService.getUpdatesSummary(clientId, 'client');
+      }
+
+      return this.updatesService.getUpdatesSummary(userId, role);
+    } catch (error) {
+      console.error('[getUpdatesSummary] Controller error:', error?.message, error?.stack);
+      throw error;
     }
-
-    return this.updatesService.getUpdatesSummary(userId, role);
   }
 
   @Post('messages/mark-read')
