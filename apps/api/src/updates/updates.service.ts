@@ -891,25 +891,43 @@ export class UpdatesService {
   ): Promise<UpdatesSummary> {
     console.log(`[getUpdatesSummary] Starting for userId: ${userId}, role: ${role}`);
     
-    const [financialActions, unreadMessages] = await Promise.all([
-      this.getFinancialActions(userId, role),
-      this.getUnreadMessages(userId, role),
-    ]);
+    try {
+      const [financialActions, unreadMessages] = await Promise.all([
+        this.getFinancialActions(userId, role).catch(err => {
+          console.error('[getUpdatesSummary] Error fetching financial actions:', err);
+          return [];
+        }),
+        this.getUnreadMessages(userId, role).catch(err => {
+          console.error('[getUpdatesSummary] Error fetching unread messages:', err);
+          return [];
+        }),
+      ]);
 
-    console.log(`[getUpdatesSummary] financialActions count: ${financialActions.length}`);
-    if (financialActions.length > 0) {
-      console.log('[getUpdatesSummary] Financial actions:', financialActions.map(a => ({ id: a.id, type: a.type, description: a.description, projectId: a.projectId })));
+      console.log(`[getUpdatesSummary] financialActions count: ${financialActions.length}`);
+      if (financialActions.length > 0) {
+        console.log('[getUpdatesSummary] Financial actions:', financialActions.map(a => ({ id: a.id, type: a.type, description: a.description, projectId: a.projectId })));
+      }
+
+      const financialCount = financialActions.length;
+      const unreadCount = unreadMessages.reduce((sum, g) => sum + g.unreadCount, 0);
+
+      return {
+        financialActions,
+        financialCount,
+        unreadMessages,
+        unreadCount,
+        totalCount: financialCount + unreadCount,
+      };
+    } catch (error) {
+      console.error('[getUpdatesSummary] Unexpected error:', error);
+      // Return empty summary instead of crashing
+      return {
+        financialActions: [],
+        financialCount: 0,
+        unreadMessages: [],
+        unreadCount: 0,
+        totalCount: 0,
+      };
     }
-
-    const financialCount = financialActions.length;
-    const unreadCount = unreadMessages.reduce((sum, g) => sum + g.unreadCount, 0);
-
-    return {
-      financialActions,
-      financialCount,
-      unreadMessages,
-      unreadCount,
-      totalCount: financialCount + unreadCount,
-    };
   }
 }
