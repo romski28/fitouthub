@@ -125,7 +125,7 @@ model Project {
   contractorContactEmail       String?
   siteAccessDataCollected      Boolean                 @default(false)
   siteAccessDataCollectedAt    DateTime?
-  locationDetailsStatus        String                  @default("pending")
+  locationDetailsStatus        String?                 @default("pending")
   locationDetailsRequiredAt    DateTime?
   locationDetailsProvidedAt    DateTime?
   emailTokens                  EmailToken[]
