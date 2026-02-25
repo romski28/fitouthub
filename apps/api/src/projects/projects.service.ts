@@ -205,7 +205,9 @@ export class ProjectsService {
   }
   
   async findAllForClient(clientId: string) {
-    console.log('[ProjectsService.findAllForClient] Looking for projects for clientId:', clientId);
+    console.log('[ProjectsService.findAllForClient] START - Looking for projects');
+    console.log('[ProjectsService.findAllForClient] Parameter clientId:', clientId);
+    console.log('[ProjectsService.findAllForClient] Query WHERE:', JSON.stringify({ OR: [{ clientId }, { userId: clientId }] }));
     
     try {
       // Step 1: Basic query without includes (to check if data exists)
@@ -223,6 +225,9 @@ export class ProjectsService {
       });
 
       console.log('[ProjectsService.findAllForClient] Basic query returned', basicProjects.length, 'projects');
+      if (basicProjects.length > 0) {
+        console.log('[ProjectsService.findAllForClient] First project:', JSON.stringify(basicProjects[0]));
+      }
       
       if (basicProjects.length === 0) {
         console.log('[ProjectsService.findAllForClient] No projects found, returning empty array');
