@@ -20,7 +20,7 @@ export class PrismaService
     // Only add pgbouncer params if using Supabase pooler, not direct connection
     const isPooler = rawUrl.includes('.pooler.supabase.com');
     const extraParams = isPooler
-      ? 'pgbouncer=true&connection_limit=5&pool_timeout=60'
+      ? 'pgbouncer=true&connection_limit=20&pool_timeout=60'
       : '';
     
     const configuredUrl = rawUrl && extraParams
