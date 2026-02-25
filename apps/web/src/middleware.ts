@@ -14,6 +14,9 @@ export function middleware(request: NextRequest) {
     });
   }
   
+  // Set Content-Language header to signal we handle our own translations
+  response.headers.set('Content-Language', locale);
+  
   return response;
 }
 
