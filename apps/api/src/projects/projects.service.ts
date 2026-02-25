@@ -267,11 +267,6 @@ export class ProjectsService {
       return [];
     }
   }
-        meta: error.meta,
-      });
-      throw error;
-    }
-  }
 
   async findOne(id: string) {
     try {

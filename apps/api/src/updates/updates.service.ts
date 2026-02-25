@@ -895,11 +895,11 @@ export class UpdatesService {
       const [financialActions, unreadMessages] = await Promise.all([
         this.getFinancialActions(userId, role).catch(err => {
           console.error('[getUpdatesSummary] Error fetching financial actions:', err);
-          return [];
+          return [] as FinancialActionItem[];
         }),
         this.getUnreadMessages(userId, role).catch(err => {
           console.error('[getUpdatesSummary] Error fetching unread messages:', err);
-          return [];
+          return [] as UnreadMessageGroup[];
         }),
       ]);
 
