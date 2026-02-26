@@ -138,54 +138,89 @@ const messages = {
       },
       "features": {
         "tabs": {
-          "why": "Why Fitout Hub",
+          "why": "Why Choose Us",
           "how": "How It Works",
-          "who": "Who We Are",
-          "choose": "Choose Fitout Hub"
+          "who": "Who Benefits",
+          "choose": "Why We Stand Out"
         },
         "why": {
-          "title": "Why Choose Fitout Hub?",
-          "description": "The complete solution for managing your fitout projects",
+          "title": "Why Choose FitoutHub",
+          "description": "The complete platform for renovation projects",
           "secure": {
-            "title": "Secure Transactions",
-            "description": "Protected escrow payments and verified contractors"
+            "title": "Secure Payments",
+            "description": "Protected escrow system for all transactions"
           },
           "contracts": {
             "title": "Smart Contracts",
-            "description": "Automated agreements and milestone payments"
+            "description": "Transparent agreements with all parties"
           },
           "oversight": {
             "title": "Project Oversight",
-            "description": "Real-time tracking and professional management"
+            "description": "Track every milestone and delivery"
           },
           "collaboration": {
-            "title": "Easy Collaboration",
-            "description": "Integrated messaging and document sharing"
+            "title": "Real Collaboration",
+            "description": "Unified communication platform"
           }
         },
         "how": {
           "title": "How It Works",
           "description": "Simple steps to get your project started",
           "plan": {
-            "title": "1. Plan Your Project",
-            "description": "Describe your fitout needs and budget requirements"
+            "title": "Create Your Plan",
+            "description": "Define your project scope and budget"
           },
           "match": {
-            "title": "2. Match with Professionals",
-            "description": "Receive quotes from verified contractors in your area"
+            "title": "Find Matches",
+            "description": "Connect with qualified professionals"
           },
           "manage": {
-            "title": "3. Manage & Complete",
-            "description": "Track progress, manage payments, and communicate seamlessly"
+            "title": "Manage Together",
+            "description": "Collaborate in real-time"
+          },
+          "complete": {
+            "title": "Complete Your Project",
+            "description": "Track progress and complete your renovation with confidence"
           }
         },
         "who": {
-          "title": "Who We Are",
-          "description": "Transforming the fitout industry with technology"
+          "title": "Who Benefits",
+          "clients": {
+            "title": "For Clients",
+            "description": "Manage your renovation project with ease and transparency"
+          },
+          "contractors": {
+            "title": "For Contractors",
+            "description": "Find quality leads and grow your business"
+          },
+          "suppliers": {
+            "title": "For Suppliers",
+            "description": "Connect with projects and expand your reach"
+          },
+          "designers": {
+            "title": "For Designers",
+            "description": "Collaborate seamlessly on renovation projects"
+          }
         },
         "choose": {
-          "title": "Why Choose Fitout Hub?",
-          "description": "Join hundreds of satisfied clients and professionals"
+          "title": "Why We Stand Out",
+          "description": "Features that make FitoutHub the best choice",
+          "pm": {
+            "title": "Project Management",
+            "description": "Comprehensive tools to manage every aspect of your renovation"
+          },
+          "communication": {
+            "title": "Clear Communication",
+            "description": "Stay connected with all stakeholders in real-time"
+          },
+          "platform": {
+            "title": "All-in-One Platform",
+            "description": "Everything you need in one place"
+          },
+          "risk": {
+            "title": "Risk Protection",
+            "description": "Secure payments and verified professionals"
+          }
         }
       }
     },

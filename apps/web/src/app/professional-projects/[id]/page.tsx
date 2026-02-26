@@ -742,18 +742,17 @@ export default function ProjectDetailPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Site Access</h2>
-                <p className="text-sm text-slate-600">
-                  Request the client to share site details for a visit or better estimation.
-                </p>
               </div>
-              <button
-                type="button"
-                onClick={handleRequestSiteAccess}
-                disabled={siteAccessActionLoading || siteAccessStatus?.requestStatus === 'pending'}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
-              </button>
+              {!siteAccessStatus?.hasAccess && (
+                <button
+                  type="button"
+                  onClick={handleRequestSiteAccess}
+                  disabled={siteAccessActionLoading || siteAccessStatus?.requestStatus === 'pending'}
+                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
+                </button>
+              )}
             </div>
 
             {siteAccessError && (
