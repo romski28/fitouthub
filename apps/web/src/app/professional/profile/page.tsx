@@ -199,13 +199,15 @@ export default function ProfessionalProfilePage() {
     setRefSaving(true);
     setRefError(null);
     try {
-      // Upload any pending files first
+      // Upload any pending files and get URLs
+      let finalImageUrls = [...(refDraft.imageUrls || [])];
       if (refPendingFiles.length > 0) {
-        await uploadRefImages(refPendingFiles);
-        // uploadRefImages also clears refPendingFiles internally
+        const uploadedUrls = await uploadFiles(refPendingFiles);
+        finalImageUrls = [...finalImageUrls, ...uploadedUrls];
+        setRefPendingFiles([]);
       }
       
-      // Then save the project
+      // Then save the project with the final image URLs
       if (refDraft.id) {
         const res = await fetch(`${API_BASE_URL}/professional/reference-projects/${refDraft.id}`, {
           method: 'PUT',
@@ -213,7 +215,7 @@ export default function ProfessionalProfilePage() {
           body: JSON.stringify({
             title: refDraft.title.trim(),
             description: refDraft.description?.trim() || undefined,
-            imageUrls: refDraft.imageUrls,
+            imageUrls: finalImageUrls,
           }),
         });
         if (!res.ok) throw new Error(await res.text());
@@ -226,7 +228,7 @@ export default function ProfessionalProfilePage() {
           body: JSON.stringify({
             title: refDraft.title.trim(),
             description: refDraft.description?.trim() || undefined,
-            imageUrls: refDraft.imageUrls,
+            imageUrls: finalImageUrls,
           }),
         });
         if (!res.ok) throw new Error(await res.text());
