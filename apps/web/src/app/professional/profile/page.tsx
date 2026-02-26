@@ -196,13 +196,16 @@ export default function ProfessionalProfilePage() {
       setRefError('Description is required');
       return;
     }
-    if (refPendingFiles.length > 0) {
-      setRefError('Please upload the selected photos before saving.');
-      return;
-    }
     setRefSaving(true);
     setRefError(null);
     try {
+      // Upload any pending files first
+      if (refPendingFiles.length > 0) {
+        await uploadRefImages(refPendingFiles);
+        // uploadRefImages also clears refPendingFiles internally
+      }
+      
+      // Then save the project
       if (refDraft.id) {
         const res = await fetch(`${API_BASE_URL}/professional/reference-projects/${refDraft.id}`, {
           method: 'PUT',
