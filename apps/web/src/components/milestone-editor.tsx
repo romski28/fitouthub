@@ -129,60 +129,6 @@ export function MilestoneEditor({
     (a, b) => a.sequence - b.sequence
   );
 
-  const handleAddMilestone = () => {
-    const newSequence = Math.max(...milestones.map((m) => m.sequence), 0) + 1;
-    const newMilestone: MilestoneEditData = {
-      title: "",
-      sequence: newSequence,
-      status: "not_started",
-      percentComplete: 0,
-      description: "",
-    };
-    const updated = [...milestones, newMilestone];
-    setMilestones(updated);
-    onMilestonesChange(updated);
-  };
-
-  const handleRemoveMilestone = (sequence: number) => {
-    const updated = milestones.filter((m) => m.sequence !== sequence);
-    setMilestones(updated);
-    onMilestonesChange(updated);
-  };
-
-  const handleMilestoneChange = (
-    sequence: number,
-    field: keyof MilestoneEditData,
-    value: any
-  ) => {
-    const updated = milestones.map((m) =>
-      m.sequence === sequence ? { ...m, [field]: value } : m
-    );
-    setMilestones(updated);
-    onMilestonesChange(updated);
-  };
-
-  const handleApplyTemplate = () => {
-    if (templates.length === 0) return;
-    
-    const templateMilestones = templates.map((t) => ({
-      title: t.stageName,
-      sequence: t.sequence,
-      status: "not_started" as const,
-      percentComplete: 0,
-      description: t.description || "",
-      plannedStartDate: undefined,
-      plannedEndDate: undefined,
-    }));
-    
-    setMilestones(templateMilestones);
-    onMilestonesChange(templateMilestones);
-    setShowTemplateForm(false);
-  };
-
-  const sortedMilestones = [...milestones].sort(
-    (a, b) => a.sequence - b.sequence
-  );
-
   return (
     <div className="space-y-4">
       {/* Header */}
