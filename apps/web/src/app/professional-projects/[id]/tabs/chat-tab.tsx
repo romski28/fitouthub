@@ -38,6 +38,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 }) => {
   const isAwarded = projectStatus === 'awarded';
   const [chatMode, setChatMode] = useState<'project' | 'direct'>(isAwarded ? 'project' : 'direct');
+  const directChatLocked = isAwarded;
 
   return (
     <div className="space-y-5">
@@ -102,6 +103,12 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 </div>
               </div>
 
+              {directChatLocked && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  Direct chat is read-only after award. Please use the project chat.
+                </div>
+              )}
+
               {messageError && (
                 <div className="rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-amber-800">
                   {messageError}
@@ -146,18 +153,18 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   value={newMessage}
                   onChange={(e) => onNewMessageChange(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !sending) {
+                    if (e.key === 'Enter' && !sending && !directChatLocked) {
                       onSendMessage();
                     }
                   }}
                   placeholder="Type your message..."
                   className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  disabled={sending}
+                  disabled={sending || directChatLocked}
                 />
                 <button
                   type="button"
                   onClick={onSendMessage}
-                  disabled={sending || !newMessage.trim()}
+                  disabled={sending || directChatLocked || !newMessage.trim()}
                   className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   {sending ? 'Sending...' : 'Send'}
