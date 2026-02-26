@@ -456,7 +456,7 @@ export default function FloatingChat() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center group attention-wiggle"
+          className="fixed bottom-[180px] right-6 z-50 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center group attention-wiggle"
           aria-label="Open chat"
           title="Chat with Fitout Hub support"
         >
