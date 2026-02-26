@@ -14,6 +14,7 @@ import { useFundsSecured } from '@/hooks/use-funds-secured';
 import { ProjectImagesCard } from '@/components/project-images-card';
 import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
+import { SiteAccessTab } from '@/app/projects/[id]/tabs/site-access-tab';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -1292,6 +1293,55 @@ export default function ClientProjectDetailPage() {
               isUpdatingSchedule={updatingSchedule}
               isUpdatingContact={updatingContact}
               isPayingInvoice={payingInvoice}
+            />
+          </div>
+        )}
+
+        {/* Tab Content - Site Access */}
+        {activeTab === 'site-access' && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <SiteAccessTab
+              siteAccessRequests={siteAccessRequests}
+              siteAccessData={siteAccessData}
+              siteVisits={siteVisits}
+              expandedAccordions={expandedAccordions}
+              onToggleAccordion={toggleAccordion}
+              onRespondToRequest={async (requestId) => {
+                await handleRespondToSiteAccessRequest(requestId);
+              }}
+              onRespondToVisit={async (visitId, status) => {
+                await handleRespondToSiteVisit(visitId, status);
+              }}
+              onSubmitLocationDetails={handleSubmitLocationDetails}
+              siteAccessLoading={siteAccessLoading}
+              siteAccessError={siteAccessError}
+              siteVisitLoading={siteVisitLoading}
+              siteVisitError={siteVisitError}
+              submittingSiteAccess={submittingSiteAccess}
+              submittingSiteVisit={submittingSiteVisit}
+              siteAccessForms={siteAccessForms}
+              onUpdateSiteAccessForm={(requestId, patch) => {
+                setSiteAccessForms((prev) => ({
+                  ...prev,
+                  [requestId]: { ...prev[requestId], ...patch },
+                }));
+              }}
+              siteVisitResponseNotes={siteVisitResponseNotes}
+              onUpdateSiteVisitResponseNotes={(visitId, notes) => {
+                setSiteVisitResponseNotes((prev) => ({
+                  ...prev,
+                  [visitId]: notes,
+                }));
+              }}
+              locationDetailsForm={locationDetailsForm}
+              onUpdateLocationDetailsForm={(patch) => {
+                setLocationDetailsForm((prev) => ({
+                  ...prev,
+                  ...patch,
+                }));
+              }}
+              isSubmittingLocationDetails={submittingLocationDetails}
+              locationDetailsError={locationDetailsError}
             />
           </div>
         )}
