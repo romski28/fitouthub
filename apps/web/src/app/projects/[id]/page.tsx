@@ -16,6 +16,7 @@ import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project
 import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
 import { SiteAccessTab } from '@/app/projects/[id]/tabs/site-access-tab';
 import { ProfessionalsTab } from '@/app/projects/[id]/tabs/professionals-tab';
+import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -1371,6 +1372,15 @@ export default function ClientProjectDetailPage() {
             </div>
           )}
 
+          {/* Tab Content - Media */}
+          {activeTab === 'media' && project && (
+            <MediaTab
+              photos={(project as any).photos || []}
+              onPhotoNoteUpdate={handleSaveImageNote}
+              isLoading={loading}
+            />
+          )}
+
           {/* Site Access Requests */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
             <div className="flex items-center justify-between">
@@ -2491,13 +2501,6 @@ export default function ClientProjectDetailPage() {
             </div>
           </div>
         )}
-
-        {/* Project Images - Moved to end */}
-        <ProjectImagesCard
-          photos={(project as any).photos || []}
-          onPhotoNoteUpdate={handleSaveImageNote}
-          isLoading={loading}
-        />
 
         <BackToTop />
       </div>
