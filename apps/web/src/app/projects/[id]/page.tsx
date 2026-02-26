@@ -2311,7 +2311,7 @@ export default function ClientProjectDetailPage() {
                     {accessToken && (
                       <ProjectChat
                         projectId={projectId}
-                        accessToken={accessToken}
+                        accessToken={accessToken as string}
                         currentUserRole="client"
                       />
                     )}
@@ -2396,7 +2396,7 @@ export default function ClientProjectDetailPage() {
                         </svg>
                         <div>
                           <h3 className="font-bold text-amber-900 text-sm">
-                            Private Chat with {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
+                            Private Chat with {selectedProfessional?.professional?.fullName || selectedProfessional?.professional?.businessName || selectedProfessional?.professional?.email}
                           </h3>
                           <p className="text-xs text-amber-700">Only visible to you, this professional, and Fitout Hub</p>
                         </div>
@@ -2469,7 +2469,7 @@ export default function ClientProjectDetailPage() {
                       </div>
 
                       {/* Send Message - Disabled if professional declined */}
-                      {selectedProfessional.status === 'declined' ? (
+                      {selectedProfessional?.status === 'declined' ? (
                         <div className="p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm">
                           This professional has declined the project. This chat is read-only.
                         </div>
