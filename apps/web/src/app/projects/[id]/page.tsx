@@ -12,6 +12,7 @@ import ChatImageUploader from '@/components/chat-image-uploader';
 import ProjectFinancialsCard from '@/components/project-financials-card';
 import { useFundsSecured } from '@/hooks/use-funds-secured';
 import { ProjectImagesCard } from '@/components/project-images-card';
+import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -234,6 +235,23 @@ export default function ClientProjectDetailPage() {
   const [submittingLocationDetails, setSubmittingLocationDetails] = useState(false);
   const [locationDetailsError, setLocationDetailsError] = useState<string | null>(null);
   const [locationDetailsSuccess, setLocationDetailsSuccess] = useState(false);
+
+  // Tab & accordion state
+  const [activeTab, setActiveTab] = useState('overview');
+  const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({
+    'site-access-requests': true,
+    'site-visit-proposals': false,
+    'location-details': false,
+    'bidding': true,
+    'awarded-details': false,
+  });
+
+  const toggleAccordion = (id: string) => {
+    setExpandedAccordions((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
