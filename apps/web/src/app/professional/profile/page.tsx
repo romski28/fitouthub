@@ -97,6 +97,8 @@ export default function ProfessionalProfilePage() {
 
   const removeRefImage = (url: string) => {
     setRefDraft((d) => ({ ...d, imageUrls: (d.imageUrls || []).filter((u) => u !== url) }));
+    // Clear pending files when removing images to allow re-adding
+    setRefPendingFiles([]);
   };
 
 
@@ -546,7 +548,7 @@ export default function ProfessionalProfilePage() {
               )}
               <button
                 type="submit"
-                disabled={refSaving || !refDraft.title.trim() || !refDraft.description.trim() || refPendingFiles.length > 0}
+                disabled={refSaving || !refDraft.title.trim() || !refDraft.description.trim()}
                 className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
               >
                 {refSaving ? 'Saving...' : refDraft.id ? 'Update project' : 'Add project'}
