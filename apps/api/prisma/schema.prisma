@@ -17,6 +17,14 @@ enum SiteAccessRequestStatus {
   cancelled
 }
 
+enum SiteAccessVisitStatus {
+  proposed
+  accepted
+  declined
+  cancelled
+  completed
+}
+
 enum LocationDetailsStatus {
   pending
   submitted
@@ -49,6 +57,7 @@ model User {
   siteAccessDataSubmitted         SiteAccessData[]
   siteAccessDataUpdated           SiteAccessData[]         @relation("SiteAccessDataUpdatedBy")
   siteAccessRequestsApproved      SiteAccessRequest[]
+  siteAccessVisitResponses        SiteAccessVisit[]    @relation("SiteAccessVisitRespondedBy")
   projectLocationDetailsSubmitted ProjectLocationDetails[]
   projectLocationDetailsReviewed  ProjectLocationDetails[] @relation("ProjectLocationDetailsReviewedBy")
 }
@@ -110,6 +119,7 @@ model Professional {
   privateChatMessagesSent PrivateChatMessage[]           @relation("ProfessionalSender")
   activityLogs            ActivityLog[]
   siteAccessRequests      SiteAccessRequest[]
+  siteAccessVisits        SiteAccessVisit[]
 }
 
 model Project {
@@ -156,6 +166,7 @@ model Project {
   approvedBudgetTransaction    FinancialTransaction?   @relation("ApprovedBudgetTx", fields: [approvedBudgetTxId], references: [id])
   awardedProjectProfessional   ProjectProfessional?    @relation("AwardedProjectProfessional", fields: [awardedProjectProfessionalId], references: [id])
   siteAccessRequests           SiteAccessRequest[]
+  siteAccessVisits             SiteAccessVisit[]
   siteAccessData               SiteAccessData?
   locationDetails              ProjectLocationDetails?
 }
@@ -196,6 +207,7 @@ model ProjectProfessional {
   escrowLedgers           EscrowLedger[]
   awardedInProject        Project?               @relation("AwardedProjectProfessional")
   siteAccessRequests      SiteAccessRequest[]
+  siteAccessVisits         SiteAccessVisit[]
 
   @@unique([projectId, professionalId])
   @@index([projectId])
@@ -530,6 +542,7 @@ model SiteAccessRequest {
   requestedAt             DateTime  @default(now())
   respondedAt             DateTime?
   visitScheduledFor       DateTime? @db.Date
+  visitScheduledAt         DateTime?
   visitedAt               DateTime?
   visitDetails            String?
   clientApprovedBy        String?
@@ -549,6 +562,34 @@ model SiteAccessRequest {
   @@index([professionalId])
   @@index([status])
   @@index([projectId, status])
+}
+
+model SiteAccessVisit {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId             String
+  projectProfessionalId String
+  professionalId        String
+  status                SiteAccessVisitStatus @default(proposed)
+  proposedAt            DateTime
+  proposedByRole        String                @default("professional")
+  notes                 String?
+  respondedAt           DateTime?
+  respondedBy           String?
+  responseNotes         String?
+  completedAt           DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectProfessional ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
+  professional        Professional        @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  respondedByUser     User?               @relation("SiteAccessVisitRespondedBy", fields: [respondedBy], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([projectProfessionalId])
+  @@index([professionalId])
+  @@index([status])
+  @@index([proposedAt])
 }
 
 model SiteAccessData {

@@ -20,6 +20,8 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { RequestSiteAccessDto } from './dto/request-site-access.dto';
 import { RespondSiteAccessRequestDto } from './dto/respond-site-access-request.dto';
 import { SiteAccessDataDto } from './dto/site-access-data.dto';
+import { RequestSiteVisitDto } from './dto/request-site-visit.dto';
+import { RespondSiteVisitDto } from './dto/respond-site-visit.dto';
 import { ConfirmSiteVisitDto } from './dto/confirm-site-visit.dto';
 import { ProjectLocationDetailsDto } from './dto/project-location-details.dto';
 import { ChatService } from '../chat/chat.service';
@@ -350,6 +352,60 @@ export class ProjectsController {
     return this.projectsService.confirmSiteVisit(requestId, professionalId, body);
   }
 
+  @Post(':id/site-visits')
+  @UseGuards(CombinedAuthGuard)
+  async requestSiteVisit(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: RequestSiteVisitDto,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can request site visits', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.requestSiteVisit(projectId, professionalId, body);
+  }
+
+  @Put('site-visits/:visitId/respond')
+  @UseGuards(CombinedAuthGuard)
+  async respondToSiteVisit(
+    @Param('visitId') visitId: string,
+    @Request() req: any,
+    @Body() body: RespondSiteVisitDto,
+  ) {
+    const isProfessional = !!req.user?.isProfessional;
+    const actorId = req.user?.id || req.user?.sub;
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.respondToSiteVisit(visitId, actorId, isProfessional, body);
+  }
+
+  @Put('site-visits/:visitId/complete')
+  @UseGuards(CombinedAuthGuard)
+  async completeSiteVisit(
+    @Param('visitId') visitId: string,
+    @Request() req: any,
+    @Body() body: ConfirmSiteVisitDto,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can complete site visits', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.completeSiteVisit(visitId, professionalId, body);
+  }
+
   @Get(':id/site-access/status')
   @UseGuards(CombinedAuthGuard)
   async getSiteAccessStatus(
@@ -366,6 +422,20 @@ export class ProjectsController {
     }
 
     return this.projectsService.getSiteAccessStatus(projectId, professionalId);
+  }
+
+  @Get(':id/site-visits')
+  @UseGuards(CombinedAuthGuard)
+  async getSiteVisits(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    const actorId = req.user?.id || req.user?.sub;
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.getSiteVisits(projectId, actorId, !!req.user?.isProfessional);
   }
 
   @Get(':id/site-access/requests')

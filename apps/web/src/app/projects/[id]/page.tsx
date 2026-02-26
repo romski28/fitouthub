@@ -84,6 +84,7 @@ interface SiteAccessRequest {
   requestedAt: string;
   respondedAt?: string;
   visitScheduledFor?: string | null;
+  visitScheduledAt?: string | null;
   reasonDenied?: string | null;
   professional: {
     id: string;
@@ -97,6 +98,23 @@ interface SiteAccessRequest {
     status: string;
     quoteAmount?: string | number | null;
     quotedAt?: string | null;
+  };
+}
+
+interface SiteAccessVisit {
+  id: string;
+  status: 'proposed' | 'accepted' | 'declined' | 'cancelled' | 'completed' | string;
+  proposedAt: string;
+  proposedByRole: 'professional' | 'client' | string;
+  notes?: string | null;
+  respondedAt?: string | null;
+  responseNotes?: string | null;
+  completedAt?: string | null;
+  professional: {
+    id: string;
+    fullName?: string;
+    businessName?: string;
+    email?: string;
   };
 }
 
@@ -182,6 +200,7 @@ export default function ClientProjectDetailPage() {
   const [siteAccessForms, setSiteAccessForms] = useState<Record<string, {
     status: 'approved_no_visit' | 'approved_visit_scheduled' | 'denied';
     visitScheduledFor?: string;
+    visitScheduledAt?: string;
     reasonDenied?: string;
     addressFull?: string;
     unitNumber?: string;
@@ -190,6 +209,11 @@ export default function ClientProjectDetailPage() {
     onSiteContactName?: string;
     onSiteContactPhone?: string;
   }>>({});
+  const [siteVisits, setSiteVisits] = useState<SiteAccessVisit[]>([]);
+  const [siteVisitLoading, setSiteVisitLoading] = useState(false);
+  const [siteVisitError, setSiteVisitError] = useState<string | null>(null);
+  const [submittingSiteVisit, setSubmittingSiteVisit] = useState<string | null>(null);
+  const [siteVisitResponseNotes, setSiteVisitResponseNotes] = useState<Record<string, string>>({});
   const [locationDetailsForm, setLocationDetailsForm] = useState({
     addressFull: '',
     postalCode: '',
@@ -316,13 +340,47 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const fetchSiteVisits = async () => {
+    if (!accessToken || !projectId) return;
+    setSiteVisitLoading(true);
+    setSiteVisitError(null);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/site-visits`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to load site visits');
+      }
+
+      const data = await parseJsonResponse<{ visits?: SiteAccessVisit[] }>(response);
+      if (!data) {
+        throw new Error('Empty response from server');
+      }
+      setSiteVisits(data.visits || []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load site visits';
+      setSiteVisitError(message);
+    } finally {
+      setSiteVisitLoading(false);
+    }
+  };
+
   const handleRespondToSiteAccessRequest = async (requestId: string) => {
     if (!accessToken) return;
     const form = siteAccessForms[requestId];
     if (!form) return;
 
-    if (form.status === 'approved_visit_scheduled' && !form.visitScheduledFor) {
-      toast.error('Please select a visit date');
+    if (form.status === 'approved_visit_scheduled' && !form.visitScheduledFor && !form.visitScheduledAt) {
+      toast.error('Please select a visit date and time');
       return;
     }
 
@@ -349,6 +407,7 @@ export default function ClientProjectDetailPage() {
           body: JSON.stringify({
             status: form.status,
             visitScheduledFor: form.visitScheduledFor || undefined,
+            visitScheduledAt: form.visitScheduledAt || undefined,
             reasonDenied: form.reasonDenied || undefined,
             addressFull: form.addressFull || siteAccessData?.addressFull,
             unitNumber: form.unitNumber || siteAccessData?.unitNumber,
@@ -367,11 +426,52 @@ export default function ClientProjectDetailPage() {
 
       toast.success('Response sent to the professional.');
       await fetchSiteAccessRequests();
+      await fetchSiteVisits();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to respond to request';
       toast.error(message);
     } finally {
       setSubmittingSiteAccess(null);
+    }
+  };
+
+  const handleRespondToSiteVisit = async (visitId: string, status: 'accepted' | 'declined') => {
+    if (!accessToken) return;
+    setSubmittingSiteVisit(visitId);
+    setSiteVisitError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/site-visits/${visitId}/respond`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status,
+            responseNotes: siteVisitResponseNotes[visitId] || undefined,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to respond to site visit');
+      }
+
+      const data = await response.json();
+      setSiteVisits((prev) =>
+        prev.map((visit) => (visit.id === visitId ? data.visit : visit)),
+      );
+      setSiteVisitResponseNotes((prev) => ({ ...prev, [visitId]: '' }));
+      toast.success(status === 'accepted' ? 'Site visit accepted.' : 'Site visit declined.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to respond to site visit';
+      setSiteVisitError(message);
+    } finally {
+      setSubmittingSiteVisit(null);
     }
   };
 
@@ -452,6 +552,7 @@ export default function ClientProjectDetailPage() {
 
     fetchProject();
     fetchSiteAccessRequests();
+    fetchSiteVisits();
   }, [isLoggedIn, accessToken, projectId, router]);
 
   useEffect(() => {
@@ -1224,6 +1325,7 @@ export default function ClientProjectDetailPage() {
                     accessDetails: siteAccessData?.accessDetails || '',
                     onSiteContactName: siteAccessData?.onSiteContactName || '',
                     onSiteContactPhone: siteAccessData?.onSiteContactPhone || '',
+                    visitScheduledAt: '',
                   };
 
                   const updateForm = (patch: Partial<typeof form>) => {
@@ -1324,11 +1426,11 @@ export default function ClientProjectDetailPage() {
                             </div>
                             {form.status === 'approved_visit_scheduled' && (
                               <div>
-                                <label className="block text-xs font-semibold text-slate-600">Visit Date</label>
+                                <label className="block text-xs font-semibold text-slate-600">Visit Date & Time</label>
                                 <input
-                                  type="date"
-                                  value={form.visitScheduledFor || ''}
-                                  onChange={(e) => updateForm({ visitScheduledFor: e.target.value })}
+                                  type="datetime-local"
+                                  value={form.visitScheduledAt || ''}
+                                  onChange={(e) => updateForm({ visitScheduledAt: e.target.value })}
                                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                                 />
                               </div>
@@ -1364,6 +1466,113 @@ export default function ClientProjectDetailPage() {
                             ? `Denied: ${request.reasonDenied}`
                             : 'Response recorded.'}
                         </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Site Visit Requests */}
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Site Visit Requests</h2>
+                <p className="text-sm text-slate-600">
+                  Approve or decline proposed site visits from professionals.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchSiteVisits}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Refresh
+              </button>
+            </div>
+
+            {siteVisitError && (
+              <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {siteVisitError}
+              </div>
+            )}
+
+            {siteVisitLoading ? (
+              <p className="mt-4 text-sm text-slate-600">Loading site visits...</p>
+            ) : siteVisits.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-600">No site visits proposed yet.</p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {siteVisits.map((visit) => {
+                  const professionalName =
+                    visit.professional.businessName ||
+                    visit.professional.fullName ||
+                    visit.professional.email ||
+                    'Professional';
+                  const isPending = visit.status === 'proposed';
+                  const proposedByProfessional = visit.proposedByRole === 'professional';
+
+                  return (
+                    <div key={visit.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-slate-900">{professionalName}</p>
+                          <p className="text-xs text-slate-500">
+                            Proposed {new Date(visit.proposedAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                          {visit.status.replace('_', ' ')}
+                        </span>
+                      </div>
+
+                      {visit.notes && (
+                        <p className="mt-2 text-xs text-slate-600">Notes: {visit.notes}</p>
+                      )}
+
+                      {visit.responseNotes && (
+                        <p className="mt-2 text-xs text-slate-600">Response: {visit.responseNotes}</p>
+                      )}
+
+                      {isPending && proposedByProfessional && (
+                        <div className="mt-3 space-y-2">
+                          <input
+                            value={siteVisitResponseNotes[visit.id] || ''}
+                            onChange={(e) =>
+                              setSiteVisitResponseNotes((prev) => ({
+                                ...prev,
+                                [visit.id]: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs"
+                            placeholder="Add a response note (optional)"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleRespondToSiteVisit(visit.id, 'accepted')}
+                              disabled={submittingSiteVisit === visit.id}
+                              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              {submittingSiteVisit === visit.id ? 'Sending...' : 'Accept'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRespondToSiteVisit(visit.id, 'declined')}
+                              disabled={submittingSiteVisit === visit.id}
+                              className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                            >
+                              {submittingSiteVisit === visit.id ? 'Sending...' : 'Decline'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {isPending && !proposedByProfessional && (
+                        <p className="mt-2 text-xs text-slate-600">
+                          Awaiting professional response to your proposed visit.
+                        </p>
                       )}
                     </div>
                   );

@@ -61,10 +61,22 @@ interface SiteAccessStatus {
   requestId: string | null;
   requestStatus: string;
   visitScheduledFor: string | null;
+  visitScheduledAt?: string | null;
   visitedAt: string | null;
   reasonDenied: string | null;
   hasAccess: boolean;
   siteAccessData: SiteAccessData | null;
+}
+
+interface SiteAccessVisit {
+  id: string;
+  status: 'proposed' | 'accepted' | 'declined' | 'cancelled' | 'completed' | string;
+  proposedAt: string;
+  proposedByRole: 'professional' | 'client' | string;
+  notes?: string | null;
+  respondedAt?: string | null;
+  responseNotes?: string | null;
+  completedAt?: string | null;
 }
 
 export default function ProjectDetailPage() {
@@ -98,6 +110,14 @@ export default function ProjectDetailPage() {
   const [siteAccessError, setSiteAccessError] = useState<string | null>(null);
   const [siteAccessActionLoading, setSiteAccessActionLoading] = useState(false);
   const [visitNotes, setVisitNotes] = useState('');
+  const [siteVisits, setSiteVisits] = useState<SiteAccessVisit[]>([]);
+  const [siteVisitLoading, setSiteVisitLoading] = useState(false);
+  const [siteVisitError, setSiteVisitError] = useState<string | null>(null);
+  const [siteVisitActionLoading, setSiteVisitActionLoading] = useState(false);
+  const [visitDate, setVisitDate] = useState('');
+  const [visitTime, setVisitTime] = useState('');
+  const [visitRequestNotes, setVisitRequestNotes] = useState('');
+  const [visitResponseNotes, setVisitResponseNotes] = useState<Record<string, string>>({});
 
   // Scroll to top on page load
   useEffect(() => {
@@ -234,6 +254,43 @@ export default function ProjectDetailPage() {
     fetchSiteAccessStatus();
   }, [accessToken, project?.project?.id]);
 
+  useEffect(() => {
+    const fetchSiteVisits = async () => {
+      if (!accessToken || !project?.project?.id) {
+        return;
+      }
+
+      setSiteVisitLoading(true);
+      setSiteVisitError(null);
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/projects/${project.project.id}/site-visits`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || 'Failed to load site visits');
+        }
+
+        const data = await response.json();
+        setSiteVisits(data.visits || []);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load site visits';
+        setSiteVisitError(message);
+      } finally {
+        setSiteVisitLoading(false);
+      }
+    };
+
+    fetchSiteVisits();
+  }, [accessToken, project?.project?.id]);
+
   const handleRequestSiteAccess = async () => {
     if (!accessToken || !project?.project?.id) return;
     setSiteAccessActionLoading(true);
@@ -263,6 +320,7 @@ export default function ProjectDetailPage() {
         requestId: data.request?.id || prev?.requestId || null,
         requestStatus: data.request?.status || 'pending',
         visitScheduledFor: prev?.visitScheduledFor || null,
+        visitScheduledAt: prev?.visitScheduledAt || null,
         visitedAt: prev?.visitedAt || null,
         reasonDenied: prev?.reasonDenied || null,
         hasAccess: prev?.hasAccess || false,
@@ -276,14 +334,106 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleConfirmSiteVisit = async () => {
-    if (!accessToken || !siteAccessStatus?.requestId) return;
-    setSiteAccessActionLoading(true);
-    setSiteAccessError(null);
+  const handleRequestSiteVisit = async () => {
+    if (!accessToken || !project?.project?.id) return;
+
+    if (!visitDate || !visitTime) {
+      setSiteVisitError('Please select a date and time for the visit');
+      return;
+    }
+
+    const scheduledAt = new Date(`${visitDate}T${visitTime}`);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      setSiteVisitError('Please enter a valid visit date and time');
+      return;
+    }
+
+    setSiteVisitActionLoading(true);
+    setSiteVisitError(null);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${project.project.id}/site-visits`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            scheduledAt: scheduledAt.toISOString(),
+            notes: visitRequestNotes || undefined,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to request site visit');
+      }
+
+      const data = await response.json();
+      toast.success('Site visit request sent to the client.');
+      if (data.visit) {
+        setSiteVisits((prev) => [data.visit, ...prev]);
+      }
+      setVisitDate('');
+      setVisitTime('');
+      setVisitRequestNotes('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to request site visit';
+      setSiteVisitError(message);
+    } finally {
+      setSiteVisitActionLoading(false);
+    }
+  };
+
+  const handleRespondSiteVisit = async (visitId: string, status: 'accepted' | 'declined') => {
+    if (!accessToken) return;
+    setSiteVisitActionLoading(true);
+    setSiteVisitError(null);
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/projects/site-access-requests/${siteAccessStatus.requestId}/confirm-visit`,
+        `${API_BASE_URL}/projects/site-visits/${visitId}/respond`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status,
+            responseNotes: visitResponseNotes[visitId] || undefined,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to respond to site visit');
+      }
+
+      const data = await response.json();
+      setSiteVisits((prev) =>
+        prev.map((visit) => (visit.id === visitId ? data.visit : visit)),
+      );
+      setVisitResponseNotes((prev) => ({ ...prev, [visitId]: '' }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to respond to site visit';
+      setSiteVisitError(message);
+    } finally {
+      setSiteVisitActionLoading(false);
+    }
+  };
+
+  const handleCompleteSiteVisit = async (visitId: string) => {
+    if (!accessToken) return;
+    setSiteVisitActionLoading(true);
+    setSiteVisitError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/site-visits/${visitId}/complete`,
         {
           method: 'PUT',
           headers: {
@@ -298,18 +448,20 @@ export default function ProjectDetailPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to confirm site visit');
+        throw new Error(data.message || 'Failed to complete site visit');
       }
 
       const data = await response.json();
-      toast.success('Site visit confirmed.');
-      setSiteAccessStatus((prev) => prev ? { ...prev, requestStatus: data.request?.status || 'visited', visitedAt: data.request?.visitedAt || new Date().toISOString() } : prev);
+      setSiteVisits((prev) =>
+        prev.map((visit) => (visit.id === visitId ? data.visit : visit)),
+      );
       setVisitNotes('');
+      toast.success('Site visit marked as completed.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to confirm site visit';
-      setSiteAccessError(message);
+      const message = err instanceof Error ? err.message : 'Failed to complete site visit';
+      setSiteVisitError(message);
     } finally {
-      setSiteAccessActionLoading(false);
+      setSiteVisitActionLoading(false);
     }
   };
 
@@ -715,6 +867,8 @@ export default function ProjectDetailPage() {
     );
   }
 
+  const acceptedVisit = siteVisits.find((visit) => visit.status === 'accepted');
+
   return (
     <>
       <Toaster position="top-right" />
@@ -788,7 +942,12 @@ export default function ProjectDetailPage() {
 
                 {siteAccessStatus.requestStatus === 'approved_visit_scheduled' && (
                   <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                    Visit approved{siteAccessStatus.visitScheduledFor ? ` for ${new Date(siteAccessStatus.visitScheduledFor).toLocaleDateString()}` : '.'}
+                    Visit approved
+                    {siteAccessStatus.visitScheduledAt
+                      ? ` for ${new Date(siteAccessStatus.visitScheduledAt).toLocaleString()}`
+                      : siteAccessStatus.visitScheduledFor
+                      ? ` for ${new Date(siteAccessStatus.visitScheduledFor).toLocaleDateString()}`
+                      : '.'}
                   </div>
                 )}
 
@@ -831,7 +990,7 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
 
-                {siteAccessStatus.requestStatus === 'approved_visit_scheduled' && (
+                {acceptedVisit && (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700">
                       Visit notes (optional)
@@ -845,12 +1004,137 @@ export default function ProjectDetailPage() {
                     />
                     <button
                       type="button"
-                      onClick={handleConfirmSiteVisit}
-                      disabled={siteAccessActionLoading}
+                      onClick={() => handleCompleteSiteVisit(acceptedVisit.id)}
+                      disabled={siteVisitActionLoading}
                       className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      {siteAccessActionLoading ? 'Confirming...' : 'Confirm Site Visit'}
+                      {siteVisitActionLoading ? 'Completing...' : 'Complete Site Visit'}
                     </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {siteAccessStatus?.hasAccess && (
+              <div className="mt-6 space-y-4 border-t border-slate-200 pt-4">
+                <div className="flex flex-wrap items-end gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Visit Date</label>
+                    <input
+                      type="date"
+                      value={visitDate}
+                      onChange={(e) => setVisitDate(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600">Visit Time</label>
+                    <input
+                      type="time"
+                      value={visitTime}
+                      onChange={(e) => setVisitTime(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[220px]">
+                    <label className="block text-xs font-semibold text-slate-600">Notes (optional)</label>
+                    <input
+                      value={visitRequestNotes}
+                      onChange={(e) => setVisitRequestNotes(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      placeholder="Access details, parking, timing, etc."
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRequestSiteVisit}
+                    disabled={siteVisitActionLoading}
+                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {siteVisitActionLoading ? 'Requesting...' : 'Request Site Visit'}
+                  </button>
+                </div>
+
+                {siteVisitError && (
+                  <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    {siteVisitError}
+                  </div>
+                )}
+
+                {siteVisitLoading ? (
+                  <div className="text-sm text-slate-600">Loading site visits...</div>
+                ) : siteVisits.length === 0 ? (
+                  <div className="text-sm text-slate-600">No site visits scheduled yet.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {siteVisits.map((visit) => {
+                      const isPending = visit.status === 'proposed';
+                      const proposedByClient = visit.proposedByRole === 'client';
+
+                      return (
+                        <div key={visit.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {proposedByClient ? 'Client proposed visit' : 'You proposed visit'}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {new Date(visit.proposedAt).toLocaleString()}
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                              {visit.status.replace('_', ' ')}
+                            </span>
+                          </div>
+
+                          {visit.notes && (
+                            <p className="mt-2 text-xs text-slate-600">Notes: {visit.notes}</p>
+                          )}
+
+                          {visit.responseNotes && (
+                            <p className="mt-2 text-xs text-slate-600">Response: {visit.responseNotes}</p>
+                          )}
+
+                          {isPending && proposedByClient && (
+                            <div className="mt-3 space-y-2">
+                              <input
+                                value={visitResponseNotes[visit.id] || ''}
+                                onChange={(e) =>
+                                  setVisitResponseNotes((prev) => ({
+                                    ...prev,
+                                    [visit.id]: e.target.value,
+                                  }))
+                                }
+                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs"
+                                placeholder="Add a response note (optional)"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRespondSiteVisit(visit.id, 'accepted')}
+                                  disabled={siteVisitActionLoading}
+                                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRespondSiteVisit(visit.id, 'declined')}
+                                  disabled={siteVisitActionLoading}
+                                  className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {isPending && !proposedByClient && (
+                            <p className="mt-2 text-xs text-slate-600">Awaiting client response.</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

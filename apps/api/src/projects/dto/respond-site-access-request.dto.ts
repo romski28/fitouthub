@@ -4,6 +4,7 @@ export class RespondSiteAccessRequestDto {
     | 'approved_visit_scheduled'
     | 'denied';
   visitScheduledFor?: string; // ISO date
+  visitScheduledAt?: string; // ISO datetime
   reasonDenied?: string;
   addressFull?: string;
   unitNumber?: string;

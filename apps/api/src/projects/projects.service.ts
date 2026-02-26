@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
+import { ChatService } from '../chat/chat.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { resolve } from 'path';
@@ -14,6 +15,7 @@ export class ProjectsService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private chatService: ChatService,
   ) {}
 
   private readonly STATUS_ORDER = [
@@ -82,6 +84,31 @@ export class ProjectsService {
       .replace(/\s+/g, ' ')
       .replace(/[^a-z0-9]+/g, ' ')
       .trim();
+  }
+
+  private formatDateTime(value?: Date | string | null): string {
+    if (!value) return 'TBD';
+    const date = typeof value === 'string' ? new Date(value) : value;
+    if (Number.isNaN(date.getTime())) return 'TBD';
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  private async addProjectChatMessage(
+    projectId: string,
+    senderType: 'client' | 'professional',
+    senderUserId: string | null,
+    senderProId: string | null,
+    content: string,
+  ): Promise<void> {
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    await this.chatService.addProjectMessage(
+      thread.id,
+      senderType,
+      senderUserId,
+      senderProId,
+      content,
+    );
   }
 
   private normalizePhotos(
@@ -1283,6 +1310,9 @@ Please review the project details and respond with your quote or decline the inv
             professionalId,
           },
         },
+        include: {
+          professional: true,
+        },
       });
 
     if (!projectProfessional) {
@@ -1321,6 +1351,18 @@ Please review the project details and respond with your quote or decline the inv
         status: 'pending',
       },
     });
+
+    const professionalName =
+      projectProfessional.professional?.businessName ||
+      projectProfessional.professional?.fullName ||
+      'Professional';
+    await this.addProjectChatMessage(
+      projectId,
+      'professional',
+      null,
+      professionalId,
+      `${professionalName} requested site access on ${this.formatDateTime(new Date())}.`,
+    );
 
     return {
       success: true,
@@ -1389,6 +1431,7 @@ Please review the project details and respond with your quote or decline the inv
     body: {
       status: 'approved_no_visit' | 'approved_visit_scheduled' | 'denied';
       visitScheduledFor?: string;
+      visitScheduledAt?: string;
       reasonDenied?: string;
       addressFull?: string;
       unitNumber?: string;
@@ -1410,7 +1453,9 @@ Please review the project details and respond with your quote or decline the inv
     await this.assertClientProjectAccess(request.projectId, userId);
 
     if (body.status === 'approved_visit_scheduled' && !body.visitScheduledFor) {
-      throw new BadRequestException('visitScheduledFor is required for scheduled visits');
+      if (!body.visitScheduledAt) {
+        throw new BadRequestException('visitScheduledAt or visitScheduledFor is required for scheduled visits');
+      }
     }
 
     if (body.status === 'denied') {
@@ -1423,6 +1468,14 @@ Please review the project details and respond with your quote or decline the inv
           reasonDenied: body.reasonDenied,
         },
       });
+
+      await this.addProjectChatMessage(
+        request.projectId,
+        'client',
+        userId,
+        null,
+        `Client denied site access${body.reasonDenied ? `: ${body.reasonDenied}` : '.'}`,
+      );
 
       return {
         success: true,
@@ -1471,6 +1524,12 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
+    const scheduledAt = body.visitScheduledAt
+      ? new Date(body.visitScheduledAt)
+      : body.visitScheduledFor
+      ? new Date(body.visitScheduledFor)
+      : null;
+
     const approved = await this.prisma.siteAccessRequest.update({
       where: { id: requestId },
       data: {
@@ -1480,9 +1539,33 @@ Please review the project details and respond with your quote or decline the inv
         reasonDenied: body.reasonDenied,
         visitScheduledFor: body.visitScheduledFor
           ? new Date(body.visitScheduledFor)
-          : null,
+          : scheduledAt,
+        visitScheduledAt: scheduledAt,
       },
     });
+
+    if (body.status === 'approved_visit_scheduled' && scheduledAt) {
+      await this.prisma.siteAccessVisit.create({
+        data: {
+          projectId: request.projectId,
+          projectProfessionalId: request.projectProfessionalId,
+          professionalId: request.professionalId,
+          proposedAt: scheduledAt,
+          proposedByRole: 'client',
+          status: 'proposed',
+        },
+      });
+    }
+
+    await this.addProjectChatMessage(
+      request.projectId,
+      'client',
+      userId,
+      null,
+      body.status === 'approved_no_visit'
+        ? 'Client approved site access (no visit required).'
+        : `Client approved site access with a proposed visit on ${this.formatDateTime(scheduledAt)}.`,
+    );
 
     return {
       success: true,
@@ -1529,10 +1612,309 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    const professional = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+    });
+    const professionalName =
+      professional?.businessName || professional?.fullName || 'Professional';
+    await this.addProjectChatMessage(
+      request.projectId,
+      'professional',
+      null,
+      professionalId,
+      `${professionalName} confirmed a site visit on ${this.formatDateTime(updatedRequest.visitedAt)}.`,
+    );
+
     return {
       success: true,
       request: updatedRequest,
     };
+  }
+
+  async requestSiteVisit(
+    projectId: string,
+    professionalId: string,
+    body: { scheduledAt: string; notes?: string },
+  ) {
+    const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null;
+    if (!scheduledAt || Number.isNaN(scheduledAt.getTime())) {
+      throw new BadRequestException('scheduledAt is required');
+    }
+
+    const projectProfessional = await this.prisma.projectProfessional.findUnique({
+      where: {
+        projectId_professionalId: {
+          projectId,
+          professionalId,
+        },
+      },
+      include: {
+        professional: true,
+      },
+    });
+
+    if (!projectProfessional) {
+      throw new BadRequestException('Professional is not linked to this project');
+    }
+
+    if (!['accepted', 'quoted', 'awarded'].includes(projectProfessional.status)) {
+      throw new BadRequestException('Project must be accepted before requesting a site visit');
+    }
+
+    const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectProfessionalId: projectProfessional.id,
+      },
+      orderBy: {
+        requestedAt: 'desc',
+      },
+    });
+
+    const approvedStatuses = [
+      'approved_no_visit',
+      'approved_visit_scheduled',
+      'visited',
+    ];
+    const hasAccess =
+      !!latestAccessRequest && approvedStatuses.includes(latestAccessRequest.status);
+
+    if (!hasAccess) {
+      throw new BadRequestException('Site access must be approved before requesting a visit');
+    }
+
+    const existingPending = await this.prisma.siteAccessVisit.findFirst({
+      where: {
+        projectProfessionalId: projectProfessional.id,
+        status: 'proposed',
+        proposedByRole: 'professional',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingPending) {
+      return {
+        success: true,
+        visit: existingPending,
+        message: 'A site visit proposal is already pending',
+      };
+    }
+
+    const latestAccepted = await this.prisma.siteAccessVisit.findFirst({
+      where: {
+        projectProfessionalId: projectProfessional.id,
+        status: 'accepted',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (latestAccepted) {
+      await this.prisma.siteAccessVisit.update({
+        where: { id: latestAccepted.id },
+        data: {
+          status: 'cancelled',
+          responseNotes: 'Rescheduled by professional',
+        },
+      });
+    }
+
+    const visit = await this.prisma.siteAccessVisit.create({
+      data: {
+        projectId,
+        projectProfessionalId: projectProfessional.id,
+        professionalId,
+        proposedAt: scheduledAt,
+        proposedByRole: 'professional',
+        notes: body.notes,
+        status: 'proposed',
+      },
+    });
+
+    const professionalName =
+      projectProfessional.professional?.businessName ||
+      projectProfessional.professional?.fullName ||
+      'Professional';
+    await this.addProjectChatMessage(
+      projectId,
+      'professional',
+      null,
+      professionalId,
+      `${professionalName} requested a site visit on ${this.formatDateTime(scheduledAt)}.`,
+    );
+
+    return {
+      success: true,
+      visit,
+    };
+  }
+
+  async respondToSiteVisit(
+    visitId: string,
+    actorId: string,
+    isProfessional: boolean,
+    body: { status: 'accepted' | 'declined'; responseNotes?: string },
+  ) {
+    const visit = await this.prisma.siteAccessVisit.findUnique({
+      where: { id: visitId },
+      include: {
+        project: true,
+        professional: true,
+      },
+    });
+
+    if (!visit) {
+      throw new BadRequestException('Site visit not found');
+    }
+
+    if (visit.status !== 'proposed') {
+      throw new BadRequestException('This site visit has already been responded to');
+    }
+
+    if (visit.proposedByRole === 'professional') {
+      if (isProfessional) {
+        throw new BadRequestException('Only clients can respond to this visit proposal');
+      }
+      await this.assertClientProjectAccess(visit.projectId, actorId);
+    } else {
+      if (!isProfessional) {
+        throw new BadRequestException('Only professionals can respond to this visit proposal');
+      }
+      if (visit.professionalId !== actorId) {
+        throw new BadRequestException('You do not have access to this visit proposal');
+      }
+    }
+
+    const updated = await this.prisma.siteAccessVisit.update({
+      where: { id: visitId },
+      data: {
+        status: body.status,
+        respondedAt: new Date(),
+        respondedBy: !isProfessional ? actorId : null,
+        responseNotes: body.responseNotes,
+      },
+    });
+
+    if (body.status === 'accepted') {
+      await this.prisma.projectProfessional.update({
+        where: { id: visit.projectProfessionalId },
+        data: {
+          visitApprovedButNotDone: true,
+        },
+      });
+    }
+
+    const professionalName =
+      visit.professional?.businessName || visit.professional?.fullName || 'Professional';
+    const actorLabel = isProfessional ? professionalName : 'Client';
+    await this.addProjectChatMessage(
+      visit.projectId,
+      isProfessional ? 'professional' : 'client',
+      isProfessional ? null : actorId,
+      isProfessional ? actorId : null,
+      body.status === 'accepted'
+        ? `${actorLabel} accepted the proposed site visit for ${this.formatDateTime(visit.proposedAt)}.`
+        : `${actorLabel} declined the proposed site visit for ${this.formatDateTime(visit.proposedAt)}${body.responseNotes ? `: ${body.responseNotes}` : '.'}`,
+    );
+
+    return {
+      success: true,
+      visit: updated,
+    };
+  }
+
+  async completeSiteVisit(
+    visitId: string,
+    professionalId: string,
+    body: { visitDetails?: string },
+  ) {
+    const visit = await this.prisma.siteAccessVisit.findUnique({
+      where: { id: visitId },
+    });
+
+    if (!visit) {
+      throw new BadRequestException('Site visit not found');
+    }
+
+    if (visit.professionalId !== professionalId) {
+      throw new BadRequestException('You do not have access to this visit');
+    }
+
+    if (visit.status !== 'accepted') {
+      throw new BadRequestException('Only accepted visits can be completed');
+    }
+
+    const updated = await this.prisma.siteAccessVisit.update({
+      where: { id: visitId },
+      data: {
+        status: 'completed',
+        completedAt: new Date(),
+        responseNotes: body.visitDetails ?? visit.responseNotes,
+      },
+    });
+
+    await this.prisma.projectProfessional.update({
+      where: { id: visit.projectProfessionalId },
+      data: {
+        siteVisitedAt: new Date(),
+        visitNotes: body.visitDetails,
+        visitApprovedButNotDone: false,
+      },
+    });
+
+    const professional = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+    });
+    const professionalName =
+      professional?.businessName || professional?.fullName || 'Professional';
+    await this.addProjectChatMessage(
+      visit.projectId,
+      'professional',
+      null,
+      professionalId,
+      `${professionalName} marked the site visit as completed on ${this.formatDateTime(updated.completedAt)}.`,
+    );
+
+    return {
+      success: true,
+      visit: updated,
+    };
+  }
+
+  async getSiteVisits(
+    projectId: string,
+    actorId: string,
+    isProfessional: boolean,
+  ) {
+    if (isProfessional) {
+      const projectProfessional = await this.prisma.projectProfessional.findUnique({
+        where: {
+          projectId_professionalId: {
+            projectId,
+            professionalId: actorId,
+          },
+        },
+      });
+
+      if (!projectProfessional) {
+        throw new BadRequestException('Professional is not linked to this project');
+      }
+
+      const visits = await this.prisma.siteAccessVisit.findMany({
+        where: { projectProfessionalId: projectProfessional.id },
+        include: { professional: true },
+        orderBy: { proposedAt: 'desc' },
+      });
+
+      return { success: true, visits };
+    }
+
+    await this.assertClientProjectAccess(projectId, actorId);
+    const visits = await this.prisma.siteAccessVisit.findMany({
+      where: { projectId },
+      include: { professional: true },
+      orderBy: { proposedAt: 'desc' },
+    });
+
+    return { success: true, visits };
   }
 
   async getSiteAccessStatus(projectId: string, professionalId: string) {
@@ -1578,6 +1960,7 @@ Please review the project details and respond with your quote or decline the inv
       requestId: latestAccessRequest?.id || null,
       requestStatus: latestAccessRequest?.status || 'none',
       visitScheduledFor: latestAccessRequest?.visitScheduledFor || null,
+      visitScheduledAt: latestAccessRequest?.visitScheduledAt || null,
       visitedAt: latestAccessRequest?.visitedAt || null,
       reasonDenied: latestAccessRequest?.reasonDenied || null,
       hasAccess,
