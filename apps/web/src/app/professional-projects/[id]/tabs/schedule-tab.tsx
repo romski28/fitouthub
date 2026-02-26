@@ -157,7 +157,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 </div>
 
                 <MilestoneTimeline
-                  milestones={milestones}
+                  milestones={milestones.map(m => ({
+                    ...m,
+                    photoUrls: m.photoUrls || []
+                  }))}
                   title="Project Progress"
                   showPhotos={true}
                   editable={false}

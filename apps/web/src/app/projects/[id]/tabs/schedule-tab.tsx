@@ -111,7 +111,10 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
             <div className="rounded-lg border border-slate-200 bg-white p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-6">Project Timeline & Progress</h3>
               <MilestoneTimeline
-                milestones={milestones}
+                milestones={milestones.map(m => ({
+                  ...m,
+                  photoUrls: m.photoUrls || []
+                }))}
                 title="Contractor's Schedule"
                 showPhotos={true}
                 editable={false}
