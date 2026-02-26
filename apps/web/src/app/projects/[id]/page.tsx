@@ -15,6 +15,7 @@ import { ProjectImagesCard } from '@/components/project-images-card';
 import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
 import { SiteAccessTab } from '@/app/projects/[id]/tabs/site-access-tab';
+import { ProfessionalsTab } from '@/app/projects/[id]/tabs/professionals-tab';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -1345,6 +1346,30 @@ export default function ClientProjectDetailPage() {
             />
           </div>
         )}
+
+          {/* Tab Content - Professionals */}
+          {activeTab === 'professionals' && project && (
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+              <ProfessionalsTab
+                project={project}
+                professionals={project.professionals || []}
+                expandedAccordions={expandedAccordions}
+                onToggleAccordion={toggleAccordion}
+                accessToken={accessToken || ''}
+                onAwarded={async () => {
+                  const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                  });
+                  if (res.ok) {
+                    const updated = await res.json();
+                    setProject(updated.project);
+                  }
+                }}
+                onActionBusy={setActionBusy}
+                actionBusy={actionBusy}
+              />
+            </div>
+          )}
 
           {/* Site Access Requests */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
