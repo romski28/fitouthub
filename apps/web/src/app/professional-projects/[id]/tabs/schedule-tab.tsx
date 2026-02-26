@@ -102,17 +102,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         return;
       }
 
-      // For now, just update local state
-      // In a full implementation, this would sync with the backend
-      // Convert back to Milestone-like objects maintaining existing IDs, projectId, etc.
+      // Update local milestones state 
+      // In a full implementation, this would sync with the backend in real-time
       const updatedFull = milestones.map((existing, idx) => ({
         ...existing,
         ...updatedMilestones[idx] || existing,
       }));
       setMilestones(updatedFull);
-      setEditingMilestones(false);
 
-      // Notify parent of update
+      // Don't auto-close - let user explicitly click Close button
       onMilestonesUpdate?.();
     } catch (err) {
       console.error('Error updating milestones:', err);
