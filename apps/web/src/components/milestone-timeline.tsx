@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ChevronRight, AlertCircle } from "lucide-react";
-import { ImageLightbox } from "./image-lightbox";
+import ImageLightbox from "./image-lightbox";
 
 interface Milestone {
   id: string;
