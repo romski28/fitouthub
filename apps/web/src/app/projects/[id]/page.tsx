@@ -13,6 +13,7 @@ import ProjectFinancialsCard from '@/components/project-financials-card';
 import { useFundsSecured } from '@/hooks/use-funds-secured';
 import { ProjectImagesCard } from '@/components/project-images-card';
 import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project-tabs';
+import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -239,6 +240,9 @@ export default function ClientProjectDetailPage() {
   // Tab & accordion state
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({
+    'project-details': true,
+    'schedule-contact': false,
+    'progress-financials': false,
     'site-access-requests': true,
     'site-visit-proposals': false,
     'location-details': false,
@@ -1185,8 +1189,8 @@ export default function ClientProjectDetailPage() {
             </Link>
           </div>
 
-        {/* Project Info */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        {/* Project Info & Tab Navigation */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className={`px-5 py-4 text-white rounded-t-xl ${
             projectStatus === 'withdrawn'
               ? 'bg-gradient-to-r from-slate-400 to-slate-300'
@@ -1227,7 +1231,7 @@ export default function ClientProjectDetailPage() {
           </div>
 
           {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
-            <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-slate-200">
               <div className="flex items-center gap-3">
                 {projectStatus === 'withdrawn' && (
                   <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
@@ -1245,65 +1249,52 @@ export default function ClientProjectDetailPage() {
             </div>
           )}
 
-          <div className="p-5 space-y-4">
-            {project.notes && (
-              <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100">
-                <p className="font-semibold text-slate-800 mb-1">Project description</p>
-                <p className="text-slate-700 leading-relaxed">{project.notes}</p>
-                <div className="flex gap-4 mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500">
-                  <span>Created: {formatDate(project.createdAt)}</span>
-                  {project.updatedAt && (
-                    <span>Last updated: {formatDate(project.updatedAt)}</span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Tab Navigation */}
+          <ProjectTabs activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
-        {/* Project Progress - Moved to 2nd position */}
-        <ProjectProgressBar
-          project={{
-            id: project.id,
-            status: project.status,
-            startDate: project.startDate,
-            endDate: project.endDate,
-            professionals:
-              project.professionals?.map((p) => ({
-                status: p.status,
-                quoteAmount: p.quoteAmount,
-                invoice: p.invoice || null,
-              })) || [],
-          }}
-          hasAssist={!!assistRequestId}
-          variant="full"
-          fundsSecured={fundsSecured}
-        />
-
-          {/* Project Financials */}
-          {accessToken && (
-            <ProjectFinancialsCard
-              projectId={project.id}
-              accessToken={accessToken}
-              projectCost={projectCostValue}
-              originalBudget={project.budget}
-              role="client"
-              onClarify={(transactionId) => {
-                // Scroll to chat and focus input for clarification
-                const chatElement = document.getElementById('project-chat');
-                if (chatElement) {
-                  chatElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  setTimeout(() => {
-                    const inputElement = chatElement.querySelector('input[type="text"]') || 
-                                        chatElement.querySelector('textarea');
-                    if (inputElement instanceof HTMLInputElement || inputElement instanceof HTMLTextAreaElement) {
-                      inputElement.focus();
-                    }
-                  }, 500);
-                }
+        {/* Tab Content - Overview */}
+        {activeTab === 'overview' && project && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <OverviewTab
+              project={project}
+              expandedAccordions={expandedAccordions}
+              onToggleAccordion={toggleAccordion}
+              accessToken={accessToken || ''}
+              fundsSecured={fundsSecured}
+              onScheduleUpdate={async (data) => {
+                const res = await fetch(`${API_BASE_URL}/projects/${projectId}/schedule`, {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                });
+                if (!res.ok) throw new Error('Failed to update schedule');
+                const updated = await res.json();
+                setProject((prev) => prev ? { ...prev, ...updated.project } : null);
               }}
+              onContactUpdate={async (data) => {
+                const res = await fetch(`${API_BASE_URL}/projects/${projectId}/contractor-contact`, {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                });
+                if (!res.ok) throw new Error('Failed to update contact');
+                const updated = await res.json();
+                setProject((prev) => prev ? { ...prev, ...updated.project } : null);
+              }}
+              onPayInvoice={handlePayInvoice}
+              isUpdatingSchedule={updatingSchedule}
+              isUpdatingContact={updatingContact}
+              isPayingInvoice={payingInvoice}
             />
-          )}
+          </div>
+        )}
 
           {/* Site Access Requests */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
