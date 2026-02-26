@@ -63,6 +63,7 @@ export default function ProfessionalProfilePage() {
     { id: undefined, title: '', description: '', imageUrls: [] },
   );
   const [refSaving, setRefSaving] = useState(false);
+  const [refError, setRefError] = useState<string | null>(null);
   const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
   const [password, setPassword] = useState('');
 
@@ -188,19 +189,19 @@ export default function ProfessionalProfilePage() {
     e.preventDefault();
     if (!accessToken) return;
     if (!refDraft.title.trim()) {
-      setError('Title is required');
+      setRefError('Title is required');
       return;
     }
     if (!refDraft.description.trim()) {
-      setError('Description is required');
+      setRefError('Description is required');
       return;
     }
     if (refPendingFiles.length > 0) {
-      setError('Please upload the selected photos before saving.');
+      setRefError('Please upload the selected photos before saving.');
       return;
     }
     setRefSaving(true);
-    setError(null);
+    setRefError(null);
     try {
       if (refDraft.id) {
         const res = await fetch(`${API_BASE_URL}/professional/reference-projects/${refDraft.id}`, {
@@ -231,7 +232,7 @@ export default function ProfessionalProfilePage() {
       }
       resetRefDraft();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save reference project');
+      setRefError(err instanceof Error ? err.message : 'Failed to save reference project');
     } finally {
       setRefSaving(false);
     }
@@ -245,12 +246,13 @@ export default function ProfessionalProfilePage() {
       imageUrls: proj.imageUrls || [],
     });
     setRefPendingFiles([]);
+    setRefError(null);
   };
 
   const handleRefDelete = async (id: string) => {
     if (!accessToken) return;
     setRefSaving(true);
-    setError(null);
+    setRefError(null);
     try {
       const res = await fetch(`${API_BASE_URL}/professional/reference-projects/${id}`, {
         method: 'DELETE',
@@ -260,7 +262,7 @@ export default function ProfessionalProfilePage() {
       setRefProjects((prev) => prev.filter((p) => p.id !== id));
       if (refDraft.id === id) resetRefDraft();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete reference project');
+      setRefError(err instanceof Error ? err.message : 'Failed to delete reference project');
     } finally {
       setRefSaving(false);
     }
@@ -479,6 +481,12 @@ export default function ProfessionalProfilePage() {
             <p className="text-sm text-slate-600">Add projects that showcase your work (title, description, and photos).</p>
           </div>
         </div>
+
+        {refError && (
+          <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+            {refError}
+          </div>
+        )}
 
         <form onSubmit={handleRefSave} className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4 mb-5">
           <div className="grid gap-3 md:grid-cols-2">
