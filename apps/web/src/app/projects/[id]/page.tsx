@@ -1414,7 +1414,8 @@ export default function ClientProjectDetailPage() {
           </div>
         )}
 
-          {/* Site Access Requests */}
+          {/* 🔴 REDUNDANT - Site Access Requests moved to Site Access Tab - Can be removed after full migration */}
+          {false && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -1600,8 +1601,10 @@ export default function ClientProjectDetailPage() {
               </div>
             )}
           </div>
+          )}
 
-          {/* Site Visit Requests */}
+          {/* 🔴 REDUNDANT - Site Visit Requests moved to Site Access Tab - Can be removed after full migration */}
+          {false && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -1707,8 +1710,10 @@ export default function ClientProjectDetailPage() {
               </div>
             )}
           </div>
+          )}
 
-          {/* Location Details (Post-Escrow) */}
+          {/* 🔴 REDUNDANT - Location Details moved to Site Access Tab - Can be removed after full migration */}
+          {false && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -1728,13 +1733,13 @@ export default function ClientProjectDetailPage() {
               </p>
             )}
 
-            {fundsSecured && project?.locationDetailsStatus && project.locationDetailsStatus !== 'pending' && (
+            {fundsSecured && project?.locationDetailsStatus && project?.locationDetailsStatus !== 'pending' && (
               <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                Location details submitted (status: {project.locationDetailsStatus}).
+                Location details submitted (status: {project?.locationDetailsStatus}).
               </div>
             )}
 
-            {fundsSecured && (!project?.locationDetailsStatus || project.locationDetailsStatus === 'pending') && (
+            {fundsSecured && (!project?.locationDetailsStatus || project?.locationDetailsStatus === 'pending') && (
               <div className="mt-4 space-y-4">
                 {locationDetailsError && (
                   <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -1904,10 +1909,11 @@ export default function ClientProjectDetailPage() {
               </div>
             )}
           </div>
+          )}
 
-          {/* Bidding Card - Show when professionals are invited but not awarded */}
-          {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          {/* 🔴 REDUNDANT - Bidding moved to Professionals Tab - Can be removed after full migration */}
+          {false && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
               <div className="mb-4 flex items-start justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Bidding</h2>
@@ -1921,7 +1927,7 @@ export default function ClientProjectDetailPage() {
                 </Link>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {project.professionals.map((pp) => {
+                {project?.professionals?.map((pp) => {
                   const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
                   const isSelected = selectedProfessional?.id === pp.id;
                   return (
@@ -2057,11 +2063,11 @@ export default function ClientProjectDetailPage() {
 
           {/* Awarded Details - REMOVED, combined with new awarded chat panel above */}
 
-          {/* Professionals Summary Table - REMOVED, replaced by Bidding Card above */}
+          {/* Professionals Summary Table - REMOVED, replaced by Professionals Tab */}
 
-        {/* Professionals & Messaging - Hidden when project is awarded */}
-        {project.professionals && project.professionals.length > 0 && !project.professionals.some((pp) => pp.status === 'awarded') && (
-          <div>
+          {/* 🔴 REDUNDANT - Professionals & Messaging moved to Chat Tab - Can be removed after full migration */}
+          {false && (
+        <div>
             {/* Messages Panel - Full Width */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 rounded-t-xl">
@@ -2069,7 +2075,7 @@ export default function ClientProjectDetailPage() {
                   <div>
                     <h3 className="font-bold text-slate-900">
                       {viewingAssistChat ? 'Fitout Hub Assistance' : (selectedProfessional
-                        ? `Chat with ${selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}`
+                        ? `Chat with ${selectedProfessional?.professional?.fullName || selectedProfessional?.professional?.businessName || selectedProfessional?.professional?.email}`
                         : 'Select a professional to chat')}
                     </h3>
                     {viewingAssistChat && (
@@ -2079,7 +2085,7 @@ export default function ClientProjectDetailPage() {
                     )}
                     {!viewingAssistChat && selectedProfessional && (
                       <p className="text-xs text-slate-600 mt-1">
-                        {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
+                        {selectedProfessional?.professional?.fullName || selectedProfessional?.professional?.businessName || selectedProfessional?.professional?.email}
                       </p>
                     )}
                   </div>
