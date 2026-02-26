@@ -37,15 +37,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   messageError,
 }) => {
   const isAwarded = projectStatus === 'awarded';
-  const [chatMode, setChatMode] = useState<'project' | 'direct'>('project');
-
-  if (!isAwarded) {
-    return (
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        Team chat will be available once your quote is awarded.
-      </div>
-    );
-  }
+  const [chatMode, setChatMode] = useState<'project' | 'direct'>(isAwarded ? 'project' : 'direct');
 
   return (
     <div className="space-y-5">
@@ -73,12 +65,20 @@ export const ChatTab: React.FC<ChatTabProps> = ({
             <div className="p-4 bg-blue-50">
               <p className="text-sm text-blue-700">Chat with the full project team</p>
             </div>
-            {projectId && accessToken && (
-              <ProjectChat
-                projectId={projectId}
-                currentUserRole="professional"
-                accessToken={accessToken}
-              />
+            {!isAwarded ? (
+              <div className="p-4">
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  Team chat will be available once your quote is awarded.
+                </div>
+              </div>
+            ) : (
+              projectId && accessToken && (
+                <ProjectChat
+                  projectId={projectId}
+                  currentUserRole="professional"
+                  accessToken={accessToken}
+                />
+              )
             )}
           </div>
         )}
