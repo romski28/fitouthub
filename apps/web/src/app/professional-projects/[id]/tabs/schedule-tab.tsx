@@ -102,19 +102,44 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         return;
       }
 
-      // Update local milestones state 
-      // In a full implementation, this would sync with the backend in real-time
-      const updatedFull = milestones.map((existing, idx) => ({
-        ...existing,
-        ...updatedMilestones[idx] || existing,
-      }));
-      setMilestones(updatedFull);
+      // Save each milestone to backend
+      const savedMilestones = [];
+      for (const milestone of updatedMilestones) {
+        const res = await fetch(
+          `${API_BASE_URL}/milestones`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              projectProfessionalId,
+              title: milestone.title,
+              description: milestone.description,
+              sequence: milestone.sequence,
+              status: milestone.status,
+              percentComplete: milestone.percentComplete,
+              plannedStartDate: milestone.plannedStartDate,
+              plannedEndDate: milestone.plannedEndDate,
+            }),
+          }
+        );
 
-      // Don't auto-close - let user explicitly click Close button
+        if (!res.ok) {
+          throw new Error(`Failed to save milestone: ${milestone.title}`);
+        }
+
+        const saved = await res.json();
+        savedMilestones.push(saved);
+      }
+
+      // Update milestones with IDs from backend
+      setMilestones(savedMilestones);
       onMilestonesUpdate?.();
     } catch (err) {
-      console.error('Error updating milestones:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update schedule');
+      console.error('Error saving milestones:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save milestones');
     }
   };
 
