@@ -1727,6 +1727,11 @@ Please review the project details and respond with your quote or decline the inv
         notes: body.notes,
         status: 'proposed',
       },
+      include: {
+        project: true,
+        professional: true,
+        projectProfessional: true,
+      },
     });
 
     const professionalName =
@@ -1791,6 +1796,11 @@ Please review the project details and respond with your quote or decline the inv
         respondedBy: !isProfessional ? actorId : null,
         responseNotes: body.responseNotes,
       },
+      include: {
+        project: true,
+        professional: true,
+        projectProfessional: true,
+      },
     });
 
     if (body.status === 'accepted') {
@@ -1848,6 +1858,11 @@ Please review the project details and respond with your quote or decline the inv
         status: 'completed',
         completedAt: new Date(),
         responseNotes: body.visitDetails ?? visit.responseNotes,
+      },
+      include: {
+        project: true,
+        professional: true,
+        projectProfessional: true,
       },
     });
 
