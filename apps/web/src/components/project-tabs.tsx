@@ -2,15 +2,23 @@
 
 import React, { useState } from 'react';
 
+interface ProjectTabDefinition {
+  id: string;
+  label: string;
+  icon?: string;
+}
+
 interface ProjectTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  tabs?: ProjectTabDefinition[];
+  children?: React.ReactNode;
 }
 
-export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange }) => {
+export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange, tabs, children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const tabs = [
+  const defaultTabs: ProjectTabDefinition[] = [
     { id: 'overview', label: 'Overview', icon: '📋' },
     { id: 'site-access', label: 'Site Access', icon: '📍' },
     { id: 'professionals', label: 'Professionals', icon: '👥' },
@@ -18,7 +26,9 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
     { id: 'media', label: 'Media', icon: '🖼️' },
   ];
 
-  const activeTabLabel = tabs.find((t) => t.id === activeTab)?.label || 'Menu';
+  const resolvedTabs = tabs && tabs.length > 0 ? tabs : defaultTabs;
+
+  const activeTabLabel = resolvedTabs.find((t) => t.id === activeTab)?.label || 'Menu';
 
   return (
     <>
@@ -26,7 +36,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
       <div className="hidden sm:block sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex overflow-x-auto">
-            {tabs.map((tab) => (
+            {resolvedTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
@@ -56,7 +66,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
             className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
           >
             <span className="text-sm font-semibold text-slate-900">
-              {tabs.find((t) => t.id === activeTab)?.icon} {activeTabLabel}
+              {resolvedTabs.find((t) => t.id === activeTab)?.icon} {activeTabLabel}
             </span>
             <svg
               className={`w-4 h-4 text-slate-600 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
@@ -71,7 +81,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
           {/* Dropdown Menu */}
           {mobileMenuOpen && (
             <div className="mt-2 space-y-2">
-              {tabs.map((tab) => (
+              {resolvedTabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => {
@@ -92,6 +102,17 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
           )}
         </div>
       </div>
+
+      {children && (
+        <div className="mt-5 space-y-5">
+          {React.Children.map(children, (child) => {
+            if (!React.isValidElement(child)) return child;
+            const childTab = (child.props as { tab?: string }).tab;
+            if (childTab && childTab !== activeTab) return null;
+            return child;
+          })}
+        </div>
+      )}
     </>
   );
 };

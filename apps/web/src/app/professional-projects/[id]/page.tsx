@@ -6,9 +6,12 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
-import ProjectChat from '@/components/project-chat';
-import ProjectFinancialsCard from '@/components/project-financials-card';
 import ProjectInfoCard from '@/components/project-info-card';
+import { ProjectTabs } from '@/components/project-tabs';
+import { OverviewTab } from './tabs/overview-tab';
+import { SiteAccessTab } from './tabs/site-access-tab';
+import { FinancialsTab } from './tabs/financials-tab';
+import { ChatTab } from './tabs/chat-tab';
 
 interface ProjectDetail {
   id: string;
@@ -118,6 +121,15 @@ export default function ProjectDetailPage() {
   const [visitTime, setVisitTime] = useState('');
   const [visitRequestNotes, setVisitRequestNotes] = useState('');
   const [visitResponseNotes, setVisitResponseNotes] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState('overview');
+  const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({});
+
+  const toggleAccordion = (id: string) => {
+    setExpandedAccordions((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   // Scroll to top on page load
   useEffect(() => {
@@ -726,18 +738,20 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleSubmitAdvanceRequest = async () => {
+  const handleSubmitAdvanceRequest = async (override?: Partial<typeof advanceRequestForm>) => {
     if (!accessToken || !projectProfessionalId) return;
 
+    const form = { ...advanceRequestForm, ...override };
+
     // Validate form
-    if (advanceRequestForm.requestType === 'fixed') {
-      const amount = parseFloat(advanceRequestForm.amount);
+    if (form.requestType === 'fixed') {
+      const amount = parseFloat(form.amount);
       if (isNaN(amount) || amount <= 0) {
         toast.error('Please enter a valid amount');
         return;
       }
     } else {
-      const percentage = parseFloat(advanceRequestForm.percentage);
+      const percentage = parseFloat(form.percentage);
       if (isNaN(percentage) || percentage <= 0 || percentage > 100) {
         toast.error('Please enter a valid percentage (1-100)');
         return;
@@ -755,14 +769,14 @@ export default function ProjectDetailPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            requestType: advanceRequestForm.requestType,
-            amount: advanceRequestForm.requestType === 'fixed' 
-              ? parseFloat(advanceRequestForm.amount) 
+            requestType: form.requestType,
+            amount: form.requestType === 'fixed' 
+              ? parseFloat(form.amount) 
               : undefined,
-            percentage: advanceRequestForm.requestType === 'percentage' 
-              ? parseFloat(advanceRequestForm.percentage) 
+            percentage: form.requestType === 'percentage' 
+              ? parseFloat(form.percentage) 
               : undefined,
-            notes: advanceRequestForm.notes,
+            notes: form.notes,
           }),
         },
       );
@@ -793,6 +807,16 @@ export default function ProjectDetailPage() {
     } finally {
       setSubmittingAdvanceRequest(false);
     }
+  };
+
+  const handleSubmitPaymentRequest = async (amount: number, type: string, notes: string) => {
+    const normalizedType = type === 'percentage' ? 'percentage' : 'fixed';
+    await handleSubmitAdvanceRequest({
+      requestType: normalizedType,
+      amount: normalizedType === 'fixed' ? amount.toString() : '',
+      percentage: normalizedType === 'percentage' ? amount.toString() : '',
+      notes,
+    });
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -867,7 +891,39 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const acceptedVisit = siteVisits.find((visit) => visit.status === 'accepted');
+  const mappedPaymentRequests = (project.paymentRequests || []).map((request) => {
+    const amount = Number(request.requestAmount);
+    return {
+      id: request.id,
+      amount: Number.isNaN(amount) ? 0 : amount,
+      type: request.requestType,
+      status: request.status,
+      notes: request.notes,
+      createdAt: request.createdAt,
+    };
+  });
+
+  const paymentRequestAmount =
+    advanceRequestForm.requestType === 'fixed'
+      ? advanceRequestForm.amount
+      : advanceRequestForm.percentage;
+
+  const awardedAmountValue = project.quoteAmount ? Number(project.quoteAmount) : undefined;
+  const projectBudgetValue = project.project.budget ? Number(project.project.budget) : undefined;
+  const totalRequested = mappedPaymentRequests.reduce((sum, request) => sum + request.amount, 0);
+  const totalPaid = mappedPaymentRequests
+    .filter((request) => request.status === 'paid' || request.status === 'approved')
+    .reduce((sum, request) => sum + request.amount, 0);
+
+  const projectFinancials = project.status === 'awarded'
+    ? {
+        projectBudget: projectBudgetValue,
+        awardedAmount: awardedAmountValue,
+        totalPaymentRequest: totalRequested,
+        totalPaid,
+        balance: awardedAmountValue !== undefined ? awardedAmountValue - totalPaid : undefined,
+      }
+    : null;
 
   return (
     <>
@@ -891,648 +947,105 @@ export default function ProjectDetailPage() {
             updatedAt={project!.updatedAt}
           />
 
-          {/* Site Access */}
-          <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Site Access</h2>
-              </div>
-              {!siteAccessStatus?.hasAccess && (
-                <button
-                  type="button"
-                  onClick={handleRequestSiteAccess}
-                  disabled={siteAccessActionLoading || siteAccessStatus?.requestStatus === 'pending'}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
-                </button>
-              )}
-            </div>
+          <ProjectTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            tabs={[
+              { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'site-access', label: 'Site Access', icon: '📍' },
+              { id: 'financials', label: 'Financials', icon: '💳' },
+              { id: 'chat', label: 'Chat', icon: '💬' },
+            ]}
+          >
+            <OverviewTab
+              tab="overview"
+              project={project}
+              quoteForm={quoteForm}
+              onUpdateQuoteForm={(patch) =>
+                setQuoteForm((prev) => ({
+                  ...prev,
+                  ...patch,
+                }))
+              }
+              onSubmitQuote={handleSubmitQuote}
+              onAccept={handleAccept}
+              onReject={handleReject}
+              onKeepCurrentQuote={handleKeepCurrentQuote}
+              submittingQuote={submittingQuote}
+              accessToken={accessToken}
+            />
 
-            {siteAccessError && (
-              <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                {siteAccessError}
-              </div>
-            )}
+            <SiteAccessTab
+              tab="site-access"
+              siteAccessStatus={siteAccessStatus}
+              siteAccessLoading={siteAccessLoading}
+              siteAccessError={siteAccessError}
+              siteVisits={siteVisits}
+              siteVisitLoading={siteVisitLoading}
+              siteVisitError={siteVisitError}
+              expandedAccordions={expandedAccordions}
+              onToggleAccordion={toggleAccordion}
+              onRequestSiteAccess={handleRequestSiteAccess}
+              onRequestSiteVisit={handleRequestSiteVisit}
+              onRespondSiteVisit={handleRespondSiteVisit}
+              onCompleteSiteVisit={handleCompleteSiteVisit}
+              siteAccessActionLoading={siteAccessActionLoading}
+              siteVisitActionLoading={siteVisitActionLoading}
+              visitDate={visitDate}
+              onUpdateVisitDate={setVisitDate}
+              visitTime={visitTime}
+              onUpdateVisitTime={setVisitTime}
+              visitRequestNotes={visitRequestNotes}
+              onUpdateVisitRequestNotes={setVisitRequestNotes}
+              visitNotes={visitNotes}
+              onUpdateVisitNotes={setVisitNotes}
+              visitResponseNotes={visitResponseNotes}
+              onUpdateVisitResponseNotes={setVisitResponseNotes}
+            />
 
-            {siteAccessLoading && (
-              <div className="mt-4 text-sm text-slate-600">Loading site access status...</div>
-            )}
+            <FinancialsTab
+              tab="financials"
+              projectStatus={project.status}
+              projectBudget={projectBudgetValue}
+              awardedAmount={awardedAmountValue}
+              paymentRequests={mappedPaymentRequests}
+              projectFinancials={projectFinancials}
+              paymentRequestLoading={false}
+              paymentRequestError={null}
+              onSubmitPaymentRequest={handleSubmitPaymentRequest}
+              paymentRequestActionLoading={submittingAdvanceRequest}
+              paymentRequestAmount={paymentRequestAmount}
+              onUpdatePaymentRequestAmount={(value) => {
+                setAdvanceRequestForm((prev) =>
+                  prev.requestType === 'fixed'
+                    ? { ...prev, amount: value }
+                    : { ...prev, percentage: value },
+                );
+              }}
+              paymentRequestType={advanceRequestForm.requestType}
+              onUpdatePaymentRequestType={(type) => {
+                setAdvanceRequestForm((prev) => ({
+                  ...prev,
+                  requestType: type === 'percentage' ? 'percentage' : 'fixed',
+                }));
+              }}
+              paymentRequestNotes={advanceRequestForm.notes}
+              onUpdatePaymentRequestNotes={(notes) => {
+                setAdvanceRequestForm((prev) => ({
+                  ...prev,
+                  notes,
+                }));
+              }}
+            />
 
-            {siteAccessStatus && !siteAccessLoading && (
-              <div className="mt-4 space-y-3">
-                <div className="text-sm text-slate-700">
-                  <span className="font-semibold">Status:</span>{' '}
-                  {siteAccessStatus.requestStatus === 'none'
-                    ? 'No request yet'
-                    : siteAccessStatus.requestStatus.replace('_', ' ')}
-                </div>
-
-                {siteAccessStatus.requestStatus === 'pending' && (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    Awaiting client approval. You can still submit a quote without site access.
-                  </div>
-                )}
-
-                {siteAccessStatus.requestStatus === 'denied' && (
-                  <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                    Site access denied{siteAccessStatus.reasonDenied ? `: ${siteAccessStatus.reasonDenied}` : '.'}
-                  </div>
-                )}
-
-                {siteAccessStatus.requestStatus === 'approved_visit_scheduled' && (
-                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                    Visit approved
-                    {siteAccessStatus.visitScheduledAt
-                      ? ` for ${new Date(siteAccessStatus.visitScheduledAt).toLocaleString()}`
-                      : siteAccessStatus.visitScheduledFor
-                      ? ` for ${new Date(siteAccessStatus.visitScheduledFor).toLocaleDateString()}`
-                      : '.'}
-                  </div>
-                )}
-
-                {siteAccessStatus.requestStatus === 'visited' && (
-                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                    Site visited{siteAccessStatus.visitedAt ? ` on ${new Date(siteAccessStatus.visitedAt).toLocaleDateString()}` : '.'}
-                  </div>
-                )}
-
-                {siteAccessStatus.hasAccess && siteAccessStatus.siteAccessData && (
-                  <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Address</p>
-                      <p className="font-medium text-slate-900">{siteAccessStatus.siteAccessData.addressFull}</p>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Unit / Floor</p>
-                        <p className="text-slate-800">
-                          {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
-                            .filter(Boolean)
-                            .join(' / ') || '—'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Access</p>
-                        <p className="text-slate-800">
-                          {siteAccessStatus.siteAccessData.accessDetails || '—'}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">On-site Contact</p>
-                      <p className="text-slate-800">
-                        {[siteAccessStatus.siteAccessData.onSiteContactName, siteAccessStatus.siteAccessData.onSiteContactPhone]
-                          .filter(Boolean)
-                          .join(' · ') || '—'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {acceptedVisit && (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700">
-                      Visit notes (optional)
-                    </label>
-                    <textarea
-                      value={visitNotes}
-                      onChange={(e) => setVisitNotes(e.target.value)}
-                      rows={3}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                      placeholder="Add any notes from the site visit"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleCompleteSiteVisit(acceptedVisit.id)}
-                      disabled={siteVisitActionLoading}
-                      className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      {siteVisitActionLoading ? 'Completing...' : 'Complete Site Visit'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {siteAccessStatus?.hasAccess && (
-              <div className="mt-6 space-y-4 border-t border-slate-200 pt-4">
-                <div className="flex flex-wrap items-end gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600">Visit Date</label>
-                    <input
-                      type="date"
-                      value={visitDate}
-                      onChange={(e) => setVisitDate(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600">Visit Time</label>
-                    <input
-                      type="time"
-                      value={visitTime}
-                      onChange={(e) => setVisitTime(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-[220px]">
-                    <label className="block text-xs font-semibold text-slate-600">Notes (optional)</label>
-                    <input
-                      value={visitRequestNotes}
-                      onChange={(e) => setVisitRequestNotes(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                      placeholder="Access details, parking, timing, etc."
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRequestSiteVisit}
-                    disabled={siteVisitActionLoading}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                  >
-                    {siteVisitActionLoading ? 'Requesting...' : 'Request Site Visit'}
-                  </button>
-                </div>
-
-                {siteVisitError && (
-                  <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                    {siteVisitError}
-                  </div>
-                )}
-
-                {siteVisitLoading ? (
-                  <div className="text-sm text-slate-600">Loading site visits...</div>
-                ) : siteVisits.length === 0 ? (
-                  <div className="text-sm text-slate-600">No site visits scheduled yet.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {siteVisits.map((visit) => {
-                      const isPending = visit.status === 'proposed';
-                      const proposedByClient = visit.proposedByRole === 'client';
-
-                      return (
-                        <div key={visit.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <p className="font-semibold text-slate-900">
-                                {proposedByClient ? 'Client proposed visit' : 'You proposed visit'}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                {new Date(visit.proposedAt).toLocaleString()}
-                              </p>
-                            </div>
-                            <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
-                              {visit.status.replace('_', ' ')}
-                            </span>
-                          </div>
-
-                          {visit.notes && (
-                            <p className="mt-2 text-xs text-slate-600">Notes: {visit.notes}</p>
-                          )}
-
-                          {visit.responseNotes && (
-                            <p className="mt-2 text-xs text-slate-600">Response: {visit.responseNotes}</p>
-                          )}
-
-                          {isPending && proposedByClient && (
-                            <div className="mt-3 space-y-2">
-                              <input
-                                value={visitResponseNotes[visit.id] || ''}
-                                onChange={(e) =>
-                                  setVisitResponseNotes((prev) => ({
-                                    ...prev,
-                                    [visit.id]: e.target.value,
-                                  }))
-                                }
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs"
-                                placeholder="Add a response note (optional)"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handleRespondSiteVisit(visit.id, 'accepted')}
-                                  disabled={siteVisitActionLoading}
-                                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                                >
-                                  Accept
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRespondSiteVisit(visit.id, 'declined')}
-                                  disabled={siteVisitActionLoading}
-                                  className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                                >
-                                  Decline
-                                </button>
-                              </div>
-                            </div>
-                          )}
-
-                          {isPending && !proposedByClient && (
-                            <p className="mt-2 text-xs text-slate-600">Awaiting client response.</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <p className="mt-4 text-xs text-slate-500">
-              Quotes can still be submitted without site access. Those quotes will be marked as remote.
-            </p>
-          </div>
-
-          {/* Quote Form */}
-          {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && !(project.status === 'declined' || project.status === 'rejected') ? (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
-              </h2>
-
-              {project.status === 'counter_requested' ? (
-                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                  The client requested a better offer. You can submit a revised quote or keep your current offer.
-                </div>
-              ) : project.status === 'quoted' ? (
-                <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
-                  You can adjust your quote if needed. Submit a revised amount or keep your current offer.
-                </div>
-              ) : null}
-
-              <form onSubmit={handleSubmitQuote} className="space-y-6">
-                <div>
-                  <label
-                    htmlFor="amount"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Quote Amount ($)
-                  </label>
-                  <input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="0.00"
-                    value={quoteForm.amount}
-                    onChange={(e) =>
-                      setQuoteForm({ ...quoteForm, amount: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="notes"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Quote Notes (Optional)
-                  </label>
-                  <textarea
-                    id="notes"
-                    rows={4}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Add any additional notes about your quote..."
-                    value={quoteForm.notes}
-                    onChange={(e) =>
-                      setQuoteForm({ ...quoteForm, notes: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="flex gap-4 flex-wrap">
-                  <button
-                    type="submit"
-                    disabled={submittingQuote}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
-                  >
-                    {submittingQuote ? 'Submitting...' : project.quotedAt ? 'Update Quote' : 'Submit Quote'}
-                  </button>
-
-                  {project.status === 'counter_requested' && (
-                    <button
-                      type="button"
-                      onClick={handleKeepCurrentQuote}
-                      disabled={submittingQuote}
-                      className="flex-1 bg-slate-600 text-white py-2 px-4 rounded-md hover:bg-slate-700 disabled:opacity-50 font-medium"
-                    >
-                      {submittingQuote ? 'Processing...' : 'Confirm Quotation'}
-                    </button>
-                  )}
-
-                  {project.status === 'pending' && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleAccept}
-                        disabled={submittingQuote}
-                        className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:opacity-50 font-medium"
-                      >
-                        {submittingQuote ? 'Processing...' : 'Accept Project'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleReject}
-                        disabled={submittingQuote}
-                        className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:opacity-50 font-medium"
-                      >
-                        {submittingQuote ? 'Processing...' : 'Reject Project'}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </form>
-            </div>
-          ) : project.quoteAmount && !(project.status === 'declined' || project.status === 'rejected') ? (
-            <div>
-              <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
-                <h2 className="text-lg font-bold text-slate-900 mb-4">Your Quote</h2>
-                <div className="grid grid-cols-4 gap-4">
-                  {/* Amount */}
-                  <div>
-                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Amount</p>
-                    <p className="text-lg font-bold text-slate-900">
-                      ${project.quoteAmount}
-                    </p>
-                  </div>
-                  
-                  {/* Submitted Date */}
-                  <div>
-                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Submitted</p>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {project.quotedAt
-                        ? new Date(project.quotedAt).toLocaleDateString()
-                        : '—'}
-                    </p>
-                  </div>
-                  
-                  {/* Notes */}
-                  <div>
-                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Notes</p>
-                    <p className="text-sm text-slate-700 line-clamp-2">
-                      {project.quoteNotes || '—'}
-                    </p>
-                  </div>
-                  
-                  {/* Status */}
-                  <div>
-                    <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Status</p>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                      project.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : project.status === 'accepted'
-                        ? 'bg-green-100 text-green-800'
-                        : project.status === 'quoted'
-                        ? 'bg-blue-100 text-blue-800'
-                        : project.status === 'counter_requested'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {project.status.replace('_', ' ')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Payment Request (shown when awarded) */}
-          {project.status === 'awarded' && (
-            <div>
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-4">💰 Request Payment</h2>
-                
-                {/* Payment Request History */}
-                {project.paymentRequests && project.paymentRequests.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Payment Request History</h3>
-                    <div className="space-y-3">
-                      {project.paymentRequests.map((request) => (
-                        <div key={request.id} className="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                          {/* Amount */}
-                          <div>
-                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Amount</p>
-                            <p className="text-lg font-bold text-slate-900">
-                              ${Number(request.requestAmount).toFixed(2)}
-                            </p>
-                          </div>
-                          
-                          {/* Date */}
-                          <div>
-                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Submitted</p>
-                            <p className="text-sm font-semibold text-slate-900">
-                              {new Date(request.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          
-                          {/* Notes */}
-                          <div>
-                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Description</p>
-                            <p className="text-sm text-slate-700 line-clamp-2">
-                              {request.notes || '—'}
-                            </p>
-                          </div>
-                          
-                          {/* Status */}
-                          <div>
-                            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold mb-1">Status</p>
-                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                              request.status === 'approved'
-                                ? 'bg-green-100 text-green-800'
-                                : request.status === 'rejected'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {request.status}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Always show payment request form (for new or additional requests) */}
-                {!showAdvanceRequestForm ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-600">
-                      Request payment for materials, labor, milestones, or advance payment before starting work.
-                    </p>
-                    <button
-                      onClick={() => setShowAdvanceRequestForm(true)}
-                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition-colors"
-                    >
-                      📋 {project.paymentRequests && project.paymentRequests.length > 0 ? 'Submit New Payment Request' : 'Request Payment'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                        <div className="flex gap-4">
-                          <label className="flex items-center">
-                            <input
-                              type="radio"
-                              name="requestType"
-                              value="fixed"
-                              checked={advanceRequestForm.requestType === 'fixed'}
-                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, requestType: e.target.value as 'fixed' })}
-                              className="mr-2"
-                            />
-                            <span className="text-sm font-medium text-gray-700">Fixed Amount</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input
-                              type="radio"
-                              name="requestType"
-                              value="percentage"
-                              checked={advanceRequestForm.requestType === 'percentage'}
-                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, requestType: e.target.value as 'percentage' })}
-                              className="mr-2"
-                            />
-                            <span className="text-sm font-medium text-gray-700">Percentage</span>
-                          </label>
-                        </div>
-
-                        {advanceRequestForm.requestType === 'fixed' ? (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Amount ($)
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={advanceRequestForm.amount}
-                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, amount: e.target.value })}
-                              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0.00"
-                            />
-                          </div>
-                        ) : (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Percentage (%)
-                            </label>
-                            <input
-                              type="number"
-                              step="1"
-                              min="1"
-                              max="100"
-                              value={advanceRequestForm.percentage}
-                              onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, percentage: e.target.value })}
-                              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="50"
-                            />
-                          </div>
-                        )}
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Notes / Reason for Payment
-                          </label>
-                          <textarea
-                            value={advanceRequestForm.notes}
-                            onChange={(e) => setAdvanceRequestForm({ ...advanceRequestForm, notes: e.target.value })}
-                            className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            rows={3}
-                            placeholder="e.g., Advance payment for materials, First milestone completion, Labor for week 1, etc."
-                          />
-                        </div>
-
-                        <div className="flex gap-3">
-                          <button
-                            onClick={handleSubmitAdvanceRequest}
-                            disabled={submittingAdvanceRequest}
-                            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
-                          >
-                            {submittingAdvanceRequest ? 'Submitting...' : 'Submit Request'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowAdvanceRequestForm(false);
-                              setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '', notes: '' });
-                            }}
-                            className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 font-medium transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-              </div>
-            </div>
-          )}
-
-          {/* Project Financials */}
-          {project.status === 'awarded' && project.quoteAmount && accessToken && (
-            <div>
-              <ProjectFinancialsCard
-                projectProfessionalId={project.id}
-                projectId={project.project.id}
-                accessToken={accessToken}
-                projectCost={project.quoteAmount}
-                role="professional"
-              />
-            </div>
-          )}
-
-          {/* Messages */}
-          <div>
-            {project.status === 'awarded' ? (
-              <>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Team Chat</h2>
-                <ProjectChat 
-                  projectId={project.project.id} 
-                  accessToken={accessToken || ''} 
-                  currentUserRole="professional"
-                />
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Messages</h2>
-                {messageError && (
-                  <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    {messageError}
-                  </div>
-                )}
-                <div className="max-h-96 overflow-y-auto bg-gray-50 p-4 rounded">
-                  {messages.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No messages yet.</p>
-                  ) : (
-                    <ul className="space-y-3">
-                      {messages.map((m) => (
-                        <li key={m.id} className={`flex ${m.senderType==='professional' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`inline-block px-3 py-2 rounded-lg text-sm ${m.senderType==='professional' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-900'}`}>
-                            <p>{m.content}</p>
-                            <p className="mt-1 text-xs opacity-70">{new Date(m.createdAt).toLocaleString()}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <form onSubmit={handleSendMessage} className="mt-4 flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sending || !newMessage.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                  >
-                    {sending ? 'Sending...' : 'Send'}
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
+            <ChatTab
+              tab="chat"
+              projectId={project.project.id}
+              projectStatus={project.status}
+              clientName={project.project.clientName}
+              accessToken={accessToken || undefined}
+            />
+          </ProjectTabs>
         </div>
       </div>
 
