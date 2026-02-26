@@ -4,8 +4,9 @@ import { ModalOverlay } from '@/components/modal-overlay';
 import { Professional } from '@/lib/types';
 import { useState } from 'react';
 import { SYSTEM_EMAILS } from '@/config/system-emails';
-import ImageLightbox from '@/components/image-lightbox';
 
+import ImageLightbox from '@/components/image-lightbox';
+import { PortfolioCarousel } from '@/components/portfolio-carousel';
 type ProfessionalDetailsModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -95,7 +96,7 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           </div>
         )}
 
-        {(professional.referenceProjects && professional.referenceProjects.length > 0) && (
+        {professional.referenceProjects && professional.referenceProjects.length > 0 ? (
           <div className="space-y-3">
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Reference Projects</p>
             <div className="grid gap-3">
@@ -110,23 +111,19 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
                     </div>
                     <span className="text-[11px] text-slate-500">{proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : ''}</span>
                   </div>
-                  {proj.imageUrls && proj.imageUrls.length > 0 ? (
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {proj.imageUrls.map((url, idx) => (
-                        <button
-                          key={url}
-                          type="button"
-                          onClick={() => setLightbox({ images: proj.imageUrls || [], index: idx })}
-                          className="block overflow-hidden rounded-md border border-slate-200 bg-slate-50"
-                        >
-                          <img src={url} alt={proj.title} className="h-16 w-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
+                  <div className="mt-2">
+                    <PortfolioCarousel 
+                      images={proj.imageUrls || []}
+                      emptyMessage="No photos in this project"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+            No project entered, please add more for better client experience.
           </div>
         )}
 

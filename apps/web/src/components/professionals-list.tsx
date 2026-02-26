@@ -200,6 +200,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [locationDisplay, setLocationDisplay] = useState<string>(initialLocationDisplay);
 
   // Debug: log pre-population values
+    const [minRating, setMinRating] = useState<number>(0);
+
   console.log('[ProfessionalsList] Pre-population:', {
     projectId,
     initialSearchTerm,
@@ -289,6 +291,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       const bySearch = needle || effectiveProfession ? textMatch || professionMatch || (!needle && professionMatch) : true;
       if (!bySearch) return false;
 
+      const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
+      if (!byRating) return false;
+
       // If no location filter is set, show based on search only
       if (!loc.primary && !loc.secondary && !loc.tertiary) {
         return true;
@@ -376,7 +381,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return sorted;
-  }, [professionals, searchTerm, professionHint, loc]);
+  }, [professionals, searchTerm, professionHint, loc, minRating]);
 
   const filtered = useMemo(() => {
     if (filteredBase.length >= 3 || (!loc.primary && !loc.secondary && !loc.tertiary)) return filteredBase;
@@ -444,7 +449,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     <div className="space-y-3">
       {/* Filters */}
       <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-3">
           <div className="relative grid gap-0.5">
             <label className="text-xs font-medium text-slate-600">Professional or Trade</label>
             <div className="relative">
@@ -538,6 +543,22 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 ))}
               </div>
             ) : null}
+          </div>
+
+          <div className="relative grid gap-0.5">
+            <label className="text-xs font-medium text-slate-600">Rating</label>
+            <select
+              value={minRating}
+              onChange={(e) => setMinRating(Number(e.target.value))}
+              className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white"
+            >
+              <option value={0}>Any rating</option>
+              <option value={4.5}>4.5+ stars</option>
+              <option value={4}>4+ stars</option>
+              <option value={3.5}>3.5+ stars</option>
+              <option value={3}>3+ stars</option>
+              <option value={2}>2+ stars</option>
+            </select>
           </div>
         </div>
       </div>

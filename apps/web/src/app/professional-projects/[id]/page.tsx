@@ -819,8 +819,8 @@ export default function ProjectDetailPage() {
     });
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!newMessage.trim()) return;
     setSending(true);
     setMessageError(null);
@@ -1044,6 +1044,12 @@ export default function ProjectDetailPage() {
               projectStatus={project.status}
               clientName={project.project.clientName}
               accessToken={accessToken || undefined}
+              messages={messages}
+              newMessage={newMessage}
+              onNewMessageChange={setNewMessage}
+              onSendMessage={() => handleSendMessage()}
+              sending={sending}
+              messageError={messageError}
             />
           </ProjectTabs>
         </div>

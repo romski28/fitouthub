@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
-import FileUploader from '@/components/file-uploader';
 
+import FileUploader from '@/components/file-uploader';
+import { PortfolioCarousel } from '@/components/portfolio-carousel';
 interface ReferenceProject {
   id: string;
   title: string;
@@ -555,8 +556,8 @@ export default function ProfessionalProfilePage() {
         </form>
 
         {refProjects.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-600">
-            No reference projects yet.
+          <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+            No project entered, please add more for better client experience.
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
@@ -585,25 +586,12 @@ export default function ProfessionalProfilePage() {
                 {proj.description ? (
                   <p className="mt-2 text-sm text-slate-700 whitespace-pre-line">{proj.description}</p>
                 ) : null}
-                {proj.imageUrls && proj.imageUrls.length > 0 ? (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    {proj.imageUrls.map((url) => (
-                      <a
-                        key={url}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group block overflow-hidden rounded-md border border-slate-200 bg-slate-50"
-                      >
-                        <img
-                          src={url}
-                          alt={proj.title}
-                          className="h-20 w-full object-cover transition group-hover:scale-105"
-                        />
-                      </a>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="mt-3">
+                  <PortfolioCarousel 
+                    images={proj.imageUrls || []}
+                    emptyMessage="No photos added to this project yet"
+                  />
+                </div>
               </div>
             ))}
           </div>
