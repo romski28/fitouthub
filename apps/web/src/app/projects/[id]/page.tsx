@@ -2247,15 +2247,18 @@ export default function ClientProjectDetailPage() {
           </div>
         )}
 
-        {/* Awarded Project Chat Panel - Show when project is awarded */}
-        {project.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
-          <div className="space-y-5">
-            {/* Unified Chat Section */}
-            <div>
-              <div className="mb-3">
-                <h2 className="text-lg font-bold text-slate-900">Project Chat</h2>
-                <p className="text-sm text-slate-600">Communicate with all awarded professionals and Fitout Hub</p>
-              </div>
+        {/* 🔴 REDUNDANT - Chat functionality moved to Chat tab */}
+        {false && (
+          <>
+            {/* Awarded Project Chat Panel - Show when project is awarded */}
+            {project?.professionals && project?.professionals?.some((pp) => pp.status === 'awarded') && (
+              <div className="space-y-5">
+                {/* Unified Chat Section */}
+                <div>
+                  <div className="mb-3">
+                    <h2 className="text-lg font-bold text-slate-900">Project Chat</h2>
+                    <p className="text-sm text-slate-600">Communicate with all awarded professionals and Fitout Hub</p>
+                  </div>
 
               {/* Chat Mode Selector - Dropdown */}
               <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -2264,7 +2267,7 @@ export default function ClientProjectDetailPage() {
                   <select
                     value={
                       viewingAssistChat ? 'fitouthub' : 
-                      selectedProfessional ? `professional-${selectedProfessional.id}` : 
+                      selectedProfessional ? `professional-${selectedProfessional?.id}` : 
                       'project'
                     }
                     onChange={(e) => {
@@ -2277,7 +2280,7 @@ export default function ClientProjectDetailPage() {
                         setSelectedProfessional(null);
                       } else {
                         const profId = val.replace('professional-', '');
-                        const prof = project.professionals?.find(p => p.id === profId);
+                        const prof = project?.professionals?.find(p => p.id === profId);
                         if (prof) {
                           setSelectedProfessional(prof);
                           setViewingAssistChat(false);
@@ -2287,7 +2290,7 @@ export default function ClientProjectDetailPage() {
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="project">Project (All professionals)</option>
-                    {project.professionals?.map((pp) => {
+                    {project?.professionals?.map((pp) => {
                       const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
                       return (
                         <option key={pp.id} value={`professional-${pp.id}`}>
@@ -2539,6 +2542,8 @@ export default function ClientProjectDetailPage() {
               </div>
             </div>
           </div>
+        )}
+          </>
         )}
 
         <BackToTop />
