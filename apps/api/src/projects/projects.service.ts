@@ -1289,7 +1289,7 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Professional is not linked to this project');
     }
 
-    if (!['accepted', 'quoted'].includes(projectProfessional.status)) {
+    if (!['accepted', 'quoted', 'awarded'].includes(projectProfessional.status)) {
       throw new BadRequestException('Project must be accepted before requesting access');
     }
 
