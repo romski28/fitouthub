@@ -85,7 +85,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     fetchMilestones();
   }, [projectProfessionalId, accessToken]);
 
-  const handleMilestonesChange = async (updatedMilestones: Milestone[]) => {
+  const handleMilestonesChange = async (updatedMilestones: Array<{
+    title: string;
+    sequence: number;
+    status: 'not_started' | 'in_progress' | 'completed';
+    percentComplete: number;
+    plannedStartDate?: string;
+    plannedEndDate?: string;
+    description?: string;
+  }>) => {
     try {
       setError(null);
 
@@ -96,7 +104,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
       // For now, just update local state
       // In a full implementation, this would sync with the backend
-      setMilestones(updatedMilestones);
+      // Convert back to Milestone-like objects maintaining existing IDs, projectId, etc.
+      const updatedFull = milestones.map((existing, idx) => ({
+        ...existing,
+        ...updatedMilestones[idx] || existing,
+      }));
+      setMilestones(updatedFull);
       setEditingMilestones(false);
 
       // Notify parent of update
@@ -183,7 +196,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
               <MilestoneEditor
                 tradeId={tradeId || ''}
-                defaultMilestones={milestones}
+                defaultMilestones={milestones.map(m => ({
+                  title: m.title,
+                  sequence: m.sequence,
+                  status: m.status,
+                  percentComplete: m.percentComplete,
+                  plannedStartDate: m.plannedStartDate,
+                  plannedEndDate: m.plannedEndDate,
+                  description: m.description,
+                }))}
                 onMilestonesChange={handleMilestonesChange}
               />
             </div>
