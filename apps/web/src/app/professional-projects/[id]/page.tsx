@@ -11,6 +11,7 @@ import { ProjectTabs } from '@/components/project-tabs';
 import { OverviewTab } from './tabs/overview-tab';
 import { SiteAccessTab } from './tabs/site-access-tab';
 import { FinancialsTab } from './tabs/financials-tab';
+import { ScheduleTab } from './tabs/schedule-tab';
 import { ChatTab } from './tabs/chat-tab';
 
 interface ProjectDetail {
@@ -953,6 +954,7 @@ export default function ProjectDetailPage() {
             tabs={[
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
+              { id: 'schedule', label: 'Schedule', icon: '📅' },
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
             ]}
@@ -1001,6 +1003,17 @@ export default function ProjectDetailPage() {
               onUpdateVisitNotes={setVisitNotes}
               visitResponseNotes={visitResponseNotes}
               onUpdateVisitResponseNotes={setVisitResponseNotes}
+            />
+
+            <ScheduleTab
+              tab="schedule"
+              projectProfessionalId={projectProfessionalId}
+              projectStatus={project.status}
+              tradeId={project.project.tradesRequired?.[0]}
+              accessToken={accessToken || null}
+              onMilestonesUpdate={() => {
+                // Refresh project data if needed
+              }}
             />
 
             <FinancialsTab

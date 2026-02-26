@@ -16,6 +16,7 @@ import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project
 import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
 import { SiteAccessTab } from '@/app/projects/[id]/tabs/site-access-tab';
 import { ProfessionalsTab } from '@/app/projects/[id]/tabs/professionals-tab';
+import { ClientScheduleTab } from '@/app/projects/[id]/tabs/schedule-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import toast, { Toaster } from 'react-hot-toast';
@@ -1254,7 +1255,18 @@ export default function ClientProjectDetailPage() {
           )}
 
           {/* Tab Navigation */}
-          <ProjectTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <ProjectTabs 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab}
+            tabs={isAwarded ? [
+              { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'site-access', label: 'Site Access', icon: '📍' },
+              { id: 'professionals', label: 'Professionals', icon: '👥' },
+              { id: 'schedule', label: 'Schedule', icon: '📅' },
+              { id: 'chat', label: 'Chat', icon: '💬' },
+              { id: 'media', label: 'Media', icon: '🖼️' },
+            ] : undefined}
+          />
         </div>
 
         {/* Tab Content - Overview */}
@@ -1369,6 +1381,18 @@ export default function ClientProjectDetailPage() {
                 }}
                 onActionBusy={setActionBusy}
                 actionBusy={actionBusy}
+              />
+            </div>
+          )}
+
+          {/* Tab Content - Schedule */}
+          {activeTab === 'schedule' && isAwarded && project && (
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+              <ClientScheduleTab
+                projectId={projectId}
+                projectStatus={projectStatus}
+                accessToken={accessToken || null}
+                awardedProfessionalId={project.professionals?.find((pp) => pp.status === 'awarded')?.professionalId}
               />
             </div>
           )}
