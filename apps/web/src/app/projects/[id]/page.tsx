@@ -17,6 +17,7 @@ import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
 import { SiteAccessTab } from '@/app/projects/[id]/tabs/site-access-tab';
 import { ProfessionalsTab } from '@/app/projects/[id]/tabs/professionals-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
+import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -1380,6 +1381,38 @@ export default function ClientProjectDetailPage() {
               isLoading={loading}
             />
           )}
+
+        {/* Tab Content - Chat */}
+        {activeTab === 'chat' && project?.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <ChatTab
+              projectId={projectId}
+              professionals={project.professionals}
+              accessToken={accessToken || ''}
+              selectedProfessional={selectedProfessional}
+              onSelectProfessional={setSelectedProfessional}
+              viewingAssistChat={viewingAssistChat}
+              onViewingAssistChatChange={setViewingAssistChat}
+              assistRequestId={assistRequestId}
+              messages={messages}
+              newMessage={newMessage}
+              onNewMessageChange={setNewMessage}
+              onSendMessage={handleSendMessage}
+              loadingMessages={loadingMessages}
+              sending={sending}
+              messageError={messageError}
+              pendingAttachments={pendingAttachments}
+              onPendingAttachmentsChange={setPendingAttachments}
+              assistMessages={assistMessages}
+              assistNewMessage={assistNewMessage}
+              onAssistNewMessageChange={setAssistNewMessage}
+              onSendAssistMessage={handleSendAssistMessage}
+              assistLoading={assistLoading}
+              assistSending={assistSending}
+              assistError={assistError}
+            />
+          </div>
+        )}
 
           {/* Site Access Requests */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
