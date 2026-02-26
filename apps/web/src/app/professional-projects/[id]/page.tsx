@@ -1009,7 +1009,7 @@ export default function ProjectDetailPage() {
               tab="schedule"
               projectProfessionalId={projectProfessionalId}
               projectStatus={project.status}
-              tradeId={project.project.tradesRequired?.[0]}
+              tradeId=""
               accessToken={accessToken || null}
               onMilestonesUpdate={() => {
                 // Refresh project data if needed
