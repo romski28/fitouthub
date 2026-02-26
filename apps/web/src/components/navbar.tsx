@@ -300,6 +300,11 @@ export const Navbar: React.FC = () => {
                 </a>
               ) : null}
 
+              {/* Language Switcher */}
+              <div className="px-3 py-2">
+                <LanguageSwitcher />
+              </div>
+
               {/* Mobile profile menu */}
               {showAuthed && (
                 <>
