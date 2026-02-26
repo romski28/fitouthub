@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ImageLightbox from '@/components/image-lightbox';
 
 interface PortfolioCarouselProps {
   images: string[];
@@ -16,6 +17,7 @@ export function PortfolioCarousel({
   className = ''
 }: PortfolioCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (!images || images.length === 0) {
     return (
@@ -51,18 +53,17 @@ export function PortfolioCarousel({
       <div className="relative rounded-lg overflow-hidden bg-slate-100 group">
         {/* Main Image */}
         <div className="relative aspect-video">
-          <a
-            href={images[currentIndex]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full h-full"
+          <button
+            onClick={() => setLightboxOpen(true)}
+            className="block w-full h-full cursor-pointer"
+            aria-label="Open lightbox"
           >
             <img
               src={images[currentIndex]}
               alt={`Portfolio image ${currentIndex + 1}`}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
-          </a>
+          </button>
 
           {/* Image Counter */}
           <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-medium px-2.5 py-1 rounded-full">
@@ -135,6 +136,15 @@ export function PortfolioCarousel({
             </button>
           ))}
         </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && (
+        <ImageLightbox
+          images={images}
+          startIndex={currentIndex}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
     </div>
   );

@@ -575,9 +575,9 @@ export default function ProfessionalProfilePage() {
             No project entered, please add more for better client experience.
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
             {refProjects.map((proj) => (
-              <div key={proj.id} className="rounded-lg border border-slate-200 p-4 bg-white shadow-sm">
+              <div key={proj.id} className="flex-shrink-0 w-full sm:w-96 rounded-lg border border-slate-200 p-4 bg-white shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">{proj.title}</h3>
