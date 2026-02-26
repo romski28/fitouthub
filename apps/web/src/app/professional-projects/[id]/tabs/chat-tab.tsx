@@ -16,12 +16,12 @@ interface ChatTabProps {
   projectStatus: string;
   clientName?: string;
   accessToken?: string;
-  messages: Message[];
-  newMessage: string;
-  onNewMessageChange: (value: string) => void;
-  onSendMessage: () => void;
-  sending: boolean;
-  messageError: string | null;
+  messages?: Message[];
+  newMessage?: string;
+  onNewMessageChange?: (value: string) => void;
+  onSendMessage?: () => void;
+  sending?: boolean;
+  messageError?: string | null;
 }
 
 export const ChatTab: React.FC<ChatTabProps> = ({
@@ -29,12 +29,12 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   projectStatus,
   clientName,
   accessToken,
-  messages,
-  newMessage,
-  onNewMessageChange,
-  onSendMessage,
-  sending,
-  messageError,
+  messages = [],
+  newMessage = '',
+  onNewMessageChange = () => undefined,
+  onSendMessage = () => undefined,
+  sending = false,
+  messageError = null,
 }) => {
   const isAwarded = projectStatus === 'awarded';
   const [chatMode, setChatMode] = useState<'project' | 'direct'>(isAwarded ? 'project' : 'direct');

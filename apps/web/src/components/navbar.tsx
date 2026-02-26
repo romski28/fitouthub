@@ -35,6 +35,7 @@ export const Navbar: React.FC = () => {
   const isAdmin = Boolean(user && user.role === 'admin');
   const showProjectsLink = hydrated && isLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
+  const showPublicLinks = !showProfessionalAuthed;
 
   return (
     <>
@@ -59,12 +60,16 @@ export const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
-            <a className="hover:text-slate-900" href="/tradesmen">
-              {t('tradesmen')}
-            </a>
-            <a className="hover:text-slate-900" href="/professionals">
-              {t('professionals')}
-            </a>
+            {showPublicLinks ? (
+              <>
+                <a className="hover:text-slate-900" href="/tradesmen">
+                  {t('tradesmen')}
+                </a>
+                <a className="hover:text-slate-900" href="/professionals">
+                  {t('professionals')}
+                </a>
+              </>
+            ) : null}
             <a className="hover:text-slate-900" href="/docs">
               {t('docs')}
             </a>
@@ -260,20 +265,24 @@ export const Navbar: React.FC = () => {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 bg-slate-50">
             <nav className="flex flex-col px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
-              <a
-                className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
-                href="/tradesmen"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {t('tradesmen')}
-              </a>
-              <a
-                className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
-                href="/professionals"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {t('professionals')}
-              </a>
+              {showPublicLinks ? (
+                <>
+                  <a
+                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                    href="/tradesmen"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('tradesmen')}
+                  </a>
+                  <a
+                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                    href="/professionals"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('professionals')}
+                  </a>
+                </>
+              ) : null}
               <a
                 className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                 href="/docs"
