@@ -1389,6 +1389,7 @@ export default function ClientProjectDetailPage() {
           {activeTab === 'schedule' && isAwarded && project && (
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
               <ClientScheduleTab
+                tab="schedule"
                 projectId={projectId}
                 projectStatus={projectStatus}
                 accessToken={accessToken || null}

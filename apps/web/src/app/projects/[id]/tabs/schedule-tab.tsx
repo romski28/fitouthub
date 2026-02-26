@@ -22,6 +22,7 @@ interface Milestone {
 }
 
 interface ClientScheduleTabProps {
+  tab?: string;
   projectId: string;
   projectStatus: string;
   accessToken: string | null;

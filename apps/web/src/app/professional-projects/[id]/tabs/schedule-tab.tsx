@@ -23,6 +23,7 @@ interface Milestone {
 }
 
 interface ScheduleTabProps {
+  tab?: string;
   projectProfessionalId: string;
   projectStatus: string;
   tradeId?: string;
