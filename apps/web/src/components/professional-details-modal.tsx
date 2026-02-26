@@ -99,9 +99,9 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
         {professional.referenceProjects && professional.referenceProjects.length > 0 ? (
           <div className="space-y-3">
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Reference Projects</p>
-            <div className="grid gap-3">
+            <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
               {professional.referenceProjects.map((proj) => (
-                <div key={proj.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div key={proj.id} className="flex-shrink-0 w-full sm:w-96 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">{proj.title}</p>
