@@ -79,10 +79,28 @@ model Tradesman {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   serviceMappings ServiceMapping[]
+  milestoneTemplates MilestoneTemplate[]
 
   @@index([category])
   @@index([enabled])
   @@index([professionType])
+}
+
+model MilestoneTemplate {
+  id                     String   @id @default(cuid())
+  tradeId                String
+  stageName              String
+  sequence               Int
+  description            String?
+  estimatedDurationDays  Int?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  trade                  Tradesman @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  projectMilestones      ProjectMilestone[] @relation("TemplateToMilestone")
+
+  @@index([tradeId])
+  @@unique([tradeId, sequence])
 }
 
 model Professional {
@@ -142,6 +160,7 @@ model Project {
   notes                        String?
   projectName                  String
   tradesRequired               String[]                @default([])
+  servicesUsed                 String[]                @default([])
   region                       String
   startDate                    DateTime?
   endDate                      DateTime?
@@ -169,6 +188,7 @@ model Project {
   siteAccessVisits             SiteAccessVisit[]
   siteAccessData               SiteAccessData?
   locationDetails              ProjectLocationDetails?
+  milestones                   ProjectMilestone[]
 }
 
 model ProjectPhoto {
@@ -208,6 +228,7 @@ model ProjectProfessional {
   awardedInProject        Project?               @relation("AwardedProjectProfessional")
   siteAccessRequests      SiteAccessRequest[]
   siteAccessVisits         SiteAccessVisit[]
+  milestones              ProjectMilestone[]
 
   @@unique([projectId, professionalId])
   @@index([projectId])
@@ -248,6 +269,35 @@ model ProfessionalReferenceProject {
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@index([professionalId])
+}
+
+model ProjectMilestone {
+  id                    String   @id @default(cuid())
+  projectId             String
+  projectProfessionalId String?
+  templateId            String?
+  title                 String
+  sequence              Int
+  status                String   @default("not_started") // not_started | in_progress | completed
+  percentComplete       Int      @default(0)
+  plannedStartDate      DateTime?
+  plannedEndDate        DateTime?
+  actualEndDate         DateTime?
+  description           String?
+  photoUrls             String[] @default([])
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  project                 Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectProfessional     ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: SetNull)
+  milestoneTemplate       MilestoneTemplate?   @relation("TemplateToMilestone", fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([projectProfessionalId])
+  @@index([templateId])
+  @@index([status])
+  @@unique([projectId, sequence])
 }
 
 model ProfessionalReport {
