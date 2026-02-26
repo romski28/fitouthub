@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, MilestoneResponseDto } from './dtos';
 
@@ -108,13 +108,36 @@ export class MilestonesService {
     });
 
     if (!milestone) {
-      throw new Error('Milestone not found');
+      throw new NotFoundException(`Milestone with ID ${id} not found`);
     }
 
     return this.prisma.projectMilestone.update({
       where: { id },
       data: {
         photoUrls: (milestone.photoUrls || []).filter((url) => url !== photoUrl),
+      },
+    });
+  }
+
+  async getTemplatesByTrade(tradeId: string) {
+    const templates = await this.prisma.milestoneTemplate.findMany({
+      where: { tradeId },
+      orderBy: { sequence: 'asc' },
+    });
+    return templates;
+  }
+
+  async getAllTemplates() {
+    return this.prisma.milestoneTemplate.findMany({
+      orderBy: [{ tradeId: 'asc' }, { sequence: 'asc' }],
+      include: {
+        trade: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+          },
+        },
       },
     });
   }

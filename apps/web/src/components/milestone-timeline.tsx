@@ -248,26 +248,49 @@ export function MilestoneTimeline({
 
                   {/* Status Controls (if editable) */}
                   {editable && (
-                    <div className="pt-2 border-t border-slate-200">
-                      <p className="font-semibold text-slate-600 text-xs mb-2">
-                        Update Status
-                      </p>
-                      <div className="flex gap-2">
-                        {Object.entries(statusConfig).map(([status, cfg]) => (
-                          <button
-                            key={status}
-                            onClick={() => {
-                              onStatusChange?.(milestone.id, status);
+                    <div className="pt-2 border-t border-slate-200 space-y-3">
+                      <div>
+                        <p className="font-semibold text-slate-600 text-xs mb-2">
+                          Update Progress
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={milestone.percentComplete}
+                            onChange={(e) => {
+                              onStatusChange?.(milestone.id, `progress:${e.target.value}`);
                             }}
-                            className={`px-2 py-1 text-xs font-medium rounded border transition-all ${
-                              milestone.status === status
-                                ? `${cfg.color} ${cfg.borderColor} border-2`
-                                : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
-                            }`}
-                          >
-                            {cfg.label}
-                          </button>
-                        ))}
+                            className="flex-1"
+                          />
+                          <span className="text-xs font-semibold text-slate-600 min-w-fit">
+                            {milestone.percentComplete}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-slate-600 text-xs mb-2">
+                          Update Status
+                        </p>
+                        <div className="flex gap-2 flex-wrap">
+                          {Object.entries(statusConfig).map(([status, cfg]) => (
+                            <button
+                              key={status}
+                              onClick={() => {
+                                onStatusChange?.(milestone.id, status);
+                              }}
+                              className={`px-2 py-1 text-xs font-medium rounded border transition-all ${
+                                milestone.status === status
+                                  ? `${cfg.color} ${cfg.borderColor} border-2`
+                                  : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
+                              }`}
+                            >
+                              {cfg.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}

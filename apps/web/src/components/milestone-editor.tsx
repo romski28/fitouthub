@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Trash2, ChevronDown, AlertCircle } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 interface MilestoneTemplate {
   id: string;
@@ -23,18 +24,14 @@ interface MilestoneEditData {
 
 interface MilestoneEditorProps {
   tradeId?: string;
-  templates?: MilestoneTemplate[];
   defaultMilestones?: MilestoneEditData[];
   onMilestonesChange: (milestones: MilestoneEditData[]) => void;
-  loadingTemplates?: boolean;
 }
 
 export function MilestoneEditor({
   tradeId,
-  templates = [],
   defaultMilestones = [],
   onMilestonesChange,
-  loadingTemplates = false,
 }: MilestoneEditorProps) {
   const [milestones, setMilestones] = useState<MilestoneEditData[]>(
     defaultMilestones.length > 0
@@ -49,8 +46,88 @@ export function MilestoneEditor({
           },
         ]
   );
+  const [templates, setTemplates] = useState<MilestoneTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [templateExpanded, setTemplateExpanded] = useState(false);
+
+  // Load templates when tradeId changes
+  useEffect(() => {
+    if (!tradeId) return;
+
+    const loadTemplates = async () => {
+      try {
+        setLoadingTemplates(true);
+        const res = await fetch(
+          `${API_BASE_URL}/milestones/templates/trade/${tradeId}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setTemplates(data);
+        }
+      } catch (error) {
+        console.error("Failed to load milestone templates:", error);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    loadTemplates();
+  }, [tradeId]);
+
+  const handleAddMilestone = () => {
+    const newSequence = Math.max(...milestones.map((m) => m.sequence), 0) + 1;
+    const newMilestone: MilestoneEditData = {
+      title: "",
+      sequence: newSequence,
+      status: "not_started",
+      percentComplete: 0,
+      description: "",
+    };
+    const updated = [...milestones, newMilestone];
+    setMilestones(updated);
+    onMilestonesChange(updated);
+  };
+
+  const handleRemoveMilestone = (sequence: number) => {
+    const updated = milestones.filter((m) => m.sequence !== sequence);
+    setMilestones(updated);
+    onMilestonesChange(updated);
+  };
+
+  const handleMilestoneChange = (
+    sequence: number,
+    field: keyof MilestoneEditData,
+    value: any
+  ) => {
+    const updated = milestones.map((m) =>
+      m.sequence === sequence ? { ...m, [field]: value } : m
+    );
+    setMilestones(updated);
+    onMilestonesChange(updated);
+  };
+
+  const handleApplyTemplate = () => {
+    if (templates.length === 0) return;
+
+    const templateMilestones = templates.map((t) => ({
+      title: t.stageName,
+      sequence: t.sequence,
+      status: "not_started" as const,
+      percentComplete: 0,
+      description: t.description || "",
+      plannedStartDate: undefined,
+      plannedEndDate: undefined,
+    }));
+
+    setMilestones(templateMilestones);
+    onMilestonesChange(templateMilestones);
+    setShowTemplateForm(false);
+  };
+
+  const sortedMilestones = [...milestones].sort(
+    (a, b) => a.sequence - b.sequence
+  );
 
   const handleAddMilestone = () => {
     const newSequence = Math.max(...milestones.map((m) => m.sequence), 0) + 1;

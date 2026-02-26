@@ -18,6 +18,16 @@ import { AuthGuard } from '@nestjs/passport';
 export class MilestonesController {
   constructor(private milestonesService: MilestonesService) {}
 
+  @Get('templates/trade/:tradeId')
+  async getTemplatesByTrade(@Param('tradeId') tradeId: string) {
+    return this.milestonesService.getTemplatesByTrade(tradeId);
+  }
+
+  @Get('templates')
+  async getAllTemplates() {
+    return this.milestonesService.getAllTemplates();
+  }
+
   @Get('project/:projectId')
   async getMilestonesByProject(@Param('projectId') projectId: string) {
     return this.milestonesService.getMilestonesByProject(projectId);
