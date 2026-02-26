@@ -464,7 +464,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const totals = useMemo(() => {
     return {
       total: items.length,
-      approved: items.filter((p) => p.status === "approved").length,
+      approved: items.filter((p) => p.status === "awarded").length,
       pending: items.filter((p) => p.status === "pending").length,
       rejected: items.filter((p) => p.status === "rejected").length,
     };
@@ -576,7 +576,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               <p className="text-lg font-bold text-white">{totals.total}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Approved</p>
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Awarded</p>
               <p className="text-lg font-bold text-emerald-300">{totals.approved}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
