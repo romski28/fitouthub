@@ -254,8 +254,8 @@ export default function ProfessionalCalendarPage() {
                       )
                     }
                   >
-                    <div className="flex items-stretch">
-                      <div className="w-20 sm:w-24 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-4">
+                    <div className="flex items-stretch min-h-[80px]">
+                      <div className="w-28 sm:w-32 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-3">
                         {sameDate ? (
                           <>
                             <div className="text-xs font-semibold uppercase tracking-wide">
@@ -278,32 +278,19 @@ export default function ProfessionalCalendarPage() {
                         )}
                       </div>
 
-                      <div className="flex-1 p-6">
-                        {/* Line 1: Milestone Title + Access Badge */}
-                        <div className="flex items-start justify-between gap-4 mb-2">
-                          <h3 className="text-base font-semibold text-slate-900">
+                      <div className="flex-1 p-3">
+                        {/* Grid: Milestone Title, Key, Status */}
+                        <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-2 items-center mb-2">
+                          <h3 className="text-base font-semibold text-slate-900 col-span-1">
                             {milestone.title}
                           </h3>
                           {milestone.siteAccessRequired && (
-                            <div className="flex-shrink-0 text-lg" title="Site access required">
+                            <div className="text-lg" title="Site access required">
                               🔑
                             </div>
                           )}
-                        </div>
-
-                        {/* Line 2: Project for Client - Status */}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-1 flex-1 min-w-0">
-                            <span className="text-xs font-medium text-blue-600 truncate">
-                              {milestone.projectProfessional.project.projectName}
-                            </span>
-                            <span className="text-xs text-slate-400 flex-shrink-0">for</span>
-                            <span className="text-xs text-slate-600 truncate">
-                              {milestone.projectProfessional.project.clientName}
-                            </span>
-                          </div>
                           {showProgressBar ? (
-                            <div className="w-36 sm:w-44">
+                            <div className="w-32 sm:w-40">
                               <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
                                 <div
                                   className="absolute left-0 top-0 h-full bg-emerald-500"
@@ -321,6 +308,17 @@ export default function ProfessionalCalendarPage() {
                               {statusLabel}
                             </span>
                           )}
+                        </div>
+
+                        {/* Line 2: Project for Client */}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-xs font-medium text-blue-600">
+                            {milestone.projectProfessional.project.projectName}
+                          </span>
+                          <span className="text-xs text-slate-400">for</span>
+                          <span className="text-xs text-slate-600">
+                            {milestone.projectProfessional.project.clientName}
+                          </span>
                         </div>
 
                         {/* Description - Body Text */}
