@@ -253,11 +253,11 @@ export default function ProfessionalCalendarPage() {
                   >
                     {/* Title Bar: Date - Milestone Title + Access Badge */}
                     <div className="flex items-center justify-between gap-4 mb-2">
-                      <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+                      <span className="text-base font-semibold text-slate-900 whitespace-nowrap">
                         {formatDateShort(date)}
                       </span>
                       <h3 className="text-base font-semibold text-slate-900 flex-1 text-center px-2">
-                        {milestone.sequence}. {milestone.title}
+                        {milestone.title}
                       </h3>
                       {milestone.siteAccessRequired && (
                         <div className="flex-shrink-0 text-lg" title="Site access required">
