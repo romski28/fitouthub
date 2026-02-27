@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { MilestoneTimeline } from '@/components/milestone-timeline';
 import { MilestoneEditor } from '@/components/milestone-editor';
+import { API_BASE_URL } from '@/config/api';
 
 interface Milestone {
   id: string;
@@ -45,7 +46,6 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [editingMilestones, setEditingMilestones] = useState(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://fitouthub.onrender.com';
   const isAwarded = projectStatus === 'awarded';
 
   // Fetch milestones
