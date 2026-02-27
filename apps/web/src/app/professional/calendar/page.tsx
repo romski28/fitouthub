@@ -247,6 +247,7 @@ export default function ProfessionalCalendarPage() {
                       statusPercent === 100 ? "Complete" :
                       statusPercent === 0 ? "Not Started" :
                       `${statusPercent}% Complete`;
+                    const showProgressBar = statusPercent > 0 && statusPercent < 100;
 
                     return (
                       <div
@@ -258,12 +259,12 @@ export default function ProfessionalCalendarPage() {
                           )
                         }
                       >
-                        {/* Top Line: Date (left) - Milestone Title (right) - Site Access Key (far right) */}
-                        <div className="flex items-center justify-between gap-4 mb-3">
+                        {/* Line 1: Date - Milestone Title + Access Badge */}
+                        <div className="flex items-center justify-between gap-4 mb-2">
                           <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
                             {formatDateShort(date)}
                           </span>
-                          <h3 className="text-base font-semibold text-slate-900 flex-1 text-center">
+                          <h3 className="text-base font-semibold text-slate-900 flex-1 text-center px-2">
                             {milestone.sequence}. {milestone.title}
                           </h3>
                           {milestone.siteAccessRequired && (
@@ -273,14 +274,15 @@ export default function ProfessionalCalendarPage() {
                           )}
                         </div>
 
-                        {/* Next Line: Project - Client - Status */}
-                        <div className="flex items-center justify-between gap-4 mb-4">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {/* Line 2: Project for Client - Status */}
+                        <div className="flex items-center justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
                             <span className="text-xs font-medium text-blue-600 truncate">
                               {milestone.projectProfessional.project.projectName}
                             </span>
-                            <span className="text-xs text-slate-500 truncate">
-                              • {milestone.projectProfessional.project.clientName}
+                            <span className="text-xs text-slate-400 flex-shrink-0">for</span>
+                            <span className="text-xs text-slate-600 truncate">
+                              {milestone.projectProfessional.project.clientName}
                             </span>
                           </div>
                           <span className="text-xs font-medium text-slate-600 whitespace-nowrap flex-shrink-0">
@@ -288,17 +290,15 @@ export default function ProfessionalCalendarPage() {
                           </span>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="mb-4 h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all rounded-full ${
-                              statusPercent === 100 ? "bg-green-500" :
-                              statusPercent === 0 ? "bg-slate-300" :
-                              "bg-blue-500"
-                            }`}
-                            style={{ width: `${statusPercent}%` }}
-                          />
-                        </div>
+                        {/* Progress Bar - Only show when 0 < percentage < 100 */}
+                        {showProgressBar && (
+                          <div className="mb-3 h-1 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full transition-all rounded-full bg-blue-500"
+                              style={{ width: `${statusPercent}%` }}
+                            />
+                          </div>
+                        )}
 
                         {/* Description - Body Text */}
                         {milestone.description && (
