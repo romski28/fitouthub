@@ -109,28 +109,24 @@ export default function ProfessionalCalendarPage() {
     return grouped;
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   const getStatusPercent = (status: string, percentComplete: number) => {
     if (status === "completed") return 100;
     if (status === "not_started") return 0;
     return percentComplete;
   };
 
-  const formatDateShort = (dateStr: string) => {
+  const formatWeekday = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", {
       weekday: "short",
+    });
+  };
+
+  const formatDayMonth = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      day: "2-digit",
       month: "short",
-      day: "numeric",
     });
   };
 
@@ -245,91 +241,107 @@ export default function ProfessionalCalendarPage() {
                 return (
                   <div
                     key={milestone.id}
-                    className="bg-white rounded-xl border border-slate-200 p-6 hover:bg-slate-50 transition cursor-pointer border-l-4 border-l-blue-500"
+                    className="bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition cursor-pointer overflow-hidden"
                     onClick={() =>
                       router.push(
                         `/professional-projects/${milestone.projectProfessional.id}`
                       )
                     }
                   >
-                    {/* Title Bar: Date - Milestone Title + Access Badge */}
-                    <div className="flex items-center justify-between gap-4 mb-2">
-                      <span className="text-base font-semibold text-slate-900 whitespace-nowrap">
-                        {formatDateShort(date)}
-                      </span>
-                      <h3 className="text-base font-semibold text-slate-900 flex-1 text-center px-2">
-                        {milestone.title}
-                      </h3>
-                      {milestone.siteAccessRequired && (
-                        <div className="flex-shrink-0 text-lg" title="Site access required">
-                          🔑
+                    <div className="flex items-stretch">
+                      <div className="w-20 sm:w-24 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-4">
+                        <div className="text-xs font-semibold uppercase tracking-wide">
+                          {formatWeekday(date)}
                         </div>
-                      )}
-                    </div>
-
-                    {/* Second Line: Project for Client - Status + Progress Bar */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-1 flex-1 min-w-0">
-                        <span className="text-xs font-medium text-blue-600 truncate">
-                          {milestone.projectProfessional.project.projectName}
-                        </span>
-                        <span className="text-xs text-slate-400 flex-shrink-0">for</span>
-                        <span className="text-xs text-slate-600 truncate">
-                          {milestone.projectProfessional.project.clientName}
-                        </span>
-                      </div>
-                      <span className="text-xs font-medium text-slate-600 whitespace-nowrap flex-shrink-0">
-                        {statusLabel}
-                      </span>
-                    </div>
-
-                    {/* Progress Bar - Only show when 0 < percentage < 100 */}
-                    {showProgressBar && (
-                      <div className="mt-2 h-1 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full transition-all rounded-full bg-blue-500"
-                          style={{ width: `${statusPercent}%` }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Description - Body Text */}
-                    {milestone.description && (
-                      <p className="text-sm text-slate-600 mt-3 mb-3 leading-relaxed">
-                        {milestone.description}
-                      </p>
-                    )}
-
-                    {/* Meta Info - Two columns */}
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      {/* Time Slot */}
-                      {milestone.startTimeSlot && (
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <Clock className="w-4 h-4 flex-shrink-0" />
-                          <span className="text-xs">
-                            {milestone.startTimeSlot === "AM" ? "Morning" :
-                             milestone.startTimeSlot === "PM" ? "Afternoon" :
-                             milestone.startTimeSlot === "ALL_DAY" ? "All Day" :
-                             milestone.startTimeSlot}
-                          </span>
+                        <div className="text-sm font-semibold mt-1">
+                          {formatDayMonth(date)}
                         </div>
-                      )}
-
-                      {/* Estimated Hours */}
-                      {milestone.estimatedHours && (
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <Clock className="w-4 h-4 flex-shrink-0" />
-                          <span className="text-xs">{milestone.estimatedHours}h estimated</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Site Access Notes - if applicable */}
-                    {milestone.siteAccessNotes && (
-                      <div className="mt-3 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded border border-amber-200">
-                        <strong>Access Notes:</strong> {milestone.siteAccessNotes}
                       </div>
-                    )}
+
+                      <div className="flex-1 p-6">
+                        {/* Line 1: Milestone Title + Access Badge */}
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <h3 className="text-base font-semibold text-slate-900">
+                            {milestone.title}
+                          </h3>
+                          {milestone.siteAccessRequired && (
+                            <div className="flex-shrink-0 text-lg" title="Site access required">
+                              🔑
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Line 2: Project for Client - Status */}
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            <span className="text-xs font-medium text-blue-600 truncate">
+                              {milestone.projectProfessional.project.projectName}
+                            </span>
+                            <span className="text-xs text-slate-400 flex-shrink-0">for</span>
+                            <span className="text-xs text-slate-600 truncate">
+                              {milestone.projectProfessional.project.clientName}
+                            </span>
+                          </div>
+                          {showProgressBar ? (
+                            <div className="w-36 sm:w-44">
+                              <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                                <div
+                                  className="absolute left-0 top-0 h-full bg-emerald-500"
+                                  style={{ width: `${statusPercent}%` }}
+                                />
+                                <span className="relative z-10 block text-[10px] font-semibold text-slate-800 text-center leading-4">
+                                  {statusPercent}%
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className={`text-xs font-semibold whitespace-nowrap ${
+                              statusPercent === 100 ? "text-emerald-600" : "text-slate-600"
+                            }`}>
+                              {statusLabel}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Description - Body Text */}
+                        {milestone.description && (
+                          <p className="text-sm text-slate-600 mt-3 mb-3 leading-relaxed">
+                            {milestone.description}
+                          </p>
+                        )}
+
+                        {/* Meta Info - Two columns */}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          {/* Time Slot */}
+                          {milestone.startTimeSlot && (
+                            <div className="flex items-center gap-1.5 text-slate-600">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span className="text-xs">
+                                {milestone.startTimeSlot === "AM" ? "Morning" :
+                                 milestone.startTimeSlot === "PM" ? "Afternoon" :
+                                 milestone.startTimeSlot === "ALL_DAY" ? "All Day" :
+                                 milestone.startTimeSlot}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Estimated Hours */}
+                          {milestone.estimatedHours && (
+                            <div className="flex items-center gap-1.5 text-slate-600">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span className="text-xs">{milestone.estimatedHours}h estimated</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Site Access Notes - if applicable */}
+                        {milestone.siteAccessNotes && (
+                          <div className="mt-3 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded border border-amber-200">
+                            <strong>Access Notes:</strong> {milestone.siteAccessNotes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 );
               })
