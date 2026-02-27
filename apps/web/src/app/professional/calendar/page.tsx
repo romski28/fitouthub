@@ -130,6 +130,11 @@ export default function ProfessionalCalendarPage() {
     });
   };
 
+  const isSameDate = (date1?: string | null, date2?: string | null) => {
+    if (!date1 || !date2) return true;
+    return date1.split("T")[0] === date2.split("T")[0];
+  };
+
   const groupedMilestones = groupByDate(milestones);
   const sortedDates = Object.keys(groupedMilestones).sort();
 
@@ -237,6 +242,7 @@ export default function ProfessionalCalendarPage() {
                   statusPercent === 0 ? "Not Started" :
                   `${statusPercent}% Complete`;
                 const showProgressBar = statusPercent > 0 && statusPercent < 100;
+                const sameDate = isSameDate(milestone.plannedStartDate, milestone.plannedEndDate);
 
                 return (
                   <div
@@ -250,12 +256,26 @@ export default function ProfessionalCalendarPage() {
                   >
                     <div className="flex items-stretch">
                       <div className="w-20 sm:w-24 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-4">
-                        <div className="text-xs font-semibold uppercase tracking-wide">
-                          {formatWeekday(date)}
-                        </div>
-                        <div className="text-sm font-semibold mt-1">
-                          {formatDayMonth(date)}
-                        </div>
+                        {sameDate ? (
+                          <>
+                            <div className="text-xs font-semibold uppercase tracking-wide">
+                              {formatWeekday(date)}
+                            </div>
+                            <div className="text-sm font-semibold mt-1">
+                              {formatDayMonth(date)}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-[10px] font-semibold">
+                              {formatDayMonth(milestone.plannedStartDate!)}
+                            </div>
+                            <div className="text-[9px] font-medium my-0.5">thru</div>
+                            <div className="text-[10px] font-semibold">
+                              {formatDayMonth(milestone.plannedEndDate!)}
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex-1 p-6">
