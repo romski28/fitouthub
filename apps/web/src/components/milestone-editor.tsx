@@ -82,15 +82,22 @@ export function MilestoneEditor({
     loadTemplates();
   }, [tradeId]);
 
-  // Auto-set percentComplete to 100 when status is completed
-  useEffect(() => {
-    if (currentMilestone.status === "completed" && currentMilestone.percentComplete !== 100) {
-      setCurrentMilestone(prev => ({
-        ...prev,
-        percentComplete: 100
-      }));
-    }
-  }, [currentMilestone.status]);
+  const deriveStatus = (percentComplete: number) => {
+    if (percentComplete >= 100) return "completed" as const;
+    if (percentComplete <= 0) return "not_started" as const;
+    return "in_progress" as const;
+  };
+
+  const formatHumanDate = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   const handleSaveMilestone = () => {
     if (!currentMilestone.title.trim()) {
@@ -98,16 +105,21 @@ export function MilestoneEditor({
       return;
     }
 
+    const normalizedMilestone: MilestoneEditData = {
+      ...currentMilestone,
+      status: deriveStatus(currentMilestone.percentComplete),
+    };
+
     let updated: MilestoneEditData[];
     if (editingIndex !== null) {
       // Update existing
       updated = savedMilestones.map((m, idx) => 
-        idx === editingIndex ? currentMilestone : m
+        idx === editingIndex ? normalizedMilestone : m
       );
       setEditingIndex(null);
     } else {
       // Add new
-      updated = [...savedMilestones, currentMilestone];
+      updated = [...savedMilestones, normalizedMilestone];
     }
 
     setSavedMilestones(updated);
@@ -124,7 +136,10 @@ export function MilestoneEditor({
   };
 
   const handleEditMilestone = (index: number) => {
-    setCurrentMilestone(savedMilestones[index]);
+    setCurrentMilestone({
+      ...savedMilestones[index],
+      status: deriveStatus(savedMilestones[index].percentComplete),
+    });
     setEditingIndex(index);
   };
 
@@ -201,28 +216,8 @@ export function MilestoneEditor({
             />
           </div>
 
-          {/* Compact Line: Status, %, Start Date, End Date */}
-          <div className="grid grid-cols-4 gap-2">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                Status
-              </label>
-              <select
-                value={currentMilestone.status}
-                onChange={(e) =>
-                  setCurrentMilestone(prev => ({
-                    ...prev,
-                    status: e.target.value as "not_started" | "in_progress" | "completed"
-                  }))
-                }
-                className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="not_started">Not Started</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-
+          {/* Compact Line: %, Start Date, End Date */}
+          <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 % Complete
@@ -232,12 +227,14 @@ export function MilestoneEditor({
                 min="0"
                 max="100"
                 value={currentMilestone.percentComplete}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const nextValue = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
                   setCurrentMilestone(prev => ({
                     ...prev,
-                    percentComplete: Math.min(100, Math.max(0, parseInt(e.target.value) || 0))
-                  }))
-                }
+                    percentComplete: nextValue,
+                    status: deriveStatus(nextValue),
+                  }));
+                }}
                 className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -252,7 +249,8 @@ export function MilestoneEditor({
                 onChange={(e) =>
                   setCurrentMilestone(prev => ({
                     ...prev,
-                    plannedStartDate: e.target.value || undefined
+                    plannedStartDate: e.target.value || undefined,
+                    plannedEndDate: e.target.value || undefined
                   }))
                 }
                 className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -269,7 +267,13 @@ export function MilestoneEditor({
                 onChange={(e) =>
                   setCurrentMilestone(prev => ({
                     ...prev,
-                    plannedEndDate: e.target.value || undefined
+                    plannedEndDate: e.target.value || undefined,
+                    startTimeSlot: prev.plannedStartDate && e.target.value && prev.plannedStartDate !== e.target.value
+                      ? "ALL_DAY"
+                      : prev.startTimeSlot,
+                    endTimeSlot: prev.plannedStartDate && e.target.value && prev.plannedStartDate !== e.target.value
+                      ? "ALL_DAY"
+                      : prev.endTimeSlot,
                   }))
                 }
                 className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -278,37 +282,17 @@ export function MilestoneEditor({
           </div>
 
           {/* Time Slots & Site Access Row */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
-                Start Time
+                Time
               </label>
               <select
                 value={currentMilestone.startTimeSlot || ""}
                 onChange={(e) =>
                   setCurrentMilestone(prev => ({
                     ...prev,
-                    startTimeSlot: (e.target.value || undefined) as "AM" | "PM" | "ALL_DAY" | undefined
-                  }))
-                }
-                className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="">Any</option>
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-                <option value="ALL_DAY">All Day</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                End Time
-              </label>
-              <select
-                value={currentMilestone.endTimeSlot || ""}
-                onChange={(e) =>
-                  setCurrentMilestone(prev => ({
-                    ...prev,
+                    startTimeSlot: (e.target.value || undefined) as "AM" | "PM" | "ALL_DAY" | undefined,
                     endTimeSlot: (e.target.value || undefined) as "AM" | "PM" | "ALL_DAY" | undefined
                   }))
                 }
@@ -383,7 +367,7 @@ export function MilestoneEditor({
           {/* Description */}
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">
-              Description
+              Milestone Notes
             </label>
             <textarea
               value={currentMilestone.description || ""}
@@ -393,7 +377,7 @@ export function MilestoneEditor({
                   description: e.target.value
                 }))
               }
-              placeholder="What happens in this phase?"
+              placeholder="Notes, materials, or access details"
               rows={2}
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
             />
@@ -474,13 +458,13 @@ export function MilestoneEditor({
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-3 text-xs text-slate-600">
-                      <span>Status: <span className="font-medium text-slate-900">{milestone.status.replace(/_/g, " ")}</span></span>
+                      <span>Status: <span className="font-medium text-slate-900">{deriveStatus(milestone.percentComplete).replace(/_/g, " ")}</span></span>
                       <span>% Complete: <span className="font-medium text-slate-900">{milestone.percentComplete}%</span></span>
                       {milestone.plannedStartDate && (
-                        <span>Start: <span className="font-medium text-slate-900">{milestone.plannedStartDate}</span></span>
+                        <span>Start: <span className="font-medium text-slate-900">{formatHumanDate(milestone.plannedStartDate)}</span></span>
                       )}
                       {milestone.plannedEndDate && (
-                        <span>End: <span className="font-medium text-slate-900">{milestone.plannedEndDate}</span></span>
+                        <span>End: <span className="font-medium text-slate-900">{formatHumanDate(milestone.plannedEndDate)}</span></span>
                       )}
                     </div>
                     {milestone.description && (

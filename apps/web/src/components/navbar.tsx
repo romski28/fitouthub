@@ -79,9 +79,14 @@ export const Navbar: React.FC = () => {
               </a>
             ) : null}
             {showProfessionalProjectsLink ? (
-              <a className="hover:text-slate-900" href="/professional-projects">
-                {t('projects')}
-              </a>
+              <>
+                <a className="hover:text-slate-900" href="/professional-projects">
+                  {t('projects')}
+                </a>
+                <a className="hover:text-slate-900" href="/professional/calendar">
+                  Calendar
+                </a>
+              </>
             ) : null}
 
             {/* Language Switcher */}
@@ -161,6 +166,12 @@ export const Navbar: React.FC = () => {
                         className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                       >
                         {t('profile')}
+                      </a>
+                      <a
+                        href="/professional/calendar"
+                        className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        Calendar
                       </a>
                       <button
                         onClick={() => {
@@ -300,13 +311,22 @@ export const Navbar: React.FC = () => {
                 </a>
               ) : null}
               {showProfessionalProjectsLink ? (
-                <a
-                  className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
-                  href="/professional-projects"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {t('projects')}
-                </a>
+                <>
+                  <a
+                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                    href="/professional-projects"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('projects')}
+                  </a>
+                  <a
+                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                    href="/professional/calendar"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Calendar
+                  </a>
+                </>
               ) : null}
 
               {/* Language Switcher */}
@@ -365,6 +385,13 @@ export const Navbar: React.FC = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('profile')}
+                  </a>
+                  <a
+                    href="/professional/calendar"
+                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Calendar
                   </a>
                   <button
                     onClick={() => {
@@ -434,6 +461,13 @@ export const Navbar: React.FC = () => {
                     onClick={() => setProfileMenuOpen(false)}
                   >
                     Profile
+                  </a>
+                  <a
+                    href="/professional/calendar"
+                    className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    Calendar
                   </a>
                   <button
                     onClick={() => {
