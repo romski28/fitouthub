@@ -258,28 +258,34 @@ export default function ProfessionalCalendarPage() {
                           )
                         }
                       >
-                        {/* Milestone Header - Title, Project, Client, and Status on one line */}
-                        <div className="flex items-center justify-between gap-4 mb-4">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-base font-semibold text-slate-900 truncate">
-                                {milestone.projectProfessional.project.projectName}
-                              </h3>
-                              <p className="text-xs text-slate-500">
-                                {milestone.projectProfessional.project.clientName}
-                              </p>
+                        {/* Top Line: Date (left) - Milestone Title (right) - Site Access Key (far right) */}
+                        <div className="flex items-center justify-between gap-4 mb-3">
+                          <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+                            {formatDateShort(date)}
+                          </span>
+                          <h3 className="text-base font-semibold text-slate-900 flex-1 text-center">
+                            {milestone.sequence}. {milestone.title}
+                          </h3>
+                          {milestone.siteAccessRequired && (
+                            <div className="flex-shrink-0 text-lg" title="Site access required">
+                              🔑
                             </div>
-                            {milestone.siteAccessRequired && (
-                              <div className="flex-shrink-0 text-lg" title="Site access required">
-                                🔑
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-shrink-0">
-                            <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
-                              {statusLabel}
+                          )}
+                        </div>
+
+                        {/* Next Line: Project - Client - Status */}
+                        <div className="flex items-center justify-between gap-4 mb-4">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-xs font-medium text-blue-600 truncate">
+                              {milestone.projectProfessional.project.projectName}
+                            </span>
+                            <span className="text-xs text-slate-500 truncate">
+                              • {milestone.projectProfessional.project.clientName}
                             </span>
                           </div>
+                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap flex-shrink-0">
+                            {statusLabel}
+                          </span>
                         </div>
 
                         {/* Progress Bar */}
@@ -294,11 +300,6 @@ export default function ProfessionalCalendarPage() {
                           />
                         </div>
 
-                        {/* Milestone Title - Larger */}
-                        <h4 className="text-lg font-semibold text-slate-900 mb-3">
-                          {milestone.sequence}. {milestone.title}
-                        </h4>
-
                         {/* Description - Body Text */}
                         {milestone.description && (
                           <p className="text-sm text-slate-600 mb-3 leading-relaxed">
@@ -307,7 +308,7 @@ export default function ProfessionalCalendarPage() {
                         )}
 
                         {/* Meta Info - Two columns */}
-                        <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+                        <div className="grid grid-cols-2 gap-3 text-sm">
                           {/* Time Slot */}
                           {milestone.startTimeSlot && (
                             <div className="flex items-center gap-1.5 text-slate-600">
