@@ -99,6 +99,14 @@ export function MilestoneEditor({
     });
   };
 
+  // Convert ISO date string to yyyy-MM-dd format for HTML date inputs
+  const toDateInputFormat = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0];
+  };
+
   const handleSaveMilestone = () => {
     if (!currentMilestone.title.trim()) {
       alert("Please enter a milestone title");
@@ -136,9 +144,12 @@ export function MilestoneEditor({
   };
 
   const handleEditMilestone = (index: number) => {
+    const milestone = savedMilestones[index];
     setCurrentMilestone({
-      ...savedMilestones[index],
-      status: deriveStatus(savedMilestones[index].percentComplete),
+      ...milestone,
+      status: deriveStatus(milestone.percentComplete),
+      plannedStartDate: toDateInputFormat(milestone.plannedStartDate),
+      plannedEndDate: toDateInputFormat(milestone.plannedEndDate),
     });
     setEditingIndex(index);
   };
@@ -245,7 +256,7 @@ export function MilestoneEditor({
               </label>
               <input
                 type="date"
-                value={currentMilestone.plannedStartDate || ""}
+                value={toDateInputFormat(currentMilestone.plannedStartDate)}
                 onChange={(e) =>
                   setCurrentMilestone(prev => ({
                     ...prev,
@@ -263,7 +274,7 @@ export function MilestoneEditor({
               </label>
               <input
                 type="date"
-                value={currentMilestone.plannedEndDate || ""}
+                value={toDateInputFormat(currentMilestone.plannedEndDate)}
                 onChange={(e) =>
                   setCurrentMilestone(prev => ({
                     ...prev,
