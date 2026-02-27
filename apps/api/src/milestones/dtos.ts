@@ -8,6 +8,11 @@ export class CreateMilestoneDto {
   percentComplete?: number;
   plannedStartDate?: Date;
   plannedEndDate?: Date;
+  startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+  endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+  estimatedHours?: number;
+  siteAccessRequired?: boolean;
+  siteAccessNotes?: string;
   description?: string;
 }
 
@@ -18,6 +23,11 @@ export class UpdateMilestoneDto {
   plannedStartDate?: Date;
   plannedEndDate?: Date;
   actualEndDate?: Date;
+  startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+  endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+  estimatedHours?: number;
+  siteAccessRequired?: boolean;
+  siteAccessNotes?: string;
   description?: string;
   photoUrls?: string[];
   notes?: string;
@@ -32,6 +42,11 @@ export class MilestoneResponseDto {
   plannedStartDate?: Date;
   plannedEndDate?: Date;
   actualEndDate?: Date;
+  startTimeSlot?: string;
+  endTimeSlot?: string;
+  estimatedHours?: number;
+  siteAccessRequired: boolean;
+  siteAccessNotes?: string;
   description?: string;
   photoUrls: string[];
   notes?: string;

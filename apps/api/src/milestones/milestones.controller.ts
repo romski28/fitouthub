@@ -42,6 +42,15 @@ export class MilestonesController {
     );
   }
 
+  @Get('calendar/:professionalId')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async getProfessionalCalendar(
+    @Param('professionalId') professionalId: string,
+    @Req() req: any,
+  ) {
+    return this.milestonesService.getProfessionalCalendar(professionalId);
+  }
+
   @Get(':id')
   async getMilestoneById(@Param('id') id: string) {
     return this.milestonesService.getMilestoneById(id);

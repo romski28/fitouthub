@@ -38,6 +38,11 @@ export class MilestonesService {
         percentComplete: data.percentComplete || 0,
         plannedStartDate: data.plannedStartDate,
         plannedEndDate: data.plannedEndDate,
+        startTimeSlot: data.startTimeSlot,
+        endTimeSlot: data.endTimeSlot,
+        estimatedHours: data.estimatedHours,
+        siteAccessRequired: data.siteAccessRequired ?? true,
+        siteAccessNotes: data.siteAccessNotes,
         description: data.description,
       },
     });
@@ -68,6 +73,11 @@ export class MilestonesService {
             percentComplete: m.percentComplete || 0,
             plannedStartDate: m.plannedStartDate,
             plannedEndDate: m.plannedEndDate,
+            startTimeSlot: m.startTimeSlot,
+            endTimeSlot: m.endTimeSlot,
+            estimatedHours: m.estimatedHours,
+            siteAccessRequired: m.siteAccessRequired ?? true,
+            siteAccessNotes: m.siteAccessNotes,
             description: m.description,
           },
         }),
@@ -146,4 +156,54 @@ export class MilestonesService {
       },
     });
   }
+
+  async getProfessionalCalendar(professionalId: string) {
+    // Get all project-professional relationships for this professional
+    const projectProfessionals = await this.prisma.projectProfessional.findMany({
+      where: {
+        professionalId,
+        status: { in: ['accepted', 'awarded'] }, // Only active/awarded projects
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            projectName: true,
+            clientName: true,
+            status: true,
+            region: true,
+          },
+        },
+      },
+    });
+
+    // Get all milestones for these project-professional relationships
+    const ppIds = projectProfessionals.map((pp) => pp.id);
+    
+    const milestones = await this.prisma.projectMilestone.findMany({
+      where: {
+        projectProfessionalId: { in: ppIds },
+        plannedStartDate: { not: null }, // Only milestones with dates set
+      },
+      orderBy: { plannedStartDate: 'asc' },
+      include: {
+        projectProfessional: {
+          include: {
+            project: {
+              select: {
+                id: true,
+                projectName: true,
+                clientName: true,
+                status: true,
+                region: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return milestones;
+  }
 }
+

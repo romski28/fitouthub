@@ -19,6 +19,11 @@ interface MilestoneEditData {
   percentComplete: number;
   plannedStartDate?: string;
   plannedEndDate?: string;
+  startTimeSlot?: "AM" | "PM" | "ALL_DAY";
+  endTimeSlot?: "AM" | "PM" | "ALL_DAY";
+  estimatedHours?: number;
+  siteAccessRequired?: boolean;
+  siteAccessNotes?: string;
   description?: string;
 }
 
@@ -44,6 +49,7 @@ export function MilestoneEditor({
     sequence: (defaultMilestones?.length || 0) + 1,
     status: "not_started",
     percentComplete: 0,
+    siteAccessRequired: true,
     description: "",
   });
 
@@ -270,6 +276,109 @@ export function MilestoneEditor({
               />
             </div>
           </div>
+
+          {/* Time Slots & Site Access Row */}
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Start Time
+              </label>
+              <select
+                value={currentMilestone.startTimeSlot || ""}
+                onChange={(e) =>
+                  setCurrentMilestone(prev => ({
+                    ...prev,
+                    startTimeSlot: (e.target.value || undefined) as "AM" | "PM" | "ALL_DAY" | undefined
+                  }))
+                }
+                className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Any</option>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+                <option value="ALL_DAY">All Day</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                End Time
+              </label>
+              <select
+                value={currentMilestone.endTimeSlot || ""}
+                onChange={(e) =>
+                  setCurrentMilestone(prev => ({
+                    ...prev,
+                    endTimeSlot: (e.target.value || undefined) as "AM" | "PM" | "ALL_DAY" | undefined
+                  }))
+                }
+                className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Any</option>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+                <option value="ALL_DAY">All Day</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Est. Hours
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="999"
+                value={currentMilestone.estimatedHours || ""}
+                onChange={(e) =>
+                  setCurrentMilestone(prev => ({
+                    ...prev,
+                    estimatedHours: e.target.value ? parseInt(e.target.value) : undefined
+                  }))
+                }
+                placeholder="Optional"
+                className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={currentMilestone.siteAccessRequired ?? true}
+                  onChange={(e) =>
+                    setCurrentMilestone(prev => ({
+                      ...prev,
+                      siteAccessRequired: e.target.checked
+                    }))
+                  }
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                Site Access
+              </label>
+            </div>
+          </div>
+
+          {/* Site Access Notes (conditional) */}
+          {currentMilestone.siteAccessRequired && (
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Site Access Notes
+              </label>
+              <input
+                type="text"
+                value={currentMilestone.siteAccessNotes || ""}
+                onChange={(e) =>
+                  setCurrentMilestone(prev => ({
+                    ...prev,
+                    siteAccessNotes: e.target.value || undefined
+                  }))
+                }
+                placeholder="e.g., Need 2-hour window, parking required"
+                className="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          )}
 
           {/* Description */}
           <div>

@@ -283,6 +283,11 @@ model ProjectMilestone {
   plannedStartDate      DateTime?
   plannedEndDate        DateTime?
   actualEndDate         DateTime?
+  startTimeSlot         String?  // "AM" | "PM" | "ALL_DAY"
+  endTimeSlot           String?  // "AM" | "PM" | "ALL_DAY"
+  estimatedHours        Int?
+  siteAccessRequired    Boolean  @default(true)
+  siteAccessNotes       String?
   description           String?
   photoUrls             String[] @default([])
   notes                 String?
@@ -297,6 +302,7 @@ model ProjectMilestone {
   @@index([projectProfessionalId])
   @@index([templateId])
   @@index([status])
+  @@index([plannedStartDate])
   @@unique([projectId, sequence])
 }
 

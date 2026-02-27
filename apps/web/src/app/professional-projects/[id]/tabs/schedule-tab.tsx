@@ -103,6 +103,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     percentComplete: number;
     plannedStartDate?: string;
     plannedEndDate?: string;
+    startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    estimatedHours?: number;
+    siteAccessRequired?: boolean;
+    siteAccessNotes?: string;
     description?: string;
   }>) => {
     try {
@@ -134,6 +139,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
               percentComplete: m.percentComplete,
               plannedStartDate: toISODateTime(m.plannedStartDate),
               plannedEndDate: toISODateTime(m.plannedEndDate),
+              startTimeSlot: m.startTimeSlot,
+              endTimeSlot: m.endTimeSlot,
+              estimatedHours: m.estimatedHours,
+              siteAccessRequired: m.siteAccessRequired,
+              siteAccessNotes: m.siteAccessNotes,
             })),
           }),
         }
