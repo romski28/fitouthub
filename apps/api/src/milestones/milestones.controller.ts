@@ -48,7 +48,7 @@ export class MilestonesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-professional'))
   async createMilestone(
     @Body() createMilestoneDto: CreateMilestoneDto,
     @Req() req: any,
@@ -57,7 +57,7 @@ export class MilestonesController {
   }
 
   @Post('batch')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-professional'))
   async createMultipleMilestones(
     @Body() data: CreateMultipleMilestonesDto,
     @Req() req: any,
@@ -66,7 +66,7 @@ export class MilestonesController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-professional'))
   async updateMilestone(
     @Param('id') id: string,
     @Body() updateMilestoneDto: UpdateMilestoneDto,
@@ -76,13 +76,13 @@ export class MilestonesController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-professional'))
   async deleteMilestone(@Param('id') id: string, @Req() req: any) {
     return this.milestonesService.deleteMilestone(id);
   }
 
   @Post(':id/photos')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-professional'))
   async addPhotoToMilestone(
     @Param('id') id: string,
     @Body() body: { photoUrls: string[] },
@@ -95,7 +95,7 @@ export class MilestonesController {
   }
 
   @Delete(':id/photos/:photoUrl')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-professional'))
   async removePhotoFromMilestone(
     @Param('id') id: string,
     @Param('photoUrl') photoUrl: string,
