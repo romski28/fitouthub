@@ -24,6 +24,7 @@ interface Milestone {
 
 interface ScheduleTabProps {
   tab?: string;
+  projectId: string;
   projectProfessionalId: string;
   projectStatus: string;
   tradeId?: string;
@@ -32,6 +33,7 @@ interface ScheduleTabProps {
 }
 
 export const ScheduleTab: React.FC<ScheduleTabProps> = ({
+  projectId,
   projectProfessionalId,
   projectStatus,
   tradeId,
@@ -102,41 +104,50 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         return;
       }
 
-      // Save each milestone to backend
-      const savedMilestones = [];
-      for (const milestone of updatedMilestones) {
-        const res = await fetch(
-          `${API_BASE_URL}/milestones`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
+      // Use batch endpoint to replace all milestones at once
+      const response = await fetch(
+        `${API_BASE_URL}/milestones/batch`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            projectId,
+            projectProfessionalId,
+            milestones: updatedMilestones.map(m => ({
               projectProfessionalId,
-              title: milestone.title,
-              description: milestone.description,
-              sequence: milestone.sequence,
-              status: milestone.status,
-              percentComplete: milestone.percentComplete,
-              plannedStartDate: milestone.plannedStartDate,
-              plannedEndDate: milestone.plannedEndDate,
-            }),
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error(`Failed to save milestone: ${milestone.title}`);
+              title: m.title,
+              description: m.description,
+              sequence: m.sequence,
+              status: m.status,
+              percentComplete: m.percentComplete,
+              plannedStartDate: m.plannedStartDate,
+              plannedEndDate: m.plannedEndDate,
+            })),
+          }),
         }
+      );
 
-        const saved = await res.json();
-        savedMilestones.push(saved);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to save milestones');
       }
 
-      // Update milestones with IDs from backend
-      setMilestones(savedMilestones);
+      const savedMilestones = await response.json();
+      
+      // Update local state with saved milestones
+      setMilestones(Array.isArray(savedMilestones) ? savedMilestones : []);
+      setEditingMilestones(false); // Close editor after successful save
       onMilestonesUpdate?.();
+      
+      // Show success message
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: { message: 'Schedule saved successfully', type: 'success' }
+        }));
+      }
     } catch (err) {
       console.error('Error saving milestones:', err);
       setError(err instanceof Error ? err.message : 'Failed to save milestones');

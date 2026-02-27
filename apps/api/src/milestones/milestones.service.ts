@@ -44,9 +44,14 @@ export class MilestonesService {
   }
 
   async createMultipleMilestones(data: CreateMultipleMilestonesDto) {
-    // First delete any existing milestones for this project
+    // First delete any existing milestones for this professional on this project
+    // Use projectProfessionalId if provided, otherwise fall back to projectId
+    const whereClause = data.projectProfessionalId
+      ? { projectProfessionalId: data.projectProfessionalId }
+      : { projectId: data.projectId };
+    
     await this.prisma.projectMilestone.deleteMany({
-      where: { projectId: data.projectId },
+      where: whereClause,
     });
 
     // Create new milestones
@@ -55,7 +60,7 @@ export class MilestonesService {
         this.prisma.projectMilestone.create({
           data: {
             projectId: data.projectId,
-            projectProfessionalId: m.projectProfessionalId,
+            projectProfessionalId: m.projectProfessionalId || data.projectProfessionalId,
             templateId: m.templateId,
             title: m.title,
             sequence: m.sequence,

@@ -1007,6 +1007,7 @@ export default function ProjectDetailPage() {
 
             <ScheduleTab
               tab="schedule"
+              projectId={project.project.id}
               projectProfessionalId={projectProfessionalId}
               projectStatus={project.status}
               tradeId=""

@@ -41,5 +41,6 @@ export class MilestoneResponseDto {
 
 export class CreateMultipleMilestonesDto {
   projectId: string;
+  projectProfessionalId?: string;
   milestones: CreateMilestoneDto[];
 }
