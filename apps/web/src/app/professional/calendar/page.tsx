@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Calendar, Clock, MapPin, AlertCircle, ArrowLeft } from "lucide-react";
 import { API_BASE_URL } from "@/config/api";
 import { useRouter } from "next/navigation";
+import { useProfessionalAuth } from "@/context/professional-auth-context";
 
 interface CalendarMilestone {
   id: string;
@@ -37,6 +38,7 @@ interface GroupedMilestones {
 
 export default function ProfessionalCalendarPage() {
   const router = useRouter();
+  const { professional, accessToken: contextToken, isLoggedIn } = useProfessionalAuth();
   const [milestones, setMilestones] = useState<CalendarMilestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,18 +46,27 @@ export default function ProfessionalCalendarPage() {
 
   useEffect(() => {
     loadCalendar();
-  }, []);
+  }, [professional?.id, contextToken, isLoggedIn]);
 
   const loadCalendar = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const accessToken = localStorage.getItem("professionalAccessToken");
-      const professionalIdStr = localStorage.getItem("professionalId");
+      const accessToken = contextToken || localStorage.getItem("professionalAccessToken");
+      const storedProfessional = localStorage.getItem("professional");
+      let storedProfessionalId: string | undefined;
+      if (storedProfessional) {
+        try {
+          storedProfessionalId = (JSON.parse(storedProfessional) as { id?: string }).id;
+        } catch {
+          storedProfessionalId = undefined;
+        }
+      }
+      const professionalIdStr = professional?.id || storedProfessionalId;
 
       if (!accessToken || !professionalIdStr) {
-        setError("Please log in to view your calendar");
+        setError(isLoggedIn === false ? "Please log in to view your calendar" : "Loading your account...");
         return;
       }
 
