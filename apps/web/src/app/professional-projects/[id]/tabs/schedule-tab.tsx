@@ -48,6 +48,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
   const isAwarded = projectStatus === 'awarded';
 
+  // Helper to convert date string to ISO-8601 DateTime
+  const toISODateTime = (dateStr: string | undefined): string | undefined => {
+    if (!dateStr) return undefined;
+    // If it's already in ISO format, return as is
+    if (dateStr.includes('T')) return dateStr;
+    // Convert YYYY-MM-DD to YYYY-MM-DDTHH:MM:SSZ
+    return `${dateStr}T00:00:00Z`;
+  };
+
   // Fetch milestones
   useEffect(() => {
     if (!projectProfessionalId) return;
@@ -123,8 +132,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
               sequence: m.sequence,
               status: m.status,
               percentComplete: m.percentComplete,
-              plannedStartDate: m.plannedStartDate,
-              plannedEndDate: m.plannedEndDate,
+              plannedStartDate: toISODateTime(m.plannedStartDate),
+              plannedEndDate: toISODateTime(m.plannedEndDate),
             })),
           }),
         }
