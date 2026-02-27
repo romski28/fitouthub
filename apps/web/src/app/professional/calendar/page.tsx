@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Calendar, Clock, MapPin, AlertCircle, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, AlertCircle, ArrowLeft } from "lucide-react";
 import { API_BASE_URL } from "@/config/api";
 import { useRouter } from "next/navigation";
 import { useProfessionalAuth } from "@/context/professional-auth-context";
@@ -119,40 +119,18 @@ export default function ProfessionalCalendarPage() {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 border-green-300";
-      case "in_progress":
-        return "bg-blue-100 text-blue-800 border-blue-300";
-      default:
-        return "bg-slate-100 text-slate-800 border-slate-300";
-    }
+  const getStatusPercent = (status: string, percentComplete: number) => {
+    if (status === "completed") return 100;
+    if (status === "not_started") return 0;
+    return percentComplete;
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "Completed";
-      case "in_progress":
-        return "In Progress";
-      default:
-        return "Not Started";
-    }
-  };
-
-  const getTimeSlotLabel = (slot?: string | null) => {
-    if (!slot) return "Flexible";
-    switch (slot) {
-      case "AM":
-        return "Morning";
-      case "PM":
-        return "Afternoon";
-      case "ALL_DAY":
-        return "All Day";
-      default:
-        return slot;
-    }
+  const formatDateShort = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   };
 
   const groupedMilestones = groupByDate(milestones);
@@ -263,84 +241,104 @@ export default function ProfessionalCalendarPage() {
 
                 {/* Milestones for this date */}
                 <div className="divide-y divide-slate-100">
-                  {groupedMilestones[date].map((milestone) => (
-                    <div
-                      key={milestone.id}
-                      className="p-6 hover:bg-slate-50 transition cursor-pointer"
-                      onClick={() =>
-                        router.push(
-                          `/professional-projects/${milestone.projectProfessional.project.id}`
-                        )
-                      }
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          {/* Project Name */}
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                              {milestone.projectProfessional.project.projectName}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              {milestone.projectProfessional.project.clientName}
+                  {groupedMilestones[date].map((milestone) => {
+                    const statusPercent = getStatusPercent(milestone.status, milestone.percentComplete);
+                    const statusLabel =
+                      statusPercent === 100 ? "Complete" :
+                      statusPercent === 0 ? "Not Started" :
+                      `${statusPercent}% Complete`;
+
+                    return (
+                      <div
+                        key={milestone.id}
+                        className="p-6 hover:bg-slate-50 transition cursor-pointer border-l-4 border-l-blue-500"
+                        onClick={() =>
+                          router.push(
+                            `/professional-projects/${milestone.projectProfessional.id}`
+                          )
+                        }
+                      >
+                        {/* Milestone Header - Title, Project, Client, and Status on one line */}
+                        <div className="flex items-center justify-between gap-4 mb-4">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base font-semibold text-slate-900 truncate">
+                                {milestone.projectProfessional.project.projectName}
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                {milestone.projectProfessional.project.clientName}
+                              </p>
+                            </div>
+                            {milestone.siteAccessRequired && (
+                              <div className="flex-shrink-0 text-lg" title="Site access required">
+                                🔑
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0">
+                            <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
+                              {statusLabel}
                             </span>
                           </div>
+                        </div>
 
-                          {/* Milestone Title */}
-                          <h3 className="text-base font-semibold text-slate-900 mb-2">
-                            {milestone.sequence}. {milestone.title}
-                          </h3>
+                        {/* Progress Bar */}
+                        <div className="mb-4 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all rounded-full ${
+                              statusPercent === 100 ? "bg-green-500" :
+                              statusPercent === 0 ? "bg-slate-300" :
+                              "bg-blue-500"
+                            }`}
+                            style={{ width: `${statusPercent}%` }}
+                          />
+                        </div>
 
-                          {/* Description */}
-                          {milestone.description && (
-                            <p className="text-sm text-slate-600 mb-3">{milestone.description}</p>
+                        {/* Milestone Title - Larger */}
+                        <h4 className="text-lg font-semibold text-slate-900 mb-3">
+                          {milestone.sequence}. {milestone.title}
+                        </h4>
+
+                        {/* Description - Body Text */}
+                        {milestone.description && (
+                          <p className="text-sm text-slate-600 mb-3 leading-relaxed">
+                            {milestone.description}
+                          </p>
+                        )}
+
+                        {/* Meta Info - Two columns */}
+                        <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+                          {/* Time Slot */}
+                          {milestone.startTimeSlot && (
+                            <div className="flex items-center gap-1.5 text-slate-600">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span className="text-xs">
+                                {milestone.startTimeSlot === "AM" ? "Morning" :
+                                 milestone.startTimeSlot === "PM" ? "Afternoon" :
+                                 milestone.startTimeSlot === "ALL_DAY" ? "All Day" :
+                                 milestone.startTimeSlot}
+                              </span>
+                            </div>
                           )}
 
-                          {/* Meta Info */}
-                          <div className="flex flex-wrap items-center gap-4 text-sm">
-                            {/* Time Slot */}
-                            {milestone.startTimeSlot && (
-                              <div className="flex items-center gap-1.5 text-slate-600">
-                                <Clock className="w-4 h-4" />
-                                <span>{getTimeSlotLabel(milestone.startTimeSlot)}</span>
-                              </div>
-                            )}
-
-                            {/* Estimated Hours */}
-                            {milestone.estimatedHours && (
-                              <div className="flex items-center gap-1.5 text-slate-600">
-                                <Clock className="w-4 h-4" />
-                                <span>{milestone.estimatedHours}h estimated</span>
-                              </div>
-                            )}
-
-                            {/* Site Access */}
-                            {milestone.siteAccessRequired && (
-                              <div className="flex items-center gap-1.5 text-amber-600">
-                                <MapPin className="w-4 h-4" />
-                                <span>Site access required</span>
-                              </div>
-                            )}
-
-                            {/* Status Badge */}
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded border ${getStatusColor(
-                                milestone.status
-                              )}`}
-                            >
-                              {getStatusLabel(milestone.status)} ({milestone.percentComplete}%)
-                            </span>
-                          </div>
-
-                          {/* Site Access Notes */}
-                          {milestone.siteAccessNotes && (
-                            <div className="mt-2 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded border border-amber-200">
-                              <strong>Access Notes:</strong> {milestone.siteAccessNotes}
+                          {/* Estimated Hours */}
+                          {milestone.estimatedHours && (
+                            <div className="flex items-center gap-1.5 text-slate-600">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span className="text-xs">{milestone.estimatedHours}h estimated</span>
                             </div>
                           )}
                         </div>
+
+                        {/* Site Access Notes - if applicable */}
+                        {milestone.siteAccessNotes && (
+                          <div className="mt-3 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded border border-amber-200">
+                            <strong>Access Notes:</strong> {milestone.siteAccessNotes}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
