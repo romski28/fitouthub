@@ -2,7 +2,7 @@ services:
   - type: web
     name: fitouthub-api
     runtime: node
-    buildCommand: cd apps/api && pnpm install && pnpm run build
+    buildCommand: cd apps/api && pnpm install && pnpm run build && pnpm prisma migrate deploy
     startCommand: cd apps/api && node dist/src/main.js
     envVars:
       - key: DATABASE_URL
