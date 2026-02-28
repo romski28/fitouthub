@@ -148,6 +148,28 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       }
 
       // Use batch endpoint to replace all milestones at once
+      const normalizedMilestones = updatedMilestones.map(m => {
+        const milestone: any = {
+          projectProfessionalId,
+          title: m.title,
+          sequence: m.sequence,
+          status: m.status || 'not_started',
+          percentComplete: m.percentComplete || 0,
+          siteAccessRequired: m.siteAccessRequired ?? true,
+        };
+        
+        // Only include optional fields if they have values
+        if (m.description) milestone.description = m.description;
+        if (m.plannedStartDate) milestone.plannedStartDate = toISODateTime(m.plannedStartDate);
+        if (m.plannedEndDate) milestone.plannedEndDate = toISODateTime(m.plannedEndDate);
+        if (m.startTimeSlot) milestone.startTimeSlot = m.startTimeSlot;
+        if (m.endTimeSlot) milestone.endTimeSlot = m.endTimeSlot;
+        if (m.estimatedHours !== undefined && m.estimatedHours !== null) milestone.estimatedHours = m.estimatedHours;
+        if (m.siteAccessNotes) milestone.siteAccessNotes = m.siteAccessNotes;
+        
+        return milestone;
+      });
+
       const response = await fetch(
         `${API_BASE_URL}/milestones/batch`,
         {
@@ -159,21 +181,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           body: JSON.stringify({
             projectId,
             projectProfessionalId,
-            milestones: updatedMilestones.map(m => ({
-              projectProfessionalId,
-              title: m.title,
-              description: m.description,
-              sequence: m.sequence,
-              status: m.status,
-              percentComplete: m.percentComplete,
-              plannedStartDate: toISODateTime(m.plannedStartDate),
-              plannedEndDate: toISODateTime(m.plannedEndDate),
-              startTimeSlot: m.startTimeSlot,
-              endTimeSlot: m.endTimeSlot,
-              estimatedHours: m.estimatedHours,
-              siteAccessRequired: m.siteAccessRequired,
-              siteAccessNotes: m.siteAccessNotes,
-            })),
+            milestones: normalizedMilestones,
           }),
         }
       );
