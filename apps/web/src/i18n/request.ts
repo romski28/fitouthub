@@ -136,6 +136,8 @@ const messages = {
         "list": {
           "title": "My Projects",
           "createNew": "+ Create New Project",
+          "defaultNickname": "Projects",
+          "total": "Total",
           "empty": "No projects yet",
           "emptyHint": "Kickstart your next renovation with a new project",
           "startProject": "Do something great, start a project now!",
@@ -144,7 +146,31 @@ const messages = {
             "awarded": "Awarded",
             "rejected": "Rejected"
           },
+          "status": {
+            "started": "Started",
+            "completed": "Completed",
+            "rated": "Rated",
+            "counterRequested": "Counter Requested",
+            "withdrawn": "Withdrawn"
+          },
           "search": "Search projects",
+          "searchPlaceholder": "e.g. client name, region, contractor",
+          "clearSearchAria": "Clear search",
+          "manage": "Manage",
+          "edit": "Edit",
+          "newCount": "{count} new",
+          "unreadMessages": "{count} unread messages",
+          "invitedProfessionals": "Professionals Invited ({count})",
+          "quoted": "Quoted",
+          "declined": "Declined",
+          "escrowAccount": "Escrow Account",
+          "paid": "Paid",
+          "updated": "Updated:",
+          "id": "ID:",
+          "assistRequestedAlt": "Fitout Hub Assistance Requested",
+          "assistRequestedTitle": "Fitout Hub Assistance Requested",
+          "noAssistAlt": "No Assistance",
+          "noAssistTitle": "No Assistance",
           "labels": {
             "budget": "Budget:",
             "created": "Created:",
@@ -154,6 +180,17 @@ const messages = {
             "projectCost": "Project Cost",
             "awarded": "Awarded"
           }
+        },
+        "edit": {
+          "tagline": "Edit project",
+          "subtitle": "Update project details and notes.",
+          "saveChanges": "Save changes",
+          "deleting": "Deleting...",
+          "delete": "Delete",
+          "deleteTitle": "Delete project?",
+          "deleteMessage": "This will remove the project and its uploaded files. This cannot be undone.",
+          "updateFailed": "Failed to update project",
+          "deleteFailed": "Failed to delete project"
         },
         "details": {
           "withdrawProject": "Withdraw Project",
@@ -601,6 +638,8 @@ const messages = {
         "list": {
           "title": "我的項目",
           "createNew": "+ 建立新項目",
+          "defaultNickname": "項目",
+          "total": "總數",
           "empty": "暫無項目",
           "emptyHint": "開始您的下一個裝修項目",
           "startProject": "做點偉大的事，立即開始項目！",
@@ -609,7 +648,31 @@ const messages = {
             "awarded": "已授予",
             "rejected": "已拒絕"
           },
+          "status": {
+            "started": "進行中",
+            "completed": "已完成",
+            "rated": "已評分",
+            "counterRequested": "要求還價",
+            "withdrawn": "已撤回"
+          },
           "search": "搜尋項目",
+          "searchPlaceholder": "例如：客戶名稱、地區、承辦商",
+          "clearSearchAria": "清除搜尋",
+          "manage": "管理",
+          "edit": "編輯",
+          "newCount": "{count}則新訊息",
+          "unreadMessages": "{count}則未讀訊息",
+          "invitedProfessionals": "已邀請專業人士（{count}）",
+          "quoted": "已報價",
+          "declined": "已拒絕",
+          "escrowAccount": "託管帳戶",
+          "paid": "已付款",
+          "updated": "更新時間:",
+          "id": "編號:",
+          "assistRequestedAlt": "已要求 Fitout Hub 協助",
+          "assistRequestedTitle": "已要求 Fitout Hub 協助",
+          "noAssistAlt": "未要求協助",
+          "noAssistTitle": "未要求協助",
           "labels": {
             "budget": "預算:",
             "created": "建立時間:",
@@ -619,6 +682,17 @@ const messages = {
             "projectCost": "項目成本",
             "awarded": "已授予"
           }
+        },
+        "edit": {
+          "tagline": "編輯項目",
+          "subtitle": "更新項目詳情與備註。",
+          "saveChanges": "儲存變更",
+          "deleting": "正在刪除...",
+          "delete": "刪除",
+          "deleteTitle": "刪除項目？",
+          "deleteMessage": "這將移除項目及其已上傳檔案，且無法復原。",
+          "updateFailed": "更新項目失敗",
+          "deleteFailed": "刪除項目失敗"
         },
         "details": {
           "withdrawProject": "撤回項目",

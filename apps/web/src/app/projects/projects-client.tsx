@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
@@ -185,10 +186,10 @@ function stripPhotoSection(notes?: string): string {
     .trim();
 }
 
-function formatDate(date?: string): string {
+function formatDate(date?: string, locale: string = 'en-GB'): string {
   if (!date) return "—";
   try {
-    return new Intl.DateTimeFormat('en-GB', {
+    return new Intl.DateTimeFormat(locale === 'zh-HK' ? 'zh-HK' : 'en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -205,9 +206,21 @@ function formatHKD(value?: number | string): string {
   return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
   const cls = statusColors[status] || "bg-slate-100 text-slate-800";
-  return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${cls}`}>{status.replace('_', ' ')}</span>;
+  const labels: Record<string, string> = {
+    pending: t('stats.pending'),
+    awarded: t('stats.awarded'),
+    rejected: t('stats.rejected'),
+    declined: t('declined'),
+    withdrawn: t('status.withdrawn'),
+    started: t('status.started'),
+    completed: t('status.completed'),
+    rated: t('status.rated'),
+    quoted: t('quoted'),
+    counter_requested: t('status.counterRequested'),
+  };
+  return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${cls}`}>{labels[status] || status.replace('_', ' ')}</span>;
 }
 
 function EditProjectModal({
@@ -221,6 +234,8 @@ function EditProjectModal({
   onSave: (updated: ExtendedProject) => void;
   onDelete: (id: string) => void;
 }) {
+  const t = useTranslations('project.edit');
+  const commonT = useTranslations('common');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -333,7 +348,7 @@ function EditProjectModal({
       onSave({ ...updated, photos: updatedPhotos });
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update project";
+      const message = err instanceof Error ? err.message : t('updateFailed');
       setError(message);
     } finally {
       setSaving(false);
@@ -354,7 +369,7 @@ function EditProjectModal({
       onDelete(project.id);
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to delete project";
+      const message = err instanceof Error ? err.message : t('deleteFailed');
       setError(message);
     } finally {
       setDeleting(false);
@@ -367,9 +382,9 @@ function EditProjectModal({
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-600">Edit project</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-600">{t('tagline')}</p>
             <h2 className="text-2xl font-bold text-slate-900">{project.projectName}</h2>
-            <p className="text-sm text-slate-600">Update project details and notes.</p>
+            <p className="text-sm text-slate-600">{t('subtitle')}</p>
           </div>
         </div>
 
@@ -384,7 +399,7 @@ function EditProjectModal({
           onCancel={onClose}
           isSubmitting={saving}
           error={error}
-          submitLabel="Save changes"
+          submitLabel={t('saveChanges')}
           showBudget
           showService
         />
@@ -396,7 +411,7 @@ function EditProjectModal({
             disabled={saving || deleting}
             className="flex-1 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
           >
-            {deleting ? "Deleting..." : "Delete"}
+            {deleting ? t('deleting') : t('delete')}
           </button>
         </div>
       </div>
@@ -404,10 +419,10 @@ function EditProjectModal({
         isOpen={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={handleDelete}
-        title="Delete project?"
-        message="This will remove the project and its uploaded files. This cannot be undone."
-        confirmLabel={deleting ? "Deleting..." : "Delete"}
-        cancelLabel="Cancel"
+        title={t('deleteTitle')}
+        message={t('deleteMessage')}
+        confirmLabel={deleting ? t('deleting') : t('delete')}
+        cancelLabel={commonT('cancel')}
         tone="danger"
       />
     </ModalOverlay>
@@ -415,6 +430,8 @@ function EditProjectModal({
 }
 
 export function ProjectsClient({ projects, clientId, initialShowCreateModal = false }: ProjectsClientProps) {
+  const t = useTranslations('project.list');
+  const locale = useLocale();
   const { isLoggedIn, accessToken, user } = useAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
@@ -560,31 +577,31 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">{user?.nickname || 'Projects'}</p>
-            <h1 className="text-2xl font-bold leading-tight">My Projects</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">{user?.nickname || t('defaultNickname')}</p>
+            <h1 className="text-2xl font-bold leading-tight">{t('title')}</h1>
           </div>
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setShowDescriptionModal(true)}
               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center"
             >
-              + Create New Project
+              {t('createNew')}
             </button>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Total</p>
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('total')}</p>
               <p className="text-lg font-bold text-white">{totals.total}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Awarded</p>
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('stats.awarded')}</p>
               <p className="text-lg font-bold text-emerald-300">{totals.approved}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Pending</p>
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('stats.pending')}</p>
               <p className="text-lg font-bold text-amber-200">{totals.pending}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Rejected</p>
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('stats.rejected')}</p>
               <p className="text-lg font-bold text-rose-200">{totals.rejected}</p>
             </div>
             </div>
@@ -596,11 +613,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
         <div className="grid gap-2 md:grid-cols-2">
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">Search projects</label>
+            <label className="text-xs font-medium text-slate-600">{t('search')}</label>
             <div className="relative">
               <input
                 type="text"
-                placeholder="e.g. client name, region, contractor"
+                placeholder={t('searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 pr-8 text-sm"
@@ -610,7 +627,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                   type="button"
                   onClick={() => setSearch("")}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                  aria-label="Clear search"
+                  aria-label={t('clearSearchAria')}
                 >
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -624,13 +641,13 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center space-y-3">
-          <p className="text-base font-semibold text-slate-800">No projects yet</p>
-          <p className="text-sm text-slate-600">Kickstart your next renovation with a new project.</p>
+          <p className="text-base font-semibold text-slate-800">{t('empty')}</p>
+          <p className="text-sm text-slate-600">{t('emptyHint')}</p>
           <button
             onClick={() => setShowDescriptionModal(true)}
             className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
           >
-            Do something great, start a project now!
+            {t('startProject')}
           </button>
         </div>
       ) : (
@@ -668,32 +685,32 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {unreadCount > 0 && (
-                      <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white" title={`${unreadCount} unread messages`}>
-                        {unreadCount} new
+                      <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white" title={t('unreadMessages', { count: unreadCount })}>
+                        {t('newCount', { count: unreadCount })}
                       </span>
                     )}
                     {assistInfo?.hasAssist && (
                       <img
                         src="/FOHAssistYes.png"
-                        alt="Fitout Hub Assistance Requested"
-                        title="Fitout Hub Assistance Requested"
+                        alt={t('assistRequestedAlt')}
+                        title={t('assistRequestedTitle')}
                         className="h-6 w-6 object-contain"
                       />
                     )}
                     {!assistInfo?.hasAssist && (
                       <img
                         src="/FOHAssistNo.png"
-                        alt="No Assistance"
-                        title="No Assistance"
+                        alt={t('noAssistAlt')}
+                        title={t('noAssistTitle')}
                         className="h-6 w-6 object-contain opacity-40"
                       />
                     )}
-                    <StatusBadge status={project.status} />
+                    <StatusBadge status={project.status} t={t} />
                     <Link
                       href={`/projects/${project.id}`}
                       className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
                     >
-                      Manage
+                      {t('manage')}
                     </Link>
                     {project.status !== 'withdrawn' && (
                       <button
@@ -701,7 +718,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         onClick={() => setEditing(project)}
                         className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
                       >
-                        Edit
+                        {t('edit')}
                       </button>
                     )}
                   </div>
@@ -728,25 +745,25 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">Client:</span>
+                    <span className="font-semibold">{t('labels.client')}</span>
                     <span className="text-slate-600">{project.clientName}</span>
                   </div>
                   {project.contractorName ? (
                     <div className="flex items-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                      <span className="font-semibold">Contractor:</span>
+                      <span className="font-semibold">{t('labels.contractor')}</span>
                       <span className="text-slate-600">{project.contractorName}</span>
                     </div>
                   ) : null}
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">Budget:</span>
+                    <span className="font-semibold">{t('labels.budget')}</span>
                     <span className="text-slate-600">{project.budget ? `HKD ${project.budget}` : '—'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">Created:</span>
-                    <span className="text-slate-600">{formatDate(project.createdAt)}</span>
+                    <span className="font-semibold">{t('labels.created')}</span>
+                    <span className="text-slate-600">{formatDate(project.createdAt, locale)}</span>
                   </div>
                 </div>
 
@@ -754,20 +771,20 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 {isAwarded ? (
                   <div className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2.5">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-emerald-900">Project Budget</p>
-                      <span className="text-[10px] font-medium text-emerald-700">Awarded</span>
+                      <p className="text-xs font-semibold text-emerald-900">{t('labels.projectBudget')}</p>
+                      <span className="text-[10px] font-medium text-emerald-700">{t('labels.awarded')}</span>
                     </div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                       <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-                        <p className="text-[11px] font-semibold text-emerald-800">Project Cost</p>
+                        <p className="text-[11px] font-semibold text-emerald-800">{t('labels.projectCost')}</p>
                         <p className="text-sm font-bold text-emerald-900">{formatHKD(projectCostValue)}</p>
                       </div>
                       <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-                        <p className="text-[11px] font-semibold text-emerald-800">Escrow Account</p>
+                        <p className="text-[11px] font-semibold text-emerald-800">{t('escrowAccount')}</p>
                         <p className="text-sm font-bold text-emerald-900">{formatHKD(escrowValue)}</p>
                       </div>
                       <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-                        <p className="text-[11px] font-semibold text-emerald-800">Paid</p>
+                        <p className="text-[11px] font-semibold text-emerald-800">{t('paid')}</p>
                         <p className="text-sm font-bold text-emerald-900">{formatHKD(paidValue)}</p>
                       </div>
                     </div>
@@ -775,18 +792,18 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 ) : project.professionals && project.professionals.length > 0 ? (
                   <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-slate-800">Professionals Invited ({project.professionals.length})</p>
+                      <p className="text-xs font-semibold text-slate-800">{t('invitedProfessionals', { count: project.professionals.length })}</p>
                       <div className="flex gap-1.5 text-[10px] font-medium">
                         <span className="text-blue-600">
-                          {project.professionals.filter(p => p.status === 'quoted').length} Quoted
+                          {project.professionals.filter(p => p.status === 'quoted').length} {t('quoted')}
                         </span>
                         <span className="text-slate-400">·</span>
                         <span className="text-amber-600">
-                          {project.professionals.filter(p => p.status === 'pending').length} Pending
+                          {project.professionals.filter(p => p.status === 'pending').length} {t('stats.pending')}
                         </span>
                         <span className="text-slate-400">·</span>
                         <span className="text-slate-500">
-                          {project.professionals.filter(p => p.status === 'declined').length} Declined
+                          {project.professionals.filter(p => p.status === 'declined').length} {t('declined')}
                         </span>
                       </div>
                     </div>
@@ -807,7 +824,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                                 HK${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}
                               </span>
                             )}
-                            <StatusBadge status={pp.status} />
+                            <StatusBadge status={pp.status} t={t} />
                           </div>
                         </div>
                       ))}
@@ -816,9 +833,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 ) : null}
 
                 <div className="flex items-center justify-between text-[11px] text-slate-500">
-                  <span>ID: {project.id}</span>
+                  <span>{t('id')} {project.id}</span>
                   <div className="flex items-center gap-3">
-                    <span>Updated: {formatDate(project.updatedAt)}</span>
+                    <span>{t('updated')} {formatDate(project.updatedAt, locale)}</span>
                   </div>
                 </div>
               </div>
