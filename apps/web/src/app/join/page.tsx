@@ -27,9 +27,9 @@ export default function JoinPage() {
     );
   }
 
-  // If user selects client, redirect to client signup
+  // If user selects client, render the signup flow
   if (showClientFlow) {
-    return <ClientSignupFlow />;
+    return <ClientSignupFlow onBack={() => setShowClientFlow(false)} />;
   }
 
   // Default: show choice
@@ -76,9 +76,10 @@ export default function JoinPage() {
   );
 }
 
-function ClientSignupFlow() {
+function ClientSignupFlow({ onBack }: { onBack: () => void }) {
   const router = useRouter();
   const t = useTranslations('auth');
+  const navT = useTranslations('nav');
   const commonT = useTranslations('common');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -203,7 +204,7 @@ function ClientSignupFlow() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('login.password')}</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('signup.password')}</label>
               <input
                 type="password"
                 autoComplete="new-password"
@@ -233,14 +234,14 @@ function ClientSignupFlow() {
               disabled={isSubmitting}
               className="w-full rounded-lg bg-blue-600 text-white font-semibold py-2.5 hover:bg-blue-700 disabled:opacity-50 transition"
             >
-              {isSubmitting ? t('common.loading') : t('signup.submit')}
+              {isSubmitting ? commonT('loading') : t('signup.submit')}
             </button>
           </form>
 
           <div className="text-center text-sm text-slate-600">
-            {t('login.haveAccount')}{' '}
+            {t('signup.haveAccount')}{' '}
             <Link href="/login" className="font-semibold text-blue-600 hover:underline">
-              {t('nav.login')}
+              {navT('login')}
             </Link>
           </div>
         </div>

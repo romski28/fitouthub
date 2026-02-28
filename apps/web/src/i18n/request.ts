@@ -78,6 +78,7 @@ const messages = {
         "lastName": "Last Name",
         "email": "Email",
         "mobile": "Mobile",
+        "password": "Password",
         "confirmPassword": "Confirm Password",
         "submit": "Create Account",
         "haveAccount": "Already have an account?"
@@ -395,6 +396,7 @@ const messages = {
         "lastName": "姓氏",
         "email": "電郵",
         "mobile": "手機",
+        "password": "密碼",
         "confirmPassword": "確認密碼",
         "submit": "建立帳戶",
         "haveAccount": "已有帳戶?"
