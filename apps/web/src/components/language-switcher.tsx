@@ -32,7 +32,7 @@ export function LanguageSwitcher() {
     <div className="flex items-center gap-2">
       <button
         onClick={() => handleLocaleChange('en')}
-        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
+        className={`whitespace-nowrap px-3 py-1.5 text-sm font-medium rounded-md transition ${
           locale === 'en'
             ? 'bg-blue-600 text-white'
             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -42,7 +42,7 @@ export function LanguageSwitcher() {
       </button>
       <button
         onClick={() => handleLocaleChange('zh-HK')}
-        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
+        className={`w-[4em] whitespace-nowrap text-center py-1.5 text-sm font-medium rounded-md transition ${
           locale === 'zh-HK'
             ? 'bg-blue-600 text-white'
             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
