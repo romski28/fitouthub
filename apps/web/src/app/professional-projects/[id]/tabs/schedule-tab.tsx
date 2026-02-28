@@ -171,6 +171,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       if (milestone.estimatedHours !== undefined && milestone.estimatedHours !== null) data.estimatedHours = milestone.estimatedHours;
       if (milestone.siteAccessNotes) data.siteAccessNotes = milestone.siteAccessNotes;
 
+      console.log('[ScheduleTab] Saving new milestone:', JSON.stringify(data, null, 2));
+
       const response = await fetch(
         `${API_BASE_URL}/milestones`,
         {
@@ -185,7 +187,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to save milestone');
+        console.error('[ScheduleTab] Save milestone error response:', errorData);
+        throw new Error(errorData.message || errorData.error || 'Failed to save milestone');
       }
 
       const savedMilestone = await response.json();
@@ -245,6 +248,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       if (updated.estimatedHours !== undefined && updated.estimatedHours !== null) data.estimatedHours = updated.estimatedHours;
       if (updated.siteAccessNotes) data.siteAccessNotes = updated.siteAccessNotes;
 
+      console.log(`[ScheduleTab] Updating milestone ${milestoneId}:`, JSON.stringify(data, null, 2));
+
       const response = await fetch(
         `${API_BASE_URL}/milestones/${milestoneId}`,
         {
@@ -259,7 +264,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to update milestone');
+        console.error('[ScheduleTab] Update milestone error response:', errorData);
+        throw new Error(errorData.message || errorData.error || 'Failed to update milestone');
       }
 
       const updatedMilestone = await response.json();
@@ -362,6 +368,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
               <MilestoneEditor
                 tradeId={tradeId || ''}
+                showSavedList={false}
                 defaultMilestones={
                   editingIndex !== null
                     ? [

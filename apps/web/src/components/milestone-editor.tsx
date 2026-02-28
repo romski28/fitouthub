@@ -31,12 +31,14 @@ interface MilestoneEditorProps {
   tradeId?: string;
   defaultMilestones?: MilestoneEditData[];
   onMilestonesChange: (milestones: MilestoneEditData[]) => void;
+  showSavedList?: boolean;
 }
 
 export function MilestoneEditor({
   tradeId,
   defaultMilestones = [],
   onMilestonesChange,
+  showSavedList = true,
 }: MilestoneEditorProps) {
   // Saved milestones from defaults
   const [savedMilestones, setSavedMilestones] = useState<MilestoneEditData[]>(
@@ -453,7 +455,7 @@ export function MilestoneEditor({
       </div>
 
       {/* Saved Milestones List */}
-      {savedMilestones.length > 0 && (
+      {showSavedList && savedMilestones.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
             Added Milestones ({savedMilestones.length})
