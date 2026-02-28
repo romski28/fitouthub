@@ -2029,8 +2029,41 @@ Please review the project details and respond with your quote or decline the inv
   ) {
     const project = await this.assertClientProjectAccess(projectId, userId);
 
-    if (!body.addressFull) {
-      throw new BadRequestException('Address is required');
+    const awardedAssignment = await this.prisma.projectProfessional.findFirst({
+      where: {
+        projectId,
+        status: 'awarded',
+      },
+      select: { id: true },
+    });
+
+    const isAwardedStage = project.status === 'awarded' || !!awardedAssignment;
+
+    const missingFields: string[] = [];
+
+    if (!body.addressFull?.trim()) missingFields.push('Full Address');
+    if (!body.unitNumber?.trim()) missingFields.push('Unit Number');
+    if (!body.floorLevel?.trim()) missingFields.push('Floor Level');
+
+    if (isAwardedStage) {
+      if (!body.postalCode?.trim()) missingFields.push('Postal Code / District');
+      if (!body.propertyType?.trim()) missingFields.push('Property Type');
+      if (!body.propertySize?.trim()) missingFields.push('Property Size');
+      if (!body.propertyAge?.trim()) missingFields.push('Property Age');
+      if (!body.existingConditions?.trim()) missingFields.push('Existing Conditions');
+      if (!body.accessDetails?.trim()) missingFields.push('Access Details');
+      if (!body.accessHoursDescription?.trim()) missingFields.push('Access Hours');
+      if (!body.onSiteContactName?.trim()) missingFields.push('On-site Contact Name');
+      if (!body.onSiteContactPhone?.trim()) missingFields.push('On-site Contact Phone');
+      if (!body.desiredStartDate?.trim()) missingFields.push('Desired Start Date');
+    }
+
+    if (missingFields.length > 0) {
+      throw new BadRequestException(
+        isAwardedStage
+          ? `Awarded projects require complete location details. Missing: ${missingFields.join(', ')}`
+          : `Bidding stage requires basic location details. Missing: ${missingFields.join(', ')}`,
+      );
     }
 
     if (

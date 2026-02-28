@@ -221,6 +221,7 @@ export default function ClientProjectDetailPage() {
   const [siteVisitError, setSiteVisitError] = useState<string | null>(null);
   const [submittingSiteVisit, setSubmittingSiteVisit] = useState<string | null>(null);
   const [siteVisitResponseNotes, setSiteVisitResponseNotes] = useState<Record<string, string>>({});
+  const [siteAccessBlockers, setSiteAccessBlockers] = useState<string[]>([]);
   const [locationDetailsForm, setLocationDetailsForm] = useState({
     addressFull: '',
     postalCode: '',
@@ -445,20 +446,46 @@ export default function ClientProjectDetailPage() {
         : undefined,
     };
 
+    const locationBlockers: string[] = [];
+    if (!locationPayload.addressFull?.trim()) locationBlockers.push('Full Address');
+    if (!locationPayload.unitNumber?.trim()) locationBlockers.push('Unit Number');
+    if (!locationPayload.floorLevel?.trim()) locationBlockers.push('Floor Level');
+
+    if (isAwarded) {
+      if (!locationPayload.postalCode?.trim()) locationBlockers.push('Postal Code / District');
+      if (!locationPayload.propertyType?.trim()) locationBlockers.push('Property Type');
+      if (!locationPayload.propertySize?.trim()) locationBlockers.push('Property Size');
+      if (!locationPayload.propertyAge?.trim()) locationBlockers.push('Property Age');
+      if (!locationPayload.existingConditions?.trim()) locationBlockers.push('Existing Conditions');
+      if (!locationPayload.accessDetails?.trim()) locationBlockers.push('Access Details');
+      if (!locationPayload.accessHoursDescription?.trim()) locationBlockers.push('Access Hours');
+      if (!locationPayload.onSiteContactName?.trim()) locationBlockers.push('On-site Contact Name');
+      if (!locationPayload.onSiteContactPhone?.trim()) locationBlockers.push('On-site Contact Phone');
+      if (!locationPayload.desiredStartDate?.trim()) locationBlockers.push('Desired Start Date');
+    }
+
     if (form.status === 'approved_visit_scheduled' && !form.visitScheduledFor) {
+      setSiteAccessBlockers(['Visit date']);
       toast.error('Please select a visit date');
       return;
     }
 
     if (form.status === 'denied' && !form.reasonDenied) {
+      setSiteAccessBlockers(['Reason for denial']);
       toast.error('Please provide a reason for denial');
       return;
     }
 
-    if (form.status !== 'denied' && !locationPayload.addressFull) {
-      toast.error('Address is required to approve site access');
+    if (form.status !== 'denied' && locationBlockers.length > 0) {
+      setSiteAccessBlockers(locationBlockers);
+      const scope = isAwarded
+        ? 'Awarded stage requires full form completion'
+        : 'Bidding stage requires basic location details';
+      toast.error(`${scope}: ${locationBlockers.join(', ')}`);
       return;
     }
+
+    setSiteAccessBlockers([]);
 
     setSubmittingSiteAccess(requestId);
     try {
@@ -490,7 +517,7 @@ export default function ClientProjectDetailPage() {
         throw new Error(data.message || 'Failed to respond to request');
       }
 
-      if (form.status !== 'denied' && locationPayload.addressFull) {
+      if (form.status !== 'denied' && isAwarded) {
         setSubmittingLocationDetails(true);
         setLocationDetailsError(null);
         const locationResponse = await fetch(
@@ -1383,6 +1410,8 @@ export default function ClientProjectDetailPage() {
               siteAccessRequests={siteAccessRequests}
               siteAccessData={siteAccessData}
               siteVisits={siteVisits}
+              projectIsAwarded={isAwarded}
+              siteAccessBlockers={siteAccessBlockers}
               expandedAccordions={expandedAccordions}
               onToggleAccordion={toggleAccordion}
               onRespondToRequest={async (requestId) => {
