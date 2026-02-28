@@ -137,6 +137,20 @@ export default function ProjectDetailPage() {
     window.scrollTo(0, 0);
   }, []);
 
+  // Auto-switch tabs based on project status
+  useEffect(() => {
+    if (project) {
+      // If on site-access tab but project is awarded, switch to schedule
+      if (activeTab === 'site-access' && project.status === 'awarded') {
+        setActiveTab('schedule');
+      }
+      // If on schedule tab but project is not awarded, switch to site-access
+      if (activeTab === 'schedule' && project.status !== 'awarded') {
+        setActiveTab('site-access');
+      }
+    }
+  }, [project?.status]);
+
   useEffect(() => {
     if (isLoggedIn === false) {
       router.push('/');
@@ -951,13 +965,28 @@ export default function ProjectDetailPage() {
           <ProjectTabs
             activeTab={activeTab}
             onTabChange={setActiveTab}
-            tabs={[
-              { id: 'overview', label: 'Overview', icon: '📋' },
-              { id: 'site-access', label: 'Site Access', icon: '📍' },
-              { id: 'schedule', label: 'Schedule', icon: '📅' },
-              { id: 'financials', label: 'Financials', icon: '💳' },
-              { id: 'chat', label: 'Chat', icon: '💬' },
-            ]}
+            tabs={(() => {
+              // Build tabs array conditionally
+              const tabsArray = [
+                { id: 'overview', label: 'Overview', icon: '📋' },
+              ];
+              
+              // Show Site Access tab only during bidding stage (not awarded)
+              if (project.status !== 'awarded') {
+                tabsArray.push({ id: 'site-access', label: 'Access & Schedule', icon: '📍' });
+              }
+              
+              // Show Schedule tab only when awarded
+              if (project.status === 'awarded') {
+                tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
+              }
+              
+              // Always show financials and chat
+              tabsArray.push({ id: 'financials', label: 'Financials', icon: '💳' });
+              tabsArray.push({ id: 'chat', label: 'Chat', icon: '💬' });
+              
+              return tabsArray;
+            })()}
           >
             <OverviewTab
               tab="overview"
