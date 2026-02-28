@@ -62,7 +62,13 @@ const messages = {
         "submit": "Sign In",
         "noAccount": "Don't have an account?",
         "forgotPassword": "Forgot password?",
-        "success": "Welcome back!"
+        "success": "Welcome back!",
+        "welcome": "Welcome to Fitout Hub",
+        "clientLabel": "Client",
+        "professionalLabel": "Professional",
+        "professionalText": "Professional account?",
+        "homePage": "home page",
+        "contactUs": "contact us"
       },
       "signup": {
         "title": "Create Account",
@@ -373,7 +379,13 @@ const messages = {
         "submit": "登入",
         "noAccount": "還未有帳戶?",
         "forgotPassword": "忘記密碼?",
-        "success": "歡迎返回!"
+        "success": "歡迎返回!",
+        "welcome": "歡迎來到 Fitout Hub",
+        "clientLabel": "客戶",
+        "professionalLabel": "專業人士",
+        "professionalText": "專業人士帳戶？",
+        "homePage": "首頁",
+        "contactUs": "聯絡我們"
       },
       "signup": {
         "title": "建立帳戶",

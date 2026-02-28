@@ -11,6 +11,8 @@ import { API_BASE_URL } from '@/config/api';
 export default function LoginPage() {
   const router = useRouter();
   const t = useTranslations('auth');
+  const commonT = useTranslations('common');
+  const navT = useTranslations('nav');
   const { login: clientLogin } = useAuth();
   const { login: professionalLogin } = useProfessionalAuth();
 
@@ -49,7 +51,7 @@ export default function LoginPage() {
             {t('login.title')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Welcome to Fitout Hub
+            {t('login.welcome')}
           </p>
         </div>
 
@@ -67,7 +69,7 @@ export default function LoginPage() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Client
+            {t('login.clientLabel')}
           </button>
           <button
             type="button"
@@ -81,7 +83,7 @@ export default function LoginPage() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Professional
+            {t('login.professionalLabel')}
           </button>
         </div>
 
@@ -145,13 +147,14 @@ export default function LoginPage() {
           <p className="text-gray-600 mb-4">
             {loginType === 'client'
               ? t('login.noAccount')
-              : 'Professional account? '}
+              : t('login.professionalText')}
+            {' '}
             <Link href="/" className="font-medium text-blue-600 hover:text-blue-700">
-              {loginType === 'client' ? 'home page' : 'contact us'}
+              {loginType === 'client' ? t('login.homePage') : t('login.contactUs')}
             </Link>
           </p>
           <Link href="/" className="font-medium text-blue-600 hover:text-blue-700">
-            {t('common.back')}
+            {commonT('back')}
           </Link>
         </div>
       </div>
