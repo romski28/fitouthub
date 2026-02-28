@@ -93,10 +93,15 @@ export function MilestoneEditor({
   // Pre-populate form when editing a single milestone directly
   useEffect(() => {
     if (defaultMilestones.length === 1) {
+      setSavedMilestones(defaultMilestones);
       setCurrentMilestone({
         ...defaultMilestones[0],
         status: deriveStatus(defaultMilestones[0].percentComplete),
       });
+      setEditingIndex(0); // Mark as editing the first (and only) item
+    } else if (defaultMilestones.length === 0) {
+      setSavedMilestones([]);
+      setEditingIndex(null);
     }
   }, [defaultMilestones]);
 
