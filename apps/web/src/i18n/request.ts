@@ -488,15 +488,51 @@ const messages = {
           "manage": {
             "title": "3. 管理和完成",
             "description": "追蹤進度、管理付款、無縫溝通"
+          },
+          "complete": {
+            "title": "完成您的項目",
+            "description": "追蹤進度，有信心地完成您的裝修"
           }
         },
         "who": {
           "title": "我們是誰",
-          "description": "用技術改造裝修行業"
+          "description": "用技術改造裝修行業",
+          "clients": {
+            "title": "客戶",
+            "description": "輕鬆透明地管理您的裝修項目"
+          },
+          "contractors": {
+            "title": "承包商",
+            "description": "找到優質業務機會並擴展您的客戶群"
+          },
+          "suppliers": {
+            "title": "供應商",
+            "description": "與項目聯繫並擴展您的商業範圍"
+          },
+          "designers": {
+            "title": "設計師",
+            "description": "在裝修項目中無縫協作"
+          }
         },
         "choose": {
           "title": "為什麼選擇Fitout Hub？",
-          "description": "加入數百名滿意的客戶和專業人士"
+          "description": "加入數百名滿意的客戶和專業人士",
+          "pm": {
+            "title": "項目管理",
+            "description": "管理您裝修每個方面的綜合工具"
+          },
+          "communication": {
+            "title": "清晰溝通",
+            "description": "與所有利益相關者實時保持聯繫"
+          },
+          "platform": {
+            "title": "一體化平台",
+            "description": "您所需的一切都在一個地方"
+          },
+          "risk": {
+            "title": "風險保護",
+            "description": "安全付款和認證專業人士"
+          }
         }
       }
     },
