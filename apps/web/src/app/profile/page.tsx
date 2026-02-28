@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { useTranslations } from 'next-intl';
 import LocationSelect, { type CanonicalLocation } from '@/components/location-select';
 import { toast } from 'react-hot-toast';
 
@@ -11,6 +12,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3
 export default function ProfilePage() {
   const { isLoggedIn, user, accessToken, logout, userLocation, setUserLocation } = useAuth();
   const router = useRouter();
+  const t = useTranslations('profile.client');
+  const commonT = useTranslations('common');
   const [locationDraft, setLocationDraft] = useState<CanonicalLocation>(userLocation || ({} as CanonicalLocation));
   const [locationSaved, setLocationSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -81,7 +84,7 @@ export default function ProfilePage() {
   if (isLoggedIn === undefined || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-slate-600">Loading profile...</p>
+        <p className="text-slate-600">{t('saving')}</p>
       </div>
     );
   }
@@ -90,16 +93,16 @@ export default function ProfilePage() {
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="bg-white rounded-lg border border-slate-200 p-8 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
-          <p className="text-sm text-slate-600 mt-1">Manage your account details and settings</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('title')}</h1>
+          <p className="text-sm text-slate-600 mt-1">{t('subtitle')}</p>
         </div>
 
         {/* Profile Edit Form */}
         <form onSubmit={handleSaveProfile} className="space-y-4 pt-6 border-t border-slate-200">
-          <h2 className="text-xl font-semibold text-slate-900">Account Information</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t('accountInfo')}</h2>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <label className="block text-sm font-medium text-slate-700">{t('email')}</label>
             <input
               type="email"
               value={email}
@@ -111,7 +114,7 @@ export default function ProfilePage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700">First Name</label>
+              <label className="block text-sm font-medium text-slate-700">{t('firstName')}</label>
               <input
                 type="text"
                 value={firstName}
@@ -121,7 +124,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700">Surname</label>
+              <label className="block text-sm font-medium text-slate-700">{t('surname')}</label>
               <input
                 type="text"
                 value={surname}
@@ -132,15 +135,15 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">New Password</label>
+            <label className="block text-sm font-medium text-slate-700">{t('newPassword')}</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              placeholder="Minimum 6 characters"
+              placeholder={t('passwordHint')}
             />
-            <p className="mt-1 text-xs text-slate-500">Leave blank to keep your current password</p>
+            <p className="mt-1 text-xs text-slate-500">{t('passwordNote')}</p>
           </div>
 
           <div className="flex justify-end">
@@ -149,16 +152,16 @@ export default function ProfilePage() {
               disabled={saving}
               className="rounded-md bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? t('saving') : t('saveChanges')}
             </button>
           </div>
         </form>
 
         {/* Default location for browsing trades/professionals */}
         <div className="pt-6 border-t border-slate-200 space-y-3">
-          <h2 className="text-xl font-semibold text-slate-900">Default Location</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t('defaultLocation')}</h2>
           <p className="text-sm text-slate-600">
-            Set your preferred location to prefill searches for trades and professionals.
+            {t('defaultLocationHint')}
           </p>
           <LocationSelect value={locationDraft} onChange={setLocationDraft} enableSearch={true} />
           <button
@@ -170,25 +173,25 @@ export default function ProfilePage() {
               setTimeout(() => setLocationSaved(false), 1500);
             }}
           >
-            Save Default Location
+            {t('saveDefaultLocation')}
           </button>
           {locationSaved ? (
-            <p className="text-sm text-green-700">Location saved.</p>
+            <p className="text-sm text-green-700">{t('locationSaved')}</p>
           ) : null}
         </div>
 
         {/* Account Info */}
         <div className="pt-6 border-t border-slate-200 space-y-2">
-          <h2 className="text-xl font-semibold text-slate-900">Account Details</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t('accountDetails')}</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-slate-600">Account Type</label>
+              <label className="block text-slate-600">{t('accountType')}</label>
               <span className="inline-block font-medium text-white bg-blue-600 px-3 py-1 rounded mt-1">
                 {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : 'Client'}
               </span>
             </div>
             <div>
-              <label className="block text-slate-600">User ID</label>
+              <label className="block text-slate-600">{t('userId')}</label>
               <p className="text-slate-900 font-mono mt-1">{user.id}</p>
             </div>
           </div>
@@ -199,7 +202,7 @@ export default function ProfilePage() {
             onClick={logout}
             className="rounded-md bg-red-600 px-4 py-2 text-white font-medium hover:bg-red-700"
           >
-            Logout
+            {t('logout')}
           </button>
         </div>
       </div>

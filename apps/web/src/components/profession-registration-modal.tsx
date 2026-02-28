@@ -1,30 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ModalOverlay } from './modal-overlay';
 
 type ProfessionType = 'contractor' | 'company' | 'reseller' | null;
-
-const professionOptions = [
-  {
-    type: 'contractor' as const,
-    title: 'Sole Trader / Individual Contractor',
-    description: 'Register as an independent professional or sole proprietor',
-    icon: '👤',
-  },
-  {
-    type: 'company' as const,
-    title: 'Service Company',
-    description: 'Register your company providing construction or renovation services',
-    icon: '🏢',
-  },
-  {
-    type: 'reseller' as const,
-    title: 'Reseller / Supplier',
-    description: 'Register your business as a supplier or reseller',
-    icon: '📦',
-  },
-];
 
 type ProfessionRegistrationModalProps = {
   isOpen: boolean;
@@ -34,6 +14,28 @@ type ProfessionRegistrationModalProps = {
 
 export function ProfessionRegistrationModal({ isOpen, onClose, onSelect }: ProfessionRegistrationModalProps) {
   const [selected, setSelected] = useState<ProfessionType>(null);
+  const t = useTranslations('professionType');
+
+  const professionOptions = [
+    {
+      type: 'contractor' as const,
+      title: t('contractor'),
+      description: t('contractorDesc'),
+      icon: '👤',
+    },
+    {
+      type: 'company' as const,
+      title: t('company'),
+      description: t('companyDesc'),
+      icon: '🏢',
+    },
+    {
+      type: 'reseller' as const,
+      title: t('reseller'),
+      description: t('resellerDesc'),
+      icon: '📦',
+    },
+  ];
 
   const handleSelect = (type: ProfessionType) => {
     setSelected(type);
@@ -48,9 +50,9 @@ export function ProfessionRegistrationModal({ isOpen, onClose, onSelect }: Profe
     <ModalOverlay isOpen={isOpen} onClose={onClose} maxWidth="max-w-2xl">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Join as a Professional</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">{t('joinAsProfessional')}</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Select the type of professional profile that best describes your business.
+            {t('selectProfession')}
           </p>
         </div>
 
@@ -85,14 +87,14 @@ export function ProfessionRegistrationModal({ isOpen, onClose, onSelect }: Profe
             }}
             className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             onClick={() => handleSelect(selected)}
             disabled={!selected}
             className="flex-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            Continue
+            {t('continue')}
           </button>
         </div>
       </div>
