@@ -76,12 +76,31 @@ const messages = {
         "username": "Username",
         "firstName": "First Name",
         "lastName": "Last Name",
+        "surname": "Surname",
         "email": "Email",
         "mobile": "Mobile",
         "password": "Password",
         "confirmPassword": "Confirm Password",
         "submit": "Create Account",
-        "haveAccount": "Already have an account?"
+        "haveAccount": "Already have an account?",
+        "creating": "Creating account..."
+      },
+      "modal": {
+        "login": "Login",
+        "join": "Join",
+        "signIn": "Sign In",
+        "loading": "Logging in...",
+        "createAccount": "Create Account",
+        "creatingAccount": "Creating account...",
+        "client": "Client",
+        "professional": "Professional",
+        "companyName": "Company Name",
+        "contactName": "Contact Name",
+        "phone": "Phone",
+        "passwordMismatch": "Passwords do not match",
+        "loginFailed": "Login failed",
+        "registrationFailed": "Registration failed",
+        "optional": "Optional"
       }
     },
     "project": {
@@ -394,12 +413,31 @@ const messages = {
         "username": "用戶名稱",
         "firstName": "名字",
         "lastName": "姓氏",
+        "surname": "姓氏",
         "email": "電郵",
         "mobile": "手機",
         "password": "密碼",
         "confirmPassword": "確認密碼",
         "submit": "建立帳戶",
-        "haveAccount": "已有帳戶?"
+        "haveAccount": "已有帳戶?",
+        "creating": "正在建立帳戶..."
+      },
+      "modal": {
+        "login": "登入",
+        "join": "加入",
+        "signIn": "登入",
+        "loading": "正在登入...",
+        "createAccount": "建立帳戶",
+        "creatingAccount": "正在建立帳戶...",
+        "client": "客戶",
+        "professional": "專業人士",
+        "companyName": "公司名稱",
+        "contactName": "聯絡人名稱",
+        "phone": "電話",
+        "passwordMismatch": "密碼不相符",
+        "loginFailed": "登入失敗",
+        "registrationFailed": "註冊失敗",
+        "optional": "可選"
       }
     },
     "project": {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 
@@ -15,6 +16,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   defaultTab = 'login',
 }) => {
+  const t = useTranslations('auth');
+  const modalT = useTranslations('auth.modal');
+  const commonT = useTranslations('common');
   const { login, register } = useAuth();
   const { login: loginProfessional, register: registerProfessional } = useProfessionalAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
@@ -92,7 +96,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setLoginEmail('');
       setLoginPassword('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : modalT('loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -103,8 +107,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
 
     if (clientForm.password !== clientForm.confirmPassword) {
-      setError('Passwords do not match');
-      return;
+        setError(modalT('passwordMismatch'));
     }
 
     setLoading(true);
@@ -129,7 +132,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         mobile: '',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : modalT('registrationFailed'));
     } finally {
       setLoading(false);
     }
@@ -140,8 +143,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
 
     if (professionalForm.password !== professionalForm.confirmPassword) {
-      setError('Passwords do not match');
-      return;
+        setError(modalT('passwordMismatch'));
     }
 
     setLoading(true);
@@ -196,7 +198,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h2 className="text-2xl font-bold text-gray-900">
-            {activeTab === 'login' ? 'Sign In' : 'Join'}
+            {activeTab === 'login' ? modalT('signIn') : modalT('join')}
           </h2>
           <button
             onClick={onClose}
@@ -220,7 +222,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Login
+            {modalT('login')}
           </button>
           <button
             onClick={() => {
@@ -233,7 +235,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Join
+            {modalT('join')}
           </button>
         </div>
 
@@ -258,7 +260,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Client
+                  {modalT('client')}
                 </button>
                 <button
                   type="button"
@@ -269,12 +271,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Professional
+                  {modalT('professional')}
                 </button>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Email
+                  {t('login.email')}
                 </label>
                 <input
                   type="email"
@@ -286,7 +288,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
+                  {t('login.password')}
                 </label>
                 <input
                   type="password"
@@ -301,7 +303,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 disabled={loading}
                 className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ? modalT('loading') : modalT('login')}
               </button>
             </form>
           ) : (
@@ -317,7 +319,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  👤 Client
+                  👤 {modalT('client')}
                 </button>
                 <button
                   type="button"
@@ -328,7 +330,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  👷 Professional
+                  👷 {modalT('professional')}
                 </button>
               </div>
 
@@ -340,7 +342,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Username
+                      {t('signup.username')}
                     </label>
                     <input
                       type="text"
@@ -352,7 +354,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Email
+                      {t('signup.email')}
                     </label>
                     <input
                       type="email"
@@ -365,7 +367,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        First Name
+                        {t('signup.firstName')}
                       </label>
                       <input
                         type="text"
@@ -377,7 +379,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Surname
+                        {t('signup.surname')}
                       </label>
                       <input
                         type="text"
@@ -390,7 +392,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Mobile (Optional)
+                      {t('signup.mobile')} ({commonT('optional')})
                     </label>
                     <input
                       type="tel"
@@ -401,7 +403,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Password
+                      {t('signup.password')}
                     </label>
                     <input
                       type="password"
@@ -414,7 +416,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Confirm Password
+                      {t('signup.confirmPassword')}
                     </label>
                     <input
                       type="password"
@@ -430,7 +432,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     disabled={loading}
                     className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {loading ? 'Creating account...' : 'Create Account'}
+                    {loading ? modalT('creatingAccount') : modalT('createAccount')}
                   </button>
                 </form>
               ) : (
@@ -441,7 +443,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Company Name
+                      {modalT('companyName')}
                     </label>
                     <input
                       type="text"
@@ -453,7 +455,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Contact Name
+                      {modalT('contactName')}
                     </label>
                     <input
                       type="text"
@@ -465,7 +467,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Email
+                      {t('signup.email')}
                     </label>
                     <input
                       type="email"
@@ -477,7 +479,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Phone
+                      {modalT('phone')}
                     </label>
                     <input
                       type="tel"
@@ -489,7 +491,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Password
+                      {t('signup.password')}
                     </label>
                     <input
                       type="password"
@@ -502,7 +504,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Confirm Password
+                      {t('signup.confirmPassword')}
                     </label>
                     <input
                       type="password"
@@ -518,7 +520,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     disabled={loading}
                     className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {loading ? 'Creating account...' : 'Create Account'}
+                    {loading ? modalT('creatingAccount') : modalT('createAccount')}
                   </button>
                 </form>
               )}
