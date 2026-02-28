@@ -58,6 +58,12 @@ export function MilestoneEditor({
   const [templateExpanded, setTemplateExpanded] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+  const deriveStatus = (percentComplete: number) => {
+    if (percentComplete >= 100) return "completed" as const;
+    if (percentComplete <= 0) return "not_started" as const;
+    return "in_progress" as const;
+  };
+
   // Load templates when tradeId changes
   useEffect(() => {
     if (!tradeId) return;
@@ -82,11 +88,15 @@ export function MilestoneEditor({
     loadTemplates();
   }, [tradeId]);
 
-  const deriveStatus = (percentComplete: number) => {
-    if (percentComplete >= 100) return "completed" as const;
-    if (percentComplete <= 0) return "not_started" as const;
-    return "in_progress" as const;
-  };
+  // Pre-populate form when editing a single milestone directly
+  useEffect(() => {
+    if (defaultMilestones.length === 1) {
+      setCurrentMilestone({
+        ...defaultMilestones[0],
+        status: deriveStatus(defaultMilestones[0].percentComplete),
+      });
+    }
+  }, []);
 
   const formatHumanDate = (dateStr?: string) => {
     if (!dateStr) return "";
