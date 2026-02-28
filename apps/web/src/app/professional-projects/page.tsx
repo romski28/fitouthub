@@ -129,34 +129,16 @@ export default function ProfessionalProjectsPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">{professional?.fullName || professional?.businessName || 'Projects'}</p>
               <h1 className="text-2xl font-bold leading-tight">My Projects</h1>
             </div>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-              <SummaryCard label="Total" value={totals.total} tone="slate" />
-              <SummaryCard label="Pending" value={totals.pending} tone="amber" />
-              <SummaryCard label="Accepted" value={totals.accepted} tone="emerald" />
-              <SummaryCard label="Quoted" value={totals.quoted} tone="blue" />
-              <SummaryCard label="Awarded" value={totals.awarded} tone="purple" />
-              <SummaryCard label="Declined" value={totals.declined} tone="rose" />
-            </div>
-          </div>
-        </div>
-
-        {/* Filters (match client styling) */}
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-          <div className="grid gap-2 md:grid-cols-2">
-            <div className="relative grid gap-0.5">
-              <label className="text-xs font-medium text-slate-600">Filter by status</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
-              >
-                <option value="all">All</option>
-                <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
-                <option value="quoted">Quoted</option>
-                <option value="awarded">Awarded</option>
-                <option value="declined">Declined</option>
-              </select>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+                <SummaryCard label="Total" value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
+                <SummaryCard label="Pending" value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
+                <SummaryCard label="Accepted" value={totals.accepted} tone="emerald" filterStatus="accepted" currentFilter={filterStatus} onClick={() => setFilterStatus('accepted')} />
+                <SummaryCard label="Quoted" value={totals.quoted} tone="blue" filterStatus="quoted" currentFilter={filterStatus} onClick={() => setFilterStatus('quoted')} />
+                <SummaryCard label="Awarded" value={totals.awarded} tone="purple" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
+                <SummaryCard label="Declined" value={totals.declined} tone="rose" filterStatus="declined" currentFilter={filterStatus} onClick={() => setFilterStatus('declined')} />
+              </div>
+              <p className="text-[10px] text-center text-slate-300 italic">Click on a status to filter</p>
             </div>
           </div>
         </div>
@@ -240,23 +222,43 @@ export default function ProfessionalProjectsPage() {
   );
 }
 
-function SummaryCard({ label, value, tone }: { label: string; value: number; tone: SummaryTone }) {
-  const toneMap: Record<SummaryTone, { valueColor: string }> = {
-    slate: { valueColor: 'text-white' },
-    amber: { valueColor: 'text-amber-200' },
-    emerald: { valueColor: 'text-emerald-300' },
-    blue: { valueColor: 'text-blue-200' },
-    purple: { valueColor: 'text-purple-200' },
-    rose: { valueColor: 'text-rose-200' },
+function SummaryCard({ 
+  label, 
+  value, 
+  tone, 
+  filterStatus, 
+  currentFilter, 
+  onClick 
+}: { 
+  label: string; 
+  value: number; 
+  tone: SummaryTone; 
+  filterStatus: string;
+  currentFilter: string;
+  onClick: () => void;
+}) {
+  const toneMap: Record<SummaryTone, { valueColor: string; activeRing: string }> = {
+    slate: { valueColor: 'text-white', activeRing: 'ring-white' },
+    amber: { valueColor: 'text-amber-200', activeRing: 'ring-amber-300' },
+    emerald: { valueColor: 'text-emerald-300', activeRing: 'ring-emerald-300' },
+    blue: { valueColor: 'text-blue-200', activeRing: 'ring-blue-300' },
+    purple: { valueColor: 'text-purple-200', activeRing: 'ring-purple-300' },
+    rose: { valueColor: 'text-rose-200', activeRing: 'ring-rose-300' },
   };
 
-  const { valueColor } = toneMap[tone];
+  const { valueColor, activeRing } = toneMap[tone];
+  const isActive = currentFilter === filterStatus;
 
   return (
-    <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
+    <button
+      onClick={onClick}
+      className={`rounded-lg bg-white/10 px-3 py-2 text-left transition-all hover:bg-white/20 ${
+        isActive ? `ring-2 ${activeRing} bg-white/20` : ''
+      }`}
+    >
       <p className="text-[11px] uppercase tracking-wide text-slate-200">{label}</p>
       <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
-    </div>
+    </button>
   );
 }
 
