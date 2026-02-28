@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { CanonicalLocation } from '@/components/location-select';
 import { searchLocations } from '@/lib/location-search';
@@ -22,6 +23,7 @@ const Pill = memo(({ label }: { label: string }) => {
 Pill.displayName = 'Pill';
 
 const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdmin }: { pro: Professional; onToggle: (pro: Professional) => void; onViewDetails: (pro: Professional) => void; isSelected: boolean; isAdmin: boolean }) => {
+  const t = useTranslations('professionalsPage.list');
   const serviceAreas = useMemo(() => 
     (pro.serviceArea ?? '')
       .split(',')
@@ -37,7 +39,7 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-base font-bold text-white">
-              {pro.fullName || pro.businessName || 'Professional'}
+              {pro.fullName || pro.businessName || t('fallbackProfessional')}
             </h3>
             <p className="text-xs font-semibold text-emerald-400 mt-1 uppercase tracking-wide">{pro.professionType}</p>
           </div>
@@ -54,19 +56,19 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
             <>
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                <span className="font-semibold">Email:</span>
+                <span className="font-semibold">{t('labels.email')}</span>
                 <span className="text-slate-600 break-all">{pro.email}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                <span className="font-semibold">Phone:</span>
+                <span className="font-semibold">{t('labels.phone')}</span>
                 <span className="text-slate-600">{pro.phone}</span>
               </div>
             </>
           ) : (
             <div className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-              <span className="text-slate-600">Contact details available after match.</span>
+              <span className="text-slate-600">{t('contactAfterMatch')}</span>
             </div>
           )}
         </div>
@@ -75,9 +77,9 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
         {(pro.primaryTrade || (pro.tradesOffered && pro.tradesOffered.length > 0) || (pro.suppliesOffered && pro.suppliesOffered.length > 0)) && (
           <div>
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-              {pro.professionType === 'contractor' && 'Trade'}
-              {pro.professionType === 'company' && 'Trades Offered'}
-              {pro.professionType === 'reseller' && 'Supplies'}
+              {pro.professionType === 'contractor' && t('tradeLabels.trade')}
+              {pro.professionType === 'company' && t('tradeLabels.tradesOffered')}
+              {pro.professionType === 'reseller' && t('tradeLabels.supplies')}
             </p>
             <div className="flex flex-wrap gap-2">
               {pro.primaryTrade && (
@@ -97,7 +99,7 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
               ))}
               {(pro.tradesOffered && pro.tradesOffered.length > 2 || pro.suppliesOffered && pro.suppliesOffered.length > 2) && (
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                  +{(pro.tradesOffered?.length ?? 0) + (pro.suppliesOffered?.length ?? 0) - 2} more
+                  {t('moreCount', { count: (pro.tradesOffered?.length ?? 0) + (pro.suppliesOffered?.length ?? 0) - 2 })}
                 </span>
               )}
             </div>
@@ -107,7 +109,7 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
         {/* Service Areas */}
         {serviceAreas.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Areas Served</p>
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">{t('areasServed')}</p>
             <div className="flex flex-wrap gap-1.5">
               {serviceAreas.slice(0, 4).map((area, index) => (
                 <span key={`area-${index}`} className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
@@ -116,7 +118,7 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
               ))}
               {serviceAreas.length > 4 && (
                 <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                  +{serviceAreas.length - 4} more
+                  {t('moreCount', { count: serviceAreas.length - 4 })}
                 </span>
               )}
             </div>
@@ -129,14 +131,14 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
             onClick={() => onViewDetails(pro)}
             className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
           >
-            View details
+            {t('viewDetails')}
           </button>
           <button
             type="button"
             onClick={() => onToggle(pro)}
             className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${isSelected ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'}`}
           >
-            {isSelected ? 'Selected' : 'Ask for help'}
+            {isSelected ? t('selected') : t('askForHelp')}
           </button>
         </div>
       </div>
@@ -154,6 +156,7 @@ interface Props {
 }
 
 export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialProjectData }: Props) {
+  const t = useTranslations('professionalsPage.list');
   const { role } = useAuth();
   const isAdmin = role === 'admin';
   // Initialize from intentData synchronously to avoid effect-based setState
@@ -451,11 +454,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
         <div className="grid gap-2 md:grid-cols-3">
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">Professional or Trade</label>
+            <label className="text-xs font-medium text-slate-600">{t('filters.professionalOrTrade')}</label>
             <div className="relative">
               <input
                 type="text"
-                placeholder="e.g. John Smith, plumber, AC servicing"
+                placeholder={t('filters.professionalOrTradePlaceholder')}
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onFocus={() => setShowSuggestions(suggestions.length > 0)}
@@ -467,7 +470,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   type="button"
                   onClick={() => handleSearchChange('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                  aria-label="Clear search"
+                  aria-label={t('filters.clearSearchAria')}
                 >
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -493,11 +496,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           </div>
 
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">Location</label>
+            <label className="text-xs font-medium text-slate-600">{t('filters.location')}</label>
             <div className="relative">
               <input
                 type="text"
-                placeholder="e.g. Hong Kong, Central"
+                placeholder={t('filters.locationPlaceholder')}
                 value={locationDisplay || locationSearch}
                 onChange={(e) => {
                   setLocationDisplay('');
@@ -520,7 +523,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                     setLoc({});
                   }}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                  aria-label="Clear location"
+                  aria-label={t('filters.clearLocationAria')}
                 >
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -546,18 +549,18 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           </div>
 
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">Rating</label>
+            <label className="text-xs font-medium text-slate-600">{t('filters.rating')}</label>
             <select
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
               className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white"
             >
-              <option value={0}>Any rating</option>
-              <option value={4.5}>4.5+ stars</option>
-              <option value={4}>4+ stars</option>
-              <option value={3.5}>3.5+ stars</option>
-              <option value={3}>3+ stars</option>
-              <option value={2}>2+ stars</option>
+              <option value={0}>{t('filters.anyRating')}</option>
+              <option value={4.5}>{t('filters.rating45')}</option>
+              <option value={4}>{t('filters.rating4')}</option>
+              <option value={3.5}>{t('filters.rating35')}</option>
+              <option value={3}>{t('filters.rating3')}</option>
+              <option value={2}>{t('filters.rating2')}</option>
             </select>
           </div>
         </div>
@@ -566,7 +569,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {/* List */}
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-          No matching professionals.
+          {t('states.empty')}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2" suppressHydrationWarning>
@@ -588,15 +591,15 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           type="button"
           onClick={() => setIsModalOpen(true)}
           className="fixed top-20 right-6 z-40 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3"
-          aria-label="Share your project"
+          aria-label={t('actions.shareProjectAria')}
         >
           <div className="flex flex-col items-center justify-center text-center">
             <span className="text-xs font-semibold leading-tight">
-              {selectedIds.size === 1 ? 'Invite 1 Professional' : `Invite ${selectedIds.size} Professionals`}
+              {selectedIds.size === 1 ? t('actions.inviteOne') : t('actions.inviteMany', { count: selectedIds.size })}
             </span>
             {selectedIds.size < 3 && (
               <span className="text-[9px] text-indigo-200 mt-0.5">
-                We recommend at least 3
+                {t('actions.recommendAtLeastThree')}
               </span>
             )}
           </div>
@@ -618,10 +621,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           const mainTrade = (mapped || needle || '').trim();
           const locationLabel = [loc.primary, loc.secondary, loc.tertiary].filter(Boolean).join(', ');
           const defaultTitle = (() => {
-            if (mainTrade && locationLabel) return `${mainTrade} in ${locationLabel}`;
+            if (mainTrade && locationLabel) return t('defaults.tradeInLocation', { trade: mainTrade, location: locationLabel });
             if (mainTrade) return mainTrade;
-            if (locationLabel) return `Service Request in ${locationLabel}`;
-            return 'Service Request';
+            if (locationLabel) return t('defaults.serviceRequestInLocation', { location: locationLabel });
+            return t('defaults.serviceRequest');
           })();
           const prefill = initialProjectData || {};
           return {

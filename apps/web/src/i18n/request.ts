@@ -221,6 +221,64 @@ const messages = {
         "showAll": "Show all {count} trades"
       }
     },
+    "professionalsPage": {
+      "hero": {
+        "tagline": "Marketplace",
+        "title": "Find Trusted Professionals",
+        "description": "Browse vetted contractors, companies, and resellers with verified ratings and proven expertise."
+      },
+      "states": {
+        "loading": "Loading professionals...",
+        "empty": "No professionals yet. Submit a registration to see them listed here."
+      },
+      "list": {
+        "fallbackProfessional": "Professional",
+        "contactAfterMatch": "Contact details available after match.",
+        "areasServed": "Areas Served",
+        "viewDetails": "View details",
+        "selected": "Selected",
+        "askForHelp": "Ask for help",
+        "moreCount": "+{count} more",
+        "labels": {
+          "email": "Email:",
+          "phone": "Phone:"
+        },
+        "tradeLabels": {
+          "trade": "Trade",
+          "tradesOffered": "Trades Offered",
+          "supplies": "Supplies"
+        },
+        "filters": {
+          "professionalOrTrade": "Professional or Trade",
+          "professionalOrTradePlaceholder": "e.g. John Smith, plumber, AC servicing",
+          "clearSearchAria": "Clear search",
+          "location": "Location",
+          "locationPlaceholder": "e.g. Hong Kong, Central",
+          "clearLocationAria": "Clear location",
+          "rating": "Rating",
+          "anyRating": "Any rating",
+          "rating45": "4.5+ stars",
+          "rating4": "4+ stars",
+          "rating35": "3.5+ stars",
+          "rating3": "3+ stars",
+          "rating2": "2+ stars"
+        },
+        "actions": {
+          "shareProjectAria": "Share your project",
+          "inviteOne": "Invite 1 Professional",
+          "inviteMany": "Invite {count} Professionals",
+          "recommendAtLeastThree": "We recommend at least 3"
+        },
+        "defaults": {
+          "tradeInLocation": "{trade} in {location}",
+          "serviceRequestInLocation": "Service Request in {location}",
+          "serviceRequest": "Service Request"
+        },
+        "states": {
+          "empty": "No matching professionals."
+        }
+      }
+    },
     "home": {
       "hero": {
         "tagline": "Professional Fitout Management Platform",
@@ -626,6 +684,64 @@ const messages = {
       },
       "actions": {
         "showAll": "顯示全部{count}個工種"
+      }
+    },
+    "professionalsPage": {
+      "hero": {
+        "tagline": "平台市場",
+        "title": "尋找可信賴的專業人士",
+        "description": "瀏覽經審核的承辦商、公司及供應商，查看其已驗證評分與專業實績。"
+      },
+      "states": {
+        "loading": "正在載入專業人士...",
+        "empty": "暫無專業人士。提交註冊後即可在此顯示。"
+      },
+      "list": {
+        "fallbackProfessional": "專業人士",
+        "contactAfterMatch": "配對成功後可查看聯絡資料。",
+        "areasServed": "服務地區",
+        "viewDetails": "查看詳情",
+        "selected": "已選擇",
+        "askForHelp": "徵求協助",
+        "moreCount": "+{count}項",
+        "labels": {
+          "email": "電郵:",
+          "phone": "電話:"
+        },
+        "tradeLabels": {
+          "trade": "工種",
+          "tradesOffered": "提供工種",
+          "supplies": "供應項目"
+        },
+        "filters": {
+          "professionalOrTrade": "專業人士或工種",
+          "professionalOrTradePlaceholder": "例如：陳大文、水喉、冷氣維修",
+          "clearSearchAria": "清除搜尋",
+          "location": "地點",
+          "locationPlaceholder": "例如：香港、中環",
+          "clearLocationAria": "清除地點",
+          "rating": "評分",
+          "anyRating": "任何評分",
+          "rating45": "4.5+ 星",
+          "rating4": "4+ 星",
+          "rating35": "3.5+ 星",
+          "rating3": "3+ 星",
+          "rating2": "2+ 星"
+        },
+        "actions": {
+          "shareProjectAria": "分享您的項目",
+          "inviteOne": "邀請 1 位專業人士",
+          "inviteMany": "邀請 {count} 位專業人士",
+          "recommendAtLeastThree": "建議至少邀請 3 位"
+        },
+        "defaults": {
+          "tradeInLocation": "{location} 的 {trade}",
+          "serviceRequestInLocation": "{location} 服務需求",
+          "serviceRequest": "服務需求"
+        },
+        "states": {
+          "empty": "沒有符合條件的專業人士。"
+        }
       }
     },
     "home": {

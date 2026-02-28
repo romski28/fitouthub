@@ -3,6 +3,7 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Professional } from '../../lib/types';
@@ -52,6 +53,7 @@ function toAbsolute(url: string): string {
 }
 
 function ProfessionalsPageInner() {
+  const t = useTranslations('professionalsPage');
   const { isLoggedIn, userLocation } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -169,13 +171,13 @@ function ProfessionalsPageInner() {
         <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white py-6 px-6">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-400">
-              Marketplace
+              {t('hero.tagline')}
             </p>
             <h1 className="text-2xl font-bold">
-              Find Trusted Professionals
+              {t('hero.title')}
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl">
-              Browse vetted contractors, companies, and resellers with verified ratings and proven expertise.
+              {t('hero.description')}
             </p>
           </div>
         </section>
@@ -197,7 +199,7 @@ function ProfessionalsPageInner() {
           </div>
         ) : professionals.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-            No professionals yet. Submit a registration to see them listed here.
+            {t('states.empty')}
           </div>
         ) : (
           <ProfessionalsList
@@ -214,8 +216,9 @@ function ProfessionalsPageInner() {
 }
 
 export default function ProfessionalsPage() {
+  const t = useTranslations('professionalsPage');
   return (
-    <Suspense fallback={<div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading professionals...</div>}>
+    <Suspense fallback={<div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">{t('states.loading')}</div>}>
       <ProfessionalsPageInner />
     </Suspense>
   );
