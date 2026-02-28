@@ -71,7 +71,18 @@ export class MilestonesController {
     @Body() data: CreateMultipleMilestonesDto,
     @Req() req: any,
   ) {
-    return this.milestonesService.createMultipleMilestones(data);
+    try {
+      console.log(`[MilestonesController] Batch POST received:`, {
+        projectId: data.projectId,
+        projectProfessionalId: data.projectProfessionalId,
+        milestonesCount: data.milestones?.length,
+        sampleMilestone: data.milestones?.[0],
+      });
+      return await this.milestonesService.createMultipleMilestones(data);
+    } catch (error) {
+      console.error(`[MilestonesController] Batch POST error:`, error);
+      throw error;
+    }
   }
 
   @Put(':id')

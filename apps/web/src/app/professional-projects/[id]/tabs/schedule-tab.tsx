@@ -174,6 +174,13 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         return milestone;
       });
 
+      console.log(`[ScheduleTab] Sending batch request:`, {
+        projectId,
+        projectProfessionalId,
+        milestonesCount: normalizedMilestones.length,
+        milestones: normalizedMilestones,
+      });
+
       const response = await fetch(
         `${API_BASE_URL}/milestones/batch`,
         {
