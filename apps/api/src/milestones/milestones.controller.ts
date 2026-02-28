@@ -62,7 +62,22 @@ export class MilestonesController {
     @Body() createMilestoneDto: CreateMilestoneDto,
     @Req() req: any,
   ) {
-    return this.milestonesService.createMilestone(createMilestoneDto);
+    try {
+      console.log(`[MilestonesController] POST /milestones received:`, {
+        projectId: createMilestoneDto.projectId,
+        projectProfessionalId: createMilestoneDto.projectProfessionalId,
+        title: createMilestoneDto.title,
+        sequence: createMilestoneDto.sequence,
+        plannedStartDate: createMilestoneDto.plannedStartDate,
+        plannedEndDate: createMilestoneDto.plannedEndDate,
+      });
+      const result = await this.milestonesService.createMilestone(createMilestoneDto);
+      console.log(`[MilestonesController] Milestone created successfully`);
+      return result;
+    } catch (error) {
+      console.error(`[MilestonesController] POST /milestones error:`, error);
+      throw error;
+    }
   }
 
   @Post('batch')

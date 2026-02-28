@@ -27,25 +27,39 @@ export class MilestonesService {
   }
 
   async createMilestone(data: CreateMilestoneDto) {
-    return this.prisma.projectMilestone.create({
-      data: {
+    try {
+      console.log(`[MilestonesService] Creating milestone:`, {
         projectId: data.projectId,
-        projectProfessionalId: data.projectProfessionalId,
-        templateId: data.templateId,
         title: data.title,
         sequence: data.sequence,
-        status: data.status || 'not_started',
-        percentComplete: data.percentComplete || 0,
-        plannedStartDate: data.plannedStartDate,
-        plannedEndDate: data.plannedEndDate,
-        startTimeSlot: data.startTimeSlot,
-        endTimeSlot: data.endTimeSlot,
-        estimatedHours: data.estimatedHours,
-        siteAccessRequired: data.siteAccessRequired ?? true,
-        siteAccessNotes: data.siteAccessNotes,
-        description: data.description,
-      },
-    });
+      });
+
+      const result = await this.prisma.projectMilestone.create({
+        data: {
+          projectId: data.projectId,
+          projectProfessionalId: data.projectProfessionalId,
+          templateId: data.templateId,
+          title: data.title,
+          sequence: data.sequence,
+          status: data.status || 'not_started',
+          percentComplete: data.percentComplete || 0,
+          plannedStartDate: data.plannedStartDate,
+          plannedEndDate: data.plannedEndDate,
+          startTimeSlot: data.startTimeSlot,
+          endTimeSlot: data.endTimeSlot,
+          estimatedHours: data.estimatedHours,
+          siteAccessRequired: data.siteAccessRequired ?? true,
+          siteAccessNotes: data.siteAccessNotes,
+          description: data.description,
+        },
+      });
+
+      console.log(`[MilestonesService] Milestone created with ID: ${result.id}`);
+      return result;
+    } catch (error) {
+      console.error(`[MilestonesService] Error creating milestone:`, error);
+      throw error;
+    }
   }
 
   async createMultipleMilestones(data: CreateMultipleMilestonesDto) {
