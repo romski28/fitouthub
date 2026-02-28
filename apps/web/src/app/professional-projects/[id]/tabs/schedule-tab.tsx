@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MilestoneTimeline } from '@/components/milestone-timeline';
 import { MilestoneEditor } from '@/components/milestone-editor';
 import { API_BASE_URL } from '@/config/api';
+import { Pencil, Trash2, Calendar, Clock } from 'lucide-react';
 
 interface Milestone {
   id: string;
@@ -17,6 +17,11 @@ interface Milestone {
   plannedStartDate?: string;
   plannedEndDate?: string;
   actualEndDate?: string;
+  startTimeSlot?: string;
+  endTimeSlot?: string;
+  estimatedHours?: number;
+  siteAccessRequired?: boolean;
+  siteAccessNotes?: string;
   photoUrls?: string[];
   notes?: string;
   createdAt: string;
@@ -44,7 +49,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editingMilestones, setEditingMilestones] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
 
   const isAwarded = projectStatus === 'awarded';
 
@@ -55,6 +61,29 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     if (dateStr.includes('T')) return dateStr;
     // Convert YYYY-MM-DD to YYYY-MM-DDTHH:MM:SSZ
     return `${dateStr}T00:00:00Z`;
+  };
+
+  const formatWeekday = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { weekday: "short" });
+  };
+
+  const formatDayMonth = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+  };
+
+  const isSameDate = (date1?: string | null, date2?: string | null) => {
+    if (!date1 || !date2) return true;
+    return date1.split("T")[0] === date2.split("T")[0];
+  };
+
+  const getStatusPercent = (status: string, percentComplete: number) => {
+    if (status === "completed") return 100;
+    if (status === "not_started") return 0;
+    return percentComplete;
   };
 
   // Fetch milestones
@@ -158,7 +187,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       
       // Update local state with saved milestones
       setMilestones(Array.isArray(savedMilestones) ? savedMilestones : []);
-      setEditingMilestones(false); // Close editor after successful save
+      setEditingIndex(null);
+      setIsAddingNew(false);
       onMilestonesUpdate?.();
       
       // Show success message
@@ -171,6 +201,19 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       console.error('Error saving milestones:', err);
       setError(err instanceof Error ? err.message : 'Failed to save milestones');
     }
+  };
+
+  const handleDeleteTask = (index: number) => {
+    const newMilestones = milestones.filter((_, i) => i !== index);
+    handleMilestonesChange(newMilestones.map(m => ({
+      title: m.title,
+      sequence: m.sequence,
+      status: m.status,
+      percentComplete: m.percentComplete,
+      plannedStartDate: m.plannedStartDate,
+      plannedEndDate: m.plannedEndDate,
+      description: m.description,
+    })));
   };
 
   return (
@@ -193,73 +236,206 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
               <p className="text-sm text-slate-600">Loading schedule...</p>
             </div>
-          ) : milestones.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm text-slate-600 mb-4">
-                📋 No milestones set up yet. Create a schedule to track project progress.
-              </p>
-              {!editingMilestones && (
-                <button
-                  onClick={() => setEditingMilestones(true)}
-                  className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                >
-                  Create Schedule
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="rounded-lg border border-slate-200 bg-white p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-slate-900">Project Timeline</h3>
-                  {!editingMilestones && (
-                    <button
-                      onClick={() => setEditingMilestones(true)}
-                      className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      ✏️ Edit
-                    </button>
-                  )}
-                </div>
-
-                <MilestoneTimeline
-                  milestones={milestones.map(m => ({
-                    ...m,
-                    photoUrls: m.photoUrls || []
-                  }))}
-                  title="Project Progress"
-                  showPhotos={true}
-                  editable={false}
-                />
-              </div>
-            </>
-          )}
-
-          {editingMilestones && (
+          ) : isAddingNew || editingIndex !== null ? (
+            // FORM VIEW: Add/Edit mode
             <div className="rounded-lg border border-slate-200 bg-white p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-slate-900">Edit Schedule</h3>
-                <button
-                  onClick={() => setEditingMilestones(false)}
-                  className="text-sm text-slate-600 hover:text-slate-900"
-                >
-                  ✕ Close
-                </button>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {isAddingNew ? 'Add New Task' : 'Edit Task'}
+                </h3>
               </div>
 
               <MilestoneEditor
                 tradeId={tradeId || ''}
-                defaultMilestones={milestones.map(m => ({
-                  title: m.title,
-                  sequence: m.sequence,
-                  status: m.status,
-                  percentComplete: m.percentComplete,
-                  plannedStartDate: m.plannedStartDate,
-                  plannedEndDate: m.plannedEndDate,
-                  description: m.description,
-                }))}
-                onMilestonesChange={handleMilestonesChange}
+                defaultMilestones={
+                  editingIndex !== null
+                    ? [
+                        {
+                          title: milestones[editingIndex].title,
+                          sequence: milestones[editingIndex].sequence,
+                          status: milestones[editingIndex].status,
+                          percentComplete: milestones[editingIndex].percentComplete,
+                          plannedStartDate: milestones[editingIndex].plannedStartDate,
+                          plannedEndDate: milestones[editingIndex].plannedEndDate,
+                          description: milestones[editingIndex].description,
+                          startTimeSlot: milestones[editingIndex].startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                          endTimeSlot: milestones[editingIndex].endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                          estimatedHours: milestones[editingIndex].estimatedHours,
+                          siteAccessRequired: milestones[editingIndex].siteAccessRequired,
+                          siteAccessNotes: milestones[editingIndex].siteAccessNotes,
+                        },
+                      ]
+                    : []
+                }
+                onMilestonesChange={(updated) => {
+                  if (editingIndex !== null) {
+                    // Editing existing task
+                    const newMilestones = [...milestones];
+                    newMilestones[editingIndex] = {
+                      ...newMilestones[editingIndex],
+                      ...updated[0],
+                    };
+                    handleMilestonesChange(
+                      newMilestones.map(m => ({
+                        title: m.title,
+                        sequence: m.sequence,
+                        status: m.status,
+                        percentComplete: m.percentComplete,
+                        plannedStartDate: m.plannedStartDate,
+                        plannedEndDate: m.plannedEndDate,
+                        description: m.description,
+                      }))
+                    );
+                  } else {
+                    // Adding new task
+                    handleMilestonesChange([
+                      ...milestones.map(m => ({
+                        title: m.title,
+                        sequence: m.sequence,
+                        status: m.status,
+                        percentComplete: m.percentComplete,
+                        plannedStartDate: m.plannedStartDate,
+                        plannedEndDate: m.plannedEndDate,
+                        description: m.description,
+                      })),
+                      updated[0],
+                    ]);
+                  }
+                }}
               />
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => {
+                    setEditingIndex(null);
+                    setIsAddingNew(false);
+                  }}
+                  className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : milestones.length === 0 ? (
+            // EMPTY STATE
+            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
+              <p className="text-sm text-slate-600 mb-4">📋 No tasks set up yet.</p>
+              <button
+                onClick={() => setIsAddingNew(true)}
+                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              >
+                Add Task
+              </button>
+            </div>
+          ) : (
+            // LIST VIEW: Showing tasks
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">Tasks</h3>
+                <button
+                  onClick={() => setIsAddingNew(true)}
+                  className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                >
+                  + Add Task
+                </button>
+              </div>
+
+              {milestones.map((milestone, index) => {
+                const statusPercent = getStatusPercent(milestone.status, milestone.percentComplete);
+                const statusLabel =
+                  statusPercent === 100 ? "Complete" :
+                  statusPercent === 0 ? "Not Started" :
+                  `${statusPercent}% Complete`;
+                const showProgressBar = statusPercent > 0 && statusPercent < 100;
+                const sameDate = isSameDate(milestone.plannedStartDate, milestone.plannedEndDate);
+
+                return (
+                  <div
+                    key={milestone.id || index}
+                    className="bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition overflow-hidden"
+                  >
+                    <div className="flex items-stretch">
+                      {/* Date Box */}
+                      <div className="w-24 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-3">
+                        {sameDate ? (
+                          <>
+                            <div className="text-xs font-semibold uppercase tracking-wide">
+                              {formatWeekday(milestone.plannedStartDate)}
+                            </div>
+                            <div className="text-sm font-semibold mt-1">
+                              {formatDayMonth(milestone.plannedStartDate)}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-[10px] font-semibold">
+                              {formatDayMonth(milestone.plannedStartDate)}
+                            </div>
+                            <div className="text-[9px] font-medium my-0.5">thru</div>
+                            <div className="text-[10px] font-semibold">
+                              {formatDayMonth(milestone.plannedEndDate)}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 p-3 flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start gap-2 mb-2">
+                            <h4 className="text-base font-semibold text-slate-900">
+                              {milestone.title}
+                            </h4>
+                          </div>
+
+                          <div className="flex items-center gap-1 flex-wrap mb-2">
+                            <span className="text-xs text-slate-600">
+                              {statusLabel}
+                            </span>
+                            {showProgressBar && (
+                              <div className="w-24">
+                                <div className="relative h-3 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                                  <div
+                                    className="absolute left-0 top-0 h-full bg-emerald-500"
+                                    style={{ width: `${statusPercent}%` }}
+                                  />
+                                  <span className="relative z-10 block text-[8px] font-semibold text-slate-800 text-center leading-3">
+                                    {statusPercent}%
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {milestone.description && (
+                            <p className="text-xs text-slate-600 mb-2">
+                              {milestone.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => setEditingIndex(index)}
+                            className="p-2 text-slate-600 hover:bg-slate-100 rounded transition"
+                            title="Edit task"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTask(index)}
+                            className="p-2 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded transition"
+                            title="Delete task"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </>
