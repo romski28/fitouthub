@@ -406,8 +406,47 @@ export default function ClientProjectDetailPage() {
     const form = siteAccessForms[requestId];
     if (!form) return;
 
-    if (form.status === 'approved_visit_scheduled' && !form.visitScheduledFor && !form.visitScheduledAt) {
-      toast.error('Please select a visit date and time');
+    const locationPayload = {
+      addressFull: locationDetailsForm.addressFull || form.addressFull || siteAccessData?.addressFull || '',
+      postalCode: locationDetailsForm.postalCode || undefined,
+      unitNumber:
+        locationDetailsForm.unitNumber || form.unitNumber || siteAccessData?.unitNumber || undefined,
+      floorLevel:
+        locationDetailsForm.floorLevel || form.floorLevel || siteAccessData?.floorLevel || undefined,
+      propertyType: locationDetailsForm.propertyType || undefined,
+      propertySize: locationDetailsForm.propertySize || undefined,
+      propertyAge: locationDetailsForm.propertyAge || undefined,
+      accessDetails:
+        locationDetailsForm.accessDetails || form.accessDetails || siteAccessData?.accessDetails || undefined,
+      existingConditions: locationDetailsForm.existingConditions || undefined,
+      specialRequirements: locationDetailsForm.specialRequirements
+        ? locationDetailsForm.specialRequirements
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+        : undefined,
+      onSiteContactName:
+        locationDetailsForm.onSiteContactName ||
+        form.onSiteContactName ||
+        siteAccessData?.onSiteContactName ||
+        undefined,
+      onSiteContactPhone:
+        locationDetailsForm.onSiteContactPhone ||
+        form.onSiteContactPhone ||
+        siteAccessData?.onSiteContactPhone ||
+        undefined,
+      accessHoursDescription: locationDetailsForm.accessHoursDescription || undefined,
+      desiredStartDate: locationDetailsForm.desiredStartDate || undefined,
+      photoUrls: locationDetailsForm.photoUrls
+        ? locationDetailsForm.photoUrls
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+        : undefined,
+    };
+
+    if (form.status === 'approved_visit_scheduled' && !form.visitScheduledFor) {
+      toast.error('Please select a visit date');
       return;
     }
 
@@ -416,7 +455,7 @@ export default function ClientProjectDetailPage() {
       return;
     }
 
-    if (form.status !== 'denied' && !form.addressFull && !siteAccessData?.addressFull) {
+    if (form.status !== 'denied' && !locationPayload.addressFull) {
       toast.error('Address is required to approve site access');
       return;
     }
@@ -436,12 +475,12 @@ export default function ClientProjectDetailPage() {
             visitScheduledFor: form.visitScheduledFor || undefined,
             visitScheduledAt: form.visitScheduledAt || undefined,
             reasonDenied: form.reasonDenied || undefined,
-            addressFull: form.addressFull || siteAccessData?.addressFull,
-            unitNumber: form.unitNumber || siteAccessData?.unitNumber,
-            floorLevel: form.floorLevel || siteAccessData?.floorLevel,
-            accessDetails: form.accessDetails || siteAccessData?.accessDetails,
-            onSiteContactName: form.onSiteContactName || siteAccessData?.onSiteContactName,
-            onSiteContactPhone: form.onSiteContactPhone || siteAccessData?.onSiteContactPhone,
+            addressFull: locationPayload.addressFull,
+            unitNumber: locationPayload.unitNumber,
+            floorLevel: locationPayload.floorLevel,
+            accessDetails: locationPayload.accessDetails,
+            onSiteContactName: locationPayload.onSiteContactName,
+            onSiteContactPhone: locationPayload.onSiteContactPhone,
           }),
         },
       );
@@ -451,14 +490,39 @@ export default function ClientProjectDetailPage() {
         throw new Error(data.message || 'Failed to respond to request');
       }
 
+      if (form.status !== 'denied' && locationPayload.addressFull) {
+        setSubmittingLocationDetails(true);
+        setLocationDetailsError(null);
+        const locationResponse = await fetch(
+          `${API_BASE_URL}/projects/${projectId}/location-details`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(locationPayload),
+          },
+        );
+
+        if (!locationResponse.ok) {
+          const locationData = await locationResponse.json().catch(() => ({}));
+          const message = locationData.message || 'Failed to save full location details';
+          setLocationDetailsError(message);
+          toast.error('Access response sent, but full location details failed to save.');
+        }
+      }
+
       toast.success('Response sent to the professional.');
       await fetchSiteAccessRequests();
       await fetchSiteVisits();
+      await fetchProject();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to respond to request';
       toast.error(message);
     } finally {
       setSubmittingSiteAccess(null);
+      setSubmittingLocationDetails(false);
     }
   };
 
@@ -1327,7 +1391,6 @@ export default function ClientProjectDetailPage() {
               onRespondToVisit={async (visitId, status) => {
                 await handleRespondToSiteVisit(visitId, status);
               }}
-              onSubmitLocationDetails={handleSubmitLocationDetails}
               siteAccessLoading={siteAccessLoading}
               siteAccessError={siteAccessError}
               siteVisitLoading={siteVisitLoading}

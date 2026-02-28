@@ -55,7 +55,6 @@ interface SiteAccessTabProps {
   onToggleAccordion: (id: string) => void;
   onRespondToRequest: (requestId: string) => Promise<void>;
   onRespondToVisit: (visitId: string, status: 'accepted' | 'declined') => Promise<void>;
-  onSubmitLocationDetails: () => Promise<void>;
   siteAccessLoading: boolean;
   siteAccessError: string | null;
   siteVisitLoading: boolean;
@@ -108,7 +107,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   onToggleAccordion,
   onRespondToRequest,
   onRespondToVisit,
-  onSubmitLocationDetails,
   siteAccessLoading,
   siteAccessError,
   siteVisitLoading,
@@ -174,126 +172,224 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                     </div>
 
                     {request.status === 'pending' && (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-2">Decision</label>
-                          <div className="flex gap-2 items-center">
-                            <select
-                              value={form.status}
-                              onChange={(e) => onUpdateSiteAccessForm(request.id, { status: e.target.value })}
-                              className="flex-1 rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                            >
-                              <option value="approved_no_visit">Approve (no site visit)</option>
-                              <option value="approved_visit_scheduled">Approve (with site visit)</option>
-                              <option value="denied">Deny</option>
-                            </select>
+                      <div className="space-y-4">
+                        {locationDetailsError && (
+                          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                            {locationDetailsError}
                           </div>
-                        </div>
+                        )}
 
-                        {form.status === 'denied' && (
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2">Access Request Response</h4>
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-2">Reason for denial</label>
-                            <textarea
-                              value={form.reasonDenied || ''}
-                              onChange={(e) => onUpdateSiteAccessForm(request.id, { reasonDenied: e.target.value })}
-                              placeholder="Brief explanation..."
-                              className="w-full rounded border border-slate-300 px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                              rows={2}
-                            />
-                          </div>
-                        )}
-
-                        {form.status === 'approved_visit_scheduled' && (
-                          <div className="space-y-3">
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Visit date</label>
-                              <input
-                                type="date"
-                                value={form.visitScheduledFor || ''}
-                                onChange={(e) => onUpdateSiteAccessForm(request.id, { visitScheduledFor: e.target.value })}
-                                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Visit time</label>
-                              <input
-                                type="time"
-                                value={form.visitScheduledAt || ''}
-                                onChange={(e) => onUpdateSiteAccessForm(request.id, { visitScheduledAt: e.target.value })}
-                                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                              />
+                            <label className="block text-xs font-semibold text-slate-700 mb-2">Decision</label>
+                            <div className="flex gap-2 items-center">
+                              <select
+                                value={form.status}
+                                onChange={(e) => onUpdateSiteAccessForm(request.id, { status: e.target.value })}
+                                className="flex-1 rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                              >
+                                <option value="approved_no_visit">Approve (no site visit)</option>
+                                <option value="approved_visit_scheduled">Approve (with site visit)</option>
+                                <option value="denied">Deny</option>
+                              </select>
                             </div>
                           </div>
-                        )}
 
-                        {form.status !== 'denied' && (
-                          <div className="space-y-3">
+                          {form.status === 'denied' && (
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Site address *</label>
-                              <input
-                                type="text"
-                                value={form.addressFull || siteAccessData?.addressFull || ''}
-                                onChange={(e) => onUpdateSiteAccessForm(request.id, { addressFull: e.target.value })}
-                                placeholder="Full address"
-                                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-2">Unit Number</label>
-                                <input
-                                  type="text"
-                                  value={form.unitNumber || siteAccessData?.unitNumber || ''}
-                                  onChange={(e) => onUpdateSiteAccessForm(request.id, { unitNumber: e.target.value })}
-                                  placeholder="e.g., 101"
-                                  className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-2">Floor Level</label>
-                                <input
-                                  type="text"
-                                  value={form.floorLevel || siteAccessData?.floorLevel || ''}
-                                  onChange={(e) => onUpdateSiteAccessForm(request.id, { floorLevel: e.target.value })}
-                                  placeholder="e.g., G/F, 1/F"
-                                  className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Access Details</label>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Reason for denial</label>
                               <textarea
-                                value={form.accessDetails || siteAccessData?.accessDetails || ''}
-                                onChange={(e) => onUpdateSiteAccessForm(request.id, { accessDetails: e.target.value })}
-                                placeholder="e.g., Security gate, notify 2 hours before"
-                                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                                value={form.reasonDenied || ''}
+                                onChange={(e) => onUpdateSiteAccessForm(request.id, { reasonDenied: e.target.value })}
+                                placeholder="Brief explanation..."
+                                className="w-full rounded border border-slate-300 px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
                                 rows={2}
                               />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                          )}
+
+                          {form.status === 'approved_visit_scheduled' && (
+                            <div className="space-y-3">
                               <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-2">On-site Contact Name</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-2">Visit date</label>
                                 <input
-                                  type="text"
-                                  value={form.onSiteContactName || siteAccessData?.onSiteContactName || ''}
-                                  onChange={(e) => onUpdateSiteAccessForm(request.id, { onSiteContactName: e.target.value })}
-                                  placeholder="Contact person"
+                                  type="date"
+                                  value={form.visitScheduledFor || ''}
+                                  onChange={(e) => onUpdateSiteAccessForm(request.id, { visitScheduledFor: e.target.value })}
                                   className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-2">Contact Phone</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-2">Visit time</label>
                                 <input
-                                  type="tel"
-                                  value={form.onSiteContactPhone || siteAccessData?.onSiteContactPhone || ''}
-                                  onChange={(e) => onUpdateSiteAccessForm(request.id, { onSiteContactPhone: e.target.value })}
-                                  placeholder="Phone number"
+                                  type="time"
+                                  value={form.visitScheduledAt || ''}
+                                  onChange={(e) => onUpdateSiteAccessForm(request.id, { visitScheduledAt: e.target.value })}
                                   className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                                 />
                               </div>
                             </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2">Basic Location Information</h4>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-2">Full Address *</label>
+                            <input
+                              type="text"
+                              value={locationDetailsForm.addressFull}
+                              onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
+                              placeholder="e.g., 123 Main Street"
+                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            />
                           </div>
-                        )}
+
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Unit Number</label>
+                              <input
+                                type="text"
+                                value={locationDetailsForm.unitNumber}
+                                onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
+                                placeholder="e.g., 101"
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Floor Level</label>
+                              <input
+                                type="text"
+                                value={locationDetailsForm.floorLevel}
+                                onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
+                                placeholder="e.g., G/F, 1/F"
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Postal Code / District</label>
+                              <input
+                                type="text"
+                                value={locationDetailsForm.postalCode}
+                                onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
+                                placeholder="e.g., Central, TST"
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2">Property Details</h4>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Property Type</label>
+                              <select
+                                value={locationDetailsForm.propertyType || ''}
+                                onChange={(e) => onUpdateLocationDetailsForm({ propertyType: e.target.value })}
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              >
+                                <option value="">Select type</option>
+                                <option value="residential">Residential</option>
+                                <option value="commercial">Commercial</option>
+                                <option value="industrial">Industrial</option>
+                                <option value="retail">Retail</option>
+                                <option value="office">Office</option>
+                                <option value="other">Other</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Property Size (sq ft)</label>
+                              <input
+                                type="text"
+                                value={locationDetailsForm.propertySize}
+                                onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
+                                placeholder="e.g., 800"
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Property Age (years)</label>
+                              <input
+                                type="text"
+                                value={locationDetailsForm.propertyAge}
+                                onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
+                                placeholder="e.g., 15"
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-2">Existing Conditions</label>
+                            <textarea
+                              value={locationDetailsForm.existingConditions}
+                              onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
+                              placeholder="Describe current state, any issues, damages, etc."
+                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              rows={2}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2">Access and Control</h4>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-2">Access Details</label>
+                            <textarea
+                              value={locationDetailsForm.accessDetails}
+                              onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
+                              placeholder="e.g., Security gate, 24/7 access, notify 2 hours before"
+                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              rows={2}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-2">Access Hours</label>
+                            <input
+                              type="text"
+                              value={locationDetailsForm.accessHoursDescription}
+                              onChange={(e) => onUpdateLocationDetailsForm({ accessHoursDescription: e.target.value })}
+                              placeholder="e.g., Mon-Fri 9am-6pm, weekends by appointment"
+                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">On-site Contact Name</label>
+                              <input
+                                type="text"
+                                value={locationDetailsForm.onSiteContactName}
+                                onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactName: e.target.value })}
+                                placeholder="Contact person"
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-2">Contact Phone</label>
+                              <input
+                                type="tel"
+                                value={locationDetailsForm.onSiteContactPhone}
+                                onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactPhone: e.target.value })}
+                                placeholder="Phone number"
+                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-2">Desired Start Date</label>
+                            <input
+                              type="date"
+                              value={locationDetailsForm.desiredStartDate}
+                              onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
+                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
 
                         <div className="flex gap-2 justify-end pt-2">
                           <button
@@ -304,10 +400,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 toast.error('Failed to respond to request');
                               }
                             }}
-                            disabled={submittingSiteAccess === request.id}
+                            disabled={submittingSiteAccess === request.id || isSubmittingLocationDetails}
                             className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 transition"
                           >
-                            {submittingSiteAccess === request.id ? 'Sending…' : 'Send Response'}
+                            {submittingSiteAccess === request.id || isSubmittingLocationDetails ? 'Saving…' : 'Save and Send Response'}
                           </button>
                         </div>
                       </div>
@@ -445,189 +541,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           </AccordionItem>
         )}
 
-        {/* Location Details */}
-        <AccordionItem
-          id="location-details"
-          title="Location Details"
-          isOpen={expandedAccordions['location-details'] === true}
-          onToggle={onToggleAccordion}
-        >
-          {locationDetailsError && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 mb-4">
-              {locationDetailsError}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-slate-800 border-b pb-2">Basic Location Information</h4>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Full Address *</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.addressFull}
-                  onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
-                  placeholder="e.g., 123 Main Street"
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Unit Number</label>
-                  <input
-                    type="text"
-                    value={locationDetailsForm.unitNumber}
-                    onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
-                    placeholder="e.g., 101"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Floor Level</label>
-                  <input
-                    type="text"
-                    value={locationDetailsForm.floorLevel}
-                    onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
-                    placeholder="e.g., G/F, 1/F"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Postal Code / District</label>
-                  <input
-                    type="text"
-                    value={locationDetailsForm.postalCode}
-                    onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
-                    placeholder="e.g., Central, TST"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-slate-800 border-b pb-2">Property Details</h4>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Property Type</label>
-                  <select
-                    value={locationDetailsForm.propertyType || ''}
-                    onChange={(e) => onUpdateLocationDetailsForm({ propertyType: e.target.value })}
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="">Select type</option>
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="retail">Retail</option>
-                    <option value="office">Office</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Property Size (sq ft)</label>
-                  <input
-                    type="text"
-                    value={locationDetailsForm.propertySize}
-                    onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
-                    placeholder="e.g., 800"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Property Age (years)</label>
-                  <input
-                    type="text"
-                    value={locationDetailsForm.propertyAge}
-                    onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
-                    placeholder="e.g., 15"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Existing Conditions</label>
-                <textarea
-                  value={locationDetailsForm.existingConditions}
-                  onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
-                  placeholder="Describe current state, any issues, damages, etc."
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  rows={2}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-slate-800 border-b pb-2">Access & Contact</h4>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Access Details</label>
-                <textarea
-                  value={locationDetailsForm.accessDetails}
-                  onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
-                  placeholder="e.g., Security gate, 24/7 access, notify 2 hours before"
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  rows={2}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Access Hours</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.accessHoursDescription}
-                  onChange={(e) => onUpdateLocationDetailsForm({ accessHoursDescription: e.target.value })}
-                  placeholder="e.g., Mon-Fri 9am-6pm, weekends by appointment"
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">On-site Contact Name</label>
-                  <input
-                    type="text"
-                    value={locationDetailsForm.onSiteContactName}
-                    onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactName: e.target.value })}
-                    placeholder="Contact person"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Contact Phone</label>
-                  <input
-                    type="tel"
-                    value={locationDetailsForm.onSiteContactPhone}
-                    onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactPhone: e.target.value })}
-                    placeholder="Phone number"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Desired Start Date</label>
-                <input
-                  type="date"
-                  value={locationDetailsForm.desiredStartDate}
-                  onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-3">
-              <button
-                onClick={onSubmitLocationDetails}
-                disabled={isSubmittingLocationDetails}
-                className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 transition"
-              >
-                {isSubmittingLocationDetails ? 'Submitting…' : 'Submit Location Details'}
-              </button>
-            </div>
-          </div>
-        </AccordionItem>
       </AccordionGroup>
     </div>
   );

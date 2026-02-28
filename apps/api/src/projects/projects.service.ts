@@ -1458,6 +1458,15 @@ Please review the project details and respond with your quote or decline the inv
       }
     }
 
+    const parseOptionalDate = (value?: string) => {
+      if (!value) return null;
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return null;
+      }
+      return parsed;
+    };
+
     if (body.status === 'denied') {
       const denied = await this.prisma.siteAccessRequest.update({
         where: { id: requestId },
@@ -1524,11 +1533,26 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
-    const scheduledAt = body.visitScheduledAt
-      ? new Date(body.visitScheduledAt)
-      : body.visitScheduledFor
-      ? new Date(body.visitScheduledFor)
-      : null;
+    const scheduledForDate = parseOptionalDate(body.visitScheduledFor);
+
+    let scheduledAt: Date | null = null;
+    if (body.visitScheduledAt) {
+      const isTimeOnly = /^\d{2}:\d{2}(:\d{2})?$/.test(body.visitScheduledAt);
+      if (isTimeOnly) {
+        if (!body.visitScheduledFor) {
+          throw new BadRequestException('visitScheduledFor is required when visitScheduledAt is a time value');
+        }
+        scheduledAt = parseOptionalDate(`${body.visitScheduledFor}T${body.visitScheduledAt}`);
+      } else {
+        scheduledAt = parseOptionalDate(body.visitScheduledAt);
+      }
+
+      if (!scheduledAt) {
+        throw new BadRequestException('visitScheduledAt must be a valid date/time');
+      }
+    } else {
+      scheduledAt = scheduledForDate;
+    }
 
     const approved = await this.prisma.siteAccessRequest.update({
       where: { id: requestId },
@@ -1537,9 +1561,7 @@ Please review the project details and respond with your quote or decline the inv
         respondedAt: new Date(),
         clientApprovedBy: userId,
         reasonDenied: body.reasonDenied,
-        visitScheduledFor: body.visitScheduledFor
-          ? new Date(body.visitScheduledFor)
-          : scheduledAt,
+        visitScheduledFor: scheduledForDate || scheduledAt,
         visitScheduledAt: scheduledAt,
       },
     });
