@@ -213,6 +213,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       plannedStartDate: m.plannedStartDate,
       plannedEndDate: m.plannedEndDate,
       description: m.description,
+      startTimeSlot: m.startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+      endTimeSlot: m.endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+      estimatedHours: m.estimatedHours,
+      siteAccessRequired: m.siteAccessRequired,
+      siteAccessNotes: m.siteAccessNotes,
     })));
   };
 
@@ -284,6 +289,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                         plannedStartDate: m.plannedStartDate,
                         plannedEndDate: m.plannedEndDate,
                         description: m.description,
+                        startTimeSlot: m.startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                        endTimeSlot: m.endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                        estimatedHours: m.estimatedHours,
+                        siteAccessRequired: m.siteAccessRequired,
+                        siteAccessNotes: m.siteAccessNotes,
                       }))
                     );
                   } else {
@@ -297,6 +307,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                         plannedStartDate: m.plannedStartDate,
                         plannedEndDate: m.plannedEndDate,
                         description: m.description,
+                        startTimeSlot: m.startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                        endTimeSlot: m.endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                        estimatedHours: m.estimatedHours,
+                        siteAccessRequired: m.siteAccessRequired,
+                        siteAccessNotes: m.siteAccessNotes,
                       })),
                       updated[0],
                     ]);
