@@ -22,6 +22,9 @@ interface Milestone {
   estimatedHours?: number;
   siteAccessRequired?: boolean;
   siteAccessNotes?: string;
+  accessDeclined?: boolean;
+  accessDeclinedReason?: string;
+  accessDeclinedAt?: string;
   photoUrls?: string[];
   notes?: string;
   createdAt: string;
@@ -505,6 +508,19 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                               </div>
                             )}
                           </div>
+
+                          {milestone.accessDeclined && (
+                            <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1">
+                              <p className="text-[11px] font-semibold text-amber-800">
+                                ⚠ Access blocked for requested date{milestone.plannedEndDate ? 's' : ''}
+                              </p>
+                              {milestone.accessDeclinedReason && (
+                                <p className="text-[11px] text-amber-700">
+                                  Client reason: {milestone.accessDeclinedReason}
+                                </p>
+                              )}
+                            </div>
+                          )}
 
                           {milestone.description && (
                             <p className="text-xs text-slate-600 mb-2">

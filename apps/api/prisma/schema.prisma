@@ -288,6 +288,10 @@ model ProjectMilestone {
   estimatedHours        Int?
   siteAccessRequired    Boolean  @default(true)
   siteAccessNotes       String?
+  accessDeclined        Boolean  @default(false)
+  accessDeclinedReason  String?
+  accessDeclinedAt      DateTime?
+  accessDeclinedByClientId String?
   description           String?
   photoUrls             String[] @default([])
   notes                 String?

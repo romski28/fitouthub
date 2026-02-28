@@ -857,4 +857,55 @@ export class EmailService {
       throw error;
     }
   }
+
+  async sendMilestoneAccessDeclinedNotification(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    milestoneTitle: string;
+    declinedDateRange: string;
+    reason: string;
+    projectProfessionalId: string;
+    baseUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send milestone access decline notice to:', params.to);
+      return;
+    }
+
+    const projectUrl = `${params.baseUrl}/professional-projects/${params.projectProfessionalId}`;
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Access date declined: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #991b1b; margin: 0 0 12px 0;">⚠️ Site access date declined</h2>
+            <p style="color: #374151;">Hi ${params.professionalName},</p>
+            <p style="color: #374151; line-height: 1.5;">
+              The client declined the requested access window for <strong>${params.milestoneTitle}</strong>
+              on <strong>${params.declinedDateRange}</strong> in project <strong>${params.projectName}</strong>.
+            </p>
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px; margin: 16px 0;">
+              <p style="margin: 0; color: #991b1b;"><strong>Reason:</strong> ${params.reason}</p>
+            </div>
+            <p style="color: #374151;">Please update the task schedule with a new access date/time.</p>
+            <div style="margin: 24px 0; text-align: center;">
+              <a href="${projectUrl}" style="display: inline-block; background: #0f766e; color: white; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600;">
+                Open Project Schedule
+              </a>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Milestone access decline notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send milestone access decline notification:', error);
+      throw error;
+    }
+  }
 }

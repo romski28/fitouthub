@@ -11,7 +11,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { MilestonesService } from './milestones.service';
-import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto } from './dtos';
+import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, DeclineMilestoneAccessDto } from './dtos';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('milestones')
@@ -116,6 +116,25 @@ export class MilestonesController {
       console.error(`[MilestonesController] PUT /milestones/${id} error:`, error);
       throw error;
     }
+  }
+
+  @Post(':id/decline-access')
+  @UseGuards(AuthGuard('jwt'))
+  async declineMilestoneAccess(
+    @Param('id') id: string,
+    @Body() body: DeclineMilestoneAccessDto,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new BadRequestException('Client authentication required');
+    }
+
+    if (!body?.reason || body.reason.trim().length < 3) {
+      throw new BadRequestException('Please provide a reason for declining access');
+    }
+
+    return this.milestonesService.declineMilestoneAccess(id, userId, body.reason.trim());
   }
 
   @Delete(':id')

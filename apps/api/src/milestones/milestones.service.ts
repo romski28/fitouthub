@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, MilestoneResponseDto } from './dtos';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class MilestonesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async getMilestonesByProject(projectId: string) {
     return this.prisma.projectMilestone.findMany({
@@ -112,10 +116,26 @@ export class MilestonesService {
   async updateMilestone(id: string, data: UpdateMilestoneDto) {
     try {
       console.log(`[MilestonesService] Updating milestone ${id}:`, JSON.stringify(data, null, 2));
+      const touchesAccessWindow =
+        data.plannedStartDate !== undefined ||
+        data.plannedEndDate !== undefined ||
+        data.startTimeSlot !== undefined ||
+        data.endTimeSlot !== undefined ||
+        data.siteAccessRequired !== undefined ||
+        data.siteAccessNotes !== undefined;
+
       const result = await this.prisma.projectMilestone.update({
         where: { id },
         data: {
           ...data,
+          ...(touchesAccessWindow
+            ? {
+                accessDeclined: false,
+                accessDeclinedReason: null,
+                accessDeclinedAt: null,
+                accessDeclinedByClientId: null,
+              }
+            : {}),
           updatedAt: new Date(),
         },
       });
@@ -125,6 +145,111 @@ export class MilestonesService {
       console.error(`[MilestonesService] Error updating milestone ${id}:`, error);
       throw error;
     }
+  }
+
+  async declineMilestoneAccess(milestoneId: string, clientUserId: string, reason: string) {
+    const milestone = await this.prisma.projectMilestone.findUnique({
+      where: { id: milestoneId },
+      include: {
+        project: true,
+        projectProfessional: {
+          include: {
+            professional: true,
+          },
+        },
+      },
+    });
+
+    if (!milestone) {
+      throw new NotFoundException('Milestone not found');
+    }
+
+    if (!milestone.projectProfessionalId) {
+      throw new BadRequestException('Milestone is not linked to a professional project assignment');
+    }
+
+    const isOwner =
+      (milestone.project.userId && milestone.project.userId === clientUserId) ||
+      (milestone.project.clientId && milestone.project.clientId === clientUserId) ||
+      (!milestone.project.userId && !milestone.project.clientId);
+
+    if (!isOwner) {
+      throw new BadRequestException('You do not have access to this milestone');
+    }
+
+    if (milestone.project.status !== 'awarded') {
+      throw new BadRequestException('Access date declines are only available after project award');
+    }
+
+    if (!milestone.siteAccessRequired) {
+      throw new BadRequestException('This task does not currently require site access');
+    }
+
+    const declined = await this.prisma.projectMilestone.update({
+      where: { id: milestoneId },
+      data: {
+        accessDeclined: true,
+        accessDeclinedReason: reason,
+        accessDeclinedAt: new Date(),
+        accessDeclinedByClientId: clientUserId,
+        updatedAt: new Date(),
+      },
+    });
+
+    const formatDate = (value?: Date | null) => {
+      if (!value) return 'unspecified date';
+      return value.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    };
+
+    const dateRangeText = milestone.plannedEndDate && milestone.plannedStartDate
+      ? `${formatDate(milestone.plannedStartDate)} to ${formatDate(milestone.plannedEndDate)}`
+      : formatDate(milestone.plannedStartDate || milestone.plannedEndDate || null);
+
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId: milestone.projectProfessionalId,
+        senderType: 'client',
+        senderClientId: clientUserId,
+        content: `⚠️ Access declined for "${milestone.title}" on ${dateRangeText}. Reason: ${reason}. Please propose a new date/time.`,
+      },
+    });
+
+    try {
+      const professionalEmail = milestone.projectProfessional?.professional?.email;
+      const professionalName =
+        milestone.projectProfessional?.professional?.fullName ||
+        milestone.projectProfessional?.professional?.businessName ||
+        'Professional';
+
+      if (professionalEmail) {
+        await this.emailService.sendMilestoneAccessDeclinedNotification({
+          to: professionalEmail,
+          professionalName,
+          projectName: milestone.project.projectName,
+          milestoneTitle: milestone.title,
+          declinedDateRange: dateRangeText,
+          reason,
+          projectProfessionalId: milestone.projectProfessionalId,
+          baseUrl:
+            process.env.WEB_BASE_URL ||
+            process.env.FRONTEND_BASE_URL ||
+            process.env.APP_WEB_URL ||
+            'https://fitouthub-web.vercel.app',
+        });
+      }
+    } catch (emailError) {
+      console.warn('[MilestonesService] Failed to send milestone access decline email:', emailError);
+    }
+
+    return {
+      success: true,
+      milestone: declined,
+      message: 'Access decline recorded and professional notified',
+    };
   }
 
   async deleteMilestone(id: string) {

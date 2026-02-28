@@ -47,11 +47,19 @@ export class MilestoneResponseDto {
   estimatedHours?: number;
   siteAccessRequired: boolean;
   siteAccessNotes?: string;
+  accessDeclined?: boolean;
+  accessDeclinedReason?: string;
+  accessDeclinedAt?: Date;
+  accessDeclinedByClientId?: string;
   description?: string;
   photoUrls: string[];
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export class DeclineMilestoneAccessDto {
+  reason: string;
 }
 
 export class CreateMultipleMilestonesDto {
