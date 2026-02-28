@@ -96,7 +96,7 @@ export function MilestoneEditor({
         status: deriveStatus(defaultMilestones[0].percentComplete),
       });
     }
-  }, []);
+  }, [defaultMilestones]);
 
   const formatHumanDate = (dateStr?: string) => {
     if (!dateStr) return "";
