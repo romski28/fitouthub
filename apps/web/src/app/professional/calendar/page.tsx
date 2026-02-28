@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Calendar, Clock, AlertCircle, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, AlertCircle, ArrowLeft, List, Grid3x3, Plus } from "lucide-react";
 import { API_BASE_URL } from "@/config/api";
 import { useRouter } from "next/navigation";
 import { useProfessionalAuth } from "@/context/professional-auth-context";
@@ -172,34 +172,47 @@ export default function ProfessionalCalendarPage() {
                   My Schedule
                 </h1>
                 <p className="text-sm text-slate-600 mt-1">
-                  {milestones.length} milestone{milestones.length !== 1 ? "s" : ""} across{" "}
+                  {milestones.length} task{milestones.length !== 1 ? "s" : ""} across{" "}
                   {new Set(milestones.map(m => m.projectProfessional.project.id)).size} project
                   {new Set(milestones.map(m => m.projectProfessional.project.id)).size !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button
                 onClick={() => setViewMode("list")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+                className={`p-2 rounded-lg transition ${
                   viewMode === "list"
                     ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
+                title="List View"
               >
-                List View
+                <List className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode("month")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+                className={`p-2 rounded-lg transition ${
                   viewMode === "month"
                     ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
                 disabled
+                title="Month View (Coming Soon)"
               >
-                Month View (Soon)
+                <Grid3x3 className="w-5 h-5" />
+              </button>
+              <div className="w-px h-6 bg-slate-200 mx-2" />
+              <button
+                onClick={() => {
+                  // TODO: Open add task modal/form
+                  alert("Add new task - feature coming soon");
+                }}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="text-sm font-medium">Add Task</span>
               </button>
             </div>
           </div>
@@ -221,9 +234,9 @@ export default function ProfessionalCalendarPage() {
         {milestones.length === 0 && !error ? (
           <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
             <Calendar className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No scheduled milestones</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No scheduled tasks</h3>
             <p className="text-slate-600 mb-4">
-              Milestones with planned dates will appear here
+              Tasks with planned dates will appear here
             </p>
             <button
               onClick={() => router.push("/professional-projects")}
