@@ -1533,18 +1533,21 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
-    const scheduledForDate = parseOptionalDate(body.visitScheduledFor);
+    const scheduledForInput = body.visitScheduledFor?.trim();
+    const scheduledAtInput = body.visitScheduledAt?.trim();
+
+    const scheduledForDate = parseOptionalDate(scheduledForInput);
 
     let scheduledAt: Date | null = null;
-    if (body.visitScheduledAt) {
-      const isTimeOnly = /^\d{2}:\d{2}(:\d{2})?$/.test(body.visitScheduledAt);
+    if (scheduledAtInput) {
+      const isTimeOnly = /^\d{2}:\d{2}(:\d{2})?$/.test(scheduledAtInput);
       if (isTimeOnly) {
-        if (!body.visitScheduledFor) {
+        if (!scheduledForInput) {
           throw new BadRequestException('visitScheduledFor is required when visitScheduledAt is a time value');
         }
-        scheduledAt = parseOptionalDate(`${body.visitScheduledFor}T${body.visitScheduledAt}`);
+        scheduledAt = parseOptionalDate(`${scheduledForInput}T${scheduledAtInput}`);
       } else {
-        scheduledAt = parseOptionalDate(body.visitScheduledAt);
+        scheduledAt = parseOptionalDate(scheduledAtInput);
       }
 
       if (!scheduledAt) {
@@ -1554,6 +1557,21 @@ Please review the project details and respond with your quote or decline the inv
       scheduledAt = scheduledForDate;
     }
 
+    const isValidDate = (value: Date | null) =>
+      !!value && !Number.isNaN(value.getTime());
+
+    const safeScheduledFor = isValidDate(scheduledForDate)
+      ? scheduledForDate
+      : isValidDate(scheduledAt)
+      ? scheduledAt
+      : null;
+
+    const safeScheduledAt = isValidDate(scheduledAt) ? scheduledAt : null;
+
+    if (body.status === 'approved_visit_scheduled' && !safeScheduledAt) {
+      throw new BadRequestException('A valid visit date/time is required for scheduled visits');
+    }
+
     const approved = await this.prisma.siteAccessRequest.update({
       where: { id: requestId },
       data: {
@@ -1561,18 +1579,18 @@ Please review the project details and respond with your quote or decline the inv
         respondedAt: new Date(),
         clientApprovedBy: userId,
         reasonDenied: body.reasonDenied,
-        visitScheduledFor: scheduledForDate || scheduledAt,
-        visitScheduledAt: scheduledAt,
+        visitScheduledFor: safeScheduledFor,
+        visitScheduledAt: safeScheduledAt,
       },
     });
 
-    if (body.status === 'approved_visit_scheduled' && scheduledAt) {
+    if (body.status === 'approved_visit_scheduled' && safeScheduledAt) {
       await this.prisma.siteAccessVisit.create({
         data: {
           projectId: request.projectId,
           projectProfessionalId: request.projectProfessionalId,
           professionalId: request.professionalId,
-          proposedAt: scheduledAt,
+          proposedAt: safeScheduledAt,
           proposedByRole: 'client',
           status: 'proposed',
         },
@@ -1586,7 +1604,7 @@ Please review the project details and respond with your quote or decline the inv
       null,
       body.status === 'approved_no_visit'
         ? 'Client approved site access (no visit required).'
-        : `Client approved site access with a proposed visit on ${this.formatDateTime(scheduledAt)}.`,
+        : `Client approved site access with a proposed visit on ${this.formatDateTime(safeScheduledAt)}.`,
     );
 
     return {
