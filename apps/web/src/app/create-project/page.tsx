@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -20,6 +21,7 @@ interface ProjectDescriptionData {
 
 export default function CreateProjectPage() {
   const router = useRouter();
+    const t = useTranslations('project');
   const { isLoggedIn, accessToken, user, userLocation } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -247,11 +249,11 @@ export default function CreateProjectPage() {
         {/* Header */}
         <div className="mb-8">
           <Link href="/projects" className="text-sm text-blue-600 hover:underline mb-4 inline-block">
-            ← Back to Projects
+            {t('create.backLink')}
           </Link>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Create a New Project</h1>
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">{t('create.title')}</h1>
           <p className="text-lg text-slate-600">
-            Describe your fitout project and scope before inviting professionals to submit quotes.
+              {t('create.description')}
           </p>
         </div>
 

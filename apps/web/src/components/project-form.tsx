@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import LocationSelect, { CanonicalLocation } from './location-select';
 import FileUploader from './file-uploader';
 import { Professional } from '@/lib/types';
@@ -78,6 +79,8 @@ export function ProjectForm({
   showBudget = true,
   showService = true,
 }: ProjectFormProps) {
+    const t = useTranslations('project');
+    const commonT = useTranslations('common');
   const [formData, setFormData] = useState<ProjectFormData>({
     projectName: initialData?.projectName || '',
     clientName: initialData?.clientName || '',

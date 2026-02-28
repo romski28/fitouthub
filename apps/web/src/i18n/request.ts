@@ -105,17 +105,60 @@ const messages = {
     },
     "project": {
       "create": {
-        "title": "Create Project",
-        "heading": "Start Your Project",
-        "projectName": "Project Name",
-        "location": "Location",
-        "budget": "Budget (HKD)",
-        "submit": "Create",
-        "success": "Created successfully!"
-      },
-      "list": {
-        "title": "My Projects",
-        "empty": "No projects yet"
+          "title": "Create a New Project",
+          "heading": "Start Your Project",
+          "description": "Describe your fitout project and scope before inviting professionals to submit quotes",
+          "backLink": "← Back to Projects",
+          "submit": "Create",
+          "success": "Created successfully!"
+        },
+        "form": {
+          "projectName": "Project Name",
+          "projectNamePlaceholder": "e.g., Office Fitout, Restaurant Renovation",
+          "yourName": "Your Name",
+          "yourNamePlaceholder": "Your full name",
+          "email": "Email",
+          "location": "Location",
+          "budget": "Budget (HKD)",
+          "description": "Describe the Project",
+          "descriptionPlaceholder": "Describe your project scope, requirements, and any specific needs...",
+          "descriptionHint": "You can add photos and more details after creating the project.",
+          "tradesRequired": "Trades Required",
+          "isEmergency": "This is an emergency",
+          "cancel": "Cancel",
+          "submit": "Create Project",
+          "submitWithFiles": "Creating Project & uploading",
+          "askAdvice": "Ask for advice",
+          "needHelp": "Need Help Executing This Project?",
+          "helpDescription": "Ask for advice: Get personalized guidance from Fitout Hub experts. We'll help you scope your project, find the right professionals, and manage the entire process from start to finish.",
+          "removeFile": "Remove"
+        },
+        "list": {
+          "title": "My Projects",
+          "createNew": "+ Create New Project",
+          "empty": "No projects yet",
+          "emptyHint": "Kickstart your next renovation with a new project",
+          "startProject": "Do something great, start a project now!",
+          "stats": {
+            "pending": "Pending",
+            "awarded": "Awarded",
+            "rejected": "Rejected"
+          },
+          "search": "Search projects",
+          "labels": {
+            "budget": "Budget:",
+            "created": "Created:",
+            "client": "Client:",
+            "contractor": "Contractor:",
+            "projectBudget": "Project Budget",
+            "projectCost": "Project Cost",
+            "awarded": "Awarded"
+          }
+        },
+        "details": {
+          "withdrawProject": "Withdraw Project",
+          "withdrawing": "Withdrawing...",
+          "quoteAwarded": "🎉 Quote Awarded!"
       }
     },
     "professional": {
@@ -442,17 +485,60 @@ const messages = {
     },
     "project": {
       "create": {
-        "title": "建立項目",
-        "heading": "開始您的項目",
-        "projectName": "項目名稱",
-        "location": "地點",
-        "budget": "預算 (港幣)",
-        "submit": "建立",
-        "success": "建立成功!"
-      },
-      "list": {
-        "title": "我的項目",
-        "empty": "暫無項目"
+          "title": "建立新項目",
+          "heading": "開始您的項目",
+          "description": "描述您的裝修項目及範圍，然後邀請專業人士提交報價",
+          "backLink": "← 返回項目",
+          "submit": "建立",
+          "success": "建立成功!"
+        },
+        "form": {
+          "projectName": "項目名稱",
+          "projectNamePlaceholder": "例如：辦公室裝修、餐廳翻新",
+          "yourName": "您的名字",
+          "yourNamePlaceholder": "您的全名",
+          "email": "電郵",
+          "location": "地點",
+          "budget": "預算 (港幣)",
+          "description": "描述項目",
+          "descriptionPlaceholder": "描述您的項目範圍、要求及特殊需求...",
+          "descriptionHint": "您可以在建立項目後新增相片和更多詳情。",
+          "tradesRequired": "所需行業",
+          "isEmergency": "這是緊急情況",
+          "cancel": "取消",
+          "submit": "建立項目",
+          "submitWithFiles": "正在建立項目及上傳",
+          "askAdvice": "徵求建議",
+          "needHelp": "需要協助執行此項目嗎?",
+          "helpDescription": "徵求建議：獲取來自 Fitout Hub 專家的個性化指導。我們將幫助您界定項目範圍、尋找合適的專業人士、協商報價，並從頭至尾管理整個過程。",
+          "removeFile": "移除"
+        },
+        "list": {
+          "title": "我的項目",
+          "createNew": "+ 建立新項目",
+          "empty": "暫無項目",
+          "emptyHint": "開始您的下一個裝修項目",
+          "startProject": "做點偉大的事，立即開始項目！",
+          "stats": {
+            "pending": "待處理",
+            "awarded": "已授予",
+            "rejected": "已拒絕"
+          },
+          "search": "搜尋項目",
+          "labels": {
+            "budget": "預算:",
+            "created": "建立時間:",
+            "client": "客戶:",
+            "contractor": "承辦商:",
+            "projectBudget": "項目預算",
+            "projectCost": "項目成本",
+            "awarded": "已授予"
+          }
+        },
+        "details": {
+          "withdrawProject": "撤回項目",
+          "withdrawing": "正在撤回...",
+          "quoteAwarded": "🎉 報價已授予!"
       }
     },
     "professional": {
