@@ -49,18 +49,21 @@ export class MilestonesService {
   }
 
   async createMultipleMilestones(data: CreateMultipleMilestonesDto) {
+    console.log(`[MilestonesService] Batch save started: projectProfessionalId=${data.projectProfessionalId}, milestones=${data.milestones.length}`);
+    
     // First delete any existing milestones for this professional on this project
     // Use projectProfessionalId if provided, otherwise fall back to projectId
     const whereClause = data.projectProfessionalId
       ? { projectProfessionalId: data.projectProfessionalId }
       : { projectId: data.projectId };
     
-    await this.prisma.projectMilestone.deleteMany({
+    const deleteResult = await this.prisma.projectMilestone.deleteMany({
       where: whereClause,
     });
+    console.log(`[MilestonesService] Deleted ${deleteResult.count} existing milestones`);
 
     // Create new milestones
-    return Promise.all(
+    const created = await Promise.all(
       data.milestones.map((m) =>
         this.prisma.projectMilestone.create({
           data: {
@@ -83,6 +86,8 @@ export class MilestonesService {
         }),
       ),
     );
+    console.log(`[MilestonesService] Created ${created.length} new milestones`);
+    return created;
   }
 
   async updateMilestone(id: string, data: UpdateMilestoneDto) {

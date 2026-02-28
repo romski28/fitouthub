@@ -109,9 +109,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
         if (response.ok) {
           const data = await response.json();
-          setMilestones(Array.isArray(data) ? data : data.milestones || []);
+          const milestonesData = Array.isArray(data) ? data : data.milestones || [];
+          console.log(`[ScheduleTab] Fetched ${milestonesData.length} milestones`);
+          setMilestones(milestonesData);
         } else {
           // No milestones yet
+          console.log('[ScheduleTab] No milestones found (404)');
           setMilestones([]);
         }
       } catch (err) {
@@ -140,6 +143,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     description?: string;
   }>) => {
     try {
+      console.log(`[ScheduleTab] handleMilestonesChange called with ${updatedMilestones.length} milestones`);
       setError(null);
 
       if (!accessToken) {
@@ -192,6 +196,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       }
 
       const savedMilestones = await response.json();
+      console.log(`[ScheduleTab] Batch save: sent ${normalizedMilestones.length} milestones, received ${Array.isArray(savedMilestones) ? savedMilestones.length : 'unknown'} back`, {
+        sent: normalizedMilestones,
+        received: savedMilestones
+      });
       
       // Update local state with saved milestones
       setMilestones(Array.isArray(savedMilestones) ? savedMilestones : []);
