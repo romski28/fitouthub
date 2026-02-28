@@ -1319,8 +1319,8 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Professional is not linked to this project');
     }
 
-    if (!['accepted', 'quoted', 'awarded'].includes(projectProfessional.status)) {
-      throw new BadRequestException('Project must be accepted before requesting access');
+    if (!['pending', 'accepted', 'quoted', 'awarded'].includes(projectProfessional.status)) {
+      throw new BadRequestException('Professional must be invited to request site access');
     }
 
     const existingRequest = await this.prisma.siteAccessRequest.findFirst({
@@ -1657,8 +1657,8 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Professional is not linked to this project');
     }
 
-    if (!['accepted', 'quoted', 'awarded'].includes(projectProfessional.status)) {
-      throw new BadRequestException('Project must be accepted before requesting a site visit');
+    if (!['pending', 'accepted', 'quoted', 'awarded'].includes(projectProfessional.status)) {
+      throw new BadRequestException('Professional must be invited to request a site visit');
     }
 
     const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
