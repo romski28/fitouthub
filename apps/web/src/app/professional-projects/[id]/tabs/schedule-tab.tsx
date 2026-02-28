@@ -51,6 +51,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
 
   const isAwarded = projectStatus === 'awarded';
 
@@ -128,7 +129,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     fetchMilestones();
   }, [projectProfessionalId, accessToken]);
 
-  const handleMilestonesChange = async (updatedMilestones: Array<{
+  const handleSaveMilestone = async (milestone: {
     title: string;
     sequence: number;
     status: 'not_started' | 'in_progress' | 'completed';
@@ -141,9 +142,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     siteAccessRequired?: boolean;
     siteAccessNotes?: string;
     description?: string;
-  }>) => {
+  }) => {
     try {
-      console.log(`[ScheduleTab] handleMilestonesChange called with ${updatedMilestones.length} milestones`);
       setError(null);
 
       if (!accessToken) {
@@ -151,97 +151,184 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         return;
       }
 
-      // Use batch endpoint to replace all milestones at once
-      const normalizedMilestones = updatedMilestones.map(m => {
-        const milestone: any = {
-          projectProfessionalId,
-          title: m.title,
-          sequence: m.sequence,
-          status: m.status || 'not_started',
-          percentComplete: m.percentComplete || 0,
-          siteAccessRequired: m.siteAccessRequired ?? true,
-        };
-        
-        // Only include optional fields if they have values
-        if (m.description) milestone.description = m.description;
-        if (m.plannedStartDate) milestone.plannedStartDate = toISODateTime(m.plannedStartDate);
-        if (m.plannedEndDate) milestone.plannedEndDate = toISODateTime(m.plannedEndDate);
-        if (m.startTimeSlot) milestone.startTimeSlot = m.startTimeSlot;
-        if (m.endTimeSlot) milestone.endTimeSlot = m.endTimeSlot;
-        if (m.estimatedHours !== undefined && m.estimatedHours !== null) milestone.estimatedHours = m.estimatedHours;
-        if (m.siteAccessNotes) milestone.siteAccessNotes = m.siteAccessNotes;
-        
-        return milestone;
-      });
-
-      console.log(`[ScheduleTab] Sending batch request:`, {
+      // Normalize milestone data
+      const data: any = {
         projectId,
         projectProfessionalId,
-        milestonesCount: normalizedMilestones.length,
-        milestones: normalizedMilestones,
-      });
+        title: milestone.title,
+        sequence: milestone.sequence,
+        status: milestone.status || 'not_started',
+        percentComplete: milestone.percentComplete || 0,
+        siteAccessRequired: milestone.siteAccessRequired ?? true,
+      };
+
+      // Only include optional fields if they have values
+      if (milestone.description) data.description = milestone.description;
+      if (milestone.plannedStartDate) data.plannedStartDate = toISODateTime(milestone.plannedStartDate);
+      if (milestone.plannedEndDate) data.plannedEndDate = toISODateTime(milestone.plannedEndDate);
+      if (milestone.startTimeSlot) data.startTimeSlot = milestone.startTimeSlot;
+      if (milestone.endTimeSlot) data.endTimeSlot = milestone.endTimeSlot;
+      if (milestone.estimatedHours !== undefined && milestone.estimatedHours !== null) data.estimatedHours = milestone.estimatedHours;
+      if (milestone.siteAccessNotes) data.siteAccessNotes = milestone.siteAccessNotes;
 
       const response = await fetch(
-        `${API_BASE_URL}/milestones/batch`,
+        `${API_BASE_URL}/milestones`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({
-            projectId,
-            projectProfessionalId,
-            milestones: normalizedMilestones,
-          }),
+          body: JSON.stringify(data),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to save milestones');
+        throw new Error(errorData.message || 'Failed to save milestone');
       }
 
-      const savedMilestones = await response.json();
-      console.log(`[ScheduleTab] Batch save: sent ${normalizedMilestones.length} milestones, received ${Array.isArray(savedMilestones) ? savedMilestones.length : 'unknown'} back`, {
-        sent: normalizedMilestones,
-        received: savedMilestones
-      });
+      const savedMilestone = await response.json();
       
-      // Update local state with saved milestones
-      setMilestones(Array.isArray(savedMilestones) ? savedMilestones : []);
-      setEditingIndex(null);
+      // Add to local state
+      setMilestones([...milestones, savedMilestone]);
       setIsAddingNew(false);
       onMilestonesUpdate?.();
       
-      // Show success message
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('toast', {
-          detail: { message: 'Schedule saved successfully', type: 'success' }
+          detail: { message: 'Task saved successfully', type: 'success' }
         }));
       }
     } catch (err) {
-      console.error('Error saving milestones:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save milestones');
+      console.error('Error saving milestone:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save task');
+    }
+  };
+
+  const handleUpdateMilestone = async (milestoneId: string, updated: {
+    title: string;
+    sequence: number;
+    status: 'not_started' | 'in_progress' | 'completed';
+    percentComplete: number;
+    plannedStartDate?: string;
+    plannedEndDate?: string;
+    startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    estimatedHours?: number;
+    siteAccessRequired?: boolean;
+    siteAccessNotes?: string;
+    description?: string;
+  }) => {
+    try {
+      setError(null);
+
+      if (!accessToken) {
+        setError('Authentication required');
+        return;
+      }
+
+      // Normalize milestone data
+      const data: any = {
+        title: updated.title,
+        status: updated.status || 'not_started',
+        percentComplete: updated.percentComplete || 0,
+        siteAccessRequired: updated.siteAccessRequired ?? true,
+        description: updated.description,
+      };
+
+      // Only include optional fields if they have values
+      if (updated.plannedStartDate) data.plannedStartDate = toISODateTime(updated.plannedStartDate);
+      if (updated.plannedEndDate) data.plannedEndDate = toISODateTime(updated.plannedEndDate);
+      if (updated.startTimeSlot) data.startTimeSlot = updated.startTimeSlot;
+      if (updated.endTimeSlot) data.endTimeSlot = updated.endTimeSlot;
+      if (updated.estimatedHours !== undefined && updated.estimatedHours !== null) data.estimatedHours = updated.estimatedHours;
+      if (updated.siteAccessNotes) data.siteAccessNotes = updated.siteAccessNotes;
+
+      const response = await fetch(
+        `${API_BASE_URL}/milestones/${milestoneId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update milestone');
+      }
+
+      const updatedMilestone = await response.json();
+      
+      // Update local state
+      setMilestones(milestones.map(m => m.id === milestoneId ? updatedMilestone : m));
+      setEditingIndex(null);
+      onMilestonesUpdate?.();
+      
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: { message: 'Task updated successfully', type: 'success' }
+        }));
+      }
+    } catch (err) {
+      console.error('Error updating milestone:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update task');
+    }
+  };
+
+  const handleDeleteMilestone = async (milestoneId: string) => {
+    try {
+      setError(null);
+
+      if (!accessToken) {
+        setError('Authentication required');
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/milestones/${milestoneId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete milestone');
+      }
+
+      // Remove from local state
+      setMilestones(milestones.filter(m => m.id !== milestoneId));
+      setDeleteConfirmIndex(null);
+      onMilestonesUpdate?.();
+      
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: { message: 'Task deleted successfully', type: 'success' }
+        }));
+      }
+    } catch (err) {
+      console.error('Error deleting milestone:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete task');
     }
   };
 
   const handleDeleteTask = (index: number) => {
-    const newMilestones = milestones.filter((_, i) => i !== index);
-    handleMilestonesChange(newMilestones.map(m => ({
-      title: m.title,
-      sequence: m.sequence,
-      status: m.status,
-      percentComplete: m.percentComplete,
-      plannedStartDate: m.plannedStartDate,
-      plannedEndDate: m.plannedEndDate,
-      description: m.description,
-      startTimeSlot: m.startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-      endTimeSlot: m.endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-      estimatedHours: m.estimatedHours,
-      siteAccessRequired: m.siteAccessRequired,
-      siteAccessNotes: m.siteAccessNotes,
-    })));
+    // Just show confirmation dialog
+    setDeleteConfirmIndex(index);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmIndex !== null) {
+      const milestone = milestones[deleteConfirmIndex];
+      handleDeleteMilestone(milestone.id);
+    }
   };
 
   return (
@@ -297,47 +384,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 }
                 onMilestonesChange={(updated) => {
                   if (editingIndex !== null) {
-                    // Editing existing task
-                    const newMilestones = [...milestones];
-                    newMilestones[editingIndex] = {
-                      ...newMilestones[editingIndex],
-                      ...updated[0],
-                    };
-                    handleMilestonesChange(
-                      newMilestones.map(m => ({
-                        title: m.title,
-                        sequence: m.sequence,
-                        status: m.status,
-                        percentComplete: m.percentComplete,
-                        plannedStartDate: m.plannedStartDate,
-                        plannedEndDate: m.plannedEndDate,
-                        description: m.description,
-                        startTimeSlot: m.startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                        endTimeSlot: m.endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                        estimatedHours: m.estimatedHours,
-                        siteAccessRequired: m.siteAccessRequired,
-                        siteAccessNotes: m.siteAccessNotes,
-                      }))
-                    );
+                    // Editing existing task - update the milestone with its ID
+                    handleUpdateMilestone(milestones[editingIndex].id, updated[0]);
                   } else {
-                    // Adding new task
-                    handleMilestonesChange([
-                      ...milestones.map(m => ({
-                        title: m.title,
-                        sequence: m.sequence,
-                        status: m.status,
-                        percentComplete: m.percentComplete,
-                        plannedStartDate: m.plannedStartDate,
-                        plannedEndDate: m.plannedEndDate,
-                        description: m.description,
-                        startTimeSlot: m.startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                        endTimeSlot: m.endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                        estimatedHours: m.estimatedHours,
-                        siteAccessRequired: m.siteAccessRequired,
-                        siteAccessNotes: m.siteAccessNotes,
-                      })),
-                      updated[0],
-                    ]);
+                    // Adding new task - save it
+                    handleSaveMilestone(updated[0]);
                   }
                 }}
               />
@@ -477,6 +528,32 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             </div>
           )}
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmIndex !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm shadow-lg">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete Task?</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              Are you sure you want to delete <strong>{milestones[deleteConfirmIndex]?.title}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmIndex(null)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded hover:bg-slate-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
