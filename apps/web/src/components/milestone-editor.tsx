@@ -48,7 +48,7 @@ export function MilestoneEditor({
   // Current form being edited
   const [currentMilestone, setCurrentMilestone] = useState<MilestoneEditData>({
     title: "",
-    sequence: (defaultMilestones?.length || 0) + 1,
+    sequence: 0,
     status: "not_started",
     percentComplete: 0,
     siteAccessRequired: true,
@@ -148,7 +148,7 @@ export function MilestoneEditor({
     // Reset form
     setCurrentMilestone({
       title: "",
-      sequence: updated.length + 1,
+      sequence: 0,
       status: "not_started",
       percentComplete: 0,
       description: "",
@@ -186,7 +186,7 @@ export function MilestoneEditor({
     setEditingIndex(null);
     setCurrentMilestone({
       title: "",
-      sequence: savedMilestones.length + 1,
+      sequence: 0,
       status: "not_started",
       percentComplete: 0,
       description: "",

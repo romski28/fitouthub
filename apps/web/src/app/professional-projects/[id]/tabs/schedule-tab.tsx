@@ -152,11 +152,14 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       }
 
       // Normalize milestone data
+      // Calculate next sequence if not provided
+      const nextSequence = milestone.sequence || Math.max(...milestones.map(m => m.sequence || 0), 0) + 1;
+
       const data: any = {
         projectId,
         projectProfessionalId,
         title: milestone.title,
-        sequence: milestone.sequence,
+        sequence: nextSequence,
         status: milestone.status || 'not_started',
         percentComplete: milestone.percentComplete || 0,
         siteAccessRequired: milestone.siteAccessRequired ?? true,

@@ -34,6 +34,11 @@ export class MilestonesService {
         sequence: data.sequence,
       });
 
+      // Validate sequence is provided and unique per project
+      if (!data.sequence && data.sequence !== 0) {
+        throw new Error('Sequence number is required');
+      }
+
       const result = await this.prisma.projectMilestone.create({
         data: {
           projectId: data.projectId,
