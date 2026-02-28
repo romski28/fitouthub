@@ -110,12 +110,21 @@ export class MilestonesService {
   }
 
   async updateMilestone(id: string, data: UpdateMilestoneDto) {
-    return this.prisma.projectMilestone.update({
-      where: { id },
-      data: {
-        ...data,
-      },
-    });
+    try {
+      console.log(`[MilestonesService] Updating milestone ${id}:`, JSON.stringify(data, null, 2));
+      const result = await this.prisma.projectMilestone.update({
+        where: { id },
+        data: {
+          ...data,
+          updatedAt: new Date(),
+        },
+      });
+      console.log(`[MilestonesService] Milestone ${id} updated successfully`);
+      return result;
+    } catch (error) {
+      console.error(`[MilestonesService] Error updating milestone ${id}:`, error);
+      throw error;
+    }
   }
 
   async deleteMilestone(id: string) {

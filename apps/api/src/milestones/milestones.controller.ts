@@ -107,7 +107,15 @@ export class MilestonesController {
     @Body() updateMilestoneDto: UpdateMilestoneDto,
     @Req() req: any,
   ) {
-    return this.milestonesService.updateMilestone(id, updateMilestoneDto);
+    try {
+      console.log(`[MilestonesController] PUT /milestones/${id} received:`, JSON.stringify(updateMilestoneDto, null, 2));
+      const result = await this.milestonesService.updateMilestone(id, updateMilestoneDto);
+      console.log(`[MilestonesController] Milestone ${id} updated successfully`);
+      return result;
+    } catch (error) {
+      console.error(`[MilestonesController] PUT /milestones/${id} error:`, error);
+      throw error;
+    }
   }
 
   @Delete(':id')
