@@ -194,6 +194,33 @@ const messages = {
       "title": "Messages",
       "send": "Send"
     },
+    "tradesmen": {
+      "hero": {
+        "tagline": "Browse Trades",
+        "title": "Find Expert Tradesmen for Any Job",
+        "description": "Discover specialized tradesmen across multiple categories. Filter by skill and expertise."
+      },
+      "search": {
+        "tagline": "Search & Filter",
+        "title": "Narrow your search",
+        "label": "Who can help me with...",
+        "placeholder": "e.g. plumber, AC servicing, electrician",
+        "clearAria": "Clear search"
+      },
+      "states": {
+        "loading": "Loading tradesmen...",
+        "empty": "No matching trades found."
+      },
+      "card": {
+        "featured": "Featured",
+        "specialties": "Specialties",
+        "more": "+{count} more",
+        "seeInArea": "See {trade} in your area"
+      },
+      "actions": {
+        "showAll": "Show all {count} trades"
+      }
+    },
     "home": {
       "hero": {
         "tagline": "Professional Fitout Management Platform",
@@ -573,6 +600,33 @@ const messages = {
     "chat": {
       "title": "訊息",
       "send": "傳送"
+    },
+    "tradesmen": {
+      "hero": {
+        "tagline": "瀏覽工種",
+        "title": "為任何工程尋找專業工匠",
+        "description": "探索多個類別的專業工匠，按技能與專長篩選。"
+      },
+      "search": {
+        "tagline": "搜尋與篩選",
+        "title": "縮窄您的搜尋",
+        "label": "誰可以幫我處理...",
+        "placeholder": "例如：水喉、冷氣維修、電工",
+        "clearAria": "清除搜尋"
+      },
+      "states": {
+        "loading": "正在載入工匠...",
+        "empty": "找不到符合的工種。"
+      },
+      "card": {
+        "featured": "精選",
+        "specialties": "專長",
+        "more": "+{count}項",
+        "seeInArea": "查看您附近的{trade}"
+      },
+      "actions": {
+        "showAll": "顯示全部{count}個工種"
+      }
     },
     "home": {
       "hero": {

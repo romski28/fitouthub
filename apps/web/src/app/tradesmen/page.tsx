@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Tradesman } from '../../lib/types';
@@ -22,6 +23,7 @@ function Badge({ label }: { label: string }) {
 }
 
 export default function TradesmenPage() {
+  const t = useTranslations('tradesmen');
   const { isLoggedIn, userLocation } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [tradesmen, setTradesmen] = useState<Tradesman[]>([]);
@@ -148,13 +150,13 @@ export default function TradesmenPage() {
         <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white py-6 px-6">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-400">
-              Browse Trades
+              {t('hero.tagline')}
             </p>
             <h1 className="text-2xl font-bold">
-              Find Expert Tradesmen for Any Job
+              {t('hero.title')}
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl">
-              Discover specialized tradesmen across multiple categories. Filter by skill and expertise.
+              {t('hero.description')}
             </p>
           </div>
         </section>
@@ -162,14 +164,14 @@ export default function TradesmenPage() {
         {/* Search Section Header */}
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500 mb-2">
-            Search & Filter
+            {t('search.tagline')}
           </p>
-          <h2 className="text-2xl font-bold text-slate-900">Narrow your search</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{t('search.title')}</h2>
         </div>
 
         {/* Search + typeahead */}
         <div className="relative w-full max-w-xl">
-          <label className="text-sm text-slate-600">Who can help me with...</label>
+          <label className="text-sm text-slate-600">{t('search.label')}</label>
           <div className="relative mt-1">
             <input
               type="text"
@@ -177,7 +179,7 @@ export default function TradesmenPage() {
               onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => setShowSuggestions(suggestions.length > 0)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-              placeholder="e.g. plumber, AC servicing, electrician"
+              placeholder={t('search.placeholder')}
               className="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 shadow-sm focus:border-slate-500 focus:outline-none"
             />
             {searchTerm && (
@@ -185,7 +187,7 @@ export default function TradesmenPage() {
                 type="button"
                 onClick={() => handleSearchChange('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                aria-label="Clear search"
+                aria-label={t('search.clearAria')}
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -212,13 +214,13 @@ export default function TradesmenPage() {
 
         {loading ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-            Loading tradesmen...
+            {t('states.loading')}
           </div>
         ) : (
           <div className="space-y-4">
             {displayedTrades.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-                No matching trades found.
+                {t('states.empty')}
               </div>
             ) : (
               <>
@@ -235,7 +237,7 @@ export default function TradesmenPage() {
                             <h3 className="text-base font-bold text-white">{trade.title}</h3>
                             <p className="text-xs font-semibold text-emerald-400 mt-1 uppercase tracking-wide">{trade.category}</p>
                           </div>
-                          {trade.featured && <Badge label="Featured" />}
+                          {trade.featured && <Badge label={t('card.featured')} />}
                         </div>
                       </div>
 
@@ -247,7 +249,7 @@ export default function TradesmenPage() {
 
                         {/* Job Tags */}
                         <div className="space-y-2">
-                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Specialties</p>
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">{t('card.specialties')}</p>
                           <div className="flex flex-wrap gap-2">
                             {trade.jobs.slice(0, 3).map((job: string) => (
                               <span
@@ -259,7 +261,7 @@ export default function TradesmenPage() {
                             ))}
                             {trade.jobs.length > 3 && (
                               <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                                +{trade.jobs.length - 3} more
+                                {t('card.more', { count: trade.jobs.length - 3 })}
                               </span>
                             )}
                           </div>
@@ -277,7 +279,7 @@ export default function TradesmenPage() {
                             }}
                             className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
                           >
-                            See {trade.title.toLowerCase()} in your area
+                            {t('card.seeInArea', { trade: trade.title.toLowerCase() })}
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
@@ -295,7 +297,7 @@ export default function TradesmenPage() {
                       className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-400 transition"
                       onClick={() => setShowAllTrades(true)}
                     >
-                      Show all {filteredTradesmen.length} trades
+                      {t('actions.showAll', { count: filteredTradesmen.length })}
                     </button>
                   </div>
                 )}
