@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
+import { NotificationService } from '../notifications/notification.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { resolve } from 'path';
@@ -16,6 +17,7 @@ export class ProjectsService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private chatService: ChatService,
+    private notificationService: NotificationService,
   ) {}
 
   private readonly STATUS_ORDER = [
@@ -1666,6 +1668,37 @@ Please review the project details and respond with your quote or decline the inv
         : `Client approved site access with a proposed visit on ${this.formatDateTime(safeScheduledAt)}.`,
     );
 
+    // Send notification to professional
+    try {
+      const professional = await this.prisma.professional.findUnique({
+        where: { id: request.professionalId },
+        include: { user: true },
+      });
+
+      if (professional?.user?.mobile) {
+        const project = await this.prisma.project.findUnique({
+          where: { id: request.projectId },
+          select: { projectName: true },
+        });
+
+        const notificationMessage = body.status === 'approved_no_visit'
+          ? `Good news! Your site access request for "${project?.projectName}" has been approved. No site visit required.`
+          : `Good news! Your site access request for "${project?.projectName}" has been approved with a scheduled visit on ${this.formatDateTime(safeScheduledAt)}.`;
+
+        if (professional.userId) {
+          await this.notificationService.send({
+            userId: professional.userId,
+            phoneNumber: professional.user.mobile,
+            eventType: 'site_access_approved',
+            message: notificationMessage,
+          });
+        }
+      }
+    } catch (error) {
+      // Log but don't fail the request if notification fails
+      console.error('Failed to send site access approval notification:', error);
+    }
+
     return {
       success: true,
       request: approved,
@@ -2470,6 +2503,24 @@ Please review the project details and respond with your quote or decline the inv
       nextStepsMessage:
         'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
     });
+
+    // Send WhatsApp notification to winner
+    try {
+      const professionalUser = await this.prisma.user.findUnique({
+        where: { id: projectProfessional.professional.userId || undefined },
+      });
+
+      if (professionalUser?.mobile && professionalUser?.id) {
+        await this.notificationService.send({
+          userId: professionalUser.id,
+          phoneNumber: professionalUser.mobile,
+          eventType: 'quote_awarded',
+          message: `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`,
+        });
+      }
+    } catch (error) {
+      console.error('[ProjectsService.awardQuote] Failed to send WhatsApp notification to winner:', error);
+    }
 
     // Send escrow notification to professional
     const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
