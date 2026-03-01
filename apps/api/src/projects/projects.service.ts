@@ -1458,6 +1458,13 @@ Please review the project details and respond with your quote or decline the inv
       }
     }
 
+    // Fetch location details to get project timezone
+    const locationDetails = await this.prisma.projectLocationDetails.findUnique({
+      where: { projectId: request.projectId },
+    });
+
+    const projectTimezone = locationDetails?.timezone || 'Asia/Hong_Kong';
+
     const parseOptionalDate = (value?: string) => {
       if (!value) return null;
       const parsed = new Date(value);
@@ -1465,6 +1472,55 @@ Please review the project details and respond with your quote or decline the inv
         return null;
       }
       return parsed;
+    };
+
+    // Convert local time string in a timezone to UTC
+    // Example: "2024-03-01T13:00" in "Asia/Hong_Kong" timezone
+    const convertLocalToUTC = (localDateTime: string, timezone: string): Date | null => {
+      try {
+        // Create formatter for the target timezone to get offset
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        });
+
+        // Parse the local datetime
+        const localDate = new Date(localDateTime);
+        if (Number.isNaN(localDate.getTime())) {
+          return null;
+        }
+
+        // Get the formatted string in the target timezone
+        const parts = formatter.formatToParts(localDate);
+        const partsObj: Record<string, string> = {};
+        parts.forEach((part) => {
+          partsObj[part.type] = part.value;
+        });
+
+        // Create a date from the formatted parts
+        const tzDate = new Date(
+          parseInt(partsObj.year),
+          parseInt(partsObj.month) - 1,
+          parseInt(partsObj.day),
+          parseInt(partsObj.hour),
+          parseInt(partsObj.minute),
+          parseInt(partsObj.second)
+        );
+
+        // Calculate offset between local and target timezone
+        const offsetMs = localDate.getTime() - tzDate.getTime();
+        
+        // Return UTC time (add offset to get back to UTC)
+        return new Date(localDate.getTime() + offsetMs);
+      } catch {
+        return null;
+      }
     };
 
     if (body.status === 'denied') {
@@ -1536,34 +1592,37 @@ Please review the project details and respond with your quote or decline the inv
     const scheduledForInput = body.visitScheduledFor?.trim();
     const scheduledAtInput = body.visitScheduledAt?.trim();
 
-    const scheduledForDate = parseOptionalDate(scheduledForInput);
-
     let scheduledAt: Date | null = null;
-    if (scheduledAtInput) {
-      const isTimeOnly = /^\d{2}:\d{2}(:\d{2})?$/.test(scheduledAtInput);
-      if (isTimeOnly) {
-        if (!scheduledForInput) {
-          throw new BadRequestException('visitScheduledFor is required when visitScheduledAt is a time value');
+    if (scheduledForInput || scheduledAtInput) {
+      let localDateTime: string | null = null;
+      
+      if (scheduledForInput && scheduledAtInput) {
+        const isTimeOnly = /^\d{2}:\d{2}(:\d{2})?$/.test(scheduledAtInput);
+        if (isTimeOnly) {
+          localDateTime = `${scheduledForInput}T${scheduledAtInput}`;
+        } else {
+          scheduledAt = parseOptionalDate(scheduledAtInput);
         }
-        scheduledAt = parseOptionalDate(`${scheduledForInput}T${scheduledAtInput}`);
-      } else {
-        scheduledAt = parseOptionalDate(scheduledAtInput);
+      } else if (scheduledForInput) {
+        localDateTime = scheduledForInput;
+      } else if (scheduledAtInput) {
+        const isTimeOnly = /^\d{2}:\d{2}(:\d{2})?$/.test(scheduledAtInput);
+        if (isTimeOnly && !scheduledForInput) {
+          throw new BadRequestException('Date is required when time is provided');
+        }
+        localDateTime = scheduledAtInput;
       }
 
-      if (!scheduledAt) {
-        throw new BadRequestException('visitScheduledAt must be a valid date/time');
+      if (localDateTime && !scheduledAt) {
+        scheduledAt = convertLocalToUTC(localDateTime, projectTimezone);
       }
-    } else {
-      scheduledAt = scheduledForDate;
     }
 
     const isValidDate = (value: Date | null) =>
       !!value && !Number.isNaN(value.getTime());
 
-    const safeScheduledFor = isValidDate(scheduledForDate)
-      ? scheduledForDate
-      : isValidDate(scheduledAt)
-      ? scheduledAt
+    const safeScheduledFor = scheduledAt
+      ? new Date(scheduledAt.getFullYear(), scheduledAt.getMonth(), scheduledAt.getDate())
       : null;
 
     const safeScheduledAt = isValidDate(scheduledAt) ? scheduledAt : null;

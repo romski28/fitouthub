@@ -693,6 +693,7 @@ model ProjectLocationDetails {
   accessHoursDescription String?
   desiredStartDate       DateTime? @db.Date
   photoUrls              String[]  @default([])
+  timezone               String    @default("Asia/Hong_Kong")
   status                 LocationDetailsStatus @default(pending)
   submittedAt            DateTime  @default(now())
   submittedBy            String
