@@ -126,6 +126,16 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   isSubmittingLocationDetails,
   locationDetailsError,
 }) => {
+  // Helper to check if a field is in the blocker list
+  const isFieldBlocked = (fieldName: string): boolean => {
+    return siteAccessBlockers.includes(fieldName);
+  };
+
+  const blockedBorderClass = (fieldName: string) =>
+    isFieldBlocked(fieldName)
+      ? 'border-rose-500 bg-rose-50'
+      : '';
+
   return (
     <div className="space-y-4">
       <AccordionGroup>
@@ -275,7 +285,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               value={locationDetailsForm.addressFull}
                               onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
                               placeholder="e.g., 123 Main Street"
-                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Full Address') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                             />
                           </div>
 
@@ -287,7 +297,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 value={locationDetailsForm.unitNumber}
                                 onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
                                 placeholder="e.g., 101"
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Unit Number') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </div>
                             <div>
@@ -297,7 +307,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 value={locationDetailsForm.floorLevel}
                                 onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
                                 placeholder="e.g., G/F, 1/F"
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Floor Level') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </div>
                             <div>
@@ -307,7 +317,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 value={locationDetailsForm.postalCode}
                                 onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
                                 placeholder="e.g., Central, TST"
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Postal Code / District') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </div>
                           </div>
@@ -332,7 +342,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               <select
                                 value={locationDetailsForm.propertyType || ''}
                                 onChange={(e) => onUpdateLocationDetailsForm({ propertyType: e.target.value })}
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Property Type') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               >
                                 <option value="">Select type</option>
                                 <option value="residential">Residential</option>
@@ -350,7 +360,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 value={locationDetailsForm.propertySize}
                                 onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
                                 placeholder="e.g., 800"
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Property Size') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </div>
                             <div>
@@ -360,7 +370,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 value={locationDetailsForm.propertyAge}
                                 onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
                                 placeholder="e.g., 15"
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Property Age') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </div>
                           </div>
@@ -371,7 +381,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               value={locationDetailsForm.existingConditions}
                               onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
                               placeholder="Describe current state, any issues, damages, etc."
-                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Existing Conditions') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               rows={2}
                             />
                           </div>
@@ -396,7 +406,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               value={locationDetailsForm.accessDetails}
                               onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
                               placeholder="e.g., Security gate, 24/7 access, notify 2 hours before"
-                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Access Details') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               rows={2}
                             />
                           </div>
@@ -408,7 +418,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               value={locationDetailsForm.accessHoursDescription}
                               onChange={(e) => onUpdateLocationDetailsForm({ accessHoursDescription: e.target.value })}
                               placeholder="e.g., Mon-Fri 9am-6pm, weekends by appointment"
-                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Access Hours') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                             />
                           </div>
 
@@ -420,7 +430,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 value={locationDetailsForm.onSiteContactName}
                                 onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactName: e.target.value })}
                                 placeholder="Contact person"
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('On-site Contact Name') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </div>
                             <div>
@@ -430,7 +440,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 value={locationDetailsForm.onSiteContactPhone}
                                 onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactPhone: e.target.value })}
                                 placeholder="Phone number"
-                                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('On-site Contact Phone') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </div>
                           </div>
@@ -441,7 +451,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               type="date"
                               value={locationDetailsForm.desiredStartDate}
                               onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
-                              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Desired Start Date') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
                             />
                           </div>
                         </div>

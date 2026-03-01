@@ -2371,6 +2371,18 @@ Please review the project details and respond with your quote or decline the inv
         },
       });
 
+      // Auto-approve awarded professional's pending site access request (if any)
+      await tx.siteAccessRequest.updateMany({
+        where: {
+          projectProfessionalId: awardedPP.id,
+          status: 'pending',
+        },
+        data: {
+          status: 'approved_no_visit',
+          respondedAt: new Date(),
+        },
+      });
+
       // Mark project as awarded for downstream views
       await tx.project.update({
         where: { id: projectId },
@@ -2520,6 +2532,18 @@ Please review the project details and respond with your quote or decline the inv
         await this.prisma.projectProfessional.update({
           where: { id: pp.id },
           data: { status: 'declined' },
+        });
+
+        // Cancel any pending site access requests from non-awarded professionals
+        await this.prisma.siteAccessRequest.updateMany({
+          where: {
+            projectProfessionalId: pp.id,
+            status: 'pending',
+          },
+          data: {
+            status: 'cancelled',
+            respondedAt: new Date(),
+          },
         });
       } catch (err) {
         console.error(
