@@ -1463,13 +1463,7 @@ export default function ClientProjectDetailPage() {
                 onToggleAccordion={toggleAccordion}
                 accessToken={accessToken || ''}
                 onAwarded={async () => {
-                  const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-                  });
-                  if (res.ok) {
-                    const updated = await res.json();
-                    setProject(updated.project);
-                  }
+                  await fetchProject();
                 }}
                 onActionBusy={setActionBusy}
                 actionBusy={actionBusy}
