@@ -4,9 +4,10 @@ import { MilestonesController } from './milestones.controller';
 import { PrismaService } from '../prisma.service';
 import { ProfessionalAuthModule } from '../professional-auth/professional-auth.module';
 import { EmailModule } from '../email/email.module';
+import { NotificationModule } from '../notifications/notification.module';
 
 @Module({
-  imports: [ProfessionalAuthModule, EmailModule],
+  imports: [ProfessionalAuthModule, EmailModule, NotificationModule],
   providers: [MilestonesService, PrismaService],
   controllers: [MilestonesController],
   exports: [MilestonesService],

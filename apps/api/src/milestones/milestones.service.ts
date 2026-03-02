@@ -2,12 +2,14 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, MilestoneResponseDto } from './dtos';
 import { EmailService } from '../email/email.service';
+import { NotificationService } from '../notifications/notification.service';
 
 @Injectable()
 export class MilestonesService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private notificationService: NotificationService,
   ) {}
 
   async getMilestonesByProject(projectId: string) {
@@ -116,6 +118,26 @@ export class MilestonesService {
   async updateMilestone(id: string, data: UpdateMilestoneDto) {
     try {
       console.log(`[MilestonesService] Updating milestone ${id}:`, JSON.stringify(data, null, 2));
+      const existingMilestone = await this.prisma.projectMilestone.findUnique({
+        where: { id },
+        include: {
+          project: {
+            include: {
+              user: true,
+            },
+          },
+          projectProfessional: {
+            include: {
+              professional: true,
+            },
+          },
+        },
+      });
+
+      if (!existingMilestone) {
+        throw new NotFoundException('Milestone not found');
+      }
+
       const touchesAccessWindow =
         data.plannedStartDate !== undefined ||
         data.plannedEndDate !== undefined ||
@@ -139,6 +161,48 @@ export class MilestonesService {
           updatedAt: new Date(),
         },
       });
+
+      const becameCompleted =
+        existingMilestone.status !== 'completed' && result.status === 'completed';
+
+      if (becameCompleted) {
+        const projectName = existingMilestone.project?.projectName || 'Project';
+
+        try {
+          const professional = existingMilestone.projectProfessional?.professional;
+          if (professional?.id && professional?.phone) {
+            await this.notificationService.send({
+              professionalId: professional.id,
+              phoneNumber: professional.phone,
+              eventType: 'milestone_completed',
+              message: `Milestone "${result.title}" for "${projectName}" is marked completed.`,
+            });
+          }
+        } catch (notificationError) {
+          console.warn(
+            '[MilestonesService] Failed to send milestone_completed notification to professional:',
+            notificationError,
+          );
+        }
+
+        try {
+          const clientUser = existingMilestone.project?.user;
+          if (existingMilestone.project?.userId && clientUser?.mobile) {
+            await this.notificationService.send({
+              userId: existingMilestone.project.userId,
+              phoneNumber: clientUser.mobile,
+              eventType: 'milestone_completed',
+              message: `Milestone "${result.title}" for "${projectName}" has been completed.`,
+            });
+          }
+        } catch (notificationError) {
+          console.warn(
+            '[MilestonesService] Failed to send milestone_completed notification to client:',
+            notificationError,
+          );
+        }
+      }
+
       console.log(`[MilestonesService] Milestone ${id} updated successfully`);
       return result;
     } catch (error) {

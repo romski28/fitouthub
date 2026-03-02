@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
+import { NotificationService } from '../notifications/notification.service';
 
 export interface CreateFinancialTransactionDto {
   projectId: string;
@@ -33,6 +34,7 @@ export class FinancialService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private chatService: ChatService,
+    private notificationService: NotificationService,
   ) {}
 
   /**
@@ -384,6 +386,23 @@ export class FinancialService {
         projectName,
         projectUrl: `${webBaseUrl}/projects/${tx.projectProfessional?.projectId}`,
       }).catch(() => void 0);
+    }
+
+    try {
+      const professional = tx.projectProfessional?.professional;
+      if (professional?.id && professional?.phone) {
+        await this.notificationService.send({
+          professionalId: professional.id,
+          phoneNumber: professional.phone,
+          eventType: 'payment_received',
+          message: `Payment is now secured in escrow for "${projectName}". You can proceed with project execution.`,
+        });
+      }
+    } catch (notificationError) {
+      console.warn(
+        '[FinancialService] Failed to send payment_received notification:',
+        notificationError,
+      );
     }
 
     return updated;
