@@ -11,20 +11,45 @@ async function bootstrap() {
   // Set global API prefix
   app.setGlobalPrefix('api');
 
+  const allowedOrigins = new Set([
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://fitouthub-web.vercel.app',
+    'https://fitouthub-web-git-main-romski28s-projects.vercel.app',
+  ]);
+
+  const isAllowedOrigin = (origin?: string) => {
+    if (!origin) {
+      return true;
+    }
+    if (allowedOrigins.has(origin)) {
+      return true;
+    }
+    return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+  };
+
   // Enable CORS
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://fitouthub-web.vercel.app',
-      'https://fitouthub-web-git-main-romski28s-projects.vercel.app',
-      /\.vercel\.app$/, // Allow all Vercel preview deployments
-    ],
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked origin: ${origin}`), false);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+      'Cache-Control',
+      'Pragma',
+    ],
     exposedHeaders: ['Content-Length', 'Content-Type'],
     maxAge: 86400, // 24 hours
+    optionsSuccessStatus: 204,
   });
 
   try {
