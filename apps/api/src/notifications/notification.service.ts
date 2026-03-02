@@ -22,21 +22,28 @@ export class NotificationService {
    */
   async send(dto: SendNotificationDto): Promise<void> {
     try {
-      // Get user preferences
-      const preferences = await this.prisma.notificationPreference.findUnique({
-        where: { userId: dto.userId },
-      });
-
-      // Determine channel to use
-      const channel = dto.channel || preferences?.primaryChannel || NotificationChannel.WHATSAPP;
+      // Get user preferences (or skip if table doesn't exist)
+      let preferences = null;
+      let channel = NotificationChannel.WHATSAPP; // default channel
       
-      // Check if channel is enabled
-      if (preferences) {
-        const channelEnabled = this.isChannelEnabled(channel, preferences);
-        if (!channelEnabled) {
-          this.logger.warn(`Channel ${channel} is disabled for user ${dto.userId}`);
-          return;
+      try {
+        preferences = await this.prisma.notificationPreference.findUnique({
+          where: { userId: dto.userId },
+        });
+        channel = dto.channel || preferences?.primaryChannel || NotificationChannel.WHATSAPP;
+        
+        // Check if channel is enabled
+        if (preferences) {
+          const channelEnabled = this.isChannelEnabled(channel, preferences);
+          if (!channelEnabled) {
+            this.logger.warn(`Channel ${channel} is disabled for user ${dto.userId}`);
+            return;
+          }
         }
+      } catch (prefError) {
+        // Notification preference table might not exist yet - use default channel
+        this.logger.debug(`Could not load preferences (table may not exist):`, (prefError as any)?.code);
+        channel = dto.channel || NotificationChannel.WHATSAPP;
       }
 
       // Send notification
@@ -57,32 +64,42 @@ export class NotificationService {
         return;
       }
 
-      // Log to database
-      await this.logNotification({
-        userId: dto.userId,
-        channel,
-        phoneNumber: dto.phoneNumber,
-        eventType: dto.eventType,
-        message: dto.message,
-        status: response.status,
-        providerId: response.providerId,
-        providerResponse: response.response,
-        failureReason: response.error,
-      });
+      // Log to database (best effort - don't fail if table doesn't exist)
+      try {
+        await this.logNotification({
+          userId: dto.userId,
+          channel,
+          phoneNumber: dto.phoneNumber,
+          eventType: dto.eventType,
+          message: dto.message,
+          status: response.status,
+          providerId: response.providerId,
+          providerResponse: response.response,
+          failureReason: response.error,
+        });
+      } catch (logError) {
+        // Notification log table might not exist yet - just log warning
+        this.logger.debug(`Could not save notification log (table may not exist):`, (logError as any)?.code);
+        // Notification was still sent via Twilio, so don't fail here
+      }
 
     } catch (error) {
       this.logger.error(`Failed to send notification:`, error);
       
-      // Log failure to database
-      await this.logNotification({
-        userId: dto.userId,
-        channel: dto.channel || NotificationChannel.WHATSAPP,
-        phoneNumber: dto.phoneNumber,
-        eventType: dto.eventType,
-        message: dto.message,
-        status: 'failed',
-        failureReason: error.message,
-      });
+      // Try to log failure to database (best effort)
+      try {
+        await this.logNotification({
+          userId: dto.userId,
+          channel: dto.channel || NotificationChannel.WHATSAPP,
+          phoneNumber: dto.phoneNumber,
+          eventType: dto.eventType,
+          message: dto.message,
+          status: 'failed',
+          failureReason: error.message,
+        });
+      } catch (logError) {
+        this.logger.debug(`Could not save failure log:`, (logError as any)?.code);
+      }
     }
   }
 
