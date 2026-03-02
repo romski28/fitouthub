@@ -22,7 +22,7 @@ export class NotificationService {
    */
   async send(dto: SendNotificationDto): Promise<void> {
     try {
-      // Get user preferences (or skip if table doesn't exist)
+      // Get user or professional preferences (or skip if table doesn't exist)
       let preferences: any = null;
       let channel: NotificationChannel = NotificationChannel.WHATSAPP;
       
@@ -31,20 +31,23 @@ export class NotificationService {
           preferences = await this.prisma.notificationPreference.findUnique({
             where: { userId: dto.userId },
           });
-          if (preferences) {
-            channel = dto.channel || preferences.primaryChannel || NotificationChannel.WHATSAPP;
-            
-            // Check if channel is enabled
-            const channelEnabled = this.isChannelEnabled(channel, preferences);
-            if (!channelEnabled) {
-              this.logger.warn(`Channel ${channel} is disabled for user ${dto.userId}`);
-              return;
-            }
-          } else {
-            channel = dto.channel || NotificationChannel.WHATSAPP;
+        } else if (dto.professionalId) {
+          preferences = await this.prisma.notificationPreference.findUnique({
+            where: { professionalId: dto.professionalId },
+          });
+        }
+        
+        if (preferences) {
+          channel = dto.channel || preferences.primaryChannel || NotificationChannel.WHATSAPP;
+          
+          // Check if channel is enabled
+          const channelEnabled = this.isChannelEnabled(channel, preferences);
+          if (!channelEnabled) {
+            const recipientId = dto.userId || dto.professionalId;
+            this.logger.warn(`Channel ${channel} is disabled for recipient ${recipientId}`);
+            return;
           }
         } else {
-          // Professional-only notifications (no User preference row)
           channel = dto.channel || NotificationChannel.WHATSAPP;
         }
       } catch (prefError) {
