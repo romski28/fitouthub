@@ -2506,20 +2506,41 @@ Please review the project details and respond with your quote or decline the inv
 
     // Send WhatsApp notification to winner
     try {
+      console.log('[ProjectsService.awardQuote] Looking up user for notification:', {
+        professionalId: projectProfessional.professional.id,
+        professionalEmail: projectProfessional.professional.email,
+        linkedUserId: projectProfessional.professional.userId,
+      });
+
       const professionalUser = await this.prisma.user.findUnique({
         where: { id: projectProfessional.professional.userId || undefined },
       });
 
+      console.log('[ProjectsService.awardQuote] User lookup result:', {
+        found: !!professionalUser,
+        userId: professionalUser?.id,
+        hasMobile: !!professionalUser?.mobile,
+        mobile: professionalUser?.mobile ? `${professionalUser.mobile.substring(0, 4)}...` : null,
+      });
+
       if (professionalUser?.mobile && professionalUser?.id) {
+        console.log('[ProjectsService.awardQuote] Sending notification to:', professionalUser.mobile);
         await this.notificationService.send({
           userId: professionalUser.id,
           phoneNumber: professionalUser.mobile,
           eventType: 'quote_awarded',
           message: `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`,
         });
+        console.log('[ProjectsService.awardQuote] Notification sent successfully');
+      } else {
+        console.log('[ProjectsService.awardQuote] Skipping notification - user has no mobile number or no linked account');
       }
     } catch (error) {
       console.error('[ProjectsService.awardQuote] Failed to send WhatsApp notification to winner:', error);
+      console.error('[ProjectsService.awardQuote] Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+      });
     }
 
     // Send escrow notification to professional
