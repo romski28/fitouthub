@@ -45,7 +45,7 @@ export class TwilioProvider implements INotificationProvider {
         body: message,
         from: this.fromPhoneNumber,
         to: phoneNumber,
-        statusCallback: `${this.configService.get('API_BASE_URL')}/notifications/webhook/twilio`,
+        statusCallback: `${this.configService.get('API_BASE_URL')}/api/notifications/webhook/twilio`,
       });
 
       this.logger.log(`SMS sent to ${phoneNumber}: ${result.sid}`);
@@ -86,7 +86,7 @@ export class TwilioProvider implements INotificationProvider {
         body: message,
         from: whatsappFrom,
         to: whatsappTo,
-        statusCallback: `${this.configService.get('API_BASE_URL')}/notifications/webhook/twilio`,
+        statusCallback: `${this.configService.get('API_BASE_URL')}/api/notifications/webhook/twilio`,
       });
 
       this.logger.log(`WhatsApp sent to ${phoneNumber}: ${result.sid}`);
