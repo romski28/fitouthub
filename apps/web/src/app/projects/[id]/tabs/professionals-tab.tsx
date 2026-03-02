@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
+import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -70,8 +71,6 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   onActionBusy,
   actionBusy,
 }) => {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://fitouthub.onrender.com';
-  
   const biddingProfessionals = professionals.filter((p) => ['pending', 'quoted'].includes(p.status));
   const awardedProfessional = professionals.find((p) => p.status === 'awarded');
   const declinedProfessionals = professionals.filter((p) => p.status === 'declined');
