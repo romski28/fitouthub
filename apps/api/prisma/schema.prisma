@@ -178,7 +178,6 @@ model Project {
   locationDetailsRequiredAt    DateTime?
   locationDetailsProvidedAt    DateTime?
   emailTokens                  EmailToken[]
-  client                       Client?                 @relation(fields: [clientId], references: [id])
   user                         User?                   @relation(fields: [userId], references: [id])
   photos                       ProjectPhoto[]
   professionals                ProjectProfessional[]
@@ -342,16 +341,6 @@ model EmailToken {
 
   @@index([token])
   @@index([projectId])
-}
-
-model Client {
-  id        String    @id @default(cuid())
-  name      String
-  email     String?   @unique
-  phone     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  projects  Project[]
 }
 
 model Message {

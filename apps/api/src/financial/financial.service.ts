@@ -294,7 +294,7 @@ export class FinancialService {
         projectProfessional: {
           include: {
             professional: true,
-            project: { include: { client: true } },
+            project: { include: { user: true } },
           },
         },
       },
@@ -363,7 +363,8 @@ export class FinancialService {
     }
 
     // Email notifications to client and professional
-    const clientEmail = tx.projectProfessional?.project?.client?.email;
+    // Note: Client is now stored as User (role='client'), access via project.user
+    const clientEmail = tx.projectProfessional?.project?.user?.email;
     const professionalEmail = tx.projectProfessional?.professional?.email;
     const projectName = tx.projectProfessional?.project?.projectName || 'Project';
     const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';

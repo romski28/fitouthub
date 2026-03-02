@@ -150,7 +150,7 @@ export class ProjectsService {
             }
           : undefined,
         include: {
-          client: true,
+
           professionals: {
             include: { professional: true },
           },
@@ -209,7 +209,7 @@ export class ProjectsService {
     try {
       const projects = await this.prisma.project.findMany({
         include: {
-          client: true,
+
           professionals: {
             include: {
               professional: true,
@@ -262,7 +262,7 @@ export class ProjectsService {
             id: { in: basicProjects.map(p => p.id) },
           },
           include: {
-            client: true,
+
             professionals: {
               include: {
                 professional: true,
@@ -307,7 +307,7 @@ export class ProjectsService {
       const project = await this.prisma.project.findUnique({
         where: { id },
         include: {
-          client: true,
+
           professionals: {
             include: {
               professional: true,
@@ -336,7 +336,7 @@ export class ProjectsService {
           userId: userId,
         },
         include: {
-          client: true,
+
           professionals: {
             include: {
               professional: true,
@@ -686,7 +686,7 @@ Please review the project details and respond with your quote or decline the inv
     const project = await this.prisma.project.create({
       data: createData,
       include: {
-        client: true,
+
         professionals: {
           include: {
             professional: true,
@@ -844,7 +844,7 @@ Please review the project details and respond with your quote or decline the inv
         where: { id },
         data: rest,
         include: {
-          client: true,
+
           professionals: {
             include: {
               professional: true,
@@ -1044,7 +1044,7 @@ Please review the project details and respond with your quote or decline the inv
       this.prisma.project.findUnique({
         where: { id: emailToken.projectId },
         include: {
-          client: true,
+
         },
       }),
     ]);
@@ -1186,7 +1186,7 @@ Please review the project details and respond with your quote or decline the inv
         include: {
           project: {
             include: {
-              client: true,
+
             },
           },
           professional: true,
@@ -2291,7 +2291,7 @@ Please review the project details and respond with your quote or decline the inv
       include: {
         project: {
           include: {
-            client: true,
+
           },
         },
       },
@@ -2361,7 +2361,7 @@ Please review the project details and respond with your quote or decline the inv
         include: {
           project: {
             include: {
-              client: true,
+
               professionals: {
                 include: { professional: true },
               },
@@ -2395,7 +2395,7 @@ Please review the project details and respond with your quote or decline the inv
           professional: true,
           project: {
             include: {
-              client: true,
+
             },
           },
         },
@@ -2645,7 +2645,7 @@ Please review the project details and respond with your quote or decline the inv
           project: {
             include: {
               user: true,
-              client: true,
+
             },
           },
         },
@@ -2897,7 +2897,7 @@ Please review the project details and respond with your quote or decline the inv
     const project = await this.prisma.project.findFirst({
       where: { id: projectId, userId },
       include: {
-        client: true,
+
         professionals: {
           include: { professional: true },
         },
