@@ -24,22 +24,27 @@ export class NotificationService {
     try {
       // Get user preferences (or skip if table doesn't exist)
       let preferences: any = null;
-      let channel: string = NotificationChannel.WHATSAPP; // default channel
+      let channel: NotificationChannel = NotificationChannel.WHATSAPP;
       
       try {
-        preferences = await this.prisma.notificationPreference.findUnique({
-          where: { userId: dto.userId },
-        });
-        if (preferences) {
-          channel = dto.channel || preferences.primaryChannel || NotificationChannel.WHATSAPP;
-          
-          // Check if channel is enabled
-          const channelEnabled = this.isChannelEnabled(channel as NotificationChannel, preferences);
-          if (!channelEnabled) {
-            this.logger.warn(`Channel ${channel} is disabled for user ${dto.userId}`);
-            return;
+        if (dto.userId) {
+          preferences = await this.prisma.notificationPreference.findUnique({
+            where: { userId: dto.userId },
+          });
+          if (preferences) {
+            channel = dto.channel || preferences.primaryChannel || NotificationChannel.WHATSAPP;
+            
+            // Check if channel is enabled
+            const channelEnabled = this.isChannelEnabled(channel, preferences);
+            if (!channelEnabled) {
+              this.logger.warn(`Channel ${channel} is disabled for user ${dto.userId}`);
+              return;
+            }
+          } else {
+            channel = dto.channel || NotificationChannel.WHATSAPP;
           }
         } else {
+          // Professional-only notifications (no User preference row)
           channel = dto.channel || NotificationChannel.WHATSAPP;
         }
       } catch (prefError) {
@@ -70,7 +75,8 @@ export class NotificationService {
       try {
         await this.logNotification({
           userId: dto.userId,
-          channel: channel as NotificationChannel,
+          professionalId: dto.professionalId,
+          channel,
           phoneNumber: dto.phoneNumber,
           eventType: dto.eventType,
           message: dto.message,
@@ -92,7 +98,8 @@ export class NotificationService {
       try {
         await this.logNotification({
           userId: dto.userId,
-          channel: (dto.channel || NotificationChannel.WHATSAPP) as NotificationChannel,
+          professionalId: dto.professionalId,
+          channel: dto.channel || NotificationChannel.WHATSAPP,
           phoneNumber: dto.phoneNumber,
           eventType: dto.eventType,
           message: dto.message,
@@ -217,7 +224,8 @@ export class NotificationService {
    * Helper: Log notification to database
    */
   private async logNotification(data: {
-    userId: string;
+    userId?: string;
+    professionalId?: string;
     channel: NotificationChannel;
     phoneNumber: string;
     eventType: string;
@@ -230,6 +238,7 @@ export class NotificationService {
     return this.prisma.notificationLog.create({
       data: {
         userId: data.userId,
+        professionalId: data.professionalId,
         channel: data.channel,
         phoneNumber: data.phoneNumber,
         eventType: data.eventType,

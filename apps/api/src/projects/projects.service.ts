@@ -1684,9 +1684,8 @@ Please review the project details and respond with your quote or decline the inv
           ? `Good news! Your site access request for "${project?.projectName}" has been approved. No site visit required.`
           : `Good news! Your site access request for "${project?.projectName}" has been approved with a scheduled visit on ${this.formatDateTime(safeScheduledAt)}.`;
 
-        const professionalUserId = `prof_${professional.id}`;
         await this.notificationService.send({
-          userId: professionalUserId,
+          professionalId: professional.id,
           phoneNumber: professional.phone,
           eventType: 'site_access_approved',
           message: notificationMessage,
@@ -2514,12 +2513,8 @@ Please review the project details and respond with your quote or decline the inv
       if (projectProfessional.professional.phone) {
         console.log('[ProjectsService.awardQuote] Sending notification to:', projectProfessional.professional.phone);
         
-        // Use a generated ID for the professional since they don't have a User account
-        // This allows the notification system to track the log even without a User
-        const professionalUserId = `prof_${projectProfessional.professional.id}`;
-        
         await this.notificationService.send({
-          userId: professionalUserId,
+          professionalId: projectProfessional.professional.id,
           phoneNumber: projectProfessional.professional.phone,
           eventType: 'quote_awarded',
           message: `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`,

@@ -3,7 +3,8 @@ import { NotificationChannel, NotificationStatus } from '@prisma/client';
 export { NotificationChannel, NotificationStatus };
 
 export interface SendNotificationDto {
-  userId: string;
+  userId?: string;
+  professionalId?: string;
   phoneNumber: string;
   eventType: string;
   message: string;

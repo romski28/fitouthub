@@ -140,6 +140,7 @@ model Professional {
   activityLogs            ActivityLog[]
   siteAccessRequests      SiteAccessRequest[]
   siteAccessVisits        SiteAccessVisit[]
+  notificationLogs        NotificationLog[]
 }
 
 model Project {
@@ -750,7 +751,8 @@ model NotificationPreference {
 
 model NotificationLog {
   id                   String               @id @default(cuid())
-  userId               String
+  userId               String?
+  professionalId       String?
   channel              NotificationChannel
   phoneNumber          String?
   eventType            String               // e.g., "site_access_approved", "quote_awarded"
@@ -765,9 +767,11 @@ model NotificationLog {
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 
-  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  professional         Professional?        @relation(fields: [professionalId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([professionalId])
   @@index([status])
   @@index([eventType])
   @@index([createdAt(sort: Desc)])
