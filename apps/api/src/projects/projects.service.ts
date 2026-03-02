@@ -1672,10 +1672,9 @@ Please review the project details and respond with your quote or decline the inv
     try {
       const professional = await this.prisma.professional.findUnique({
         where: { id: request.professionalId },
-        include: { user: true },
       });
 
-      if (professional?.user?.mobile) {
+      if (professional?.phone) {
         const project = await this.prisma.project.findUnique({
           where: { id: request.projectId },
           select: { projectName: true },
@@ -1685,14 +1684,13 @@ Please review the project details and respond with your quote or decline the inv
           ? `Good news! Your site access request for "${project?.projectName}" has been approved. No site visit required.`
           : `Good news! Your site access request for "${project?.projectName}" has been approved with a scheduled visit on ${this.formatDateTime(safeScheduledAt)}.`;
 
-        if (professional.userId) {
-          await this.notificationService.send({
-            userId: professional.userId,
-            phoneNumber: professional.user.mobile,
-            eventType: 'site_access_approved',
-            message: notificationMessage,
-          });
-        }
+        const professionalUserId = `prof_${professional.id}`;
+        await this.notificationService.send({
+          userId: professionalUserId,
+          phoneNumber: professional.phone,
+          eventType: 'site_access_approved',
+          message: notificationMessage,
+        });
       }
     } catch (error) {
       // Log but don't fail the request if notification fails
@@ -2506,53 +2504,34 @@ Please review the project details and respond with your quote or decline the inv
 
     // Send WhatsApp notification to winner
     try {
-      console.log('[ProjectsService.awardQuote] Looking up user for notification:', {
+      console.log('[ProjectsService.awardQuote] Preparing notification for professional:', {
         professionalId: projectProfessional.professional.id,
         professionalEmail: projectProfessional.professional.email,
-        linkedUserId: projectProfessional.professional.userId,
+        professionalPhone: projectProfessional.professional.phone ? `${projectProfessional.professional.phone.substring(0, 4)}...` : null,
       });
 
-      let professionalUser = null;
-      
-      // Try to find user by linked userId first
-      if (projectProfessional.professional.userId) {
-        professionalUser = await this.prisma.user.findUnique({
-          where: { id: projectProfessional.professional.userId },
-        });
-      }
-      
-      // Fall back to finding by professional email if no direct link
-      if (!professionalUser) {
-        console.log('[ProjectsService.awardQuote] No linked User, looking up by email:', projectProfessional.professional.email);
-        professionalUser = await this.prisma.user.findUnique({
-          where: { email: projectProfessional.professional.email },
-        });
-      }
-
-      console.log('[ProjectsService.awardQuote] User lookup result:', {
-        found: !!professionalUser,
-        userId: professionalUser?.id,
-        hasMobile: !!professionalUser?.mobile,
-        mobile: professionalUser?.mobile ? `${professionalUser.mobile.substring(0, 4)}...` : null,
-      });
-
-      if (professionalUser?.mobile && professionalUser?.id) {
-        console.log('[ProjectsService.awardQuote] Sending notification to:', professionalUser.mobile);
+      // Use professional's phone number directly
+      if (projectProfessional.professional.phone) {
+        console.log('[ProjectsService.awardQuote] Sending notification to:', projectProfessional.professional.phone);
+        
+        // Use a generated ID for the professional since they don't have a User account
+        // This allows the notification system to track the log even without a User
+        const professionalUserId = `prof_${projectProfessional.professional.id}`;
+        
         await this.notificationService.send({
-          userId: professionalUser.id,
-          phoneNumber: professionalUser.mobile,
+          userId: professionalUserId,
+          phoneNumber: projectProfessional.professional.phone,
           eventType: 'quote_awarded',
           message: `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`,
         });
         console.log('[ProjectsService.awardQuote] Notification sent successfully');
       } else {
-        console.log('[ProjectsService.awardQuote] Skipping notification - user has no mobile number or no linked account');
+        console.log('[ProjectsService.awardQuote] Skipping notification - professional has no phone number');
       }
     } catch (error) {
       console.error('[ProjectsService.awardQuote] Failed to send WhatsApp notification to winner:', error);
       console.error('[ProjectsService.awardQuote] Error details:', {
         message: error?.message,
-        stack: error?.stack,
       });
     }
 
