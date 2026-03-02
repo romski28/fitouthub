@@ -23,22 +23,24 @@ export class NotificationService {
   async send(dto: SendNotificationDto): Promise<void> {
     try {
       // Get user preferences (or skip if table doesn't exist)
-      let preferences = null;
-      let channel = NotificationChannel.WHATSAPP; // default channel
+      let preferences: any = null;
+      let channel: string = NotificationChannel.WHATSAPP; // default channel
       
       try {
         preferences = await this.prisma.notificationPreference.findUnique({
           where: { userId: dto.userId },
         });
-        channel = dto.channel || preferences?.primaryChannel || NotificationChannel.WHATSAPP;
-        
-        // Check if channel is enabled
         if (preferences) {
-          const channelEnabled = this.isChannelEnabled(channel, preferences);
+          channel = dto.channel || preferences.primaryChannel || NotificationChannel.WHATSAPP;
+          
+          // Check if channel is enabled
+          const channelEnabled = this.isChannelEnabled(channel as NotificationChannel, preferences);
           if (!channelEnabled) {
             this.logger.warn(`Channel ${channel} is disabled for user ${dto.userId}`);
             return;
           }
+        } else {
+          channel = dto.channel || NotificationChannel.WHATSAPP;
         }
       } catch (prefError) {
         // Notification preference table might not exist yet - use default channel
@@ -68,7 +70,7 @@ export class NotificationService {
       try {
         await this.logNotification({
           userId: dto.userId,
-          channel,
+          channel: channel as NotificationChannel,
           phoneNumber: dto.phoneNumber,
           eventType: dto.eventType,
           message: dto.message,
@@ -90,12 +92,12 @@ export class NotificationService {
       try {
         await this.logNotification({
           userId: dto.userId,
-          channel: dto.channel || NotificationChannel.WHATSAPP,
+          channel: (dto.channel || NotificationChannel.WHATSAPP) as NotificationChannel,
           phoneNumber: dto.phoneNumber,
           eventType: dto.eventType,
           message: dto.message,
           status: 'failed',
-          failureReason: error.message,
+          failureReason: (error as any)?.message,
         });
       } catch (logError) {
         this.logger.debug(`Could not save failure log:`, (logError as any)?.code);
