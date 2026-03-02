@@ -39,10 +39,26 @@ TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_AUTH_TOKEN=your_auth_token_here
 TWILIO_PHONE_NUMBER=+85212345678
 TWILIO_WHATSAPP_NUMBER=+14155238886
-API_BASE_URL=http://localhost:4000
+API_BASE_URL=https://fitouthub.onrender.com
 ```
 
-## 6. Configure Webhooks (Local Testing) (5 mins)
+## 6. Configure Webhooks (Render/Vercel Deployment) (3 mins)
+
+Because your API is deployed on Render, Twilio webhook callbacks must target Render (not Vercel).
+
+1. Go to Twilio Console → Phone Numbers → Your SMS number
+2. Under "Messaging Configuration":
+  - **Status Callback URL**: `https://fitouthub.onrender.com/notifications/webhook/twilio`
+  - **HTTP Method**: POST
+3. Save
+
+For WhatsApp sandbox callbacks:
+1. Go to Twilio Console → Messaging → Try it out → WhatsApp Sandbox Settings
+2. Set **Status Callback URL** to:
+  - `https://fitouthub.onrender.com/notifications/webhook/twilio`
+3. Save
+
+## 7. Optional Local Testing with ngrok
 
 For local development, use ngrok to expose your local API:
 
@@ -68,7 +84,7 @@ Copy the ngrok URL (e.g., `https://abc123.ngrok.io`), then:
    - **HTTP Method**: POST
 4. Save
 
-## 7. Test Notification (2 mins)
+## 8. Test Notification (2 mins)
 
 ```bash
 # Start API
@@ -82,7 +98,13 @@ In Twilio Console or via your app:
 - Check API logs for delivery status updates
 - Check database: `NotificationLog` table for records
 
-## 8. Production Setup (Later)
+## 9. Deployment Notes (Your Current URLs)
+
+- **Frontend (Vercel):** `https://fitouthub-web.vercel.app/`
+- **API + Webhook target (Render):** `https://fitouthub.onrender.com`
+- **Do not use Vercel URL for Twilio callback** unless webhook route is explicitly proxied there.
+
+## 10. Production Setup (Later)
 
 For production (when ready):
 - Apply for WhatsApp Business API (takes 1-2 weeks)
@@ -113,9 +135,9 @@ await this.notificationService.send({
 - Ensure you joined WhatsApp sandbox
 
 **Webhook not working?**
-- Verify ngrok is running and URL is correct
+- If deployed: verify callback is exactly `https://fitouthub.onrender.com/notifications/webhook/twilio`
+- If local: verify ngrok is running and URL is correct
 - Check API logs for incoming webhook requests
-- Test webhook URL in browser: `https://your-ngrok-url.ngrok.io/notifications/webhook/twilio`
 
 **Local development notes:**
 - ngrok URL changes each restart (free tier)
