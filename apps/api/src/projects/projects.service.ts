@@ -2512,9 +2512,22 @@ Please review the project details and respond with your quote or decline the inv
         linkedUserId: projectProfessional.professional.userId,
       });
 
-      const professionalUser = await this.prisma.user.findUnique({
-        where: { id: projectProfessional.professional.userId || undefined },
-      });
+      let professionalUser = null;
+      
+      // Try to find user by linked userId first
+      if (projectProfessional.professional.userId) {
+        professionalUser = await this.prisma.user.findUnique({
+          where: { id: projectProfessional.professional.userId },
+        });
+      }
+      
+      // Fall back to finding by professional email if no direct link
+      if (!professionalUser) {
+        console.log('[ProjectsService.awardQuote] No linked User, looking up by email:', projectProfessional.professional.email);
+        professionalUser = await this.prisma.user.findUnique({
+          where: { email: projectProfessional.professional.email },
+        });
+      }
 
       console.log('[ProjectsService.awardQuote] User lookup result:', {
         found: !!professionalUser,
