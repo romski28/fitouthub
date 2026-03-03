@@ -108,9 +108,14 @@ export default function SearchFlow() {
   };
 
   return (
-    <>
+    <div className="space-y-3">
+      <div className="text-center space-y-2 mb-6">
+        <p className="text-sm text-slate-600">
+          Describe what you need in a few words. We'll help you get started.
+        </p>
+      </div>
       <SearchBox onSubmit={handleSearch} />
       <IntentModal intent={intent} onClose={() => setIntent(null)} />
-    </>
+    </div>
   );
 }

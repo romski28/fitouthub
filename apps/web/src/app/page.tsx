@@ -43,7 +43,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Search Flow */}
+      {/* Search Flow - Single entry point for all users */}
       <section className="relative -mx-6 -mt-10 bg-gradient-to-b from-emerald-50 to-white px-6 py-16">
         <div className="mx-auto max-w-2xl">
           <div className="text-center mb-8">
@@ -55,18 +55,6 @@ export default function Home() {
             </h2>
           </div>
           <SearchFlow />
-          
-          {/* New Project Button - Only for logged-in users */}
-          {hydrated && isLoggedIn && (
-            <div className="mt-6">
-              <button
-                onClick={() => router.push('/projects?createNew=true')}
-                className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all duration-200 shadow-sm"
-              >
-                {t('quickStart.newProjectButton')}
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
