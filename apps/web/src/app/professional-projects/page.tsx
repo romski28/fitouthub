@@ -228,7 +228,9 @@ export default function ProfessionalProjectsPage() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-slate-900">{projectProf.project.projectName}</p>
                         <p className="truncate text-xs text-slate-500">{projectProf.project.region}</p>
-                        <p className="mt-1 text-xs font-semibold text-blue-800">{action.actionLabel}</p>
+                        <span className="mt-1 inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-semibold text-blue-800">
+                          {action.actionLabel}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Link
@@ -237,14 +239,16 @@ export default function ProfessionalProjectsPage() {
                         >
                           Open
                         </Link>
-                        <button
-                          type="button"
-                          onClick={(event) => handleCompleteNextStep(event, projectProf.project.id)}
-                          disabled={Boolean(nextStepLoadingMap[projectProf.project.id])}
-                          className="rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {nextStepLoadingMap[projectProf.project.id] ? '...' : 'Done'}
-                        </button>
+                        {action.requiresAction && (
+                          <button
+                            type="button"
+                            onClick={(event) => handleCompleteNextStep(event, projectProf.project.id)}
+                            disabled={Boolean(nextStepLoadingMap[projectProf.project.id])}
+                            className="rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {nextStepLoadingMap[projectProf.project.id] ? '...' : 'Done'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

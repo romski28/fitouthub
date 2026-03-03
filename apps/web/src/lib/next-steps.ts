@@ -6,6 +6,7 @@ export type NextStepAction = {
   description?: string;
   isPrimary: boolean;
   isElective: boolean;
+  requiresAction: boolean;
 };
 
 type NextStepResponse = {

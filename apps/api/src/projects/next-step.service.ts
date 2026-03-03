@@ -8,6 +8,7 @@ export interface NextStepAction {
   description?: string;
   isPrimary: boolean;
   isElective: boolean;
+  requiresAction: boolean;
   estimatedDurationMinutes?: number;
   displayOrder: number;
 }
@@ -106,6 +107,7 @@ export class NextStepService {
         description: s.description || undefined,
         isPrimary: s.isPrimary,
         isElective: s.isElective,
+        requiresAction: s.requiresAction,
         estimatedDurationMinutes: s.estimatedDurationMinutes || undefined,
         displayOrder: s.displayOrder,
       }));
@@ -118,6 +120,7 @@ export class NextStepService {
         description: s.description || undefined,
         isPrimary: s.isPrimary,
         isElective: s.isElective,
+        requiresAction: s.requiresAction,
         estimatedDurationMinutes: s.estimatedDurationMinutes || undefined,
         displayOrder: s.displayOrder,
       }));

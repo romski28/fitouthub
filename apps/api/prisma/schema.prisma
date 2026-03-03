@@ -826,6 +826,7 @@ model NextStepConfig {
   description              String?
   isPrimary                Boolean  @default(false)
   isElective               Boolean  @default(false)
+  requiresAction           Boolean  @default(true) // false for passive monitoring (e.g., "Wait for quotes")
   estimatedDurationMinutes Int?
   displayOrder             Int      @default(0)
   createdAt                DateTime @default(now())
