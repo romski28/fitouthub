@@ -246,7 +246,7 @@ export default function ProfessionalProjectsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200">
+                          <span className="rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200">
                             {action.actionLabel}
                           </span>
                         </div>
