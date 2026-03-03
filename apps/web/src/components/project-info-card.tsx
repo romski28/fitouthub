@@ -80,7 +80,7 @@ export default function ProjectInfoCard({
             {status === 'awarded' && awardedDisplayName && (
               <span className="text-xs font-medium text-slate-300">{awardedDisplayName}</span>
             )}
-            {status === 'quoted' && quoteAmount && (
+            {quoteAmount && (
               <span className="text-sm font-bold text-emerald-300">{formatHKD(quoteAmount)}</span>
             )}
           </div>
