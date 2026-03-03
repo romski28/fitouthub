@@ -685,22 +685,19 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
             {actionableProjects.map((project) => {
               const action = nextStepMap[project.id];
               if (!action) return null;
-              const professionalCount = project.professionals?.length || 0;
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               return (
                 <div key={`dash-${project.id}`} className="rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex flex-1 items-center gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-bold text-white">{project.projectName}</p>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-300">
+                  <div className="grid gap-3">
+                    {/* Title - Full Width */}
+                    <p className="truncate text-sm font-bold text-white">{project.projectName}</p>
+                    
+                    {/* Details Row - Responsive Grid */}
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+                      {/* Project Details */}
+                      <div className="col-span-2 md:col-span-1">
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
                           <span>{project.region}</span>
-                          {professionalCount > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>{professionalCount} pro{professionalCount !== 1 ? 's' : ''}</span>
-                            </>
-                          )}
                           {quotedCount > 0 && (
                             <>
                               <span>•</span>
@@ -709,19 +706,23 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      
+                      {/* Badge */}
+                      <div className="flex items-center">
                         <span className="rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200">
                           {action.actionLabel}
                         </span>
                       </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <Link
-                        href={`/projects/${project.id}`}
-                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition"
-                      >
-                        Show me
-                      </Link>
+                      
+                      {/* Button */}
+                      <div className="flex items-center">
+                        <Link
+                          href={`/projects/${project.id}`}
+                          className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                        >
+                          Show me
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
