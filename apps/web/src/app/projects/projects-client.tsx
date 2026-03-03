@@ -744,11 +744,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     variant="compact"
                   />
                 <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">{t('labels.client')}</span>
-                    <span className="text-slate-600">{project.clientName}</span>
-                  </div>
                   {project.contractorName ? (
                     <div className="flex items-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
@@ -756,16 +751,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       <span className="text-slate-600">{project.contractorName}</span>
                     </div>
                   ) : null}
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">{t('labels.budget')}</span>
-                    <span className="text-slate-600">{project.budget ? `HKD ${project.budget}` : '—'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">{t('labels.created')}</span>
-                    <span className="text-slate-600">{formatDate(project.createdAt, locale)}</span>
-                  </div>
                 </div>
 
                 {/* Budget or Professionals Section */}
@@ -775,7 +760,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       <p className="text-xs font-semibold text-emerald-900">{t('labels.projectBudget')}</p>
                       <span className="text-[10px] font-medium text-emerald-700">{t('labels.awarded')}</span>
                     </div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
+                        <p className="text-[11px] font-semibold text-emerald-800">{t('labels.budget')}</p>
+                        <p className="text-sm font-bold text-emerald-900">{formatHKD(project.budget)}</p>
+                      </div>
                       <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
                         <p className="text-[11px] font-semibold text-emerald-800">{t('labels.projectCost')}</p>
                         <p className="text-sm font-bold text-emerald-900">{formatHKD(projectCostValue)}</p>
@@ -836,6 +825,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 <div className="flex items-center justify-between text-[11px] text-slate-500">
                   <span>{t('id')} {project.id}</span>
                   <div className="flex items-center gap-3">
+                    <span>{t('labels.created')} {formatDate(project.createdAt, locale)}</span>
                     <span>{t('updated')} {formatDate(project.updatedAt, locale)}</span>
                   </div>
                 </div>
