@@ -160,26 +160,19 @@ export default function ProfessionalProjectsPage() {
               .slice(0, visibleCount)
               .map((projectProf) => (
               <Link key={projectProf.id} href={`/professional-projects/${projectProf.id}`}>
-                <div className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                <div className="group relative rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                  {/* Unread message bubble */}
+                  {projectProf.unreadCount && projectProf.unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md" title={`${projectProf.unreadCount} unread messages`}>
+                      {projectProf.unreadCount > 99 ? '99+' : projectProf.unreadCount}
+                    </span>
+                  )}
                   <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
                     <div className="space-y-1">
                       <div className="text-base font-bold">{projectProf.project.projectName}</div>
                       <div className="text-xs text-emerald-300 font-semibold uppercase tracking-wide">{projectProf.project.region}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {projectProf.unreadCount && projectProf.unreadCount > 0 ? (
-                        <span 
-                          style={{
-                            backgroundColor: colors.successBg,
-                            color: colors.success,
-                            borderColor: colors.success,
-                          }}
-                          className="rounded-md border-2 px-2 py-0.5 text-xs font-bold" 
-                          title={`${projectProf.unreadCount} unread messages`}
-                        >
-                          {projectProf.unreadCount} new
-                        </span>
-                      ) : null}
                       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeClass(projectProf.status)}`}>{projectProf.status}</span>
                     </div>
                   </div>

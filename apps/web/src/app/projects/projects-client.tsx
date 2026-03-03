@@ -664,8 +664,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
             return (
               <div
                 key={project.id}
-                className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className="group relative rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
+                {/* Unread message bubble */}
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md" title={t('unreadMessages', { count: unreadCount })}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
                 <div className={`flex flex-col md:flex-row md:items-start md:justify-between gap-3 px-4 py-3 text-white ${
                   project.status === 'withdrawn'
                     ? 'bg-gradient-to-r from-slate-400 to-slate-300'
@@ -684,11 +690,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {unreadCount > 0 && (
-                      <span className="rounded-md border border-white/40 px-2 py-0.5 text-xs font-semibold text-white" title={t('unreadMessages', { count: unreadCount })}>
-                        {t('newCount', { count: unreadCount })}
-                      </span>
-                    )}
                     {assistInfo?.hasAssist && (
                       <img
                         src="/FOHAssistYes.png"
