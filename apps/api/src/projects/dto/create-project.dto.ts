@@ -15,4 +15,5 @@ export class CreateProjectDto {
   isEmergency?: boolean;
   photos?: Array<{ url: string; note?: string }>;
   photoUrls?: string[]; // Legacy compatibility
+  userPrompt?: string; // Original natural language prompt from user search/creation for AI training
 }
