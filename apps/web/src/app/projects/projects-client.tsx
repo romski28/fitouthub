@@ -674,11 +674,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
-              <h2 className="text-xl font-bold text-white">Projects needing action</h2>
+              <h2 className="text-xl font-bold text-white">{actionableProjects.length} Projects needing action</h2>
             </div>
-            <span className="rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm">
-              {actionableProjects.length}
-            </span>
           </div>
           <div className="space-y-2">
             {actionableProjects.map((project) => {

@@ -144,17 +144,6 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
             inspirationalMessage
           )}
         </span>
-        {hasUpdates && (
-          <span
-            style={{
-              backgroundColor: colors.background,
-              color: colors.primary,
-            }}
-            className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-sm font-bold"
-          >
-            {summary.totalCount}
-          </span>
-        )}
       </button>
 
       <UpdatesModal
