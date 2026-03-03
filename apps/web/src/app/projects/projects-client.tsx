@@ -39,6 +39,8 @@ function ProjectProgressWrapper({ projectId, project, hasAssist, variant }: { pr
 
 type AssistStatus = "open" | "in_progress" | "closed";
 
+type SummaryTone = 'slate' | 'emerald' | 'amber' | 'rose';
+
 const assistStatusColors: Record<AssistStatus, string> = {
   open: "bg-amber-100 text-amber-800",
   in_progress: "bg-blue-100 text-blue-800",
@@ -446,6 +448,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   console.log('[ProjectsClient] Render - projects.length:', projects.length, 'items.length:', items.length);
 
@@ -464,9 +467,17 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   );
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return items;
+    let result = items;
+    
+    // Filter by status if not 'all'
+    if (filterStatus !== 'all') {
+      result = result.filter((p) => p.status === filterStatus);
+    }
+    
+    // Filter by search
+    if (!search.trim()) return result;
     const needle = search.toLowerCase();
-    return items.filter((p) => {
+    return result.filter((p) => {
       const fields = [
         p.projectName,
         p.clientName,
@@ -479,7 +490,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         .map((v) => v!.toString().toLowerCase());
       return fields.some((f) => f.includes(needle));
     });
-  }, [items, search]);
+  }, [items, search, filterStatus]);
 
   const actionableProjects = useMemo(() => {
     return items
@@ -648,22 +659,10 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               {t('createNew')}
             </button>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('total')}</p>
-              <p className="text-lg font-bold text-white">{totals.total}</p>
-            </div>
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('stats.awarded')}</p>
-              <p className="text-lg font-bold text-emerald-300">{totals.approved}</p>
-            </div>
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('stats.pending')}</p>
-              <p className="text-lg font-bold text-amber-200">{totals.pending}</p>
-            </div>
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">{t('stats.rejected')}</p>
-              <p className="text-lg font-bold text-rose-200">{totals.rejected}</p>
-            </div>
+              <SummaryCard label={t('total')} value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
+              <SummaryCard label={t('stats.awarded')} value={totals.approved} tone="emerald" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
+              <SummaryCard label={t('stats.pending')} value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
+              <SummaryCard label={t('stats.rejected')} value={totals.rejected} tone="rose" filterStatus="rejected" currentFilter={filterStatus} onClick={() => setFilterStatus('rejected')} />
             </div>
           </div>
         </div>
@@ -1000,5 +999,43 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       
       <BackToTop />
     </div>
+  );
+}
+
+function SummaryCard({ 
+  label, 
+  value, 
+  tone, 
+  filterStatus, 
+  currentFilter, 
+  onClick 
+}: { 
+  label: string; 
+  value: number; 
+  tone: SummaryTone; 
+  filterStatus: string;
+  currentFilter: string;
+  onClick: () => void;
+}) {
+  const toneMap: Record<SummaryTone, { valueColor: string; activeRing: string }> = {
+    slate: { valueColor: 'text-white', activeRing: 'ring-white' },
+    amber: { valueColor: 'text-amber-200', activeRing: 'ring-amber-300' },
+    emerald: { valueColor: 'text-emerald-300', activeRing: 'ring-emerald-300' },
+    rose: { valueColor: 'text-rose-200', activeRing: 'ring-rose-300' },
+  };
+
+  const { valueColor, activeRing } = toneMap[tone];
+  const isActive = currentFilter === filterStatus;
+
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-lg bg-white/10 px-3 py-2 text-left transition-all hover:bg-white/20 ${
+        isActive ? `ring-2 ${activeRing} bg-white/20` : ''
+      }`}
+    >
+      <p className="text-[11px] uppercase tracking-wide text-slate-200">{label}</p>
+      <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
+    </button>
   );
 }
