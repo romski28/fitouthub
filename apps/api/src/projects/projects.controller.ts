@@ -12,6 +12,8 @@ import {
   UseGuards,
   Request,
   BadRequestException,
+  Patch,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ProjectsService } from './projects.service';
@@ -27,6 +29,11 @@ import { ProjectLocationDetailsDto } from './dto/project-location-details.dto';
 import { ChatService } from '../chat/chat.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 import { PrismaService } from '../prisma.service';
+import { NextStepService } from './next-step.service';
+import { AdminActionService } from './admin-action.service';
+import { ProjectStageService } from './project-stage.service';
+import { RecordNextStepActionDto, TransitionProjectStageDto, PauseProjectDto, ResumeProjectDto, DisputeProjectDto } from './dto/next-step.dto';
+import { CreateAdminActionDto, UpdateAdminActionDto, AssignAdminActionDto, CompleteAdminActionDto } from './dto/admin-action.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -34,6 +41,9 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly chatService: ChatService,
     private readonly prisma: PrismaService,
+    private readonly nextStepService: NextStepService,
+    private readonly adminActionService: AdminActionService,
+    private readonly projectStageService: ProjectStageService,
   ) {}
 
   @Get()
@@ -691,5 +701,314 @@ export class ProjectsController {
     // In a full implementation, we'd track read status per user
     // For now, just return success
     return { success: true };
+  }
+
+  // ============================================================================
+  // NEXT STEP ENDPOINTS
+  // ============================================================================
+
+  /**
+   * GET /projects/:projectId/next-steps
+   * Get available next step actions for the requesting user
+   */
+  @Get(':projectId/next-steps')
+  @UseGuards(CombinedAuthGuard)
+  async getNextSteps(@Param('projectId') projectId: string, @Request() req: any) {
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      const isProfessional = req.user?.isProfessional;
+      const role = req.user?.role === 'admin' ? 'ADMIN' : isProfessional ? 'PROFESSIONAL' : 'CLIENT';
+
+      const nextSteps = await this.nextStepService.getNextSteps(projectId, userId, role);
+      return nextSteps;
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * POST /projects/:projectId/next-steps/:actionKey
+   * Record user action on a next step (complete, skip, defer)
+   */
+  @Post(':projectId/next-steps/:actionKey')
+  @UseGuards(CombinedAuthGuard)
+  async recordNextStepAction(
+    @Param('projectId') projectId: string,
+    @Param('actionKey') actionKey: string,
+    @Body() body: { userAction: string; metadata?: any },
+    @Request() req: any,
+  ) {
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      const validActions = ['COMPLETED', 'SKIPPED', 'DEFERRED', 'ALTERNATIVE'];
+
+      if (!validActions.includes(body.userAction)) {
+        throw new BadRequestException('Invalid user action');
+      }
+
+      const action = await this.nextStepService.recordNextStepAction(
+        projectId,
+        userId,
+        actionKey,
+        body.userAction as any,
+        body.metadata,
+      );
+
+      return { success: true, action };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * GET /projects/:projectId/next-steps/history
+   * Get action history for a project
+   */
+  @Get(':projectId/next-steps/history')
+  @UseGuards(CombinedAuthGuard)
+  async getNextStepHistory(@Param('projectId') projectId: string, @Request() req: any) {
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      const history = await this.nextStepService.getUserActionHistory(projectId, userId);
+      return { history };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  // ============================================================================
+  // PROJECT STAGE ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /projects/:projectId/stage/transition
+   * Transition project to a new stage (admin or authorized user only)
+   */
+  @Post(':projectId/stage/transition')
+  @UseGuards(AuthGuard('jwt'))
+  async transitionStage(
+    @Param('projectId') projectId: string,
+    @Body() dto: TransitionProjectStageDto,
+    @Request() req: any,
+  ) {
+    try {
+      // Only allow admins or designated users
+      if (req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only administrators can transition stages');
+      }
+
+      const result = await this.projectStageService.transitionStage(projectId, dto.newStage as any);
+      return result;
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * GET /projects/:projectId/stage/history
+   * Get stage transition history
+   */
+  @Get(':projectId/stage/history')
+  @UseGuards(CombinedAuthGuard)
+  async getStageHistory(@Param('projectId') projectId: string) {
+    try {
+      const history = await this.projectStageService.getProjectStageHistory(projectId);
+      return history;
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  /**
+   * POST /projects/:projectId/pause
+   * Pause a project
+   */
+  @Post(':projectId/pause')
+  @UseGuards(CombinedAuthGuard)
+  async pauseProject(
+    @Param('projectId') projectId: string,
+    @Body() dto: PauseProjectDto,
+    @Request() req: any,
+  ) {
+    try {
+      // Verify user is owner
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { userId: true },
+      });
+
+      if (project?.userId !== req.user?.id && req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only project owner or admin can pause');
+      }
+
+      const result = await this.projectStageService.pauseProject(projectId, dto.reason);
+      return { success: true, result };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * POST /projects/:projectId/resume
+   * Resume a paused project
+   */
+  @Post(':projectId/resume')
+  @UseGuards(CombinedAuthGuard)
+  async resumeProject(
+    @Param('projectId') projectId: string,
+    @Body() dto: ResumeProjectDto,
+    @Request() req: any,
+  ) {
+    try {
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { userId: true, currentStage: true },
+      });
+
+      if (project?.userId !== req.user?.id && req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only project owner or admin can resume');
+      }
+
+      const result = await this.projectStageService.resumeProject(projectId, dto.resumeToStage as any);
+      return { success: true, result };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * POST /projects/:projectId/dispute
+   * Flag a project as disputed
+   */
+  @Post(':projectId/dispute')
+  @UseGuards(CombinedAuthGuard)
+  async disputeProject(
+    @Param('projectId') projectId: string,
+    @Body() dto: DisputeProjectDto,
+  ) {
+    try {
+      const result = await this.projectStageService.disputeProject(projectId, dto.reason);
+      return { success: true, result };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  // ============================================================================
+  // ADMIN ACTION ENDPOINTS
+  // ============================================================================
+
+  /**
+   * GET /admin/actions
+   * Get pending admin actions (admin only)
+   */
+  @Get('admin/actions')
+  @UseGuards(AuthGuard('jwt'))
+  async getAdminActions(
+    @Request() req: any,
+    @Query('status') status?: string,
+    @Query('priority') priority?: string,
+    @Query('assignedToMe') assignedToMe?: string,
+  ) {
+    try {
+      if (req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only admins can view admin actions');
+      }
+
+      const assignedTo = assignedToMe === 'true' ? req.user?.id : undefined;
+      const actions = await this.adminActionService.getPendingActions(status, priority, assignedTo);
+
+      return { actions, count: actions.length };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * GET /projects/:projectId/admin-actions
+   * Get all admin actions for a specific project
+   */
+  @Get(':projectId/admin-actions')
+  @UseGuards(AuthGuard('jwt'))
+  async getProjectAdminActions(@Param('projectId') projectId: string, @Request() req: any) {
+    try {
+      if (req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only admins can view admin actions');
+      }
+
+      const actions = await this.adminActionService.getProjectAdminActions(projectId);
+      return { actions };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * PATCH /admin/actions/:actionId/assign
+   * Assign admin action to user
+   */
+  @Patch('admin/actions/:actionId/assign')
+  @UseGuards(AuthGuard('jwt'))
+  async assignAdminAction(
+    @Param('actionId') actionId: string,
+    @Body() dto: AssignAdminActionDto,
+    @Request() req: any,
+  ) {
+    try {
+      if (req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only admins can assign actions');
+      }
+
+      const action = await this.adminActionService.assignAction(actionId, dto.adminUserId);
+      return { success: true, action };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * PATCH /admin/actions/:actionId/complete
+   * Complete/resolve an admin action
+   */
+  @Patch('admin/actions/:actionId/complete')
+  @UseGuards(AuthGuard('jwt'))
+  async completeAdminAction(
+    @Param('actionId') actionId: string,
+    @Body() dto: CompleteAdminActionDto,
+    @Request() req: any,
+  ) {
+    try {
+      if (req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only admins can complete actions');
+      }
+
+      const action = await this.adminActionService.completeAction(
+        actionId,
+        req.user?.id,
+        dto,
+      );
+      return { success: true, action };
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * GET /admin/stats
+   * Get admin action statistics
+   */
+  @Get('admin/stats')
+  @UseGuards(AuthGuard('jwt'))
+  async getAdminStats(@Request() req: any) {
+    try {
+      if (req.user?.role !== 'admin') {
+        throw new ForbiddenException('Only admins can view admin stats');
+      }
+
+      const stats = await this.adminActionService.getAdminStats();
+      return stats;
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 }

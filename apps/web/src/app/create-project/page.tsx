@@ -109,6 +109,7 @@ export default function CreateProjectPage() {
         userId: user?.id,
         tradesRequired: formData.tradesRequired || [],
         photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
+        userPrompt: descriptionData?.description || null,
       };
 
       console.log('[create-project] Submitting payload:', payload);
@@ -186,6 +187,7 @@ export default function CreateProjectPage() {
         userId: user?.id,
         tradesRequired: formData.tradesRequired || [],
         photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
+        userPrompt: descriptionData?.description || null,
       };
 
       const response = await fetch(`${API_BASE_URL}/projects`, {

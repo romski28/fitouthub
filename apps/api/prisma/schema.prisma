@@ -32,6 +32,42 @@ enum LocationDetailsStatus {
   approved
 }
 
+enum ProjectStage {
+  // Normal project flow (stages 1-16)
+  CREATED
+  BIDDING_ACTIVE
+  SITE_VISIT_SCHEDULED
+  SITE_VISIT_COMPLETE
+  QUOTE_RECEIVED
+  BIDDING_CLOSED
+  CONTRACT_PHASE
+  PRE_WORK
+  WORK_IN_PROGRESS
+  MILESTONE_PENDING    // Can repeat for each milestone
+  PAYMENT_RELEASED     // Can repeat for each milestone
+  NEAR_COMPLETION
+  FINAL_INSPECTION
+  COMPLETE
+  WARRANTY_PERIOD      // Warranty/defect reporting phase
+  CLOSED
+  // Exceptional states (can occur at any point)
+  PAUSED
+  DISPUTED
+}
+
+enum AdminActionType {
+  VERIFY_ESCROW_RECEIPT
+  APPROVE_PAYMENT_RELEASE
+  REVIEW_CONTRACT
+  VALIDATE_INSURANCE
+  VALIDATE_LICENSE
+  RESOLVE_DISPUTE
+  APPROVE_LARGE_BUDGET
+  FLAG_QUALITY_ISSUE
+  INVESTIGATE_COMPLAINT
+  APPROVE_CHANGE_ORDER
+}
+
 model User {
   id                              String                   @id @default(cuid())
   nickname                        String                   @unique
@@ -62,6 +98,9 @@ model User {
   projectLocationDetailsReviewed  ProjectLocationDetails[] @relation("ProjectLocationDetailsReviewedBy")
   notificationPreference          NotificationPreference?
   notificationLogs                NotificationLog[]
+  nextStepActions                 NextStepAction[]
+  adminActionsAssigned            AdminAction[]           @relation("AdminActionAssigned")
+  adminActionsCompleted           AdminAction[]           @relation("AdminActionCompleted")
 }
 
 model Tradesman {
@@ -193,6 +232,11 @@ model Project {
   siteAccessData               SiteAccessData?
   locationDetails              ProjectLocationDetails?
   milestones                   ProjectMilestone[]
+  currentStage                 ProjectStage             @default(CREATED)
+  stageStartedAt               DateTime                 @default(now())
+  lastStageTransitionAt        DateTime?                @updatedAt
+  nextStepActions              NextStepAction[]
+  adminActions                 AdminAction[]
 }
 
 model ProjectPhoto {
@@ -771,4 +815,85 @@ model NotificationLog {
   @@index([status])
   @@index([eventType])
   @@index([createdAt(sort: Desc)])
+}
+
+model NextStepConfig {
+  id                       String   @id @default(cuid())
+  projectStage             ProjectStage
+  role                     String   // 'CLIENT', 'PROFESSIONAL', 'ADMIN'
+  actionKey                String
+  actionLabel              String
+  description              String?
+  isPrimary                Boolean  @default(false)
+  isElective               Boolean  @default(false)
+  estimatedDurationMinutes Int?
+  displayOrder             Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@unique([projectStage, role, actionKey])
+  @@index([projectStage])
+  @@index([role])
+}
+
+model NextStepAction {
+  id               String   @id @default(cuid())
+  projectId        String
+  userId           String
+  actionKey        String
+  projectStage     ProjectStage
+  userAction       String   // 'COMPLETED', 'SKIPPED', 'DEFERRED', 'ALTERNATIVE'
+  completedAt      DateTime?
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([actionKey])
+  @@index([projectStage])
+}
+
+model AdminAction {
+  id                   String   @id @default(cuid())
+  projectId            String
+  actionType           AdminActionType
+  status               String   @default("PENDING") // 'PENDING', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'ESCALATED'
+  priority             String   @default("NORMAL") // 'LOW', 'NORMAL', 'HIGH', 'URGENT'
+  reason               String?
+  triggerCondition     String?  // e.g., 'PAYMENT_OVER_10000', 'ON_DISPUTE'
+  requiredByDate       DateTime?
+  assignedToAdminId    String?
+  completedAt          DateTime?
+  completedByAdminId   String?
+  approvalDetails      Json?
+  notes                String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  project              Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedToAdmin      User?    @relation("AdminActionAssigned", fields: [assignedToAdminId], references: [id], onDelete: SetNull)
+  completedByAdmin     User?    @relation("AdminActionCompleted", fields: [completedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([status])
+  @@index([priority])
+  @@index([actionType])
+  @@index([assignedToAdminId])
+}
+
+model AdminNextStepTemplate {
+  id               String   @id @default(cuid())
+  projectStage     ProjectStage
+  actionType       AdminActionType
+  description      String
+  triggerCondition String?  // e.g., 'PAYMENT_OVER_10000', 'ON_DISPUTE', 'ALWAYS'
+  isPriority       Boolean  @default(false)
+  displayOrder     Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  @@unique([projectStage, actionType])
+  @@index([projectStage])
 }
