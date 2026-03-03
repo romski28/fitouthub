@@ -671,13 +671,13 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
       {/* Action Dashboard */}
       {actionableProjects.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700">Dashboard</p>
-              <h2 className="text-xl font-bold text-slate-900">Projects needing action</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
+              <h2 className="text-xl font-bold text-white">Projects needing action</h2>
             </div>
-            <span className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm">
+            <span className="rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm">
               {actionableProjects.length}
             </span>
           </div>
@@ -688,12 +688,12 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const professionalCount = project.professionals?.length || 0;
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               return (
-                <div key={`dash-${project.id}`} className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:shadow-md">
+                <div key={`dash-${project.id}`} className="rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex flex-1 items-center gap-4">
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-bold text-slate-900">{project.projectName}</p>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500">
+                        <p className="truncate text-sm font-bold text-white">{project.projectName}</p>
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-300">
                           <span>{project.region}</span>
                           {professionalCount > 0 && (
                             <>
@@ -704,13 +704,13 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           {quotedCount > 0 && (
                             <>
                               <span>•</span>
-                              <span className="text-emerald-600 font-medium">{quotedCount} quote{quotedCount !== 1 ? 's' : ''}</span>
+                              <span className="text-emerald-300 font-medium">{quotedCount} quote{quotedCount !== 1 ? 's' : ''}</span>
                             </>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                        <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200">
                           {action.actionLabel}
                         </span>
                       </div>
@@ -718,20 +718,10 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     <div className="flex shrink-0 items-center gap-2">
                       <Link
                         href={`/projects/${project.id}`}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition"
                       >
-                        Open
+                        Show me
                       </Link>
-                      {action.requiresAction && (
-                        <button
-                          type="button"
-                          onClick={() => handleCompleteNextStep(project.id)}
-                          disabled={Boolean(nextStepLoadingMap[project.id])}
-                          className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {nextStepLoadingMap[project.id] ? '...' : 'Done'}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
