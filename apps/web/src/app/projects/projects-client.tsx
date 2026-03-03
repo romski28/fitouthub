@@ -16,6 +16,7 @@ import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { UpdatesButton } from "@/components/updates-button";
 import { useAuth } from "@/context/auth-context";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
+import { completeNextStep, fetchPrimaryNextStep, type NextStepAction } from "@/lib/next-steps";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -443,6 +444,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [search, setSearch] = useState("");
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
+  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
+  const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
 
   console.log('[ProjectsClient] Render - projects.length:', projects.length, 'items.length:', items.length);
 
@@ -545,6 +548,57 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     load();
     return () => { cancelled = true; };
   }, [isLoggedIn, accessToken, items]);
+
+  // Fetch primary next-step action per project (client view)
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken || items.length === 0) return;
+
+    let cancelled = false;
+
+    const loadNextSteps = async () => {
+      const entries = await Promise.all(
+        items.map(async (p) => {
+          try {
+            const action = await fetchPrimaryNextStep(p.id, accessToken);
+            return [p.id, action] as const;
+          } catch {
+            return [p.id, null] as const;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+
+      const next: Record<string, NextStepAction | null> = {};
+      entries.forEach(([id, action]) => {
+        next[id] = action;
+      });
+      setNextStepMap(next);
+    };
+
+    loadNextSteps();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, accessToken, items]);
+
+  const handleCompleteNextStep = async (projectId: string) => {
+    if (!accessToken) return;
+    const action = nextStepMap[projectId];
+    if (!action) return;
+
+    setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: true }));
+    try {
+      const ok = await completeNextStep(projectId, action.actionKey, accessToken);
+      if (!ok) return;
+
+      const refreshed = await fetchPrimaryNextStep(projectId, accessToken);
+      setNextStepMap((prev) => ({ ...prev, [projectId]: refreshed }));
+    } finally {
+      setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: false }));
+    }
+  };
 
   const handleSave = (updated: ExtendedProject) => {
     setItems((prev) => prev.map((p) => (p.id === updated.id ? { ...updated } : p)));
@@ -726,6 +780,28 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 </div>
 
                 <div className="p-4 space-y-3">
+                  {nextStepMap[project.id] && (
+                    <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2.5">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">Next step</p>
+                          <p className="text-sm font-semibold text-blue-900">{nextStepMap[project.id]?.actionLabel}</p>
+                          {nextStepMap[project.id]?.description ? (
+                            <p className="text-xs text-blue-800">{nextStepMap[project.id]?.description}</p>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCompleteNextStep(project.id)}
+                          disabled={Boolean(nextStepLoadingMap[project.id])}
+                          className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {nextStepLoadingMap[project.id] ? "Updating..." : "Mark done"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <ProjectProgressWrapper
                     projectId={project.id}
                     project={{

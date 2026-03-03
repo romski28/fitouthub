@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
 import { useRoleGuard } from '@/hooks/use-role-guard';
+import { completeNextStep, fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 
 interface ProjectProfessional {
   id: string;
@@ -41,6 +42,8 @@ export default function ProfessionalProjectsPage() {
   const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
+  const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const totals = {
     total: projects.length,
     pending: projects.filter(p => p.status === 'pending').length,
@@ -98,6 +101,62 @@ export default function ProfessionalProjectsPage() {
 
     fetchProjects();
   }, [isLoggedIn, accessToken, router]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken || projects.length === 0) return;
+
+    let cancelled = false;
+
+    const loadNextSteps = async () => {
+      const entries = await Promise.all(
+        projects.map(async (projectProf) => {
+          try {
+            const action = await fetchPrimaryNextStep(projectProf.project.id, accessToken);
+            return [projectProf.project.id, action] as const;
+          } catch {
+            return [projectProf.project.id, null] as const;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+
+      const next: Record<string, NextStepAction | null> = {};
+      entries.forEach(([id, action]) => {
+        next[id] = action;
+      });
+      setNextStepMap(next);
+    };
+
+    loadNextSteps();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, accessToken, projects]);
+
+  const handleCompleteNextStep = async (
+    event: MouseEvent<HTMLButtonElement>,
+    projectId: string,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!accessToken) return;
+    const action = nextStepMap[projectId];
+    if (!action) return;
+
+    setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: true }));
+    try {
+      const ok = await completeNextStep(projectId, action.actionKey, accessToken);
+      if (!ok) return;
+
+      const refreshed = await fetchPrimaryNextStep(projectId, accessToken);
+      setNextStepMap((prev) => ({ ...prev, [projectId]: refreshed }));
+    } finally {
+      setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: false }));
+    }
+  };
 
   if (isLoggedIn === undefined || loading) {
     return (
@@ -178,6 +237,28 @@ export default function ProfessionalProjectsPage() {
                   </div>
 
                   <div className="p-4 space-y-3">
+                    {nextStepMap[projectProf.project.id] && (
+                      <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2.5">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">Next step</p>
+                            <p className="text-sm font-semibold text-blue-900">{nextStepMap[projectProf.project.id]?.actionLabel}</p>
+                            {nextStepMap[projectProf.project.id]?.description ? (
+                              <p className="text-xs text-blue-800">{nextStepMap[projectProf.project.id]?.description}</p>
+                            ) : null}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(event) => handleCompleteNextStep(event, projectProf.project.id)}
+                            disabled={Boolean(nextStepLoadingMap[projectProf.project.id])}
+                            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {nextStepLoadingMap[projectProf.project.id] ? 'Updating...' : 'Mark done'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {projectProf.project.notes ? (
                       <div className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 border border-slate-100">
                         <p className="font-semibold text-slate-800 mb-1">Notes</p>
