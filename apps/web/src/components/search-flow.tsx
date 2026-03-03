@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
+import { SearchHelpModal } from '@/components/search-help-modal';
+import { useAuth } from '@/context/auth-context';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -101,6 +103,8 @@ function IntentModal({ intent, onClose }: IntentModalProps) {
 
 export default function SearchFlow() {
   const [intent, setIntent] = useState<IntentResult | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const { isLoggedIn } = useAuth();
 
   const handleSearch = (query: string) => {
     const result = matchIntent(query);
@@ -111,11 +115,35 @@ export default function SearchFlow() {
     <div className="space-y-3">
       <div className="text-center space-y-2 mb-6">
         <p className="text-sm text-slate-600">
-          Describe what you need in a few words. We'll help you get started.
+          Describe what you need in a few words.{' '}
+          <button
+            onClick={() => setShowHelp(true)}
+            className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition"
+          >
+            We'll help you get started.
+          </button>
         </p>
       </div>
       <SearchBox onSubmit={handleSearch} />
+      
+      {/* Auth message for non-logged-in users */}
+      {isLoggedIn === false && (
+        <div className="text-center pt-2">
+          <p className="text-xs text-slate-500">
+            <a href="/login" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+              Login
+            </a>
+            {' or '}
+            <a href="/join" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+              Join Now
+            </a>
+            {' for the best experience'}
+          </p>
+        </div>
+      )}
+      
       <IntentModal intent={intent} onClose={() => setIntent(null)} />
+      <SearchHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }
