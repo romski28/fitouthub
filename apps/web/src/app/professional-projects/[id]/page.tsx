@@ -960,6 +960,7 @@ export default function ProjectDetailPage() {
             notes={project!.project.notes || undefined}
             createdAt={project!.createdAt}
             updatedAt={project!.updatedAt}
+            quoteAmount={project!.quoteAmount}
           />
 
           <ProjectTabs

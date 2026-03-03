@@ -12,6 +12,7 @@ export type ProjectInfoProps = {
   createdAt?: string;
   updatedAt?: string;
   awardedDisplayName?: string;
+  quoteAmount?: string | number;
   showWithdrawButton?: boolean;
   withdrawing?: boolean;
   onWithdraw?: () => void;
@@ -39,11 +40,18 @@ export default function ProjectInfoCard({
   createdAt,
   updatedAt,
   awardedDisplayName,
+  quoteAmount,
   showWithdrawButton,
   withdrawing,
   onWithdraw,
 }: ProjectInfoProps) {
   const withdrawn = status === 'withdrawn';
+  
+  const formatHKD = (amount?: string | number) => {
+    if (!amount) return undefined;
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return `HK$${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  };
 
   return (
     <div className="rounded-xl border border-border bg-surface shadow-sm">
@@ -71,6 +79,9 @@ export default function ProjectInfoCard({
             />
             {status === 'awarded' && awardedDisplayName && (
               <span className="text-xs font-medium text-slate-300">{awardedDisplayName}</span>
+            )}
+            {status === 'quoted' && quoteAmount && (
+              <span className="text-sm font-bold text-emerald-300">{formatHKD(quoteAmount)}</span>
             )}
           </div>
         </div>
