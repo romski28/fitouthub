@@ -58,9 +58,14 @@ export class NextStepService {
     const isProfessional = await this.prisma.projectProfessional.findFirst({
       where: {
         projectId,
-        professional: {
-          userId,
-        },
+        OR: [
+          { professionalId: userId },
+          {
+            professional: {
+              userId,
+            },
+          },
+        ],
       },
     });
 

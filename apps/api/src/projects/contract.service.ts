@@ -184,6 +184,9 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       throw new BadRequestException('You have already signed this contract');
     }
 
+    const professionalSignerUserId =
+      project.awardedProjectProfessional?.professional?.userId || null;
+
     const updateData: any =
       userRole === 'CLIENT'
         ? {
@@ -192,7 +195,7 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
           }
         : {
             professionalSignedAt: new Date(),
-            professionalSignedById: userId,
+            professionalSignedById: professionalSignerUserId,
           };
 
     const updatedProject = await this.prisma.project.update({
@@ -246,7 +249,11 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       return 'CLIENT';
     }
 
-    if (project.awardedProjectProfessional?.professional?.userId === userId) {
+    const awardedProfessional = project.awardedProjectProfessional;
+    if (
+      awardedProfessional?.professionalId === userId ||
+      awardedProfessional?.professional?.userId === userId
+    ) {
       return 'PROFESSIONAL';
     }
 
