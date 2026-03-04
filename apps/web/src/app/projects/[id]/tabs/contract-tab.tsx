@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '@/config/api';
 
 interface ContractData {
   projectId: string;
@@ -73,8 +74,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       setLoading(true);
       setError(null);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/projects/${projectId}/contract`, {
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/contract`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -102,8 +102,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
     try {
       setSigning(true);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/projects/${projectId}/contract/sign`, {
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/contract/sign`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
