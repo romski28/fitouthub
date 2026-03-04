@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
@@ -155,6 +155,7 @@ const formatHKD = (value?: number | string) => {
 export default function ClientProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const projectId = params.id as string;
 
   const { isLoggedIn, accessToken } = useAuth();
@@ -281,6 +282,20 @@ export default function ClientProjectDetailPage() {
     }, 100);
     return () => clearTimeout(scrollTimer);
   }, [projectId]);
+
+  // Allow deep-linking to tab from dashboard/actions via ?tab=
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab');
+    if (!requestedTab) return;
+
+    const allowedTabs = new Set(['overview', 'site-access', 'professionals', 'media']);
+    if (isAwarded) {
+      allowedTabs.add('schedule');
+      allowedTabs.add('chat');
+    }
+
+    setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
+  }, [searchParams, isAwarded]);
 
   const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
     const text = await response.text();

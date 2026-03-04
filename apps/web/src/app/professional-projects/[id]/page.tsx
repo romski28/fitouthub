@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
@@ -86,6 +86,7 @@ interface SiteAccessVisit {
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const projectProfessionalId = params.id as string;
 
   const { isLoggedIn, accessToken } = useProfessionalAuth();
@@ -150,6 +151,21 @@ export default function ProjectDetailPage() {
       }
     }
   }, [project?.status]);
+
+  // Allow deep-linking to tab from dashboard/actions via ?tab=
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab');
+    if (!requestedTab || !project) return;
+
+    const allowedTabs = new Set(['overview', 'financials', 'chat']);
+    if (project.status === 'awarded') {
+      allowedTabs.add('schedule');
+    } else {
+      allowedTabs.add('site-access');
+    }
+
+    setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
+  }, [searchParams, project]);
 
   useEffect(() => {
     if (isLoggedIn === false) {

@@ -41,6 +41,25 @@ type AssistStatus = "open" | "in_progress" | "closed";
 
 type SummaryTone = 'slate' | 'emerald' | 'amber' | 'rose';
 
+const clientActionTabMap: Record<string, string> = {
+  INVITE_PROFESSIONALS: 'professionals',
+  REVIEW_INCOMING_QUOTES: 'professionals',
+  COMPARE_QUOTES: 'professionals',
+  SELECT_PROFESSIONAL: 'professionals',
+  REQUEST_SITE_VISIT: 'site-access',
+  CONFIRM_SITE_VISIT: 'site-access',
+  REVIEW_PROGRESS: 'schedule',
+  APPROVE_MILESTONE: 'schedule',
+  SCHEDULE_FINAL_INSPECTION: 'schedule',
+  APPROVE_FINAL_WORK: 'schedule',
+  REPORT_DEFECT: 'schedule',
+};
+
+function getClientShowMeHref(projectId: string, actionKey: string) {
+  const tab = clientActionTabMap[actionKey] || 'overview';
+  return `/projects/${projectId}?tab=${encodeURIComponent(tab)}`;
+}
+
 const assistStatusColors: Record<AssistStatus, string> = {
   open: "bg-amber-100 text-amber-800",
   in_progress: "bg-blue-100 text-blue-800",
@@ -713,7 +732,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       {/* Button */}
                       <div className="flex items-center">
                         <Link
-                          href={`/projects/${project.id}`}
+                          href={getClientShowMeHref(project.id, action.actionKey)}
                           className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
                         >
                           Show me

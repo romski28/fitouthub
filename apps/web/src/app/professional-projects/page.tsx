@@ -31,6 +31,24 @@ interface ProjectProfessional {
 
 type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
 
+const professionalActionTabMap: Record<string, string> = {
+  REQUEST_SITE_ACCESS: 'site-access',
+  ATTEND_SITE_VISIT: 'site-access',
+  PREPARE_REVISED_QUOTE: 'site-access',
+  SUBMIT_QUOTE: 'overview',
+  REPLY_TO_INVITATION: 'overview',
+  SUBMIT_PROGRESS_UPDATE: 'schedule',
+  REQUEST_FINAL_WALKTHROUGH: 'schedule',
+  ADDRESS_FINAL_ITEMS: 'schedule',
+  PROVIDE_WARRANTY_DETAILS: 'schedule',
+  RESPOND_TO_DISPUTE: 'chat',
+};
+
+function getProfessionalShowMeHref(projectProfessionalId: string, actionKey: string) {
+  const tab = professionalActionTabMap[actionKey] || 'overview';
+  return `/professional-projects/${projectProfessionalId}?tab=${encodeURIComponent(tab)}`;
+}
+
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
@@ -257,7 +275,7 @@ export default function ProfessionalProjectsPage() {
                         {/* Button */}
                         <div className="flex items-center">
                           <Link
-                            href={`/professional-projects/${projectProf.id}`}
+                            href={getProfessionalShowMeHref(projectProf.id, action.actionKey)}
                             className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
                           >
                             Show me
