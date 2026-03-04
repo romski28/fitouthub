@@ -29,7 +29,7 @@ interface ContractData {
 
 interface ContractTabProps {
   projectId: string;
-  accessToken: string;
+  accessToken: string | null;
 }
 
 const formatDate = (date?: string | null) => {
@@ -61,6 +61,12 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   }, [projectId]);
 
   const fetchContract = async () => {
+    if (!accessToken) {
+      setError('Authentication required');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -89,7 +95,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   };
 
   const handleSignContract = async () => {
-    if (!contract?.canSign) return;
+    if (!contract?.canSign || !accessToken) return;
 
     try {
       setSigning(true);
