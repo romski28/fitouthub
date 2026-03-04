@@ -29,6 +29,7 @@ interface ContractData {
 }
 
 interface ContractTabProps {
+  tab?: string;
   projectId: string;
   accessToken: string | null;
 }
