@@ -1055,7 +1055,6 @@ export default function ProjectDetailPage() {
             />
 
             <ContractTab
-              tab="contract"
               projectId={project.project.id}
               accessToken={accessToken}
             />
