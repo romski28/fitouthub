@@ -1012,6 +1012,7 @@ export class ProjectsController {
     } catch (error: any) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+  }
 
   /**
    * GET /projects/:id/contract
@@ -1051,6 +1052,5 @@ export class ProjectsController {
     } catch (error: any) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
-  }
   }
 }
