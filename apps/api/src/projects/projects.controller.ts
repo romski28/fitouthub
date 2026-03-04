@@ -32,6 +32,7 @@ import { PrismaService } from '../prisma.service';
 import { NextStepService } from './next-step.service';
 import { AdminActionService } from './admin-action.service';
 import { ProjectStageService } from './project-stage.service';
+import { ContractService } from './contract.service';
 import { RecordNextStepActionDto, TransitionProjectStageDto, PauseProjectDto, ResumeProjectDto, DisputeProjectDto } from './dto/next-step.dto';
 import { CreateAdminActionDto, UpdateAdminActionDto, AssignAdminActionDto, CompleteAdminActionDto } from './dto/admin-action.dto';
 
@@ -44,6 +45,7 @@ export class ProjectsController {
     private readonly nextStepService: NextStepService,
     private readonly adminActionService: AdminActionService,
     private readonly projectStageService: ProjectStageService,
+    private readonly contractService: ContractService,
   ) {}
 
   @Get()
@@ -1010,5 +1012,45 @@ export class ProjectsController {
     } catch (error: any) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+
+  /**
+   * GET /projects/:id/contract
+   * Get contract for a project (generates if not exists)
+   */
+  @Get(':id/contract')
+  @UseGuards(CombinedAuthGuard)
+  async getContract(@Param('id') projectId: string, @Request() req: any) {
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      if (!userId) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      const contract = await this.contractService.getContract(projectId, userId);
+      return contract;
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * POST /projects/:id/contract/sign
+   * Sign the contract as client or professional
+   */
+  @Post(':id/contract/sign')
+  @UseGuards(CombinedAuthGuard)
+  async signContract(@Param('id') projectId: string, @Request() req: any) {
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      if (!userId) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      const result = await this.contractService.signContract(projectId, userId);
+      return result;
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
   }
 }

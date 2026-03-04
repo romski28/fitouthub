@@ -48,6 +48,7 @@ const clientActionTabMap: Record<string, string> = {
   SELECT_PROFESSIONAL: 'professionals',
   REQUEST_SITE_VISIT: 'site-access',
   CONFIRM_SITE_VISIT: 'site-access',
+  REVIEW_CONTRACT: 'contract',
   REVIEW_PROGRESS: 'schedule',
   APPROVE_MILESTONE: 'schedule',
   SCHEDULE_FINAL_INSPECTION: 'schedule',

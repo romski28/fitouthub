@@ -37,6 +37,8 @@ const professionalActionTabMap: Record<string, string> = {
   PREPARE_REVISED_QUOTE: 'site-access',
   SUBMIT_QUOTE: 'overview',
   REPLY_TO_INVITATION: 'overview',
+  REVIEW_CONTRACT: 'contract',
+  SIGN_CONTRACT: 'contract',
   SUBMIT_PROGRESS_UPDATE: 'schedule',
   REQUEST_FINAL_WALKTHROUGH: 'schedule',
   ADDRESS_FINAL_ITEMS: 'schedule',

@@ -7,6 +7,7 @@ import { ProjectsService } from './projects/projects.service';
 import { NextStepService } from './projects/next-step.service';
 import { AdminActionService } from './projects/admin-action.service';
 import { ProjectStageService } from './projects/project-stage.service';
+import { ContractService } from './projects/contract.service';
 import { ProfessionalsModule } from './professionals/professionals.module';
 import { TradesmModule } from './tradesman/tradesman.module';
 import { UploadsController } from './uploads/uploads.controller';
@@ -68,6 +69,7 @@ import { NotificationModule } from './notifications/notification.module';
     NextStepService,
     AdminActionService,
     ProjectStageService,
+    ContractService,
     ReportsService,
     AssistRequestsService,
     ChatService,

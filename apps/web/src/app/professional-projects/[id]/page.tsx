@@ -10,6 +10,7 @@ import ProjectInfoCard from '@/components/project-info-card';
 import { ProjectTabs } from '@/components/project-tabs';
 import { OverviewTab } from './tabs/overview-tab';
 import { SiteAccessTab } from './tabs/site-access-tab';
+import { ContractTab } from './tabs/contract-tab';
 import { FinancialsTab } from './tabs/financials-tab';
 import { ScheduleTab } from './tabs/schedule-tab';
 import { ChatTab } from './tabs/chat-tab';
@@ -159,6 +160,7 @@ export default function ProjectDetailPage() {
 
     const allowedTabs = new Set(['overview', 'financials', 'chat']);
     if (project.status === 'awarded') {
+      allowedTabs.add('contract');
       allowedTabs.add('schedule');
     } else {
       allowedTabs.add('site-access');
@@ -993,8 +995,9 @@ export default function ProjectDetailPage() {
                 tabsArray.push({ id: 'site-access', label: 'Access & Schedule', icon: '📍' });
               }
               
-              // Show Schedule tab only when awarded
+              // Show Contract and Schedule tabs only when awarded
               if (project.status === 'awarded') {
+                tabsArray.push({ id: 'contract', label: 'Contract', icon: '📄' });
                 tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
               }
               
@@ -1049,6 +1052,12 @@ export default function ProjectDetailPage() {
               onUpdateVisitNotes={setVisitNotes}
               visitResponseNotes={visitResponseNotes}
               onUpdateVisitResponseNotes={setVisitResponseNotes}
+            />
+
+            <ContractTab
+              tab="contract"
+              projectId={project.project.id}
+              accessToken={accessToken}
             />
 
             <ScheduleTab

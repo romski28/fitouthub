@@ -19,6 +19,7 @@ import { ProfessionalsTab } from '@/app/projects/[id]/tabs/professionals-tab';
 import { ClientScheduleTab } from '@/app/projects/[id]/tabs/schedule-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
+import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -57,6 +58,7 @@ interface ProjectDetail {
   locationDetailsStatus?: string;
   locationDetailsRequiredAt?: string;
   locationDetailsProvidedAt?: string;
+  currentStage?: string;
   professionals?: ProjectProfessional[];
   startDate?: string;
   endDate?: string;
@@ -290,6 +292,7 @@ export default function ClientProjectDetailPage() {
 
     const allowedTabs = new Set(['overview', 'site-access', 'professionals', 'media']);
     if (isAwarded) {
+      allowedTabs.add('contract');
       allowedTabs.add('schedule');
       allowedTabs.add('chat');
     }
@@ -1368,6 +1371,7 @@ export default function ClientProjectDetailPage() {
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
+              { id: 'contract', label: 'Contract', icon: '📄' },
               { id: 'schedule', label: 'Schedule', icon: '📅' },
               { id: 'chat', label: 'Chat', icon: '💬' },
               { id: 'media', label: 'Media', icon: '🖼️' },
@@ -1482,6 +1486,17 @@ export default function ClientProjectDetailPage() {
                 }}
                 onActionBusy={setActionBusy}
                 actionBusy={actionBusy}
+              />
+            </div>
+          )}
+
+          {/* Tab Content - Contract */}
+          {activeTab === 'contract' && isAwarded && project && (
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+              <ContractTab
+                projectId={projectId}
+                accessToken={accessToken || ''}
+                userRole="client"
               />
             </div>
           )}

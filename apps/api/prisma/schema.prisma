@@ -101,6 +101,8 @@ model User {
   nextStepActions                 NextStepAction[]
   adminActionsAssigned            AdminAction[]           @relation("AdminActionAssigned")
   adminActionsCompleted           AdminAction[]           @relation("AdminActionCompleted")
+  contractsSignedAsClient         Project[]               @relation("ClientContractSignature")
+  contractsSignedAsProfessional   Project[]               @relation("ProfessionalContractSignature")
 }
 
 model Tradesman {
@@ -237,6 +239,16 @@ model Project {
   lastStageTransitionAt        DateTime?                @updatedAt
   nextStepActions              NextStepAction[]
   adminActions                 AdminAction[]
+  // Contract signing fields
+  contractType                 String?                  // e.g., 'BASIC', 'STANDARD', 'COMPREHENSIVE'
+  contractContent              String?                  @db.Text // Snapshot of contract at signing time
+  contractGeneratedAt          DateTime?
+  clientSignedAt               DateTime?
+  clientSignedById             String?
+  clientSignedBy               User?                    @relation("ClientContractSignature", fields: [clientSignedById], references: [id])
+  professionalSignedAt         DateTime?
+  professionalSignedById       String?
+  professionalSignedBy         User?                    @relation("ProfessionalContractSignature", fields: [professionalSignedById], references: [id])
 }
 
 model ProjectPhoto {
