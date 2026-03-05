@@ -39,7 +39,15 @@ interface AuthContextType {
     role?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
     requireOtpVerification?: boolean;
-  }) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
+  }) => Promise<
+    | { success: boolean; accessToken: string; refreshToken: string; user: User }
+    | {
+        success: boolean;
+        otpRequired: true;
+        email: string;
+        preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+      }
+  >;
   login: (email: string, password: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
   logout: () => void;
   refreshToken: () => Promise<void>;
@@ -120,6 +128,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     const result = await response.json();
+
+    if (result?.otpRequired) {
+      return result;
+    }
+
+    if (!result?.accessToken || !result?.refreshToken || !result?.user) {
+      throw new Error('Registration response is missing authentication tokens');
+    }
 
     // Save tokens and user to localStorage
     localStorage.setItem('accessToken', result.accessToken);

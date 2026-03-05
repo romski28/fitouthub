@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
+import { API_BASE_URL } from '@/config/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -33,7 +34,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [clientPreferredContact, setClientPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [professionalPreferredContact, setProfessionalPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [professionType, setProfessionType] = useState<string>('general');
-  const [requireOtpVerification, setRequireOtpVerification] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState<{
+    email: string;
+    userType: 'client' | 'professional';
+  } | null>(null);
+  const [otpCode, setOtpCode] = useState('');
 
   React.useEffect(() => {
     setActiveTab(defaultTab);
@@ -50,7 +55,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setClientPreferredContact('EMAIL');
       setProfessionalPreferredContact('EMAIL');
       setProfessionType('general');
-      setRequireOtpVerification(false);
+      setPendingVerification(null);
+      setOtpCode('');
       setClientForm({
         nickname: '',
         email: '',
@@ -133,7 +139,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
-      await register({
+      const result = await register({
         nickname: clientForm.nickname,
         email: clientForm.email,
         password: clientForm.password,
@@ -142,7 +148,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         mobile: clientForm.mobile || undefined,
         role: 'client',
         preferredContactMethod: clientPreferredContact,
+        requireOtpVerification: true,
       });
+
+      if ('otpRequired' in result && result.otpRequired) {
+        setPendingVerification({
+          email: result.email || clientForm.email,
+          userType: 'client',
+        });
+        setOtpCode('');
+        return;
+      }
+
       onClose();
       setClientForm({
         nickname: '',
@@ -176,7 +193,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
-      await registerProfessional({
+      const result = await registerProfessional({
         businessName: professionalForm.businessName,
         fullName: professionalForm.contactName,
         email: professionalForm.email,
@@ -184,8 +201,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         phone: professionalForm.phone,
         professionType: professionType,
         preferredContactMethod: professionalPreferredContact,
-        requireOtpVerification: requireOtpVerification,
+        requireOtpVerification: true,
       });
+
+      if ('otpRequired' in result && result.otpRequired) {
+        setPendingVerification({
+          email: result.email || professionalForm.email,
+          userType: 'professional',
+        });
+        setOtpCode('');
+        return;
+      }
+
       onClose();
       setProfessionalForm({
         businessName: '',
@@ -197,6 +224,78 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!pendingVerification || !otpCode) {
+      setError('Please enter the verification code');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const endpoint = pendingVerification.userType === 'professional'
+        ? `${API_BASE_URL}/professional/auth/verify-registration-otp`
+        : `${API_BASE_URL}/auth/verify-registration-otp`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerification.email, code: otpCode }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'OTP verification failed');
+      }
+
+      if (pendingVerification.userType === 'professional') {
+        await loginProfessional(professionalForm.email, professionalForm.password);
+      } else {
+        await login(clientForm.email, clientForm.password);
+      }
+
+      setPendingVerification(null);
+      setOtpCode('');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+
+    if (!pendingVerification) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const endpoint = pendingVerification.userType === 'professional'
+        ? `${API_BASE_URL}/professional/auth/resend-registration-otp`
+        : `${API_BASE_URL}/auth/resend-registration-otp`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerification.email }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to resend OTP');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend OTP');
     } finally {
       setLoading(false);
     }
@@ -339,33 +438,69 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </form>
           ) : (
             <>
-              {/* User Type Toggle */}
-              <div className="mb-6 flex gap-2 bg-gray-100 p-1 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setUserType('client')}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                    userType === 'client'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  👤 {modalT('client')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUserType('professional')}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                    userType === 'professional'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  👷 {modalT('professional')}
-                </button>
-              </div>
+              {!pendingVerification && (
+                <div className="mb-6 flex gap-2 bg-gray-100 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setUserType('client')}
+                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                      userType === 'client'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    👤 {modalT('client')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserType('professional')}
+                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                      userType === 'professional'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    👷 {modalT('professional')}
+                  </button>
+                </div>
+              )}
 
-              {userType === 'client' ? (
+              {pendingVerification ? (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
+                    Enter the 6-digit OTP sent to {pendingVerification.email}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Verification Code
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    {loading ? 'Verifying...' : 'Verify OTP'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={loading}
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-700 font-medium hover:bg-gray-50 disabled:bg-gray-100"
+                  >
+                    Resend code
+                  </button>
+                </form>
+              ) : userType === 'client' ? (
                 <form
                   onSubmit={handleClientRegister}
                   className="space-y-4 max-h-96 overflow-y-auto"
@@ -641,19 +776,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         WeChat (disabled)
                       </button>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={requireOtpVerification}
-                        onChange={(e) => setRequireOtpVerification(e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      Require OTP verification
-                    </label>
-                    <p className="text-xs text-gray-600 mt-1">Enhance security with one-time password verification</p>
                   </div>
 
                   <div>
