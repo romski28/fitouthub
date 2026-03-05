@@ -6,6 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import { API_BASE_URL } from '@/config/api';
+import confetti from 'canvas-confetti';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     userType: 'client' | 'professional';
   } | null>(null);
   const [otpCode, setOtpCode] = useState('');
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
 
   React.useEffect(() => {
     setActiveTab(defaultTab);
@@ -57,6 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setProfessionType('general');
       setPendingVerification(null);
       setOtpCode('');
+      setVerificationSuccess(false);
       setClientForm({
         nickname: '',
         email: '',
@@ -255,17 +258,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         throw new Error(data.message || 'OTP verification failed');
       }
 
-      if (pendingVerification.userType === 'professional') {
-        await loginProfessional(professionalForm.email, professionalForm.password);
-      } else {
-        await login(clientForm.email, clientForm.password);
-      }
+      // Show success banner and trigger confetti
+      setVerificationSuccess(true);
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+      });
 
-      setPendingVerification(null);
-      setOtpCode('');
-      onClose();
+      // Auto-login and close after 2.5 seconds
+      setTimeout(async () => {
+        try {
+          if (pendingVerification.userType === 'professional') {
+            await loginProfessional(professionalForm.email, professionalForm.password);
+          } else {
+            await login(clientForm.email, clientForm.password);
+          }
+
+          setPendingVerification(null);
+          setOtpCode('');
+          setVerificationSuccess(false);
+          onClose();
+        } catch (loginErr) {
+          setError(loginErr instanceof Error ? loginErr.message : 'Login failed');
+          setVerificationSuccess(false);
+        }
+      }, 2500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'OTP verification failed');
+      setVerificationSuccess(false);
     } finally {
       setLoading(false);
     }
@@ -465,7 +487,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               )}
 
-              {pendingVerification ? (
+              {verificationSuccess ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div className="text-5xl animate-bounce">🎉</div>
+                  <h3 className="text-2xl font-bold text-gray-900">Welcome! 👋</h3>
+                  <p className="text-center text-gray-600">
+                    Your account is verified. Logging you in...
+                  </p>
+                  <div className="w-full bg-gradient-to-r from-blue-500 to-green-500 h-1 rounded-full animate-pulse"></div>
+                </div>
+              ) : pendingVerification ? (
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
                     Enter the 6-digit OTP sent to {pendingVerification.email}
