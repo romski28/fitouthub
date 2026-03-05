@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
 
 type PolicyType = 'TERMS_AND_CONDITIONS' | 'SECURITY_STATEMENT' | 'CONTRACT_TEMPLATE';
 
@@ -41,8 +42,7 @@ export default function AdminPoliciesPage() {
     
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/policies`, {
+      const response = await fetch(`${API_BASE_URL}/policies`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -71,8 +71,7 @@ export default function AdminPoliciesPage() {
 
   const activatePolicy = async (id: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/policies/${id}/activate`, {
+      const response = await fetch(`${API_BASE_URL}/policies/${id}/activate`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -98,8 +97,7 @@ export default function AdminPoliciesPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/policies/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/policies/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -488,8 +486,7 @@ function CreatePolicyForm({
 
     try {
       setSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/policies`, {
+      const response = await fetch(`${API_BASE_URL}/policies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
