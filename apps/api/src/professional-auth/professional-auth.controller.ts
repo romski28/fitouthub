@@ -25,6 +25,20 @@ export class ProfessionalAuthController {
     return this.professionalAuthService.register(dto);
   }
 
+  @Post('verify-registration-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyRegistrationOtp(
+    @Body() body: { email: string; code: string },
+  ) {
+    return this.professionalAuthService.verifyRegistrationOtp(body.email, body.code);
+  }
+
+  @Post('resend-registration-otp')
+  @HttpCode(HttpStatus.OK)
+  async resendRegistrationOtp(@Body() body: { email: string }) {
+    return this.professionalAuthService.resendRegistrationOtp(body.email);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: ProfessionalLoginDto) {

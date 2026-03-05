@@ -5,4 +5,6 @@ export class ProfessionalRegisterDto {
   professionType?: string;
   fullName?: string;
   businessName?: string;
+  preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+  requireOtpVerification?: boolean;
 }

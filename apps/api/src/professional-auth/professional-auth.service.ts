@@ -8,12 +8,17 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
 import { ProfessionalLoginDto, ProfessionalRegisterDto } from './dto';
+import { EmailService } from '../email/email.service';
+import { NotificationService } from '../notifications/notification.service';
+import { NotificationChannel } from '@prisma/client';
 
 @Injectable()
 export class ProfessionalAuthService {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
+    private emailService: EmailService,
+    private notificationService: NotificationService,
   ) {}
 
   async register(dto: ProfessionalRegisterDto) {
@@ -38,6 +43,15 @@ export class ProfessionalAuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
+    // Generate OTP if verification is required
+    let otpCode: string | null = null;
+    let otpExpiresAt: Date | null = null;
+    
+    if (dto.requireOtpVerification) {
+      otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    }
+
     // Create professional account
     const professional = await (this.prisma as any).professional.create({
       data: {
@@ -52,8 +66,30 @@ export class ProfessionalAuthService {
         agreedToTermsVersion: '1.0',
         agreedToSecurityStatementAt: new Date(),
         agreedToSecurityStatementVersion: '1.0',
+        otpCode,
+        otpExpiresAt,
       },
     });
+
+    // Create notification preference for the professional
+    const preferredChannel = (dto.preferredContactMethod as NotificationChannel) || NotificationChannel.EMAIL;
+    
+    await (this.prisma as any).notificationPreference.create({
+      data: {
+        professionalId: professional.id,
+        channel: preferredChannel,
+        enabled: true,
+      },
+    });
+
+    // Send OTP if verification is required
+    if (otpCode && dto.requireOtpVerification) {
+      if (preferredChannel === NotificationChannel.EMAIL) {
+        await this.emailService.sendOtpEmail(professional.email, otpCode);
+      } else if (preferredChannel === NotificationChannel.SMS) {
+        await this.notificationService.sendSms(professional.phone, `Your OTP is: ${otpCode}`);
+      }
+    }
 
     // Generate tokens
     const tokens = this.generateTokens(professional.id);
@@ -69,6 +105,7 @@ export class ProfessionalAuthService {
         businessName: professional.businessName,
         professionType: professional.professionType,
       },
+      requiresOtpVerification: dto.requireOtpVerification || false,
     };
   }
 
@@ -136,6 +173,83 @@ export class ProfessionalAuthService {
         email: professional.email,
         fullName: professional.fullName,
       },
+    };
+  }
+
+  async verifyOtp(professionalId: string, otpCode: string) {
+    const professional = await (this.prisma as any).professional.findUnique({
+      where: { id: professionalId },
+    });
+
+    if (!professional) {
+      throw new UnauthorizedException('Professional not found');
+    }
+
+    if (!professional.otpCode) {
+      throw new BadRequestException('No OTP request found for this account');
+    }
+
+    if (professional.otpCode !== otpCode) {
+      throw new BadRequestException('Invalid OTP code');
+    }
+
+    if (professional.otpExpiresAt && professional.otpExpiresAt < new Date()) {
+      throw new BadRequestException('OTP has expired');
+    }
+
+    // Mark OTP as verified and clear OTP fields
+    await (this.prisma as any).professional.update({
+      where: { id: professionalId },
+      data: {
+        otpVerifiedAt: new Date(),
+        otpCode: null,
+        otpExpiresAt: null,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'OTP verified successfully',
+    };
+  }
+
+  async resendOtp(professionalId: string) {
+    const professional = await (this.prisma as any).professional.findUnique({
+      where: { id: professionalId },
+      include: {
+        notificationPreference: true,
+      },
+    });
+
+    if (!professional) {
+      throw new UnauthorizedException('Professional not found');
+    }
+
+    // Generate new OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    // Update OTP in database
+    await (this.prisma as any).professional.update({
+      where: { id: professionalId },
+      data: {
+        otpCode,
+        otpExpiresAt,
+      },
+    });
+
+    // Send OTP via preferred channel
+    const preferredChannel = professional.notificationPreference?.channel || NotificationChannel.EMAIL;
+    
+    if (preferredChannel === NotificationChannel.EMAIL) {
+      await this.emailService.sendOtpEmail(professional.email, otpCode);
+    } else if (preferredChannel === NotificationChannel.SMS) {
+      await this.notificationService.sendSms(professional.phone, `Your OTP is: ${otpCode}`);
+    }
+
+    return {
+      success: true,
+      message: 'OTP resent successfully',
     };
   }
 
