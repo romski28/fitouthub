@@ -81,8 +81,7 @@ export async function getPolicyContent(type: PolicyType): Promise<string> {
  */
 export async function prefetchAllPolicies(): Promise<void> {
   try {
-    const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/policies/active/all`);
+    const response = await fetch(`${API_BASE_URL}/policies/active/all`);
     
     if (!response.ok) {
       throw new Error(`Failed to prefetch policies: ${response.statusText}`);
