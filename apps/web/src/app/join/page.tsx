@@ -85,6 +85,7 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
   const t = useTranslations('auth');
   const navT = useTranslations('nav');
   const commonT = useTranslations('common');
+  const { openLoginModal } = useAuthModalControl();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
