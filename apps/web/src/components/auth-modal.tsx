@@ -620,3 +620,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           title="Security Statement"
           content={SECURITY_STATEMENT}
         />
+      </div>
+    </div>
+  );
+};
