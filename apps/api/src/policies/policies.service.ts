@@ -4,9 +4,8 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { CreatePolicyDto } from './dto/create-policy.dto';
+import { CreatePolicyDto, type PolicyType } from './dto/create-policy.dto';
 import { UpdatePolicyDto } from './dto/update-policy.dto';
-import { PolicyType } from '@prisma/client';
 
 @Injectable()
 export class PoliciesService {
