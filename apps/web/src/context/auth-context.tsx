@@ -37,6 +37,8 @@ interface AuthContextType {
     chineseName?: string;
     mobile?: string;
     role?: string;
+    preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    requireOtpVerification?: boolean;
   }) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
   login: (email: string, password: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
   logout: () => void;
@@ -103,6 +105,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     chineseName?: string;
     mobile?: string;
     role?: string;
+    preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    requireOtpVerification?: boolean;
   }) => {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
