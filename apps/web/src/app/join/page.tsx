@@ -4,7 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuthModalControl } from '@/context/auth-modal-control';
+import { DocumentModal } from '@/components/document-modal';
 import { ProfessionRegistrationModal } from '@/components/profession-registration-modal';
+import { TERMS_AND_CONDITIONS } from '@/content/terms-and-conditions';
+import { SECURITY_STATEMENT } from '@/content/security-statement';
 
 export default function JoinPage() {
   const router = useRouter();
@@ -84,6 +87,9 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
   const commonT = useTranslations('common');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [formData, setFormData] = useState({
     nickname: '',
     firstName: '',
@@ -97,6 +103,11 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!agreeToTerms) {
+      setError('You must agree to the Terms and Conditions to continue');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError(t('validation.passwordMismatch'));
@@ -230,6 +241,37 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
 
             {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 p-3 text-sm">{error}</div>}
 
+            {/* Terms and Conditions Checkbox */}
+            <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="agreeToTerms"
+                  checked={agreeToTerms}
+                  onChange={(e) => setAgreeToTerms(e.target.checked)}
+                  className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="agreeToTerms" className="text-sm text-slate-700">
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="font-semibold text-blue-600 hover:underline"
+                  >
+                    Terms and Conditions
+                  </button>
+                  {' and acknowledge the '}
+                  <button
+                    type="button"
+                    onClick={() => setShowSecurityModal(true)}
+                    className="font-semibold text-blue-600 hover:underline"
+                  >
+                    Security Statement
+                  </button>
+                </label>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
@@ -247,6 +289,20 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <DocumentModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title="Terms and Conditions"
+        content={TERMS_AND_CONDITIONS}
+      />
+      <DocumentModal
+        isOpen={showSecurityModal}
+        onClose={() => setShowSecurityModal(false)}
+        title="Security Statement"
+        content={SECURITY_STATEMENT}
+      />
     </div>
   );
 }
