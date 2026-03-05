@@ -48,6 +48,10 @@ export class ProfessionalAuthService {
         businessName: dto.businessName,
         passwordHash: hashedPassword,
         status: 'pending',
+        agreedToTermsAt: new Date(),
+        agreedToTermsVersion: '1.0',
+        agreedToSecurityStatementAt: new Date(),
+        agreedToSecurityStatementVersion: '1.0',
       },
     });
 

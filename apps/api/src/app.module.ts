@@ -31,6 +31,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ActivityLogController } from './activity-log.controller';
 import { MilestonesModule } from './milestones/milestones.module';
 import { NotificationModule } from './notifications/notification.module';
+import { PoliciesModule } from './policies/policies.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { NotificationModule } from './notifications/notification.module';
     UpdatesModule,
     MilestonesModule,
     NotificationModule,
+    PoliciesModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },

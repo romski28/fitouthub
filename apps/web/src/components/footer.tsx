@@ -2,10 +2,8 @@
 
 import { useState } from 'react';
 import { useAuthModalControl } from '@/context/auth-modal-control';
-import { DocumentModal } from '@/components/document-modal';
+import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import { useTranslations } from 'next-intl';
-import { TERMS_AND_CONDITIONS } from '@/content/terms-and-conditions';
-import { SECURITY_STATEMENT } from '@/content/security-statement';
 
 export default function Footer() {
   const t = useTranslations('footer');
@@ -67,17 +65,17 @@ export default function Footer() {
       </div>
 
       {/* Modals */}
-      <DocumentModal
+      <PolicyDocumentModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         title="Terms and Conditions"
-        content={TERMS_AND_CONDITIONS}
+        policyType="TERMS_AND_CONDITIONS"
       />
-      <DocumentModal
+      <PolicyDocumentModal
         isOpen={showSecurityModal}
         onClose={() => setShowSecurityModal(false)}
         title="Security Statement"
-        content={SECURITY_STATEMENT}
+        policyType="SECURITY_STATEMENT"
       />
     </footer>
   );

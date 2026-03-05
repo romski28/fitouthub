@@ -52,6 +52,10 @@ export class AuthService {
         chineseName: dto.chineseName,
         mobile: dto.mobile,
         role: dto.role || 'client',
+        agreedToTermsAt: new Date(),
+        agreedToTermsVersion: '1.0',
+        agreedToSecurityStatementAt: new Date(),
+        agreedToSecurityStatementVersion: '1.0',
       },
     });
 

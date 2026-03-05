@@ -68,6 +68,12 @@ enum AdminActionType {
   APPROVE_CHANGE_ORDER
 }
 
+enum PolicyType {
+  TERMS_AND_CONDITIONS
+  SECURITY_STATEMENT
+  CONTRACT_TEMPLATE
+}
+
 model User {
   id                              String                   @id @default(cuid())
   nickname                        String                   @unique
@@ -103,6 +109,10 @@ model User {
   adminActionsCompleted           AdminAction[]           @relation("AdminActionCompleted")
   contractsSignedAsClient         Project[]               @relation("ClientContractSignature")
   contractsSignedAsProfessional   Project[]               @relation("ProfessionalContractSignature")
+  agreedToTermsAt                DateTime?
+  agreedToTermsVersion            String?                 @default("1.0")
+  agreedToSecurityStatementAt     DateTime?
+  agreedToSecurityStatementVersion String?                @default("1.0")
 }
 
 model Tradesman {
@@ -183,6 +193,10 @@ model Professional {
   siteAccessVisits        SiteAccessVisit[]
   notificationLogs        NotificationLog[]
   notificationPreferences NotificationPreference?
+  agreedToTermsAt                DateTime?
+  agreedToTermsVersion            String?                 @default("1.0")
+  agreedToSecurityStatementAt     DateTime?
+  agreedToSecurityStatementVersion String?                @default("1.0")
 }
 
 model Project {
@@ -909,4 +923,21 @@ model AdminNextStepTemplate {
 
   @@unique([projectStage, actionType])
   @@index([projectStage])
+}
+
+model Policy {
+  id          String     @id @default(cuid())
+  type        PolicyType
+  version     String
+  title       String
+  content     String     @db.Text
+  isActive    Boolean    @default(false)
+  createdBy   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([type, version])
+  @@index([type])
+  @@index([isActive])
+  @@index([type, isActive])
 }

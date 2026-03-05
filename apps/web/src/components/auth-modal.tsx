@@ -4,9 +4,7 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
-import { DocumentModal } from '@/components/document-modal';
-import { TERMS_AND_CONDITIONS } from '@/content/terms-and-conditions';
-import { SECURITY_STATEMENT } from '@/content/security-statement';
+import { PolicyDocumentModal } from '@/components/policy-document-modal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -608,17 +606,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Modals */}
-        <DocumentModal
+        <PolicyDocumentModal
           isOpen={showTermsModal}
           onClose={() => setShowTermsModal(false)}
           title="Terms and Conditions"
-          content={TERMS_AND_CONDITIONS}
+          policyType="TERMS_AND_CONDITIONS"
         />
-        <DocumentModal
+        <PolicyDocumentModal
           isOpen={showSecurityModal}
           onClose={() => setShowSecurityModal(false)}
           title="Security Statement"
-          content={SECURITY_STATEMENT}
+          policyType="SECURITY_STATEMENT"
         />
       </div>
     </div>
