@@ -312,6 +312,150 @@ export default function AdminPoliciesPage() {
             </div>
           </div>
         )}
+
+        {/* Future Enhancements Section */}
+        <div className="mt-12 space-y-6">
+          <div className="border-t border-slate-200 pt-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Future Enhancements</h2>
+            <p className="text-slate-600 mb-6">Planned features for the policy management system</p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Rich Text Editor */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">✏️</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">Rich Text Editor</h3>
+                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-medium">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mb-3">
+                WYSIWYG editor for policy content with formatting, headings, lists, and links. Preview mode before publishing.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-1">
+                <li>• Visual formatting tools</li>
+                <li>• Markdown support</li>
+                <li>• Live preview</li>
+                <li>• Template variables</li>
+              </ul>
+            </div>
+
+            {/* Version Comparison */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">🔀</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">Version Diff Viewer</h3>
+                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-medium">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mb-3">
+                Side-by-side comparison of policy versions showing exactly what changed between versions.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-1">
+                <li>• Highlighted differences</li>
+                <li>• Side-by-side view</li>
+                <li>• Change summary</li>
+                <li>• Export diff report</li>
+              </ul>
+            </div>
+
+            {/* Approval Workflow */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">✅</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">Approval Workflow</h3>
+                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-medium">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mb-3">
+                Multi-step approval process for policy changes. Require legal review before activation.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-1">
+                <li>• Draft → Review → Approved states</li>
+                <li>• Reviewer assignments</li>
+                <li>• Comment threads</li>
+                <li>• Approval history</li>
+              </ul>
+            </div>
+
+            {/* User Notifications */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">🔔</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">User Notifications</h3>
+                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-medium">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mb-3">
+                Automatically notify users when policies are updated. Track which users have acknowledged changes.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-1">
+                <li>• Email notifications</li>
+                <li>• In-app alerts</li>
+                <li>• Re-consent flow</li>
+                <li>• Acknowledgment tracking</li>
+              </ul>
+            </div>
+
+            {/* Document Templates */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">📋</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">Dynamic Templates</h3>
+                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-medium">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mb-3">
+                Template variables for contracts that auto-populate with project details, client info, and milestones.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-1">
+                <li>• Variable placeholders</li>
+                <li>• Conditional sections</li>
+                <li>• Auto-generation</li>
+                <li>• PDF export</li>
+              </ul>
+            </div>
+
+            {/* Compliance Reports */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">📊</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">Compliance Reports</h3>
+                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-medium">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mb-3">
+                Generate compliance reports showing user agreement rates, version history, and audit trails.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-1">
+                <li>• Agreement statistics</li>
+                <li>• Version timeline</li>
+                <li>• Export to PDF/Excel</li>
+                <li>• Regulatory compliance</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Note */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💡</span>
+              <div>
+                <h3 className="font-semibold text-blue-900">Development Roadmap</h3>
+                <p className="mt-1 text-sm text-blue-800">
+                  These features will be implemented as the platform grows. The current system provides a solid foundation
+                  for version control and document management. Contact support if you need any of these features prioritized.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

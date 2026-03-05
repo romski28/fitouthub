@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { DocumentModal } from './document-modal';
 import { getPolicyContent, PolicyType } from '@/lib/policies';
+import { TERMS_AND_CONDITIONS } from '@/content/terms-and-conditions';
+import { SECURITY_STATEMENT } from '@/content/security-statement';
 
 interface PolicyDocumentModalProps {
   isOpen: boolean;
@@ -13,7 +15,7 @@ interface PolicyDocumentModalProps {
 
 /**
  * PolicyDocumentModal - Fetches policy content from API and displays in modal
- * This replaces direct usage of DocumentModal with hardcoded content
+ * Falls back to hardcoded content if API is unavailable (e.g., migrations not run yet)
  */
 export const PolicyDocumentModal: React.FC<PolicyDocumentModalProps> = ({
   isOpen,
@@ -35,9 +37,11 @@ export const PolicyDocumentModal: React.FC<PolicyDocumentModalProps> = ({
           setContent(policyContent);
         }
       } catch (err) {
-        console.error('Error loading policy:', err);
+        console.warn('Error loading policy from API, using fallback:', err);
         if (!cancelled) {
-          setContent('Failed to load document. Please try again.');
+          // Fallback to hardcoded content if API fails (e.g., migrations not run yet)
+          const fallbackContent = getFallbackContent(policyType);
+          setContent(fallbackContent);
         }
       }
     }
@@ -60,3 +64,19 @@ export const PolicyDocumentModal: React.FC<PolicyDocumentModalProps> = ({
     />
   );
 };
+
+/**
+ * Fallback content for when API is unavailable
+ */
+function getFallbackContent(type: PolicyType): string {
+  switch (type) {
+    case 'TERMS_AND_CONDITIONS':
+      return TERMS_AND_CONDITIONS;
+    case 'SECURITY_STATEMENT':
+      return SECURITY_STATEMENT;
+    case 'CONTRACT_TEMPLATE':
+      return 'Contract template is being loaded...';
+    default:
+      return 'Document content unavailable. Please try again later.';
+  }
+}

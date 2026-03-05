@@ -95,6 +95,13 @@ export default function AdminDashboard() {
       icon: "📜",
       stats: "View activity",
     },
+    {
+      title: "Policies & Documents",
+      description: "Manage Terms & Conditions, Security Statement, and Contract templates. Version control and document updates.",
+      href: "/admin/policies",
+      icon: "📄",
+      stats: "Manage documents",
+    },
   ];
 
   return (
