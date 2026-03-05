@@ -77,20 +77,8 @@ export class AuthService {
       },
     });
 
-    await this.prisma.notificationPreference.upsert({
-      where: { userId: user.id },
-      update: {
-        primaryChannel: preferredContactMethod,
-        fallbackChannel:
-          preferredContactMethod === NotificationChannel.EMAIL
-            ? NotificationChannel.WHATSAPP
-            : NotificationChannel.EMAIL,
-        enableEmail: true,
-        enableWhatsApp: !!dto.mobile,
-        enableSMS: !!dto.mobile,
-        enableWeChat: false,
-      },
-      create: {
+    await this.prisma.notificationPreference.create({
+      data: {
         userId: user.id,
         primaryChannel: preferredContactMethod,
         fallbackChannel:

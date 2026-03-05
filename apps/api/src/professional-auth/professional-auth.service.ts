@@ -74,20 +74,8 @@ export class ProfessionalAuthService {
     // Create notification preference for the professional
     const preferredChannel = (dto.preferredContactMethod as NotificationChannel) || NotificationChannel.EMAIL;
     
-    await (this.prisma as any).notificationPreference.upsert({
-      where: { professionalId: professional.id },
-      update: {
-        primaryChannel: preferredChannel,
-        fallbackChannel:
-          preferredChannel === NotificationChannel.EMAIL
-            ? NotificationChannel.WHATSAPP
-            : NotificationChannel.EMAIL,
-        enableEmail: true,
-        enableWhatsApp: !!professional.phone,
-        enableSMS: !!professional.phone,
-        enableWeChat: false,
-      },
-      create: {
+    await (this.prisma as any).notificationPreference.create({
+      data: {
         professionalId: professional.id,
         primaryChannel: preferredChannel,
         fallbackChannel:
