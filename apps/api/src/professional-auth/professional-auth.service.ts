@@ -74,21 +74,42 @@ export class ProfessionalAuthService {
     // Create notification preference for the professional
     const preferredChannel = (dto.preferredContactMethod as NotificationChannel) || NotificationChannel.EMAIL;
     
-    await (this.prisma as any).notificationPreference.create({
-      data: {
+    await (this.prisma as any).notificationPreference.upsert({
+      where: { professionalId: professional.id },
+      update: {
+        primaryChannel: preferredChannel,
+        fallbackChannel:
+          preferredChannel === NotificationChannel.EMAIL
+            ? NotificationChannel.WHATSAPP
+            : NotificationChannel.EMAIL,
+        enableEmail: true,
+        enableWhatsApp: !!professional.phone,
+        enableSMS: !!professional.phone,
+        enableWeChat: false,
+      },
+      create: {
         professionalId: professional.id,
-        channel: preferredChannel,
-        enabled: true,
+        primaryChannel: preferredChannel,
+        fallbackChannel:
+          preferredChannel === NotificationChannel.EMAIL
+            ? NotificationChannel.WHATSAPP
+            : NotificationChannel.EMAIL,
+        enableEmail: true,
+        enableWhatsApp: !!professional.phone,
+        enableSMS: !!professional.phone,
+        enableWeChat: false,
       },
     });
 
     // Send OTP if verification is required
     if (otpCode && dto.requireOtpVerification) {
-      if (preferredChannel === NotificationChannel.EMAIL) {
-        await this.emailService.sendOtpEmail(professional.email, otpCode);
-      } else if (preferredChannel === NotificationChannel.SMS) {
-        await this.notificationService.sendSms(professional.phone, `Your OTP is: ${otpCode}`);
-      }
+      await this.sendProfessionalOtp(
+        professional.id,
+        professional.email,
+        professional.phone,
+        preferredChannel,
+        otpCode,
+      );
     }
 
     // Generate tokens
@@ -105,8 +126,42 @@ export class ProfessionalAuthService {
         businessName: professional.businessName,
         professionType: professional.professionType,
       },
-      requiresOtpVerification: dto.requireOtpVerification || false,
+      otpRequired: dto.requireOtpVerification || false,
     };
+  }
+
+  async verifyRegistrationOtp(email: string, code: string) {
+    if (!email || !code) {
+      throw new BadRequestException('Email and code are required');
+    }
+
+    const professional = await (this.prisma as any).professional.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (!professional) {
+      throw new BadRequestException('Professional not found');
+    }
+
+    return this.verifyOtp(professional.id, code);
+  }
+
+  async resendRegistrationOtp(email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    const professional = await (this.prisma as any).professional.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (!professional) {
+      throw new BadRequestException('Professional not found');
+    }
+
+    return this.resendOtp(professional.id);
   }
 
   async login(dto: ProfessionalLoginDto) {
@@ -216,9 +271,6 @@ export class ProfessionalAuthService {
   async resendOtp(professionalId: string) {
     const professional = await (this.prisma as any).professional.findUnique({
       where: { id: professionalId },
-      include: {
-        notificationPreference: true,
-      },
     });
 
     if (!professional) {
@@ -239,13 +291,19 @@ export class ProfessionalAuthService {
     });
 
     // Send OTP via preferred channel
-    const preferredChannel = professional.notificationPreference?.channel || NotificationChannel.EMAIL;
-    
-    if (preferredChannel === NotificationChannel.EMAIL) {
-      await this.emailService.sendOtpEmail(professional.email, otpCode);
-    } else if (preferredChannel === NotificationChannel.SMS) {
-      await this.notificationService.sendSms(professional.phone, `Your OTP is: ${otpCode}`);
-    }
+    const preference = await (this.prisma as any).notificationPreference.findUnique({
+      where: { professionalId },
+    });
+    const preferredChannel =
+      preference?.primaryChannel || NotificationChannel.EMAIL;
+
+    await this.sendProfessionalOtp(
+      professional.id,
+      professional.email,
+      professional.phone,
+      preferredChannel,
+      otpCode,
+    );
 
     return {
       success: true,
@@ -301,5 +359,44 @@ export class ProfessionalAuthService {
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  private async sendProfessionalOtp(
+    professionalId: string,
+    email: string,
+    phone: string,
+    preferredChannel: NotificationChannel,
+    otpCode: string,
+  ) {
+    const message = `Your Fitout Hub verification code is ${otpCode}. It expires in 15 minutes.`;
+
+    if (preferredChannel === NotificationChannel.SMS && phone) {
+      await this.notificationService.send({
+        professionalId,
+        phoneNumber: phone,
+        channel: NotificationChannel.SMS,
+        eventType: 'registration_otp',
+        message,
+      });
+      return;
+    }
+
+    if (preferredChannel === NotificationChannel.WHATSAPP && phone) {
+      await this.notificationService.send({
+        professionalId,
+        phoneNumber: phone,
+        channel: NotificationChannel.WHATSAPP,
+        eventType: 'registration_otp',
+        message,
+      });
+      return;
+    }
+
+    await this.emailService.sendOtpCode({
+      to: email,
+      code: otpCode,
+      firstName: undefined,
+      minutesValid: 15,
+    });
   }
 }
