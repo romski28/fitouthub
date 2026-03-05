@@ -30,6 +30,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [clientAgreeToTerms, setClientAgreeToTerms] = useState(false);
   const [professionalAgreeToTerms, setProfessionalAgreeToTerms] = useState(false);
+  const [clientPreferredContact, setClientPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
+  const [professionalPreferredContact, setProfessionalPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
+  const [professionType, setProfessionType] = useState<string>('general');
+  const [requireOtpVerification, setRequireOtpVerification] = useState(false);
 
   React.useEffect(() => {
     setActiveTab(defaultTab);
@@ -43,6 +47,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setError(null);
       setClientAgreeToTerms(false);
       setProfessionalAgreeToTerms(false);
+      setClientPreferredContact('EMAIL');
+      setProfessionalPreferredContact('EMAIL');
+      setProfessionType('general');
+      setRequireOtpVerification(false);
       setClientForm({
         nickname: '',
         email: '',
@@ -133,6 +141,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         surname: clientForm.surname,
         mobile: clientForm.mobile || undefined,
         role: 'client',
+        preferredContactMethod: clientPreferredContact,
       });
       onClose();
       setClientForm({
@@ -173,6 +182,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         email: professionalForm.email,
         password: professionalForm.password,
         phone: professionalForm.phone,
+        professionType: professionType,
+        preferredContactMethod: professionalPreferredContact,
+        requireOtpVerification: requireOtpVerification,
       });
       onClose();
       setProfessionalForm({
@@ -446,6 +458,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Primary contact preference
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setClientPreferredContact('EMAIL')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredContact === 'EMAIL' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        Email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setClientPreferredContact('WHATSAPP')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredContact === 'WHATSAPP' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        WhatsApp
+                      </button>
+                      <button
+                        type="button"
+                        disabled
+                        className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
+                      >
+                        SMS (coming)
+                      </button>
+                      <button
+                        type="button"
+                        disabled
+                        className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
+                      >
+                        WeChat (disabled)
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex items-start gap-3">
                       <input
@@ -537,6 +586,76 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Profession Type
+                    </label>
+                    <select
+                      value={professionType}
+                      onChange={(e) => setProfessionType(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                    >
+                      <option value="general">General</option>
+                      <option value="electrician">Electrician</option>
+                      <option value="plumber">Plumber</option>
+                      <option value="carpenter">Carpenter</option>
+                      <option value="painter">Painter</option>
+                      <option value="contractor">Contractor</option>
+                      <option value="hvac">HVAC</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred contact method
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setProfessionalPreferredContact('EMAIL')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredContact === 'EMAIL' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        Email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfessionalPreferredContact('WHATSAPP')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredContact === 'WHATSAPP' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        WhatsApp
+                      </button>
+                      <button
+                        type="button"
+                        disabled
+                        className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
+                      >
+                        SMS (coming)
+                      </button>
+                      <button
+                        type="button"
+                        disabled
+                        className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
+                      >
+                        WeChat (disabled)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={requireOtpVerification}
+                        onChange={(e) => setRequireOtpVerification(e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      Require OTP verification
+                    </label>
+                    <p className="text-xs text-gray-600 mt-1">Enhance security with one-time password verification</p>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       {t('signup.password')}
