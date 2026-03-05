@@ -370,28 +370,39 @@ export class ProfessionalAuthService {
   ) {
     const message = `Your Fitout Hub verification code is ${otpCode}. It expires in 15 minutes.`;
 
+    // Try SMS
     if (preferredChannel === NotificationChannel.SMS && phone) {
-      await this.notificationService.send({
-        professionalId,
-        phoneNumber: phone,
-        channel: NotificationChannel.SMS,
-        eventType: 'registration_otp',
-        message,
-      });
-      return;
+      try {
+        await this.notificationService.send({
+          professionalId,
+          phoneNumber: phone,
+          channel: NotificationChannel.SMS,
+          eventType: 'registration_otp',
+          message,
+        });
+        return;
+      } catch (error) {
+        console.error('Failed to send SMS OTP, falling back to email:', error.message);
+      }
     }
 
+    // Try WhatsApp
     if (preferredChannel === NotificationChannel.WHATSAPP && phone) {
-      await this.notificationService.send({
-        professionalId,
-        phoneNumber: phone,
-        channel: NotificationChannel.WHATSAPP,
-        eventType: 'registration_otp',
-        message,
-      });
-      return;
+      try {
+        await this.notificationService.send({
+          professionalId,
+          phoneNumber: phone,
+          channel: NotificationChannel.WHATSAPP,
+          eventType: 'registration_otp',
+          message,
+        });
+        return;
+      } catch (error) {
+        console.error('Failed to send WhatsApp OTP, falling back to email:', error.message);
+      }
     }
 
+    // Fallback to email
     await this.emailService.sendOtpCode({
       to: email,
       code: otpCode,
