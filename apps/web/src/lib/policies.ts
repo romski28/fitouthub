@@ -1,6 +1,8 @@
 // Policy management utility for fetching and caching policy documents
 // This replaces hardcoded policy content with API-fetched versions
 
+import { API_BASE_URL } from '@/config/api';
+
 export type PolicyType = 'TERMS_AND_CONDITIONS' | 'SECURITY_STATEMENT' | 'CONTRACT_TEMPLATE';
 
 export interface Policy {
@@ -21,18 +23,10 @@ let lastFetchTime: number | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Get the API URL based on environment
- */
-function getApiUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-}
-
-/**
  * Fetch active policy from API
  */
 async function fetchPolicyFromAPI(type: PolicyType): Promise<Policy> {
-  const apiUrl = getApiUrl();
-  const response = await fetch(`${apiUrl}/policies/active?type=${type}`);
+  const response = await fetch(`${API_BASE_URL}/policies/active?type=${type}`);
   
   if (!response.ok) {
     throw new Error(`Failed to fetch policy: ${response.statusText}`);

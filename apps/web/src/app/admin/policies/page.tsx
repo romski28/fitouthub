@@ -41,7 +41,7 @@ export default function AdminPoliciesPage() {
     
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
       const response = await fetch(`${apiUrl}/policies`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -71,7 +71,7 @@ export default function AdminPoliciesPage() {
 
   const activatePolicy = async (id: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
       const response = await fetch(`${apiUrl}/policies/${id}/activate`, {
         method: 'POST',
         headers: {
@@ -98,7 +98,7 @@ export default function AdminPoliciesPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
       const response = await fetch(`${apiUrl}/policies/${id}`, {
         method: 'DELETE',
         headers: {
@@ -488,7 +488,7 @@ function CreatePolicyForm({
 
     try {
       setSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
       const response = await fetch(`${apiUrl}/policies`, {
         method: 'POST',
         headers: {
