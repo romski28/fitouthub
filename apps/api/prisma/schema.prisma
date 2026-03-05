@@ -197,6 +197,9 @@ model Professional {
   agreedToTermsVersion            String?                 @default("1.0")
   agreedToSecurityStatementAt     DateTime?
   agreedToSecurityStatementVersion String?                @default("1.0")
+  otpCode                 String?
+  otpExpiresAt            DateTime?
+  otpVerifiedAt           DateTime?
 }
 
 model Project {
