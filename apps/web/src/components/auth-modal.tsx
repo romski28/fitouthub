@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { DocumentModal } from '@/components/document-modal';
+import { TERMS_AND_CONDITIONS } from '@/content/terms-and-conditions';
+import { SECURITY_STATEMENT } from '@/content/security-statement';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,6 +28,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [userType, setUserType] = useState<'client' | 'professional'>('client');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [clientAgreeToTerms, setClientAgreeToTerms] = useState(false);
+  const [professionalAgreeToTerms, setProfessionalAgreeToTerms] = useState(false);
 
   React.useEffect(() => {
     setActiveTab(defaultTab);
@@ -36,6 +43,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setLoginEmail('');
       setLoginPassword('');
       setError(null);
+      setClientAgreeToTerms(false);
+      setProfessionalAgreeToTerms(false);
       setClientForm({
         nickname: '',
         email: '',
@@ -106,8 +115,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     e.preventDefault();
     setError(null);
 
+    if (!clientAgreeToTerms) {
+      setError('You must agree to the Terms and Conditions to continue');
+      return;
+    }
+
     if (clientForm.password !== clientForm.confirmPassword) {
         setError(modalT('passwordMismatch'));
+        return;
     }
 
     setLoading(true);
@@ -142,8 +157,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     e.preventDefault();
     setError(null);
 
+    if (!professionalAgreeToTerms) {
+      setError('You must agree to the Terms and Conditions to continue');
+      return;
+    }
+
     if (professionalForm.password !== professionalForm.confirmPassword) {
         setError(modalT('passwordMismatch'));
+        return;
     }
 
     setLoading(true);
@@ -427,6 +448,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
+                  <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="clientAgreeToTerms"
+                        checked={clientAgreeToTerms}
+                        onChange={(e) => setClientAgreeToTerms(e.target.checked)}
+                        className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="clientAgreeToTerms" className="text-xs text-gray-700">
+                        I agree to the{' '}
+                        <button
+                          type="button"
+                          onClick={() => setShowTermsModal(true)}
+                          className="font-semibold text-blue-600 hover:underline"
+                        >
+                          Terms and Conditions
+                        </button>
+                        {' and acknowledge the '}
+                        <button
+                          type="button"
+                          onClick={() => setShowSecurityModal(true)}
+                          className="font-semibold text-blue-600 hover:underline"
+                        >
+                          Security Statement
+                        </button>
+                      </label>
+                    </div>
+                  </div>
                   <button
                     type="submit"
                     disabled={loading}
@@ -515,6 +565,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
+                  <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="professionalAgreeToTerms"
+                        checked={professionalAgreeToTerms}
+                        onChange={(e) => setProfessionalAgreeToTerms(e.target.checked)}
+                        className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="professionalAgreeToTerms" className="text-xs text-gray-700">
+                        I agree to the{' '}
+                        <button
+                          type="button"
+                          onClick={() => setShowTermsModal(true)}
+                          className="font-semibold text-blue-600 hover:underline"
+                        >
+                          Terms and Conditions
+                        </button>
+                        {' and acknowledge the '}
+                        <button
+                          type="button"
+                          onClick={() => setShowSecurityModal(true)}
+                          className="font-semibold text-blue-600 hover:underline"
+                        >
+                          Security Statement
+                        </button>
+                      </label>
+                    </div>
+                  </div>
                   <button
                     type="submit"
                     disabled={loading}
@@ -527,7 +606,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </>
           )}
         </div>
-      </div>
-    </div>
-  );
-};
+
+        {/* Modals */}
+        <DocumentModal
+          isOpen={showTermsModal}
+          onClose={() => setShowTermsModal(false)}
+          title="Terms and Conditions"
+          content={TERMS_AND_CONDITIONS}
+        />
+        <DocumentModal
+          isOpen={showSecurityModal}
+          onClose={() => setShowSecurityModal(false)}
+          title="Security Statement"
+          content={SECURITY_STATEMENT}
+        />
