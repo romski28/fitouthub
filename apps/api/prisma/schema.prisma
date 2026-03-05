@@ -108,6 +108,9 @@ model User {
   adminActionsAssigned            AdminAction[]           @relation("AdminActionAssigned")
   adminActionsCompleted           AdminAction[]           @relation("AdminActionCompleted")
   contractsSignedAsClient         Project[]               @relation("ClientContractSignature")
+  otpCode                         String?
+  otpExpiresAt                    DateTime?
+  otpVerifiedAt                   DateTime?
   contractsSignedAsProfessional   Project[]               @relation("ProfessionalContractSignature")
   agreedToTermsAt                DateTime?
   agreedToTermsVersion            String?                 @default("1.0")
