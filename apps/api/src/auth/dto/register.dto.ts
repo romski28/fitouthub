@@ -6,5 +6,7 @@ export class RegisterDto {
   surname: string;
   chineseName?: string;
   mobile?: string;
+  preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+  requireOtpVerification?: boolean;
   role?: 'client' | 'professional' | 'reseller' | 'admin'; // defaults to 'client'
 }

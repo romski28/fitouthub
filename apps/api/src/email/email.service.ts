@@ -16,6 +16,36 @@ export class EmailService {
     this.resend = new Resend(apiKey);
   }
 
+  async sendOtpCode(params: {
+    to: string;
+    code: string;
+    firstName?: string;
+    minutesValid?: number;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send OTP email to:', params.to, params.code);
+      return;
+    }
+
+    const minutesValid = params.minutesValid ?? 10;
+    const greeting = params.firstName ? `Hi ${params.firstName},` : 'Hi,';
+
+    await this.resend.emails.send({
+      from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+      to: params.to,
+      subject: 'Your Fitout Hub verification code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #4f46e5;">Verify your account</h2>
+          <p>${greeting}</p>
+          <p>Your verification code is:</p>
+          <div style="font-size: 32px; letter-spacing: 4px; font-weight: 700; color: #111827; margin: 16px 0;">${params.code}</div>
+          <p>This code expires in ${minutesValid} minutes.</p>
+        </div>
+      `,
+    });
+  }
+
   /**
    * Send project invitation email to a professional
    * Includes accept/decline action buttons with secure tokens

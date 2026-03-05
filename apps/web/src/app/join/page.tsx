@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import { ProfessionRegistrationModal } from '@/components/profession-registration-modal';
+import { API_BASE_URL } from '@/config/api';
 
 export default function JoinPage() {
   const router = useRouter();
@@ -89,6 +90,9 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
   const [formData, setFormData] = useState({
     nickname: '',
     firstName: '',
@@ -113,9 +117,14 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
       return;
     }
 
+    if ((preferredContactMethod === 'WHATSAPP' || preferredContactMethod === 'SMS') && !formData.mobile) {
+      setError('Mobile number is required when WhatsApp or SMS is selected');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,6 +133,8 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
           surname: formData.surname,
           email: formData.email,
           mobile: formData.mobile,
+          preferredContactMethod,
+          requireOtpVerification: true,
           password: formData.password,
           role: 'client',
         }),
@@ -134,13 +145,124 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
         throw new Error(data.message || t('errors.registrationFailed'));
       }
 
-      router.push('/projects');
+      const data = await response.json();
+      if (data?.otpRequired) {
+        setPendingVerificationEmail(formData.email);
+      } else {
+        router.push('/projects');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.registrationFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingVerificationEmail || !otpCode) {
+      setError('Please enter the verification code');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify-registration-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerificationEmail, code: otpCode }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to verify OTP');
+      }
+
+      const result = await response.json();
+      localStorage.setItem('accessToken', result.accessToken);
+      localStorage.setItem('refreshToken', result.refreshToken);
+      localStorage.setItem('user', JSON.stringify(result.user));
+      router.push('/projects');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to verify OTP');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!pendingVerificationEmail) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/resend-registration-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerificationEmail }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to resend OTP');
+      }
+      alert('Verification code sent');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend OTP');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (pendingVerificationEmail) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="rounded-xl border border-blue-200 bg-white shadow-lg p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <h1 className="text-2xl font-bold text-slate-900">Verify your account</h1>
+              <p className="text-slate-600 text-sm">
+                Enter the OTP sent to {pendingVerificationEmail} via {preferredContactMethod === 'WHATSAPP' ? 'WhatsApp' : preferredContactMethod.toLowerCase()}.
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Verification code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  required
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 p-3 text-sm">{error}</div>}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-blue-600 text-white font-semibold py-2.5 hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {isSubmitting ? commonT('loading') : 'Verify and continue'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isSubmitting}
+                className="w-full rounded-lg border border-slate-300 text-slate-700 font-semibold py-2.5 hover:bg-slate-50 disabled:opacity-50 transition"
+              >
+                Resend code
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
@@ -212,6 +334,40 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
                 onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Primary contact preference</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreferredContactMethod('EMAIL')}
+                  className={`rounded-lg border px-3 py-2 text-sm font-medium ${preferredContactMethod === 'EMAIL' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                >
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreferredContactMethod('WHATSAPP')}
+                  className={`rounded-lg border px-3 py-2 text-sm font-medium ${preferredContactMethod === 'WHATSAPP' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                >
+                  WhatsApp (active)
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-400 cursor-not-allowed"
+                >
+                  SMS (coming soon)
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-400 cursor-not-allowed"
+                >
+                  WeChat (disabled)
+                </button>
+              </div>
             </div>
 
             <div>

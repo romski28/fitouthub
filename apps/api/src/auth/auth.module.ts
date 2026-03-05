@@ -5,10 +5,14 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../prisma.service';
+import { EmailModule } from '../email/email.module';
+import { NotificationModule } from '../notifications/notification.module';
 
 @Module({
   imports: [
     PassportModule,
+    EmailModule,
+    NotificationModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secret-key',
       signOptions: {

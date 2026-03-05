@@ -12,6 +12,20 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @Post('verify-registration-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyRegistrationOtp(
+    @Body() body: { email: string; code: string },
+  ) {
+    return this.authService.verifyRegistrationOtp(body.email, body.code);
+  }
+
+  @Post('resend-registration-otp')
+  @HttpCode(HttpStatus.OK)
+  async resendRegistrationOtp(@Body() body: { email: string }) {
+    return this.authService.resendRegistrationOtp(body.email);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
