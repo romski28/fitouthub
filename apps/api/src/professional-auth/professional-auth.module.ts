@@ -5,10 +5,14 @@ import { ProfessionalAuthService } from './professional-auth.service';
 import { ProfessionalAuthController } from './professional-auth.controller';
 import { JwtProfessionalStrategy } from './jwt-professional.strategy';
 import { PrismaService } from '../prisma.service';
+import { EmailModule } from '../email/email.module';
+import { NotificationModule } from '../notifications/notification.module';
 
 @Module({
   imports: [
     PassportModule,
+    EmailModule,
+    NotificationModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secret-key',
       signOptions: {
