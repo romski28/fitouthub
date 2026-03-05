@@ -9,7 +9,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { PoliciesService } from './policies.service';
-import { CreatePolicyDto, PolicyType } from './dto/create-policy.dto';
+import { CreatePolicyDto } from './dto/create-policy.dto';
+import type { PolicyType } from './dto/create-policy.dto';
 import { UpdatePolicyDto } from './dto/update-policy.dto';
 
 @Controller('policies')
