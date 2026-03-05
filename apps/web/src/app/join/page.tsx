@@ -1,13 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useAuthModalControl } from '@/context/auth-modal-control';
 import { ProfessionRegistrationModal } from '@/components/profession-registration-modal';
 
 export default function JoinPage() {
   const router = useRouter();
+  const { openLoginModal } = useAuthModalControl();
   const t = useTranslations('auth');
   const navT = useTranslations('nav');
   const [showClientFlow, setShowClientFlow] = useState(false);
@@ -66,9 +67,9 @@ export default function JoinPage() {
 
           <div className="text-center text-sm text-slate-600">
             {t('signup.haveAccount')}{' '}
-            <Link href="/login" className="font-semibold text-blue-600 hover:underline">
+            <button onClick={openLoginModal} className="font-semibold text-blue-600 hover:underline bg-transparent border-none cursor-pointer p-0">
               {navT('login')}
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -240,9 +241,9 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
 
           <div className="text-center text-sm text-slate-600">
             {t('signup.haveAccount')}{' '}
-            <Link href="/login" className="font-semibold text-blue-600 hover:underline">
+            <button onClick={openLoginModal} className="font-semibold text-blue-600 hover:underline bg-transparent border-none cursor-pointer p-0">
               {navT('login')}
-            </Link>
+            </button>
           </div>
         </div>
       </div>

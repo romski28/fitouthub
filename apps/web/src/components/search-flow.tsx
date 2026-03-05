@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
 import { SearchHelpModal } from '@/components/search-help-modal';
 import { useAuth } from '@/context/auth-context';
+import { useAuthModalControl } from '@/context/auth-modal-control';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -105,6 +107,7 @@ export default function SearchFlow() {
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const { isLoggedIn } = useAuth();
+  const { openLoginModal } = useAuthModalControl();
 
   const handleSearch = (query: string) => {
     const result = matchIntent(query);
@@ -130,13 +133,13 @@ export default function SearchFlow() {
       {isLoggedIn === false && (
         <div className="text-center pt-2">
           <p className="text-xs text-slate-500">
-            <a href="/login" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+            <button onClick={openLoginModal} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">
               Login
-            </a>
+            </button>
             {' or '}
-            <a href="/join" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+            <Link href="/join" className="text-emerald-600 hover:text-emerald-700 font-semibold">
               Join Now
-            </a>
+            </Link>
             {' for the best experience'}
           </p>
         </div>

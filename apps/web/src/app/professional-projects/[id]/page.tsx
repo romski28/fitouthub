@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
@@ -91,6 +92,7 @@ export default function ProjectDetailPage() {
   const projectProfessionalId = params.id as string;
 
   const { isLoggedIn, accessToken } = useProfessionalAuth();
+  const { openLoginModal } = useAuthModalControl();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -195,7 +197,7 @@ export default function ProjectDetailPage() {
 
         if (!response.ok) {
           if (response.status === 401) {
-            router.push('/login');
+            openLoginModal();
             return;
           }
           throw new Error('Failed to fetch project');

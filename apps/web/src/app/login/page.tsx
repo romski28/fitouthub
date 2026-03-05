@@ -1,53 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useAuthModalControl } from '@/context/auth-modal-control';
 import { useAuth } from '@/context/auth-context';
-import { useProfessionalAuth } from '@/context/professional-auth-context';
-import { API_BASE_URL } from '@/config/api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const t = useTranslations('auth');
-  const commonT = useTranslations('common');
-  const navT = useTranslations('nav');
-  const { login: clientLogin } = useAuth();
-  const { login: professionalLogin } = useProfessionalAuth();
+  const { isLoggedIn } = useAuth();
+  const { openLoginModal } = useAuthModalControl();
 
-  const [loginType, setLoginType] = useState<'client' | 'professional'>('client');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      if (loginType === 'client') {
-        await clientLogin(email, password);
-        router.push('/');
-      } else {
-        await professionalLogin(email, password);
-        router.push('/professional-projects');
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    // If already logged in, redirect to home
+    if (isLoggedIn) {
+      router.push('/');
+      return;
     }
-  };
 
+    // Open the login modal and redirect
+    openLoginModal();
+    // Redirect after a short delay to let the modal open
+    const timer = setTimeout(() => {
+      router.push('/');
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [isLoggedIn, router, openLoginModal]);
+
+  // Temporary loading/redirect screen
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">Redirecting to login...</p>
+      </div>
+    </div>
+  );
+}
             {t('login.title')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
