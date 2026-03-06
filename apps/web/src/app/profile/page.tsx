@@ -49,9 +49,9 @@ export default function ProfilePage() {
         });
         
         if (res.status === 404) {
-          // User doesn't exist in this environment's database
-          toast.error('Session expired or invalid. Please log in again.');
-          logout();
+          // User doesn't exist - likely stale session. Skip preferences load but don't logout yet
+          console.warn('User profile not found in this environment');
+          setPreferencesLoading(false);
           return;
         }
         
@@ -72,7 +72,7 @@ export default function ProfilePage() {
         }
       } catch (err) {
         console.error('Error loading preferences:', err);
-        toast.error('Failed to load preferences');
+        // Silently fail - preferences are optional and may not load in all environments
       } finally {
         setPreferencesLoading(false);
       }

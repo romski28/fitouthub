@@ -21,11 +21,12 @@ export class PrismaService
     const isPooler = rawUrl.includes('.pooler.supabase.com');
     
     // Render-optimized connection limits: 
-    // - Lower connection_limit (5-7 instead of 20) prevents pool exhaustion
-    // - Shorter pool_timeout (20s) fails fast instead of hanging
-    // - connect_timeout (10s) for initial connection attempts
+    // - Minimal connection_limit (3) prevents pool exhaustion on cold starts
+    // - max_pool_size controls total pooler connections
+    // - Aggressive timeouts force connection recycling
+    // - idle_in_transaction forces cleanup of stale transactions
     const extraParams = isPooler
-      ? 'pgbouncer=true&connection_limit=5&pool_timeout=20&connect_timeout=10'
+      ? 'pgbouncer=true&connection_limit=3&max_pool_size=10&pool_timeout=10&connect_timeout=5&idle_in_transaction_session_timeout=30000&statement_timeout=30000'
       : '';
     
     const configuredUrl = rawUrl && extraParams
