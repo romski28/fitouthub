@@ -230,6 +230,7 @@ model Project {
   startDate                    DateTime?
   endDate                      DateTime?
   isEmergency                  Boolean                 @default(false)
+  onlySelectedProfessionalsCanBid Boolean              @default(true)
   contractorContactName        String?
   contractorContactPhone       String?
   contractorContactEmail       String?

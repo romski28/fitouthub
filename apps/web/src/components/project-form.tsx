@@ -19,6 +19,7 @@ export interface ProjectFormData {
   existingPhotos?: Array<{ id?: string; url: string; note?: string | null }>;
   tradesRequired: string[];
   isEmergency?: boolean;
+  onlySelectedProfessionalsCanBid?: boolean;
   endDate?: string; // ISO date string (YYYY-MM-DD)
 }
 
@@ -93,6 +94,7 @@ export function ProjectForm({
     existingPhotos: initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []),
     tradesRequired: initialData?.tradesRequired || [],
     isEmergency: initialData?.isEmergency ?? false,
+    onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
     endDate: initialData?.endDate || '',
   });
 
@@ -543,16 +545,31 @@ export function ProjectForm({
 
       {/* Timescale */}
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex items-center gap-2">
-          <input
-            id="isEmergency"
-            type="checkbox"
-            checked={!!formData.isEmergency}
-            onChange={(e) => handleChange('isEmergency', e.target.checked)}
-            disabled={isReadOnly || isSubmitting}
-            className="h-4 w-4 rounded border-slate-300"
-          />
-          <label htmlFor="isEmergency" className="text-sm font-medium text-slate-800">This is an emergency</label>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <input
+              id="isEmergency"
+              type="checkbox"
+              checked={!!formData.isEmergency}
+              onChange={(e) => handleChange('isEmergency', e.target.checked)}
+              disabled={isReadOnly || isSubmitting}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            <label htmlFor="isEmergency" className="text-sm font-medium text-slate-800">This is an emergency</label>
+          </div>
+          <div className="flex items-start gap-2">
+            <input
+              id="onlySelectedProfessionalsCanBid"
+              type="checkbox"
+              checked={formData.onlySelectedProfessionalsCanBid ?? true}
+              onChange={(e) => handleChange('onlySelectedProfessionalsCanBid', e.target.checked)}
+              disabled={isReadOnly || isSubmitting}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            />
+            <label htmlFor="onlySelectedProfessionalsCanBid" className="text-sm font-medium text-slate-800">
+              Only allow professionals that I select to bid on this project
+            </label>
+          </div>
         </div>
         <div className="grid gap-1">
           <label className="text-sm font-medium text-slate-800">I need this completed by</label>

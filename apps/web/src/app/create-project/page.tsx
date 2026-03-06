@@ -108,6 +108,7 @@ export default function CreateProjectPage() {
         professionalIds: [],
         userId: user?.id,
         tradesRequired: formData.tradesRequired || [],
+        onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
         photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
         userPrompt: descriptionData?.description || null,
       };
@@ -186,6 +187,7 @@ export default function CreateProjectPage() {
         professionalIds: [],
         userId: user?.id,
         tradesRequired: formData.tradesRequired || [],
+        onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
         photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
         userPrompt: descriptionData?.description || null,
       };
