@@ -50,7 +50,6 @@ export default function ProfilePage() {
         
         if (res.status === 404) {
           // User doesn't exist - likely stale session. Skip preferences load but don't logout yet
-          console.warn('User profile not found in this environment');
           setPreferencesLoading(false);
           return;
         }
@@ -79,7 +78,7 @@ export default function ProfilePage() {
     };
 
     loadPreferences();
-  }, [user, accessToken, logout]);
+  }, [user, accessToken]);
 
   // Redirect unauthenticated users
   useEffect(() => {
