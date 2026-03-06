@@ -59,7 +59,16 @@ export class ProfessionalsService {
   async findOne(id: string) {
     return (this.prisma as any).professional.findUnique({
       where: { id },
-      include: { referenceProjects: { orderBy: { createdAt: 'desc' } } },
+      include: {
+        referenceProjects: { orderBy: { createdAt: 'desc' } },
+        notificationPreference: {
+          select: {
+            id: true,
+            allowPartnerOffers: true,
+            allowPlatformUpdates: true,
+          },
+        },
+      },
     });
   }
 
@@ -291,5 +300,43 @@ export class ProfessionalsService {
     );
 
     return [header.join(','), ...rows].join('\n');
+  }
+
+  async updateNotificationPreferences(
+    id: string,
+    preferences: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+  ) {
+    // First, ensure the notification preference record exists
+    let notificationPreference = await this.prisma.notificationPreference.findUnique({
+      where: { professionalId: id },
+    });
+
+    if (!notificationPreference) {
+      notificationPreference = await this.prisma.notificationPreference.create({
+        data: {
+          professionalId: id,
+          allowPartnerOffers: preferences.allowPartnerOffers ?? false,
+          allowPlatformUpdates: preferences.allowPlatformUpdates ?? true,
+        },
+      });
+    } else {
+      notificationPreference = await this.prisma.notificationPreference.update({
+        where: { professionalId: id },
+        data: {
+          ...(preferences.allowPartnerOffers !== undefined && {
+            allowPartnerOffers: preferences.allowPartnerOffers,
+          }),
+          ...(preferences.allowPlatformUpdates !== undefined && {
+            allowPlatformUpdates: preferences.allowPlatformUpdates,
+          }),
+        },
+      });
+    }
+
+    return {
+      id: notificationPreference.id,
+      allowPartnerOffers: notificationPreference.allowPartnerOffers,
+      allowPlatformUpdates: notificationPreference.allowPlatformUpdates,
+    };
   }
 }

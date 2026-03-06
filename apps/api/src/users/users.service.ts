@@ -44,6 +44,13 @@ export class UsersService {
         role: true,
         createdAt: true,
         updatedAt: true,
+        notificationPreference: {
+          select: {
+            id: true,
+            allowPartnerOffers: true,
+            allowPlatformUpdates: true,
+          },
+        },
       },
     });
   }
@@ -93,5 +100,43 @@ export class UsersService {
         updatedAt: true,
       },
     });
+  }
+
+  async updateNotificationPreferences(
+    id: string,
+    preferences: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+  ) {
+    // First, ensure the notification preference record exists
+    let notificationPreference = await this.prisma.notificationPreference.findUnique({
+      where: { userId: id },
+    });
+
+    if (!notificationPreference) {
+      notificationPreference = await this.prisma.notificationPreference.create({
+        data: {
+          userId: id,
+          allowPartnerOffers: preferences.allowPartnerOffers ?? false,
+          allowPlatformUpdates: preferences.allowPlatformUpdates ?? true,
+        },
+      });
+    } else {
+      notificationPreference = await this.prisma.notificationPreference.update({
+        where: { userId: id },
+        data: {
+          ...(preferences.allowPartnerOffers !== undefined && {
+            allowPartnerOffers: preferences.allowPartnerOffers,
+          }),
+          ...(preferences.allowPlatformUpdates !== undefined && {
+            allowPlatformUpdates: preferences.allowPlatformUpdates,
+          }),
+        },
+      });
+    }
+
+    return {
+      id: notificationPreference.id,
+      allowPartnerOffers: notificationPreference.allowPartnerOffers,
+      allowPlatformUpdates: notificationPreference.allowPlatformUpdates,
+    };
   }
 }

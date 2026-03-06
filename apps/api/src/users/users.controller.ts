@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Delete, Body, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Put, Patch, Delete, Body, Param, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -32,5 +32,13 @@ export class UsersController {
       throw new BadRequestException('Password must be at least 6 characters');
     }
     return this.usersService.updatePassword(id, body.password);
+  }
+
+  @Patch(':id/notification-preferences')
+  async updateNotificationPreferences(
+    @Param('id') id: string,
+    @Body() body: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+  ) {
+    return this.usersService.updateNotificationPreferences(id, body);
   }
 }

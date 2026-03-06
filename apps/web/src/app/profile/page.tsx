@@ -23,6 +23,11 @@ export default function ProfilePage() {
   const [surname, setSurname] = useState('');
   const [password, setPassword] = useState('');
 
+  // Notification preferences
+  const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
+  const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
+  const [preferencesLoading, setPreferencesLoading] = useState(true);
+
   // Load user data into form
   useEffect(() => {
     if (user) {
@@ -31,6 +36,33 @@ export default function ProfilePage() {
       setSurname(user.surname || '');
     }
   }, [user]);
+
+  // Load notification preferences
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (!user || !accessToken) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        if (!res.ok) throw new Error('Failed to load preferences');
+        
+        const data = await res.json();
+        if (data.notificationPreference) {
+          setAllowPartnerOffers(data.notificationPreference.allowPartnerOffers ?? false);
+          setAllowPlatformUpdates(data.notificationPreference.allowPlatformUpdates ?? true);
+        }
+      } catch (err) {
+        console.error('Error loading preferences:', err);
+      } finally {
+        setPreferencesLoading(false);
+      }
+    };
+
+    loadPreferences();
+  }, [user, accessToken]);
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -71,6 +103,21 @@ export default function ProfilePage() {
         if (!pwRes.ok) throw new Error(await pwRes.text());
         setPassword('');
       }
+
+      // Update notification preferences
+      const prefRes = await fetch(`${API_BASE_URL}/users/${user.id}/notification-preferences`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          allowPartnerOffers,
+          allowPlatformUpdates,
+        }),
+      });
+
+      if (!prefRes.ok) throw new Error(await prefRes.text());
 
       toast.success('Profile updated successfully');
     } catch (err) {
@@ -144,6 +191,39 @@ export default function ProfilePage() {
               placeholder={t('passwordHint')}
             />
             <p className="mt-1 text-xs text-slate-500">{t('passwordNote')}</p>
+          </div>
+
+          {/* Notification Preferences */}
+          <div className="pt-6 border-t border-slate-200 space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900">Notification Preferences</h2>
+            
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="allowPartnerOffers"
+                checked={allowPartnerOffers}
+                onChange={(e) => setAllowPartnerOffers(e.target.checked)}
+                disabled={preferencesLoading}
+                className="rounded border-slate-300"
+              />
+              <label htmlFor="allowPartnerOffers" className="text-sm text-slate-700">
+                Receive news and offers from our registered suppliers and partners
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="allowPlatformUpdates"
+                checked={allowPlatformUpdates}
+                onChange={(e) => setAllowPlatformUpdates(e.target.checked)}
+                disabled={preferencesLoading}
+                className="rounded border-slate-300"
+              />
+              <label htmlFor="allowPlatformUpdates" className="text-sm text-slate-700">
+                Receive news and updates about the Fitout Hub platform and its associates
+              </label>
+            </div>
           </div>
 
           <div className="flex justify-end">

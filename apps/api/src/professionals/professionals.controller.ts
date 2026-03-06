@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Put,
+  Patch,
   Delete,
   HttpCode,
   HttpStatus,
@@ -112,5 +113,13 @@ export class ProfessionalsController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.professionalsService.remove(id);
+  }
+
+  @Patch(':id/notification-preferences')
+  async updateNotificationPreferences(
+    @Param('id') id: string,
+    @Body() body: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+  ) {
+    return this.professionalsService.updateNotificationPreferences(id, body);
   }
 }
