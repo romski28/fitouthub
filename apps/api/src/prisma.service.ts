@@ -19,8 +19,13 @@ export class PrismaService
     
     // Only add pgbouncer params if using Supabase pooler, not direct connection
     const isPooler = rawUrl.includes('.pooler.supabase.com');
+    
+    // Render-optimized connection limits: 
+    // - Lower connection_limit (5-7 instead of 20) prevents pool exhaustion
+    // - Shorter pool_timeout (20s) fails fast instead of hanging
+    // - connect_timeout (10s) for initial connection attempts
     const extraParams = isPooler
-      ? 'pgbouncer=true&connection_limit=20&pool_timeout=60'
+      ? 'pgbouncer=true&connection_limit=5&pool_timeout=20&connect_timeout=10'
       : '';
     
     const configuredUrl = rawUrl && extraParams
@@ -33,13 +38,31 @@ export class PrismaService
   }
 
   async onModuleInit(): Promise<void> {
-    try {
-      await this.$connect();
-      this.logger.log('Database connection successful');
-    } catch (error) {
-      this.logger.warn(
-        'Could not connect to database: ' + (error as Error).message,
-      );
+    // Retry logic with exponential backoff for Render cold starts
+    const maxRetries = 5;
+    const baseDelay = 1000; // 1 second
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.$connect();
+        this.logger.log(`Database connection successful (attempt ${attempt}/${maxRetries})`);
+        return;
+      } catch (error) {
+        const isLastAttempt = attempt === maxRetries;
+        const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), 10000); // Max 10s
+        
+        if (isLastAttempt) {
+          this.logger.error(
+            `Database connection failed after ${maxRetries} attempts: ${(error as Error).message}`,
+          );
+          // Don't throw - allow app to start but log the failure
+        } else {
+          this.logger.warn(
+            `Database connection attempt ${attempt}/${maxRetries} failed: ${(error as Error).message}. Retrying in ${delay}ms...`,
+          );
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
   }
 
