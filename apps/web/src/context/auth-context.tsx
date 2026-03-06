@@ -38,6 +38,8 @@ interface AuthContextType {
     mobile?: string;
     role?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    allowPartnerOffers?: boolean;
+    allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
   }) => Promise<
     | { success: boolean; accessToken: string; refreshToken: string; user: User }
@@ -114,6 +116,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     mobile?: string;
     role?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    allowPartnerOffers?: boolean;
+    allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
   }) => {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {

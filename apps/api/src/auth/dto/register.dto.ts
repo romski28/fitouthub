@@ -7,6 +7,8 @@ export class RegisterDto {
   chineseName?: string;
   mobile?: string;
   preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+  allowPartnerOffers?: boolean;
+  allowPlatformUpdates?: boolean;
   requireOtpVerification?: boolean;
   role?: 'client' | 'professional' | 'reseller' | 'admin'; // defaults to 'client'
 }

@@ -86,6 +86,8 @@ export class ProfessionalAuthService {
         enableWhatsApp: !!professional.phone,
         enableSMS: !!professional.phone,
         enableWeChat: false,
+        allowPartnerOffers: dto.allowPartnerOffers ?? false,
+        allowPlatformUpdates: dto.allowPlatformUpdates ?? true,
       },
     });
 

@@ -32,6 +32,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [clientAgreeToTerms, setClientAgreeToTerms] = useState(false);
   const [professionalAgreeToTerms, setProfessionalAgreeToTerms] = useState(false);
+  const [clientAllowPartnerOffers, setClientAllowPartnerOffers] = useState(false);
+  const [clientAllowPlatformUpdates, setClientAllowPlatformUpdates] = useState(true);
+  const [professionalAllowPartnerOffers, setProfessionalAllowPartnerOffers] = useState(false);
+  const [professionalAllowPlatformUpdates, setProfessionalAllowPlatformUpdates] = useState(true);
   const [clientPreferredContact, setClientPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [professionalPreferredContact, setProfessionalPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [professionType, setProfessionType] = useState<string>('general');
@@ -54,6 +58,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setError(null);
       setClientAgreeToTerms(false);
       setProfessionalAgreeToTerms(false);
+      setClientAllowPartnerOffers(false);
+      setClientAllowPlatformUpdates(true);
+      setProfessionalAllowPartnerOffers(false);
+      setProfessionalAllowPlatformUpdates(true);
       setClientPreferredContact('EMAIL');
       setProfessionalPreferredContact('EMAIL');
       setProfessionType('general');
@@ -151,6 +159,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         mobile: clientForm.mobile || undefined,
         role: 'client',
         preferredContactMethod: clientPreferredContact,
+        allowPartnerOffers: clientAllowPartnerOffers,
+        allowPlatformUpdates: clientAllowPlatformUpdates,
         requireOtpVerification: true,
       });
 
@@ -204,6 +214,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         phone: professionalForm.phone,
         professionType: professionType,
         preferredContactMethod: professionalPreferredContact,
+        allowPartnerOffers: professionalAllowPartnerOffers,
+        allowPlatformUpdates: professionalAllowPlatformUpdates,
         requireOtpVerification: true,
       });
 
@@ -665,6 +677,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <div className="flex items-start gap-3">
                       <input
                         type="checkbox"
+                        id="clientAllowPartnerOffers"
+                        checked={clientAllowPartnerOffers}
+                        onChange={(e) => setClientAllowPartnerOffers(e.target.checked)}
+                        className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="clientAllowPartnerOffers" className="text-xs text-gray-700">
+                        Do you want selected news and offers from our registered suppliers and partners?
+                      </label>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="clientAllowPlatformUpdates"
+                        checked={clientAllowPlatformUpdates}
+                        onChange={(e) => setClientAllowPlatformUpdates(e.target.checked)}
+                        className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="clientAllowPlatformUpdates" className="text-xs text-gray-700">
+                        Do you want news and updates on the Fitout Hub platform and its associates?
+                      </label>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
                         id="clientAgreeToTerms"
                         checked={clientAgreeToTerms}
                         onChange={(e) => setClientAgreeToTerms(e.target.checked)}
@@ -836,6 +872,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     />
                   </div>
                   <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="professionalAllowPartnerOffers"
+                        checked={professionalAllowPartnerOffers}
+                        onChange={(e) => setProfessionalAllowPartnerOffers(e.target.checked)}
+                        className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="professionalAllowPartnerOffers" className="text-xs text-gray-700">
+                        Do you want selected news and offers from our registered suppliers and partners?
+                      </label>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="professionalAllowPlatformUpdates"
+                        checked={professionalAllowPlatformUpdates}
+                        onChange={(e) => setProfessionalAllowPlatformUpdates(e.target.checked)}
+                        className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="professionalAllowPlatformUpdates" className="text-xs text-gray-700">
+                        Do you want news and updates on the Fitout Hub platform and its associates?
+                      </label>
+                    </div>
                     <div className="flex items-start gap-3">
                       <input
                         type="checkbox"

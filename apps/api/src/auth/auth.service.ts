@@ -89,6 +89,8 @@ export class AuthService {
         enableWhatsApp: !!dto.mobile,
         enableSMS: !!dto.mobile,
         enableWeChat: false,
+        allowPartnerOffers: dto.allowPartnerOffers ?? false,
+        allowPlatformUpdates: dto.allowPlatformUpdates ?? true,
       },
     });
 

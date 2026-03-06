@@ -32,6 +32,8 @@ interface ProfessionalAuthContextType {
     fullName?: string;
     businessName?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    allowPartnerOffers?: boolean;
+    allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
   }) => Promise<
     | { success: boolean; accessToken: string; refreshToken: string }
@@ -97,6 +99,8 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     fullName?: string;
     businessName?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    allowPartnerOffers?: boolean;
+    allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
   }) => {
     setLoading(true);
