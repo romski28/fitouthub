@@ -47,7 +47,23 @@ export default function ProfilePage() {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        if (!res.ok) throw new Error('Failed to load preferences');
+        
+        if (res.status === 404) {
+          // User doesn't exist in this environment's database
+          toast.error('Session expired or invalid. Please log in again.');
+          logout();
+          return;
+        }
+        
+        if (!res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType?.includes('application/json')) {
+            const error = await res.json();
+            throw new Error(error.message || 'Failed to load preferences');
+          } else {
+            throw new Error('Failed to load preferences');
+          }
+        }
         
         const data = await res.json();
         if (data.notificationPreference) {
@@ -56,13 +72,14 @@ export default function ProfilePage() {
         }
       } catch (err) {
         console.error('Error loading preferences:', err);
+        toast.error('Failed to load preferences');
       } finally {
         setPreferencesLoading(false);
       }
     };
 
     loadPreferences();
-  }, [user, accessToken]);
+  }, [user, accessToken, logout]);
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -87,7 +104,19 @@ export default function ProfilePage() {
         body: JSON.stringify({ email, firstName, surname }),
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (res.status === 404) {
+        toast.error('Session expired. Please log in again.');
+        logout();
+        return;
+      }
+
+      if (!res.ok) {
+        const contentType = res.headers.get('content-type');
+        const errorText = contentType?.includes('application/json')
+          ? (await res.json()).message
+          : await res.text();
+        throw new Error(errorText);
+      }
 
       // Update password if provided
       if (password && password.length >= 6) {
@@ -100,7 +129,10 @@ export default function ProfilePage() {
           body: JSON.stringify({ password }),
         });
 
-        if (!pwRes.ok) throw new Error(await pwRes.text());
+        if (!pwRes.ok) {
+          const errorText = await pwRes.text();
+          throw new Error(errorText);
+        }
         setPassword('');
       }
 
