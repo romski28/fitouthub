@@ -4,6 +4,7 @@ import React, {
   createContext,
   useContext,
   useState,
+  useEffect,
   ReactNode,
 } from 'react';
 import type { CanonicalLocation } from '@/components/location-select';
@@ -71,31 +72,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return {} as CanonicalLocation;
   };
 
-  const initialPersisted = (() => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [userLocation, setUserLocationState] = useState<CanonicalLocation>({} as CanonicalLocation);
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
-      return { token: null, user: null, location: {} as CanonicalLocation };
+      setIsLoggedIn(false);
+      return;
     }
 
     try {
       const token = localStorage.getItem('accessToken');
       const storedUserRaw = localStorage.getItem('user');
       const storedLocRaw = localStorage.getItem('userLocation');
-      const user = storedUserRaw ? (JSON.parse(storedUserRaw) as User) : null;
-      const location = storedLocRaw ? (JSON.parse(storedLocRaw) as CanonicalLocation) : extractLocationFromUser(user);
-      return { token, user, location };
-    } catch (err) {
-      console.warn('Failed to read persisted auth data:', err);
-      return { token: null, user: null, location: {} as CanonicalLocation };
-    }
-  })();
+      const restoredUser = storedUserRaw ? (JSON.parse(storedUserRaw) as User) : null;
+      const restoredLocation = storedLocRaw
+        ? (JSON.parse(storedLocRaw) as CanonicalLocation)
+        : extractLocationFromUser(restoredUser);
 
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(
-    initialPersisted.token && initialPersisted.user ? true : false
-  );
-  const [user, setUser] = useState<User | null>(initialPersisted.user);
-  const [accessToken, setAccessToken] = useState<string | null>(initialPersisted.token);
-  const [role, setRole] = useState<string | null>(initialPersisted.user?.role ?? null);
-  const [userLocation, setUserLocationState] = useState<CanonicalLocation>(initialPersisted.location);
+      setAccessToken(token);
+      setUser(restoredUser);
+      setRole(restoredUser?.role ?? null);
+      setUserLocationState(restoredLocation);
+      setIsLoggedIn(Boolean(token && restoredUser));
+    } catch (err) {
+      console.warn('Failed to restore auth data:', err);
+      setAccessToken(null);
+      setUser(null);
+      setRole(null);
+      setUserLocationState({} as CanonicalLocation);
+      setIsLoggedIn(false);
+    }
+  }, []);
 
   const persistLocation = (loc: CanonicalLocation) => {
     setUserLocationState(loc);
