@@ -36,16 +36,43 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // Keep draft location in sync once auth/localStorage hydration completes
+  useEffect(() => {
+    setLocationDraft(userLocation || ({} as CanonicalLocation));
+  }, [userLocation]);
+
+  const fetchUser = async (path = '', init?: RequestInit) => {
+    if (!accessToken || !user) {
+      throw new Error('Missing authentication');
+    }
+
+    const headers = {
+      ...(init?.headers || {}),
+      Authorization: `Bearer ${accessToken}`,
+    };
+
+    // Prefer token-bound endpoints; fallback for environments where /me routes are not yet deployed
+    let res = await fetch(`${API_BASE_URL}/users/me${path}`, {
+      ...init,
+      headers,
+    });
+
+    if (res.status === 404) {
+      res = await fetch(`${API_BASE_URL}/users/${user.id}${path}`, {
+        ...init,
+        headers,
+      });
+    }
+
+    return res;
+  };
+
   // Load notification preferences
   useEffect(() => {
     const loadPreferences = async () => {
       if (!user || !accessToken) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/users/${user.id}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const res = await fetchUser();
         
         if (res.status === 404) {
           // User doesn't exist - likely stale session. Skip preferences load but don't logout yet
@@ -94,11 +121,10 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       // Update profile
-      const res = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+      const res = await fetchUser('', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ email, firstName, surname }),
       });
@@ -119,11 +145,10 @@ export default function ProfilePage() {
 
       // Update password if provided
       if (password && password.length >= 6) {
-        const pwRes = await fetch(`${API_BASE_URL}/users/${user.id}/password`, {
+        const pwRes = await fetchUser('/password', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({ password }),
         });
@@ -136,11 +161,10 @@ export default function ProfilePage() {
       }
 
       // Update notification preferences
-      const prefRes = await fetch(`${API_BASE_URL}/users/${user.id}/notification-preferences`, {
+      const prefRes = await fetchUser('/notification-preferences', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           allowPartnerOffers,
@@ -289,6 +313,9 @@ export default function ProfilePage() {
           {locationSaved ? (
             <p className="text-sm text-green-700">{t('locationSaved')}</p>
           ) : null}
+          <p className="text-xs text-slate-500">
+            Saved locally in this browser for search defaults.
+          </p>
         </div>
 
         {/* Account Info */}
