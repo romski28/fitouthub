@@ -42,7 +42,7 @@ export default function ProfilePage() {
     const loadPreferences = async () => {
       if (!user || !accessToken) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/users/me`, {
+        const res = await fetch(`${API_BASE_URL}/users/${user.id}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -95,7 +95,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       // Update profile
-      const res = await fetch(`${API_BASE_URL}/users/me`, {
+      const res = await fetch(`${API_BASE_URL}/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export default function ProfilePage() {
 
       // Update password if provided
       if (password && password.length >= 6) {
-        const pwRes = await fetch(`${API_BASE_URL}/users/me/password`, {
+        const pwRes = await fetch(`${API_BASE_URL}/users/${user.id}/password`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export default function ProfilePage() {
       }
 
       // Update notification preferences
-      const prefRes = await fetch(`${API_BASE_URL}/users/me/notification-preferences`, {
+      const prefRes = await fetch(`${API_BASE_URL}/users/${user.id}/notification-preferences`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
