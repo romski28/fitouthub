@@ -6,8 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { useTranslations } from 'next-intl';
 import LocationSelect, { type CanonicalLocation } from '@/components/location-select';
 import { toast } from 'react-hot-toast';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3002';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ProfilePage() {
   const { isLoggedIn, user, accessToken, logout, userLocation, setUserLocation } = useAuth();
