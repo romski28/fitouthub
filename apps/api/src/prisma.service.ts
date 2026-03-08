@@ -14,14 +14,27 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    const rawUrl = process.env.DATABASE_URL || '';
-    const isPooler = rawUrl.includes('.pooler.supabase.com');
-    let configuredUrl = rawUrl;
+    const rawDatabaseUrl = process.env.DATABASE_URL || '';
+    const rawDirectUrl = process.env.DIRECT_URL || '';
+    const useDirectOverride = process.env.PRISMA_USE_DIRECT_URL === 'true';
+    const databaseUrlIsPooler = rawDatabaseUrl.includes('.pooler.supabase.com');
+    const preferDirectInProduction =
+      process.env.NODE_ENV === 'production' &&
+      databaseUrlIsPooler &&
+      Boolean(rawDirectUrl);
+
+    const sourceUrl =
+      useDirectOverride || preferDirectInProduction
+        ? rawDirectUrl || rawDatabaseUrl
+        : rawDatabaseUrl;
+    const isPooler = sourceUrl.includes('.pooler.supabase.com');
+    let configuredUrl = sourceUrl;
+    const usingDirect = sourceUrl === rawDirectUrl && Boolean(rawDirectUrl);
     let parseWarning: string | null = null;
 
-    if (rawUrl) {
+    if (sourceUrl) {
       try {
-        const parsed = new URL(rawUrl);
+        const parsed = new URL(sourceUrl);
 
         if (isPooler) {
           if (!parsed.searchParams.has('pgbouncer')) {
@@ -44,7 +57,7 @@ export class PrismaService
 
         configuredUrl = parsed.toString();
       } catch (error) {
-        parseWarning = `Failed to parse DATABASE_URL for parameter normalization: ${(error as Error).message}`;
+        parseWarning = `Failed to parse configured DB URL for parameter normalization: ${(error as Error).message}`;
       }
     }
 
@@ -55,6 +68,12 @@ export class PrismaService
 
     if (parseWarning) {
       this.logger.warn(parseWarning);
+    }
+
+    if (usingDirect) {
+      this.logger.warn(
+        'Prisma is using DIRECT_URL instead of DATABASE_URL pooler endpoint. Set PRISMA_USE_DIRECT_URL=false to force pooler mode.',
+      );
     }
   }
 
