@@ -14,41 +14,25 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    const rawDatabaseUrl = process.env.DATABASE_URL || '';
-    const rawDirectUrl = process.env.DIRECT_URL || '';
-    const useDirectOverride = process.env.PRISMA_USE_DIRECT_URL === 'true';
-    const databaseUrlIsPooler = rawDatabaseUrl.includes('.pooler.supabase.com');
-    const preferDirectInProduction =
-      process.env.NODE_ENV === 'production' &&
-      databaseUrlIsPooler &&
-      Boolean(rawDirectUrl);
-
-    const sourceUrl =
-      useDirectOverride || preferDirectInProduction
-        ? rawDirectUrl || rawDatabaseUrl
-        : rawDatabaseUrl;
-    const isPooler = sourceUrl.includes('.pooler.supabase.com');
-    let configuredUrl = sourceUrl;
-    const usingDirect = sourceUrl === rawDirectUrl && Boolean(rawDirectUrl);
+    const rawUrl = process.env.DATABASE_URL || '';
+    const isPooler = rawUrl.includes('.pooler.supabase.com');
+    let configuredUrl = rawUrl;
     let parseWarning: string | null = null;
 
-    if (sourceUrl) {
+    // Normalize pooler URL with minimal required parameters only
+    if (rawUrl) {
       try {
-        const parsed = new URL(sourceUrl);
+        const parsed = new URL(rawUrl);
 
         if (isPooler) {
+          // Pooler mode: use minimal, stable parameters
           if (!parsed.searchParams.has('pgbouncer')) {
             parsed.searchParams.set('pgbouncer', 'true');
           }
-          if (!parsed.searchParams.has('connection_limit')) {
-            parsed.searchParams.set('connection_limit', '20');
-          }
-          if (!parsed.searchParams.has('pool_timeout')) {
-            parsed.searchParams.set('pool_timeout', '90');
-          }
-          if (!parsed.searchParams.has('connect_timeout')) {
-            parsed.searchParams.set('connect_timeout', '5');
-          }
+          // Remove aggressive pool tuning that may conflict with Supabase pooler
+          parsed.searchParams.delete('connection_limit');
+          parsed.searchParams.delete('pool_timeout');
+          parsed.searchParams.delete('connect_timeout');
         }
 
         if (!parsed.searchParams.has('sslmode')) {
@@ -57,7 +41,7 @@ export class PrismaService
 
         configuredUrl = parsed.toString();
       } catch (error) {
-        parseWarning = `Failed to parse configured DB URL for parameter normalization: ${(error as Error).message}`;
+        parseWarning = `Failed to parse DATABASE_URL: ${(error as Error).message}`;
       }
     }
 
@@ -70,11 +54,9 @@ export class PrismaService
       this.logger.warn(parseWarning);
     }
 
-    if (usingDirect) {
-      this.logger.warn(
-        'Prisma is using DIRECT_URL instead of DATABASE_URL pooler endpoint. Set PRISMA_USE_DIRECT_URL=false to force pooler mode.',
-      );
-    }
+    // Log the configured connection URL for diagnostics (sanitized for security)
+    const sanitized = configuredUrl.replace(/:[^@]+@/, ':*****@');
+    this.logger.log(`Prisma configured with URL: ${sanitized}`);
   }
 
   async onModuleInit(): Promise<void> {
