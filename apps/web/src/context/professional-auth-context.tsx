@@ -207,9 +207,13 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
+    // Clear all auth tokens (client and professional) to ensure clean slate
     localStorage.removeItem('professionalAccessToken');
     localStorage.removeItem('professionalRefreshToken');
     localStorage.removeItem('professional');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
     setAccessToken(null);
     setProfessional(null);
     setIsLoggedIn(false);
