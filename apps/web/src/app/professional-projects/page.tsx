@@ -309,11 +309,14 @@ export default function ProfessionalProjectsPage() {
               .slice(0, visibleCount)
               .map((projectProf) => (
               <Link key={projectProf.id} href={`/professional-projects/${projectProf.id}`} className="block">
+                {(() => {
+                  const unreadCount = projectProf.unreadCount ?? 0;
+                  return (
                 <div className="group relative rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
                   {/* Unread message bubble */}
-                  {(projectProf.unreadCount ?? 0) > 0 && (
-                    <span className="absolute -top-2 -right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md" title={`${projectProf.unreadCount} unread messages`}>
-                      {projectProf.unreadCount > 99 ? '99+' : projectProf.unreadCount}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md" title={`${unreadCount} unread messages`}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                   <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
@@ -364,6 +367,8 @@ export default function ProfessionalProjectsPage() {
                     </div>
                   </div>
                 </div>
+                  );
+                })()}
               </Link>
             ))}
           </div>
