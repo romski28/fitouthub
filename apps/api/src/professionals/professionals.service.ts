@@ -61,7 +61,7 @@ export class ProfessionalsService {
       where: { id },
       include: {
         referenceProjects: { orderBy: { createdAt: 'desc' } },
-        notificationPreference: {
+        notificationPreferences: {
           select: {
             id: true,
             allowPartnerOffers: true,
