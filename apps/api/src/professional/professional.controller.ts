@@ -125,13 +125,15 @@ export class ProfessionalController {
       // Attach unread message count per project (client -> professional unread)
       const withUnread = await Promise.all(
         projectProfessionals.map(async (pp: any) => {
-          const unreadCount = await (this.prisma as any).message.count({
-            where: {
-              projectProfessionalId: pp.id,
-              senderType: 'client',
-              readByProfessionalAt: null,
-            },
-          });
+          const unreadCount = await (this.prisma as any).message
+            .count({
+              where: {
+                projectProfessionalId: pp.id,
+                senderType: 'client',
+                readByProfessionalAt: null,
+              },
+            })
+            .catch(() => 0);
           return { ...pp, unreadCount };
         }),
       );

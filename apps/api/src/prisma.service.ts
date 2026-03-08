@@ -15,27 +15,47 @@ export class PrismaService
 
   constructor() {
     const rawUrl = process.env.DATABASE_URL || '';
-    const urlHasQuery = rawUrl.includes('?');
-    
-    // Only add pgbouncer params if using Supabase pooler, not direct connection
     const isPooler = rawUrl.includes('.pooler.supabase.com');
-    
-    // Render-optimized connection limits: 
-    // - Minimal connection_limit (3) prevents pool exhaustion on cold starts
-    // - max_pool_size controls total pooler connections
-    // - Aggressive timeouts force connection recycling
-    // - idle_in_transaction forces cleanup of stale transactions
-    const extraParams = isPooler
-      ? 'pgbouncer=true&connection_limit=3&max_pool_size=10&pool_timeout=10&connect_timeout=5&idle_in_transaction_session_timeout=30000&statement_timeout=30000'
-      : '';
-    
-    const configuredUrl = rawUrl && extraParams
-      ? `${rawUrl}${urlHasQuery ? '&' : '?'}${extraParams}`
-      : rawUrl;
+    let configuredUrl = rawUrl;
+    let parseWarning: string | null = null;
+
+    if (rawUrl) {
+      try {
+        const parsed = new URL(rawUrl);
+
+        if (isPooler) {
+          if (!parsed.searchParams.has('pgbouncer')) {
+            parsed.searchParams.set('pgbouncer', 'true');
+          }
+          if (!parsed.searchParams.has('connection_limit')) {
+            parsed.searchParams.set('connection_limit', '1');
+          }
+          if (!parsed.searchParams.has('pool_timeout')) {
+            parsed.searchParams.set('pool_timeout', '20');
+          }
+          if (!parsed.searchParams.has('connect_timeout')) {
+            parsed.searchParams.set('connect_timeout', '10');
+          }
+        }
+
+        if (!parsed.searchParams.has('sslmode')) {
+          parsed.searchParams.set('sslmode', 'require');
+        }
+
+        configuredUrl = parsed.toString();
+      } catch (error) {
+        parseWarning = `Failed to parse DATABASE_URL for parameter normalization: ${(error as Error).message}`;
+      }
+    }
+
     super({
       datasources: { db: { url: configuredUrl } },
       log: ['warn', 'error'],
     });
+
+    if (parseWarning) {
+      this.logger.warn(parseWarning);
+    }
   }
 
   async onModuleInit(): Promise<void> {
@@ -56,7 +76,7 @@ export class PrismaService
           this.logger.error(
             `Database connection failed after ${maxRetries} attempts: ${(error as Error).message}`,
           );
-          // Don't throw - allow app to start but log the failure
+          throw error;
         } else {
           this.logger.warn(
             `Database connection attempt ${attempt}/${maxRetries} failed: ${(error as Error).message}. Retrying in ${delay}ms...`,
