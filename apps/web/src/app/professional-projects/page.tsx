@@ -308,10 +308,10 @@ export default function ProfessionalProjectsPage() {
               .filter(p => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))))
               .slice(0, visibleCount)
               .map((projectProf) => (
-              <Link key={projectProf.id} href={`/professional-projects/${projectProf.id}`}>
+              <Link key={projectProf.id} href={`/professional-projects/${projectProf.id}`} className="block">
                 <div className="group relative rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
                   {/* Unread message bubble */}
-                  {projectProf.unreadCount && projectProf.unreadCount > 0 && (
+                  {(projectProf.unreadCount ?? 0) > 0 && (
                     <span className="absolute -top-2 -right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md" title={`${projectProf.unreadCount} unread messages`}>
                       {projectProf.unreadCount > 99 ? '99+' : projectProf.unreadCount}
                     </span>
