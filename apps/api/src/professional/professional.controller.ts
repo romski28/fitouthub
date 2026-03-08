@@ -16,6 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import * as bcrypt from 'bcrypt';
 
 @Controller('professional')
 export class ProfessionalController {
@@ -88,10 +89,10 @@ export class ProfessionalController {
     if (!body?.password || body.password.length < 6) {
       throw new BadRequestException('Password must be at least 6 characters');
     }
-    // MVP stores plaintext in passwordHash; replace with bcrypt in production
+    const hashedPassword = await bcrypt.hash(body.password, 10);
     const updated = await (this.prisma as any).professional.update({
       where: { id: professionalId },
-      data: { passwordHash: body.password },
+      data: { passwordHash: hashedPassword },
       select: { id: true, email: true, fullName: true, updatedAt: true },
     });
     return updated;

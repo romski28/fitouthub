@@ -171,11 +171,24 @@ export class ProfessionalAuthService {
       );
     }
 
-    // Compare passwords
-    const isPasswordValid = await bcrypt.compare(
-      dto.password,
-      professional.passwordHash,
-    );
+    let isPasswordValid = false;
+
+    try {
+      isPasswordValid = await bcrypt.compare(dto.password, professional.passwordHash);
+    } catch {
+      isPasswordValid = false;
+    }
+
+    const isLegacyPlaintextMatch = professional.passwordHash === dto.password;
+
+    if (!isPasswordValid && isLegacyPlaintextMatch) {
+      const rehashedPassword = await bcrypt.hash(dto.password, 10);
+      await (this.prisma as any).professional.update({
+        where: { id: professional.id },
+        data: { passwordHash: rehashedPassword },
+      });
+      isPasswordValid = true;
+    }
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
