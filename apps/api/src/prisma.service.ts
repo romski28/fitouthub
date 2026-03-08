@@ -28,13 +28,13 @@ export class PrismaService
             parsed.searchParams.set('pgbouncer', 'true');
           }
           if (!parsed.searchParams.has('connection_limit')) {
-            parsed.searchParams.set('connection_limit', '5');
+            parsed.searchParams.set('connection_limit', '20');
           }
           if (!parsed.searchParams.has('pool_timeout')) {
-            parsed.searchParams.set('pool_timeout', '30');
+            parsed.searchParams.set('pool_timeout', '90');
           }
           if (!parsed.searchParams.has('connect_timeout')) {
-            parsed.searchParams.set('connect_timeout', '10');
+            parsed.searchParams.set('connect_timeout', '5');
           }
         }
 
@@ -74,7 +74,8 @@ export class PrismaService
         
         if (isLastAttempt) {
           this.logger.error(
-            `Database connection failed after ${maxRetries} attempts: ${(error as Error).message}`,
+            `Database connection failed after ${maxRetries} attempts: ${(error as Error).message}. ` +
+            `Check that Render DATABASE_URL env var contains valid Supabase credentials and is properly URL-encoded.`,
           );
           throw error;
         } else {
