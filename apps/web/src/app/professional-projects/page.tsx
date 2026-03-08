@@ -69,6 +69,7 @@ export default function ProfessionalProjectsPage() {
   const [error, setError] = useState<string | null>(null);
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
+  const [dashboardLoading, setDashboardLoading] = useState(false);
   const totals = {
     total: projects.length,
     pending: projects.filter(p => p.status === 'pending').length,
@@ -136,6 +137,7 @@ export default function ProfessionalProjectsPage() {
     let cancelled = false;
 
     const loadNextSteps = async () => {
+      setDashboardLoading(true);
       const next: Record<string, NextStepAction | null> = {};
 
       for (const projectProf of projects) {
@@ -154,6 +156,7 @@ export default function ProfessionalProjectsPage() {
 
       if (cancelled) return;
       setNextStepMap(next);
+      setDashboardLoading(false);
     };
 
     loadNextSteps();
@@ -231,7 +234,32 @@ export default function ProfessionalProjectsPage() {
         </div>
 
         {/* Action Dashboard */}
-        {actionableProjects.length > 0 && (
+        {dashboardLoading ? (
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
+                <h2 className="text-xl font-bold text-white">Loading your action items...</h2>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={`skeleton-${i}`} className="animate-pulse rounded-lg bg-white/10 px-4 py-3">
+                  <div className="grid gap-3">
+                    <div className="h-4 bg-white/20 rounded w-3/4"></div>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+                      <div className="col-span-2 md:col-span-1">
+                        <div className="h-3 bg-white/20 rounded w-1/2"></div>
+                      </div>
+                      <div className="h-8 bg-white/20 rounded w-24"></div>
+                      <div className="h-9 bg-white/20 rounded w-20"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : actionableProjects.length > 0 && (
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -303,12 +331,14 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {projects.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-            No projects assigned yet. Once you accept project invitations, they'll appear here.
-          </div>
-        ) : (
-          <div className="space-y-3">
+        {/* Project List - Only show after dashboard has loaded */}
+        {!dashboardLoading && (
+          projects.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+              No projects assigned yet. Once you accept project invitations, they'll appear here.
+            </div>
+          ) : (
+            <div className="space-y-3">
             {projects
               .filter(p => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))))
               .slice(0, visibleCount)
@@ -376,18 +406,19 @@ export default function ProfessionalProjectsPage() {
                 })()}
               </Link>
             ))}
+            
+            {projects.length > visibleCount && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => setVisibleCount((c) => c + 30)}
+                  className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-md transition font-medium"
+                >
+                  Display More
+                </button>
+              </div>
+            )}
           </div>
-        )}
-
-        {projects.length > visibleCount && (
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => setVisibleCount((c) => c + 30)}
-              className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-md transition font-medium"
-            >
-              Display More
-            </button>
-          </div>
+          )
         )}
 
         <BackToTop />
