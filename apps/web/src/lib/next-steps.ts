@@ -14,6 +14,13 @@ type NextStepResponse = {
   ELECTIVE?: NextStepAction[];
 };
 
+export class NextStepAuthError extends Error {
+  constructor() {
+    super('Unauthorized to fetch next steps');
+    this.name = 'NextStepAuthError';
+  }
+}
+
 export async function fetchPrimaryNextStep(
   projectId: string,
   token: string,
@@ -24,6 +31,10 @@ export async function fetchPrimaryNextStep(
       'Content-Type': 'application/json',
     },
   });
+
+  if (response.status === 401 || response.status === 403) {
+    throw new NextStepAuthError();
+  }
 
   if (!response.ok) {
     return null;

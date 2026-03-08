@@ -9,7 +9,12 @@ import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
 import { useRoleGuard } from '@/hooks/use-role-guard';
-import { completeNextStep, fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
+import {
+  NextStepAuthError,
+  completeNextStep,
+  fetchPrimaryNextStep,
+  type NextStepAction,
+} from '@/lib/next-steps';
 
 interface ProjectProfessional {
   id: string;
@@ -131,23 +136,23 @@ export default function ProfessionalProjectsPage() {
     let cancelled = false;
 
     const loadNextSteps = async () => {
-      const entries = await Promise.all(
-        projects.map(async (projectProf) => {
-          try {
-            const action = await fetchPrimaryNextStep(projectProf.project.id, accessToken);
-            return [projectProf.project.id, action] as const;
-          } catch {
-            return [projectProf.project.id, null] as const;
+      const next: Record<string, NextStepAction | null> = {};
+
+      for (const projectProf of projects) {
+        if (cancelled) return;
+
+        try {
+          const action = await fetchPrimaryNextStep(projectProf.project.id, accessToken);
+          next[projectProf.project.id] = action;
+        } catch (error) {
+          next[projectProf.project.id] = null;
+          if (error instanceof NextStepAuthError) {
+            break;
           }
-        }),
-      );
+        }
+      }
 
       if (cancelled) return;
-
-      const next: Record<string, NextStepAction | null> = {};
-      entries.forEach(([id, action]) => {
-        next[id] = action;
-      });
       setNextStepMap(next);
     };
 

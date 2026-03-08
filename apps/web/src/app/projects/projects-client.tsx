@@ -16,7 +16,12 @@ import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { UpdatesButton } from "@/components/updates-button";
 import { useAuth } from "@/context/auth-context";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
-import { completeNextStep, fetchPrimaryNextStep, type NextStepAction } from "@/lib/next-steps";
+import {
+  NextStepAuthError,
+  completeNextStep,
+  fetchPrimaryNextStep,
+  type NextStepAction,
+} from "@/lib/next-steps";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -593,23 +598,23 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     let cancelled = false;
 
     const loadNextSteps = async () => {
-      const entries = await Promise.all(
-        items.map(async (p) => {
-          try {
-            const action = await fetchPrimaryNextStep(p.id, accessToken);
-            return [p.id, action] as const;
-          } catch {
-            return [p.id, null] as const;
+      const next: Record<string, NextStepAction | null> = {};
+
+      for (const project of items) {
+        if (cancelled) return;
+
+        try {
+          const action = await fetchPrimaryNextStep(project.id, accessToken);
+          next[project.id] = action;
+        } catch (error) {
+          next[project.id] = null;
+          if (error instanceof NextStepAuthError) {
+            break;
           }
-        }),
-      );
+        }
+      }
 
       if (cancelled) return;
-
-      const next: Record<string, NextStepAction | null> = {};
-      entries.forEach(([id, action]) => {
-        next[id] = action;
-      });
       setNextStepMap(next);
     };
 
