@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   getHello(): string {
     return 'Hello World!';
@@ -21,7 +22,9 @@ export class AppService {
 
   async getReadiness() {
     const startedAt = Date.now();
-    await this.prisma.$queryRaw`SELECT 1`;
+    // Lazy-load PrismaService only when readiness check is called
+    const prisma = this.moduleRef.get(PrismaService, { strict: false });
+    await prisma.$queryRaw`SELECT 1`;
     return {
       status: 'ready',
       timestamp: new Date().toISOString(),
