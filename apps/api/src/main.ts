@@ -1,11 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma.service';
+import { Logger } from '@nestjs/common';
 import * as express from 'express';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+
+  process.on('unhandledRejection', (reason) => {
+    logger.error(`Unhandled promise rejection: ${String(reason)}`);
+  });
+
+  process.on('uncaughtException', (error) => {
+    logger.error(`Uncaught exception: ${(error as Error).stack || (error as Error).message}`);
+  });
+
+  process.on('SIGTERM', () => {
+    logger.warn('Received SIGTERM - shutting down process');
+  });
+
+  process.on('SIGINT', () => {
+    logger.warn('Received SIGINT - shutting down process');
+  });
+
   const app = await NestFactory.create(AppModule);
 
   // Set global API prefix
@@ -52,13 +71,33 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
+  app.use((req, res, next) => {
+    const startedAt = Date.now();
+    const { method, originalUrl } = req;
+
+    res.on('finish', () => {
+      const durationMs = Date.now() - startedAt;
+      const message = `${method} ${originalUrl} -> ${res.statusCode} (${durationMs}ms)`;
+
+      if (res.statusCode >= 500) {
+        logger.error(message);
+      } else if (durationMs >= 2000) {
+        logger.warn(`Slow request: ${message}`);
+      } else {
+        logger.log(message);
+      }
+    });
+
+    next();
+  });
+
   try {
     const prisma = app.get(PrismaService);
     const count = await prisma.project.count();
-    console.log('✓ Database connected - Project rows:', count);
+    logger.log(`Database connected - Project rows: ${count}`);
   } catch (error) {
-    console.log('⚠ Database connection failed, but API is running');
-    console.log('  Error:', (error as Error).message);
+    logger.warn('Database connection failed during startup health probe, but API is running');
+    logger.warn(`Startup probe error: ${(error as Error).message}`);
   }
 
   const port = process.env.PORT || 3001;
@@ -70,6 +109,6 @@ async function bootstrap() {
   app.use('/uploads', express.static(uploadsPath));
   app.use('/api/uploads', express.static(uploadsPath));
   await app.listen(port, '0.0.0.0');
-  console.log(`✓ API listening on port ${port}`);
+  logger.log(`API listening on port ${port}`);
 }
 bootstrap();
