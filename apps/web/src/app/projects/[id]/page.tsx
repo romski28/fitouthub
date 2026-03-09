@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { API_BASE_URL } from '@/config/api';
+import { fetchWithRetry } from '@/lib/http';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
@@ -315,7 +316,7 @@ export default function ClientProjectDetailPage() {
     if (!accessToken || !projectId) return;
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+      const response = await fetchWithRetry(`${API_BASE_URL}/projects/${projectId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -356,7 +357,7 @@ export default function ClientProjectDetailPage() {
     setSiteAccessLoading(true);
     setSiteAccessError(null);
     try {
-      const response = await fetch(
+      const response = await fetchWithRetry(
         `${API_BASE_URL}/projects/${projectId}/site-access/requests`,
         {
           method: 'GET',
@@ -391,7 +392,7 @@ export default function ClientProjectDetailPage() {
     setSiteVisitLoading(true);
     setSiteVisitError(null);
     try {
-      const response = await fetch(
+      const response = await fetchWithRetry(
         `${API_BASE_URL}/projects/${projectId}/site-visits`,
         {
           method: 'GET',

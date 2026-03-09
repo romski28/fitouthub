@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
+import { fetchWithRetry } from '@/lib/http';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import ProjectInfoCard from '@/components/project-info-card';
@@ -184,7 +185,7 @@ export default function ProjectDetailPage() {
     const fetchProject = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
+        const response = await fetchWithRetry(
           `${API_BASE_URL}/professional/projects/${projectProfessionalId}`,
           {
             method: 'GET',
