@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -31,10 +32,54 @@ export class ProfessionalController {
     const professionalId = req.user.id || req.user.sub;
     const professional = await (this.prisma as any).professional.findUnique({
       where: { id: professionalId },
-      include: { referenceProjects: { orderBy: { createdAt: 'desc' } } },
+      include: {
+        referenceProjects: { orderBy: { createdAt: 'desc' } },
+        notificationPreferences: true,
+      },
     });
     if (!professional) throw new BadRequestException('Professional not found');
     return professional;
+  }
+
+  @Patch('me/notification-preferences')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async updateMyNotificationPreferences(
+    @Request() req: any,
+    @Body()
+    body: {
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+    },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+
+    const existing = await (this.prisma as any).notificationPreference.findUnique({
+      where: { professionalId },
+    });
+
+    if (!existing) {
+      return (this.prisma as any).notificationPreference.create({
+        data: {
+          professionalId,
+          primaryChannel: 'EMAIL',
+          fallbackChannel: 'WHATSAPP',
+          enableEmail: true,
+          enableWhatsApp: true,
+          enableSMS: true,
+          enableWeChat: false,
+          allowPartnerOffers: body.allowPartnerOffers ?? false,
+          allowPlatformUpdates: body.allowPlatformUpdates ?? true,
+        },
+      });
+    }
+
+    return (this.prisma as any).notificationPreference.update({
+      where: { professionalId },
+      data: {
+        allowPartnerOffers: body.allowPartnerOffers,
+        allowPlatformUpdates: body.allowPlatformUpdates,
+      },
+    });
   }
 
   @Put('me')

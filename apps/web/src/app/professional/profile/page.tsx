@@ -31,6 +31,10 @@ interface ProfessionalProfile {
   primaryTrade?: string | null;
   referenceProjects?: ReferenceProject[];
   profileImages?: string[];
+  notificationPreferences?: {
+    allowPartnerOffers?: boolean;
+    allowPlatformUpdates?: boolean;
+  } | null;
 }
 
 const emptyProfile: ProfessionalProfile = {
@@ -66,6 +70,8 @@ export default function ProfessionalProfilePage() {
   const [refError, setRefError] = useState<string | null>(null);
   const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
   const [password, setPassword] = useState('');
+  const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
+  const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -124,6 +130,8 @@ export default function ProfessionalProfilePage() {
         const data = await res.json();
         setProfile({ ...emptyProfile, ...data });
         setRefProjects(data.referenceProjects || []);
+        setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
+        setAllowPlatformUpdates(data.notificationPreferences?.allowPlatformUpdates ?? true);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load profile');
       } finally {
@@ -176,6 +184,19 @@ export default function ProfessionalProfilePage() {
         if (!pwRes.ok) throw new Error(await pwRes.text());
         setPassword('');
       }
+
+      const prefRes = await fetch(`${API_BASE_URL}/professional/me/notification-preferences`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          allowPartnerOffers,
+          allowPlatformUpdates,
+        }),
+      });
+      if (!prefRes.ok) throw new Error(await prefRes.text());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
@@ -429,6 +450,36 @@ export default function ProfessionalProfilePage() {
               placeholder="Minimum 6 characters"
             />
             <p className="mt-1 text-xs text-slate-500">Leave blank to keep your current password</p>
+          </div>
+
+          <div className="pt-6 border-t border-slate-200 space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900">Notification Preferences</h2>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="professionalAllowPartnerOffers"
+                checked={allowPartnerOffers}
+                onChange={(e) => setAllowPartnerOffers(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <label htmlFor="professionalAllowPartnerOffers" className="text-sm text-slate-700">
+                I agree to receive partner offers and promotions
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="professionalAllowPlatformUpdates"
+                checked={allowPlatformUpdates}
+                onChange={(e) => setAllowPlatformUpdates(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <label htmlFor="professionalAllowPlatformUpdates" className="text-sm text-slate-700">
+                I agree to receive platform updates and service notifications
+              </label>
+            </div>
           </div>
 
           <div className="grid gap-3">
