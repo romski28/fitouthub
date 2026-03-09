@@ -28,19 +28,8 @@ export class TradesService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(private prisma: PrismaService) {
-    // Pre-load cache on startup (with error handling for missing tables)
-    this.refreshCache().catch((err) => {
-      console.warn(
-        '[TradesService] Failed to load cache on startup (tables may not exist yet):',
-        err.message,
-      );
-      // Set empty cache so service doesn't crash
-      this.cache = {
-        trades: [],
-        mappings: new Map(),
-        lastUpdated: Date.now(),
-      };
-    });
+    // Cache will be loaded lazily on first use, not during bootstrap
+    // This prevents eager DB queries before PrismaService is ready
   }
 
   private async refreshCache() {
