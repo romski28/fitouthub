@@ -25,14 +25,25 @@ export class PrismaService
         const parsed = new URL(rawUrl);
 
         if (isPooler) {
-          // Pooler mode: use minimal, stable parameters
+          // Pooler mode: enforce minimal connection pool for serverless
           if (!parsed.searchParams.has('pgbouncer')) {
             parsed.searchParams.set('pgbouncer', 'true');
           }
-          // Remove aggressive pool tuning that may conflict with Supabase pooler
-          parsed.searchParams.delete('connection_limit');
-          parsed.searchParams.delete('pool_timeout');
-          parsed.searchParams.delete('connect_timeout');
+          
+          // CRITICAL: Serverless environments (Render) need SMALL pools
+          // Each instance gets its own pool; multiple instances = pool multiplication
+          // Supabase free tier pooler has limited connections (~15 total)
+          if (!parsed.searchParams.has('connection_limit')) {
+            parsed.searchParams.set('connection_limit', '2');
+          }
+          
+          // Set reasonable timeouts for pooler mode
+          if (!parsed.searchParams.has('pool_timeout')) {
+            parsed.searchParams.set('pool_timeout', '20'); // 20 seconds
+          }
+          if (!parsed.searchParams.has('connect_timeout')) {
+            parsed.searchParams.set('connect_timeout', '10'); // 10 seconds
+          }
         }
 
         if (!parsed.searchParams.has('sslmode')) {
@@ -48,6 +59,7 @@ export class PrismaService
     super({
       datasources: { db: { url: configuredUrl } },
       log: ['warn', 'error'],
+      errorFormat: 'pretty',
     });
 
     if (parseWarning) {
