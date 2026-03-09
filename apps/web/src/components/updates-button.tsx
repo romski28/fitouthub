@@ -17,6 +17,38 @@ interface UpdatesSummary {
   unreadCount: number;
 }
 
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchWithRetry = async (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  maxAttempts = 3,
+): Promise<Response> => {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch(input, init);
+      if (!RETRYABLE_STATUSES.has(response.status) || attempt === maxAttempts) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+    }
+
+    await sleep(300 * Math.pow(2, attempt - 1));
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Failed to fetch after retries');
+};
+
 const INSPIRATIONAL_MESSAGES = [
   "You're all caught up! Start something great today! 🚀",
   "Nothing pending! Time to make magic happen! ✨",
@@ -51,7 +83,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
 
     try {
       console.log('Fetching updates summary...');
-      const response = await fetch(`${API_BASE_URL}/updates/summary`, {
+      const response = await fetchWithRetry(`${API_BASE_URL}/updates/summary`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -66,7 +98,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
           unreadCount: data.unreadCount,
         });
       } else {
-        console.error('Failed to fetch updates:', response.status, response.statusText);
+        console.warn('Failed to fetch updates summary:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Failed to fetch updates:', error);

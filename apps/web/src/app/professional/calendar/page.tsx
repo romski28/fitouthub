@@ -5,6 +5,7 @@ import { Calendar, Clock, AlertCircle, ArrowLeft, List, Grid3x3, Plus } from "lu
 import { API_BASE_URL } from "@/config/api";
 import { useRouter } from "next/navigation";
 import { useProfessionalAuth } from "@/context/professional-auth-context";
+import { fetchWithRetry } from "@/lib/http";
 
 interface CalendarMilestone {
   id: string;
@@ -70,7 +71,7 @@ export default function ProfessionalCalendarPage() {
         return;
       }
 
-      const response = await fetch(
+      const response = await fetchWithRetry(
         `${API_BASE_URL}/milestones/calendar/${professionalIdStr}`,
         {
           headers: {

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
 import { useRoleGuard } from '@/hooks/use-role-guard';
+import { fetchWithRetry } from '@/lib/http';
 import {
   NextStepAuthError,
   completeNextStep,
@@ -95,7 +96,7 @@ export default function ProfessionalProjectsPage() {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/professional/projects`, {
+        const response = await fetchWithRetry(`${API_BASE_URL}/professional/projects`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${accessToken}`,

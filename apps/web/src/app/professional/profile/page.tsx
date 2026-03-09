@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import { fetchWithRetry } from '@/lib/http';
 
 import FileUploader from '@/components/file-uploader';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
@@ -119,7 +120,7 @@ export default function ProfessionalProfilePage() {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE_URL}/professional/me`, {
+        const res = await fetchWithRetry(`${API_BASE_URL}/professional/me`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (res.status === 401) {

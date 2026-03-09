@@ -59,6 +59,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const isAuthFailureStatus = (status: number) => status === 401 || status === 403;
+
   const extractLocationFromUser = (u: Partial<User> | null): CanonicalLocation => {
     if (!u) return {} as CanonicalLocation;
     const { locationPrimary, locationSecondary, locationTertiary } = u;
@@ -235,7 +237,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (!response.ok) {
-        logout();
+        if (isAuthFailureStatus(response.status)) {
+          logout();
+          return;
+        }
+        console.warn('Skipping forced logout on transient refresh failure:', response.status);
         return;
       }
 
@@ -244,7 +250,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAccessToken(result.accessToken);
     } catch (error) {
       console.error('Failed to refresh token:', error);
-      logout();
     }
   };
 

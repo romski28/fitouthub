@@ -6,6 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { ProjectsClient } from "./projects-client";
 import { Project } from "@/lib/types";
 import { API_BASE_URL } from '@/config/api';
+import { fetchWithRetry } from '@/lib/http';
 import { useRoleGuard } from '@/hooks/use-role-guard';
 
 export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string; createNew?: string }> }) {
@@ -42,7 +43,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
       console.log('[ProjectsPage] Fetching projects from:', url);
       
       try {
-        const response = await fetch(url, { 
+        const response = await fetchWithRetry(url, {
           headers: { Authorization: `Bearer ${accessToken}` } 
         });
         

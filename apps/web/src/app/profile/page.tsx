@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import LocationSelect, { type CanonicalLocation } from '@/components/location-select';
 import { toast } from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
+import { fetchWithRetry } from '@/lib/http';
 
 export default function ProfilePage() {
   const { isLoggedIn, user, accessToken, logout, userLocation, setUserLocation } = useAuth();
@@ -52,13 +53,13 @@ export default function ProfilePage() {
     };
 
     // Prefer token-bound endpoints; fallback for environments where /me routes are not yet deployed
-    let res = await fetch(`${API_BASE_URL}/users/me${path}`, {
+    let res = await fetchWithRetry(`${API_BASE_URL}/users/me${path}`, {
       ...init,
       headers,
     });
 
     if (res.status === 404) {
-      res = await fetch(`${API_BASE_URL}/users/${user.id}${path}`, {
+      res = await fetchWithRetry(`${API_BASE_URL}/users/${user.id}${path}`, {
         ...init,
         headers,
       });

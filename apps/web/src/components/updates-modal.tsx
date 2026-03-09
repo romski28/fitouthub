@@ -48,6 +48,38 @@ interface UpdatesModalProps {
   actAsClientId?: string; // when present, admin views a client's updates
 }
 
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchWithRetry = async (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  maxAttempts = 3,
+): Promise<Response> => {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch(input, init);
+      if (!RETRYABLE_STATUSES.has(response.status) || attempt === maxAttempts) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+    }
+
+    await sleep(300 * Math.pow(2, attempt - 1));
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Failed to fetch after retries');
+};
+
 export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: UpdatesModalProps) {
   const router = useRouter();
   const { accessToken: clientToken } = useAuth();
@@ -69,7 +101,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: Upda
       const url = actAsClientId
         ? `${API_BASE_URL}/updates/summary?actAs=client&clientId=${encodeURIComponent(actAsClientId)}`
         : `${API_BASE_URL}/updates/summary`;
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

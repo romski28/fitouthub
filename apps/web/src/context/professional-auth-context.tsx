@@ -60,6 +60,8 @@ const ProfessionalAuthContext = createContext<
 export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const isAuthFailureStatus = (status: number) => status === 401 || status === 403;
+
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
   const [professional, setProfessional] = useState<Professional | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -236,7 +238,11 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (!response.ok) {
-        logout();
+        if (isAuthFailureStatus(response.status)) {
+          logout();
+          return;
+        }
+        console.warn('Skipping forced logout on transient professional refresh failure:', response.status);
         return;
       }
 
@@ -249,7 +255,6 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       setAccessToken(result.accessToken);
     } catch (err) {
       console.error('Token refresh failed:', err);
-      logout();
     }
   };
 
