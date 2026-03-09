@@ -91,6 +91,21 @@ async function bootstrap() {
     next();
   });
 
+  const port = process.env.PORT || 3001;
+  
+  // Serve static uploads under both root and global /api prefix so frontend links resolve
+  const uploadsPath = join(process.cwd(), 'uploads');
+  if (!existsSync(uploadsPath)) {
+    mkdirSync(uploadsPath, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsPath));
+  app.use('/api/uploads', express.static(uploadsPath));
+  
+  // Start listening immediately to satisfy Render port detection
+  await app.listen(port, '0.0.0.0');
+  logger.log(`API listening on port ${port}`);
+
+  // Health probe after port is open
   try {
     const prisma = app.get(PrismaService);
     const count = await prisma.project.count();
@@ -99,16 +114,10 @@ async function bootstrap() {
     logger.warn('Database connection failed during startup health probe, but API is running');
     logger.warn(`Startup probe error: ${(error as Error).message}`);
   }
-
-  const port = process.env.PORT || 3001;
-  // Serve static uploads under both root and global /api prefix so frontend links resolve
-  const uploadsPath = join(process.cwd(), 'uploads');
-  if (!existsSync(uploadsPath)) {
-    mkdirSync(uploadsPath, { recursive: true });
-  }
-  app.use('/uploads', express.static(uploadsPath));
-  app.use('/api/uploads', express.static(uploadsPath));
-  await app.listen(port, '0.0.0.0');
-  logger.log(`API listening on port ${port}`);
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  const logger = new Logger('Bootstrap');
+  logger.error(`Fatal error during bootstrap: ${(error as Error).stack || (error as Error).message}`);
+  process.exit(1);
+});
