@@ -38,12 +38,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <nav className="flex-none border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo/Title */}
             <Link href="/admin" className="text-xl font-bold text-slate-900">
               Admin Portal
             </Link>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               <div className="flex gap-4">
                 <Link
@@ -75,12 +73,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >
                   Support Inbox
-                                <Link
-                                  href="/admin/support"
-                                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                                >
-                                  Support Pool
-                                </Link>
+                </Link>
+                <Link
+                  href="/admin/support"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Support Pool
                 </Link>
                 <Link
                   href="/admin/trades"
@@ -96,7 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <button
                   onClick={() => {
                     logout();
-                    router.push('/');
+                    router.push("/");
                   }}
                   className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
                 >
@@ -105,11 +103,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             </div>
 
-            {/* Mobile: User name and hamburger */}
             <div className="md:hidden flex items-center gap-3">
-              <span className="text-sm text-slate-600 font-medium">
-                {user.firstName}
-              </span>
+              <span className="text-sm text-slate-600 font-medium">{user.firstName}</span>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-md hover:bg-slate-100"
@@ -142,7 +137,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 bg-slate-50">
             <div className="px-4 py-3 space-y-2">
@@ -150,13 +144,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href="/admin/professionals"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 onClick={() => setMobileMenuOpen(false)}
-                            <Link
-                              href="/admin/support"
-                              className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                              onClick={() => setMobileMenuOpen(false)}
-                            >
-                              Support Pool
-                            </Link>
               >
                 Professionals
               </Link>
@@ -189,6 +176,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 Support Inbox
               </Link>
               <Link
+                href="/admin/support"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Support Pool
+              </Link>
+              <Link
                 href="/admin/trades"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 onClick={() => setMobileMenuOpen(false)}
@@ -199,7 +193,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 onClick={() => {
                   logout();
-                  router.push('/');
+                  router.push("/");
                 }}
                 className="block w-full text-left rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
