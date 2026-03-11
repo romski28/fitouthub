@@ -8,6 +8,9 @@ import Link from "next/link";
 type AssistRequest = {
   id: string;
   status: string;
+  contactMethod?: 'chat' | 'call' | 'whatsapp' | string;
+  requestedCallAt?: string | null;
+  requestedCallTimezone?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -346,6 +349,12 @@ export default function AdminMessagingPage() {
     return 'Unknown';
   };
 
+  const getAssistMethodLabel = (method?: string) => {
+    if (method === 'call') return 'Book a call';
+    if (method === 'whatsapp') return 'Please WhatsApp me';
+    return 'In-platform chat';
+  };
+
   const statusEligible = (msgType: string) => ['support', 'supplier-client', 'anonymous'].includes(msgType);
   const filterButtonBase = 'min-w-[150px] h-10 rounded-md px-4 text-sm font-semibold border transition flex items-center justify-center gap-2';
   const smallFilterButtonBase = 'min-w-[150px] h-9 rounded-md px-3 text-sm font-semibold border transition flex items-center justify-center gap-2';
@@ -559,6 +568,23 @@ export default function AdminMessagingPage() {
                         </div>
                         <div className="text-xs text-slate-600">
                           {req.project.region} • {req.project.clientName}
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                          <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700 border border-indigo-200">
+                            {getAssistMethodLabel(req.contactMethod)}
+                          </span>
+                          {req.requestedCallAt && (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700 border border-amber-200">
+                              {new Date(req.requestedCallAt).toLocaleString('en-GB', {
+                                timeZone: req.requestedCallTimezone || 'Asia/Hong_Kong',
+                                weekday: 'short',
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          )}
                         </div>
                         {req.notes && (
                           <p className="mt-1 text-xs text-slate-700 line-clamp-2">{req.notes}</p>

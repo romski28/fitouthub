@@ -444,6 +444,9 @@ model ProjectAssistRequest {
   projectId String
   userId    String?
   status    String          @default("open") // open | in_progress | closed
+  contactMethod String      @default("chat") // chat | call | whatsapp
+  requestedCallAt DateTime?
+  requestedCallTimezone String?
   notes     String?
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
@@ -453,6 +456,8 @@ model ProjectAssistRequest {
 
   @@index([projectId])
   @@index([status])
+  @@index([contactMethod])
+  @@index([requestedCallAt])
 }
 
 model AssistMessage {

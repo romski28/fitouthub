@@ -8,6 +8,9 @@ interface CreateAssistRequestDto {
   notes?: string;
   clientName?: string;
   projectName?: string;
+  contactMethod?: 'chat' | 'call' | 'whatsapp';
+  requestedCallAt?: string;
+  requestedCallTimezone?: string;
 }
 
 @Injectable()
@@ -19,6 +22,23 @@ export class AssistRequestsService {
 
   async createRequest(dto: CreateAssistRequestDto) {
     if (!dto.projectId) throw new BadRequestException('projectId is required');
+
+    const contactMethod = dto.contactMethod || 'chat';
+    if (!['chat', 'call', 'whatsapp'].includes(contactMethod)) {
+      throw new BadRequestException('Invalid contactMethod');
+    }
+
+    let requestedCallAt: Date | null = null;
+    if (dto.requestedCallAt) {
+      requestedCallAt = new Date(dto.requestedCallAt);
+      if (Number.isNaN(requestedCallAt.getTime())) {
+        throw new BadRequestException('Invalid requestedCallAt');
+      }
+    }
+
+    if (contactMethod === 'call' && !requestedCallAt) {
+      throw new BadRequestException('requestedCallAt is required for call requests');
+    }
 
     const project = await (this.prisma as any).project.findUnique({
       where: { id: dto.projectId },
@@ -36,6 +56,9 @@ export class AssistRequestsService {
         projectId: dto.projectId,
         userId: dto.userId,
         status: 'open',
+        contactMethod,
+        requestedCallAt,
+        requestedCallTimezone: dto.requestedCallTimezone || (requestedCallAt ? 'Asia/Hong_Kong' : null),
         notes: dto.notes?.trim() || null,
       },
     });
@@ -54,12 +77,39 @@ export class AssistRequestsService {
 
     // Notify FOH via email
     try {
+      const methodLabel =
+        contactMethod === 'call'
+          ? 'Book a call'
+          : contactMethod === 'whatsapp'
+            ? 'Please WhatsApp me'
+            : 'In-platform chat';
+
+      const formattedRequestedCallAt = requestedCallAt
+        ? requestedCallAt.toLocaleString('en-GB', {
+            timeZone: 'Asia/Hong_Kong',
+            weekday: 'short',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : null;
+
+      const notificationNotes = [
+        `Assistance type: ${methodLabel}`,
+        formattedRequestedCallAt ? `Requested call slot: ${formattedRequestedCallAt} (Hong Kong)` : null,
+        dto.notes?.trim() ? `\nClient request:\n${dto.notes.trim()}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n');
+
       await this.emailService.sendAssistRequestNotification({
         to: process.env.FOH_ASSIST_EMAIL || 'fitouthub@romski.me.uk',
         projectName: dto.projectName || project.projectName || 'Project',
         projectId: dto.projectId,
         clientName: dto.clientName || project.clientName || 'Client',
-        notes: dto.notes || '',
+        notes: notificationNotes,
         webBaseUrl:
           process.env.WEB_BASE_URL ||
           process.env.FRONTEND_BASE_URL ||

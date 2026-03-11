@@ -9,6 +9,7 @@ import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import { ProjectForm } from '@/components/project-form';
 import { ProjectDescriptionModal } from '@/components/project-description-modal';
+import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import type { ProjectFormData } from '@/components/project-form';
 import type { CanonicalLocation } from '@/components/location-select';
 
@@ -17,6 +18,12 @@ interface ProjectDescriptionData {
   profession?: string;
   location?: CanonicalLocation;
   tradesRequired: string[];
+}
+
+interface AssistDraft {
+  formData: ProjectFormData;
+  pendingFiles: File[];
+  removedPhotos: string[];
 }
 
 export default function CreateProjectPage() {
@@ -28,6 +35,8 @@ export default function CreateProjectPage() {
   const [hydrated, setHydrated] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionData, setDescriptionData] = useState<ProjectDescriptionData | null>(null);
+  const [showAssistModal, setShowAssistModal] = useState(false);
+  const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -64,73 +73,82 @@ export default function CreateProjectPage() {
 
   if (isLoggedIn === false) return null;
 
-  const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
-    setError(null);
+  const uploadPendingFiles = async (pendingFiles: File[]) => {
+    let photoUrls: string[] = [];
+    if (pendingFiles.length > 0) {
+      const uploadFormData = new FormData();
+      pendingFiles.forEach((f) => uploadFormData.append("files", f));
+      const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
+        method: "POST",
+        body: uploadFormData,
+      });
+      if (!uploadRes.ok) {
+        const message = await uploadRes.text();
+        throw new Error(message || "Failed to upload files");
+      }
+      const uploadData = (await uploadRes.json()) as { urls: string[] };
+      photoUrls = uploadData.urls;
+    }
+    return photoUrls;
+  };
 
-    // Derive region from location object
-    const region = formData.location 
+  const buildProjectPayload = (formData: ProjectFormData, photoUrls: string[]) => {
+    const region = formData.location
       ? [formData.location.primary, formData.location.secondary, formData.location.tertiary]
           .filter(Boolean)
           .join(", ")
       : formData.region || '';
 
     if (!formData.projectName?.trim() || !region.trim()) {
-      setError('Project name and region are required');
-      return;
+      throw new Error('Project name and region are required');
     }
+
+    return {
+      projectName: formData.projectName,
+      clientName: formData.clientName,
+      region,
+      budget: formData.budget ? parseFloat(String(formData.budget)) : null,
+      notes: formData.notes,
+      status: 'pending',
+      professionalIds: [],
+      userId: user?.id,
+      tradesRequired: formData.tradesRequired || [],
+      onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
+      photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
+      userPrompt: descriptionData?.description || null,
+    };
+  };
+
+  const createProject = async (payload: ReturnType<typeof buildProjectPayload>) => {
+    const response = await fetch(`${API_BASE_URL}/projects`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({ message: 'Failed to create project' }));
+      console.error('[create-project] Error response:', data);
+      throw new Error(data.message || `Server error: ${response.status}`);
+    }
+
+    return response.json();
+  };
+
+  const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
+    setError(null);
 
     setIsSubmitting(true);
     try {
-      // Upload pending files first if any
-      let photoUrls: string[] = [];
-      if (pendingFiles.length > 0) {
-        const uploadFormData = new FormData();
-        pendingFiles.forEach((f) => uploadFormData.append("files", f));
-        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
-          method: "POST",
-          body: uploadFormData,
-        });
-        if (!uploadRes.ok) {
-          const message = await uploadRes.text();
-          throw new Error(message || "Failed to upload files");
-        }
-        const uploadData = (await uploadRes.json()) as { urls: string[] };
-        photoUrls = uploadData.urls;
-      }
-
-      const payload = {
-        projectName: formData.projectName,
-        clientName: formData.clientName,
-        region: region,
-        budget: formData.budget ? parseFloat(String(formData.budget)) : null,
-        notes: formData.notes,
-        status: 'pending',
-        professionalIds: [],
-        userId: user?.id,
-        tradesRequired: formData.tradesRequired || [],
-        onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
-        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
-        userPrompt: descriptionData?.description || null,
-      };
+      const photoUrls = await uploadPendingFiles(pendingFiles);
+      const payload = buildProjectPayload(formData, photoUrls);
 
       console.log('[create-project] Submitting payload:', payload);
 
-      const response = await fetch(`${API_BASE_URL}/projects`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({ message: 'Failed to create project' }));
-        console.error('[create-project] Error response:', data);
-        throw new Error(data.message || `Server error: ${response.status}`);
-      }
-
-      const project = await response.json();
+      const project = await createProject(payload);
       console.log('[create-project] Project created successfully:', project);
       toast.success('Project created! Now invite professionals...');
       router.push(`/projects/${project.id}`);
@@ -146,67 +164,19 @@ export default function CreateProjectPage() {
 
   const handleAssist = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setError(null);
+    setAssistDraft({ formData, pendingFiles, removedPhotos });
+    setShowAssistModal(true);
+  };
+
+  const submitAssistRequest = async (assistConfig: AssistRequestModalSubmit) => {
+    if (!assistDraft) return;
+
+    setError(null);
     setIsSubmitting(true);
     try {
-      const region = formData.location 
-        ? [formData.location.primary, formData.location.secondary, formData.location.tertiary]
-            .filter(Boolean)
-            .join(", ")
-        : formData.region || '';
-
-      if (!formData.projectName?.trim() || !region.trim()) {
-        setError('Project name and region are required');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Upload pending files first if any
-      let photoUrls: string[] = [];
-      if (pendingFiles.length > 0) {
-        const uploadFormData = new FormData();
-        pendingFiles.forEach((f) => uploadFormData.append("files", f));
-        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
-          method: "POST",
-          body: uploadFormData,
-        });
-        if (!uploadRes.ok) {
-          const message = await uploadRes.text();
-          throw new Error(message || "Failed to upload files");
-        }
-        const uploadData = (await uploadRes.json()) as { urls: string[] };
-        photoUrls = uploadData.urls;
-      }
-
-      const payload = {
-        projectName: formData.projectName,
-        clientName: formData.clientName,
-        region,
-        budget: formData.budget ? parseFloat(String(formData.budget)) : null,
-        notes: formData.notes,
-        status: 'pending',
-        professionalIds: [],
-        userId: user?.id,
-        tradesRequired: formData.tradesRequired || [],
-        onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
-        photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
-        userPrompt: descriptionData?.description || null,
-      };
-
-      const response = await fetch(`${API_BASE_URL}/projects`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({ message: 'Failed to create project' }));
-        throw new Error(data.message || `Server error: ${response.status}`);
-      }
-
-      const project = await response.json();
+      const photoUrls = await uploadPendingFiles(assistDraft.pendingFiles);
+      const payload = buildProjectPayload(assistDraft.formData, photoUrls);
+      const project = await createProject(payload);
 
       const assistRes = await fetch(`${API_BASE_URL}/assist-requests`, {
         method: 'POST',
@@ -219,7 +189,10 @@ export default function CreateProjectPage() {
           userId: user?.id,
           clientName: payload.clientName,
           projectName: payload.projectName,
-          notes: payload.notes,
+          notes: assistConfig.notes,
+          contactMethod: assistConfig.contactMethod,
+          requestedCallAt: assistConfig.requestedCallAt,
+          requestedCallTimezone: assistConfig.requestedCallTimezone,
         }),
       });
 
@@ -228,10 +201,22 @@ export default function CreateProjectPage() {
         throw new Error(data.message || `Server error: ${assistRes.status}`);
       }
 
+      setShowAssistModal(false);
+      setAssistDraft(null);
+
+      toast.success(
+        assistConfig.contactMethod === 'call'
+          ? 'Project created and call request sent to Fitout Hub.'
+          : assistConfig.contactMethod === 'whatsapp'
+            ? 'Project created and WhatsApp request sent to Fitout Hub.'
+            : 'Project created and chat assistance requested.',
+      );
+
       router.push(`/projects/${project.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to request assistance';
       setError(message);
+      throw err;
     } finally {
       setIsSubmitting(false);
     }
@@ -247,6 +232,20 @@ export default function CreateProjectPage() {
           setShowDescriptionModal(false);
         }}
         onCancel={() => router.push('/projects')}
+      />
+
+      <AssistRequestModal
+        key={showAssistModal ? `${assistDraft?.formData.projectName || 'assist'}-${assistDraft?.formData.notes || ''}-${assistDraft?.pendingFiles.length || 0}` : 'assist-closed'}
+        isOpen={showAssistModal}
+        onClose={() => {
+          if (isSubmitting) return;
+          setShowAssistModal(false);
+        }}
+        onSubmit={submitAssistRequest}
+        isSubmitting={isSubmitting}
+        error={error}
+        initialNotes={assistDraft?.formData.notes || descriptionData?.description || ''}
+        projectName={assistDraft?.formData.projectName || descriptionData?.profession}
       />
 
       <div className="max-w-2xl mx-auto">

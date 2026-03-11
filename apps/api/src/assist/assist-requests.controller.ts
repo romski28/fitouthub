@@ -24,6 +24,9 @@ export class AssistRequestsController {
       userId?: string;
       clientName?: string;
       projectName?: string;
+      contactMethod?: 'chat' | 'call' | 'whatsapp';
+      requestedCallAt?: string;
+      requestedCallTimezone?: string;
     },
   ) {
     try {
@@ -33,6 +36,9 @@ export class AssistRequestsController {
         notes: body.notes,
         clientName: body.clientName,
         projectName: body.projectName,
+        contactMethod: body.contactMethod,
+        requestedCallAt: body.requestedCallAt,
+        requestedCallTimezone: body.requestedCallTimezone,
       });
     } catch (error) {
       throw new HttpException(

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuthModalControl } from '@/context/auth-modal-control';
+import { useAuth } from '@/context/auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import { ProfessionRegistrationModal } from '@/components/profession-registration-modal';
 import { API_BASE_URL } from '@/config/api';
@@ -85,6 +86,7 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
   const navT = useTranslations('nav');
   const commonT = useTranslations('common');
   const { openLoginModal } = useAuthModalControl();
+  const { login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -179,10 +181,8 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
         throw new Error(data.message || 'Failed to verify OTP');
       }
 
-      const result = await response.json();
-      localStorage.setItem('accessToken', result.accessToken);
-      localStorage.setItem('refreshToken', result.refreshToken);
-      localStorage.setItem('user', JSON.stringify(result.user));
+      await response.json();
+      await login(pendingVerificationEmail, formData.password);
       router.push('/projects');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to verify OTP');
