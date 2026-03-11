@@ -226,6 +226,7 @@ export default function AdminProjectsPage() {
   const [statusFilter, setStatusFilter] = useState<
     "active" | "pending" | "onsite" | "completed" | "cancelled" | "archived"
   >("active");
+  const cancelledStatuses = ["rejected", "withdrawn", "declined"];
 
   const totals = useMemo(() => {
     const activeProjects = projects.filter(
@@ -236,7 +237,7 @@ export default function AdminProjectsPage() {
       pending: activeProjects.filter((p) => p.status === "pending").length,
       onsite: activeProjects.filter((p) => p.status === "awarded").length,
       completed: projects.filter((p) => p.status === "completed").length,
-      cancelled: activeProjects.filter((p) => p.status === "rejected").length,
+      cancelled: activeProjects.filter((p) => cancelledStatuses.includes(p.status)).length,
       archived: projects.filter((p) => p.status === "archived").length,
     };
   }, [projects]);
@@ -348,7 +349,7 @@ export default function AdminProjectsPage() {
     if (statusFilter === "pending" && p.status !== "pending") return false;
     if (statusFilter === "onsite" && p.status !== "awarded") return false;
     if (statusFilter === "completed" && p.status !== "completed") return false;
-    if (statusFilter === "cancelled" && p.status !== "rejected") return false;
+    if (statusFilter === "cancelled" && !cancelledStatuses.includes(p.status)) return false;
     if (statusFilter === "archived" && p.status !== "archived") return false;
 
     // Filter by search text
