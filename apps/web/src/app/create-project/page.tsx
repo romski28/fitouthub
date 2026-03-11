@@ -159,24 +159,6 @@ export default function CreateProjectPage() {
     return response.json();
   };
 
-  const selectProfessionalsForProject = async (projectId: string, professionalIds: string[]) => {
-    if (!professionalIds.length) return;
-
-    const response = await fetch(`${API_BASE_URL}/projects/${encodeURIComponent(projectId)}/select`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ professionalIds }),
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({ message: 'Failed to save selected professionals' }));
-      throw new Error(data.message || `Server error: ${response.status}`);
-    }
-  };
-
   const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setError(null);
 
@@ -193,7 +175,11 @@ export default function CreateProjectPage() {
 
       const project = await createProject(payload);
       console.log('[create-project] Project created successfully:', project);
-      toast.success('Project created! Now invite professionals...');
+      toast.success(
+        selectedProfessionals.length > 0
+          ? 'Project created and bidding is now open to your selected professionals.'
+          : 'Project saved. You can open bidding when you are ready.',
+      );
       router.push(`/projects/${project.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create project';
@@ -218,7 +204,10 @@ export default function CreateProjectPage() {
     setIsSubmitting(true);
     try {
       const photoUrls = await uploadPendingFiles(assistDraft.pendingFiles);
-      const payload = buildProjectPayload(assistDraft.formData, photoUrls);
+      const payload = {
+        ...buildProjectPayload(assistDraft.formData, photoUrls, []),
+        onlySelectedProfessionalsCanBid: true,
+      };
       const project = await createProject(payload);
 
       const assistRes = await fetch(`${API_BASE_URL}/assist-requests`, {
@@ -243,11 +232,6 @@ export default function CreateProjectPage() {
         const data = await assistRes.json().catch(() => ({ message: 'Failed to request assistance' }));
         throw new Error(data.message || `Server error: ${assistRes.status}`);
       }
-
-      await selectProfessionalsForProject(
-        project.id,
-        selectedProfessionals.map((professional) => professional.id),
-      );
 
       setShowAssistModal(false);
       setAssistDraft(null);
@@ -333,7 +317,7 @@ export default function CreateProjectPage() {
               onCancel={() => router.push('/projects')}
               isSubmitting={isSubmitting}
               error={error}
-              submitLabel="Create Project"
+              submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
               showBudget={true}
               showService={true}
             />

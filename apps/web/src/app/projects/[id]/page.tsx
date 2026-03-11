@@ -292,14 +292,26 @@ export default function ClientProjectDetailPage() {
     if (!requestedTab) return;
 
     const allowedTabs = new Set(['overview', 'site-access', 'professionals', 'media']);
+    if (isAwarded || !!assistRequestId) {
+      allowedTabs.add('chat');
+    }
     if (isAwarded) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
-      allowedTabs.add('chat');
+    }
+
+    if (requestedTab === 'assist' && assistRequestId) {
+      setViewingAssistChat(true);
+      setActiveTab('chat');
+      return;
+    }
+
+    if (requestedTab === 'chat') {
+      setViewingAssistChat(false);
     }
 
     setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
-  }, [searchParams, isAwarded]);
+  }, [searchParams, isAwarded, assistRequestId]);
 
   const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
     const text = await response.text();
@@ -1525,11 +1537,11 @@ export default function ClientProjectDetailPage() {
           )}
 
         {/* Tab Content - Chat */}
-        {activeTab === 'chat' && project?.professionals && project.professionals.some((pp) => pp.status === 'awarded') && (
+        {activeTab === 'chat' && (isAwarded || !!assistRequestId) && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
             <ChatTab
               projectId={projectId}
-              professionals={project.professionals}
+              professionals={project.professionals || []}
               accessToken={accessToken || ''}
               selectedProfessional={selectedProfessional}
               onSelectProfessional={setSelectedProfessional}

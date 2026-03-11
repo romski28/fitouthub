@@ -10,6 +10,7 @@ import { promises as fs } from 'fs';
 import { createId } from '@paralleldrive/cuid2';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client';
+import { ProjectStage } from '@prisma/client';
 
 @Injectable()
 export class ProjectsService {
@@ -671,6 +672,7 @@ Please review the project details and respond with your quote or decline the inv
 
     const createData: any = {
       ...normalized,
+      currentStage: ids.length > 0 ? ProjectStage.BIDDING_ACTIVE : ProjectStage.CREATED,
       professionals: {
         create: ids.map((id) => ({
           professionalId: id,
