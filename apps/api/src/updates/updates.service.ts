@@ -140,6 +140,7 @@ export class UpdatesService {
           { userId: clientId },
           { clientId: clientId },
         ],
+        status: { not: 'archived' },
         professionals: {
           some: {
             status: 'quoted',  // Professional has quoted but client hasn't accepted
@@ -277,6 +278,7 @@ export class UpdatesService {
         WHERE pcm."readByClientAt" IS NULL
           AND pcm."senderType" != 'client'
           AND p."userId" = ${userId}
+          AND p.status != 'archived'
         GROUP BY pcm."threadId", pct."projectId", p."projectName"
       `;
 
@@ -333,6 +335,7 @@ export class UpdatesService {
         WHERE am."readByClientAt" IS NULL
           AND am."senderType" = 'foh'
           AND p."userId" = ${userId}
+          AND p.status != 'archived'
         GROUP BY am."assistRequestId", ar."projectId", p."projectName"
       `;
 
@@ -451,6 +454,7 @@ export class UpdatesService {
         WHERE m."readByProfessionalAt" IS NULL
           AND m."senderType" = 'client'
           AND pp."professionalId" = ${professional.id}
+          AND p.status != 'archived'
         GROUP BY m."projectProfessionalId", p.id, p."projectName"
       `;
 
@@ -520,6 +524,7 @@ export class UpdatesService {
           AND pcm."senderType" != 'professional'
           AND pp."professionalId" = ${professional.id}
           AND pp.status = 'awarded'
+          AND p.status != 'archived'
         GROUP BY pcm."threadId", pct."projectId", p."projectName"
       `;
 

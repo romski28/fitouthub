@@ -5,6 +5,7 @@ import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { EditModal, FieldDefinition } from "@/components/edit-modal";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { ModalOverlay } from "@/components/modal-overlay";
 import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { useAuth } from "@/context/auth-context";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
@@ -63,7 +64,17 @@ function formatHKD(value?: number | string): string {
 }
 
 // Wrapper component to use useFundsSecured hook for each card
-function ProjectCard({ project, onEdit, onDelete }: { project: Project; onEdit: (p: Project) => void; onDelete: (id: string) => void }) {
+function ProjectCard({
+  project,
+  onEdit,
+  onArchive,
+  onDelete,
+}: {
+  project: Project;
+  onEdit: (p: Project) => void;
+  onArchive: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
   const { accessToken } = useAuth();
   const fundsSecured = useFundsSecured(project.id, accessToken || undefined);
 
@@ -95,6 +106,13 @@ function ProjectCard({ project, onEdit, onDelete }: { project: Project; onEdit: 
               className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
             >
               Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onArchive(project.id)}
+              className="rounded-md bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600"
+            >
+              Archive
             </button>
             <button
               type="button"
@@ -201,7 +219,9 @@ export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
   const [filter, setFilter] = useState("");
 
   const totals = useMemo(() => {
@@ -266,10 +286,25 @@ export default function AdminProjectsPage() {
     await fetchProjects();
   };
 
+  const handleArchive = async () => {
+    if (!archiveId || !accessToken) return;
+
+    const res = await fetch(`${API_BASE_URL}/projects/${archiveId}/archive`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    setProjects((prev) => prev.filter((p) => p.id !== archiveId));
+    setArchiveId(null);
+  };
+
   const handleDelete = async () => {
     if (!deletingId || !accessToken) return;
 
-    const res = await fetch(`${API_BASE_URL}/projects/${deletingId}`, {
+    const res = await fetch(`${API_BASE_URL}/projects/${deletingId}/permanent`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -279,6 +314,23 @@ export default function AdminProjectsPage() {
     if (!res.ok) throw new Error(await res.text());
     setProjects((prev) => prev.filter((p) => p.id !== deletingId));
     setDeletingId(null);
+    setDeleteConfirmStep(1);
+  };
+
+  const handleArchiveFromDelete = async () => {
+    if (!deletingId || !accessToken) return;
+
+    const res = await fetch(`${API_BASE_URL}/projects/${deletingId}/archive`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    setProjects((prev) => prev.filter((p) => p.id !== deletingId));
+    setDeletingId(null);
+    setDeleteConfirmStep(1);
   };
 
   const filtered = projects.filter((p) => {
@@ -395,7 +447,11 @@ export default function AdminProjectsPage() {
               key={project.id}
               project={project}
               onEdit={setEditingProject}
-              onDelete={setDeletingId}
+              onArchive={setArchiveId}
+              onDelete={(id) => {
+                setDeletingId(id);
+                setDeleteConfirmStep(1);
+              }}
             />
           ))}
         </div>
@@ -412,13 +468,85 @@ export default function AdminProjectsPage() {
       )}
 
       <ConfirmModal
-        isOpen={!!deletingId}
-        onCancel={() => setDeletingId(null)}
-        onConfirm={handleDelete}
-        title="Delete Project"
-        message="Are you sure you want to delete this project? This will also delete all associated email tokens and professional responses."
-        tone="danger"
+        isOpen={!!archiveId}
+        onCancel={() => setArchiveId(null)}
+        onConfirm={handleArchive}
+        title="Archive Project"
+        message="Archive this project so it is hidden from client and professional views?"
+        confirmLabel="Archive"
+        tone="default"
       />
+
+      {deletingId && (
+        <ModalOverlay
+          isOpen={!!deletingId}
+          onClose={() => {
+            setDeletingId(null);
+            setDeleteConfirmStep(1);
+          }}
+          maxWidth="max-w-lg"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-1 h-9 w-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {deleteConfirmStep === 1 ? "Delete Project Permanently?" : "Final Confirmation"}
+                </h3>
+                <p className="text-sm text-slate-600">
+                  {deleteConfirmStep === 1
+                    ? "Permanent delete is irreversible. If you only want to hide it from platform users, choose Archive instead."
+                    : "This will permanently delete the project and associated records. This cannot be undone."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingId(null);
+                  setDeleteConfirmStep(1);
+                }}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+
+              {deleteConfirmStep === 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleArchiveFromDelete}
+                    className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition"
+                  >
+                    Archive Instead
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmStep(2)}
+                    className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
+                  >
+                    Continue Delete
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800 transition"
+                >
+                  Yes, Delete Permanently
+                </button>
+              )}
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
     </div>
   );
 }

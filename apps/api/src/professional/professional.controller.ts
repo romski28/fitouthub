@@ -152,7 +152,12 @@ export class ProfessionalController {
       const projectProfessionals = await (
         this.prisma as any
       ).projectProfessional.findMany({
-        where: { professionalId },
+        where: {
+          professionalId,
+          project: {
+            status: { not: 'archived' },
+          },
+        },
         include: {
           project: {
             select: {
@@ -295,7 +300,12 @@ export class ProfessionalController {
       where: {
         senderType: 'client',
         readByProfessionalAt: null,
-        projectProfessional: { professionalId },
+        projectProfessional: {
+          professionalId,
+          project: {
+            status: { not: 'archived' },
+          },
+        },
       },
     });
     return { unreadCount: count };
@@ -316,6 +326,9 @@ export class ProfessionalController {
         where: {
           id: projectProfessionalId,
           professionalId,
+          project: {
+            status: { not: 'archived' },
+          },
         },
         include: {
           project: true,

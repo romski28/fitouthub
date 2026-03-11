@@ -212,6 +212,19 @@ export class ChatService {
    * Get or create a project chat thread
    */
   async getOrCreateProjectThread(projectId: string): Promise<ProjectChatThreadDto> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, status: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if ((project.status || '').toLowerCase() === 'archived') {
+      throw new ForbiddenException('Project is archived');
+    }
+
     let thread = await this.prisma.projectChatThread.findUnique({
       where: { projectId },
       include: {

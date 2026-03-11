@@ -577,8 +577,47 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.projectsService.remove(id);
+  @UseGuards(CombinedAuthGuard)
+  async remove(@Param('id') id: string, @Request() req: any) {
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can archive projects');
+    }
+    return this.projectsService.archive(id);
+  }
+
+  @Post(':id/archive')
+  @UseGuards(CombinedAuthGuard)
+  async archive(@Param('id') id: string, @Request() req: any) {
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can archive projects');
+    }
+    return this.projectsService.archive(id);
+  }
+
+  @Post(':id/unarchive')
+  @UseGuards(CombinedAuthGuard)
+  async unarchive(
+    @Param('id') id: string,
+    @Body() body: { status?: string },
+    @Request() req: any,
+  ) {
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can unarchive projects');
+    }
+    return this.projectsService.unarchive(id, body?.status || 'pending');
+  }
+
+  @Delete(':id/permanent')
+  @UseGuards(CombinedAuthGuard)
+  async hardRemove(@Param('id') id: string, @Request() req: any) {
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can permanently delete projects');
+    }
+    return this.projectsService.hardRemove(id);
   }
 
   // ===== PROJECT PHOTO ENDPOINTS =====

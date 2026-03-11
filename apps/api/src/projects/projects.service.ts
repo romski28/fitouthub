@@ -30,6 +30,8 @@ export class ProjectsService {
     'declined',
   ];
 
+  private readonly ARCHIVED_STATUS = 'archived';
+
   private betterStatus(
     a?: string | null,
     b?: string | null,
@@ -147,8 +149,11 @@ export class ProjectsService {
         where: userId
           ? {
               userId: userId,
+              status: { not: this.ARCHIVED_STATUS },
             }
-          : undefined,
+          : {
+              status: { not: this.ARCHIVED_STATUS },
+            },
         include: {
 
           professionals: {
@@ -240,6 +245,7 @@ export class ProjectsService {
       const basicProjects = await this.prisma.project.findMany({
         where: {
           userId: userId,
+          status: { not: this.ARCHIVED_STATUS },
         },
         select: {
           id: true,
@@ -334,6 +340,7 @@ export class ProjectsService {
         where: {
           id,
           userId: userId,
+          status: { not: this.ARCHIVED_STATUS },
         },
         include: {
 
@@ -2969,7 +2976,59 @@ Please review the project details and respond with your quote or decline the inv
     return { success: true, status: 'withdrawn' };
   }
 
+  async archive(id: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      select: { id: true, status: true },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    if ((project.status || '').toLowerCase() === this.ARCHIVED_STATUS) {
+      return { success: true, status: this.ARCHIVED_STATUS, alreadyArchived: true };
+    }
+
+    await this.prisma.project.update({
+      where: { id },
+      data: { status: this.ARCHIVED_STATUS, updatedAt: new Date() },
+    });
+
+    return { success: true, status: this.ARCHIVED_STATUS };
+  }
+
+  async unarchive(id: string, status = 'pending') {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      select: { id: true, status: true },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    if ((status || '').toLowerCase() === this.ARCHIVED_STATUS) {
+      throw new BadRequestException('Unarchive status cannot be archived');
+    }
+
+    if ((project.status || '').toLowerCase() !== this.ARCHIVED_STATUS) {
+      return { success: true, status: project.status, alreadyActive: true };
+    }
+
+    await this.prisma.project.update({
+      where: { id },
+      data: { status, updatedAt: new Date() },
+    });
+
+    return { success: true, status };
+  }
+
   async remove(id: string) {
+    return this.archive(id);
+  }
+
+  async hardRemove(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
       select: { notes: true },
