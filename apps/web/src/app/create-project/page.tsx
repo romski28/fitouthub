@@ -32,6 +32,12 @@ interface CreateProjectDraft {
   selectedProfessionals?: Professional[];
 }
 
+const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
+
+const filterProjectSelectableProfessionals = (professionals: Professional[]) => {
+  return professionals.filter((professional) => PROJECT_SELECTABLE_TYPES.has(professional.professionType));
+};
+
 export default function CreateProjectPage() {
   const router = useRouter();
     const t = useTranslations('project');
@@ -63,7 +69,11 @@ export default function CreateProjectPage() {
         try {
           const parsed = JSON.parse(storedDraft) as CreateProjectDraft;
           setInitialFormData(parsed.initialData || {});
-          setSelectedProfessionals(Array.isArray(parsed.selectedProfessionals) ? parsed.selectedProfessionals : []);
+          setSelectedProfessionals(
+            Array.isArray(parsed.selectedProfessionals)
+              ? filterProjectSelectableProfessionals(parsed.selectedProfessionals)
+              : [],
+          );
         } catch (e) {
           console.warn('[create-project] Failed to parse createProjectDraft:', e);
         } finally {

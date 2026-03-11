@@ -16,6 +16,12 @@ import { useSearchParams } from 'next/navigation';
 import { matchLocation } from '@/lib/location-matcher';
 import type { ProjectFormData } from '@/components/project-form';
 
+const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
+
+function filterProjectSelectableProfessionals(list: Professional[]): Professional[] {
+  return list.filter((professional) => PROJECT_SELECTABLE_TYPES.has(professional.professionType));
+}
+
 function extractPhotoUrls(notes?: string): string[] {
   if (!notes) return [];
   const matches = notes.match(/(https?:\/\/[^\s,;\)]+|\/api?\/uploads\/[^\s,;\)]+)/gi) || [];
@@ -86,11 +92,12 @@ function ProfessionalsPageInner() {
             : [];
 
         console.log('API Response - first professional:', data[0]);
-        setProfessionals(data.length ? data : fallbackProfessionals);
+        const source = data.length ? data : fallbackProfessionals;
+        setProfessionals(filterProjectSelectableProfessionals(source));
       } catch (error) {
         console.error('Failed to fetch professionals:', error);
         // Show a sensible fallback instead of crashing on invalid JSON responses
-        setProfessionals(fallbackProfessionals);
+        setProfessionals(filterProjectSelectableProfessionals(fallbackProfessionals));
       } finally {
         setLoading(false);
       }

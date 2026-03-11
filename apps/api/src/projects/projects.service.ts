@@ -32,6 +32,25 @@ export class ProjectsService {
   ];
 
   private readonly ARCHIVED_STATUS = 'archived';
+  private readonly PROJECT_SELECTABLE_PROFESSION_TYPES = ['contractor', 'company'] as const;
+
+  private async getProjectSelectableProfessionals(ids: string[]) {
+    const professionals = await this.prisma.professional.findMany({
+      where: {
+        id: { in: ids },
+        professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
+      },
+      select: { id: true, email: true, fullName: true, businessName: true },
+    });
+
+    if (professionals.length !== ids.length) {
+      throw new BadRequestException(
+        'Only company and contractor professionals can be selected for projects',
+      );
+    }
+
+    return professionals;
+  }
 
   private betterStatus(
     a?: string | null,
@@ -408,7 +427,7 @@ export class ProjectsService {
   async inviteProfessionals(projectId: string, professionalIds: string[]) {
     if (!projectId) throw new BadRequestException('projectId is required');
     const ids = Array.isArray(professionalIds)
-      ? professionalIds.filter(Boolean)
+      ? Array.from(new Set(professionalIds.filter(Boolean)))
       : [];
     if (ids.length === 0) {
       throw new BadRequestException('At least one professionalId is required');
@@ -419,10 +438,7 @@ export class ProjectsService {
     });
     if (!project) throw new BadRequestException('Project not found');
 
-    const professionals = await this.prisma.professional.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, email: true, fullName: true, businessName: true },
-    });
+    const professionals = await this.getProjectSelectableProfessionals(ids);
     if (professionals.length === 0) {
       throw new BadRequestException('No professionals found for given ids');
     }
@@ -567,7 +583,7 @@ Please review the project details and respond with your quote or decline the inv
   async selectProfessionals(projectId: string, professionalIds: string[]) {
     if (!projectId) throw new BadRequestException('projectId is required');
     const ids = Array.isArray(professionalIds)
-      ? professionalIds.filter(Boolean)
+      ? Array.from(new Set(professionalIds.filter(Boolean)))
       : [];
     if (ids.length === 0) {
       throw new BadRequestException('At least one professionalId is required');
@@ -577,6 +593,8 @@ Please review the project details and respond with your quote or decline the inv
       where: { id: projectId },
     });
     if (!project) throw new BadRequestException('Project not found');
+
+    await this.getProjectSelectableProfessionals(ids);
 
     const results: any[] = [];
     for (const proId of ids) {
@@ -629,7 +647,7 @@ Please review the project details and respond with your quote or decline the inv
 
     // Backward compatibility: allow single professionalId in payload
     const ids: string[] = Array.isArray(professionalIds)
-      ? professionalIds.filter(Boolean)
+      ? Array.from(new Set(professionalIds.filter(Boolean)))
       : [];
 
     const legacyId = (createProjectDto as any).professionalId;
@@ -646,18 +664,7 @@ Please review the project details and respond with your quote or decline the inv
     // Fetch professionals for email (if any)
     let professionals: any[] = [];
     if (ids.length > 0) {
-      professionals = await this.prisma.professional.findMany({
-        where: { id: { in: ids } },
-        select: { id: true, email: true, fullName: true, businessName: true },
-      });
-
-      if (professionals.length !== ids.length) {
-        console.warn('[ProjectsService.create] missing professionals', {
-          requested: ids,
-          found: professionals.map((p) => p.id),
-        });
-        throw new BadRequestException('One or more professionals not found');
-      }
+      professionals = await this.getProjectSelectableProfessionals(ids);
     }
 
     // Transform userId into user relation for Prisma
