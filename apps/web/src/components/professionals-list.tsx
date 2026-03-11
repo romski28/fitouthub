@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, memo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { CanonicalLocation } from '@/components/location-select';
@@ -157,6 +158,7 @@ interface Props {
 
 export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialProjectData }: Props) {
   const t = useTranslations('professionalsPage.list');
+  const router = useRouter();
   const { role } = useAuth();
   const isAdmin = role === 'admin';
   // Initialize from intentData synchronously to avoid effect-based setState
@@ -443,6 +445,61 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
 
+  const shareInitialData = useMemo<Partial<ProjectFormData>>(() => {
+    const needle = (searchTerm || '').trim();
+    const mapped = needle ? matchServiceToProfession(needle) : (professionHint || '');
+    const mainTrade = (mapped || needle || '').trim();
+    const locationLabel = [loc.primary, loc.secondary, loc.tertiary].filter(Boolean).join(', ');
+    const defaultTitle = (() => {
+      if (mainTrade && locationLabel) return t('defaults.tradeInLocation', { trade: mainTrade, location: locationLabel });
+      if (mainTrade) return mainTrade;
+      if (locationLabel) return t('defaults.serviceRequestInLocation', { location: locationLabel });
+      return t('defaults.serviceRequest');
+    })();
+    const prefill = initialProjectData || {};
+
+    return {
+      projectName: prefill.projectName || defaultTitle,
+      location: prefill.location || loc,
+      tradesRequired: (prefill.tradesRequired && prefill.tradesRequired.length > 0)
+        ? prefill.tradesRequired
+        : (mainTrade ? [mainTrade] : []),
+      notes: prefill.notes || initialFromIntent.description || '',
+      photoUrls: prefill.photoUrls,
+      onlySelectedProfessionalsCanBid: prefill.onlySelectedProfessionalsCanBid ?? true,
+    };
+  }, [initialFromIntent.description, initialProjectData, loc, professionHint, searchTerm, t]);
+
+  const handleInviteSelected = () => {
+    if (projectId) {
+      setIsModalOpen(true);
+      return;
+    }
+
+    const selectedProfessionals = filtered.filter((p) => selectedIds.has(p.id));
+    if (selectedProfessionals.length === 0) return;
+
+    sessionStorage.setItem(
+      'projectDescription',
+      JSON.stringify({
+        description: shareInitialData.notes || initialFromIntent.description || '',
+        profession: shareInitialData.tradesRequired?.[0],
+        location: shareInitialData.location,
+        tradesRequired: shareInitialData.tradesRequired || [],
+      }),
+    );
+
+    sessionStorage.setItem(
+      'createProjectDraft',
+      JSON.stringify({
+        initialData: shareInitialData,
+        selectedProfessionals,
+      }),
+    );
+
+    router.push('/create-project');
+  };
+
   const openDetails = (pro: Professional) => {
     setDetailsPro(pro);
     setDetailsOpen(true);
@@ -589,7 +646,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {selectedIds.size > 0 ? (
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleInviteSelected}
           className="fixed top-20 right-6 z-40 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3"
           aria-label={t('actions.shareProjectAria')}
         >
@@ -615,28 +672,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         }}
         professionals={filtered.filter((p) => selectedIds.has(p.id))}
         projectId={projectId}
-        initialData={(() => {
-          const needle = (searchTerm || '').trim();
-          const mapped = needle ? matchServiceToProfession(needle) : (professionHint || '');
-          const mainTrade = (mapped || needle || '').trim();
-          const locationLabel = [loc.primary, loc.secondary, loc.tertiary].filter(Boolean).join(', ');
-          const defaultTitle = (() => {
-            if (mainTrade && locationLabel) return t('defaults.tradeInLocation', { trade: mainTrade, location: locationLabel });
-            if (mainTrade) return mainTrade;
-            if (locationLabel) return t('defaults.serviceRequestInLocation', { location: locationLabel });
-            return t('defaults.serviceRequest');
-          })();
-          const prefill = initialProjectData || {};
-          return {
-            projectName: prefill.projectName || defaultTitle,
-            location: prefill.location || loc,
-            tradesRequired: (prefill.tradesRequired && prefill.tradesRequired.length > 0)
-              ? prefill.tradesRequired
-              : (mainTrade ? [mainTrade] : []),
-            notes: prefill.notes,
-            photoUrls: prefill.photoUrls,
-          };
-        })()}
+        initialData={shareInitialData}
       />
 
       <ProfessionalDetailsModal

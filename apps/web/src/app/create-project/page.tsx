@@ -12,6 +12,7 @@ import { ProjectDescriptionModal } from '@/components/project-description-modal'
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import type { ProjectFormData } from '@/components/project-form';
 import type { CanonicalLocation } from '@/components/location-select';
+import type { Professional } from '@/lib/types';
 
 interface ProjectDescriptionData {
   description: string;
@@ -26,6 +27,11 @@ interface AssistDraft {
   removedPhotos: string[];
 }
 
+interface CreateProjectDraft {
+  initialData?: Partial<ProjectFormData>;
+  selectedProfessionals?: Professional[];
+}
+
 export default function CreateProjectPage() {
   const router = useRouter();
     const t = useTranslations('project');
@@ -37,6 +43,8 @@ export default function CreateProjectPage() {
   const [descriptionData, setDescriptionData] = useState<ProjectDescriptionData | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
+  const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
+  const [selectedProfessionals, setSelectedProfessionals] = useState<Professional[]>([]);
 
   useEffect(() => {
     setHydrated(true);
@@ -50,6 +58,19 @@ export default function CreateProjectPage() {
 
   useEffect(() => {
     if (hydrated && isLoggedIn) {
+      const storedDraft = sessionStorage.getItem('createProjectDraft');
+      if (storedDraft) {
+        try {
+          const parsed = JSON.parse(storedDraft) as CreateProjectDraft;
+          setInitialFormData(parsed.initialData || {});
+          setSelectedProfessionals(Array.isArray(parsed.selectedProfessionals) ? parsed.selectedProfessionals : []);
+        } catch (e) {
+          console.warn('[create-project] Failed to parse createProjectDraft:', e);
+        } finally {
+          sessionStorage.removeItem('createProjectDraft');
+        }
+      }
+
       // Check if we have description data from sessionStorage (from projects list)
       const stored = sessionStorage.getItem('projectDescription');
       if (stored) {
@@ -61,7 +82,7 @@ export default function CreateProjectPage() {
         }
       }
       // Show description modal if no data stored
-      if (!stored) {
+      if (!stored && !storedDraft) {
         setShowDescriptionModal(true);
       }
     }
@@ -92,7 +113,7 @@ export default function CreateProjectPage() {
     return photoUrls;
   };
 
-  const buildProjectPayload = (formData: ProjectFormData, photoUrls: string[]) => {
+  const buildProjectPayload = (formData: ProjectFormData, photoUrls: string[], professionalIds: string[] = []) => {
     const region = formData.location
       ? [formData.location.primary, formData.location.secondary, formData.location.tertiary]
           .filter(Boolean)
@@ -110,7 +131,7 @@ export default function CreateProjectPage() {
       budget: formData.budget ? parseFloat(String(formData.budget)) : null,
       notes: formData.notes,
       status: 'pending',
-      professionalIds: [],
+      professionalIds,
       userId: user?.id,
       tradesRequired: formData.tradesRequired || [],
       onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
@@ -138,13 +159,35 @@ export default function CreateProjectPage() {
     return response.json();
   };
 
+  const selectProfessionalsForProject = async (projectId: string, professionalIds: string[]) => {
+    if (!professionalIds.length) return;
+
+    const response = await fetch(`${API_BASE_URL}/projects/${encodeURIComponent(projectId)}/select`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ professionalIds }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({ message: 'Failed to save selected professionals' }));
+      throw new Error(data.message || `Server error: ${response.status}`);
+    }
+  };
+
   const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setError(null);
 
     setIsSubmitting(true);
     try {
       const photoUrls = await uploadPendingFiles(pendingFiles);
-      const payload = buildProjectPayload(formData, photoUrls);
+      const payload = buildProjectPayload(
+        formData,
+        photoUrls,
+        selectedProfessionals.map((professional) => professional.id),
+      );
 
       console.log('[create-project] Submitting payload:', payload);
 
@@ -200,6 +243,11 @@ export default function CreateProjectPage() {
         const data = await assistRes.json().catch(() => ({ message: 'Failed to request assistance' }));
         throw new Error(data.message || `Server error: ${assistRes.status}`);
       }
+
+      await selectProfessionalsForProject(
+        project.id,
+        selectedProfessionals.map((professional) => professional.id),
+      );
 
       setShowAssistModal(false);
       setAssistDraft(null);
@@ -265,12 +313,20 @@ export default function CreateProjectPage() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-8">
             <ProjectForm
               mode="create"
-              key={descriptionData ? JSON.stringify(descriptionData) : 'empty'}
+              key={JSON.stringify({
+                descriptionData,
+                initialFormData,
+                selectedProfessionalIds: selectedProfessionals.map((professional) => professional.id),
+              })}
+              professionals={selectedProfessionals}
               initialData={{
+                ...initialFormData,
                 clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
-                notes: descriptionData?.description || '',
-                tradesRequired: descriptionData?.tradesRequired || [],
-                location: descriptionData?.location || userLocation || undefined,
+                notes: initialFormData.notes || descriptionData?.description || '',
+                tradesRequired: initialFormData.tradesRequired?.length
+                  ? initialFormData.tradesRequired
+                  : (descriptionData?.tradesRequired || []),
+                location: initialFormData.location || descriptionData?.location || userLocation || undefined,
               }}
               onAssistRequest={handleAssist}
               onSubmit={handleSubmit}
