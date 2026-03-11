@@ -223,13 +223,17 @@ export default function AdminProjectsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
   const [filter, setFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"active" | "archived">("active");
 
   const totals = useMemo(() => {
+    const activeProjects = projects.filter((p) => p.status !== "archived");
+    const archivedProjects = projects.filter((p) => p.status === "archived");
     return {
-      total: projects.length,
-      approved: projects.filter((p) => p.status === "approved").length,
-      pending: projects.filter((p) => p.status === "pending").length,
-      rejected: projects.filter((p) => p.status === "rejected").length,
+      active: activeProjects.length,
+      archived: archivedProjects.length,
+      approved: activeProjects.filter((p) => p.status === "approved").length,
+      pending: activeProjects.filter((p) => p.status === "pending").length,
+      rejected: activeProjects.filter((p) => p.status === "rejected").length,
     };
   }, [projects]);
 
@@ -334,6 +338,11 @@ export default function AdminProjectsPage() {
   };
 
   const filtered = projects.filter((p) => {
+    // Filter by status (active vs archived)
+    if (statusFilter === "active" && p.status === "archived") return false;
+    if (statusFilter === "archived" && p.status !== "archived") return false;
+
+    // Filter by search text
     if (!filter.trim()) return true;
     const needle = filter.toLowerCase();
     const fields = [
@@ -385,11 +394,31 @@ export default function AdminProjectsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Admin</p>
             <h1 className="text-2xl font-bold leading-tight">All Projects</h1>
           </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Total</p>
-              <p className="text-lg font-bold text-white">{totals.total}</p>
-            </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("active")}
+              className={`rounded-lg px-3 py-2 text-left transition ${
+                statusFilter === "active"
+                  ? "bg-emerald-500/20 border border-emerald-400/50"
+                  : "bg-white/10 hover:bg-white/15"
+              }`}
+            >
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">All Active</p>
+              <p className="text-lg font-bold text-white">{totals.active}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("archived")}
+              className={`rounded-lg px-3 py-2 text-left transition ${
+                statusFilter === "archived"
+                  ? "bg-slate-500/20 border border-slate-400/50"
+                  : "bg-white/10 hover:bg-white/15"
+              }`}
+            >
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Archived</p>
+              <p className="text-lg font-bold text-slate-300">{totals.archived}</p>
+            </button>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Approved</p>
               <p className="text-lg font-bold text-emerald-300">{totals.approved}</p>
