@@ -57,6 +57,7 @@ export default function AdminSupportPage() {
   const { accessToken, user } = useAuth();
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<SupportRequest | null>(null);
   const [replyText, setReplyText] = useState('');
   const [notesText, setNotesText] = useState('');
@@ -75,14 +76,18 @@ export default function AdminSupportPage() {
     if (!accessToken) return;
     try {
       const res = await fetch(`${API_BASE_URL}/support-requests`, { headers: headers() });
-      if (res.ok) {
-        const data: SupportRequest[] = await res.json();
-        setRequests(data);
-        // refresh selected if open
-        setSelected((prev) => (prev ? data.find((r) => r.id === prev.id) ?? prev : null));
+      if (!res.ok) {
+        const message = (await res.text()) || 'Could not load support requests';
+        throw new Error(`Support pool request failed (${res.status}): ${message}`);
       }
-    } catch {
-      // silent
+
+      const data: SupportRequest[] = await res.json();
+      setRequests(data);
+      setError(null);
+      // refresh selected if open
+      setSelected((prev) => (prev ? data.find((r) => r.id === prev.id) ?? prev : null));
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -92,9 +97,15 @@ export default function AdminSupportPage() {
     if (!accessToken) return;
     try {
       const res = await fetch(`${API_BASE_URL}/support-requests/resolved`, { headers: headers() });
-      if (res.ok) setResolved(await res.json());
-    } catch {
-      // silent
+      if (!res.ok) {
+        const message = (await res.text()) || 'Could not load resolved support requests';
+        throw new Error(`Resolved support request fetch failed (${res.status}): ${message}`);
+      }
+
+      setResolved(await res.json());
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
     }
   }, [accessToken, headers]);
 
@@ -205,6 +216,12 @@ export default function AdminSupportPage() {
             Refresh
           </button>
         </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-sm font-medium">

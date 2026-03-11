@@ -4,7 +4,9 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { TwilioProvider } from '../notifications/twilio.provider';
 import { WhatsAppInboundDto } from './dto/whatsapp-inbound.dto';
@@ -19,43 +21,77 @@ export class SupportRequestsService {
     private readonly twilio: TwilioProvider,
   ) {}
 
+  private rethrowSupportPoolDatabaseError(error: unknown): never {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === 'P2021' || error.code === 'P2022')
+    ) {
+      throw new ServiceUnavailableException(
+        'Support pool database migration has not been applied yet',
+      );
+    }
+
+    throw error;
+  }
+
   // ── Pool queries ─────────────────────────────────────────────────────────
 
   /** Return all non-resolved requests for the admin pool view */
   async getPool() {
-    return this.prisma.supportRequest.findMany({
-      where: { status: { not: 'resolved' } },
-      include: {
-        assignedAdmin: { select: { id: true, firstName: true, surname: true } },
-        project: { select: { id: true, projectName: true } },
-      },
-      orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
-    });
+    try {
+      return await this.prisma.supportRequest.findMany({
+        where: { status: { not: 'resolved' } },
+        include: {
+          assignedAdmin: {
+            select: { id: true, firstName: true, surname: true },
+          },
+          project: { select: { id: true, projectName: true } },
+        },
+        orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+      });
+    } catch (error) {
+      this.rethrowSupportPoolDatabaseError(error);
+    }
   }
 
   /** Return resolved requests (paginated) */
   async getResolved(limit = 50, offset = 0) {
-    return this.prisma.supportRequest.findMany({
-      where: { status: 'resolved' },
-      include: {
-        assignedAdmin: { select: { id: true, firstName: true, surname: true } },
-        project: { select: { id: true, projectName: true } },
-      },
-      orderBy: { resolvedAt: 'desc' },
-      take: limit,
-      skip: offset,
-    });
+    try {
+      return await this.prisma.supportRequest.findMany({
+        where: { status: 'resolved' },
+        include: {
+          assignedAdmin: {
+            select: { id: true, firstName: true, surname: true },
+          },
+          project: { select: { id: true, projectName: true } },
+        },
+        orderBy: { resolvedAt: 'desc' },
+        take: limit,
+        skip: offset,
+      });
+    } catch (error) {
+      this.rethrowSupportPoolDatabaseError(error);
+    }
   }
 
   /** Return a single request */
   async getOne(id: string) {
-    const req = await this.prisma.supportRequest.findUnique({
-      where: { id },
-      include: {
-        assignedAdmin: { select: { id: true, firstName: true, surname: true } },
-        project: { select: { id: true, projectName: true } },
-      },
-    });
+    let req;
+
+    try {
+      req = await this.prisma.supportRequest.findUnique({
+        where: { id },
+        include: {
+          assignedAdmin: {
+            select: { id: true, firstName: true, surname: true },
+          },
+          project: { select: { id: true, projectName: true } },
+        },
+      });
+    } catch (error) {
+      this.rethrowSupportPoolDatabaseError(error);
+    }
+
     if (!req) throw new NotFoundException('Support request not found');
     return req;
   }
@@ -200,14 +236,20 @@ export class SupportRequestsService {
     );
 
     // Check if there is already an open (non-resolved) request from this number
-    const existing = await this.prisma.supportRequest.findFirst({
-      where: {
-        fromNumber,
-        channel: 'whatsapp',
-        status: { not: 'resolved' },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    let existing;
+
+    try {
+      existing = await this.prisma.supportRequest.findFirst({
+        where: {
+          fromNumber,
+          channel: 'whatsapp',
+          status: { not: 'resolved' },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      this.rethrowSupportPoolDatabaseError(error);
+    }
 
     if (existing) {
       // Append the new message as an inbound reply to the existing thread
@@ -220,10 +262,14 @@ export class SupportRequestsService {
         direction: 'inbound',
         twilioMessageSid: payload.MessageSid,
       };
-      await this.prisma.supportRequest.update({
-        where: { id: existing.id },
-        data: { replies: [...existingReplies, inboundEntry] as any },
-      });
+      try {
+        await this.prisma.supportRequest.update({
+          where: { id: existing.id },
+          data: { replies: [...existingReplies, inboundEntry] as any },
+        });
+      } catch (error) {
+        this.rethrowSupportPoolDatabaseError(error);
+      }
       this.logger.log(
         `Appended message to existing support request ${existing.id}`,
       );
@@ -231,17 +277,23 @@ export class SupportRequestsService {
     }
 
     // New conversation
-    const req = await this.prisma.supportRequest.create({
-      data: {
-        channel: 'whatsapp',
-        fromNumber,
-        clientName: payload.ProfileName ?? null,
-        body: payload.Body ?? '',
-        twilioMessageSid: payload.MessageSid ?? null,
-        status: 'unassigned',
-        replies: [],
-      },
-    });
+    let req;
+
+    try {
+      req = await this.prisma.supportRequest.create({
+        data: {
+          channel: 'whatsapp',
+          fromNumber,
+          clientName: payload.ProfileName ?? null,
+          body: payload.Body ?? '',
+          twilioMessageSid: payload.MessageSid ?? null,
+          status: 'unassigned',
+          replies: [],
+        },
+      });
+    } catch (error) {
+      this.rethrowSupportPoolDatabaseError(error);
+    }
 
     this.logger.log(`Created new support request ${req.id} from ${fromNumber}`);
     return req;
@@ -249,17 +301,21 @@ export class SupportRequestsService {
 
   /** Create a SupportRequest from the website callback form */
   async createCallback(dto: CreateCallbackDto) {
-    return this.prisma.supportRequest.create({
-      data: {
-        channel: 'callback',
-        fromNumber: dto.phone ?? null,
-        clientName: dto.clientName,
-        clientEmail: dto.clientEmail ?? null,
-        body: dto.notes ?? 'Callback requested',
-        projectId: dto.projectId ?? null,
-        status: 'unassigned',
-        replies: [],
-      },
-    });
+    try {
+      return await this.prisma.supportRequest.create({
+        data: {
+          channel: 'callback',
+          fromNumber: dto.phone ?? null,
+          clientName: dto.clientName,
+          clientEmail: dto.clientEmail ?? null,
+          body: dto.notes ?? 'Callback requested',
+          projectId: dto.projectId ?? null,
+          status: 'unassigned',
+          replies: [],
+        },
+      });
+    } catch (error) {
+      this.rethrowSupportPoolDatabaseError(error);
+    }
   }
 }

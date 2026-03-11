@@ -497,7 +497,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     
     // Filter by status if not 'all'
     if (filterStatus !== 'all') {
-      result = result.filter((p) => p.status === filterStatus);
+      if (filterStatus === 'withdrawn') {
+        result = result.filter((p) => p.status === 'withdrawn' || p.status === 'rejected');
+      } else {
+        result = result.filter((p) => p.status === filterStatus);
+      }
     }
     
     // Filter by search
@@ -529,7 +533,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       total: items.length,
       approved: items.filter((p) => p.status === "awarded").length,
       pending: items.filter((p) => p.status === "pending").length,
-      rejected: items.filter((p) => p.status === "rejected").length,
+      withdrawn: items.filter((p) => p.status === "rejected" || p.status === "withdrawn").length,
     };
   }, [items]);
 
@@ -690,7 +694,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               <SummaryCard label={t('total')} value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
               <SummaryCard label={t('stats.awarded')} value={totals.approved} tone="emerald" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
               <SummaryCard label={t('stats.pending')} value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
-              <SummaryCard label={t('stats.rejected')} value={totals.rejected} tone="rose" filterStatus="rejected" currentFilter={filterStatus} onClick={() => setFilterStatus('rejected')} />
+              <SummaryCard label="WITHDRAWN" value={totals.withdrawn} tone="rose" filterStatus="withdrawn" currentFilter={filterStatus} onClick={() => setFilterStatus('withdrawn')} />
             </div>
           </div>
         </div>

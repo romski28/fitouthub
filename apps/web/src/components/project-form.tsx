@@ -65,6 +65,68 @@ interface ProjectFormProps {
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+type AvailableTrade = {
+  id: string;
+  name: string;
+  category: string;
+  professionType?: string | null;
+  aliases?: string[];
+};
+
+const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectFormData => ({
+  projectName: initialData?.projectName || '',
+  clientName: initialData?.clientName || '',
+  region: initialData?.region || '',
+  budget: initialData?.budget || '',
+  notes: initialData?.notes || '',
+  selectedService: initialData?.selectedService || '',
+  location: initialData?.location || {},
+  photoUrls: initialData?.photoUrls || [],
+  existingPhotos: initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []),
+  tradesRequired: initialData?.tradesRequired || [],
+  isEmergency: initialData?.isEmergency ?? false,
+  onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
+  endDate: initialData?.endDate || '',
+});
+
+const normalizeTradeSelections = (trades: string[], availableTrades: AvailableTrade[]) => {
+  const normalizedSelections: string[] = [];
+
+  for (const trade of trades) {
+    const rawValue = typeof trade === 'string' ? trade.trim() : '';
+    if (!rawValue) continue;
+
+    const normalizedValue = rawValue.toLowerCase();
+    const matchedTrade = availableTrades.find((availableTrade) => {
+      const aliases = availableTrade.aliases?.map((alias) => alias.toLowerCase()) ?? [];
+      const tradeName = availableTrade.name.toLowerCase();
+      const professionType = availableTrade.professionType?.toLowerCase();
+
+      return (
+        tradeName === normalizedValue ||
+        professionType === normalizedValue ||
+        aliases.includes(normalizedValue) ||
+        tradeName.includes(normalizedValue) ||
+        normalizedValue.includes(tradeName) ||
+        (!!professionType && professionType.includes(normalizedValue)) ||
+        aliases.some((alias) => alias.includes(normalizedValue) || normalizedValue.includes(alias))
+      );
+    });
+
+    const resolvedTrade = matchedTrade?.name || rawValue;
+    if (!normalizedSelections.includes(resolvedTrade)) {
+      normalizedSelections.push(resolvedTrade);
+    }
+  }
+
+  return normalizedSelections;
+};
+
+const tradeSelectionsMatch = (left: string[], right: string[]) => {
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+};
+
 export function ProjectForm({
   mode = 'create',
   initialData,
@@ -82,29 +144,26 @@ export function ProjectForm({
 }: ProjectFormProps) {
     const t = useTranslations('project');
     const commonT = useTranslations('common');
-  const [formData, setFormData] = useState<ProjectFormData>({
-    projectName: initialData?.projectName || '',
-    clientName: initialData?.clientName || '',
-    region: initialData?.region || '',
-    budget: initialData?.budget || '',
-    notes: initialData?.notes || '',
-    selectedService: initialData?.selectedService || '',
-    location: initialData?.location || {},
-    photoUrls: initialData?.photoUrls || [],
-    existingPhotos: initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []),
-    tradesRequired: initialData?.tradesRequired || [],
-    isEmergency: initialData?.isEmergency ?? false,
-    onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
-    endDate: initialData?.endDate || '',
-  });
+  const initialDataKey = useMemo(() => JSON.stringify(initialData ?? {}), [initialData]);
+  const [formData, setFormData] = useState<ProjectFormData>(() => buildInitialFormState(initialData));
 
-  const [availableTrades, setAvailableTrades] = useState<Array<{ id: string; name: string; category: string }>>([]);
+  const [availableTrades, setAvailableTrades] = useState<AvailableTrade[]>([]);
   const [showTradeDropdown, setShowTradeDropdown] = useState(false);
   const [tradeSearchTerm, setTradeSearchTerm] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []));
   const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
   const isReadOnly = mode === 'view';
+
+  useEffect(() => {
+    const nextFormState = buildInitialFormState(initialData);
+    setFormData(nextFormState);
+    setExistingPhotos(nextFormState.existingPhotos || []);
+    setPendingFiles([]);
+    setRemovedPhotos([]);
+    setTradeSearchTerm('');
+    setShowTradeDropdown(false);
+  }, [initialDataKey]);
 
   // Fetch available trades from API
   useEffect(() => {
@@ -113,10 +172,12 @@ export function ProjectForm({
         const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/trades`);
         if (res.ok) {
           const data = await res.json();
-          setAvailableTrades(data.map((t: { id: string; name: string; category: string }) => ({
+          setAvailableTrades(data.map((t: AvailableTrade) => ({
             id: t.id,
             name: t.name,
             category: t.category,
+            professionType: t.professionType,
+            aliases: t.aliases || [],
           })));
         }
       } catch (err) {
@@ -125,6 +186,22 @@ export function ProjectForm({
     };
     fetchTrades();
   }, []);
+
+  useEffect(() => {
+    if (availableTrades.length === 0) return;
+
+    setFormData((prev) => {
+      const normalizedTrades = normalizeTradeSelections(prev.tradesRequired, availableTrades);
+      if (tradeSelectionsMatch(prev.tradesRequired, normalizedTrades)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        tradesRequired: normalizedTrades,
+      };
+    });
+  }, [availableTrades]);
 
   const filteredTrades = useMemo(() => {
     if (!tradeSearchTerm.trim()) return availableTrades;
