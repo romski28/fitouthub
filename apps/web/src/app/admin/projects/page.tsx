@@ -223,17 +223,21 @@ export default function AdminProjectsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
   const [filter, setFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"active" | "archived">("active");
+  const [statusFilter, setStatusFilter] = useState<
+    "active" | "pending" | "onsite" | "completed" | "cancelled" | "archived"
+  >("active");
 
   const totals = useMemo(() => {
-    const activeProjects = projects.filter((p) => p.status !== "archived");
-    const archivedProjects = projects.filter((p) => p.status === "archived");
+    const activeProjects = projects.filter(
+      (p) => p.status !== "archived" && p.status !== "completed",
+    );
     return {
       active: activeProjects.length,
-      archived: archivedProjects.length,
-      approved: activeProjects.filter((p) => p.status === "approved").length,
       pending: activeProjects.filter((p) => p.status === "pending").length,
-      rejected: activeProjects.filter((p) => p.status === "rejected").length,
+      onsite: activeProjects.filter((p) => p.status === "awarded").length,
+      completed: projects.filter((p) => p.status === "completed").length,
+      cancelled: activeProjects.filter((p) => p.status === "rejected").length,
+      archived: projects.filter((p) => p.status === "archived").length,
     };
   }, [projects]);
 
@@ -338,8 +342,13 @@ export default function AdminProjectsPage() {
   };
 
   const filtered = projects.filter((p) => {
-    // Filter by status (active vs archived)
-    if (statusFilter === "active" && p.status === "archived") return false;
+    if (statusFilter === "active" && (p.status === "archived" || p.status === "completed")) {
+      return false;
+    }
+    if (statusFilter === "pending" && p.status !== "pending") return false;
+    if (statusFilter === "onsite" && p.status !== "awarded") return false;
+    if (statusFilter === "completed" && p.status !== "completed") return false;
+    if (statusFilter === "cancelled" && p.status !== "rejected") return false;
     if (statusFilter === "archived" && p.status !== "archived") return false;
 
     // Filter by search text
@@ -394,7 +403,7 @@ export default function AdminProjectsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Admin</p>
             <h1 className="text-2xl font-bold leading-tight">All Projects</h1>
           </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
             <button
               type="button"
               onClick={() => setStatusFilter("active")}
@@ -409,6 +418,54 @@ export default function AdminProjectsPage() {
             </button>
             <button
               type="button"
+              onClick={() => setStatusFilter("pending")}
+              className={`rounded-lg px-3 py-2 text-left transition ${
+                statusFilter === "pending"
+                  ? "bg-amber-500/20 border border-amber-400/50"
+                  : "bg-white/10 hover:bg-white/15"
+              }`}
+            >
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Pending</p>
+              <p className="text-lg font-bold text-amber-200">{totals.pending}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("onsite")}
+              className={`rounded-lg px-3 py-2 text-left transition ${
+                statusFilter === "onsite"
+                  ? "bg-emerald-500/20 border border-emerald-400/50"
+                  : "bg-white/10 hover:bg-white/15"
+              }`}
+            >
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">On Site</p>
+              <p className="text-lg font-bold text-emerald-300">{totals.onsite}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("completed")}
+              className={`rounded-lg px-3 py-2 text-left transition ${
+                statusFilter === "completed"
+                  ? "bg-emerald-500/20 border border-emerald-400/50"
+                  : "bg-white/10 hover:bg-white/15"
+              }`}
+            >
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Completed</p>
+              <p className="text-lg font-bold text-emerald-300">{totals.completed}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("cancelled")}
+              className={`rounded-lg px-3 py-2 text-left transition ${
+                statusFilter === "cancelled"
+                  ? "bg-rose-500/20 border border-rose-400/50"
+                  : "bg-white/10 hover:bg-white/15"
+              }`}
+            >
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Cancelled</p>
+              <p className="text-lg font-bold text-rose-200">{totals.cancelled}</p>
+            </button>
+            <button
+              type="button"
               onClick={() => setStatusFilter("archived")}
               className={`rounded-lg px-3 py-2 text-left transition ${
                 statusFilter === "archived"
@@ -419,18 +476,6 @@ export default function AdminProjectsPage() {
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Archived</p>
               <p className="text-lg font-bold text-slate-300">{totals.archived}</p>
             </button>
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Approved</p>
-              <p className="text-lg font-bold text-emerald-300">{totals.approved}</p>
-            </div>
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Pending</p>
-              <p className="text-lg font-bold text-amber-200">{totals.pending}</p>
-            </div>
-            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Rejected</p>
-              <p className="text-lg font-bold text-rose-200">{totals.rejected}</p>
-            </div>
           </div>
         </div>
       </div>
