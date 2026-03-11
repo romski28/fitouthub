@@ -116,6 +116,7 @@ model User {
   agreedToTermsVersion            String?                 @default("1.0")
   agreedToSecurityStatementAt     DateTime?
   agreedToSecurityStatementVersion String?                @default("1.0")
+  supportRequests                 SupportRequest[]        @relation("SupportRequestAdmin")
 }
 
 model Tradesman {
@@ -270,6 +271,7 @@ model Project {
   professionalSignedAt         DateTime?
   professionalSignedById       String?
   professionalSignedBy         User?                    @relation("ProfessionalContractSignature", fields: [professionalSignedById], references: [id])
+  supportRequests              SupportRequest[]
 }
 
 model ProjectPhoto {
@@ -954,4 +956,45 @@ model Policy {
   @@index([type])
   @@index([isActive])
   @@index([type, isActive])
+}
+
+// ── Support Request Pool ─────────────────────────────────────────────────────
+
+enum SupportRequestStatus {
+  unassigned
+  claimed
+  in_progress
+  resolved
+}
+
+enum SupportRequestChannel {
+  whatsapp
+  callback
+}
+
+model SupportRequest {
+  id               String                @id @default(cuid())
+  channel          SupportRequestChannel
+  fromNumber       String?               // phone number for whatsapp; empty for callback
+  clientName       String?               // WhatsApp profile name or form name
+  clientEmail      String?               // from callback form
+  body             String                // first message text or callback notes
+  twilioMessageSid String?               // Twilio SID for the inbound message
+  status           SupportRequestStatus  @default(unassigned)
+  assignedAdminId  String?
+  claimedAt        DateTime?
+  resolvedAt       DateTime?
+  projectId        String?               // optional link to a project
+  notes            String?               // internal admin notes
+  replies          Json[]                // array of {body, sentAt, adminId, direction}
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  assignedAdmin    User?    @relation("SupportRequestAdmin", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  project          Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([assignedAdminId])
+  @@index([channel])
+  @@index([createdAt])
 }

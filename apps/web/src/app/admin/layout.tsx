@@ -75,6 +75,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >
                   Support Inbox
+                                <Link
+                                  href="/admin/support"
+                                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                                >
+                                  Support Pool
+                                </Link>
                 </Link>
                 <Link
                   href="/admin/trades"
@@ -144,6 +150,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href="/admin/professionals"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 onClick={() => setMobileMenuOpen(false)}
+                            <Link
+                              href="/admin/support"
+                              className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              Support Pool
+                            </Link>
               >
                 Professionals
               </Link>

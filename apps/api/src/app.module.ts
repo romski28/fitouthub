@@ -32,6 +32,7 @@ import { ActivityLogController } from './activity-log.controller';
 import { MilestonesModule } from './milestones/milestones.module';
 import { NotificationModule } from './notifications/notification.module';
 import { PoliciesModule } from './policies/policies.module';
+import { SupportRequestsModule } from './support-requests/support-requests.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { PoliciesModule } from './policies/policies.module';
     MilestonesModule,
     NotificationModule,
     PoliciesModule,
+    SupportRequestsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },
