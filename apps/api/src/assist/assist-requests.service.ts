@@ -13,8 +13,72 @@ interface CreateAssistRequestDto {
   requestedCallTimezone?: string;
 }
 
+interface MirrorSupportPoolParams {
+  projectId: string;
+  contactMethod: 'chat' | 'call' | 'whatsapp';
+  requestedCallAt: Date | null;
+  requestedCallTimezone?: string;
+  notes?: string;
+  clientName?: string;
+  clientEmail?: string;
+  phone?: string;
+}
+
 @Injectable()
 export class AssistRequestsService {
+  private async mirrorToSupportPool(params: MirrorSupportPoolParams) {
+    if (params.contactMethod === 'chat') return;
+
+    const channel = params.contactMethod === 'whatsapp' ? 'whatsapp' : 'callback';
+    const methodLabel =
+      params.contactMethod === 'call' ? 'Book a call' : 'Please WhatsApp me';
+
+    const requestedSlot = params.requestedCallAt
+      ? params.requestedCallAt.toLocaleString('en-GB', {
+          timeZone: params.requestedCallTimezone || 'Asia/Hong_Kong',
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : null;
+
+    const body = [
+      `Assist request: ${methodLabel}`,
+      requestedSlot ? `Requested call slot: ${requestedSlot} (${params.requestedCallTimezone || 'Asia/Hong_Kong'})` : null,
+      params.notes?.trim() ? `Client notes: ${params.notes.trim()}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const existingOpen = await this.prisma.supportRequest.findFirst({
+      where: {
+        projectId: params.projectId,
+        channel,
+        status: { not: 'resolved' },
+        body: { startsWith: `Assist request: ${methodLabel}` },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingOpen) return;
+
+    await this.prisma.supportRequest.create({
+      data: {
+        channel,
+        fromNumber: params.phone || null,
+        clientName: params.clientName || null,
+        clientEmail: params.clientEmail || null,
+        body,
+        projectId: params.projectId,
+        status: 'unassigned',
+        replies: [],
+      },
+    });
+  }
+
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -45,11 +109,45 @@ export class AssistRequestsService {
     });
     if (!project) throw new BadRequestException('Project not found');
 
+    const projectUserId = dto.userId || project.userId || undefined;
+    const requestUser = projectUserId
+      ? await this.prisma.user.findUnique({
+          where: { id: projectUserId },
+          select: {
+            id: true,
+            firstName: true,
+            surname: true,
+            email: true,
+            mobile: true,
+          },
+        })
+      : null;
+
     const existing = await (this.prisma as any).projectAssistRequest.findFirst({
       where: { projectId: dto.projectId },
       orderBy: { createdAt: 'desc' },
     });
-    if (existing) return existing;
+    if (existing) {
+      try {
+        await this.mirrorToSupportPool({
+          projectId: dto.projectId,
+          contactMethod,
+          requestedCallAt,
+          requestedCallTimezone: dto.requestedCallTimezone,
+          notes: dto.notes,
+          clientName:
+            dto.clientName ||
+            [requestUser?.firstName, requestUser?.surname].filter(Boolean).join(' ').trim() ||
+            project.clientName ||
+            undefined,
+          clientEmail: requestUser?.email || undefined,
+          phone: requestUser?.mobile || undefined,
+        });
+      } catch (err) {
+        console.warn('[AssistRequestsService] Support pool mirror failed (existing assist):', err);
+      }
+      return existing;
+    }
 
     const created = await (this.prisma as any).projectAssistRequest.create({
       data: {
@@ -73,6 +171,25 @@ export class AssistRequestsService {
           content: dto.notes.trim(),
         },
       });
+    }
+
+    try {
+      await this.mirrorToSupportPool({
+        projectId: dto.projectId,
+        contactMethod,
+        requestedCallAt,
+        requestedCallTimezone: dto.requestedCallTimezone,
+        notes: dto.notes,
+        clientName:
+          dto.clientName ||
+          [requestUser?.firstName, requestUser?.surname].filter(Boolean).join(' ').trim() ||
+          project.clientName ||
+          undefined,
+        clientEmail: requestUser?.email || undefined,
+        phone: requestUser?.mobile || undefined,
+      });
+    } catch (err) {
+      console.warn('[AssistRequestsService] Support pool mirror failed (new assist):', err);
     }
 
     // Notify FOH via email
