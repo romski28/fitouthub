@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
+  Logger,
   Param,
   Patch,
   Post,
@@ -11,6 +13,8 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as twilio from 'twilio';
 import { AuthGuard } from '@nestjs/passport';
 import { SupportRequestsService } from './support-requests.service';
 import { WhatsAppInboundDto } from './dto/whatsapp-inbound.dto';
@@ -23,11 +27,35 @@ import {
 
 @Controller('support-requests')
 export class SupportRequestsController {
-  constructor(private readonly service: SupportRequestsService) {}
+  private readonly logger = new Logger(SupportRequestsController.name);
+
+  constructor(
+    private readonly service: SupportRequestsService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private validateTwilioSignature(req: any): void {
+    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+    if (!authToken) return;
+    const signature = req.headers['x-twilio-signature'] as string;
+    if (!signature) {
+      this.logger.warn(`Rejected webhook - missing X-Twilio-Signature from ${req.ip}`);
+      throw new ForbiddenException('Invalid request origin');
+    }
+    const protocol = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+    const host = (req.headers['x-forwarded-host'] as string) || req.headers['host'];
+    const url = `${protocol}://${host}${req.originalUrl}`;
+    const valid = twilio.validateRequest(authToken, signature, url, req.body as Record<string, string>);
+    if (!valid) {
+      this.logger.warn(`Rejected webhook - invalid Twilio signature from ${req.ip}`);
+      throw new ForbiddenException('Invalid request origin');
+    }
+  }
 
   @Post('webhook/whatsapp')
   @HttpCode(200)
-  async handleWhatsAppInbound(@Body() payload: WhatsAppInboundDto) {
+  async handleWhatsAppInbound(@Req() req: any, @Body() payload: WhatsAppInboundDto) {
+    this.validateTwilioSignature(req);
     await this.service.createFromWhatsapp(payload);
     return '';
   }

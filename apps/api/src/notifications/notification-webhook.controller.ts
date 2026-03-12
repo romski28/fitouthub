@@ -1,4 +1,6 @@
-import { Controller, Post, Body, Logger, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Logger, HttpCode, ForbiddenException, Req } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as twilio from 'twilio';
 import { NotificationService } from './notification.service';
 import { NotificationStatus } from './notification.types';
 import { SupportRequestsService } from '../support-requests/support-requests.service';
@@ -10,16 +12,35 @@ export class NotificationWebhookController {
   constructor(
     private notificationService: NotificationService,
     private supportRequestsService: SupportRequestsService,
+    private configService: ConfigService,
   ) {}
 
+  private validateTwilioSignature(req: any): void {
+    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+    if (!authToken) return;
+    const signature = req.headers['x-twilio-signature'] as string;
+    if (!signature) {
+      this.logger.warn(`Rejected webhook - missing X-Twilio-Signature from ${req.ip}`);
+      throw new ForbiddenException('Invalid request origin');
+    }
+    const protocol = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+    const host = (req.headers['x-forwarded-host'] as string) || req.headers['host'];
+    const url = `${protocol}://${host}${req.originalUrl}`;
+    const valid = twilio.validateRequest(authToken, signature, url, req.body as Record<string, string>);
+    if (!valid) {
+      this.logger.warn(`Rejected webhook - invalid Twilio signature from ${req.ip}`);
+      throw new ForbiddenException('Invalid request origin');
+    }
+  }
+
   /**
-   * Twilio status callback webhook
-   * Called when message status changes (sent, delivered, read, failed, etc.)
+   * Twilio inbound WhatsApp + status callback webhook
    */
   @Post('twilio')
   @HttpCode(200)
-  async handleTwilioWebhook(@Body() payload: any) {
+  async handleTwilioWebhook(@Req() req: any, @Body() payload: any) {
     try {
+      this.validateTwilioSignature(req);
       this.logger.log(`Twilio webhook received: ${JSON.stringify(payload)}`);
 
       const isInboundWhatsapp =
