@@ -90,7 +90,10 @@ export class PrismaService
             `Database connection failed after ${maxRetries} attempts: ${(error as Error).message}. ` +
             `Check that Render DATABASE_URL env var contains valid Supabase credentials and is properly URL-encoded.`,
           );
-          throw error;
+          this.logger.warn(
+            'Continuing startup without an initial DB connection. Prisma will retry on first query.',
+          );
+          return;
         } else {
           this.logger.warn(
             `Database connection attempt ${attempt}/${maxRetries} failed: ${(error as Error).message}. Retrying in ${delay}ms...`,
