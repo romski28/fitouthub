@@ -135,7 +135,9 @@ export class NextStepService {
       role === 'PROFESSIONAL' &&
       isProfessional &&
       effectiveStage === ProjectStage.CREATED &&
-      isProfessional.status === 'accepted'
+      ['accepted', 'quoted', 'counter_requested', 'awarded'].includes(
+        isProfessional.status,
+      )
     ) {
       const biddingActiveSteps = await this.prisma.nextStepConfig.findMany({
         where: {

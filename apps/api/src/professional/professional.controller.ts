@@ -384,6 +384,7 @@ export class ProfessionalController {
           quoteNotes: body.quoteNotes || '',
           quotedAt: new Date(),
           status: 'quoted',
+          respondedAt: projectProfessional.respondedAt || new Date(),
         },
       });
 
