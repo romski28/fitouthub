@@ -40,7 +40,7 @@ export class ProjectsService {
         id: { in: ids },
         professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
       },
-      select: { id: true, email: true, fullName: true, businessName: true },
+      select: { id: true, email: true, phone: true, fullName: true, businessName: true },
     });
 
     if (professionals.length !== ids.length) {
@@ -503,78 +503,78 @@ Please review the project details and respond with your quote or decline the inv
 
     await Promise.all(messagePromises);
 
-    // Generate tokens and send emails
+    // Generate tokens for all professionals in parallel (no rate limit concern)
+    const tokenData: Array<{ professional: typeof professionals[0]; acceptToken: string; declineToken: string; authToken: string }> = [];
     const tokenPromises: any[] = [];
-    const emailPromises: any[] = [];
+
     for (const professional of professionals) {
       const acceptToken = createId();
       const declineToken = createId();
       const authToken = createId();
       const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
-      const authExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days for auth token
+      const authExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      tokenData.push({ professional, acceptToken, declineToken, authToken });
 
       tokenPromises.push(
-        this.prisma.emailToken.create({
-          data: {
-            token: acceptToken,
-            projectId,
-            professionalId: professional.id,
-            action: 'accept',
-            expiresAt,
-          },
-        }),
-        this.prisma.emailToken.create({
-          data: {
-            token: declineToken,
-            projectId,
-            professionalId: professional.id,
-            action: 'decline',
-            expiresAt,
-          },
-        }),
-        this.prisma.emailToken.create({
-          data: {
-            token: authToken,
-            projectId,
-            professionalId: professional.id,
-            action: 'auth',
-            expiresAt: authExpiresAt,
-          },
-        }),
-      );
-
-      const professionalName =
-        professional.fullName || professional.businessName || 'Professional';
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-
-      emailPromises.push(
-        this.emailService
-          .sendProjectInvitation({
-            to: professional.email,
-            professionalName,
-            projectName: project.projectName,
-            projectDescription: project.notes || 'No description provided',
-            location: project.region,
-            acceptToken,
-            declineToken,
-            authToken,
-            projectId,
-            baseUrl,
-          })
-          .catch((err) => {
-            console.error(
-              '[ProjectsService.inviteProfessionals] failed to send invite',
-              {
-                to: professional.email,
-                error: err?.message,
-              },
-            );
-            return null;
-          }),
+        this.prisma.emailToken.create({ data: { token: acceptToken, projectId, professionalId: professional.id, action: 'accept', expiresAt } }),
+        this.prisma.emailToken.create({ data: { token: declineToken, projectId, professionalId: professional.id, action: 'decline', expiresAt } }),
+        this.prisma.emailToken.create({ data: { token: authToken, projectId, professionalId: professional.id, action: 'auth', expiresAt: authExpiresAt } }),
       );
     }
 
-    await Promise.all([...tokenPromises, ...emailPromises]);
+    await Promise.all(tokenPromises);
+
+    // Send notifications sequentially — 1.1s gap between emails to respect Resend free-tier rate limit (1 req/s)
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    for (let i = 0; i < tokenData.length; i++) {
+      if (i > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+      }
+
+      const { professional, acceptToken, declineToken, authToken } = tokenData[i];
+      const professionalName = professional.fullName || professional.businessName || 'Professional';
+
+      // Always send email (carries accept/decline token links)
+      try {
+        await this.emailService.sendProjectInvitation({
+          to: professional.email,
+          professionalName,
+          projectName: project.projectName,
+          projectDescription: project.notes || 'No description provided',
+          location: project.region,
+          acceptToken,
+          declineToken,
+          authToken,
+          projectId,
+          baseUrl,
+        });
+      } catch (err) {
+        console.error('[ProjectsService.inviteProfessionals] email failed', { to: professional.email, error: err?.message });
+      }
+
+      // Also send WhatsApp/SMS if professional has a non-email primary channel and a phone number
+      if (professional.phone) {
+        try {
+          const preference = await this.prisma.notificationPreference.findUnique({
+            where: { professionalId: professional.id },
+            select: { primaryChannel: true },
+          });
+          if (preference && preference.primaryChannel !== 'EMAIL') {
+            const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. Check your email or log in to respond.`;
+            await this.notificationService.send({
+              professionalId: professional.id,
+              phoneNumber: professional.phone,
+              channel: preference.primaryChannel as any,
+              eventType: 'project_invitation',
+              message: shortMsg,
+            });
+          }
+        } catch (err) {
+          console.error('[ProjectsService.inviteProfessionals] WhatsApp/SMS failed', { professionalId: professional.id, error: err?.message });
+        }
+      }
+    }
 
     return { success: true, invitedCount: professionals.length };
   }
