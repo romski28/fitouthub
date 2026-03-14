@@ -13,6 +13,7 @@ interface ActivityLog {
   resource?: string;
   resourceId?: string;
   details?: string;
+  metadata?: unknown;
   status: 'success' | 'info' | 'warning' | 'danger';
   createdAt: string;
   user?: { firstName: string; surname: string; email: string };
@@ -42,6 +43,7 @@ export default function ActivityLogPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [expandedPayloads, setExpandedPayloads] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadLogs();
@@ -104,6 +106,13 @@ export default function ActivityLogPage() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
+  const togglePayload = (id: string) => {
+    setExpandedPayloads((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -146,6 +155,22 @@ export default function ActivityLogPage() {
                     </div>
                     {item.details && (
                       <p className="text-xs text-slate-600 mt-0.5">{item.details}</p>
+                    )}
+                    {item.metadata && (
+                      <div className="mt-1">
+                        <button
+                          type="button"
+                          onClick={() => togglePayload(item.id)}
+                          className="text-xs font-medium text-blue-700 hover:text-blue-800"
+                        >
+                          {expandedPayloads[item.id] ? 'Hide payload' : 'View payload'}
+                        </button>
+                        {expandedPayloads[item.id] && (
+                          <pre className="mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-2 text-[11px] leading-relaxed text-slate-700">
+                            {JSON.stringify(item.metadata, null, 2)}
+                          </pre>
+                        )}
+                      </div>
                     )}
                     <p className="text-xs text-slate-500">{formatTimestamp(item.createdAt)}</p>
                   </div>
