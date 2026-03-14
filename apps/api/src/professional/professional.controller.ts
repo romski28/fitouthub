@@ -386,7 +386,7 @@ export class ProfessionalController {
           status: 'quoted',
         },
         include: {
-          project: { include: { user: true, client: true } },
+          project: { include: { user: true } },
           professional: true,
         },
       });
@@ -409,14 +409,13 @@ export class ProfessionalController {
           process.env.APP_WEB_URL ||
           'https://fitouthub-web.vercel.app';
 
-        const clientEmail =
-          updated.project?.user?.email || updated.project?.client?.email;
+        const clientEmail = updated.project?.user?.email;
         if (clientEmail) {
           await this.email.sendQuoteSubmitted({
             to: clientEmail,
             clientName:
               updated.project?.user?.firstName ||
-              updated.project?.client?.name ||
+              updated.project?.clientName ||
               'Client',
             professionalName:
               updated.professional?.fullName ||
@@ -709,7 +708,7 @@ export class ProfessionalController {
         include: {
           project: {
             include: {
-              client: true,
+              user: true,
             },
           },
           professional: true,
@@ -788,7 +787,7 @@ export class ProfessionalController {
       const professionalName = projectProfessional.professional.fullName ||
         projectProfessional.professional.businessName ||
         'Professional';
-      const clientEmail = projectProfessional.project.client?.email;
+      const clientEmail = projectProfessional.project.user?.email;
 
       if (clientEmail) {
         await this.email.sendAdvancePaymentRequestNotification({
