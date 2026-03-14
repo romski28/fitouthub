@@ -197,6 +197,27 @@ export class ProfessionalAuthService {
     // Generate tokens
     const tokens = this.generateTokens(professional.id);
 
+    try {
+      await (this.prisma as any).activityLog.create({
+        data: {
+          professionalId: professional.id,
+          actorName:
+            professional.fullName ||
+            professional.businessName ||
+            professional.email ||
+            'Professional',
+          actorType: 'professional',
+          action: 'login',
+          resource: 'Professional',
+          resourceId: professional.id,
+          details: 'Professional logged in',
+          status: 'success',
+        },
+      });
+    } catch (error) {
+      console.error('[ProfessionalAuthService.login] Failed to write activity log:', (error as any)?.message);
+    }
+
     return {
       success: true,
       accessToken: tokens.accessToken,

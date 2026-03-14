@@ -439,6 +439,31 @@ export class ProfessionalController {
         console.warn('Failed to send quote submitted email:', e);
       }
 
+      try {
+        await (this.prisma as any).activityLog.create({
+          data: {
+            professionalId,
+            actorName:
+              updated.professional?.fullName ||
+              updated.professional?.businessName ||
+              updated.professional?.email ||
+              'Professional',
+            actorType: 'professional',
+            action: 'quote_submitted',
+            resource: 'Project',
+            resourceId: updated.project?.id || projectProfessional.projectId,
+            details: `Submitted quote for ${updated.project?.projectName || 'project'}`,
+            metadata: {
+              projectProfessionalId,
+              quoteAmount: Number(quoteAmount) || 0,
+            },
+            status: 'success',
+          },
+        });
+      } catch (e) {
+        console.error('[ProfessionalController.submitQuote] Failed to write activity log:', (e as any)?.message);
+      }
+
       return {
         success: true,
         projectProfessional: updated,
@@ -547,6 +572,27 @@ export class ProfessionalController {
         return updatedPP;
       });
 
+      try {
+        await (this.prisma as any).activityLog.create({
+          data: {
+            professionalId,
+            actorName: req.user?.fullName || req.user?.email || 'Professional',
+            actorType: 'professional',
+            action: 'project_invitation_accepted',
+            resource: 'ProjectProfessional',
+            resourceId: projectProfessionalId,
+            details: `Accepted project invitation for ${projectProfessional.project?.projectName || 'project'}`,
+            metadata: {
+              projectId: projectProfessional.projectId,
+              projectProfessionalId,
+            },
+            status: 'success',
+          },
+        });
+      } catch (e) {
+        console.error('[ProfessionalController.acceptProject] Failed to write activity log:', (e as any)?.message);
+      }
+
       return {
         success: true,
         projectProfessional: updated,
@@ -588,6 +634,26 @@ export class ProfessionalController {
           respondedAt: new Date(),
         },
       });
+
+      try {
+        await (this.prisma as any).activityLog.create({
+          data: {
+            professionalId,
+            actorName: req.user?.fullName || req.user?.email || 'Professional',
+            actorType: 'professional',
+            action: 'project_invitation_rejected',
+            resource: 'ProjectProfessional',
+            resourceId: projectProfessionalId,
+            details: 'Rejected project invitation',
+            metadata: {
+              projectProfessionalId,
+            },
+            status: 'info',
+          },
+        });
+      } catch (e) {
+        console.error('[ProfessionalController.rejectProject] Failed to write activity log:', (e as any)?.message);
+      }
 
       return {
         success: true,
