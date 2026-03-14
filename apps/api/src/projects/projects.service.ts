@@ -2495,6 +2495,40 @@ Please review the project details and respond with your quote or decline the inv
       projectProfessional.professional.businessName ||
       'Professional';
     const clientName = project.clientName;
+    const notificationAudit: {
+      projectId: string;
+      awardedProfessionalId: string;
+      event: string;
+      timestamp: string;
+      winner: {
+        email: 'sent' | 'failed';
+        direct: 'sent' | 'skipped' | 'failed';
+        preferredChannel?: NotificationChannel | null;
+        directChannel?: NotificationChannel | null;
+        skipReason?: string;
+        error?: string;
+      };
+      nonWinners: Array<{
+        professionalId: string;
+        email: 'sent' | 'failed';
+        direct: 'sent' | 'skipped' | 'failed';
+        preferredChannel?: NotificationChannel | null;
+        directChannel?: NotificationChannel | null;
+        skipReason?: string;
+        emailError?: string;
+        directError?: string;
+      }>;
+    } = {
+      projectId,
+      awardedProfessionalId: professionalId,
+      event: 'quote_award_notifications',
+      timestamp: new Date().toISOString(),
+      winner: {
+        email: 'sent',
+        direct: 'skipped',
+      },
+      nonWinners: [],
+    };
 
     // Send winner notification
 
@@ -2504,14 +2538,21 @@ Please review the project details and respond with your quote or decline the inv
       email: projectProfessional.professional.email,
     });
 
-    await this.emailService.sendWinnerNotification({
-      to: projectProfessional.professional.email,
-      professionalName: winnerName,
-      projectName: project.projectName,
-      quoteAmount: projectProfessional.quoteAmount?.toString() || '0',
-      nextStepsMessage:
-        'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
-    });
+    try {
+      await this.emailService.sendWinnerNotification({
+        to: projectProfessional.professional.email,
+        professionalName: winnerName,
+        projectName: project.projectName,
+        quoteAmount: projectProfessional.quoteAmount?.toString() || '0',
+        nextStepsMessage:
+          'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
+      });
+      notificationAudit.winner.email = 'sent';
+    } catch (error) {
+      notificationAudit.winner.email = 'failed';
+      notificationAudit.winner.error = error?.message;
+      throw error;
+    }
 
     // Send preferred channel notification to winner (email remains as backup)
     try {
@@ -2532,6 +2573,8 @@ Please review the project details and respond with your quote or decline the inv
         preferredChannel === NotificationChannel.SMS
           ? preferredChannel
           : null;
+      notificationAudit.winner.preferredChannel = preferredChannel;
+      notificationAudit.winner.directChannel = directChannel;
 
       // TODO(notification-templates): revisit award-notification templates per channel in a dedicated template pass.
       const winnerShortMsg = `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`;
@@ -2546,14 +2589,21 @@ Please review the project details and respond with your quote or decline the inv
           eventType: 'quote_awarded',
           message: winnerShortMsg,
         });
+        notificationAudit.winner.direct = 'sent';
         console.log('[ProjectsService.awardQuote] Notification sent successfully');
       } else {
+        notificationAudit.winner.direct = 'skipped';
+        notificationAudit.winner.skipReason = !projectProfessional.professional.phone
+          ? 'missing_phone'
+          : 'preferred_channel_email_or_unsupported';
         console.log('[ProjectsService.awardQuote] Skipping direct winner notification (no phone or primary channel is EMAIL/unsupported)', {
           hasPhone: Boolean(projectProfessional.professional.phone),
           preferredChannel,
         });
       }
     } catch (error) {
+      notificationAudit.winner.direct = 'failed';
+      notificationAudit.winner.error = error?.message;
       console.error('[ProjectsService.awardQuote] Failed to send preferred-channel notification to winner:', error);
       console.error('[ProjectsService.awardQuote] Error details:', {
         message: error?.message,
@@ -2576,9 +2626,20 @@ Please review the project details and respond with your quote or decline the inv
         pp.professionalId !== professionalId && pp.status !== 'declined',
     );
 
-    const emailPromises = otherProfessionals.map((pp: any) =>
-      this.emailService
-        .sendLoserNotification({
+    for (const pp of otherProfessionals) {
+      const nonWinnerAudit = {
+        professionalId: pp.professional.id,
+        email: 'sent' as const,
+        direct: 'skipped' as const,
+        preferredChannel: null as NotificationChannel | null,
+        directChannel: null as NotificationChannel | null,
+        skipReason: undefined as string | undefined,
+        emailError: undefined as string | undefined,
+        directError: undefined as string | undefined,
+      };
+
+      try {
+        await this.emailService.sendLoserNotification({
           to: pp.professional.email,
           professionalName:
             pp.professional.fullName ||
@@ -2588,22 +2649,20 @@ Please review the project details and respond with your quote or decline the inv
           winnerName,
           thankYouMessage:
             'Thank you for your time and effort on this project. We hope to work with you on future opportunities.',
-        })
-        .catch((err) => {
-          console.error(
-            '[ProjectsService.awardQuote] Failed to send loser notification',
-            {
-              to: pp.professional.email,
-              error: err?.message,
-            },
-          );
-          return null;
-        }),
-    );
+        });
+        nonWinnerAudit.email = 'sent';
+      } catch (err) {
+        nonWinnerAudit.email = 'failed';
+        nonWinnerAudit.emailError = err?.message;
+        console.error(
+          '[ProjectsService.awardQuote] Failed to send loser notification',
+          {
+            to: pp.professional.email,
+            error: err?.message,
+          },
+        );
+      }
 
-    await Promise.all(emailPromises);
-
-    for (const pp of otherProfessionals) {
       try {
         const preference = await this.prisma.notificationPreference.findUnique({
           where: { professionalId: pp.professional.id },
@@ -2616,6 +2675,8 @@ Please review the project details and respond with your quote or decline the inv
           preferredChannel === NotificationChannel.SMS
             ? preferredChannel
             : null;
+        nonWinnerAudit.preferredChannel = preferredChannel;
+        nonWinnerAudit.directChannel = directChannel;
 
         if (pp.professional.phone && directChannel) {
           await this.notificationService.send({
@@ -2625,8 +2686,16 @@ Please review the project details and respond with your quote or decline the inv
             eventType: 'quote_not_awarded',
             message: `Update on "${project.projectName}": another professional was selected this time. Thank you for your quote—we hope to work with you on a future project.`,
           });
+          nonWinnerAudit.direct = 'sent';
+        } else {
+          nonWinnerAudit.direct = 'skipped';
+          nonWinnerAudit.skipReason = !pp.professional.phone
+            ? 'missing_phone'
+            : 'preferred_channel_email_or_unsupported';
         }
       } catch (err) {
+        nonWinnerAudit.direct = 'failed';
+        nonWinnerAudit.directError = err?.message;
         console.error(
           '[ProjectsService.awardQuote] Failed to send preferred-channel non-winner notification',
           {
@@ -2635,7 +2704,11 @@ Please review the project details and respond with your quote or decline the inv
           },
         );
       }
+
+      notificationAudit.nonWinners.push(nonWinnerAudit);
     }
+
+    console.log('[ProjectsService.awardQuote] Notification audit summary', notificationAudit);
 
     // Add system messages to project chat
     // Winner message
