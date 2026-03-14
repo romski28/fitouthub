@@ -377,7 +377,7 @@ export class ProfessionalController {
         throw new BadRequestException('Invalid quote amount');
       }
 
-      const updated = await (this.prisma as any).projectProfessional.update({
+      await (this.prisma as any).projectProfessional.update({
         where: { id: projectProfessionalId },
         data: {
           quoteAmount: quoteAmount,
@@ -385,11 +385,19 @@ export class ProfessionalController {
           quotedAt: new Date(),
           status: 'quoted',
         },
+      });
+
+      const updated = await (this.prisma as any).projectProfessional.findUnique({
+        where: { id: projectProfessionalId },
         include: {
           project: { include: { user: true } },
           professional: true,
         },
       });
+
+      if (!updated) {
+        throw new BadRequestException('Failed to load updated quote record');
+      }
 
       // Create a message to notify the client in-app
       await (this.prisma as any).message.create({
