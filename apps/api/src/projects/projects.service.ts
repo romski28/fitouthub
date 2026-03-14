@@ -2799,7 +2799,6 @@ Please review the project details and respond with your quote or decline the inv
             pp.professional.businessName ||
             'Professional',
           projectName: project.projectName,
-          winnerName,
           thankYouMessage:
             'Thank you for your time and effort on this project. We hope to work with you on future opportunities.',
         });

@@ -422,7 +422,6 @@ export class EmailService {
     to: string;
     professionalName: string;
     projectName: string;
-    winnerName: string;
     thankYouMessage: string;
   }): Promise<void> {
     if (!this.resend) {
@@ -447,7 +446,7 @@ export class EmailService {
               <h3 style="margin-top: 0; color: #374151;">"${params.projectName}"</h3>
             </div>
             
-            <p>The client has selected <strong>${params.winnerName}</strong> to move forward with this project.</p>
+            <p>The client has selected another professional to move forward with this project.</p>
             
             <p>${params.thankYouMessage}</p>
             
