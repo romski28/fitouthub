@@ -6,6 +6,7 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
+import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import ProjectInfoCard from '@/components/project-info-card';
@@ -362,7 +363,17 @@ export default function ProjectDetailPage() {
         throw new Error(data.message || 'Failed to request site access');
       }
 
-      toast.success('Site access request sent to the client.');
+      await showWorkflowSuccessToast({
+        successMessage: 'Site access request sent to the client.',
+        projectId: project.project.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Wait for client response',
+          canActNow: false,
+          waitReason:
+            'No action needed now; the client needs to approve your access request.',
+        },
+      });
       const data = await response.json();
       setSiteAccessStatus((prev) => ({
         requestId: data.request?.id || prev?.requestId || null,
@@ -420,7 +431,17 @@ export default function ProjectDetailPage() {
       }
 
       const data = await response.json();
-      toast.success('Site visit request sent to the client.');
+      await showWorkflowSuccessToast({
+        successMessage: 'Site visit request sent to the client.',
+        projectId: project.project.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Wait for client response',
+          canActNow: false,
+          waitReason:
+            'No action needed now; the client needs to accept or decline the proposed visit.',
+        },
+      });
       if (data.visit) {
         setSiteVisits((prev) => [data.visit, ...prev]);
       }
@@ -504,7 +525,15 @@ export default function ProjectDetailPage() {
         prev.map((visit) => (visit.id === visitId ? data.visit : visit)),
       );
       setVisitNotes('');
-      toast.success('Site visit marked as completed.');
+      await showWorkflowSuccessToast({
+        successMessage: 'Site visit marked as completed.',
+        projectId: project?.project?.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Submit your quote',
+          canActNow: true,
+        },
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete site visit';
       setSiteVisitError(message);
@@ -584,7 +613,19 @@ export default function ProjectDetailPage() {
       }
       setError(null);
       setQuoteForm({ amount: '', notes: '' }); // Clear form
-      toast.success(isUpdate ? 'Quote updated successfully!' : 'Quote submitted successfully!');
+      await showWorkflowSuccessToast({
+        successMessage: isUpdate
+          ? 'Quote updated successfully!'
+          : 'Quote submitted successfully!',
+        projectId: project?.project?.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Wait for client decision',
+          canActNow: false,
+          waitReason:
+            'No action needed now; the client will review your quote.',
+        },
+      });
       
       // Refresh messages to show the auto-generated message
       const msgRes = await fetch(
@@ -647,7 +688,17 @@ export default function ProjectDetailPage() {
       // Merge updated fields into existing project to preserve nested project object
       setProject((prev) => prev ? { ...prev, ...result.projectProfessional } : result.projectProfessional);
       setError(null);
-      toast.success('Quotation confirmed. The client will review it.');
+      await showWorkflowSuccessToast({
+        successMessage: 'Quotation confirmed. The client will review it.',
+        projectId: project?.project?.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Wait for client decision',
+          canActNow: false,
+          waitReason:
+            'No action needed now; the client will decide whether to award or request changes.',
+        },
+      });
       
       // Refresh messages
       const msgRes = await fetch(
@@ -694,7 +745,15 @@ export default function ProjectDetailPage() {
 
       const result = await response.json();
       setProject(result.projectProfessional);
-      toast.success('Project accepted!');
+      await showWorkflowSuccessToast({
+        successMessage: 'Project accepted!',
+        projectId: result.projectProfessional?.project?.id || project?.project?.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Prepare and submit your quote',
+          canActNow: true,
+        },
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to accept project';
       setError(message);
@@ -830,7 +889,17 @@ export default function ProjectDetailPage() {
         throw new Error(errorMessage);
       }
 
-      toast.success('Payment request submitted! Client will be notified.');
+      await showWorkflowSuccessToast({
+        successMessage: 'Payment request submitted! Client will be notified.',
+        projectId: project?.project?.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Wait for client decision',
+          canActNow: false,
+          waitReason:
+            'No action needed now; the client must approve, decline, or request clarification.',
+        },
+      });
       setShowAdvanceRequestForm(false);
       setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '', notes: '' });
       

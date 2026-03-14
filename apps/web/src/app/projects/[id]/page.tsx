@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
+import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
@@ -969,8 +970,6 @@ export default function ClientProjectDetailPage() {
         }
         if (!res.ok) throw new Error('Award failed');
         
-        toast.success('Quote accepted! Project awarded to professional.');
-        
         // Show contact sharing modal
         setAwardedProfessional(selectedProfessional);
         setShowContactModal(true);
@@ -980,6 +979,16 @@ export default function ClientProjectDetailPage() {
         
         // Refresh project to update project.status to 'awarded'
         await fetchProject();
+
+        await showWorkflowSuccessToast({
+          successMessage: 'Quote accepted! Project awarded to professional.',
+          projectId,
+          token: accessToken,
+          fallbackGuidance: {
+            nextStepLabel: 'Review and sign contract',
+            canActNow: true,
+          },
+        });
       } else {
         // Reject or counter-request
         let res;
@@ -1013,9 +1022,27 @@ export default function ClientProjectDetailPage() {
         const data = await res.json();
         
         if (kind === 'reject') {
-          toast.success('Quote declined.');
+          await showWorkflowSuccessToast({
+            successMessage: 'Quote declined.',
+            projectId,
+            token: accessToken,
+            fallbackGuidance: {
+              nextStepLabel: 'Review remaining quotes',
+              canActNow: true,
+            },
+          });
         } else {
-          toast.success('Requested better quote.');
+          await showWorkflowSuccessToast({
+            successMessage: 'Requested better quote.',
+            projectId,
+            token: accessToken,
+            fallbackGuidance: {
+              nextStepLabel: 'Wait for revised quote',
+              canActNow: false,
+              waitReason:
+                'Waiting for the professional to submit an updated quote.',
+            },
+          });
         }
         
         setSelectedProfessional((prev) => (prev ? { ...prev, status: kind === 'request-better' ? 'counter_requested' : (data.projectProfessional?.status || prev.status) } : prev));
@@ -1157,7 +1184,17 @@ export default function ClientProjectDetailPage() {
         throw new Error(data.message || 'Payment failed');
       }
 
-      toast.success('Payment successful! Funds deposited into escrow.');
+      await showWorkflowSuccessToast({
+        successMessage: 'Payment successful! Funds deposited into escrow.',
+        projectId,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Await platform verification',
+          canActNow: false,
+          waitReason:
+            'No action needed now; Fitout Hub will verify and unlock the next stage.',
+        },
+      });
       
       // Refresh project to update invoice status
       await fetchProject();
@@ -1257,7 +1294,17 @@ export default function ClientProjectDetailPage() {
         throw new Error(text || 'Failed to send invitation');
       }
 
-      toast.success('Invitation sent to professional.');
+      await showWorkflowSuccessToast({
+        successMessage: 'Invitation sent to professional.',
+        projectId,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Wait for professional response',
+          canActNow: false,
+          waitReason:
+            'No action needed now; the professional must accept before bidding can continue.',
+        },
+      });
 
       // Refresh project to update statuses
       await fetchProject();

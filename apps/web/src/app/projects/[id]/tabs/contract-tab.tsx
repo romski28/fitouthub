@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
+import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
 
 interface ContractData {
   projectId: string;
@@ -59,11 +60,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchContract();
-  }, [projectId]);
-
-  const fetchContract = async () => {
+  const fetchContract = useCallback(async () => {
     if (!accessToken) {
       setError('Authentication required');
       setLoading(false);
@@ -87,14 +84,20 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       const data = await response.json();
       setContract(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to load contract';
       console.error('Error fetching contract:', err);
-      setError(err.message || 'Failed to load contract');
-      toast.error(err.message || 'Failed to load contract');
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken, projectId]);
+
+  useEffect(() => {
+    fetchContract();
+  }, [fetchContract]);
 
   const handleSignContract = async () => {
     if (!contract?.canSign || !accessToken) return;
@@ -116,13 +119,45 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       }
 
       const result = await response.json();
-      toast.success('Contract signed successfully!');
+      await showWorkflowSuccessToast({
+        successMessage: 'Contract signed successfully!',
+        projectId,
+        token: accessToken,
+        fallbackGuidance:
+          userRole === 'client'
+            ? result.isFullySigned
+              ? {
+                  nextStepLabel: 'Deposit funds to escrow',
+                  canActNow: true,
+                }
+              : {
+                  nextStepLabel: 'Wait for professional signature',
+                  canActNow: false,
+                  waitReason:
+                    'No action needed now; the professional needs to sign the contract.',
+                }
+            : result.isFullySigned
+              ? {
+                  nextStepLabel: 'Wait for client escrow deposit',
+                  canActNow: false,
+                  waitReason:
+                    'No action needed now; the client must deposit funds to escrow.',
+                }
+              : {
+                  nextStepLabel: 'Wait for client signature',
+                  canActNow: false,
+                  waitReason:
+                    'No action needed now; the client needs to sign the contract.',
+                },
+      });
 
       // Refresh contract data
       await fetchContract();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to sign contract';
       console.error('Error signing contract:', err);
-      toast.error(err.message || 'Failed to sign contract');
+      toast.error(message);
     } finally {
       setSigning(false);
     }
