@@ -44,6 +44,8 @@ export class NextStepService {
         status: true,
         userId: true,
         awardedProjectProfessionalId: true,
+        clientSignedAt: true,
+        professionalSignedAt: true,
         _count: {
           select: {
             professionals: true,
@@ -152,32 +154,39 @@ export class NextStepService {
     }
 
     if (role === 'CLIENT' && project.status === 'awarded') {
-      const pendingEscrowRequest =
-        await this.prisma.financialTransaction.findFirst({
-          where: {
-            projectId,
-            type: 'escrow_deposit_request',
-            status: 'pending',
-            actionComplete: false,
-            OR: [{ actionBy: userId }, { actionBy: null }],
-          },
-          orderBy: { createdAt: 'desc' },
-        });
+      const contractFullySigned =
+        Boolean(project.clientSignedAt) && Boolean(project.professionalSignedAt);
 
-      if (pendingEscrowRequest) {
-        availableConfigSteps = [
-          {
-            actionKey: 'DEPOSIT_ESCROW_FUNDS',
-            actionLabel: 'Deposit funds to escrow',
-            description:
-              'Confirm escrow deposit so the project can proceed to contract/start phase.',
-            isPrimary: true,
-            isElective: false,
-            requiresAction: true,
-            estimatedDurationMinutes: 10,
-            displayOrder: 1,
-          } as any,
-        ];
+      // Only offer escrow deposit AFTER both parties have signed the contract.
+      // Until then, the standard CONTRACT_PHASE step (sign contract) should show.
+      if (contractFullySigned) {
+        const pendingEscrowRequest =
+          await this.prisma.financialTransaction.findFirst({
+            where: {
+              projectId,
+              type: 'escrow_deposit_request',
+              status: 'pending',
+              actionComplete: false,
+              OR: [{ actionBy: userId }, { actionBy: null }],
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+
+        if (pendingEscrowRequest) {
+          availableConfigSteps = [
+            {
+              actionKey: 'DEPOSIT_ESCROW_FUNDS',
+              actionLabel: 'Deposit funds to escrow',
+              description:
+                'Both parties have signed the contract. Confirm your escrow deposit so work can begin.',
+              isPrimary: true,
+              isElective: false,
+              requiresAction: true,
+              estimatedDurationMinutes: 10,
+              displayOrder: 1,
+            } as any,
+          ];
+        }
       }
     }
 

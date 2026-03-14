@@ -115,7 +115,24 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       throw new ForbiddenException('You do not have access to this project');
     }
 
-    if (!this.isContractPhase(project.currentStage)) {
+    // Projects awarded before the CONTRACT_PHASE stage fix may still carry a
+    // pre-contract currentStage.  Treat them as CONTRACT_PHASE so the contract
+    // can be loaded and signed.
+    const preContractStages = [
+      'CREATED',
+      'BIDDING_ACTIVE',
+      'SITE_VISIT_SCHEDULED',
+      'SITE_VISIT_COMPLETE',
+      'QUOTE_RECEIVED',
+      'BIDDING_CLOSED',
+    ];
+    const effectiveStage =
+      project.status === 'awarded' &&
+      preContractStages.includes(project.currentStage)
+        ? 'CONTRACT_PHASE'
+        : project.currentStage;
+
+    if (!this.isContractPhase(effectiveStage)) {
       throw new BadRequestException(
         'Contract is not yet available for this project',
       );
