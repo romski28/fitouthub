@@ -14,10 +14,12 @@ import { ProjectStage } from '@prisma/client';
 import { NotificationChannel } from '@prisma/client';
 
 type NotificationDeliveryStatus = 'sent' | 'failed' | 'skipped';
+type NotificationActorType = 'professional' | 'client' | 'reseller' | 'platform' | 'unknown';
 
 interface NotificationAuditRecipient {
-  professionalId: string;
-  role: 'invitee' | 'winner' | 'non_winner';
+  actorType: NotificationActorType;
+  actorId: string;
+  role: string;
   email: {
     status: NotificationDeliveryStatus;
     error?: string;
@@ -605,7 +607,8 @@ Please review the project details and respond with your quote or decline the inv
       const { professional, acceptToken, declineToken, authToken } = tokenData[i];
       const professionalName = professional.fullName || professional.businessName || 'Professional';
       const recipientAudit: NotificationAuditRecipient = {
-        professionalId: professional.id,
+        actorType: 'professional',
+        actorId: professional.id,
         role: 'invitee',
         email: { status: 'skipped' },
         direct: { status: 'skipped' },
@@ -1304,7 +1307,12 @@ Please review the project details and respond with your quote or decline the inv
         include: {
           project: {
             include: {
-
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                },
+              },
             },
           },
           professional: true,
@@ -1374,23 +1382,59 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     // Notify client
-    const clientEmail =
-      projectProfessional.project.clientId || 'client@example.com'; // TODO: Get real client email
+    const clientActorId =
+      projectProfessional.project.user?.id ||
+      projectProfessional.project.userId ||
+      projectProfessional.project.clientId ||
+      'unknown-client';
+    const clientEmail = projectProfessional.project.user?.email || 'client@example.com';
     const professionalName =
       projectProfessional.professional.fullName ||
       projectProfessional.professional.businessName ||
       'Professional';
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
-    await this.emailService.sendQuoteSubmitted({
-      to: clientEmail,
-      clientName: projectProfessional.project.clientName,
-      professionalName,
-      projectName: projectProfessional.project.projectName,
-      quoteAmount,
+    const notificationAudit = this.createNotificationAudit(
+      'quote_submitted_notifications',
       projectId,
-      baseUrl,
-    });
+      {
+        professionalId,
+        projectProfessionalId: projectProfessional.id,
+      },
+    );
+
+    const clientAudit: NotificationAuditRecipient = {
+      actorType: 'client',
+      actorId: clientActorId,
+      role: 'quote_submit_recipient',
+      email: { status: 'skipped' },
+      direct: {
+        status: 'skipped',
+        reason: 'not_implemented_client_direct_notification',
+      },
+    };
+
+    try {
+      await this.emailService.sendQuoteSubmitted({
+        to: clientEmail,
+        clientName: projectProfessional.project.clientName,
+        professionalName,
+        projectName: projectProfessional.project.projectName,
+        quoteAmount,
+        projectId,
+        baseUrl,
+      });
+      clientAudit.email.status = 'sent';
+    } catch (error) {
+      clientAudit.email.status = 'failed';
+      clientAudit.email.error = error?.message;
+      this.pushNotificationAuditRecipient(notificationAudit, clientAudit);
+      this.finalizeNotificationAudit(notificationAudit);
+      throw error;
+    }
+
+    this.pushNotificationAuditRecipient(notificationAudit, clientAudit);
+    this.finalizeNotificationAudit(notificationAudit);
 
     return {
       success: true,
@@ -2609,7 +2653,8 @@ Please review the project details and respond with your quote or decline the inv
       },
     );
     const winnerAudit: NotificationAuditRecipient = {
-      professionalId,
+      actorType: 'professional',
+      actorId: professionalId,
       role: 'winner',
       email: { status: 'skipped' },
       direct: { status: 'skipped' },
@@ -2715,7 +2760,8 @@ Please review the project details and respond with your quote or decline the inv
 
     for (const pp of otherProfessionals) {
       const nonWinnerAudit: NotificationAuditRecipient = {
-        professionalId: pp.professional.id,
+        actorType: 'professional',
+        actorId: pp.professional.id,
         role: 'non_winner',
         email: { status: 'skipped' },
         direct: { status: 'skipped' },
