@@ -84,7 +84,7 @@ export class ProjectsService {
     audit.recipients.push(recipient);
   }
 
-  private finalizeNotificationAudit(audit: NotificationAuditEvent): void {
+  private async finalizeNotificationAudit(audit: NotificationAuditEvent): Promise<void> {
     const summary = {
       recipients: audit.recipients.length,
       email: {
@@ -103,6 +103,30 @@ export class ProjectsService {
       ...audit,
       summary,
     });
+
+    try {
+      await (this.prisma as any).activityLog.create({
+        data: {
+          actorName: 'System',
+          actorType: 'system',
+          action: 'notification_audit',
+          resource: 'Project',
+          resourceId: audit.projectId,
+          details: `Notification audit for ${audit.event}`,
+          metadata: {
+            ...audit,
+            summary,
+          },
+          status: summary.email.failed > 0 || summary.direct.failed > 0 ? 'warning' : 'success',
+        },
+      });
+    } catch (error) {
+      console.error('[ProjectsService.notificationAudit] Failed to persist activity log:', {
+        event: audit.event,
+        projectId: audit.projectId,
+        message: (error as any)?.message,
+      });
+    }
   }
 
   private async getProjectSelectableProfessionals(ids: string[]) {
@@ -679,7 +703,7 @@ Please review the project details and respond with your quote or decline the inv
       this.pushNotificationAuditRecipient(notificationAudit, recipientAudit);
     }
 
-    this.finalizeNotificationAudit(notificationAudit);
+    await this.finalizeNotificationAudit(notificationAudit);
 
     return { success: true, invitedCount: professionals.length };
   }
@@ -1429,12 +1453,12 @@ Please review the project details and respond with your quote or decline the inv
       clientAudit.email.status = 'failed';
       clientAudit.email.error = error?.message;
       this.pushNotificationAuditRecipient(notificationAudit, clientAudit);
-      this.finalizeNotificationAudit(notificationAudit);
+      await this.finalizeNotificationAudit(notificationAudit);
       throw error;
     }
 
     this.pushNotificationAuditRecipient(notificationAudit, clientAudit);
-    this.finalizeNotificationAudit(notificationAudit);
+    await this.finalizeNotificationAudit(notificationAudit);
 
     return {
       success: true,
@@ -2838,7 +2862,7 @@ Please review the project details and respond with your quote or decline the inv
       this.pushNotificationAuditRecipient(notificationAudit, nonWinnerAudit);
     }
 
-    this.finalizeNotificationAudit(notificationAudit);
+    await this.finalizeNotificationAudit(notificationAudit);
 
     // Add system messages to project chat
     // Winner message
