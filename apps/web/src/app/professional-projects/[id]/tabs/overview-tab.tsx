@@ -255,13 +255,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
           
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Client Budget</p>
-            <p className="text-base font-semibold text-slate-900">
-              {project.project.budget ? `$${project.project.budget}` : '—'}
-            </p>
-          </div>
-          
-          <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Status</p>
             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
               project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
