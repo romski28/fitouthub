@@ -33,6 +33,7 @@ const actionLabels: Record<string, string> = {
   login_failed: 'Login Failed',
   password_changed: 'Password Changed',
   profile_updated: 'Updated Profile',
+  notification_audit: 'Notification Audit',
 };
 
 export default function ActivityLogPage() {
