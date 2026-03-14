@@ -2855,7 +2855,6 @@ Please review the project details and respond with your quote or decline the inv
         );
       }
 
-      notificationAudit.nonWinners.push(nonWinnerAudit);
       this.pushNotificationAuditRecipient(notificationAudit, nonWinnerAudit);
     }
 
