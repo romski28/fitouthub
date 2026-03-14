@@ -468,10 +468,6 @@ export class ProjectsService {
       const professional = professionals.find(p => p.id === projectProfessional.professionalId);
       if (!professional) return;
 
-      const budgetText = project.budget 
-        ? `Budget: HK$${project.budget.toLocaleString()}`
-        : 'Budget: TBD';
-      
       const tradesText = project.tradesRequired && project.tradesRequired.length > 0
         ? `Trades Required: ${project.tradesRequired.join(', ')}`
         : 'Trades: To be discussed';
@@ -484,7 +480,6 @@ export class ProjectsService {
 
 You've been invited to submit a quote for this project.
 
-${budgetText}
 ${tradesText}
 Region: ${project.region}
 ${timelineText}
