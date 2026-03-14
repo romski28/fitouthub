@@ -12,6 +12,7 @@ type WorkflowToastOptions = {
   projectId?: string | null;
   token?: string | null;
   fallbackGuidance?: WorkflowGuidance;
+  preferFallbackGuidance?: boolean;
 };
 
 const DEFAULT_SUCCESS_DURATION_MS = 4000;
@@ -42,7 +43,7 @@ export async function showWorkflowSuccessToast(
 ): Promise<void> {
   let guidance = options.fallbackGuidance;
 
-  if (options.projectId && options.token) {
+  if (!options.preferFallbackGuidance && options.projectId && options.token) {
     try {
       const primaryNextStep = await fetchPrimaryNextStep(
         options.projectId,

@@ -243,8 +243,22 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       },
     });
 
+    const preContractStages = [
+      'CREATED',
+      'BIDDING_ACTIVE',
+      'SITE_VISIT_SCHEDULED',
+      'SITE_VISIT_COMPLETE',
+      'QUOTE_RECEIVED',
+      'BIDDING_CLOSED',
+    ];
+    const effectiveStage =
+      updatedProject.status === 'awarded' &&
+      preContractStages.includes(updatedProject.currentStage)
+        ? 'CONTRACT_PHASE'
+        : updatedProject.currentStage;
+
     if (
-      updatedProject.currentStage === 'CONTRACT_PHASE' &&
+      effectiveStage === 'CONTRACT_PHASE' &&
       updatedProject.clientSignedAt &&
       updatedProject.professionalSignedAt
     ) {

@@ -71,6 +71,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       setError(null);
 
       const response = await fetch(`${API_BASE_URL}/projects/${projectId}/contract`, {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -106,6 +107,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       const response = await fetch(`${API_BASE_URL}/projects/${projectId}/contract/sign`, {
         method: 'POST',
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -122,6 +124,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         successMessage: 'Contract signed successfully!',
         projectId,
         token: accessToken,
+        preferFallbackGuidance: true,
         fallbackGuidance: result.isFullySigned
           ? {
               nextStepLabel: 'Wait for client escrow deposit',

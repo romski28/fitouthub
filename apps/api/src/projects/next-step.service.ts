@@ -20,6 +20,29 @@ export interface NextStepResult {
   stage: ProjectStage;
 }
 
+const createSyntheticPrimaryStep = (
+  actionKey: string,
+  actionLabel: string,
+  requiresAction: boolean,
+  role: string,
+  projectStage: ProjectStage,
+  description?: string,
+): any => ({
+  id: `synthetic-${actionKey}`,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  role,
+  projectStage,
+  actionKey,
+  actionLabel,
+  description,
+  isPrimary: true,
+  isElective: false,
+  requiresAction,
+  estimatedDurationMinutes: null,
+  displayOrder: 1,
+});
+
 @Injectable()
 export class NextStepService {
   constructor(private prisma: PrismaService) {}
@@ -153,9 +176,50 @@ export class NextStepService {
       }
     }
 
+    if (
+      effectiveStage === ProjectStage.CONTRACT_PHASE &&
+      project.status === 'awarded'
+    ) {
+      const clientSigned = Boolean(project.clientSignedAt);
+      const professionalSigned = Boolean(project.professionalSignedAt);
+
+      if (role === 'CLIENT' && clientSigned && !professionalSigned) {
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'WAIT_FOR_PROFESSIONAL_SIGNATURE',
+            'Wait for professional signature',
+            false,
+            role,
+            effectiveStage,
+            "The contract has been signed by you and is awaiting the professional's signature.",
+          ),
+        ];
+      }
+
+      if (role === 'PROFESSIONAL' && professionalSigned && !clientSigned) {
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'WAIT_FOR_CLIENT_SIGNATURE',
+            'Wait for client signature',
+            false,
+            role,
+            effectiveStage,
+            "The contract has been signed by you and is awaiting the client's signature.",
+          ),
+        ];
+      }
+
+      if (role === 'PROFESSIONAL' && clientSigned && !professionalSigned) {
+        availableConfigSteps = nextSteps.filter((step) =>
+          ['REVIEW_CONTRACT', 'SIGN_CONTRACT'].includes(step.actionKey),
+        );
+      }
+    }
+
     if (role === 'CLIENT' && project.status === 'awarded') {
       const contractFullySigned =
-        Boolean(project.clientSignedAt) && Boolean(project.professionalSignedAt);
+        Boolean(project.clientSignedAt) &&
+        Boolean(project.professionalSignedAt);
 
       // Only offer escrow deposit AFTER both parties have signed the contract.
       // Until then, the standard CONTRACT_PHASE step (sign contract) should show.

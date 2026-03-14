@@ -26,6 +26,7 @@ export async function fetchPrimaryNextStep(
   token: string,
 ): Promise<NextStepAction | null> {
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
+    cache: 'no-store',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
