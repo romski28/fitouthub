@@ -529,8 +529,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         const aUpdated = new Date(a.updatedAt || 0).getTime();
         const bUpdated = new Date(b.updatedAt || 0).getTime();
         return bUpdated - aUpdated;
-      })
-      .slice(0, 6);
+      });
   }, [items, nextStepMap]);
 
   const totals = useMemo(() => {

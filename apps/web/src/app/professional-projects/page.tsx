@@ -80,8 +80,7 @@ export default function ProfessionalProjectsPage() {
     declined: projects.filter(p => p.status === 'rejected' || p.status === 'declined').length,
   };
   const actionableProjects = projects
-    .filter((projectProf) => Boolean(nextStepMap[projectProf.project.id]))
-    .slice(0, 6);
+    .filter((projectProf) => Boolean(nextStepMap[projectProf.project.id]));
 
   useEffect(() => {
     if (isLoggedIn === false) {
