@@ -11,6 +11,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client';
 import { ProjectStage } from '@prisma/client';
+import { NotificationChannel } from '@prisma/client';
 
 @Injectable()
 export class ProjectsService {
@@ -2512,7 +2513,7 @@ Please review the project details and respond with your quote or decline the inv
         'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
     });
 
-    // Send WhatsApp notification to winner
+    // Send preferred channel notification to winner (email remains as backup)
     try {
       console.log('[ProjectsService.awardQuote] Preparing notification for professional:', {
         professionalId: projectProfessional.professional.id,
@@ -2520,22 +2521,40 @@ Please review the project details and respond with your quote or decline the inv
         professionalPhone: projectProfessional.professional.phone ? `${projectProfessional.professional.phone.substring(0, 4)}...` : null,
       });
 
-      // Use professional's phone number directly
-      if (projectProfessional.professional.phone) {
+      const preference = await this.prisma.notificationPreference.findUnique({
+        where: { professionalId: projectProfessional.professional.id },
+        select: { primaryChannel: true },
+      });
+
+      const preferredChannel = preference?.primaryChannel;
+      const directChannel =
+        preferredChannel === NotificationChannel.WHATSAPP ||
+        preferredChannel === NotificationChannel.SMS
+          ? preferredChannel
+          : null;
+
+      // TODO(notification-templates): revisit award-notification templates per channel in a dedicated template pass.
+      const winnerShortMsg = `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`;
+
+      if (projectProfessional.professional.phone && directChannel) {
         console.log('[ProjectsService.awardQuote] Sending notification to:', projectProfessional.professional.phone);
         
         await this.notificationService.send({
           professionalId: projectProfessional.professional.id,
           phoneNumber: projectProfessional.professional.phone,
+          channel: directChannel,
           eventType: 'quote_awarded',
-          message: `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`,
+          message: winnerShortMsg,
         });
         console.log('[ProjectsService.awardQuote] Notification sent successfully');
       } else {
-        console.log('[ProjectsService.awardQuote] Skipping notification - professional has no phone number');
+        console.log('[ProjectsService.awardQuote] Skipping direct winner notification (no phone or primary channel is EMAIL/unsupported)', {
+          hasPhone: Boolean(projectProfessional.professional.phone),
+          preferredChannel,
+        });
       }
     } catch (error) {
-      console.error('[ProjectsService.awardQuote] Failed to send WhatsApp notification to winner:', error);
+      console.error('[ProjectsService.awardQuote] Failed to send preferred-channel notification to winner:', error);
       console.error('[ProjectsService.awardQuote] Error details:', {
         message: error?.message,
       });
