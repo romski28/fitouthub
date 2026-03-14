@@ -149,6 +149,24 @@ export class NextStepService {
       availableConfigSteps = biddingActiveSteps;
     }
 
+    if (
+      role === 'PROFESSIONAL' &&
+      isProfessional &&
+      isProfessional.status === 'quoted' &&
+      project.status !== 'awarded'
+    ) {
+      availableConfigSteps = [
+        createSyntheticPrimaryStep(
+          'WAIT_FOR_CLIENT_DECISION',
+          'Wait for client review and decision',
+          false,
+          role,
+          effectiveStage,
+          'Your quote has been submitted. No action is needed from you until the client responds.',
+        ),
+      ];
+    }
+
     if (role === 'CLIENT' && effectiveStage === ProjectStage.CREATED) {
       const invitedProfessionalCount = project._count.professionals;
 
