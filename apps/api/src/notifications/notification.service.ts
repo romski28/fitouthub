@@ -20,7 +20,7 @@ export class NotificationService {
   /**
    * Send a notification to a user based on their preferences
    */
-  async send(dto: SendNotificationDto): Promise<void> {
+  async send(dto: SendNotificationDto): Promise<NotificationResponse> {
     try {
       // Get user or professional preferences (or skip if table doesn't exist)
       let preferences: any = null;
@@ -38,21 +38,37 @@ export class NotificationService {
         }
         
         if (preferences) {
-          channel = dto.channel || preferences.primaryChannel || NotificationChannel.WHATSAPP;
+          channel =
+            dto.channel ||
+            preferences.primaryChannel ||
+            NotificationChannel.WHATSAPP;
           
           // Check if channel is enabled
           const channelEnabled = this.isChannelEnabled(channel, preferences);
           if (!channelEnabled) {
             const recipientId = dto.userId || dto.professionalId;
-            this.logger.warn(`Channel ${channel} is disabled for recipient ${recipientId}`);
-            return;
+            this.logger.warn(
+              `Channel ${channel} is disabled for recipient ${recipientId}`,
+            );
+            return {
+              success: false,
+              status: 'failed',
+              error: `Channel ${channel} is disabled for recipient ${recipientId}`,
+            };
           }
         } else {
           channel = dto.channel || NotificationChannel.WHATSAPP;
         }
       } catch (prefError) {
         // Notification preference table might not exist yet - use default channel
-        this.logger.debug(`Could not load preferences (table may not exist):`, (prefError as any)?.code);
+        const prefErrorCode =
+          prefError instanceof Error
+            ? (prefError as Error & { code?: string }).code
+            : undefined;
+        this.logger.debug(
+          `Could not load preferences (table may not exist):`,
+          prefErrorCode,
+        );
         channel = dto.channel || NotificationChannel.WHATSAPP;
       }
 
@@ -71,7 +87,11 @@ export class NotificationService {
         response = await this.twilioProvider.sendSMS(dto.phoneNumber, dto.message);
       } else {
         this.logger.warn(`Unsupported channel: ${channel}`);
-        return;
+        return {
+          success: false,
+          status: 'failed',
+          error: `Unsupported channel: ${channel}`,
+        };
       }
 
       // Log to database (best effort - don't fail if table doesn't exist)
@@ -94,8 +114,11 @@ export class NotificationService {
         // Notification was still sent via Twilio, so don't fail here
       }
 
+      return response;
+
     } catch (error) {
       this.logger.error(`Failed to send notification:`, error);
+      const failureReason = (error as any)?.message || 'Unknown notification error';
       
       // Try to log failure to database (best effort)
       try {
@@ -107,11 +130,17 @@ export class NotificationService {
           eventType: dto.eventType,
           message: dto.message,
           status: 'failed',
-          failureReason: (error as any)?.message,
+          failureReason,
         });
       } catch (logError) {
         this.logger.debug(`Could not save failure log:`, (logError as any)?.code);
       }
+
+      return {
+        success: false,
+        status: 'failed',
+        error: failureReason,
+      };
     }
   }
 

@@ -664,31 +664,71 @@ Please review the project details and respond with your quote or decline the inv
         try {
           const preference = await this.prisma.notificationPreference.findUnique({
             where: { professionalId: professional.id },
-            select: { primaryChannel: true },
+            select: {
+              primaryChannel: true,
+              fallbackChannel: true,
+              enableWhatsApp: true,
+              enableSMS: true,
+            },
           });
           const preferredChannel = preference?.primaryChannel;
-          const directChannel =
-            preferredChannel === NotificationChannel.WHATSAPP ||
-            preferredChannel === NotificationChannel.SMS
-              ? preferredChannel
-              : null;
+          const fallbackChannel = preference?.fallbackChannel;
+
+          const isMessagingChannel = (channel?: NotificationChannel | null) =>
+            channel === NotificationChannel.WHATSAPP ||
+            channel === NotificationChannel.SMS;
+
+          const isChannelEnabled = (channel?: NotificationChannel | null) => {
+            if (!channel) return false;
+            if (channel === NotificationChannel.WHATSAPP) {
+              return preference?.enableWhatsApp ?? true;
+            }
+            if (channel === NotificationChannel.SMS) {
+              return preference?.enableSMS ?? true;
+            }
+            return false;
+          };
+
+          let directChannel: NotificationChannel | null = null;
+          if (
+            isMessagingChannel(preferredChannel) &&
+            isChannelEnabled(preferredChannel)
+          ) {
+            directChannel = preferredChannel as NotificationChannel;
+          } else if (
+            isMessagingChannel(fallbackChannel) &&
+            isChannelEnabled(fallbackChannel)
+          ) {
+            directChannel = fallbackChannel as NotificationChannel;
+          } else if (!preference) {
+            directChannel = NotificationChannel.WHATSAPP;
+          }
 
           recipientAudit.direct.preferredChannel = preferredChannel;
           recipientAudit.direct.channel = directChannel;
 
           if (directChannel) {
             const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. Check your email or log in to respond.`;
-            await this.notificationService.send({
+            const sendResult = await this.notificationService.send({
               professionalId: professional.id,
               phoneNumber: professional.phone,
               channel: directChannel,
               eventType: 'project_invitation',
               message: shortMsg,
             });
-            recipientAudit.direct.status = 'sent';
+
+            if (sendResult.success) {
+              recipientAudit.direct.status = 'sent';
+            } else {
+              recipientAudit.direct.status = 'failed';
+              recipientAudit.direct.error =
+                sendResult.error || 'Direct invitation notification failed';
+            }
           } else {
             recipientAudit.direct.status = 'skipped';
-            recipientAudit.direct.reason = 'preferred_channel_email_or_unsupported';
+            recipientAudit.direct.reason = preference
+              ? 'no_enabled_messaging_channel'
+              : 'missing_notification_preference';
           }
         } catch (err) {
           recipientAudit.direct.status = 'failed';
