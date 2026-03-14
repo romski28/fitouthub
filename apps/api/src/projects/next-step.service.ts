@@ -89,6 +89,24 @@ export class NextStepService {
 
     let availableConfigSteps = nextSteps;
 
+    // If a professional has already accepted the invitation but the project stage is still CREATED,
+    // they should see SUBMIT_QUOTE (BIDDING_ACTIVE steps) rather than REPLY_TO_INVITATION.
+    if (
+      role === 'PROFESSIONAL' &&
+      isProfessional &&
+      project.currentStage === ProjectStage.CREATED &&
+      isProfessional.status === 'accepted'
+    ) {
+      const biddingActiveSteps = await this.prisma.nextStepConfig.findMany({
+        where: {
+          projectStage: ProjectStage.BIDDING_ACTIVE,
+          role: 'PROFESSIONAL',
+        },
+        orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
+      });
+      availableConfigSteps = biddingActiveSteps;
+    }
+
     if (role === 'CLIENT' && project.currentStage === ProjectStage.CREATED) {
       const invitedProfessionalCount = project._count.professionals;
 

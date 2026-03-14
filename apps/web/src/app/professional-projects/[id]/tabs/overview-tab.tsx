@@ -46,72 +46,39 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   submittingQuote,
   accessToken,
 }) => {
+  // 3-day quote deadline countdown from invitation date
+  const invitedAt = project.createdAt ? new Date(project.createdAt) : null;
+  const quoteDeadline = invitedAt ? new Date(invitedAt.getTime() + 3 * 24 * 60 * 60 * 1000) : null;
+  const msRemaining = quoteDeadline ? quoteDeadline.getTime() - Date.now() : null;
+  const isOverdue = msRemaining !== null && msRemaining < 0;
+  const daysLeft = msRemaining !== null && msRemaining > 0 ? Math.floor(msRemaining / (24 * 60 * 60 * 1000)) : 0;
+  const hoursLeft = msRemaining !== null && msRemaining > 0 ? Math.floor((msRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)) : 0;
+
+  const countdownBadge = quoteDeadline && !project.quotedAt ? (
+    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+      isOverdue ? 'bg-red-100 text-red-700' :
+      daysLeft === 0 ? 'bg-amber-100 text-amber-700' :
+      'bg-blue-100 text-blue-700'
+    }`}>
+      {isOverdue ? '⚠ Quote overdue' : daysLeft > 0 ? `⏱ ${daysLeft}d ${hoursLeft}h to quote` : `⏱ ${hoursLeft}h to quote`}
+    </span>
+  ) : null;
+
   return (
     <div className="space-y-6">
-      {/* Project Info */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Project Details</h2>
-        
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Project Name</p>
-            <p className="text-base font-semibold text-slate-900">{project.project.projectName}</p>
-          </div>
-          
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Client</p>
-            <p className="text-base font-semibold text-slate-900">{project.project.clientName}</p>
-          </div>
-          
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Region</p>
-            <p className="text-base font-semibold text-slate-900">{project.project.region}</p>
-          </div>
-          
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Client Budget</p>
-            <p className="text-base font-semibold text-slate-900">
-              {project.project.budget ? `$${project.project.budget}` : '—'}
-            </p>
-          </div>
-          
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Status</p>
-            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-              project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-              project.status === 'accepted' ? 'bg-green-100 text-green-800' :
-              project.status === 'quoted' ? 'bg-blue-100 text-blue-800' :
-              project.status === 'awarded' ? 'bg-emerald-100 text-emerald-800' :
-              project.status === 'counter_requested' ? 'bg-amber-100 text-amber-800' :
-              'bg-slate-100 text-slate-800'
-            }`}>
-              {project.status.replace('_', ' ')}
-            </span>
-          </div>
-          
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Invited Date</p>
-            <p className="text-sm font-semibold text-slate-900">
-              {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '—'}
-            </p>
-          </div>
-        </div>
-
-        {project.project.notes && (
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Project Notes</p>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.project.notes}</p>
-          </div>
-        )}
-      </div>
+      {/* Quote Form / Status — shown first so the action is immediately visible */}
+      {/* (Project Info follows below) */}
 
       {/* Quote Form/Status */}
       {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && 
        !(project.status === 'declined' || project.status === 'rejected') ? (
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">
-            {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
-          </h2>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900">
+              {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
+            </h2>
+            {countdownBadge}
+          </div>
 
           {project.status === 'counter_requested' && (
             <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -235,6 +202,63 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         </div>
       ) : null}
+
+      {/* Project Info */}
+      <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Project Details</h2>
+        
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Project Name</p>
+            <p className="text-base font-semibold text-slate-900">{project.project.projectName}</p>
+          </div>
+          
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Client</p>
+            <p className="text-base font-semibold text-slate-900">{project.project.clientName}</p>
+          </div>
+          
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Region</p>
+            <p className="text-base font-semibold text-slate-900">{project.project.region}</p>
+          </div>
+          
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Client Budget</p>
+            <p className="text-base font-semibold text-slate-900">
+              {project.project.budget ? `$${project.project.budget}` : '—'}
+            </p>
+          </div>
+          
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Status</p>
+            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+              project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              project.status === 'accepted' ? 'bg-green-100 text-green-800' :
+              project.status === 'quoted' ? 'bg-blue-100 text-blue-800' :
+              project.status === 'awarded' ? 'bg-emerald-100 text-emerald-800' :
+              project.status === 'counter_requested' ? 'bg-amber-100 text-amber-800' :
+              'bg-slate-100 text-slate-800'
+            }`}>
+              {project.status.replace('_', ' ')}
+            </span>
+          </div>
+          
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Invited Date</p>
+            <p className="text-sm font-semibold text-slate-900">
+              {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '—'}
+            </p>
+          </div>
+        </div>
+
+        {project.project.notes && (
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Project Notes</p>
+            <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.project.notes}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
