@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { toast } from 'react-hot-toast';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3002';
+import { API_BASE_URL } from '@/config/api';
 
 interface ActivityLog {
   id: string;
