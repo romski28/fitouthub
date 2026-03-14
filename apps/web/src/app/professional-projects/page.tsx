@@ -139,25 +139,26 @@ export default function ProfessionalProjectsPage() {
 
     const loadNextSteps = async () => {
       setDashboardLoading(true);
-      const next: Record<string, NextStepAction | null> = {};
 
-      for (const projectProf of projects) {
-        if (cancelled) return;
+      const fetches = projects.map((projectProf) =>
+        fetchPrimaryNextStep(projectProf.project.id, accessToken)
+          .then((action) => {
+            if (!cancelled) {
+              setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: action }));
+            }
+            return { id: projectProf.project.id, action };
+          })
+          .catch((error) => {
+            if (!cancelled) {
+              setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: null }));
+            }
+            return { id: projectProf.project.id, action: null, error };
+          }),
+      );
 
-        try {
-          const action = await fetchPrimaryNextStep(projectProf.project.id, accessToken);
-          next[projectProf.project.id] = action;
-        } catch (error) {
-          next[projectProf.project.id] = null;
-          if (error instanceof NextStepAuthError) {
-            break;
-          }
-        }
-      }
+      await Promise.allSettled(fetches);
 
-      if (cancelled) return;
-      setNextStepMap(next);
-      setDashboardLoading(false);
+      if (!cancelled) setDashboardLoading(false);
     };
 
     loadNextSteps();
@@ -332,8 +333,8 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {/* Project List - Only show after dashboard has loaded */}
-        {!dashboardLoading && (
+        {/* Project List */}
+        {
           projects.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
               No projects assigned yet. Once you accept project invitations, they'll appear here.
@@ -420,7 +421,7 @@ export default function ProfessionalProjectsPage() {
             )}
           </div>
           )
-        )}
+        }
 
         <BackToTop />
       </div>

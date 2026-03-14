@@ -609,25 +609,26 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
     const loadNextSteps = async () => {
       setDashboardLoading(true);
-      const next: Record<string, NextStepAction | null> = {};
 
-      for (const project of items) {
-        if (cancelled) return;
+      const fetches = items.map((project) =>
+        fetchPrimaryNextStep(project.id, accessToken)
+          .then((action) => {
+            if (!cancelled) {
+              setNextStepMap((prev) => ({ ...prev, [project.id]: action }));
+            }
+            return { id: project.id, action };
+          })
+          .catch((error) => {
+            if (!cancelled) {
+              setNextStepMap((prev) => ({ ...prev, [project.id]: null }));
+            }
+            return { id: project.id, action: null, error };
+          }),
+      );
 
-        try {
-          const action = await fetchPrimaryNextStep(project.id, accessToken);
-          next[project.id] = action;
-        } catch (error) {
-          next[project.id] = null;
-          if (error instanceof NextStepAuthError) {
-            break;
-          }
-        }
-      }
+      await Promise.allSettled(fetches);
 
-      if (cancelled) return;
-      setNextStepMap(next);
-      setDashboardLoading(false);
+      if (!cancelled) setDashboardLoading(false);
     };
 
     loadNextSteps();
@@ -790,8 +791,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         </div>
       )}
 
-      {/* Filters - Only show after dashboard has loaded */}
-      {!dashboardLoading && (
+      {/* Filters */}
       <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
         <div className="grid gap-2 md:grid-cols-2">
           <div className="relative grid gap-0.5">
@@ -820,11 +820,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           </div>
         </div>
       </div>
-      )}
 
       {/* Project List */}
-      {!dashboardLoading && (
-        filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center space-y-3">
           <p className="text-base font-semibold text-slate-800">{t('empty')}</p>
           <p className="text-sm text-slate-600">{t('emptyHint')}</p>
@@ -1042,7 +1040,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           })}
         </div>
       )
-      )}
+      }
 
       {editing ? (
         <EditProjectModal
