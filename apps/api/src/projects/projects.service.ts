@@ -2603,6 +2603,40 @@ Please review the project details and respond with your quote or decline the inv
 
     await Promise.all(emailPromises);
 
+    for (const pp of otherProfessionals) {
+      try {
+        const preference = await this.prisma.notificationPreference.findUnique({
+          where: { professionalId: pp.professional.id },
+          select: { primaryChannel: true },
+        });
+
+        const preferredChannel = preference?.primaryChannel;
+        const directChannel =
+          preferredChannel === NotificationChannel.WHATSAPP ||
+          preferredChannel === NotificationChannel.SMS
+            ? preferredChannel
+            : null;
+
+        if (pp.professional.phone && directChannel) {
+          await this.notificationService.send({
+            professionalId: pp.professional.id,
+            phoneNumber: pp.professional.phone,
+            channel: directChannel,
+            eventType: 'quote_not_awarded',
+            message: `Update on "${project.projectName}": another professional was selected this time. Thank you for your quote—we hope to work with you on a future project.`,
+          });
+        }
+      } catch (err) {
+        console.error(
+          '[ProjectsService.awardQuote] Failed to send preferred-channel non-winner notification',
+          {
+            professionalId: pp.professional?.id,
+            error: err?.message,
+          },
+        );
+      }
+    }
+
     // Add system messages to project chat
     // Winner message
     await this.prisma.message.create({
