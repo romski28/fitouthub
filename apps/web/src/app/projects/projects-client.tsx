@@ -524,7 +524,12 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
   const actionableProjects = useMemo(() => {
     return items
-      .filter((project) => Boolean(nextStepMap[project.id]))
+      .filter((project) => Boolean(nextStepMap[project.id]?.requiresAction))
+      .sort((a, b) => {
+        const aUpdated = new Date(a.updatedAt || 0).getTime();
+        const bUpdated = new Date(b.updatedAt || 0).getTime();
+        return bUpdated - aUpdated;
+      })
       .slice(0, 6);
   }, [items, nextStepMap]);
 

@@ -18,6 +18,7 @@ type NextStepSeed = {
   description?: string;
   isPrimary?: boolean;
   isElective?: boolean;
+  requiresAction?: boolean;
   estimatedDurationMinutes?: number;
   displayOrder?: number;
 };
@@ -32,8 +33,8 @@ type AdminTemplateSeed = {
 };
 
 const nextStepSeeds: NextStepSeed[] = [
-  { projectStage: ProjectStage.CREATED, role: 'CLIENT', actionKey: 'WAIT_FOR_QUOTES', actionLabel: 'Wait for quotes', description: 'Monitor responses from invited professionals.', isPrimary: true, displayOrder: 1 },
-  { projectStage: ProjectStage.CREATED, role: 'CLIENT', actionKey: 'INVITE_PROFESSIONALS', actionLabel: 'Invite professionals', description: 'Invite additional professionals to increase quote options.', isElective: true, displayOrder: 2 },
+  { projectStage: ProjectStage.CREATED, role: 'CLIENT', actionKey: 'WAIT_FOR_QUOTES', actionLabel: 'Wait for quotes', description: 'Monitor responses from invited professionals.', isPrimary: true, requiresAction: false, displayOrder: 1 },
+  { projectStage: ProjectStage.CREATED, role: 'CLIENT', actionKey: 'INVITE_PROFESSIONALS', actionLabel: 'Invite professionals', description: 'Invite professionals so they can start quoting on your project.', isElective: true, requiresAction: true, displayOrder: 2 },
   { projectStage: ProjectStage.CREATED, role: 'PROFESSIONAL', actionKey: 'REPLY_TO_INVITATION', actionLabel: 'Reply to invitation', description: 'Accept and proceed to quote workflow.', isPrimary: true, displayOrder: 1 },
 
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'CLIENT', actionKey: 'REVIEW_INCOMING_QUOTES', actionLabel: 'Review incoming quotes', description: 'Compare submitted pricing and notes.', isPrimary: true, displayOrder: 1 },

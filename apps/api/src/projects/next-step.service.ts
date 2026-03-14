@@ -44,6 +44,11 @@ export class NextStepService {
         status: true,
         userId: true,
         awardedProjectProfessionalId: true,
+        _count: {
+          select: {
+            professionals: true,
+          },
+        },
       },
     });
 
@@ -82,6 +87,37 @@ export class NextStepService {
       orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
     });
 
+    let availableConfigSteps = nextSteps;
+
+    if (role === 'CLIENT' && project.currentStage === ProjectStage.CREATED) {
+      const invitedProfessionalCount = project._count.professionals;
+
+      if (invitedProfessionalCount === 0) {
+        availableConfigSteps = nextSteps
+          .filter((step) => step.actionKey === 'INVITE_PROFESSIONALS')
+          .map((step) => ({
+            ...step,
+            isPrimary: true,
+            isElective: false,
+            requiresAction: true,
+            description:
+              step.description ||
+              'Invite professionals so they can start quoting on your project.',
+          }));
+      } else {
+        availableConfigSteps = nextSteps.map((step) =>
+          step.actionKey === 'WAIT_FOR_QUOTES'
+            ? {
+                ...step,
+                isPrimary: true,
+                isElective: false,
+                requiresAction: false,
+              }
+            : step,
+        );
+      }
+    }
+
     // Check if any of these actions have already been completed
     const userActions = await this.prisma.nextStepAction.findMany({
       where: {
@@ -99,7 +135,7 @@ export class NextStepService {
     );
 
     // Filter out completed primary actions
-    const availableSteps = nextSteps.filter(
+    const availableSteps = availableConfigSteps.filter(
       (step) => !(step.isPrimary && completedActions.has(step.actionKey)),
     );
 
