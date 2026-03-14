@@ -13,6 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ProjectStage } from '@prisma/client';
 
 @Controller('client')
 export class ClientController {
@@ -185,6 +186,15 @@ export class ClientController {
         data: { status: 'awarded' },
       });
 
+      await tx.project.update({
+        where: { id: pp.projectId },
+        data: {
+          status: 'awarded',
+          currentStage: ProjectStage.CONTRACT_PHASE,
+          awardedProjectProfessionalId: projectProfessionalId,
+        },
+      });
+
       await tx.message.create({
         data: {
           projectProfessionalId,
@@ -195,7 +205,9 @@ export class ClientController {
       });
 
       // Create financial transactions for accepted quotation
-      const quoteAmount = pp.quoteAmount ? new Decimal(pp.quoteAmount.toString()) : new Decimal(0);
+      const quoteAmount = pp.quoteAmount
+        ? new Decimal(pp.quoteAmount.toString())
+        : new Decimal(0);
       if (quoteAmount.greaterThan(0)) {
         // 1) Informational line: quotation accepted (mark complete)
         const quoteTx = await tx.financialTransaction.create({

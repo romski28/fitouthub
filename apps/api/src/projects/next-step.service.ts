@@ -78,10 +78,25 @@ export class NextStepService {
       throw new Error('User does not have access to this project');
     }
 
+    const awardedButPreContractStages: ProjectStage[] = [
+      ProjectStage.CREATED,
+      ProjectStage.BIDDING_ACTIVE,
+      ProjectStage.SITE_VISIT_SCHEDULED,
+      ProjectStage.SITE_VISIT_COMPLETE,
+      ProjectStage.QUOTE_RECEIVED,
+      ProjectStage.BIDDING_CLOSED,
+    ];
+
+    const effectiveStage =
+      project.status === 'awarded' &&
+      awardedButPreContractStages.includes(project.currentStage)
+        ? ProjectStage.CONTRACT_PHASE
+        : project.currentStage;
+
     // Get available actions for this stage and role
     const nextSteps = await this.prisma.nextStepConfig.findMany({
       where: {
-        projectStage: project.currentStage,
+        projectStage: effectiveStage,
         role: role,
       },
       orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
@@ -94,7 +109,7 @@ export class NextStepService {
     if (
       role === 'PROFESSIONAL' &&
       isProfessional &&
-      project.currentStage === ProjectStage.CREATED &&
+      effectiveStage === ProjectStage.CREATED &&
       isProfessional.status === 'accepted'
     ) {
       const biddingActiveSteps = await this.prisma.nextStepConfig.findMany({
@@ -107,7 +122,7 @@ export class NextStepService {
       availableConfigSteps = biddingActiveSteps;
     }
 
-    if (role === 'CLIENT' && project.currentStage === ProjectStage.CREATED) {
+    if (role === 'CLIENT' && effectiveStage === ProjectStage.CREATED) {
       const invitedProfessionalCount = project._count.professionals;
 
       if (invitedProfessionalCount === 0) {
@@ -136,12 +151,42 @@ export class NextStepService {
       }
     }
 
+    if (role === 'CLIENT' && project.status === 'awarded') {
+      const pendingEscrowRequest =
+        await this.prisma.financialTransaction.findFirst({
+          where: {
+            projectId,
+            type: 'escrow_deposit_request',
+            status: 'pending',
+            actionComplete: false,
+            OR: [{ actionBy: userId }, { actionBy: null }],
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+      if (pendingEscrowRequest) {
+        availableConfigSteps = [
+          {
+            actionKey: 'DEPOSIT_ESCROW_FUNDS',
+            actionLabel: 'Deposit funds to escrow',
+            description:
+              'Confirm escrow deposit so the project can proceed to contract/start phase.',
+            isPrimary: true,
+            isElective: false,
+            requiresAction: true,
+            estimatedDurationMinutes: 10,
+            displayOrder: 1,
+          } as any,
+        ];
+      }
+    }
+
     // Check if any of these actions have already been completed
     const userActions = await this.prisma.nextStepAction.findMany({
       where: {
         projectId,
         userId,
-        projectStage: project.currentStage,
+        projectStage: effectiveStage,
       },
       select: { actionKey: true, userAction: true },
     });
@@ -188,7 +233,7 @@ export class NextStepService {
       PRIMARY: primary,
       ELECTIVE: elective,
       status: project.status,
-      stage: project.currentStage,
+      stage: effectiveStage,
     };
   }
 
@@ -225,8 +270,7 @@ export class NextStepService {
         actionKey,
         projectStage: project.currentStage,
         userAction,
-        completedAt:
-          userAction === 'COMPLETED' ? new Date() : null,
+        completedAt: userAction === 'COMPLETED' ? new Date() : null,
         metadata,
       },
     });

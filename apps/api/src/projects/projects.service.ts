@@ -2602,7 +2602,11 @@ Please review the project details and respond with your quote or decline the inv
       // Mark project as awarded for downstream views
       await tx.project.update({
         where: { id: projectId },
-        data: { status: 'awarded' },
+        data: {
+          status: 'awarded',
+          currentStage: ProjectStage.CONTRACT_PHASE,
+          awardedProjectProfessionalId: awardedPP.id,
+        },
       });
 
       // Create financial transactions mirroring the client acceptance flow
