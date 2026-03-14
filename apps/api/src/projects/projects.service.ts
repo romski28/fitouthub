@@ -2531,6 +2531,15 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    // Move project to PRE_WORK once escrow deposit is confirmed by client
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        currentStage: ProjectStage.PRE_WORK,
+        stageStartedAt: new Date(),
+      },
+    });
+
     return { success: true };
   }
 
@@ -2644,23 +2653,8 @@ Please review the project details and respond with your quote or decline the inv
           },
         });
 
-        // Action line: request client deposit into escrow (from FOH/platform)
-        await tx.financialTransaction.create({
-          data: {
-            projectId,
-            projectProfessionalId: awardedPP.id,
-            type: 'escrow_deposit_request',
-            description: 'Request to deposit project fees to escrow',
-            amount: quoteAmount,
-            status: 'pending',
-            requestedBy: 'foh',
-            requestedByRole: 'platform',
-            actionBy: clientId,
-            actionByRole: 'client',
-            actionComplete: false,  // Pending client action
-            notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
-          },
-        });
+        // Escrow deposit request is intentionally created later,
+        // after both parties have signed the standard contract.
       }
 
       return { awarded: awardedPP };

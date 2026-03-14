@@ -237,23 +237,8 @@ export class ClientController {
           },
         });
 
-        // 2) Action line: request client deposit into escrow (from FOH/platform)
-        await tx.financialTransaction.create({
-          data: {
-            projectId: pp.projectId,
-            projectProfessionalId,
-            type: 'escrow_deposit_request',
-            description: 'Request to deposit project fees to escrow',
-            amount: quoteAmount,
-            status: 'pending',
-            requestedBy: 'foh',
-            requestedByRole: 'platform',
-            actionBy: userId,
-            actionByRole: 'client',
-            actionComplete: false,
-            notes: `Quote amount for project ${pp.project?.projectName || 'Project'}`,
-          },
-        });
+        // Escrow deposit request is intentionally created later,
+        // after both parties have signed the standard contract.
       }
 
       return updatedPP;

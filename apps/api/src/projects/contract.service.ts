@@ -5,12 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ContractService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private generateContractContent(project: any, awardedProfessional: any): string {
+  private generateContractContent(
+    project: any,
+    awardedProfessional: any,
+  ): string {
     const today = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -82,7 +86,12 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
             professional: {
               include: {
                 user: {
-                  select: { id: true, email: true, firstName: true, surname: true },
+                  select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    surname: true,
+                  },
                 },
               },
             },
@@ -107,11 +116,15 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
     }
 
     if (!this.isContractPhase(project.currentStage)) {
-      throw new BadRequestException('Contract is not yet available for this project');
+      throw new BadRequestException(
+        'Contract is not yet available for this project',
+      );
     }
 
     if (!project.awardedProjectProfessional) {
-      throw new BadRequestException('No professional has been awarded this project yet');
+      throw new BadRequestException(
+        'No professional has been awarded this project yet',
+      );
     }
 
     if (!project.contractContent) {
@@ -144,7 +157,9 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       clientSignedBy: project.clientSignedBy,
       professionalSignedAt: project.professionalSignedAt,
       professionalSignedBy: project.professionalSignedBy,
-      isFullySigned: Boolean(project.clientSignedAt && project.professionalSignedAt),
+      isFullySigned: Boolean(
+        project.clientSignedAt && project.professionalSignedAt,
+      ),
       canSign: this.canUserSign(project, userRole),
     };
   }
@@ -216,13 +231,41 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       updatedProject.clientSignedAt &&
       updatedProject.professionalSignedAt
     ) {
-      await this.prisma.project.update({
-        where: { id: projectId },
-        data: {
-          currentStage: 'PRE_WORK',
-          stageStartedAt: new Date(),
-        },
-      });
+      const existingEscrowRequest =
+        await this.prisma.financialTransaction.findFirst({
+          where: {
+            projectId,
+            type: 'escrow_deposit_request',
+            status: { in: ['pending', 'paid'] },
+          },
+        });
+
+      if (!existingEscrowRequest) {
+        const escrowAmount =
+          updatedProject.approvedBudget ||
+          project.awardedProjectProfessional?.quoteAmount ||
+          null;
+
+        if (escrowAmount) {
+          const clientId = updatedProject.clientId || updatedProject.userId;
+          await this.prisma.financialTransaction.create({
+            data: {
+              projectId,
+              projectProfessionalId: project.awardedProjectProfessionalId,
+              type: 'escrow_deposit_request',
+              description: 'Request to deposit project fees to escrow',
+              amount: new Decimal(escrowAmount.toString()),
+              status: 'pending',
+              requestedBy: 'foh',
+              requestedByRole: 'platform',
+              actionBy: clientId,
+              actionByRole: 'client',
+              actionComplete: false,
+              notes: `Quote amount for project ${updatedProject.projectName || 'Project'}`,
+            },
+          });
+        }
+      }
     }
 
     return {
@@ -275,10 +318,14 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
     ].includes(stage);
   }
 
-  private canUserSign(project: any, userRole: 'CLIENT' | 'PROFESSIONAL' | null): boolean {
+  private canUserSign(
+    project: any,
+    userRole: 'CLIENT' | 'PROFESSIONAL' | null,
+  ): boolean {
     if (!userRole) return false;
     if (userRole === 'CLIENT' && project.clientSignedAt) return false;
-    if (userRole === 'PROFESSIONAL' && project.professionalSignedAt) return false;
+    if (userRole === 'PROFESSIONAL' && project.professionalSignedAt)
+      return false;
     return true;
   }
 }
