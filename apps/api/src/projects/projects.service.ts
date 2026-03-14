@@ -13,6 +13,32 @@ import { Prisma } from '@prisma/client';
 import { ProjectStage } from '@prisma/client';
 import { NotificationChannel } from '@prisma/client';
 
+type NotificationDeliveryStatus = 'sent' | 'failed' | 'skipped';
+
+interface NotificationAuditRecipient {
+  professionalId: string;
+  role: 'invitee' | 'winner' | 'non_winner';
+  email: {
+    status: NotificationDeliveryStatus;
+    error?: string;
+  };
+  direct: {
+    status: NotificationDeliveryStatus;
+    preferredChannel?: NotificationChannel | null;
+    channel?: NotificationChannel | null;
+    reason?: string;
+    error?: string;
+  };
+}
+
+interface NotificationAuditEvent {
+  event: string;
+  projectId: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+  recipients: NotificationAuditRecipient[];
+}
+
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -34,6 +60,48 @@ export class ProjectsService {
 
   private readonly ARCHIVED_STATUS = 'archived';
   private readonly PROJECT_SELECTABLE_PROFESSION_TYPES = ['contractor', 'company'] as const;
+
+  private createNotificationAudit(
+    event: string,
+    projectId: string,
+    metadata?: Record<string, unknown>,
+  ): NotificationAuditEvent {
+    return {
+      event,
+      projectId,
+      timestamp: new Date().toISOString(),
+      metadata,
+      recipients: [],
+    };
+  }
+
+  private pushNotificationAuditRecipient(
+    audit: NotificationAuditEvent,
+    recipient: NotificationAuditRecipient,
+  ): void {
+    audit.recipients.push(recipient);
+  }
+
+  private finalizeNotificationAudit(audit: NotificationAuditEvent): void {
+    const summary = {
+      recipients: audit.recipients.length,
+      email: {
+        sent: audit.recipients.filter((r) => r.email.status === 'sent').length,
+        failed: audit.recipients.filter((r) => r.email.status === 'failed').length,
+        skipped: audit.recipients.filter((r) => r.email.status === 'skipped').length,
+      },
+      direct: {
+        sent: audit.recipients.filter((r) => r.direct.status === 'sent').length,
+        failed: audit.recipients.filter((r) => r.direct.status === 'failed').length,
+        skipped: audit.recipients.filter((r) => r.direct.status === 'skipped').length,
+      },
+    };
+
+    console.log('[ProjectsService.notificationAudit]', {
+      ...audit,
+      summary,
+    });
+  }
 
   private async getProjectSelectableProfessionals(ids: string[]) {
     const professionals = await this.prisma.professional.findMany({
@@ -523,6 +591,12 @@ Please review the project details and respond with your quote or decline the inv
 
     // Send notifications sequentially — 1.1s gap between emails to respect Resend free-tier rate limit (1 req/s)
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const notificationAudit = this.createNotificationAudit(
+      'project_invitation_notifications',
+      projectId,
+      { invitedCount: tokenData.length },
+    );
+
     for (let i = 0; i < tokenData.length; i++) {
       if (i > 0) {
         await new Promise((resolve) => setTimeout(resolve, 1100));
@@ -530,6 +604,12 @@ Please review the project details and respond with your quote or decline the inv
 
       const { professional, acceptToken, declineToken, authToken } = tokenData[i];
       const professionalName = professional.fullName || professional.businessName || 'Professional';
+      const recipientAudit: NotificationAuditRecipient = {
+        professionalId: professional.id,
+        role: 'invitee',
+        email: { status: 'skipped' },
+        direct: { status: 'skipped' },
+      };
 
       // Always send email (carries accept/decline token links)
       try {
@@ -545,7 +625,10 @@ Please review the project details and respond with your quote or decline the inv
           projectId,
           baseUrl,
         });
+        recipientAudit.email.status = 'sent';
       } catch (err) {
+        recipientAudit.email.status = 'failed';
+        recipientAudit.email.error = err?.message;
         console.error('[ProjectsService.inviteProfessionals] email failed', { to: professional.email, error: err?.message });
       }
 
@@ -556,21 +639,44 @@ Please review the project details and respond with your quote or decline the inv
             where: { professionalId: professional.id },
             select: { primaryChannel: true },
           });
-          if (preference && preference.primaryChannel !== 'EMAIL') {
+          const preferredChannel = preference?.primaryChannel;
+          const directChannel =
+            preferredChannel === NotificationChannel.WHATSAPP ||
+            preferredChannel === NotificationChannel.SMS
+              ? preferredChannel
+              : null;
+
+          recipientAudit.direct.preferredChannel = preferredChannel;
+          recipientAudit.direct.channel = directChannel;
+
+          if (directChannel) {
             const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. Check your email or log in to respond.`;
             await this.notificationService.send({
               professionalId: professional.id,
               phoneNumber: professional.phone,
-              channel: preference.primaryChannel as any,
+              channel: directChannel,
               eventType: 'project_invitation',
               message: shortMsg,
             });
+            recipientAudit.direct.status = 'sent';
+          } else {
+            recipientAudit.direct.status = 'skipped';
+            recipientAudit.direct.reason = 'preferred_channel_email_or_unsupported';
           }
         } catch (err) {
+          recipientAudit.direct.status = 'failed';
+          recipientAudit.direct.error = err?.message;
           console.error('[ProjectsService.inviteProfessionals] WhatsApp/SMS failed', { professionalId: professional.id, error: err?.message });
         }
+      } else {
+        recipientAudit.direct.status = 'skipped';
+        recipientAudit.direct.reason = 'missing_phone';
       }
+
+      this.pushNotificationAuditRecipient(notificationAudit, recipientAudit);
     }
+
+    this.finalizeNotificationAudit(notificationAudit);
 
     return { success: true, invitedCount: professionals.length };
   }
@@ -2495,39 +2601,18 @@ Please review the project details and respond with your quote or decline the inv
       projectProfessional.professional.businessName ||
       'Professional';
     const clientName = project.clientName;
-    const notificationAudit: {
-      projectId: string;
-      awardedProfessionalId: string;
-      event: string;
-      timestamp: string;
-      winner: {
-        email: 'sent' | 'failed';
-        direct: 'sent' | 'skipped' | 'failed';
-        preferredChannel?: NotificationChannel | null;
-        directChannel?: NotificationChannel | null;
-        skipReason?: string;
-        error?: string;
-      };
-      nonWinners: Array<{
-        professionalId: string;
-        email: 'sent' | 'failed';
-        direct: 'sent' | 'skipped' | 'failed';
-        preferredChannel?: NotificationChannel | null;
-        directChannel?: NotificationChannel | null;
-        skipReason?: string;
-        emailError?: string;
-        directError?: string;
-      }>;
-    } = {
+    const notificationAudit = this.createNotificationAudit(
+      'quote_award_notifications',
       projectId,
-      awardedProfessionalId: professionalId,
-      event: 'quote_award_notifications',
-      timestamp: new Date().toISOString(),
-      winner: {
-        email: 'sent',
-        direct: 'skipped',
+      {
+        awardedProfessionalId: professionalId,
       },
-      nonWinners: [],
+    );
+    const winnerAudit: NotificationAuditRecipient = {
+      professionalId,
+      role: 'winner',
+      email: { status: 'skipped' },
+      direct: { status: 'skipped' },
     };
 
     // Send winner notification
@@ -2547,10 +2632,10 @@ Please review the project details and respond with your quote or decline the inv
         nextStepsMessage:
           'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
       });
-      notificationAudit.winner.email = 'sent';
+      winnerAudit.email.status = 'sent';
     } catch (error) {
-      notificationAudit.winner.email = 'failed';
-      notificationAudit.winner.error = error?.message;
+      winnerAudit.email.status = 'failed';
+      winnerAudit.email.error = error?.message;
       throw error;
     }
 
@@ -2573,8 +2658,8 @@ Please review the project details and respond with your quote or decline the inv
         preferredChannel === NotificationChannel.SMS
           ? preferredChannel
           : null;
-      notificationAudit.winner.preferredChannel = preferredChannel;
-      notificationAudit.winner.directChannel = directChannel;
+      winnerAudit.direct.preferredChannel = preferredChannel;
+      winnerAudit.direct.channel = directChannel;
 
       // TODO(notification-templates): revisit award-notification templates per channel in a dedicated template pass.
       const winnerShortMsg = `Congratulations! Your quote for "${project.projectName}" has been awarded. The client will contact you soon to discuss next steps.`;
@@ -2589,11 +2674,11 @@ Please review the project details and respond with your quote or decline the inv
           eventType: 'quote_awarded',
           message: winnerShortMsg,
         });
-        notificationAudit.winner.direct = 'sent';
+        winnerAudit.direct.status = 'sent';
         console.log('[ProjectsService.awardQuote] Notification sent successfully');
       } else {
-        notificationAudit.winner.direct = 'skipped';
-        notificationAudit.winner.skipReason = !projectProfessional.professional.phone
+        winnerAudit.direct.status = 'skipped';
+        winnerAudit.direct.reason = !projectProfessional.professional.phone
           ? 'missing_phone'
           : 'preferred_channel_email_or_unsupported';
         console.log('[ProjectsService.awardQuote] Skipping direct winner notification (no phone or primary channel is EMAIL/unsupported)', {
@@ -2602,13 +2687,15 @@ Please review the project details and respond with your quote or decline the inv
         });
       }
     } catch (error) {
-      notificationAudit.winner.direct = 'failed';
-      notificationAudit.winner.error = error?.message;
+      winnerAudit.direct.status = 'failed';
+      winnerAudit.direct.error = error?.message;
       console.error('[ProjectsService.awardQuote] Failed to send preferred-channel notification to winner:', error);
       console.error('[ProjectsService.awardQuote] Error details:', {
         message: error?.message,
       });
     }
+
+    this.pushNotificationAuditRecipient(notificationAudit, winnerAudit);
 
     // Send escrow notification to professional
     const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
@@ -2627,15 +2714,11 @@ Please review the project details and respond with your quote or decline the inv
     );
 
     for (const pp of otherProfessionals) {
-      const nonWinnerAudit = {
+      const nonWinnerAudit: NotificationAuditRecipient = {
         professionalId: pp.professional.id,
-        email: 'sent' as const,
-        direct: 'skipped' as const,
-        preferredChannel: null as NotificationChannel | null,
-        directChannel: null as NotificationChannel | null,
-        skipReason: undefined as string | undefined,
-        emailError: undefined as string | undefined,
-        directError: undefined as string | undefined,
+        role: 'non_winner',
+        email: { status: 'skipped' },
+        direct: { status: 'skipped' },
       };
 
       try {
@@ -2650,10 +2733,10 @@ Please review the project details and respond with your quote or decline the inv
           thankYouMessage:
             'Thank you for your time and effort on this project. We hope to work with you on future opportunities.',
         });
-        nonWinnerAudit.email = 'sent';
+        nonWinnerAudit.email.status = 'sent';
       } catch (err) {
-        nonWinnerAudit.email = 'failed';
-        nonWinnerAudit.emailError = err?.message;
+        nonWinnerAudit.email.status = 'failed';
+        nonWinnerAudit.email.error = err?.message;
         console.error(
           '[ProjectsService.awardQuote] Failed to send loser notification',
           {
@@ -2675,8 +2758,8 @@ Please review the project details and respond with your quote or decline the inv
           preferredChannel === NotificationChannel.SMS
             ? preferredChannel
             : null;
-        nonWinnerAudit.preferredChannel = preferredChannel;
-        nonWinnerAudit.directChannel = directChannel;
+        nonWinnerAudit.direct.preferredChannel = preferredChannel;
+        nonWinnerAudit.direct.channel = directChannel;
 
         if (pp.professional.phone && directChannel) {
           await this.notificationService.send({
@@ -2686,16 +2769,16 @@ Please review the project details and respond with your quote or decline the inv
             eventType: 'quote_not_awarded',
             message: `Update on "${project.projectName}": another professional was selected this time. Thank you for your quote—we hope to work with you on a future project.`,
           });
-          nonWinnerAudit.direct = 'sent';
+          nonWinnerAudit.direct.status = 'sent';
         } else {
-          nonWinnerAudit.direct = 'skipped';
-          nonWinnerAudit.skipReason = !pp.professional.phone
+          nonWinnerAudit.direct.status = 'skipped';
+          nonWinnerAudit.direct.reason = !pp.professional.phone
             ? 'missing_phone'
             : 'preferred_channel_email_or_unsupported';
         }
       } catch (err) {
-        nonWinnerAudit.direct = 'failed';
-        nonWinnerAudit.directError = err?.message;
+        nonWinnerAudit.direct.status = 'failed';
+        nonWinnerAudit.direct.error = err?.message;
         console.error(
           '[ProjectsService.awardQuote] Failed to send preferred-channel non-winner notification',
           {
@@ -2706,9 +2789,10 @@ Please review the project details and respond with your quote or decline the inv
       }
 
       notificationAudit.nonWinners.push(nonWinnerAudit);
+      this.pushNotificationAuditRecipient(notificationAudit, nonWinnerAudit);
     }
 
-    console.log('[ProjectsService.awardQuote] Notification audit summary', notificationAudit);
+    this.finalizeNotificationAudit(notificationAudit);
 
     // Add system messages to project chat
     // Winner message
