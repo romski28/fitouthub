@@ -68,6 +68,7 @@ interface ProjectDetail {
   contractorContactName?: string;
   contractorContactPhone?: string;
   contractorContactEmail?: string;
+  tradesRequired?: string[];
 }
 
 interface Message {
@@ -1747,7 +1748,7 @@ export default function ClientProjectDetailPage() {
               <p className="text-sm">Start by searching for professionals who match your project needs.</p>
             </div>
             <Link
-              href={`/professionals?projectId=${projectId}`}
+              href={`/professionals?projectId=${projectId}${project.tradesRequired?.[0] ? `&trade=${encodeURIComponent(project.tradesRequired[0])}` : ''}`}
               className="inline-block rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-sm font-semibold transition"
             >
               Search & Invite Professionals

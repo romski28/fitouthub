@@ -21,6 +21,7 @@ interface ProjectDetail {
   contractorContactName?: string;
   contractorContactPhone?: string;
   contractorContactEmail?: string;
+  tradesRequired?: string[];
   professionals?: any[];
 }
 
@@ -150,6 +151,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100">
                 <p className="font-semibold text-slate-800 mb-1">Description</p>
                 <p className="text-slate-700 leading-relaxed">{project.notes}</p>
+              </div>
+            )}
+
+            {project.tradesRequired && project.tradesRequired.length > 0 && (
+              <div className="rounded-md bg-blue-50 px-3 py-2 text-sm border border-blue-100">
+                <p className="font-semibold text-blue-800 mb-2">Required Trades</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {project.tradesRequired.map((trade) => (
+                    <span key={trade} className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                      {trade}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 

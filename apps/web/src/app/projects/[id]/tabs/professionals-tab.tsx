@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
@@ -135,6 +136,32 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Required Trades - always visible */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-1.5">Required Trades</p>
+            {project.tradesRequired && project.tradesRequired.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {project.tradesRequired.map((trade: string) => (
+                  <span key={trade} className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">
+                    {trade}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-blue-700">No specific trades recorded for this project.</p>
+            )}
+          </div>
+          <Link
+            href={`/professionals?projectId=${project.id}${project.tradesRequired?.[0] ? `&trade=${encodeURIComponent(project.tradesRequired[0])}` : ''}`}
+            className="shrink-0 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+          >
+            Search &amp; Invite Professionals
+          </Link>
+        </div>
+      </div>
+
       <AccordionGroup>
         {/* Bidding Board */}
         <AccordionItem
