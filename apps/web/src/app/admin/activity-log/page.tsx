@@ -155,7 +155,7 @@ export default function ActivityLogPage() {
                     {item.details && (
                       <p className="text-xs text-slate-600 mt-0.5">{item.details}</p>
                     )}
-                    {item.metadata && (
+                    {Boolean(item.metadata) && (
                       <div className="mt-1">
                         <button
                           type="button"
