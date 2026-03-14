@@ -26,7 +26,7 @@ interface OverviewTabProps {
     amount: string;
     notes: string;
   };
-  onUpdateQuoteForm: (patch: any) => void;
+  onUpdateQuoteForm: (patch: Partial<{ amount: string; notes: string }>) => void;
   onSubmitQuote: (e: React.FormEvent) => Promise<void>;
   onAccept: () => Promise<void>;
   onReject: () => Promise<void>;
@@ -44,17 +44,29 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onReject,
   onKeepCurrentQuote,
   submittingQuote,
-  accessToken,
 }) => {
+  const [nowMs, setNowMs] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    setNowMs(Date.now());
+    const timer = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
   // 3-day quote deadline countdown from invitation date
   const invitedAt = project.createdAt ? new Date(project.createdAt) : null;
   const quoteDeadline = invitedAt ? new Date(invitedAt.getTime() + 3 * 24 * 60 * 60 * 1000) : null;
-  const msRemaining = quoteDeadline ? quoteDeadline.getTime() - Date.now() : null;
+  const msRemaining = quoteDeadline && nowMs !== null ? quoteDeadline.getTime() - nowMs : null;
   const isOverdue = msRemaining !== null && msRemaining < 0;
   const daysLeft = msRemaining !== null && msRemaining > 0 ? Math.floor(msRemaining / (24 * 60 * 60 * 1000)) : 0;
   const hoursLeft = msRemaining !== null && msRemaining > 0 ? Math.floor((msRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)) : 0;
 
-  const countdownBadge = quoteDeadline && !project.quotedAt ? (
+  const hasInitialQuote = Boolean(project.quotedAt);
+  const isRebidFlow = project.status === 'counter_requested' || project.status === 'quoted';
+  const shouldEnforceInitialDeadline = !hasInitialQuote && !isRebidFlow;
+  const isInitialQuoteLocked = shouldEnforceInitialDeadline && isOverdue;
+
+  const countdownBadge = quoteDeadline && shouldEnforceInitialDeadline ? (
     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
       isOverdue ? 'bg-red-100 text-red-700' :
       daysLeft === 0 ? 'bg-amber-100 text-amber-700' :
@@ -92,7 +104,24 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           )}
 
-          <form onSubmit={onSubmitQuote} className="space-y-4">
+          <form
+            onSubmit={async (e) => {
+              if (isInitialQuoteLocked) {
+                e.preventDefault();
+                toast.error('Quote submission window has expired for the initial invitation.');
+                return;
+              }
+
+              await onSubmitQuote(e);
+            }}
+            className="space-y-4"
+          >
+            {isInitialQuoteLocked && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                Initial quote window closed (3 days from invitation). Please contact the client to reopen bidding.
+              </div>
+            )}
+
             <div>
               <label htmlFor="amount" className="block text-sm font-semibold text-slate-700 mb-1">
                 Quote Amount ($) *
@@ -103,6 +132,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 step="0.01"
                 min="0"
                 required
+                disabled={submittingQuote || isInitialQuoteLocked}
                 value={quoteForm.amount}
                 onChange={(e) => onUpdateQuoteForm({ amount: e.target.value })}
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -117,6 +147,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <textarea
                 id="notes"
                 rows={4}
+                disabled={submittingQuote || isInitialQuoteLocked}
                 value={quoteForm.notes}
                 onChange={(e) => onUpdateQuoteForm({ notes: e.target.value })}
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -127,7 +158,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={submittingQuote}
+                disabled={submittingQuote || isInitialQuoteLocked}
                 className="flex-1 min-w-40 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition"
               >
                 {submittingQuote ? 'Submitting...' : project.quotedAt ? 'Update Quote' : 'Submit Quote'}
