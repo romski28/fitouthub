@@ -49,6 +49,7 @@ export class ProfessionalController {
     body: {
       allowPartnerOffers?: boolean;
       allowPlatformUpdates?: boolean;
+      preferredLanguage?: string;
     },
   ) {
     const professionalId = req.user.id || req.user.sub;
@@ -69,6 +70,7 @@ export class ProfessionalController {
           enableWeChat: false,
           allowPartnerOffers: body.allowPartnerOffers ?? false,
           allowPlatformUpdates: body.allowPlatformUpdates ?? true,
+          preferredLanguage: body.preferredLanguage ?? 'en',
         },
       });
     }
@@ -78,6 +80,7 @@ export class ProfessionalController {
       data: {
         allowPartnerOffers: body.allowPartnerOffers,
         allowPlatformUpdates: body.allowPlatformUpdates,
+        preferredLanguage: body.preferredLanguage,
       },
     });
   }

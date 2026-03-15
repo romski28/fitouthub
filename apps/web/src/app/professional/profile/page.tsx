@@ -35,6 +35,7 @@ interface ProfessionalProfile {
   notificationPreferences?: {
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
+    preferredLanguage?: string;
   } | null;
 }
 
@@ -73,6 +74,7 @@ export default function ProfessionalProfilePage() {
   const [password, setPassword] = useState('');
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
+  const [preferredLanguage, setPreferredLanguage] = useState('en');
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -133,6 +135,7 @@ export default function ProfessionalProfilePage() {
         setRefProjects(data.referenceProjects || []);
         setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
         setAllowPlatformUpdates(data.notificationPreferences?.allowPlatformUpdates ?? true);
+        setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load profile');
       } finally {
@@ -195,6 +198,7 @@ export default function ProfessionalProfilePage() {
         body: JSON.stringify({
           allowPartnerOffers,
           allowPlatformUpdates,
+          preferredLanguage,
         }),
       });
       if (!prefRes.ok) throw new Error(await prefRes.text());
@@ -480,6 +484,21 @@ export default function ProfessionalProfilePage() {
               <label htmlFor="professionalAllowPlatformUpdates" className="text-sm text-slate-700">
                 I agree to receive platform updates and service notifications
               </label>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="professionalPreferredLanguage" className="block text-sm text-slate-700">
+                Preferred language
+              </label>
+              <select
+                id="professionalPreferredLanguage"
+                value={preferredLanguage}
+                onChange={(e) => setPreferredLanguage(e.target.value)}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="en">English</option>
+                <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+              </select>
             </div>
           </div>
 

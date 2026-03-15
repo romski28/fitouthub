@@ -49,6 +49,7 @@ export class UsersService {
             id: true,
             allowPartnerOffers: true,
             allowPlatformUpdates: true,
+            preferredLanguage: true,
           },
         },
       },
@@ -104,7 +105,11 @@ export class UsersService {
 
   async updateNotificationPreferences(
     id: string,
-    preferences: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+    preferences: {
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      preferredLanguage?: string;
+    },
   ) {
     // First, ensure the notification preference record exists
     let notificationPreference = await this.prisma.notificationPreference.findUnique({
@@ -117,6 +122,7 @@ export class UsersService {
           userId: id,
           allowPartnerOffers: preferences.allowPartnerOffers ?? false,
           allowPlatformUpdates: preferences.allowPlatformUpdates ?? true,
+          preferredLanguage: preferences.preferredLanguage ?? 'en',
         },
       });
     } else {
@@ -129,6 +135,9 @@ export class UsersService {
           ...(preferences.allowPlatformUpdates !== undefined && {
             allowPlatformUpdates: preferences.allowPlatformUpdates,
           }),
+          ...(preferences.preferredLanguage !== undefined && {
+            preferredLanguage: preferences.preferredLanguage,
+          }),
         },
       });
     }
@@ -137,6 +146,7 @@ export class UsersService {
       id: notificationPreference.id,
       allowPartnerOffers: notificationPreference.allowPartnerOffers,
       allowPlatformUpdates: notificationPreference.allowPlatformUpdates,
+      preferredLanguage: notificationPreference.preferredLanguage,
     };
   }
 }

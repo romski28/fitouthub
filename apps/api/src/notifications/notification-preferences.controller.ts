@@ -17,6 +17,7 @@ import { PrismaService } from '../prisma.service';
 interface UpdatePreferencesDto {
   primaryChannel?: 'WHATSAPP' | 'SMS' | 'WECHAT' | 'EMAIL';
   fallbackChannel?: 'WHATSAPP' | 'SMS' | 'WECHAT' | 'EMAIL';
+  preferredLanguage?: string;
   enableSMS?: boolean;
   enableWhatsApp?: boolean;
   enableWeChat?: boolean;
@@ -28,6 +29,7 @@ interface NotificationPreferenceDto {
   id: string;
   primaryChannel: string;
   fallbackChannel: string;
+  preferredLanguage: string;
   enableSMS: boolean;
   enableWhatsApp: boolean;
   enableWeChat: boolean;
@@ -68,11 +70,12 @@ export class NotificationPreferencesController {
           professionalId: professional.id,
           primaryChannel: 'WHATSAPP',
           fallbackChannel: 'SMS',
+          preferredLanguage: 'en',
           enableSMS: true,
           enableWhatsApp: true,
           enableWeChat: false,
           enableEmail: true,
-        },
+        } as any,
       });
       return this.mapToDto(preferences);
     }
@@ -159,11 +162,12 @@ export class NotificationPreferencesController {
           professionalId: professional.id,
           primaryChannel: 'WHATSAPP',
           fallbackChannel: 'SMS',
+          preferredLanguage: 'en',
           enableSMS: true,
           enableWhatsApp: true,
           enableWeChat: false,
           enableEmail: true,
-        },
+        } as any,
       });
       return this.mapToDto(preferences);
     }
@@ -227,6 +231,7 @@ export class NotificationPreferencesController {
       id: preferences.id,
       primaryChannel: preferences.primaryChannel,
       fallbackChannel: preferences.fallbackChannel,
+      preferredLanguage: preferences.preferredLanguage || 'en',
       enableSMS: preferences.enableSMS,
       enableWhatsApp: preferences.enableWhatsApp,
       enableWeChat: preferences.enableWeChat,

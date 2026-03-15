@@ -7,6 +7,7 @@ interface NotificationPreference {
   id: string;
   primaryChannel: 'WHATSAPP' | 'SMS' | 'WECHAT' | 'EMAIL';
   fallbackChannel: 'WHATSAPP' | 'SMS' | 'WECHAT' | 'EMAIL';
+  preferredLanguage: string;
   enableSMS: boolean;
   enableWhatsApp: boolean;
   enableWeChat: boolean;
@@ -90,6 +91,7 @@ export function NotificationPreferencesForm() {
           body: JSON.stringify({
             primaryChannel: preferences.primaryChannel,
             fallbackChannel: preferences.fallbackChannel,
+            preferredLanguage: preferences.preferredLanguage,
             enableSMS: preferences.enableSMS,
             enableWhatsApp: preferences.enableWhatsApp,
             enableWeChat: preferences.enableWeChat,
@@ -247,6 +249,22 @@ export function NotificationPreferencesForm() {
           />
         </div>
       )}
+
+      <div className="space-y-2">
+        <label htmlFor="preferredLanguage" className="block text-sm font-semibold text-gray-900">
+          Preferred Language
+        </label>
+        <p className="text-sm text-gray-600">Used for localized notifications when available</p>
+        <select
+          id="preferredLanguage"
+          value={preferences.preferredLanguage || 'en'}
+          onChange={(e) => setPreferences({ ...preferences, preferredLanguage: e.target.value })}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        >
+          <option value="en">English</option>
+          <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+        </select>
+      </div>
 
       {/* Error Message */}
       {error && (

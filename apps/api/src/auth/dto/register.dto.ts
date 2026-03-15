@@ -7,6 +7,7 @@ export class RegisterDto {
   chineseName?: string;
   mobile?: string;
   preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+  preferredLanguage?: string;
   allowPartnerOffers?: boolean;
   allowPlatformUpdates?: boolean;
   requireOtpVerification?: boolean;

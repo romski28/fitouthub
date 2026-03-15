@@ -82,6 +82,7 @@ export class ProfessionalAuthService {
           preferredChannel === NotificationChannel.EMAIL
             ? NotificationChannel.WHATSAPP
             : NotificationChannel.EMAIL,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
         enableEmail: true,
         enableWhatsApp: !!professional.phone,
         enableSMS: !!professional.phone,

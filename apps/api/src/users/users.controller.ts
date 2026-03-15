@@ -70,7 +70,12 @@ export class UsersController {
   @Patch(':id/notification-preferences')
   async updateNotificationPreferences(
     @Param('id') id: string,
-    @Body() body: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+    @Body()
+    body: {
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      preferredLanguage?: string;
+    },
   ) {
     return this.usersService.updateNotificationPreferences(id, body);
   }
@@ -79,7 +84,12 @@ export class UsersController {
   @Patch('me/notification-preferences')
   async updateMyNotificationPreferences(
     @Request() req: any,
-    @Body() body: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+    @Body()
+    body: {
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      preferredLanguage?: string;
+    },
   ) {
     return this.usersService.updateNotificationPreferences(req.user.id, body);
   }

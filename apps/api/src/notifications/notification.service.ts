@@ -191,11 +191,12 @@ export class NotificationService {
           userId,
           primaryChannel: NotificationChannel.WHATSAPP,
           fallbackChannel: NotificationChannel.SMS,
+          preferredLanguage: 'en',
           enableSMS: true,
           enableWhatsApp: true,
           enableWeChat: false,
           enableEmail: true,
-        },
+        } as any,
       });
     }
 
@@ -208,6 +209,7 @@ export class NotificationService {
   async updatePreferences(userId: string, preferences: Partial<{
     primaryChannel: NotificationChannel;
     fallbackChannel: NotificationChannel;
+    preferredLanguage: string;
     enableSMS: boolean;
     enableWhatsApp: boolean;
     enableWeChat: boolean;

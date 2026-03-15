@@ -85,6 +85,7 @@ export class AuthService {
           preferredContactMethod === NotificationChannel.EMAIL
             ? NotificationChannel.WHATSAPP
             : NotificationChannel.EMAIL,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
         enableEmail: true,
         enableWhatsApp: !!dto.mobile,
         enableSMS: !!dto.mobile,

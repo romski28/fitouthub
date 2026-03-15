@@ -2737,7 +2737,7 @@ Please review the project details and respond with your quote or decline the inv
         projectName: project.projectName,
         quoteAmount: projectProfessional.quoteAmount?.toString() || '0',
         nextStepsMessage:
-          'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.',
+          'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.\n\nWhile you are waiting for the client to get in contact with you, please ensure you sign the project contract, available in your project panel. Without a signed, binding contract we will not ask the client to fund the project.',
       });
       winnerAudit.email.status = 'sent';
     } catch (error) {
@@ -2756,15 +2756,43 @@ Please review the project details and respond with your quote or decline the inv
 
       const preference = await this.prisma.notificationPreference.findUnique({
         where: { professionalId: projectProfessional.professional.id },
-        select: { primaryChannel: true },
+        select: {
+          primaryChannel: true,
+          fallbackChannel: true,
+          enableWhatsApp: true,
+          enableSMS: true,
+        },
       });
 
       const preferredChannel = preference?.primaryChannel;
-      const directChannel =
-        preferredChannel === NotificationChannel.WHATSAPP ||
-        preferredChannel === NotificationChannel.SMS
-          ? preferredChannel
-          : null;
+      const fallbackChannel = preference?.fallbackChannel;
+
+      const isMessagingChannel = (channel?: NotificationChannel | null) =>
+        channel === NotificationChannel.WHATSAPP ||
+        channel === NotificationChannel.SMS;
+
+      const isChannelEnabled = (channel?: NotificationChannel | null) => {
+        if (!channel) return false;
+        if (channel === NotificationChannel.WHATSAPP) {
+          return preference?.enableWhatsApp ?? true;
+        }
+        if (channel === NotificationChannel.SMS) {
+          return preference?.enableSMS ?? true;
+        }
+        return false;
+      };
+
+      let directChannel: NotificationChannel | null = null;
+      if (isMessagingChannel(preferredChannel) && isChannelEnabled(preferredChannel)) {
+        directChannel = preferredChannel as NotificationChannel;
+      } else if (
+        isMessagingChannel(fallbackChannel) &&
+        isChannelEnabled(fallbackChannel)
+      ) {
+        directChannel = fallbackChannel as NotificationChannel;
+      } else if (!preference) {
+        directChannel = NotificationChannel.WHATSAPP;
+      }
       winnerAudit.direct.preferredChannel = preferredChannel;
       winnerAudit.direct.channel = directChannel;
 
@@ -2773,21 +2801,30 @@ Please review the project details and respond with your quote or decline the inv
 
       if (projectProfessional.professional.phone && directChannel) {
         console.log('[ProjectsService.awardQuote] Sending notification to:', projectProfessional.professional.phone);
-        
-        await this.notificationService.send({
+
+        const sendResult = await this.notificationService.send({
           professionalId: projectProfessional.professional.id,
           phoneNumber: projectProfessional.professional.phone,
           channel: directChannel,
           eventType: 'quote_awarded',
           message: winnerShortMsg,
         });
-        winnerAudit.direct.status = 'sent';
-        console.log('[ProjectsService.awardQuote] Notification sent successfully');
+
+        if (sendResult.success) {
+          winnerAudit.direct.status = 'sent';
+          console.log('[ProjectsService.awardQuote] Notification sent successfully');
+        } else {
+          winnerAudit.direct.status = 'failed';
+          winnerAudit.direct.error =
+            sendResult.error || 'Direct winner notification failed';
+        }
       } else {
         winnerAudit.direct.status = 'skipped';
         winnerAudit.direct.reason = !projectProfessional.professional.phone
           ? 'missing_phone'
-          : 'preferred_channel_email_or_unsupported';
+          : preference
+            ? 'no_enabled_messaging_channel'
+            : 'missing_notification_preference';
         console.log('[ProjectsService.awardQuote] Skipping direct winner notification (no phone or primary channel is EMAIL/unsupported)', {
           hasPhone: Boolean(projectProfessional.professional.phone),
           preferredChannel,
@@ -2817,7 +2854,8 @@ Please review the project details and respond with your quote or decline the inv
     // Send notifications to non-declined, non-awarded professionals
     const otherProfessionals = professionals.filter(
       (pp: any) =>
-        pp.professionalId !== professionalId && pp.status !== 'declined',
+        pp.professionalId !== professionalId &&
+        !['declined', 'rejected'].includes(pp.status),
     );
 
     for (const pp of otherProfessionals) {
@@ -2856,32 +2894,69 @@ Please review the project details and respond with your quote or decline the inv
       try {
         const preference = await this.prisma.notificationPreference.findUnique({
           where: { professionalId: pp.professional.id },
-          select: { primaryChannel: true },
+          select: {
+            primaryChannel: true,
+            fallbackChannel: true,
+            enableWhatsApp: true,
+            enableSMS: true,
+          },
         });
 
         const preferredChannel = preference?.primaryChannel;
-        const directChannel =
-          preferredChannel === NotificationChannel.WHATSAPP ||
-          preferredChannel === NotificationChannel.SMS
-            ? preferredChannel
-            : null;
+        const fallbackChannel = preference?.fallbackChannel;
+
+        const isMessagingChannel = (channel?: NotificationChannel | null) =>
+          channel === NotificationChannel.WHATSAPP ||
+          channel === NotificationChannel.SMS;
+
+        const isChannelEnabled = (channel?: NotificationChannel | null) => {
+          if (!channel) return false;
+          if (channel === NotificationChannel.WHATSAPP) {
+            return preference?.enableWhatsApp ?? true;
+          }
+          if (channel === NotificationChannel.SMS) {
+            return preference?.enableSMS ?? true;
+          }
+          return false;
+        };
+
+        let directChannel: NotificationChannel | null = null;
+        if (isMessagingChannel(preferredChannel) && isChannelEnabled(preferredChannel)) {
+          directChannel = preferredChannel as NotificationChannel;
+        } else if (
+          isMessagingChannel(fallbackChannel) &&
+          isChannelEnabled(fallbackChannel)
+        ) {
+          directChannel = fallbackChannel as NotificationChannel;
+        } else if (!preference) {
+          directChannel = NotificationChannel.WHATSAPP;
+        }
         nonWinnerAudit.direct.preferredChannel = preferredChannel;
         nonWinnerAudit.direct.channel = directChannel;
 
         if (pp.professional.phone && directChannel) {
-          await this.notificationService.send({
+          const sendResult = await this.notificationService.send({
             professionalId: pp.professional.id,
             phoneNumber: pp.professional.phone,
             channel: directChannel,
             eventType: 'quote_not_awarded',
             message: `Update on "${project.projectName}": another professional was selected this time. Thank you for your quote—we hope to work with you on a future project.`,
           });
-          nonWinnerAudit.direct.status = 'sent';
+
+          if (sendResult.success) {
+            nonWinnerAudit.direct.status = 'sent';
+          } else {
+            nonWinnerAudit.direct.status = 'failed';
+            nonWinnerAudit.direct.error =
+              sendResult.error || 'Direct non-winner notification failed';
+          }
         } else {
           nonWinnerAudit.direct.status = 'skipped';
           nonWinnerAudit.direct.reason = !pp.professional.phone
             ? 'missing_phone'
-            : 'preferred_channel_email_or_unsupported';
+            : preference
+              ? 'no_enabled_messaging_channel'
+              : 'missing_notification_preference';
         }
       } catch (err) {
         nonWinnerAudit.direct.status = 'failed';

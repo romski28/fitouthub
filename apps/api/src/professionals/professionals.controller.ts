@@ -118,7 +118,12 @@ export class ProfessionalsController {
   @Patch(':id/notification-preferences')
   async updateNotificationPreferences(
     @Param('id') id: string,
-    @Body() body: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+    @Body()
+    body: {
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      preferredLanguage?: string;
+    },
   ) {
     return this.professionalsService.updateNotificationPreferences(id, body);
   }

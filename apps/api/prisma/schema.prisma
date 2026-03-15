@@ -816,6 +816,7 @@ model NotificationPreference {
   enableWhatsApp       Boolean              @default(true)
   enableWeChat         Boolean              @default(false)
   enableEmail          Boolean              @default(true)
+  preferredLanguage    String               @default("en")
   allowPartnerOffers   Boolean              @default(false)
   allowPlatformUpdates Boolean              @default(true)
   weChatOpenId         String?

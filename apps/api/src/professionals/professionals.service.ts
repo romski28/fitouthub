@@ -66,6 +66,7 @@ export class ProfessionalsService {
             id: true,
             allowPartnerOffers: true,
             allowPlatformUpdates: true,
+            preferredLanguage: true,
           },
         },
       },
@@ -304,7 +305,11 @@ export class ProfessionalsService {
 
   async updateNotificationPreferences(
     id: string,
-    preferences: { allowPartnerOffers?: boolean; allowPlatformUpdates?: boolean },
+    preferences: {
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      preferredLanguage?: string;
+    },
   ) {
     // First, ensure the notification preference record exists
     let notificationPreference = await this.prisma.notificationPreference.findUnique({
@@ -317,6 +322,7 @@ export class ProfessionalsService {
           professionalId: id,
           allowPartnerOffers: preferences.allowPartnerOffers ?? false,
           allowPlatformUpdates: preferences.allowPlatformUpdates ?? true,
+          preferredLanguage: preferences.preferredLanguage ?? 'en',
         },
       });
     } else {
@@ -329,6 +335,9 @@ export class ProfessionalsService {
           ...(preferences.allowPlatformUpdates !== undefined && {
             allowPlatformUpdates: preferences.allowPlatformUpdates,
           }),
+          ...(preferences.preferredLanguage !== undefined && {
+            preferredLanguage: preferences.preferredLanguage,
+          }),
         },
       });
     }
@@ -337,6 +346,7 @@ export class ProfessionalsService {
       id: notificationPreference.id,
       allowPartnerOffers: notificationPreference.allowPartnerOffers,
       allowPlatformUpdates: notificationPreference.allowPlatformUpdates,
+      preferredLanguage: notificationPreference.preferredLanguage,
     };
   }
 }

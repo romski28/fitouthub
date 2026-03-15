@@ -26,6 +26,7 @@ export default function ProfilePage() {
   // Notification preferences
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
+  const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferencesLoading, setPreferencesLoading] = useState(true);
 
   // Load user data into form
@@ -96,6 +97,7 @@ export default function ProfilePage() {
         if (data.notificationPreference) {
           setAllowPartnerOffers(data.notificationPreference.allowPartnerOffers ?? false);
           setAllowPlatformUpdates(data.notificationPreference.allowPlatformUpdates ?? true);
+          setPreferredLanguage(data.notificationPreference.preferredLanguage ?? 'en');
         }
       } catch (err) {
         console.error('Error loading preferences:', err);
@@ -170,6 +172,7 @@ export default function ProfilePage() {
         body: JSON.stringify({
           allowPartnerOffers,
           allowPlatformUpdates,
+          preferredLanguage,
         }),
       });
 
@@ -279,6 +282,22 @@ export default function ProfilePage() {
               <label htmlFor="allowPlatformUpdates" className="text-sm text-slate-700">
                 Receive news and updates about the Fitout Hub platform and its associates
               </label>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="preferredLanguage" className="block text-sm text-slate-700">
+                Preferred language
+              </label>
+              <select
+                id="preferredLanguage"
+                value={preferredLanguage}
+                onChange={(e) => setPreferredLanguage(e.target.value)}
+                disabled={preferencesLoading}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="en">English</option>
+                <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+              </select>
             </div>
           </div>
 
