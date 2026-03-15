@@ -767,6 +767,7 @@ export default function ProjectDetailPage() {
   // REMOVED: Now handled by advance payment request form in detail card
 
   const handleReject = async () => {
+    const confirmToastId = 'decline-project-confirm';
     const confirmed = await new Promise<boolean>((resolve) => {
       toast((t) => (
         <div className="space-y-3">
@@ -775,7 +776,7 @@ export default function ProjectDetailPage() {
           <div className="flex items-center gap-2 justify-end">
             <button
               onClick={() => {
-                toast.dismiss(t.id);
+                toast.dismiss(confirmToastId);
                 resolve(false);
               }}
               className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50"
@@ -784,7 +785,7 @@ export default function ProjectDetailPage() {
             </button>
             <button
               onClick={() => {
-                toast.dismiss(t.id);
+                toast.dismiss(confirmToastId);
                 resolve(true);
               }}
               className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-sm font-medium hover:bg-rose-700"
@@ -793,7 +794,10 @@ export default function ProjectDetailPage() {
             </button>
           </div>
         </div>
-      ));
+      ), {
+        id: confirmToastId,
+        duration: Infinity,
+      });
     });
 
     if (!confirmed) {
@@ -820,8 +824,14 @@ export default function ProjectDetailPage() {
         throw new Error(data.message || 'Failed to decline project');
       }
 
-      toast.success('Project declined');
+      const successToastId = 'decline-project-success';
+      toast.dismiss(confirmToastId);
+      toast.success('Project declined.', {
+        id: successToastId,
+        duration: 2500,
+      });
       setTimeout(() => {
+        toast.dismiss(successToastId);
         router.push('/professional-projects');
       }, 800);
     } catch (err) {
