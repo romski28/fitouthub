@@ -638,6 +638,8 @@ model FinancialTransaction {
   escrowLedgers         EscrowLedger[]
 
   @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([projectId, type, status])
   @@index([projectProfessionalId])
   @@index([status])
   @@index([actionComplete])

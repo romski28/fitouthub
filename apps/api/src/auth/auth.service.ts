@@ -120,6 +120,7 @@ export class AuthService {
         firstName: user.firstName,
         surname: user.surname,
         role: user.role,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
       },
     };
   }
@@ -172,6 +173,7 @@ export class AuthService {
         firstName: updatedUser.firstName,
         surname: updatedUser.surname,
         role: updatedUser.role,
+        preferredLanguage: user.notificationPreference?.preferredLanguage ?? 'en',
       },
     };
   }
@@ -210,6 +212,13 @@ export class AuthService {
     // Find user by email
     const user = await (this.prisma as any).user.findUnique({
       where: { email: dto.email },
+      include: {
+        notificationPreference: {
+          select: {
+            preferredLanguage: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -235,6 +244,7 @@ export class AuthService {
         firstName: user.firstName,
         surname: user.surname,
         role: user.role,
+        preferredLanguage: user.notificationPreference?.preferredLanguage ?? 'en',
       },
     };
   }

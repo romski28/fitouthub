@@ -16,6 +16,7 @@ export interface Professional {
   businessName?: string;
   professionType?: string;
   status?: string;
+  preferredLanguage?: string;
 }
 
 interface ProfessionalAuthContextType {
@@ -32,6 +33,7 @@ interface ProfessionalAuthContextType {
     fullName?: string;
     businessName?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    preferredLanguage?: string;
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
@@ -68,6 +70,17 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizeLocale = (language?: string | null): 'en' | 'zh-HK' => {
+    return language === 'zh-HK' ? 'zh-HK' : 'en';
+  };
+
+  const applyPreferredLocale = (language?: string | null) => {
+    if (typeof document === 'undefined') return;
+    const locale = normalizeLocale(language);
+    document.cookie = `NEXT_LOCALE=${locale};path=/;max-age=31536000`;
+    document.documentElement.lang = locale;
+  };
+
   // Initialize from localStorage on mount
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -83,6 +96,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
         const prof = JSON.parse(storedProfessional) as Professional;
         setAccessToken(storedToken);
         setProfessional(prof);
+        applyPreferredLocale(prof?.preferredLanguage);
         setIsLoggedIn(true);
       } else {
         setIsLoggedIn(false);
@@ -101,6 +115,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     fullName?: string;
     businessName?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    preferredLanguage?: string;
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
@@ -145,6 +160,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setAccessToken(result.accessToken);
       setProfessional(result.professional);
+      applyPreferredLocale(result.professional?.preferredLanguage);
       setIsLoggedIn(true);
 
       return {
@@ -191,6 +207,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setAccessToken(result.accessToken);
       setProfessional(result.professional);
+      applyPreferredLocale(result.professional?.preferredLanguage);
       setIsLoggedIn(true);
 
       return {

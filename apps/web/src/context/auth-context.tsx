@@ -17,6 +17,7 @@ interface User {
   firstName: string;
   surname: string;
   role: string;
+  preferredLanguage?: string;
   locationPrimary?: string | null;
   locationSecondary?: string | null;
   locationTertiary?: string | null;
@@ -39,6 +40,7 @@ interface AuthContextType {
     mobile?: string;
     role?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    preferredLanguage?: string;
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
@@ -98,6 +100,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAccessToken(token);
       setUser(restoredUser);
       setRole(restoredUser?.role ?? null);
+      applyPreferredLocale(restoredUser?.preferredLanguage);
       setUserLocationState(restoredLocation);
       setIsLoggedIn(Boolean(token && restoredUser));
     } catch (err) {
@@ -119,6 +122,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const normalizeLocale = (language?: string | null): 'en' | 'zh-HK' => {
+    return language === 'zh-HK' ? 'zh-HK' : 'en';
+  };
+
+  const applyPreferredLocale = (language?: string | null) => {
+    if (typeof document === 'undefined') return;
+    const locale = normalizeLocale(language);
+    document.cookie = `NEXT_LOCALE=${locale};path=/;max-age=31536000`;
+    document.documentElement.lang = locale;
+  };
+
   const register = async (data: {
     nickname: string;
     email: string;
@@ -129,6 +143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     mobile?: string;
     role?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    preferredLanguage?: string;
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
@@ -162,6 +177,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessToken(result.accessToken);
     setUser(result.user);
     setRole(result.user.role);
+    applyPreferredLocale(result.user?.preferredLanguage);
     const derivedLoc = extractLocationFromUser(result.user);
     if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
       persistLocation(derivedLoc);
@@ -198,6 +214,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessToken(result.accessToken);
     setUser(result.user);
     setRole(result.user.role);
+    applyPreferredLocale(result.user?.preferredLanguage);
     const derivedLoc = extractLocationFromUser(result.user);
     if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
       persistLocation(derivedLoc);

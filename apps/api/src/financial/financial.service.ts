@@ -542,18 +542,38 @@ export class FinancialService {
    * Get summary of project finances - optimized with database aggregation
    */
   async getProjectFinancialSummary(projectId: string) {
-    // Get all transactions with minimal data
-    const transactions = await this.getProjectTransactions(projectId);
-
-    // Use database aggregation for summary instead of post-processing
-    const aggregation = await this.retryWithBackoff(() =>
-      this.prisma.financialTransaction.groupBy({
-        by: ['type', 'status'],
-        where: { projectId },
-        _sum: {
-          amount: true,
-        },
-      }),
+    // Fetch recent transactions + aggregate totals together to reduce round trips
+    const [transactions, aggregation] = await this.retryWithBackoff(() =>
+      this.prisma.$transaction([
+        this.prisma.financialTransaction.findMany({
+          where: { projectId },
+          select: {
+            id: true,
+            projectProfessionalId: true,
+            type: true,
+            description: true,
+            amount: true,
+            status: true,
+            requestedBy: true,
+            requestedByRole: true,
+            actionBy: true,
+            actionByRole: true,
+            actionAt: true,
+            actionComplete: true,
+            notes: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 200,
+        }),
+        this.prisma.financialTransaction.groupBy({
+          by: ['type', 'status'],
+          where: { projectId },
+          _sum: {
+            amount: true,
+          },
+        }),
+      ]),
     );
 
     const summary = {

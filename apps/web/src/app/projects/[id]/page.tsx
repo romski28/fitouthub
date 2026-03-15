@@ -1555,7 +1555,7 @@ export default function ClientProjectDetailPage() {
           {activeTab === 'contract' && isAwarded && project && (
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
               <ContractTab
-                projectId={projectId}
+                projectId={project.id}
                 accessToken={accessToken || ''}
                 userRole="client"
               />

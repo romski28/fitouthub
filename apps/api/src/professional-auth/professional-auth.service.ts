@@ -116,6 +116,7 @@ export class ProfessionalAuthService {
         fullName: professional.fullName,
         businessName: professional.businessName,
         professionType: professional.professionType,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
       },
       otpRequired: dto.requireOtpVerification || false,
     };
@@ -159,6 +160,13 @@ export class ProfessionalAuthService {
     // Find professional by email
     const professional = await (this.prisma as any).professional.findUnique({
       where: { email: dto.email },
+      include: {
+        notificationPreferences: {
+          select: {
+            preferredLanguage: true,
+          },
+        },
+      },
     });
 
     if (!professional) {
@@ -230,6 +238,8 @@ export class ProfessionalAuthService {
         businessName: professional.businessName,
         professionType: professional.professionType,
         status: professional.status,
+        preferredLanguage:
+          professional.notificationPreferences?.preferredLanguage ?? 'en',
       },
     };
   }
