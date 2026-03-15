@@ -144,7 +144,7 @@ const messages = {
           "stats": {
             "pending": "Pending",
             "awarded": "Awarded",
-            "rejected": "Rejected"
+            "rejected": "Declined"
           },
           "status": {
             "started": "Started",

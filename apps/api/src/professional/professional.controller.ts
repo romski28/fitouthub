@@ -645,7 +645,7 @@ export class ProfessionalController {
             action: 'project_invitation_rejected',
             resource: 'ProjectProfessional',
             resourceId: projectProfessionalId,
-            details: 'Rejected project invitation',
+            details: 'Declined project invitation',
             metadata: {
               projectProfessionalId,
             },

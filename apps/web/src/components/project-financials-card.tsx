@@ -81,7 +81,7 @@ const getTypeLabel = (type: string) => {
     escrow_confirmation: 'Escrow Confirmed',
     payment_request: 'Payment Request',
     advance_payment_approval: 'Advance Approved',
-    advance_payment_rejection: 'Advance Rejected',
+    advance_payment_rejection: 'Advance Declined',
     release_payment: 'Payment Released',
   };
   return map[type] || type;

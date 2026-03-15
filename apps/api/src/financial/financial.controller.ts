@@ -155,14 +155,14 @@ export class FinancialController {
     }
 
     if (req.user.isProfessional) {
-      throw new BadRequestException('Professionals cannot reject payments');
+      throw new BadRequestException('Professionals cannot decline payments');
     }
 
     const approverRole = req.user.role === 'admin' ? 'admin' : 'client';
     return this.financialService.rejectAdvancePayment(
       transactionId,
       req.user.id,
-      body.reason || 'Rejected by client',
+      body.reason || 'Declined by client',
       approverRole,
     );
   }

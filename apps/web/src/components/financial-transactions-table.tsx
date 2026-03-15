@@ -40,7 +40,7 @@ const getTypeLabel = (type: string) => {
     escrow_deposit: 'Escrow Deposit',
     payment_request: 'Payment Request',
     advance_payment_approval: 'Payment Approved',
-    advance_payment_rejection: 'Payment Rejected',
+    advance_payment_rejection: 'Payment Declined',
     release_payment: 'Release Payment',
     escrow_confirmation: 'Escrow Confirmed',
   };

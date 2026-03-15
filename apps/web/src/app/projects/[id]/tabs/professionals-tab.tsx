@@ -122,12 +122,12 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
       );
 
       if (!res.ok) {
-        throw new Error('Failed to reject quote');
+        throw new Error('Failed to decline quote');
       }
 
-      toast.success('Quote rejected.');
+      toast.success('Quote declined.');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to reject quote';
+      const msg = err instanceof Error ? err.message : 'Failed to decline quote';
       toast.error(msg);
     } finally {
       onActionBusy?.(null);

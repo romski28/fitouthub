@@ -191,7 +191,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     disabled={submittingQuote}
                     className="flex-1 min-w-40 rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
                   >
-                    {submittingQuote ? 'Processing...' : 'Reject Project'}
+                    {submittingQuote ? 'Processing...' : 'Decline Project'}
                   </button>
                 </>
               )}

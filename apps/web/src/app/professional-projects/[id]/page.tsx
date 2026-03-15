@@ -770,7 +770,7 @@ export default function ProjectDetailPage() {
     const confirmed = await new Promise<boolean>((resolve) => {
       toast((t) => (
         <div className="space-y-3">
-          <p className="font-medium text-slate-900">Reject this project?</p>
+          <p className="font-medium text-slate-900">Decline this project?</p>
           <p className="text-sm text-slate-600">This action cannot be undone.</p>
           <div className="flex items-center gap-2 justify-end">
             <button
@@ -789,7 +789,7 @@ export default function ProjectDetailPage() {
               }}
               className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-sm font-medium hover:bg-rose-700"
             >
-              Reject
+              Decline
             </button>
           </div>
         </div>
@@ -817,15 +817,15 @@ export default function ProjectDetailPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Failed to reject project');
+        throw new Error(data.message || 'Failed to decline project');
       }
 
-      toast.success('Project rejected');
+      toast.success('Project declined');
       setTimeout(() => {
         router.push('/professional-projects');
       }, 800);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to reject project';
+      const message = err instanceof Error ? err.message : 'Failed to decline project';
       setError(message);
       toast.error(message);
     } finally {

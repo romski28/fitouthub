@@ -383,7 +383,7 @@ export default function AdminProjectsPage() {
           options: [
             { label: "Pending", value: "pending" },
             { label: "Approved", value: "approved" },
-            { label: "Rejected", value: "rejected" },
+            { label: "Declined", value: "rejected" },
           ],
           required: true,
         },
