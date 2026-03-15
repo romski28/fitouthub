@@ -34,28 +34,20 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
-  }
-
   @UseGuards(AuthGuard('jwt'))
   @Put('me')
   async updateMe(@Request() req: any, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(req.user.id, updateUserDto);
   }
 
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
+  }
+
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
-  }
-
-  @Put(':id/password')
-  async updatePassword(@Param('id') id: string, @Body() body: { password?: string }) {
-    if (!body?.password || body.password.length < 6) {
-      throw new BadRequestException('Password must be at least 6 characters');
-    }
-    return this.usersService.updatePassword(id, body.password);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -67,17 +59,12 @@ export class UsersController {
     return this.usersService.updatePassword(req.user.id, body.password);
   }
 
-  @Patch(':id/notification-preferences')
-  async updateNotificationPreferences(
-    @Param('id') id: string,
-    @Body()
-    body: {
-      allowPartnerOffers?: boolean;
-      allowPlatformUpdates?: boolean;
-      preferredLanguage?: string;
-    },
-  ) {
-    return this.usersService.updateNotificationPreferences(id, body);
+  @Put(':id/password')
+  async updatePassword(@Param('id') id: string, @Body() body: { password?: string }) {
+    if (!body?.password || body.password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+    return this.usersService.updatePassword(id, body.password);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -92,5 +79,18 @@ export class UsersController {
     },
   ) {
     return this.usersService.updateNotificationPreferences(req.user.id, body);
+  }
+
+  @Patch(':id/notification-preferences')
+  async updateNotificationPreferences(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      preferredLanguage?: string;
+    },
+  ) {
+    return this.usersService.updateNotificationPreferences(id, body);
   }
 }
