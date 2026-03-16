@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Tradesman } from '../../lib/types';
-import { ProtectedPageOverlay } from '@/components/protected-page-overlay';
 import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
 import { API_BASE_URL } from '@/config/api';
 import {
@@ -66,12 +65,8 @@ export default function TradesmenPage() {
       }
     };
 
-    if (isLoggedIn) {
-      fetchTradesmen();
-    } else if (isLoggedIn === false) {
-      setLoading(false);
-    }
-  }, [isLoggedIn]);
+    fetchTradesmen();
+  }, []);  // fetch on mount regardless of auth state
 
   const filterByTerm = (term: string) => {
     const needle = term.trim().toLowerCase();
@@ -139,12 +134,6 @@ export default function TradesmenPage() {
 
   return (
     <>
-      {/* Protected page overlay */}
-      <ProtectedPageOverlay
-        onJoinClick={openJoinModal}
-        onLoginClick={openLoginModal}
-      />
-
       <div className="space-y-8">
         {/* Compact Hero Section */}
         <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white py-6 px-6">
@@ -267,23 +256,36 @@ export default function TradesmenPage() {
                           </div>
                         </div>
 
-                        {/* Link to professionals filtered by this trade */}
+                        {/* Link to professionals filtered by this trade (logged-in) or join CTA (anonymous) */}
                         <div className="pt-2">
-                          <Link
-                            href={{
-                              pathname: '/professionals',
-                              query: {
-                                trade: trade.title,
-                                ...(userLocation?.primary && { location: userLocation.primary }),
-                              },
-                            }}
-                            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
-                          >
-                            {t('card.seeInArea', { trade: trade.title.toLowerCase() })}
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Link>
+                          {isLoggedIn ? (
+                            <Link
+                              href={{
+                                pathname: '/professionals',
+                                query: {
+                                  trade: trade.title,
+                                  ...(userLocation?.primary && { location: userLocation.primary }),
+                                },
+                              }}
+                              className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
+                            >
+                              {t('card.seeInArea', { trade: trade.title.toLowerCase() })}
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={openJoinModal}
+                              className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:text-emerald-800 transition"
+                            >
+                              {t('card.joinCta')}
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

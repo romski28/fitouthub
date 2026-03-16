@@ -1,28 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
 import { SearchHelpModal } from '@/components/search-help-modal';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
+import { API_BASE_URL } from '@/config/api';
 
 interface IntentModalProps {
   intent: IntentResult | null;
   onClose: () => void;
+  matchCount: number | null;
+  countLoading: boolean;
+  isLoggedIn: boolean | undefined;
+  openJoinModal: () => void;
 }
 
-function IntentModal({ intent, onClose }: IntentModalProps) {
+function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, openJoinModal }: IntentModalProps) {
   const router = useRouter();
+  const t = useTranslations('home.searchFlow');
   const [isNavigating, setIsNavigating] = useState(false);
 
   if (!intent || intent.confidence === 0) return null;
 
+  const isAnonProfFind = isLoggedIn === false && intent.action === 'find-professional';
+
   const handleProceed = () => {
     setIsNavigating(true);
-    // Store metadata in sessionStorage for the next page to consume
     if (intent.metadata.professionType || intent.metadata.location || intent.metadata.description) {
       sessionStorage.setItem(
         'intentData',
@@ -35,6 +42,18 @@ function IntentModal({ intent, onClose }: IntentModalProps) {
     }
     router.push(intent.route);
   };
+
+  const buildCountMessage = () => {
+    if (countLoading) return null;
+    const trade = intent.metadata.professionType ?? 'professional';
+    const location = intent.metadata.location;
+    if (matchCount === null) return null;
+    if (matchCount === 0) return t('anonMatchNone');
+    if (location) return t('anonMatchFoundInLocation', { count: matchCount, trade, location });
+    return t('anonMatchFound', { count: matchCount, trade });
+  };
+
+  const countMessage = buildCountMessage();
 
   return (
     <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
@@ -52,15 +71,31 @@ function IntentModal({ intent, onClose }: IntentModalProps) {
           <h2 className="text-2xl font-bold text-slate-900">
             {intent.metadata.displayText}
           </h2>
-          <p className="text-sm text-slate-600">
-            {intent.confidence === 1 || intent.confidence > 0.9
-              ? 'Ready to proceed?'
-              : 'Is this what you meant?'}
-          </p>
+
+          {isAnonProfFind ? (
+            <div className="space-y-2">
+              {countLoading ? (
+                <p className="text-sm text-slate-500">{t('loading')}</p>
+              ) : countMessage ? (
+                <>
+                  <p className="text-sm font-semibold text-slate-800">{countMessage}</p>
+                  {(matchCount ?? 0) > 0 && (
+                    <p className="text-sm text-slate-600">{t('anonRegisterPrompt')}</p>
+                  )}
+                </>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">
+              {intent.confidence === 1 || intent.confidence > 0.9
+                ? t('readyToProceed')
+                : t('isThisRight')}
+            </p>
+          )}
         </div>
 
-        {/* Details (if any) */}
-        {(intent.metadata.professionType || intent.metadata.location) && (
+        {/* Details (if any) — shown for logged-in users */}
+        {!isAnonProfFind && (intent.metadata.professionType || intent.metadata.location) && (
           <div className="bg-slate-50 rounded-lg p-4 space-y-2 text-sm">
             {intent.metadata.professionType && (
               <div className="flex items-center gap-2">
@@ -88,15 +123,24 @@ function IntentModal({ intent, onClose }: IntentModalProps) {
             className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
             disabled={isNavigating}
           >
-            Back
+            {t('back')}
           </button>
-          <button
-            onClick={handleProceed}
-            disabled={isNavigating}
-            className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
-          >
-            {isNavigating ? 'Loading...' : 'Let\'s go'}
-          </button>
+          {isAnonProfFind ? (
+            <button
+              onClick={() => { onClose(); openJoinModal(); }}
+              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition"
+            >
+              {t('anonRegisterCta')}
+            </button>
+          ) : (
+            <button
+              onClick={handleProceed}
+              disabled={isNavigating}
+              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
+            >
+              {isNavigating ? t('loading') : t('letsGo')}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -106,11 +150,43 @@ function IntentModal({ intent, onClose }: IntentModalProps) {
 export default function SearchFlow() {
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [matchCount, setMatchCount] = useState<number | null>(null);
+  const [countLoading, setCountLoading] = useState(false);
   const { isLoggedIn } = useAuth();
-  const { openLoginModal } = useAuthModalControl();
+  const { openLoginModal, openJoinModal } = useAuthModalControl();
+
+  // Fetch professional count whenever a find-professional intent is detected
+  useEffect(() => {
+    if (!intent || intent.action !== 'find-professional') {
+      setMatchCount(null);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchCount = async () => {
+      setCountLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (intent.metadata.professionType) params.set('trade', intent.metadata.professionType);
+        if (intent.metadata.location) params.set('location', intent.metadata.location);
+        const res = await fetch(`${API_BASE_URL}/professionals/public/count?${params.toString()}`);
+        if (!res.ok) throw new Error('count fetch failed');
+        const data: { count: number } = await res.json();
+        if (!cancelled) setMatchCount(data.count);
+      } catch {
+        if (!cancelled) setMatchCount(null);
+      } finally {
+        if (!cancelled) setCountLoading(false);
+      }
+    };
+
+    fetchCount();
+    return () => { cancelled = true; };
+  }, [intent]);
 
   const handleSearch = (query: string) => {
     const result = matchIntent(query);
+    setMatchCount(null);
     setIntent(result);
   };
 
@@ -128,24 +204,37 @@ export default function SearchFlow() {
         </p>
       </div>
       <SearchBox onSubmit={handleSearch} />
-      
-      {/* Auth message for non-logged-in users */}
+
+      {/* Auth nudge for non-logged-in users */}
       {isLoggedIn === false && (
         <div className="text-center pt-2">
           <p className="text-xs text-slate-500">
-            <button onClick={openLoginModal} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">
+            <button
+              onClick={openLoginModal}
+              className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0"
+            >
               Login
             </button>
             {' or '}
-            <Link href="/join" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+            <button
+              onClick={openJoinModal}
+              className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0"
+            >
               Join Now
-            </Link>
+            </button>
             {' for the best experience'}
           </p>
         </div>
       )}
-      
-      <IntentModal intent={intent} onClose={() => setIntent(null)} />
+
+      <IntentModal
+        intent={intent}
+        onClose={() => setIntent(null)}
+        matchCount={matchCount}
+        countLoading={countLoading}
+        isLoggedIn={isLoggedIn}
+        openJoinModal={openJoinModal}
+      />
       <SearchHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );

@@ -303,6 +303,42 @@ export class ProfessionalsService {
     return [header.join(','), ...rows].join('\n');
   }
 
+  async countPublic(trade?: string, location?: string): Promise<{ count: number }> {
+    try {
+      const where: any = { status: 'approved' };
+
+      const tradeFilters = trade
+        ? [
+            { primaryTrade: { contains: trade, mode: 'insensitive' } },
+            { tradesOffered: { hasSome: [trade] } },
+          ]
+        : null;
+
+      const locationFilters = location
+        ? [
+            { locationPrimary: { contains: location, mode: 'insensitive' } },
+            { locationSecondary: { contains: location, mode: 'insensitive' } },
+            { locationTertiary: { contains: location, mode: 'insensitive' } },
+            { serviceArea: { contains: location, mode: 'insensitive' } },
+          ]
+        : null;
+
+      if (tradeFilters && locationFilters) {
+        where.AND = [{ OR: tradeFilters }, { OR: locationFilters }];
+      } else if (tradeFilters) {
+        where.OR = tradeFilters;
+      } else if (locationFilters) {
+        where.OR = locationFilters;
+      }
+
+      const count = await (this.prisma as any).professional.count({ where });
+      return { count };
+    } catch (error) {
+      console.error('Error counting professionals:', error);
+      return { count: 0 };
+    }
+  }
+
   async updateNotificationPreferences(
     id: string,
     preferences: {

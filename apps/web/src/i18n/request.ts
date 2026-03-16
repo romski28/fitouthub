@@ -288,7 +288,9 @@ const messages = {
         "featured": "Featured",
         "specialties": "Specialties",
         "more": "+{count} more",
-        "seeInArea": "See {trade} in your area"
+        "seeInArea": "See {trade} in your area",
+        "joinToView": "Join to see {trade} professionals",
+        "joinCta": "Register free →"
       },
       "actions": {
         "showAll": "Show all {count} trades"
@@ -353,6 +355,18 @@ const messages = {
       }
     },
     "home": {
+      "searchFlow": {
+        "anonMatchFound": "There are {count} {trade} professionals who could help with your project.",
+        "anonMatchFoundInLocation": "There are {count} {trade} professionals in {location} who could help with your project.",
+        "anonMatchNone": "We don't have an exact match right now. Join Fitout Hub and our team will help you find the right professional.",
+        "anonRegisterPrompt": "To find out more, please register with our platform.",
+        "anonRegisterCta": "Register free →",
+        "readyToProceed": "Ready to proceed?",
+        "isThisRight": "Is this what you meant?",
+        "back": "Back",
+        "letsGo": "Let's go",
+        "loading": "Loading..."
+      },
       "hero": {
         "tagline": "Professional Fitout Management Platform",
         "title": "Transform Your Space with Fitout Hub",
@@ -826,7 +840,9 @@ const messages = {
         "featured": "精選",
         "specialties": "專長",
         "more": "+{count}項",
-        "seeInArea": "查看您附近的{trade}"
+        "seeInArea": "查看您附近的{trade}",
+        "joinToView": "立即加入，查看{trade}專業人士",
+        "joinCta": "免費註冊 →"
       },
       "actions": {
         "showAll": "顯示全部{count}個工種"
@@ -891,6 +907,18 @@ const messages = {
       }
     },
     "home": {
+      "searchFlow": {
+        "anonMatchFound": "有{count}位{trade}專業人士可以協助您的項目。",
+        "anonMatchFoundInLocation": "{location}有{count}位{trade}專業人士可以協助您的項目。",
+        "anonMatchNone": "目前暫無完全符合的配對。加入 Fitout Hub，我們的團隊將協助您尋找合適的專業人士。",
+        "anonRegisterPrompt": "如需了解更多，請在我們的平台上註冊。",
+        "anonRegisterCta": "免費註冊 →",
+        "readyToProceed": "準備好繼續了嗎？",
+        "isThisRight": "這是您的意思嗎？",
+        "back": "返回",
+        "letsGo": "出發！",
+        "loading": "載入中..."
+      },
       "hero": {
         "tagline": "專業裝修管理平台",
         "title": "使用 Fitout Hub 改造您的空間",

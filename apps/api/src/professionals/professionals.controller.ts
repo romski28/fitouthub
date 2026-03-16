@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   Header,
+  Query,
 } from '@nestjs/common';
 import { ProfessionalsService } from './professionals.service';
 import {
@@ -87,6 +88,14 @@ export class ProfessionalsController {
   @HttpCode(HttpStatus.OK)
   async bulkApprove(@Body() bulkApproveDto: BulkApproveDto) {
     return this.professionalsService.bulkApprove(bulkApproveDto.ids);
+  }
+
+  @Get('public/count')
+  async countPublic(
+    @Query('trade') trade?: string,
+    @Query('location') location?: string,
+  ) {
+    return this.professionalsService.countPublic(trade, location);
   }
 
   @Get('export')
