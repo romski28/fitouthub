@@ -160,9 +160,38 @@ export default function SearchFlow() {
     durationMs: number;
     totalTokens: number | null;
   } | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthError, setHealthError] = useState<string | null>(null);
+  const [healthStatus, setHealthStatus] = useState<{
+    ok: boolean;
+    status: string;
+  } | null>(null);
   const { isLoggedIn } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX === 'true';
+
+  const checkSandboxHealth = async () => {
+    setHealthLoading(true);
+    setHealthError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/sandbox/health`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Health check failed (${response.status})`);
+      }
+
+      const payload: { ok: boolean; status: string } = await response.json();
+      setHealthStatus({ ok: payload.ok, status: payload.status });
+    } catch (error) {
+      setHealthStatus(null);
+      setHealthError((error as Error).message || 'Sandbox health check failed');
+    } finally {
+      setHealthLoading(false);
+    }
+  };
 
   // Fetch professional count whenever a find-professional intent is detected
   useEffect(() => {
@@ -259,7 +288,31 @@ export default function SearchFlow() {
 
       {deepSeekSandboxEnabled && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 text-xs text-slate-700 space-y-2">
-          <p className="font-semibold text-emerald-700">DeepSeek sandbox preview (test mode)</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-semibold text-emerald-700">DeepSeek sandbox preview (test mode)</p>
+            <button
+              type="button"
+              onClick={checkSandboxHealth}
+              disabled={healthLoading}
+              className="rounded border border-emerald-300 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 transition disabled:opacity-50"
+            >
+              {healthLoading ? 'Checking...' : 'Check AI health'}
+            </button>
+          </div>
+
+          {healthStatus && (
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${healthStatus.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}
+              >
+                {healthStatus.ok ? 'Configured' : 'Missing API key'}
+              </span>
+              <span className="text-slate-500">status: {healthStatus.status}</span>
+            </div>
+          )}
+
+          {healthError && <p className="text-rose-600">{healthError}</p>}
+
           {aiLoading && <p>Running requirement analysis...</p>}
           {!aiLoading && aiError && <p className="text-rose-600">{aiError}</p>}
           {!aiLoading && !aiError && aiOutput && (
