@@ -6,7 +6,7 @@ export class AiController {
   constructor(private readonly aiService: AiService) {}
 
   @Get('sandbox/health')
-  getSandboxHealth() {
+  async getSandboxHealth() {
     return this.aiService.getSandboxHealth();
   }
 

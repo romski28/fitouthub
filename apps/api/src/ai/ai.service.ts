@@ -271,12 +271,13 @@ OUTPUT SCHEMA
     };
   }
 
-  getSandboxHealth() {
+  async getSandboxHealth() {
     const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
-    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '15000');
+    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '30000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '450');
     const apiKeyPresent = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
+    const promptWrapper = await this.buildPromptWrapper();
 
     return {
       ok: apiKeyPresent,
@@ -288,6 +289,11 @@ OUTPUT SCHEMA
         timeoutMs,
         maxOutputTokens,
         apiKeyPresent,
+      },
+      promptWrapper: {
+        systemPromptChars: promptWrapper.systemPrompt.length,
+        allowedTradesCount: promptWrapper.allowedTradesCount,
+        locationEntryCount: promptWrapper.locationEntryCount,
       },
     };
   }
@@ -308,12 +314,15 @@ OUTPUT SCHEMA
 
     const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
-    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '15000');
+    // Increased default timeout to 30000ms (30s) for large prompts
+    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '30000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '450');
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
     const promptWrapper = await this.buildPromptWrapper();
+
+    const userMessage = `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
     const messages: DeepSeekMessage[] = [
       {
@@ -322,16 +331,18 @@ OUTPUT SCHEMA
       },
       {
         role: 'user',
-        content: `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`,
+        content: userMessage,
       },
     ];
+
+    const totalMessageChars = messages.reduce((sum, message) => sum + message.content.length, 0);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       this.logger.log(
-        `[${requestId}] DeepSeek request started model=${model} promptChars=${trimmedPrompt.length}`,
+        `[${requestId}] DeepSeek request started model=${model} userPromptChars=${trimmedPrompt.length} userMessageChars=${userMessage.length} systemPromptChars=${promptWrapper.systemPrompt.length} totalMessageChars=${totalMessageChars} allowedTrades=${promptWrapper.allowedTradesCount} locationEntries=${promptWrapper.locationEntryCount}`,
       );
 
       const response = await fetch(endpoint, {

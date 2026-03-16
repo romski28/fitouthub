@@ -19,6 +19,35 @@ interface IntentModalProps {
   openJoinModal: () => void;
 }
 
+function ThinkingIndicator() {
+  const phases = ['Reading your request', 'Mapping trades and location', 'Structuring project requirements'];
+  const [phaseIndex, setPhaseIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setPhaseIndex((current) => (current + 1) % phases.length);
+    }, 1400);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-white/80 p-4" aria-live="polite">
+      <div className="flex items-center gap-3">
+        <div className="flex items-end gap-1" aria-hidden="true">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-emerald-800">AI is thinking...</p>
+          <p className="text-xs text-slate-500 transition-opacity duration-200">{phases[phaseIndex]}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, openJoinModal }: IntentModalProps) {
   const router = useRouter();
   const t = useTranslations('home.searchFlow');
@@ -348,7 +377,7 @@ export default function SearchFlow() {
 
           {healthError && <p className="text-rose-600">{healthError}</p>}
 
-          {aiLoading && <p>Running requirement analysis...</p>}
+          {aiLoading && <ThinkingIndicator />}
           {!aiLoading && aiError && <p className="text-rose-600">{aiError}</p>}
           {!aiLoading && !aiError && aiOutput && (
             <>
