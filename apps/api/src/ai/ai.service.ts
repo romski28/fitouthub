@@ -9,7 +9,6 @@ import {
 import { LOCATIONS } from '../../../../packages/schemas/locations';
 import { PrismaService } from '../prisma.service';
 import { TradesService, type TradeView } from '../trades/trades.service';
-import { ProfessionalsService } from '../professionals/professionals.service';
 
 type DeepSeekMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -36,7 +35,6 @@ export class AiService {
 
   constructor(
     private readonly tradesService: TradesService,
-    private readonly professionalsService: ProfessionalsService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -574,23 +572,53 @@ OUTPUT SCHEMA
         return { count: 0, hasTrades: false, hasLocation: false };
       }
 
-      // Use the first trade for filtering (if available)
-      const primaryTrade = hasTrades ? trades[0] : undefined;
+      const where: any = { status: 'approved' };
 
-      // Call the professionals service count method
-      const result = await this.professionalsService.countPublic(
-        primaryTrade,
-        hasLocation ? location : undefined,
-      );
+      // Build trade filters from array
+      const tradeFilters =
+        hasTrades
+          ? trades.map((trade) => ({
+              OR: [
+                { primaryTrade: { contains: trade, mode: 'insensitive' } },
+                { tradesOffered: { hasSome: [trade] } },
+              ],
+            }))
+          : null;
 
+      // Build location filters
+      const locationFilters = hasLocation
+        ? [
+            { locationPrimary: { contains: location, mode: 'insensitive' } },
+            { locationSecondary: { contains: location, mode: 'insensitive' } },
+            { locationTertiary: { contains: location, mode: 'insensitive' } },
+            { serviceArea: { contains: location, mode: 'insensitive' } },
+          ]
+        : null;
+
+      // Combine filters based on what's available
+      if (tradeFilters && locationFilters) {
+        // Both trades and location: match any trade AND any location
+        where.AND = [
+          { OR: tradeFilters.reduce((acc, f) => [...acc, ...f.OR], [] as any[]) },
+          { OR: locationFilters },
+        ];
+      } else if (tradeFilters) {
+        // Only trades: match any trade
+        where.OR = tradeFilters.reduce((acc, f) => [...acc, ...f.OR], [] as any[]);
+      } else if (locationFilters) {
+        // Only location: match any location
+        where.OR = locationFilters;
+      }
+
+      const count = await (this.prisma as any).professional.count({ where });
       return {
-        count: result.count,
+        count,
         hasTrades,
         hasLocation,
       };
     } catch (error) {
       this.logger.warn(
-        `Error counting professionals: ${(error as Error).message}`,
+        `Error counting professionals for AI extraction: ${(error as Error).message}`,
       );
       return { count: 0, hasTrades: false, hasLocation: false };
     }
