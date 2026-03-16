@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
@@ -22,8 +22,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const t = useTranslations('auth');
   const modalT = useTranslations('auth.modal');
   const commonT = useTranslations('common');
+  const locale = useLocale();
   const { login, register } = useAuth();
   const { login: loginProfessional, register: registerProfessional } = useProfessionalAuth();
+  const pageLanguage = locale === 'zh-HK' ? 'zh-HK' : 'en';
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
   const [userType, setUserType] = useState<'client' | 'professional'>('client');
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +40,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [professionalAllowPlatformUpdates, setProfessionalAllowPlatformUpdates] = useState(true);
   const [clientPreferredContact, setClientPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [professionalPreferredContact, setProfessionalPreferredContact] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
+  const [clientPreferredLanguage, setClientPreferredLanguage] = useState<'en' | 'zh-HK'>(pageLanguage);
+  const [professionalPreferredLanguage, setProfessionalPreferredLanguage] = useState<'en' | 'zh-HK'>(pageLanguage);
   const [professionType, setProfessionType] = useState<string>('general');
   const [pendingVerification, setPendingVerification] = useState<{
     email: string;
@@ -64,6 +68,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setProfessionalAllowPlatformUpdates(true);
       setClientPreferredContact('EMAIL');
       setProfessionalPreferredContact('EMAIL');
+      setClientPreferredLanguage(pageLanguage);
+      setProfessionalPreferredLanguage(pageLanguage);
       setProfessionType('general');
       setPendingVerification(null);
       setOtpCode('');
@@ -86,7 +92,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         phone: '',
       });
     }
-  }, [isOpen]);
+  }, [isOpen, pageLanguage]);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -139,7 +145,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
 
     if (!clientAgreeToTerms) {
-      setError('You must agree to the Terms and Conditions to continue');
+      setError(modalT('termsRequired'));
       return;
     }
 
@@ -159,6 +165,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         mobile: clientForm.mobile || undefined,
         role: 'client',
         preferredContactMethod: clientPreferredContact,
+        preferredLanguage: clientPreferredLanguage,
         allowPartnerOffers: clientAllowPartnerOffers,
         allowPlatformUpdates: clientAllowPlatformUpdates,
         requireOtpVerification: true,
@@ -195,7 +202,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
 
     if (!professionalAgreeToTerms) {
-      setError('You must agree to the Terms and Conditions to continue');
+      setError(modalT('termsRequired'));
       return;
     }
 
@@ -214,6 +221,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         phone: professionalForm.phone,
         professionType: professionType,
         preferredContactMethod: professionalPreferredContact,
+        preferredLanguage: professionalPreferredLanguage,
         allowPartnerOffers: professionalAllowPartnerOffers,
         allowPlatformUpdates: professionalAllowPlatformUpdates,
         requireOtpVerification: true,
@@ -238,7 +246,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         phone: '',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : modalT('registrationFailed'));
     } finally {
       setLoading(false);
     }
@@ -249,7 +257,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
 
     if (!pendingVerification || !otpCode) {
-      setError('Please enter the verification code');
+      setError(modalT('enterVerificationCode'));
       return;
     }
 
@@ -267,7 +275,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'OTP verification failed');
+        throw new Error(data.message || modalT('otpVerificationFailed'));
       }
 
       // Show success banner and trigger confetti
@@ -293,12 +301,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setVerificationSuccess(false);
           onClose();
         } catch (loginErr) {
-          setError(loginErr instanceof Error ? loginErr.message : 'Login failed');
+          setError(loginErr instanceof Error ? loginErr.message : modalT('loginFailed'));
           setVerificationSuccess(false);
         }
       }, 2500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'OTP verification failed');
+      setError(err instanceof Error ? err.message : modalT('otpVerificationFailed'));
       setVerificationSuccess(false);
     } finally {
       setLoading(false);
@@ -326,10 +334,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Failed to resend OTP');
+        throw new Error(data.message || modalT('otpResendFailed'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resend OTP');
+      setError(err instanceof Error ? err.message : modalT('otpResendFailed'));
     } finally {
       setLoading(false);
     }
@@ -367,7 +375,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl"
-            aria-label="Close modal"
+            aria-label={modalT('closeModal')}
           >
             ✕
           </button>
@@ -502,20 +510,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {verificationSuccess ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <div className="text-5xl animate-bounce">🎉</div>
-                  <h3 className="text-2xl font-bold text-gray-900">Welcome! 👋</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">{modalT('welcomeVerified')}</h3>
                   <p className="text-center text-gray-600">
-                    Your account is verified. Logging you in...
+                    {modalT('verifiedLoggingIn')}
                   </p>
                   <div className="w-full bg-gradient-to-r from-blue-500 to-green-500 h-1 rounded-full animate-pulse"></div>
                 </div>
               ) : pendingVerification ? (
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
-                    Enter the 6-digit OTP sent to {pendingVerification.email}
+                    {modalT('otpSentTo', { email: pendingVerification.email })}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Verification Code
+                      {modalT('verificationCode')}
                     </label>
                     <input
                       type="text"
@@ -532,7 +540,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     disabled={loading}
                     className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {loading ? 'Verifying...' : 'Verify OTP'}
+                    {loading ? modalT('verifyingOtp') : modalT('verifyOtp')}
                   </button>
                   <button
                     type="button"
@@ -540,7 +548,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     disabled={loading}
                     className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-700 font-medium hover:bg-gray-50 disabled:bg-gray-100"
                   >
-                    Resend code
+                    {modalT('resendCode')}
                   </button>
                 </form>
               ) : userType === 'client' ? (
@@ -639,7 +647,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Primary contact preference
+                      {modalT('primaryContactPreference')}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
@@ -647,28 +655,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onClick={() => setClientPreferredContact('EMAIL')}
                         className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredContact === 'EMAIL' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                       >
-                        Email
+                        {modalT('contactEmail')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setClientPreferredContact('WHATSAPP')}
                         className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredContact === 'WHATSAPP' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                       >
-                        WhatsApp
+                        {modalT('contactWhatsapp')}
                       </button>
                       <button
                         type="button"
                         disabled
                         className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
                       >
-                        SMS (coming)
+                        {modalT('contactSmsComing')}
                       </button>
                       <button
                         type="button"
                         disabled
                         className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
                       >
-                        WeChat (disabled)
+                        {modalT('contactWeChatDisabled')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {modalT('preferredLanguage')}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setClientPreferredLanguage('zh-HK')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredLanguage === 'zh-HK' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇭🇰 {modalT('languageCantonese')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setClientPreferredLanguage('en')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredLanguage === 'en' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇬🇧 {modalT('languageEnglish')}
                       </button>
                     </div>
                   </div>
@@ -683,7 +713,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                       <label htmlFor="clientAllowPartnerOffers" className="text-xs text-gray-700">
-                        Do you want selected news and offers from our registered suppliers and partners?
+                        {modalT('partnerOffers')}
                       </label>
                     </div>
                     <div className="flex items-start gap-3">
@@ -695,7 +725,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                       <label htmlFor="clientAllowPlatformUpdates" className="text-xs text-gray-700">
-                        Do you want news and updates on the Fitout Hub platform and its associates?
+                        {modalT('platformUpdates')}
                       </label>
                     </div>
                     <div className="flex items-start gap-3">
@@ -707,21 +737,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                       <label htmlFor="clientAgreeToTerms" className="text-xs text-gray-700">
-                        I agree to the{' '}
+                        {modalT('agreePrefix')}{' '}
                         <button
                           type="button"
                           onClick={() => setShowTermsModal(true)}
                           className="font-semibold text-blue-600 hover:underline"
                         >
-                          Terms and Conditions
+                          {modalT('termsAndConditions')}
                         </button>
-                        {' and acknowledge the '}
+                        {' '}{modalT('agreeMiddle')}{' '}
                         <button
                           type="button"
                           onClick={() => setShowSecurityModal(true)}
                           className="font-semibold text-blue-600 hover:underline"
                         >
-                          Security Statement
+                          {modalT('securityStatement')}
                         </button>
                       </label>
                     </div>
@@ -791,27 +821,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Profession Type
+                      {modalT('professionType')}
                     </label>
                     <select
                       value={professionType}
                       onChange={(e) => setProfessionType(e.target.value)}
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     >
-                      <option value="general">General</option>
-                      <option value="electrician">Electrician</option>
-                      <option value="plumber">Plumber</option>
-                      <option value="carpenter">Carpenter</option>
-                      <option value="painter">Painter</option>
-                      <option value="contractor">Contractor</option>
-                      <option value="hvac">HVAC</option>
-                      <option value="other">Other</option>
+                      <option value="general">{modalT('professionGeneral')}</option>
+                      <option value="electrician">{modalT('professionElectrician')}</option>
+                      <option value="plumber">{modalT('professionPlumber')}</option>
+                      <option value="carpenter">{modalT('professionCarpenter')}</option>
+                      <option value="painter">{modalT('professionPainter')}</option>
+                      <option value="contractor">{modalT('professionContractor')}</option>
+                      <option value="hvac">{modalT('professionHvac')}</option>
+                      <option value="other">{modalT('professionOther')}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Preferred contact method
+                      {modalT('preferredContactMethod')}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
@@ -819,28 +849,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onClick={() => setProfessionalPreferredContact('EMAIL')}
                         className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredContact === 'EMAIL' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                       >
-                        Email
+                        {modalT('contactEmail')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setProfessionalPreferredContact('WHATSAPP')}
                         className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredContact === 'WHATSAPP' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                       >
-                        WhatsApp
+                        {modalT('contactWhatsapp')}
                       </button>
                       <button
                         type="button"
                         disabled
                         className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
                       >
-                        SMS (coming)
+                        {modalT('contactSmsComing')}
                       </button>
                       <button
                         type="button"
                         disabled
                         className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
                       >
-                        WeChat (disabled)
+                        {modalT('contactWeChatDisabled')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {modalT('preferredLanguage')}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setProfessionalPreferredLanguage('zh-HK')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredLanguage === 'zh-HK' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇭🇰 {modalT('languageCantonese')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfessionalPreferredLanguage('en')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredLanguage === 'en' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇬🇧 {modalT('languageEnglish')}
                       </button>
                     </div>
                   </div>
@@ -881,7 +933,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                       <label htmlFor="professionalAllowPartnerOffers" className="text-xs text-gray-700">
-                        Do you want selected news and offers from our registered suppliers and partners?
+                        {modalT('partnerOffers')}
                       </label>
                     </div>
                     <div className="flex items-start gap-3">
@@ -893,7 +945,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                       <label htmlFor="professionalAllowPlatformUpdates" className="text-xs text-gray-700">
-                        Do you want news and updates on the Fitout Hub platform and its associates?
+                        {modalT('platformUpdates')}
                       </label>
                     </div>
                     <div className="flex items-start gap-3">
@@ -905,21 +957,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                       <label htmlFor="professionalAgreeToTerms" className="text-xs text-gray-700">
-                        I agree to the{' '}
+                        {modalT('agreePrefix')}{' '}
                         <button
                           type="button"
                           onClick={() => setShowTermsModal(true)}
                           className="font-semibold text-blue-600 hover:underline"
                         >
-                          Terms and Conditions
+                          {modalT('termsAndConditions')}
                         </button>
-                        {' and acknowledge the '}
+                        {' '}{modalT('agreeMiddle')}{' '}
                         <button
                           type="button"
                           onClick={() => setShowSecurityModal(true)}
                           className="font-semibold text-blue-600 hover:underline"
                         >
-                          Security Statement
+                          {modalT('securityStatement')}
                         </button>
                       </label>
                     </div>
@@ -941,13 +993,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <PolicyDocumentModal
           isOpen={showTermsModal}
           onClose={() => setShowTermsModal(false)}
-          title="Terms and Conditions"
+          title={modalT('termsAndConditions')}
           policyType="TERMS_AND_CONDITIONS"
         />
         <PolicyDocumentModal
           isOpen={showSecurityModal}
           onClose={() => setShowSecurityModal(false)}
-          title="Security Statement"
+          title={modalT('securityStatement')}
           policyType="SECURITY_STATEMENT"
         />
       </div>
