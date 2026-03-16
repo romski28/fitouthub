@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, Query } from '@nestjs/common';
 import { AiService } from './ai.service';
 
 @Controller('ai')
@@ -30,5 +30,15 @@ export class AiController {
       userId,
       sessionId: body?.sessionId,
     });
+  }
+
+  @Get('professionals/count')
+  async countProfessionals(
+    @Query('trades') tradesParam?: string,
+    @Query('location') location?: string,
+  ) {
+    // Parse trades from comma-separated string to array
+    const trades = tradesParam ? tradesParam.split(',').map((t) => t.trim()).filter(Boolean) : undefined;
+    return this.aiService.countProfessionals(trades, location);
   }
 }

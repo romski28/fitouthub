@@ -87,12 +87,14 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 
   const buildCountMessage = () => {
     if (countLoading) return null;
-    const trade = intent.metadata.professionType ?? 'professional';
-    const location = intent.metadata.location;
+    const trade = intent.metadata.professionType ?? null;
+    const location = intent.metadata.location ?? null;
     if (matchCount === null) return null;
     if (matchCount === 0) return t('anonMatchNone');
-    if (location) return t('anonMatchFoundInLocation', { count: matchCount, trade, location });
-    return t('anonMatchFound', { count: matchCount, trade });
+    if (trade && location) return t('anonMatchFoundInLocation', { count: matchCount, trade, location });
+    if (trade && !location) return t('anonMatchFoundNoLocation', { count: matchCount, trade });
+    if (!trade && location) return t('anonMatchFoundNoTrade', { count: matchCount, location });
+    return t('anonMatchFoundNoBoth');
   };
 
   const countMessage = buildCountMessage();
@@ -212,6 +214,8 @@ export default function SearchFlow() {
     trades: string[];
     locationPrimary: string | null;
   } | null>(null);
+  const [aiMatchCount, setAiMatchCount] = useState<number | null>(null);
+  const [aiCountLoading, setAiCountLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -264,6 +268,45 @@ export default function SearchFlow() {
       setHealthLoading(false);
     }
   };
+
+  // Fetch professional count for non-logged-in users when AI extraction is complete
+  useEffect(() => {
+    // Only for non-logged-in users and AI mode
+    if (isLoggedIn !== false || searchMode !== 'ai') {
+      setAiMatchCount(null);
+      return;
+    }
+
+    if (!aiStructured) {
+      setAiMatchCount(null);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchCount = async () => {
+      setAiCountLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (aiStructured.trades?.length > 0) {
+          params.set('trades', aiStructured.trades.join(','));
+        }
+        if (aiStructured.locationPrimary) {
+          params.set('location', aiStructured.locationPrimary);
+        }
+        const res = await fetch(`${API_BASE_URL}/ai/professionals/count?${params.toString()}`);
+        if (!res.ok) throw new Error('count fetch failed');
+        const data: { count: number } = await res.json();
+        if (!cancelled) setAiMatchCount(data.count);
+      } catch {
+        if (!cancelled) setAiMatchCount(null);
+      } finally {
+        if (!cancelled) setAiCountLoading(false);
+      }
+    };
+
+    fetchCount();
+    return () => { cancelled = true; };
+  }, [aiStructured, isLoggedIn, searchMode]);
 
   // Fetch professional count whenever a find-professional intent is detected
   useEffect(() => {
@@ -443,9 +486,40 @@ export default function SearchFlow() {
                   model: {aiMeta.model} · duration: {aiMeta.durationMs}ms · total tokens: {aiMeta.totalTokens ?? 'n/a'}
                 </p>
               )}
+              {isLoggedIn === false && aiStructured && aiCountLoading && (
+                <p className="text-sm text-slate-600 italic">{t('loading')}</p>
+              )}
+              {isLoggedIn === false && aiStructured && !aiCountLoading && aiMatchCount !== null && (
+                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                  <p className="text-sm font-semibold text-emerald-800">
+                    {aiMatchCount === 0 && t('anonMatchNone')}
+                    {aiMatchCount > 0 && aiStructured.trades.length > 0 && aiStructured.locationPrimary
+                      && t('anonMatchFoundInLocation', {
+                        count: aiMatchCount,
+                        trade: aiStructured.trades[0],
+                        location: aiStructured.locationPrimary,
+                      })}
+                    {aiMatchCount > 0 && aiStructured.trades.length > 0 && !aiStructured.locationPrimary
+                      && t('anonMatchFoundNoLocation', {
+                        count: aiMatchCount,
+                        trade: aiStructured.trades[0],
+                      })}
+                    {aiMatchCount > 0 && aiStructured.trades.length === 0 && aiStructured.locationPrimary
+                      && t('anonMatchFoundNoTrade', {
+                        count: aiMatchCount,
+                        location: aiStructured.locationPrimary,
+                      })}
+                    {aiMatchCount > 0 && aiStructured.trades.length === 0 && !aiStructured.locationPrimary
+                      && t('anonMatchFoundNoBoth')}
+                  </p>
+                  {aiMatchCount > 0 && (
+                    <p className="text-sm text-emerald-700 mt-2">{t('anonRegisterPrompt')}</p>
+                  )}
+                </div>
+              )}
               {aiStructured && (
                 <div className="flex flex-wrap gap-2 pt-1 border-t border-emerald-100">
-                  {aiStructured.trades.length > 0 && (
+                  {aiStructured.trades.length > 0 && (isLoggedIn === true || isLoggedIn === undefined) && (
                     <button
                       type="button"
                       onClick={() => {

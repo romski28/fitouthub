@@ -9,6 +9,7 @@ import {
 import { LOCATIONS } from '../../../../packages/schemas/locations';
 import { PrismaService } from '../prisma.service';
 import { TradesService, type TradeView } from '../trades/trades.service';
+import { ProfessionalsService } from '../professionals/professionals.service';
 
 type DeepSeekMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -35,6 +36,7 @@ export class AiService {
 
   constructor(
     private readonly tradesService: TradesService,
+    private readonly professionalsService: ProfessionalsService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -556,5 +558,41 @@ OUTPUT SCHEMA
         userPrompt: intake.rawPrompt,
       },
     };
+  }
+
+  async countProfessionals(trades?: string[], location?: string): Promise<{
+    count: number;
+    hasTrades: boolean;
+    hasLocation: boolean;
+  }> {
+    try {
+      const hasTrades = Array.isArray(trades) && trades.length > 0;
+      const hasLocation = Boolean(location?.trim());
+
+      // If no trades and no location provided, return 0
+      if (!hasTrades && !hasLocation) {
+        return { count: 0, hasTrades: false, hasLocation: false };
+      }
+
+      // Use the first trade for filtering (if available)
+      const primaryTrade = hasTrades ? trades[0] : undefined;
+
+      // Call the professionals service count method
+      const result = await this.professionalsService.countPublic(
+        primaryTrade,
+        hasLocation ? location : undefined,
+      );
+
+      return {
+        count: result.count,
+        hasTrades,
+        hasLocation,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Error counting professionals: ${(error as Error).message}`,
+      );
+      return { count: 0, hasTrades: false, hasLocation: false };
+    }
   }
 }
