@@ -276,7 +276,7 @@ OUTPUT SCHEMA
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     const timeoutRaw = process.env.DEEPSEEK_TIMEOUT_MS;
     const timeoutMs = Number(timeoutRaw || '30000');
-    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '450');
+    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '600');
     const apiKeyPresent = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
     const promptWrapper = await this.buildPromptWrapper();
 
@@ -323,7 +323,7 @@ OUTPUT SCHEMA
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '30000');
-    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '450');
+    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '600');
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
