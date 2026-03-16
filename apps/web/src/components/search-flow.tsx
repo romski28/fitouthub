@@ -148,6 +148,8 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 }
 
 export default function SearchFlow() {
+  const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX === 'true';
+  const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('legacy');
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [matchCount, setMatchCount] = useState<number | null>(null);
@@ -168,7 +170,6 @@ export default function SearchFlow() {
   } | null>(null);
   const { isLoggedIn } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
-  const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX === 'true';
 
   const checkSandboxHealth = async () => {
     setHealthLoading(true);
@@ -195,6 +196,11 @@ export default function SearchFlow() {
 
   // Fetch professional count whenever a find-professional intent is detected
   useEffect(() => {
+    if (searchMode !== 'legacy') {
+      setMatchCount(null);
+      return;
+    }
+
     if (!intent || intent.action !== 'find-professional') {
       setMatchCount(null);
       return;
@@ -220,55 +226,64 @@ export default function SearchFlow() {
 
     fetchCount();
     return () => { cancelled = true; };
-  }, [intent]);
+  }, [intent, searchMode]);
+
+  const runSandbox = async (query: string) => {
+    setAiLoading(true);
+    setAiError(null);
+    setAiOutput(null);
+    setAiMeta(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: query.trim() }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Sandbox request failed (${response.status})`);
+      }
+
+      const payload: {
+        output: string;
+        model: string;
+        durationMs: number;
+        usage?: { totalTokens?: number | null };
+      } = await response.json();
+
+      setAiOutput(payload.output || '');
+      setAiMeta({
+        model: payload.model,
+        durationMs: payload.durationMs,
+        totalTokens: payload.usage?.totalTokens ?? null,
+      });
+    } catch (error) {
+      setAiError((error as Error).message || 'DeepSeek sandbox is unavailable');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleSearch = (query: string) => {
-    const result = matchIntent(query);
-    setMatchCount(null);
-    setIntent(result);
-
-    if (!deepSeekSandboxEnabled || !query.trim()) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       return;
     }
 
-    const runSandbox = async () => {
-      setAiLoading(true);
-      setAiError(null);
-      setAiOutput(null);
-      setAiMeta(null);
+    if (searchMode === 'ai' && deepSeekSandboxEnabled) {
+      setIntent(null);
+      setMatchCount(null);
+      runSandbox(trimmed);
+      return;
+    }
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: query.trim() }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Sandbox request failed (${response.status})`);
-        }
-
-        const payload: {
-          output: string;
-          model: string;
-          durationMs: number;
-          usage?: { totalTokens?: number | null };
-        } = await response.json();
-
-        setAiOutput(payload.output || '');
-        setAiMeta({
-          model: payload.model,
-          durationMs: payload.durationMs,
-          totalTokens: payload.usage?.totalTokens ?? null,
-        });
-      } catch (error) {
-        setAiError((error as Error).message || 'DeepSeek sandbox is unavailable');
-      } finally {
-        setAiLoading(false);
-      }
-    };
-
-    runSandbox();
+    setAiOutput(null);
+    setAiError(null);
+    setAiMeta(null);
+    const result = matchIntent(trimmed);
+    setMatchCount(null);
+    setIntent(result);
   };
 
   return (
@@ -288,6 +303,26 @@ export default function SearchFlow() {
 
       {deepSeekSandboxEnabled && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 text-xs text-slate-700 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-semibold text-slate-700">Mode</span>
+            <div className="inline-flex rounded-md border border-emerald-300 bg-white p-0.5">
+              <button
+                type="button"
+                onClick={() => setSearchMode('legacy')}
+                className={`px-2 py-1 text-[11px] font-semibold rounded ${searchMode === 'legacy' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}
+              >
+                Not AI (Legacy)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchMode('ai')}
+                className={`px-2 py-1 text-[11px] font-semibold rounded ${searchMode === 'ai' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}
+              >
+                AI (DeepSeek)
+              </button>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between gap-2">
             <p className="font-semibold text-emerald-700">DeepSeek sandbox preview (test mode)</p>
             <button
