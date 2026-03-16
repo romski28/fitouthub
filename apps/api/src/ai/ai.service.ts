@@ -5,6 +5,8 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { LOCATIONS } from '../../../../packages/schemas/locations';
+import { TradesService, type TradeView } from '../trades/trades.service';
 
 type DeepSeekMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -28,6 +30,186 @@ type DeepSeekChatResponse = {
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
+
+  constructor(private readonly tradesService: TradesService) {}
+
+  private readonly fallbackTrades = [
+    {
+      name: 'Builder',
+      category: 'General',
+      aliases: ['new build', 'extension', 'structural works'],
+      description: 'New builds, extensions, and structural works.',
+    },
+    {
+      name: 'Renovator',
+      category: 'General',
+      aliases: ['refurbishment', 'interior renovation', 'makeover'],
+      description: 'Interior and exterior refurbishments.',
+    },
+    {
+      name: 'Project Manager',
+      category: 'General',
+      aliases: ['fitout manager', 'coordination', 'timeline management'],
+      description: 'Coordination of timelines, budgets, and stakeholders.',
+    },
+    {
+      name: 'Electrician',
+      category: 'Systems',
+      aliases: ['lighting', 'wiring', 'power', 'socket'],
+      description: 'Wiring, lighting, and safety systems.',
+    },
+    {
+      name: 'Plumber',
+      category: 'Systems',
+      aliases: ['drainage', 'pipework', 'water heater', 'sanitary'],
+      description: 'Water systems, heating, and drainage.',
+    },
+    {
+      name: 'HVAC Technician',
+      category: 'Systems',
+      aliases: ['ac', 'air conditioning', 'ventilation', 'cooling'],
+      description: 'Air conditioning, ventilation, and heating.',
+    },
+  ];
+
+  private buildLocationTaxonomy() {
+    const taxonomy: Record<string, Record<string, string[]>> = {};
+
+    for (const loc of LOCATIONS) {
+      if (!taxonomy[loc.primary]) {
+        taxonomy[loc.primary] = {};
+      }
+      if (!taxonomy[loc.primary][loc.secondary]) {
+        taxonomy[loc.primary][loc.secondary] = [];
+      }
+      if (loc.tertiary) {
+        taxonomy[loc.primary][loc.secondary].push(loc.tertiary);
+      }
+    }
+
+    return taxonomy;
+  }
+
+  private async getAllowedTrades() {
+    try {
+      const trades = await this.tradesService.findAll();
+      if (Array.isArray(trades) && trades.length > 0) {
+        return trades.map((trade: TradeView) => ({
+          name: trade.name,
+          category: trade.category,
+          professionType: trade.professionType ?? null,
+          aliases: Array.isArray(trade.aliases) ? trade.aliases : [],
+          description: trade.description ?? null,
+        }));
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Falling back to static trades in AI prompt wrapper: ${(error as Error).message}`,
+      );
+    }
+
+    return this.fallbackTrades;
+  }
+
+  private async buildPromptWrapper() {
+    const allowedTrades = await this.getAllowedTrades();
+    const locationTaxonomy = this.buildLocationTaxonomy();
+
+    const systemPrompt = `You are Fitout Hub Intake Extractor.
+
+Your job is to convert a free-text renovation or fitout request into strict JSON that is directly useful to the Fitout Hub platform in Hong Kong.
+
+CRITICAL RULES
+1) Output JSON only. No markdown. No prose outside JSON.
+2) The \"trades\" array must contain only exact values from ALLOWED_TRADES.name.
+3) If a user need is mentioned but no exact trade exists in ALLOWED_TRADES, add it to \"unmappedNeeds\" and do not invent a trade.
+4) Geography is Hong Kong by default. Normalize location using the HK_LOCATION_TAXONOMY.
+5) Use location fields that match the platform structure: primary, secondary, tertiary.
+6) If a field is unknown, use null or an empty array. Do not guess.
+7) Preserve raw snippets where useful, especially for scope, size, budget, timeline, and location.
+8) Confidence values must be numbers between 0 and 1.
+9) Prefer precision over completeness. Never hallucinate facts.
+10) Return every key in the schema.
+
+ALLOWED_TRADES = ${JSON.stringify(allowedTrades)}
+
+HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
+
+NORMALIZATION RULES
+- Currency: If the prompt uses HKD, HK$, or $ in Hong Kong context, normalize currency to HKD.
+- Budget shorthand: 450k => 450000, 1.2m => 1200000.
+- If one budget figure is given, set min and max to the same value.
+- Size: normalize common units to sqft or sqm. Keep rawText even when numeric parsing succeeds.
+- Space: identify propertyType and scopeLevel such as room, floor, unit, shop, office, building, house, apartment.
+- Timeline: capture durationText, startText, deadlineText separately.
+- Trades: choose all relevant exact trade names from ALLOWED_TRADES.name.
+- Location: use country=Hong Kong and normalize into primary/secondary/tertiary where possible.
+
+OUTPUT SCHEMA
+{
+  "version": "1.0",
+  "language": "en|zh-HK|mixed|unknown",
+  "intent": "new_project|quote_request|advice|unknown",
+  "summary": "string|null",
+  "project": {
+    "scopeText": "string|null",
+    "propertyType": "string|null",
+    "scopeLevel": "room|floor|unit|shop|office|building|house|apartment|mixed|null",
+    "affectedAreas": ["string"],
+    "works": ["string"],
+    "deliverables": ["string"]
+  },
+  "size": {
+    "value": number|null,
+    "unit": "sqft|sqm|null",
+    "rawText": "string|null",
+    "confidence": number
+  },
+  "budget": {
+    "currency": "HKD|USD|CNY|unknown|null",
+    "min": number|null,
+    "max": number|null,
+    "rawText": "string|null",
+    "confidence": number
+  },
+  "timeline": {
+    "durationText": "string|null",
+    "startText": "string|null",
+    "deadlineText": "string|null",
+    "confidence": number
+  },
+  "location": {
+    "country": "Hong Kong",
+    "primary": "string|null",
+    "secondary": "string|null",
+    "tertiary": "string|null",
+    "rawText": "string|null",
+    "confidence": number
+  },
+  "trades": ["string"],
+  "tradeDetails": [
+    {
+      "trade": "string",
+      "confidence": number,
+      "reason": "string",
+      "evidence": "string"
+    }
+  ],
+  "unmappedNeeds": ["string"],
+  "keyFacts": ["string"],
+  "assumptions": ["string"],
+  "risks": ["string"],
+  "missingInfo": ["string"],
+  "followUpQuestions": ["string"],
+  "overallConfidence": number
+}`;
+
+    return {
+      systemPrompt,
+      allowedTradesCount: allowedTrades.length,
+      locationEntryCount: LOCATIONS.length,
+    };
+  }
 
   getSandboxHealth() {
     const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
@@ -71,16 +253,16 @@ export class AiService {
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
+    const promptWrapper = await this.buildPromptWrapper();
 
     const messages: DeepSeekMessage[] = [
       {
         role: 'system',
-        content:
-          'You are a renovation requirements analyst. Return concise JSON only with keys: summary, scope, assumptions, risks, nextQuestions. Keep output practical for project intake.',
+        content: promptWrapper.systemPrompt,
       },
       {
         role: 'user',
-        content: trimmedPrompt,
+        content: `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`,
       },
     ];
 
@@ -127,6 +309,15 @@ export class AiService {
       const output = payload.choices?.[0]?.message?.content?.trim() || '';
       const durationMs = Date.now() - startedAt;
       const usage = payload.usage || {};
+      let parsedOutput: unknown = null;
+
+      if (output) {
+        try {
+          parsedOutput = JSON.parse(output);
+        } catch {
+          this.logger.warn(`[${requestId}] DeepSeek returned non-parseable JSON content`);
+        }
+      }
 
       this.logger.log(
         `[${requestId}] DeepSeek request completed durationMs=${durationMs} promptTokens=${usage.prompt_tokens ?? 0} completionTokens=${usage.completion_tokens ?? 0} totalTokens=${usage.total_tokens ?? 0}`,
@@ -141,7 +332,12 @@ export class AiService {
           completionTokens: usage.completion_tokens ?? null,
           totalTokens: usage.total_tokens ?? null,
         },
+        wrapper: {
+          allowedTradesCount: promptWrapper.allowedTradesCount,
+          locationEntryCount: promptWrapper.locationEntryCount,
+        },
         output,
+        parsedOutput,
       };
     } catch (error) {
       const durationMs = Date.now() - startedAt;
