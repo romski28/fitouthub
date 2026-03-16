@@ -178,6 +178,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 
 export default function SearchFlow() {
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
+  const router = useRouter();
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('legacy');
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -191,6 +192,14 @@ export default function SearchFlow() {
     durationMs: number;
     totalTokens: number | null;
   } | null>(null);
+  const [aiStructured, setAiStructured] = useState<{
+    intakeId: string | null;
+    title: string | null;
+    trades: string[];
+    locationPrimary: string | null;
+  } | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{
@@ -262,6 +271,8 @@ export default function SearchFlow() {
     setAiError(null);
     setAiOutput(null);
     setAiMeta(null);
+    setAiStructured(null);
+    setConvertError(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
@@ -275,10 +286,16 @@ export default function SearchFlow() {
       }
 
       const payload: {
+        intakeId: string | null;
         output: string;
         model: string;
         durationMs: number;
         usage?: { totalTokens?: number | null };
+        parsedOutput?: {
+          title?: string | null;
+          trades?: string[];
+          location?: { primary?: string | null; secondary?: string | null; tertiary?: string | null };
+        } | null;
       } = await response.json();
 
       setAiOutput(payload.output || '');
@@ -286,6 +303,12 @@ export default function SearchFlow() {
         model: payload.model,
         durationMs: payload.durationMs,
         totalTokens: payload.usage?.totalTokens ?? null,
+      });
+      setAiStructured({
+        intakeId: payload.intakeId ?? null,
+        title: payload.parsedOutput?.title ?? null,
+        trades: payload.parsedOutput?.trades ?? [],
+        locationPrimary: payload.parsedOutput?.location?.primary ?? null,
       });
     } catch (error) {
       setAiError((error as Error).message || 'DeepSeek sandbox is unavailable');
@@ -386,6 +409,51 @@ export default function SearchFlow() {
                 <p className="text-slate-500">
                   model: {aiMeta.model} · duration: {aiMeta.durationMs}ms · total tokens: {aiMeta.totalTokens ?? 'n/a'}
                 </p>
+              )}
+              {aiStructured && (
+                <div className="flex flex-wrap gap-2 pt-1 border-t border-emerald-100">
+                  {aiStructured.trades.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const params = new URLSearchParams();
+                        if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
+                        if (aiStructured.locationPrimary) params.set('location', aiStructured.locationPrimary);
+                        router.push(`/professionals?${params.toString()}`);
+                      }}
+                      className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
+                    >
+                      Continue → Find Professionals
+                    </button>
+                  )}
+                  {aiStructured.intakeId && (
+                    <button
+                      type="button"
+                      disabled={isConverting}
+                      onClick={async () => {
+                        setIsConverting(true);
+                        setConvertError(null);
+                        try {
+                          const res = await fetch(`${API_BASE_URL}/ai/intake/${aiStructured.intakeId}/convert`, {
+                            method: 'POST',
+                          });
+                          if (!res.ok) throw new Error(`Convert failed (${res.status})`);
+                          const data: { draft: Record<string, unknown> } = await res.json();
+                          sessionStorage.setItem('createProjectDraft', JSON.stringify({ initialData: data.draft }));
+                          router.push('/create-project');
+                        } catch (err) {
+                          setConvertError((err as Error).message || 'Convert failed');
+                        } finally {
+                          setIsConverting(false);
+                        }
+                      }}
+                      className="flex-1 min-w-[140px] rounded border border-emerald-400 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 transition disabled:opacity-50"
+                    >
+                      {isConverting ? 'Creating…' : 'Convert to Project'}
+                    </button>
+                  )}
+                  {convertError && <p className="w-full text-rose-600 text-[11px]">{convertError}</p>}
+                </div>
               )}
             </>
           )}

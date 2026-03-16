@@ -117,6 +117,7 @@ model User {
   agreedToSecurityStatementAt     DateTime?
   agreedToSecurityStatementVersion String?                @default("1.0")
   supportRequests                 SupportRequest[]        @relation("SupportRequestAdmin")
+    aiIntakes                       AiIntake[]
 }
 
 model Tradesman {
@@ -1001,3 +1002,41 @@ model SupportRequest {
   @@index([channel])
   @@index([createdAt])
 }
+
+  model AiIntake {
+    id                String    @id @default(cuid())
+    createdAt         DateTime  @default(now())
+    userId            String?
+    user              User?     @relation(fields: [userId], references: [id])
+    sessionId         String?
+    rawPrompt         String
+    requestId         String    @unique
+    model             String?
+    durationMs        Int?
+    promptTokens      Int?
+    completionTokens  Int?
+    title             String?
+    intent            String?
+    trades            String[]
+    locationPrimary   String?
+    locationSecondary String?
+    locationTertiary  String?
+    summary           String?
+    scope             String?
+    risks             Json?
+    assumptions       Json?
+    nextQuestions     Json?
+    project           Json?
+    budget            Json?
+    timeline          Json?
+    overallConfidence Float?
+    rawOutput         Json?
+    status            String    @default("draft")
+    projectId         String?
+
+    @@index([userId])
+    @@index([sessionId])
+    @@index([status])
+    @@index([createdAt])
+    @@map("ai_intakes")
+  }

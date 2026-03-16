@@ -3,9 +3,11 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { LOCATIONS } from '../../../../packages/schemas/locations';
+import { PrismaService } from '../prisma.service';
 import { TradesService, type TradeView } from '../trades/trades.service';
 
 type DeepSeekMessage = {
@@ -31,7 +33,10 @@ type DeepSeekChatResponse = {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  constructor(private readonly tradesService: TradesService) {}
+  constructor(
+    private readonly tradesService: TradesService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   private readonly fallbackTrades = [
     {
@@ -155,6 +160,7 @@ OUTPUT SCHEMA
   "version": "1.0",
   "language": "en|zh-HK|mixed|unknown",
   "intent": "new_project|quote_request|advice|unknown",
+  "title": "string|null",
   "summary": "string|null",
   "scope": "string|null",
   "assumptions": ["string"],
@@ -230,6 +236,11 @@ OUTPUT SCHEMA
         : {};
 
     const summary = typeof result.summary === 'string' ? result.summary : null;
+    const providedTitle = typeof result.title === 'string' ? result.title.trim() : '';
+    const derivedTitle = summary
+      ? summary.split('.').map((part) => part.trim()).filter(Boolean)[0]?.slice(0, 70) ?? null
+      : null;
+    const title = providedTitle || derivedTitle;
     const scope =
       typeof result.scope === 'string'
         ? result.scope
@@ -252,6 +263,7 @@ OUTPUT SCHEMA
 
     return {
       ...result,
+      title,
       summary,
       scope,
       assumptions,
@@ -262,6 +274,7 @@ OUTPUT SCHEMA
         : nextQuestions,
       project,
       contractDocumentation: {
+        title,
         summary,
         scope,
         assumptions,
@@ -409,8 +422,52 @@ OUTPUT SCHEMA
         `[${requestId}] DeepSeek request completed durationMs=${durationMs} promptTokens=${usage.prompt_tokens ?? 0} completionTokens=${usage.completion_tokens ?? 0} totalTokens=${usage.total_tokens ?? 0}`,
       );
 
+      // Extract structured fields for DB storage
+      const p = parsedOutput as Record<string, unknown> | null;
+      const locObj = p?.location && typeof p.location === 'object' ? (p.location as Record<string, unknown>) : null;
+      const budgetObj = p?.budget && typeof p.budget === 'object' ? p.budget : null;
+      const timelineObj = p?.timeline && typeof p.timeline === 'object' ? p.timeline : null;
+      const projectObj = p?.project && typeof p.project === 'object' ? p.project : null;
+
+      let intakeId: string | null = null;
+      try {
+        const intake = await this.prisma.aiIntake.create({
+          data: {
+            requestId,
+            rawPrompt: trimmedPrompt,
+            model: payload.model || model,
+            durationMs,
+            promptTokens: usage.prompt_tokens ?? null,
+            completionTokens: usage.completion_tokens ?? null,
+            title: typeof p?.title === 'string' ? p.title : null,
+            intent: typeof p?.intent === 'string' ? p.intent : null,
+            trades: Array.isArray(p?.trades) ? (p.trades as string[]) : [],
+            locationPrimary: typeof locObj?.primary === 'string' ? locObj.primary : null,
+            locationSecondary: typeof locObj?.secondary === 'string' ? locObj.secondary : null,
+            locationTertiary: typeof locObj?.tertiary === 'string' ? locObj.tertiary : null,
+            summary: typeof p?.summary === 'string' ? p.summary : null,
+            scope: typeof p?.scope === 'string' ? p.scope : null,
+            risks: Array.isArray(p?.risks) ? p.risks : undefined,
+            assumptions: Array.isArray(p?.assumptions) ? p.assumptions : undefined,
+            nextQuestions: Array.isArray(p?.nextQuestions) ? p.nextQuestions : undefined,
+            project: projectObj ?? undefined,
+            budget: budgetObj ?? undefined,
+            timeline: timelineObj ?? undefined,
+            overallConfidence: typeof p?.overallConfidence === 'number' ? p.overallConfidence : null,
+            rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
+            status: 'draft',
+          },
+        });
+        intakeId = intake.id;
+        this.logger.log(`[${requestId}] Intake saved id=${intakeId}`);
+      } catch (dbErr) {
+        // Non-fatal — log and continue; don't fail the user response
+        this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);
+      }
+
       return {
         requestId,
+        intakeId,
         model: payload.model || model,
         durationMs,
         usage: {
@@ -446,5 +503,31 @@ OUTPUT SCHEMA
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  async convertIntake(intakeId: string, userId?: string) {
+    const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
+    if (!intake) throw new NotFoundException('AI intake not found');
+
+    // Update intake to reflect conversion intent
+    await this.prisma.aiIntake.update({
+      where: { id: intakeId },
+      data: {
+        status: 'pending_project',
+        ...(userId ? { userId } : {}),
+      },
+    });
+
+    // Return pre-populated project draft data for the create-project page
+    return {
+      intakeId: intake.id,
+      draft: {
+        projectName: intake.title ?? intake.summary ?? '',
+        region: intake.locationPrimary ?? '',
+        tradesRequired: intake.trades,
+        notes: intake.scope ?? intake.summary ?? '',
+        userPrompt: intake.rawPrompt,
+      },
+    };
   }
 }
