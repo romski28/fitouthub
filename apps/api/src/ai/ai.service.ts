@@ -274,7 +274,8 @@ OUTPUT SCHEMA
   async getSandboxHealth() {
     const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
-    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '30000');
+    const timeoutRaw = process.env.DEEPSEEK_TIMEOUT_MS;
+    const timeoutMs = Number(timeoutRaw || '30000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '450');
     const apiKeyPresent = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
     const promptWrapper = await this.buildPromptWrapper();
@@ -287,6 +288,7 @@ OUTPUT SCHEMA
         model,
         endpoint,
         timeoutMs,
+        timeoutRaw: timeoutRaw ?? null,
         maxOutputTokens,
         apiKeyPresent,
       },
@@ -294,6 +296,11 @@ OUTPUT SCHEMA
         systemPromptChars: promptWrapper.systemPrompt.length,
         allowedTradesCount: promptWrapper.allowedTradesCount,
         locationEntryCount: promptWrapper.locationEntryCount,
+      },
+      runtime: {
+        renderGitCommit: process.env.RENDER_GIT_COMMIT ?? null,
+        renderServiceName: process.env.RENDER_SERVICE_NAME ?? null,
+        nodeEnv: process.env.NODE_ENV ?? null,
       },
     };
   }
@@ -342,7 +349,7 @@ OUTPUT SCHEMA
 
     try {
       this.logger.log(
-        `[${requestId}] DeepSeek request started model=${model} userPromptChars=${trimmedPrompt.length} userMessageChars=${userMessage.length} systemPromptChars=${promptWrapper.systemPrompt.length} totalMessageChars=${totalMessageChars} allowedTrades=${promptWrapper.allowedTradesCount} locationEntries=${promptWrapper.locationEntryCount}`,
+        `[${requestId}] DeepSeek request started model=${model} timeoutMs=${timeoutMs} userPromptChars=${trimmedPrompt.length} userMessageChars=${userMessage.length} systemPromptChars=${promptWrapper.systemPrompt.length} totalMessageChars=${totalMessageChars} allowedTrades=${promptWrapper.allowedTradesCount} locationEntries=${promptWrapper.locationEntryCount}`,
       );
 
       const response = await fetch(endpoint, {
