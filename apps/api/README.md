@@ -77,6 +77,25 @@ Reference migration file:
 
 - `apps/api/prisma/migrations/20260315_add_financial_summary_indexes/migration.sql`
 
+### DeepSeek sandbox (optional)
+
+For safe requirement-intake experimentation, you can enable a non-critical sandbox endpoint:
+
+- `POST /api/ai/sandbox/requirements`
+
+Required/optional environment variables:
+
+- `DEEPSEEK_API_KEY` (required)
+- `DEEPSEEK_API_URL` (optional, default: `https://api.deepseek.com/chat/completions`)
+- `DEEPSEEK_MODEL` (optional, default: `deepseek-chat`)
+- `DEEPSEEK_TIMEOUT_MS` (optional, default: `15000`)
+- `DEEPSEEK_MAX_OUTPUT_TOKENS` (optional, default: `450`)
+
+Notes:
+
+- The endpoint is intended for sandbox usage only (prompt preview/prototyping).
+- API logs include request duration and token usage for cost/latency monitoring.
+
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash

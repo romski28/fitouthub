@@ -33,6 +33,7 @@ import { MilestonesModule } from './milestones/milestones.module';
 import { NotificationModule } from './notifications/notification.module';
 import { PoliciesModule } from './policies/policies.module';
 import { SupportRequestsModule } from './support-requests/support-requests.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SupportRequestsModule } from './support-requests/support-requests.modul
     NotificationModule,
     PoliciesModule,
     SupportRequestsModule,
+    AiModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },
