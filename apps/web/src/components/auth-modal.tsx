@@ -618,6 +618,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {modalT('preferredLanguage')}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setClientPreferredLanguage('zh-HK')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredLanguage === 'zh-HK' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇭🇰 {modalT('languageCantonese')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setClientPreferredLanguage('en')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredLanguage === 'en' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇬🇧 {modalT('languageEnglish')}
+                      </button>
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       {t('signup.password')}
@@ -677,28 +699,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
                       >
                         {modalT('contactWeChatDisabled')}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {modalT('preferredLanguage')}
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setClientPreferredLanguage('zh-HK')}
-                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredLanguage === 'zh-HK' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-                      >
-                        🇭🇰 {modalT('languageCantonese')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setClientPreferredLanguage('en')}
-                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${clientPreferredLanguage === 'en' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-                      >
-                        🇬🇧 {modalT('languageEnglish')}
                       </button>
                     </div>
                   </div>
@@ -820,6 +820,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {modalT('preferredLanguage')}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setProfessionalPreferredLanguage('zh-HK')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredLanguage === 'zh-HK' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇭🇰 {modalT('languageCantonese')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfessionalPreferredLanguage('en')}
+                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredLanguage === 'en' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        🇬🇧 {modalT('languageEnglish')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-medium text-gray-700">
                       {modalT('professionType')}
                     </label>
@@ -871,28 +893,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
                       >
                         {modalT('contactWeChatDisabled')}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {modalT('preferredLanguage')}
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setProfessionalPreferredLanguage('zh-HK')}
-                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredLanguage === 'zh-HK' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-                      >
-                        🇭🇰 {modalT('languageCantonese')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setProfessionalPreferredLanguage('en')}
-                        className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${professionalPreferredLanguage === 'en' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-                      >
-                        🇬🇧 {modalT('languageEnglish')}
                       </button>
                     </div>
                   </div>
