@@ -119,6 +119,10 @@ export class AiService {
 
 Your job is to convert a free-text renovation or fitout request into strict JSON that is directly useful to the Fitout Hub platform in Hong Kong.
 
+  The response must serve TWO purposes at the same time:
+  1) a contract-friendly narrative summary block
+  2) a platform-friendly structured extraction block
+
 CRITICAL RULES
 1) Output JSON only. No markdown. No prose outside JSON.
 2) The \"trades\" array must contain only exact values from ALLOWED_TRADES.name.
@@ -130,6 +134,7 @@ CRITICAL RULES
 8) Confidence values must be numbers between 0 and 1.
 9) Prefer precision over completeness. Never hallucinate facts.
 10) Return every key in the schema.
+11) The narrative keys summary, scope, assumptions, risks, and nextQuestions are mandatory because they may be reused in contract documentation and project records.
 
 ALLOWED_TRADES = ${JSON.stringify(allowedTrades)}
 
@@ -151,6 +156,10 @@ OUTPUT SCHEMA
   "language": "en|zh-HK|mixed|unknown",
   "intent": "new_project|quote_request|advice|unknown",
   "summary": "string|null",
+  "scope": "string|null",
+  "assumptions": ["string"],
+  "risks": ["string"],
+  "nextQuestions": ["string"],
   "project": {
     "scopeText": "string|null",
     "propertyType": "string|null",
@@ -197,8 +206,6 @@ OUTPUT SCHEMA
   ],
   "unmappedNeeds": ["string"],
   "keyFacts": ["string"],
-  "assumptions": ["string"],
-  "risks": ["string"],
   "missingInfo": ["string"],
   "followUpQuestions": ["string"],
   "overallConfidence": number
@@ -208,6 +215,59 @@ OUTPUT SCHEMA
       systemPrompt,
       allowedTradesCount: allowedTrades.length,
       locationEntryCount: LOCATIONS.length,
+    };
+  }
+
+  private normalizeParsedOutput(parsedOutput: unknown) {
+    if (!parsedOutput || typeof parsedOutput !== 'object' || Array.isArray(parsedOutput)) {
+      return parsedOutput;
+    }
+
+    const result = parsedOutput as Record<string, unknown>;
+    const project =
+      result.project && typeof result.project === 'object' && !Array.isArray(result.project)
+        ? ({ ...(result.project as Record<string, unknown>) } as Record<string, unknown>)
+        : {};
+
+    const summary = typeof result.summary === 'string' ? result.summary : null;
+    const scope =
+      typeof result.scope === 'string'
+        ? result.scope
+        : typeof project.scopeText === 'string'
+          ? (project.scopeText as string)
+          : null;
+    const assumptions = Array.isArray(result.assumptions)
+      ? result.assumptions
+      : [];
+    const risks = Array.isArray(result.risks) ? result.risks : [];
+    const nextQuestions = Array.isArray(result.nextQuestions)
+      ? result.nextQuestions
+      : Array.isArray(result.followUpQuestions)
+        ? result.followUpQuestions
+        : [];
+
+    if (!project.scopeText && scope) {
+      project.scopeText = scope;
+    }
+
+    return {
+      ...result,
+      summary,
+      scope,
+      assumptions,
+      risks,
+      nextQuestions,
+      followUpQuestions: Array.isArray(result.followUpQuestions)
+        ? result.followUpQuestions
+        : nextQuestions,
+      project,
+      contractDocumentation: {
+        summary,
+        scope,
+        assumptions,
+        risks,
+        nextQuestions,
+      },
     };
   }
 
@@ -313,11 +373,19 @@ OUTPUT SCHEMA
 
       if (output) {
         try {
-          parsedOutput = JSON.parse(output);
+          parsedOutput = this.normalizeParsedOutput(JSON.parse(output));
         } catch {
           this.logger.warn(`[${requestId}] DeepSeek returned non-parseable JSON content`);
         }
       }
+
+      const normalizedContractDocumentation =
+        parsedOutput &&
+        typeof parsedOutput === 'object' &&
+        !Array.isArray(parsedOutput) &&
+        'contractDocumentation' in parsedOutput
+          ? (parsedOutput as Record<string, unknown>).contractDocumentation
+          : null;
 
       this.logger.log(
         `[${requestId}] DeepSeek request completed durationMs=${durationMs} promptTokens=${usage.prompt_tokens ?? 0} completionTokens=${usage.completion_tokens ?? 0} totalTokens=${usage.total_tokens ?? 0}`,
@@ -338,6 +406,7 @@ OUTPUT SCHEMA
         },
         output,
         parsedOutput,
+        contractDocumentation: normalizedContractDocumentation,
       };
     } catch (error) {
       const durationMs = Date.now() - startedAt;
