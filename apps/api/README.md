@@ -61,6 +61,22 @@ $ pnpm run test:cov
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
+### Manual SQL required (2026-03-15)
+
+Run the following SQL manually in production before deploying API changes related to financial summary performance:
+
+```sql
+CREATE INDEX IF NOT EXISTS "FinancialTransaction_projectId_createdAt_idx"
+ON "FinancialTransaction"("projectId", "createdAt" DESC);
+
+CREATE INDEX IF NOT EXISTS "FinancialTransaction_projectId_type_status_idx"
+ON "FinancialTransaction"("projectId", "type", "status");
+```
+
+Reference migration file:
+
+- `apps/api/prisma/migrations/20260315_add_financial_summary_indexes/migration.sql`
+
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash
