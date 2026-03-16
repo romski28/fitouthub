@@ -148,7 +148,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 }
 
 export default function SearchFlow() {
-  const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX === 'true';
+  const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('legacy');
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
