@@ -11,13 +11,24 @@ export class AiController {
   }
 
   @Post('sandbox/requirements')
-  async previewRequirements(@Body() body: { prompt?: string }) {
-    return this.aiService.previewRequirements(body?.prompt ?? '');
+  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string }, @Request() req: any) {
+    const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
+    return this.aiService.previewRequirements(body?.prompt ?? '', {
+      sessionId: body?.sessionId,
+      userId,
+    });
   }
 
   @Post('intake/:id/convert')
-  async convertIntake(@Param('id') id: string, @Request() req: any) {
+  async convertIntake(
+    @Param('id') id: string,
+    @Body() body: { sessionId?: string },
+    @Request() req: any,
+  ) {
     const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
-    return this.aiService.convertIntake(id, userId);
+    return this.aiService.convertIntake(id, {
+      userId,
+      sessionId: body?.sessionId,
+    });
   }
 }

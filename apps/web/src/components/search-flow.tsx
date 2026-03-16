@@ -179,6 +179,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 export default function SearchFlow() {
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
+  const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('legacy');
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -208,6 +209,25 @@ export default function SearchFlow() {
   } | null>(null);
   const { isLoggedIn } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
+
+  useEffect(() => {
+    try {
+      const key = 'aiSandboxSessionId';
+      const existing = sessionStorage.getItem(key);
+      if (existing) {
+        setAiSessionId(existing);
+        return;
+      }
+      const generated =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+      sessionStorage.setItem(key, generated);
+      setAiSessionId(generated);
+    } catch {
+      setAiSessionId(null);
+    }
+  }, []);
 
   const checkSandboxHealth = async () => {
     setHealthLoading(true);
@@ -278,7 +298,7 @@ export default function SearchFlow() {
       const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: query.trim() }),
+        body: JSON.stringify({ prompt: query.trim(), sessionId: aiSessionId }),
       });
 
       if (!response.ok) {
@@ -436,6 +456,8 @@ export default function SearchFlow() {
                         try {
                           const res = await fetch(`${API_BASE_URL}/ai/intake/${aiStructured.intakeId}/convert`, {
                             method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ sessionId: aiSessionId }),
                           });
                           if (!res.ok) throw new Error(`Convert failed (${res.status})`);
                           const data: { draft: Record<string, unknown> } = await res.json();

@@ -38,6 +38,12 @@ export class AiService {
     private readonly prisma: PrismaService,
   ) {}
 
+  private sanitizeSessionId(sessionId?: string) {
+    const trimmed = sessionId?.trim();
+    if (!trimmed) return undefined;
+    return trimmed.slice(0, 128);
+  }
+
   private readonly fallbackTrades = [
     {
       name: 'Builder',
@@ -318,7 +324,7 @@ OUTPUT SCHEMA
     };
   }
 
-  async previewRequirements(prompt: string) {
+  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string }) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
       throw new BadRequestException('Prompt is required');
@@ -430,11 +436,16 @@ OUTPUT SCHEMA
       const projectObj = p?.project && typeof p.project === 'object' ? p.project : null;
 
       let intakeId: string | null = null;
+      const sessionId = this.sanitizeSessionId(context?.sessionId);
+      const userId = context?.userId;
+
       try {
         const intake = await this.prisma.aiIntake.create({
           data: {
             requestId,
             rawPrompt: trimmedPrompt,
+            userId: userId ?? null,
+            sessionId: sessionId ?? null,
             model: payload.model || model,
             durationMs,
             promptTokens: usage.prompt_tokens ?? null,
@@ -505,9 +516,22 @@ OUTPUT SCHEMA
     }
   }
 
-  async convertIntake(intakeId: string, userId?: string) {
+  async convertIntake(intakeId: string, context?: { userId?: string; sessionId?: string }) {
+    const userId = context?.userId;
+    const sessionId = this.sanitizeSessionId(context?.sessionId);
     const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
     if (!intake) throw new NotFoundException('AI intake not found');
+
+    // Access control: allow convert only for owning user or matching anonymous session
+    if (intake.userId) {
+      if (!userId || intake.userId !== userId) {
+        throw new NotFoundException('AI intake not found');
+      }
+    } else if (intake.sessionId) {
+      if (!sessionId || intake.sessionId !== sessionId) {
+        throw new NotFoundException('AI intake not found');
+      }
+    }
 
     // Update intake to reflect conversion intent
     await this.prisma.aiIntake.update({
@@ -515,6 +539,7 @@ OUTPUT SCHEMA
       data: {
         status: 'pending_project',
         ...(userId ? { userId } : {}),
+        ...(!intake.sessionId && sessionId ? { sessionId } : {}),
       },
     });
 
