@@ -29,6 +29,27 @@ type DeepSeekChatResponse = {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
+  getSandboxHealth() {
+    const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '15000');
+    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '450');
+    const apiKeyPresent = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
+
+    return {
+      ok: apiKeyPresent,
+      status: apiKeyPresent ? 'configured' : 'missing_api_key',
+      provider: 'deepseek',
+      config: {
+        model,
+        endpoint,
+        timeoutMs,
+        maxOutputTokens,
+        apiKeyPresent,
+      },
+    };
+  }
+
   async previewRequirements(prompt: string) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {

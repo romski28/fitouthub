@@ -82,6 +82,7 @@ Reference migration file:
 For safe requirement-intake experimentation, you can enable a non-critical sandbox endpoint:
 
 - `POST /api/ai/sandbox/requirements`
+- `GET /api/ai/sandbox/health` (configuration readiness check)
 
 Required/optional environment variables:
 
