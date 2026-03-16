@@ -101,6 +101,22 @@ export class AiService {
     return taxonomy;
   }
 
+  private buildCompactLocationTaxonomy() {
+    const taxonomy: Record<string, string[]> = {};
+
+    for (const loc of LOCATIONS) {
+      if (!taxonomy[loc.primary]) {
+        taxonomy[loc.primary] = [];
+      }
+
+      if (!taxonomy[loc.primary].includes(loc.secondary)) {
+        taxonomy[loc.primary].push(loc.secondary);
+      }
+    }
+
+    return taxonomy;
+  }
+
   private async getAllowedTrades() {
     try {
       const trades = await this.tradesService.findAll();
@@ -124,42 +140,35 @@ export class AiService {
 
   private async buildPromptWrapper() {
     const allowedTrades = await this.getAllowedTrades();
-    const locationTaxonomy = this.buildLocationTaxonomy();
+    const locationTaxonomy = this.buildCompactLocationTaxonomy();
+    const allowedTradeNames = allowedTrades.map((trade) => trade.name);
 
     const systemPrompt = `You are Fitout Hub Intake Extractor.
 
-Your job is to convert a free-text renovation or fitout request into strict JSON that is directly useful to the Fitout Hub platform in Hong Kong.
-
-  The response must serve TWO purposes at the same time:
-  1) a contract-friendly narrative summary block
-  2) a platform-friendly structured extraction block
+Convert a Hong Kong renovation or fitout request into strict JSON for routing and project setup.
 
 CRITICAL RULES
-1) Output JSON only. No markdown. No prose outside JSON.
-2) The \"trades\" array must contain only exact values from ALLOWED_TRADES.name.
-3) If a user need is mentioned but no exact trade exists in ALLOWED_TRADES, add it to \"unmappedNeeds\" and do not invent a trade.
-4) Geography is Hong Kong by default. Normalize location using the HK_LOCATION_TAXONOMY.
-5) Use location fields that match the platform structure: primary, secondary, tertiary.
-6) If a field is unknown, use null or an empty array. Do not guess.
-7) Preserve raw snippets where useful, especially for scope, size, budget, timeline, and location.
-8) Confidence values must be numbers between 0 and 1.
-9) Prefer precision over completeness. Never hallucinate facts.
-10) Return every key in the schema.
-11) The narrative keys summary, scope, assumptions, risks, and nextQuestions are mandatory because they may be reused in contract documentation and project records.
+1) Output JSON only.
+2) \"trades\" must contain exact values from ALLOWED_TRADES only.
+3) If no exact trade exists, add the need to \"unmappedNeeds\".
+4) Geography is Hong Kong by default.
+5) Use location.primary, location.secondary, location.tertiary.
+6) Unknown values must be null or empty arrays.
+7) Confidence values must be between 0 and 1.
+8) Prefer precision over completeness. Do not hallucinate.
+9) Return every top-level key in the schema.
 
-ALLOWED_TRADES = ${JSON.stringify(allowedTrades)}
+ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
 
 HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
 
 NORMALIZATION RULES
-- Currency: If the prompt uses HKD, HK$, or $ in Hong Kong context, normalize currency to HKD.
+- Currency: HKD if HK context uses HKD, HK$, or $.
 - Budget shorthand: 450k => 450000, 1.2m => 1200000.
-- If one budget figure is given, set min and max to the same value.
-- Size: normalize common units to sqft or sqm. Keep rawText even when numeric parsing succeeds.
-- Space: identify propertyType and scopeLevel such as room, floor, unit, shop, office, building, house, apartment.
-- Timeline: capture durationText, startText, deadlineText separately.
-- Trades: choose all relevant exact trade names from ALLOWED_TRADES.name.
-- Location: use country=Hong Kong and normalize into primary/secondary/tertiary where possible.
+- If one budget figure is given, set min and max the same.
+- Normalize size units to sqft or sqm.
+- Capture durationText, startText, deadlineText separately.
+- Use country=Hong Kong. Set tertiary only if explicit in the user prompt.
 
 OUTPUT SCHEMA
 {
@@ -208,14 +217,7 @@ OUTPUT SCHEMA
     "confidence": number
   },
   "trades": ["string"],
-  "tradeDetails": [
-    {
-      "trade": "string",
-      "confidence": number,
-      "reason": "string",
-      "evidence": "string"
-    }
-  ],
+  "tradeDetails": [{ "trade": "string", "confidence": number }],
   "unmappedNeeds": ["string"],
   "keyFacts": ["string"],
   "missingInfo": ["string"],
@@ -226,7 +228,7 @@ OUTPUT SCHEMA
     return {
       systemPrompt,
       allowedTradesCount: allowedTrades.length,
-      locationEntryCount: LOCATIONS.length,
+      locationEntryCount: Object.keys(locationTaxonomy).length,
     };
   }
 
@@ -294,7 +296,7 @@ OUTPUT SCHEMA
     const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     const timeoutRaw = process.env.DEEPSEEK_TIMEOUT_MS;
-    const timeoutMs = Number(timeoutRaw || '30000');
+    const timeoutMs = Number(timeoutRaw || '60000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '700');
     const apiKeyPresent = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
     const promptWrapper = await this.buildPromptWrapper();
@@ -341,7 +343,7 @@ OUTPUT SCHEMA
     const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     // Increased default timeout to 30000ms (30s) for large prompts
-    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '30000');
+    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '700');
 
     const requestId = `ds_${Date.now().toString(36)}`;

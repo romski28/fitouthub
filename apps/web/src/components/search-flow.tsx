@@ -22,13 +22,21 @@ interface IntentModalProps {
 function ThinkingIndicator() {
   const phases = ['Reading your request', 'Mapping trades and location', 'Structuring project requirements'];
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    const phaseInterval = window.setInterval(() => {
       setPhaseIndex((current) => (current + 1) % phases.length);
     }, 1400);
 
-    return () => window.clearInterval(interval);
+    const timerInterval = window.setInterval(() => {
+      setElapsedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => {
+      window.clearInterval(phaseInterval);
+      window.clearInterval(timerInterval);
+    };
   }, []);
 
   return (
@@ -40,7 +48,12 @@ function ThinkingIndicator() {
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-emerald-800">AI is thinking...</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-emerald-800">AI is thinking...</p>
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              {elapsedSeconds}s
+            </span>
+          </div>
           <p className="text-xs text-slate-500 transition-opacity duration-200">{phases[phaseIndex]}</p>
         </div>
       </div>

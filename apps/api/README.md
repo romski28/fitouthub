@@ -89,7 +89,7 @@ Required/optional environment variables:
 - `DEEPSEEK_API_KEY` (required)
 - `DEEPSEEK_API_URL` (optional, default: `https://api.deepseek.com/chat/completions`)
 - `DEEPSEEK_MODEL` (optional, default: `deepseek-chat`)
-- `DEEPSEEK_TIMEOUT_MS` (optional, default: `30000`) — Timeout in ms for DeepSeek API requests (increase for large prompts)
+- `DEEPSEEK_TIMEOUT_MS` (optional, default: `60000`) — Timeout in ms for DeepSeek API requests (increase for large prompts)
 - `DEEPSEEK_MAX_OUTPUT_TOKENS` (optional, default: `700`)
 
 Notes:
