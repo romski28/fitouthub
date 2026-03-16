@@ -193,6 +193,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 
 export default function SearchFlow() {
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
+  const t = useTranslations('home.searchFlow');
   const router = useRouter();
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('legacy');
