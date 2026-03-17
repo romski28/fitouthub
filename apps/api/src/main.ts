@@ -75,6 +75,13 @@ async function bootstrap() {
     const startedAt = Date.now();
     const { method, originalUrl } = req;
 
+    // Ensure UTF-8 charset on all JSON responses
+    const originalJson = res.json;
+    res.json = function(body: any) {
+      res.set('Content-Type', 'application/json; charset=utf-8');
+      return originalJson.call(this, body);
+    };
+
     res.on('finish', () => {
       const durationMs = Date.now() - startedAt;
       const message = `${method} ${originalUrl} -> ${res.statusCode} (${durationMs}ms)`;

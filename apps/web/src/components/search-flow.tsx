@@ -100,7 +100,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
     const { currency, min, max, rawText } = s.budget;
     if (rawText && !min && !max) return rawText;
     const cur = currency && currency !== 'unknown' ? currency : 'HKD';
-    if (min && max && min !== max) return `${cur} ${min.toLocaleString()} â€“ ${max.toLocaleString()}`;
+    if (min && max && min !== max) return `${cur} ${min.toLocaleString()} – ${max.toLocaleString()}`;
     if (min) return `${cur} ${min.toLocaleString()}`;
     return null;
   })();
@@ -687,7 +687,7 @@ export default function SearchFlow() {
                     onClick={handleConvertToProject}
                     className="flex-1 min-w-[140px] rounded border border-emerald-400 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 transition disabled:opacity-50"
                   >
-                    {isConverting ? 'Creatingâ€¦' : isLoggedIn === false ? 'Create Project (join free â†’)' : 'Convert to Project'}
+                    {isConverting ? 'Creating…' : isLoggedIn === false ? 'Create Project (join free →)' : 'Convert to Project'}
                   </button>
                 )}
                 {convertError && <p className="w-full text-rose-600 text-[11px]">{convertError}</p>}
