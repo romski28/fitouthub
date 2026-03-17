@@ -178,13 +178,13 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Key facts</p>
           <ul className="space-y-0.5">
             {s.keyFacts.slice(0, 4).map((fact, i) => (
-              <li key={i} className="text-slate-600 flex gap-1.5"><span className="text-emerald-500">â€¢</span>{fact}</li>
+              <li key={i} className="text-slate-600 flex gap-1.5"><span className="text-emerald-500">•</span>{fact}</li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Next questions â€” gated for anon */}
+      {/* Next questions – gated for anon */}
       {s.nextQuestions.length > 0 && (
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">We may need to know</p>
@@ -192,7 +192,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
             <div className="relative">
               <ul className="space-y-0.5 blur-sm select-none pointer-events-none">
                 {s.nextQuestions.slice(0, 3).map((q, i) => (
-                  <li key={i} className="text-slate-500 flex gap-1.5"><span>â“</span>{q}</li>
+                  <li key={i} className="text-slate-500 flex gap-1.5"><span>❓</span>{q}</li>
                 ))}
               </ul>
               <div className="absolute inset-0 flex items-center justify-center">
@@ -201,7 +201,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
                   onClick={openJoinModal}
                   className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 px-3 py-1 rounded-full hover:bg-emerald-100 transition"
                 >
-                  Join free to see full analysis â†’
+                  Join free to see full analysis →
                 </button>
               </div>
             </div>
