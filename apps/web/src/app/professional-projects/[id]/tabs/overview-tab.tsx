@@ -2,6 +2,7 @@
 
 import React from 'react';
 import toast from 'react-hot-toast';
+import { ProjectAiPanel } from '@/components/project-ai-panel';
 
 interface OverviewTabProps {
   tab?: string;
@@ -14,6 +15,11 @@ interface OverviewTabProps {
       region: string;
       budget?: string;
       notes?: string;
+      aiIntake?: {
+        id?: string;
+        assumptions?: unknown;
+        risks?: unknown;
+      } | null;
     };
     status: string;
     quoteAmount?: string;
@@ -280,6 +286,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <div className="mt-4 pt-4 border-t border-slate-200">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Project Notes</p>
             <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.project.notes}</p>
+          </div>
+        )}
+
+        {project.project.aiIntake && (
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <ProjectAiPanel aiIntake={project.project.aiIntake} mode="professional" />
           </div>
         )}
       </div>

@@ -280,6 +280,14 @@ function EditProjectModal({
     tradesRequired: project.tradesRequired || [],
     isEmergency: (project as any).isEmergency ?? false,
     endDate: (project as any).endDate || "",
+    aiFrom: {
+      assumptions: Array.isArray((project as any)?.aiIntake?.assumptions)
+        ? (project as any).aiIntake.assumptions
+        : [],
+      risks: Array.isArray((project as any)?.aiIntake?.risks)
+        ? (project as any).aiIntake.risks
+        : [],
+    },
     existingPhotos:
       Array.isArray((project as any).photos)
         ? (project as any).photos.map((p: any) =>

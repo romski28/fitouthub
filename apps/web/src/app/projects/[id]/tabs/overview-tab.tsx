@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
 import ProjectFinancialsCard from '@/components/project-financials-card';
+import { ProjectAiPanel } from '@/components/project-ai-panel';
 import toast from 'react-hot-toast';
 
 interface ProjectDetail {
@@ -23,6 +24,11 @@ interface ProjectDetail {
   contractorContactEmail?: string;
   tradesRequired?: string[];
   professionals?: any[];
+  aiIntake?: {
+    id?: string;
+    assumptions?: unknown;
+    risks?: unknown;
+  } | null;
 }
 
 interface OverviewTabProps {
@@ -135,6 +141,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const projectStatus = project.status ?? 'pending';
   const awardedPro = project.professionals?.find((pp) => pp.status === 'awarded');
   const projectCostValue = Number(awardedPro?.quoteAmount || project.approvedBudget || project.budget || 0);
+  const hasAiInsights = Boolean(project.aiIntake && (project.aiIntake.assumptions || project.aiIntake.risks));
 
   return (
     <div className="space-y-4">
@@ -205,6 +212,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           </div>
         </AccordionItem>
+
+        {hasAiInsights && (
+          <AccordionItem
+            id="from-ai"
+            title="From AI"
+            isOpen={expandedAccordions['from-ai'] === true}
+            onToggle={onToggleAccordion}
+          >
+            <ProjectAiPanel aiIntake={project.aiIntake ?? null} mode="client" />
+          </AccordionItem>
+        )}
 
         {/* Schedule & Contractor Contact */}
         <AccordionItem

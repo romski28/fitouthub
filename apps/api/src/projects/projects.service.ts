@@ -274,6 +274,13 @@ export class ProjectsService {
           professionals: {
             include: { professional: true },
           },
+          aiIntake: {
+            select: {
+              id: true,
+              assumptions: true,
+              risks: true,
+            },
+          },
           photos: true,
         },
       })) as any[];
@@ -335,6 +342,7 @@ export class ProjectsService {
               professional: true,
             },
           },
+          aiIntake: true,
           photos: true,
         },
       });
@@ -389,6 +397,13 @@ export class ProjectsService {
                 professional: true,
               },
             },
+            aiIntake: {
+              select: {
+                id: true,
+                assumptions: true,
+                risks: true,
+              },
+            },
             photos: true,
           },
         });
@@ -434,6 +449,7 @@ export class ProjectsService {
               professional: true,
             },
           },
+          aiIntake: true,
           photos: true,
         },
       });
@@ -462,6 +478,13 @@ export class ProjectsService {
           professionals: {
             include: {
               professional: true,
+            },
+          },
+          aiIntake: {
+            select: {
+              id: true,
+              assumptions: true,
+              risks: true,
             },
           },
           photos: true,

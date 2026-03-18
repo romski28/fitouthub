@@ -334,7 +334,17 @@ export class ProfessionalController {
           },
         },
         include: {
-          project: true,
+          project: {
+            include: {
+              aiIntake: {
+                select: {
+                  id: true,
+                  assumptions: true,
+                  risks: true,
+                },
+              },
+            },
+          },
           paymentRequests: true,
         },
       });

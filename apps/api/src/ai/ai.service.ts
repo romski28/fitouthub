@@ -545,6 +545,13 @@ OUTPUT SCHEMA
       },
     });
 
+    const toStringArray = (value: unknown): string[] => {
+      if (!Array.isArray(value)) return [];
+      return value
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter((item) => item.length > 0);
+    };
+
     // ── Budget mapping ────────────────────────────────────────────────
     const budgetJson = intake.budget as {
       min?: number | null;
@@ -601,6 +608,10 @@ OUTPUT SCHEMA
         tradesRequired: intake.trades,
         notes: intake.scope ?? intake.summary ?? '',
         userPrompt: intake.rawPrompt,
+        aiFrom: {
+          assumptions: toStringArray(intake.assumptions),
+          risks: toStringArray(intake.risks),
+        },
         ...(draftBudget !== null ? { budget: draftBudget } : {}),
         ...(draftEndDate ? { endDate: draftEndDate } : {}),
         ...(isEmergency ? { isEmergency: true } : {}),

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import LocationSelect, { CanonicalLocation } from './location-select';
 import FileUploader from './file-uploader';
+import { ProjectAiPanel } from './project-ai-panel';
 import { Professional } from '@/lib/types';
 import { API_BASE_URL } from '@/config/api';
 
@@ -21,6 +22,10 @@ export interface ProjectFormData {
   isEmergency?: boolean;
   onlySelectedProfessionalsCanBid?: boolean;
   endDate?: string; // ISO date string (YYYY-MM-DD)
+  aiFrom?: {
+    assumptions?: string[];
+    risks?: string[];
+  };
 }
 
 interface ProjectFormProps {
@@ -87,6 +92,7 @@ const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectF
   isEmergency: initialData?.isEmergency ?? false,
   onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
   endDate: initialData?.endDate || '',
+  aiFrom: initialData?.aiFrom,
 });
 
 const normalizeTradeSelections = (trades: string[], availableTrades: AvailableTrade[]) => {
@@ -473,6 +479,13 @@ export function ProjectForm({
             ))}
           </div>
         </div>
+      )}
+
+      {formData.aiFrom && (
+        <ProjectAiPanel
+          aiIntake={{ assumptions: formData.aiFrom.assumptions, risks: formData.aiFrom.risks }}
+          mode="client"
+        />
       )}
 
       {/* Project Name */}

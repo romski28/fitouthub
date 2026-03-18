@@ -11,6 +11,7 @@ import { UpdatesModal } from "@/components/updates-modal";
 import ProjectFinancialsCard from "@/components/project-financials-card";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
 import { useRoleGuard } from "@/hooks/use-role-guard";
+import { ProjectAiPanel } from "@/components/project-ai-panel";
 
 interface ProjectProfessional {
   id: string;
@@ -44,6 +45,10 @@ interface ProjectDetail {
   endDate?: string;
   professionals?: ProjectProfessional[];
   tradesRequired?: string[];
+  aiIntake?: {
+    id?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 const formatDate = (date?: string) => {
@@ -182,6 +187,10 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         awardedDisplayName={project.professionals?.find((pp) => pp.status === 'awarded')?.professional.fullName ||
           project.professionals?.find((pp) => pp.status === 'awarded')?.professional.businessName}
       />
+
+      {project.aiIntake && (
+        <ProjectAiPanel aiIntake={project.aiIntake} mode="admin" />
+      )}
 
       <ProjectProgressBar
         project={{
