@@ -88,7 +88,7 @@ async function bootstrap() {
 
       if (res.statusCode >= 500) {
         logger.error(message);
-      } else if (durationMs >= 2000) {
+      } else if (res.statusCode !== 304 && durationMs >= 2000) {
         logger.warn(`Slow request: ${message}`);
       } else {
         logger.log(message);

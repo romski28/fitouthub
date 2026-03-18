@@ -40,8 +40,6 @@ export class UpdatesController {
         throw new BadRequestException('actAs is only permitted for admin');
       }
 
-      console.log('[getUpdatesSummary] User:', userId, 'Role:', role, 'tokenRole:', tokenRole, 'isProfessionalFlag:', isProfessionalFlag, 'actAs:', actAs, 'clientId:', clientId);
-
       // Admin impersonation of client
       if (role === 'admin' && actAs === 'client' && clientId) {
         return this.updatesService.getUpdatesSummary(clientId, 'client');
@@ -49,7 +47,7 @@ export class UpdatesController {
 
       return this.updatesService.getUpdatesSummary(userId, role);
     } catch (error) {
-      console.error('[getUpdatesSummary] Controller error:', error?.message, error?.stack);
+      console.error('[getUpdatesSummary] Controller error:', error?.message);
       throw error;
     }
   }

@@ -154,9 +154,10 @@ interface Props {
   projectId?: string;
   initialSearchTerm?: string;
   initialProjectData?: Partial<ProjectFormData>;
+  requireLocation?: boolean;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialProjectData }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialProjectData, requireLocation = false }: Props) {
   const t = useTranslations('professionalsPage.list');
   const router = useRouter();
   const { role } = useAuth();
@@ -471,6 +472,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   }, [initialFromIntent.description, initialProjectData, loc, professionHint, searchTerm, t]);
 
   const handleInviteSelected = () => {
+    if (requireLocation && !loc.primary && !loc.secondary && !loc.tertiary) {
+      return;
+    }
+
     if (projectId) {
       setIsModalOpen(true);
       return;
@@ -504,6 +509,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     setDetailsPro(pro);
     setDetailsOpen(true);
   };
+
+  const locationSelected = Boolean(loc.primary || loc.secondary || loc.tertiary);
+  const blockInviteForMissingLocation = requireLocation && !locationSelected;
 
   return (
     <div className="space-y-3">
@@ -644,23 +652,31 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       )}
 
       {selectedIds.size > 0 ? (
-        <button
-          type="button"
-          onClick={handleInviteSelected}
-          className="fixed top-20 right-6 z-40 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3"
-          aria-label={t('actions.shareProjectAria')}
-        >
-          <div className="flex flex-col items-center justify-center text-center">
-            <span className="text-xs font-semibold leading-tight">
-              {selectedIds.size === 1 ? t('actions.inviteOne') : t('actions.inviteMany', { count: selectedIds.size })}
-            </span>
-            {selectedIds.size < 3 && (
-              <span className="text-[9px] text-indigo-200 mt-0.5">
-                {t('actions.recommendAtLeastThree')}
+        <div className="fixed top-20 right-6 z-40 flex flex-col items-end gap-2">
+          {blockInviteForMissingLocation && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 shadow-sm max-w-[220px]">
+              Please set location before continuing.
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleInviteSelected}
+            disabled={blockInviteForMissingLocation}
+            className="rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+            aria-label={t('actions.shareProjectAria')}
+          >
+            <div className="flex flex-col items-center justify-center text-center">
+              <span className="text-xs font-semibold leading-tight">
+                {selectedIds.size === 1 ? t('actions.inviteOne') : t('actions.inviteMany', { count: selectedIds.size })}
               </span>
-            )}
-          </div>
-        </button>
+              {selectedIds.size < 3 && (
+                <span className="text-[9px] text-indigo-200 mt-0.5">
+                  {t('actions.recommendAtLeastThree')}
+                </span>
+              )}
+            </div>
+          </button>
+        </div>
       ) : null}
 
       <ProjectShareModal

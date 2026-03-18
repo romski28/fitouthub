@@ -783,6 +783,7 @@ export default function SearchFlow() {
                       const params = new URLSearchParams();
                       if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
                       if (aiStructured.locationPrimary) params.set('location', aiStructured.locationPrimary);
+                      else params.set('askRegion', '1');
                       router.push(`/professionals?${params.toString()}`);
                     }}
                     className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"

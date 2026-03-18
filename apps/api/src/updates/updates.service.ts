@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 
 export interface FinancialActionItem {
@@ -39,7 +39,57 @@ export interface UpdatesSummary {
 
 @Injectable()
 export class UpdatesService {
+  private readonly logger = new Logger(UpdatesService.name);
+  private readonly summaryCache = new Map<
+    string,
+    { expiresAt: number; value: UpdatesSummary }
+  >();
+  private readonly summaryCacheTtlMs = Number(
+    process.env.UPDATES_SUMMARY_CACHE_TTL_MS || '15000',
+  );
+
   constructor(private prisma: PrismaService) {}
+
+  private getSummaryCacheKey(
+    userId: string,
+    role: 'client' | 'professional' | 'admin',
+  ) {
+    return `${role}:${userId}`;
+  }
+
+  private getCachedSummary(
+    userId: string,
+    role: 'client' | 'professional' | 'admin',
+  ): UpdatesSummary | null {
+    const key = this.getSummaryCacheKey(userId, role);
+    const entry = this.summaryCache.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt < Date.now()) {
+      this.summaryCache.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  private setCachedSummary(
+    userId: string,
+    role: 'client' | 'professional' | 'admin',
+    value: UpdatesSummary,
+  ) {
+    const key = this.getSummaryCacheKey(userId, role);
+    this.summaryCache.set(key, {
+      value,
+      expiresAt: Date.now() + this.summaryCacheTtlMs,
+    });
+  }
+
+  private invalidateSummaryCache(
+    userId: string,
+    role: 'client' | 'professional' | 'admin',
+  ) {
+    const key = this.getSummaryCacheKey(userId, role);
+    this.summaryCache.delete(key);
+  }
 
   /**
    * Get financial transactions requiring action from the user
@@ -91,18 +141,6 @@ export class UpdatesService {
       },
     });
 
-    console.log(`[getFinancialActions] Role: ${role}, Found ${transactions.length} transactions`);
-    if (role === 'admin') {
-      console.log(`[getFinancialActions] Platform tasks:`, transactions.filter(t => t.actionByRole === 'platform').map(t => ({
-        id: t.id,
-        type: t.type,
-        actionByRole: t.actionByRole,
-        actionBy: t.actionBy,
-        actionComplete: t.actionComplete,
-        status: t.status,
-      })));
-    }
-
     let actions: FinancialActionItem[] = transactions.map((t) => ({
       id: t.id,
       type: t.type,
@@ -118,15 +156,12 @@ export class UpdatesService {
 
     // For clients, add pending quotations that need review (admin impersonation handled at controller level)
     if (role === 'client') {
-      console.log(`[getFinancialActions] ${role} role detected, fetching pending quotations...`);
       const pendingQuotations = await this.getPendingQuotations(userId);
-      console.log(`[getFinancialActions] Found ${pendingQuotations.length} pending quotations for user ${userId}`);
       actions = [...actions, ...pendingQuotations];
       // Sort by creation date descending
       actions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
-    console.log(`[getFinancialActions] Returning ${actions.length} total actions`);
     return actions;
   }
 
@@ -134,59 +169,40 @@ export class UpdatesService {
    * Get projects with pending quotations for a client (status='quoted', not yet accepted)
    */
   private async getPendingQuotations(clientId: string): Promise<FinancialActionItem[]> {
-    const projects = await this.prisma.project.findMany({
+    const quotedItems = await this.prisma.projectProfessional.findMany({
       where: {
-        OR: [
-          { userId: clientId },
-          { clientId: clientId },
-        ],
-        status: { not: 'archived' },
-        professionals: {
-          some: {
-            status: 'quoted',  // Professional has quoted but client hasn't accepted
-          },
+        status: 'quoted',
+        project: {
+          OR: [{ userId: clientId }, { clientId }],
+          status: { not: 'archived' },
         },
       },
-      include: {
-        professionals: {
-          where: {
-            status: 'quoted',
-          },
-          include: {
-            professional: {
-              select: {
-                businessName: true,
-                fullName: true,
-              },
-            },
+      select: {
+        id: true,
+        quoteAmount: true,
+        quotedAt: true,
+        professionalId: true,
+        project: {
+          select: {
+            id: true,
+            projectName: true,
           },
         },
       },
     });
 
-    console.log(`[getPendingQuotations] Found ${projects.length} projects with quoted professionals for client ${clientId}`);
-    if (projects.length > 0) {
-      console.log('[getPendingQuotations] Projects:', projects.map(p => ({
-        id: p.id,
-        name: p.projectName,
-        quotedProfessionals: p.professionals.length,
-      })));
-    }
-
-    return projects.flatMap((project) =>
-      project.professionals.map((pp) => ({
-        id: `quotation-${pp.id}`,  // Synthetic ID for quotation items
+    return quotedItems.map((item) => ({
+        id: `quotation-${item.id}`,
         type: 'quotation_review',
         description: `Project quotation in progress, please review`,
-        amount: pp.quoteAmount?.toString() || '0',
+        amount: item.quoteAmount?.toString() || '0',
         status: 'pending',
-        projectId: project.id,
-        projectName: project.projectName || 'Project',
-        createdAt: pp.quotedAt || new Date(),
-        requestedBy: pp.professionalId,
+        projectId: item.project.id,
+        projectName: item.project.projectName || 'Project',
+        createdAt: item.quotedAt || new Date(),
+        requestedBy: item.professionalId,
         requestedByRole: 'professional',
-      })),
-    );
+      }));
   }
 
   /**
@@ -428,11 +444,11 @@ export class UpdatesService {
       });
 
       if (!professional) {
-        console.log('[UpdatesService.getUnreadMessages] Professional not found for userId:', userId);
+        this.logger.warn(
+          `[getUnreadMessages] Professional not found for userId=${userId}`,
+        );
         return [];
       }
-
-      console.log('[UpdatesService.getUnreadMessages] Found professional:', professional.id);
 
       // 1. ProjectProfessional messages (Message model)
       const unreadClientMessages = await this.prisma.$queryRaw<
@@ -457,8 +473,6 @@ export class UpdatesService {
           AND p.status != 'archived'
         GROUP BY m."projectProfessionalId", p.id, p."projectName"
       `;
-
-      console.log('[UpdatesService.getUnreadMessages] Unread client messages found:', unreadClientMessages.length);
 
       for (const group of unreadClientMessages) {
         const latestMessage = await this.prisma.message.findFirst({
@@ -884,6 +898,7 @@ export class UpdatesService {
       throw new BadRequestException('Invalid chat type');
     }
 
+    this.invalidateSummaryCache(userId, role);
     return { success: true };
   }
 
@@ -894,37 +909,44 @@ export class UpdatesService {
     userId: string,
     role: 'client' | 'professional' | 'admin',
   ): Promise<UpdatesSummary> {
-    console.log(`[getUpdatesSummary] Starting for userId: ${userId}, role: ${role}`);
-    
+    const cached = this.getCachedSummary(userId, role);
+    if (cached) {
+      return cached;
+    }
+
     try {
       const [financialActions, unreadMessages] = await Promise.all([
         this.getFinancialActions(userId, role).catch(err => {
-          console.error('[getUpdatesSummary] Error fetching financial actions:', err);
+          this.logger.error(
+            `[getUpdatesSummary] Error fetching financial actions for userId=${userId}, role=${role}: ${err instanceof Error ? err.message : 'unknown error'}`,
+          );
           return [] as FinancialActionItem[];
         }),
         this.getUnreadMessages(userId, role).catch(err => {
-          console.error('[getUpdatesSummary] Error fetching unread messages:', err);
+          this.logger.error(
+            `[getUpdatesSummary] Error fetching unread messages for userId=${userId}, role=${role}: ${err instanceof Error ? err.message : 'unknown error'}`,
+          );
           return [] as UnreadMessageGroup[];
         }),
       ]);
 
-      console.log(`[getUpdatesSummary] financialActions count: ${financialActions.length}`);
-      if (financialActions.length > 0) {
-        console.log('[getUpdatesSummary] Financial actions:', financialActions.map(a => ({ id: a.id, type: a.type, description: a.description, projectId: a.projectId })));
-      }
-
       const financialCount = financialActions.length;
       const unreadCount = unreadMessages.reduce((sum, g) => sum + g.unreadCount, 0);
 
-      return {
+      const summary: UpdatesSummary = {
         financialActions,
         financialCount,
         unreadMessages,
         unreadCount,
         totalCount: financialCount + unreadCount,
       };
+
+      this.setCachedSummary(userId, role, summary);
+      return summary;
     } catch (error) {
-      console.error('[getUpdatesSummary] Unexpected error:', error);
+      this.logger.error(
+        `[getUpdatesSummary] Unexpected error for userId=${userId}, role=${role}: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
       // Return empty summary instead of crashing
       return {
         financialActions: [],

@@ -67,6 +67,7 @@ function ProfessionalsPageInner() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId') || undefined;
   const tradeParam = searchParams.get('trade') || undefined;
+  const askRegion = searchParams.get('askRegion') === '1';
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
   const [projectPrefill, setProjectPrefill] = useState<Partial<ProjectFormData>>({});
@@ -163,6 +164,11 @@ function ProfessionalsPageInner() {
     return userLocation;
   }, [projectRegion, userLocation]);
 
+  const hasDefaultLocation = Boolean(
+    defaultLocation?.primary || defaultLocation?.secondary || defaultLocation?.tertiary,
+  );
+  const shouldShowRegionNotice = askRegion && !hasDefaultLocation;
+
   console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, projectName, defaultLocation });
 
   return (
@@ -188,6 +194,12 @@ function ProfessionalsPageInner() {
             </p>
           </div>
         </section>
+
+        {shouldShowRegionNotice && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            We couldn&apos;t confirm your area. Please set the location filter to find better matches.
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-4">
@@ -215,6 +227,7 @@ function ProfessionalsPageInner() {
             projectId={projectId}
             initialSearchTerm={tradeParam || projectName}
             initialProjectData={projectPrefill}
+            requireLocation={shouldShowRegionNotice}
           />
         )}
       </div>
