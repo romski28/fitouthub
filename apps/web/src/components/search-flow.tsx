@@ -34,6 +34,8 @@ interface AiStructured {
   timeline: { durationText: string | null; startText: string | null } | null;
   keyFacts: string[];
   nextQuestions: string[];
+  assumptions: string[];
+  risks: string[];
   overallConfidence: number | null;
 }
 
@@ -510,6 +512,8 @@ export default function SearchFlow() {
           keyFacts?: string[];
           nextQuestions?: string[];
           followUpQuestions?: string[];
+          assumptions?: string[];
+          risks?: string[];
           overallConfidence?: number | null;
         } | null;
       } = await response.json();
@@ -538,6 +542,8 @@ export default function SearchFlow() {
         timeline: p?.timeline ? { durationText: p.timeline.durationText ?? null, startText: p.timeline.startText ?? null } : null,
         keyFacts: p?.keyFacts ?? [],
         nextQuestions: p?.nextQuestions ?? p?.followUpQuestions ?? [],
+        assumptions: Array.isArray(p?.assumptions) ? p.assumptions.filter((item): item is string => typeof item === 'string') : [],
+        risks: Array.isArray(p?.risks) ? p.risks.filter((item): item is string => typeof item === 'string') : [],
         overallConfidence: p?.overallConfidence ?? null,
       });
 
@@ -780,6 +786,25 @@ export default function SearchFlow() {
                   <button
                     type="button"
                     onClick={() => {
+                      const aiRegion = [aiStructured.locationSecondary, aiStructured.locationPrimary]
+                        .filter((item): item is string => Boolean(item && item.trim()))
+                        .join(', ');
+                      const aiDraft = {
+                        initialData: {
+                          projectName: aiStructured.title || aiStructured.summary || '',
+                          notes: finalSummary.trim() || aiStructured.scope || aiStructured.summary || '',
+                          tradesRequired: aiStructured.trades || [],
+                          region: aiRegion,
+                          aiFrom: {
+                            assumptions: aiStructured.assumptions,
+                            risks: aiStructured.risks,
+                          },
+                        },
+                        ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
+                      };
+
+                      sessionStorage.setItem('createProjectDraft', JSON.stringify(aiDraft));
+
                       const params = new URLSearchParams();
                       if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
                       if (aiStructured.locationPrimary) params.set('location', aiStructured.locationPrimary);

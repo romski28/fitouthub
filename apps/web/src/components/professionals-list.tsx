@@ -484,21 +484,49 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const selectedProfessionals = filtered.filter((p) => selectedIds.has(p.id));
     if (selectedProfessionals.length === 0) return;
 
+    let existingDraft: {
+      initialData?: Partial<ProjectFormData>;
+      aiIntakeId?: string;
+    } | null = null;
+    try {
+      const rawDraft = sessionStorage.getItem('createProjectDraft');
+      if (rawDraft) {
+        existingDraft = JSON.parse(rawDraft) as {
+          initialData?: Partial<ProjectFormData>;
+          aiIntakeId?: string;
+        };
+      }
+    } catch {
+      existingDraft = null;
+    }
+
+    const mergedInitialData: Partial<ProjectFormData> = {
+      ...(existingDraft?.initialData || {}),
+      ...shareInitialData,
+      notes:
+        shareInitialData.notes ||
+        existingDraft?.initialData?.notes ||
+        initialFromIntent.description ||
+        '',
+      aiFrom: shareInitialData.aiFrom || existingDraft?.initialData?.aiFrom,
+    };
+
     sessionStorage.setItem(
       'projectDescription',
       JSON.stringify({
-        description: shareInitialData.notes || initialFromIntent.description || '',
-        profession: shareInitialData.tradesRequired?.[0],
-        location: shareInitialData.location,
-        tradesRequired: shareInitialData.tradesRequired || [],
+        description: mergedInitialData.notes || '',
+        profession: mergedInitialData.tradesRequired?.[0],
+        location: mergedInitialData.location,
+        tradesRequired: mergedInitialData.tradesRequired || [],
       }),
     );
 
     sessionStorage.setItem(
       'createProjectDraft',
       JSON.stringify({
-        initialData: shareInitialData,
+        initialData: mergedInitialData,
         selectedProfessionals,
+        ...(existingDraft?.aiIntakeId ? { aiIntakeId: existingDraft.aiIntakeId } : {}),
       }),
     );
 

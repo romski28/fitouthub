@@ -65,6 +65,9 @@ interface ProjectFormProps {
   
   /** Whether to show service selection */
   showService?: boolean;
+
+  /** Show AI-first overview block before full editable fields */
+  showAiOverview?: boolean;
 }
 
 const MAX_FILES = 5;
@@ -147,6 +150,7 @@ export function ProjectForm({
   submitLabel,
   showBudget = true,
   showService = true,
+  showAiOverview = false,
 }: ProjectFormProps) {
     const t = useTranslations('project');
     const commonT = useTranslations('common');
@@ -159,6 +163,8 @@ export function ProjectForm({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []));
   const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
+  const [isOverviewEditing, setIsOverviewEditing] = useState(false);
+  const [showAiExtract, setShowAiExtract] = useState(false);
   const isReadOnly = mode === 'view';
 
   useEffect(() => {
@@ -169,6 +175,8 @@ export function ProjectForm({
     setRemovedPhotos([]);
     setTradeSearchTerm('');
     setShowTradeDropdown(false);
+    setIsOverviewEditing(false);
+    setShowAiExtract(false);
   }, [initialDataKey]);
 
   // Fetch available trades from API
@@ -268,6 +276,24 @@ export function ProjectForm({
     if (!onAssistRequest) return;
     await onAssistRequest({ ...formData, existingPhotos }, pendingFiles, removedPhotos);
   };
+
+  const locationSummary = [
+    formData.location?.tertiary,
+    formData.location?.secondary,
+    formData.location?.primary,
+  ]
+    .filter((item): item is string => Boolean(item && item.trim()))
+    .join(', ');
+
+  const hasAiContext = Boolean(
+    showAiOverview &&
+      (formData.aiFrom ||
+        formData.projectName?.trim() ||
+        formData.notes?.trim() ||
+        formData.tradesRequired.length > 0),
+  );
+
+  const showEditableAiFields = !hasAiContext || isOverviewEditing;
 
   // Quick request form (compact)
   if (isQuickRequest) {
@@ -481,15 +507,69 @@ export function ProjectForm({
         </div>
       )}
 
+      {hasAiContext && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-emerald-900">Overview from AI</h3>
+            {!isReadOnly && (
+              <button
+                type="button"
+                onClick={() => setIsOverviewEditing((prev) => !prev)}
+                className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+              >
+                {isOverviewEditing ? 'Done editing overview' : 'Edit overview'}
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2 text-sm text-slate-700">
+            {formData.projectName?.trim() && (
+              <p>
+                <span className="font-semibold text-slate-900">Project:</span> {formData.projectName}
+              </p>
+            )}
+            {(locationSummary || formData.region?.trim()) && (
+              <p>
+                <span className="font-semibold text-slate-900">Location:</span> {locationSummary || formData.region}
+              </p>
+            )}
+            {formData.tradesRequired.length > 0 && (
+              <p>
+                <span className="font-semibold text-slate-900">Trades:</span> {formData.tradesRequired.join(', ')}
+              </p>
+            )}
+            {formData.notes?.trim() && (
+              <div>
+                <p className="font-semibold text-slate-900">Project scope</p>
+                <p className="mt-1 whitespace-pre-wrap">{formData.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {formData.aiFrom && (
-        <ProjectAiPanel
-          aiIntake={{ assumptions: formData.aiFrom.assumptions, risks: formData.aiFrom.risks }}
-          mode="client"
-        />
+        <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
+          <button
+            type="button"
+            onClick={() => setShowAiExtract((prev) => !prev)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <span className="text-sm font-semibold text-violet-900">AI extract</span>
+            <span className="text-xs font-semibold text-violet-700">{showAiExtract ? 'Hide' : 'Show'}</span>
+          </button>
+          {showAiExtract && (
+            <ProjectAiPanel
+              aiIntake={{ assumptions: formData.aiFrom.assumptions, risks: formData.aiFrom.risks }}
+              mode="client"
+              className="mt-3"
+            />
+          )}
+        </div>
       )}
 
       {/* Project Name */}
-      <div>
+      <div className={showEditableAiFields ? '' : 'hidden'}>
         <label className="block text-sm font-semibold text-slate-900 mb-2">
           Project Name {!isReadOnly && '*'}
         </label>
@@ -520,7 +600,7 @@ export function ProjectForm({
       </div>
 
       {/* Location */}
-      <div>
+      <div className={showEditableAiFields ? '' : 'hidden'}>
         <label className="block text-sm font-semibold text-slate-900 mb-2">
           Region/Location {!isReadOnly && '*'}
         </label>
@@ -533,7 +613,7 @@ export function ProjectForm({
 
       {/* Trades Required */}
       {showService && (
-        <div>
+        <div className={showEditableAiFields ? '' : 'hidden'}>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Required Trades/Services {!isReadOnly && '*'}
           </label>
@@ -618,7 +698,7 @@ export function ProjectForm({
       )}
 
       {/* Project Scope & Notes */}
-      <div>
+      <div className={showEditableAiFields ? '' : 'hidden'}>
         <label className="block text-sm font-semibold text-slate-900 mb-2">
           Project Scope & Details <span className="text-slate-500 font-normal">(Optional)</span>
         </label>

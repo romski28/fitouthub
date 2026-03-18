@@ -335,6 +335,7 @@ export default function CreateProjectPage() {
               onCancel={() => router.push('/projects')}
               isSubmitting={isSubmitting}
               error={error}
+              showAiOverview={Boolean(aiIntakeId || initialFormData.aiFrom || initialFormData.notes)}
               submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
               showBudget={true}
               showService={true}
