@@ -563,7 +563,10 @@ export default function SearchFlow() {
       });
       if (!res.ok) throw new Error(`Convert failed (${res.status})`);
       const data: { draft: Record<string, unknown> } = await res.json();
-      sessionStorage.setItem('createProjectDraft', JSON.stringify({ initialData: data.draft }));
+      sessionStorage.setItem('createProjectDraft', JSON.stringify({ 
+        initialData: data.draft,
+        aiIntakeId: aiStructured.intakeId,
+      }));
 
       if (isLoggedIn === false) {
         // Store redirect intent then prompt registration

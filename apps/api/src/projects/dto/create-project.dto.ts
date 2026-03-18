@@ -17,4 +17,5 @@ export class CreateProjectDto {
   photos?: Array<{ url: string; note?: string }>;
   photoUrls?: string[]; // Legacy compatibility
   userPrompt?: string; // Original natural language prompt from user search/creation for AI training
+  aiIntakeId?: string; // Link to AI intake that generated this project
 }

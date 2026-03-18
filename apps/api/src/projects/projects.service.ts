@@ -807,7 +807,7 @@ Please review the project details and respond with your quote or decline the inv
   }
 
   async create(createProjectDto: CreateProjectDto) {
-    const { professionalIds, userId, photos, photoUrls, ...rest } = createProjectDto;
+    const { professionalIds, userId, photos, photoUrls, aiIntakeId, ...rest } = createProjectDto;
     // Strip legacy professionalId from the data object so Prisma does not see an unknown field
 
     const { professionalId: _legacyField, ...projectData } = rest as any;
@@ -856,6 +856,11 @@ Please review the project details and respond with your quote or decline the inv
         })),
       },
     };
+
+    // Link to AI intake if provided
+    if (aiIntakeId) {
+      createData.aiIntakeId = aiIntakeId;
+    }
 
     if (normalizedPhotos.length > 0) {
       createData.photos = {
@@ -996,6 +1001,26 @@ Please review the project details and respond with your quote or decline the inv
 
     // Execute all token creations and email sends in parallel
     await Promise.all([...tokenPromises, ...emailPromises]);
+
+    // Link the AI intake to the project if provided
+    if (aiIntakeId && userId) {
+      try {
+        await this.prisma.aiIntake.update({
+          where: { id: aiIntakeId },
+          data: {
+            projectId: project.id,
+            status: 'converted',
+          },
+        });
+      } catch (err) {
+        // Silently fail AI intake linking - project was already created successfully
+        console.warn('[ProjectsService.create] Failed to link AI intake:', {
+          aiIntakeId,
+          projectId: project.id,
+          error: (err as Error)?.message,
+        });
+      }
+    }
 
     return project;
   }

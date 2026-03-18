@@ -358,6 +358,9 @@ const messages = {
       "searchFlow": {
         "anonMatchFound": "There are {count} {trade} professionals who could help with your project.",
         "anonMatchFoundInLocation": "There are {count} {trade} professionals in {location} who could help with your project.",
+        "anonMatchFoundNoTrade": "We found {count} professionals who could help with your project. Join to see all options.",
+        "anonMatchFoundNoLocation": "There are {count} {trade} professionals available. Join to see all options and their locations.",
+        "anonMatchFoundNoBoth": "We have professionals available to help. Join to find the right match for your project.",
         "anonMatchNone": "We don't have an exact match right now. Join Fitout Hub and our team will help you find the right professional.",
         "anonRegisterPrompt": "To find out more, please register with our platform.",
         "anonRegisterCta": "Register free →",

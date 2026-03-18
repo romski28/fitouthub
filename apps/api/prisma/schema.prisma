@@ -242,6 +242,7 @@ model Project {
   locationDetailsRequiredAt    DateTime?
   locationDetailsProvidedAt    DateTime?
   userPrompt                   String?                 // Original natural language prompt from user search/creation for AI training
+  aiIntakeId                   String?                 // Link to AI intake that generated this project
   emailTokens                  EmailToken[]
   user                         User?                   @relation(fields: [userId], references: [id])
   photos                       ProjectPhoto[]
@@ -252,6 +253,7 @@ model Project {
   escrowLedgers                EscrowLedger[]
   approvedBudgetTransaction    FinancialTransaction?   @relation("ApprovedBudgetTx", fields: [approvedBudgetTxId], references: [id])
   awardedProjectProfessional   ProjectProfessional?    @relation("AwardedProjectProfessional", fields: [awardedProjectProfessionalId], references: [id])
+  aiIntake                     AiIntake?
   siteAccessRequests           SiteAccessRequest[]
   siteAccessVisits             SiteAccessVisit[]
   siteAccessData               SiteAccessData?
@@ -1032,11 +1034,13 @@ model SupportRequest {
     overallConfidence Float?
     rawOutput         Json?
     status            String    @default("draft")
-    projectId         String?
+    projectId         String?   @unique
+    convertedProject  Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
     @@index([userId])
     @@index([sessionId])
     @@index([status])
     @@index([createdAt])
+    @@index([projectId])
     @@map("ai_intakes")
   }

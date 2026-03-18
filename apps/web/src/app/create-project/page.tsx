@@ -30,6 +30,7 @@ interface AssistDraft {
 interface CreateProjectDraft {
   initialData?: Partial<ProjectFormData>;
   selectedProfessionals?: Professional[];
+  aiIntakeId?: string;
 }
 
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
@@ -51,6 +52,7 @@ export default function CreateProjectPage() {
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
   const [selectedProfessionals, setSelectedProfessionals] = useState<Professional[]>([]);
+  const [aiIntakeId, setAiIntakeId] = useState<string | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -74,6 +76,9 @@ export default function CreateProjectPage() {
               ? filterProjectSelectableProfessionals(parsed.selectedProfessionals)
               : [],
           );
+          if (parsed.aiIntakeId) {
+            setAiIntakeId(parsed.aiIntakeId);
+          }
         } catch (e) {
           console.warn('[create-project] Failed to parse createProjectDraft:', e);
         } finally {
@@ -147,6 +152,7 @@ export default function CreateProjectPage() {
       onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
       photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       userPrompt: descriptionData?.description || null,
+      aiIntakeId: aiIntakeId || null,
     };
   };
 
