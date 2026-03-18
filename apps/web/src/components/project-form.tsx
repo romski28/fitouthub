@@ -249,6 +249,8 @@ export function ProjectForm({
     return [];
   }, [singleProfessional, professionals]);
 
+  const hasSelectedProfessionals = displayNames.length > 0;
+
   const handleChange = (field: keyof ProjectFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -851,7 +853,15 @@ export function ProjectForm({
         <div className="mt-8 pt-8 border-t border-slate-200">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
-              <strong>Next Step:</strong> After creating your project, you&apos;ll be able to search and invite professionals to submit quotes. We&apos;ll help you compare quotes, negotiate, and award the project.
+              {hasSelectedProfessionals ? (
+                <>
+                  <strong>Next Step:</strong> After creating your project, invite your selected professionals to quote or ask FoH for advice before opening bidding.
+                </>
+              ) : (
+                <>
+                  <strong>Next Step:</strong> After creating your project, you&apos;ll be able to search and invite professionals to submit quotes. We&apos;ll help you compare quotes, negotiate, and award the project.
+                </>
+              )}
             </p>
           </div>
         </div>

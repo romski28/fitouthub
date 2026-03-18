@@ -503,9 +503,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const mergedInitialData: Partial<ProjectFormData> = {
       ...(existingDraft?.initialData || {}),
       ...shareInitialData,
+      projectName:
+        existingDraft?.initialData?.projectName ||
+        shareInitialData.projectName ||
+        '',
       notes:
-        shareInitialData.notes ||
         existingDraft?.initialData?.notes ||
+        shareInitialData.notes ||
         initialFromIntent.description ||
         '',
       aiFrom: shareInitialData.aiFrom || existingDraft?.initialData?.aiFrom,

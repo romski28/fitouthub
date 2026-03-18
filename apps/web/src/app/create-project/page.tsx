@@ -129,11 +129,14 @@ export default function CreateProjectPage() {
   };
 
   const buildProjectPayload = (formData: ProjectFormData, photoUrls: string[], professionalIds: string[] = []) => {
-    const region = formData.location
-      ? [formData.location.primary, formData.location.secondary, formData.location.tertiary]
-          .filter(Boolean)
-          .join(", ")
-      : formData.region || '';
+    const locationRegion = [
+      formData.location?.primary,
+      formData.location?.secondary,
+      formData.location?.tertiary,
+    ]
+      .filter((value): value is string => Boolean(value && value.trim()))
+      .join(', ');
+    const region = locationRegion || formData.region || '';
 
     if (!formData.projectName?.trim() || !region.trim()) {
       throw new Error('Project name and region are required');
