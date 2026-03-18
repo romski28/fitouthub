@@ -545,6 +545,53 @@ OUTPUT SCHEMA
       },
     });
 
+    // ── Budget mapping ────────────────────────────────────────────────
+    const budgetJson = intake.budget as {
+      min?: number | null;
+      max?: number | null;
+      currency?: string | null;
+    } | null;
+    let draftBudget: number | null = null;
+    if (budgetJson) {
+      const { min, max } = budgetJson;
+      if (max && max > 0) draftBudget = max;
+      else if (min && min > 0) draftBudget = min;
+    }
+
+    // ── Timeline → endDate ────────────────────────────────────────────
+    const timelineJson = intake.timeline as {
+      durationText?: string | null;
+      startText?: string | null;
+      deadlineText?: string | null;
+    } | null;
+
+    const asapKeywords = /\b(asap|immediately|urgent|today|tonight|right now|right away|straight away|as soon as possible)\b/i;
+    const isAsap = asapKeywords.test(intake.rawPrompt) || asapKeywords.test(timelineJson?.startText ?? '');
+    const isEmergency = /\b(emergency|urgent|asap|immediately|today|tonight|right now)\b/i.test(intake.rawPrompt);
+
+    let draftEndDate: string | null = null;
+    const now = new Date();
+
+    if (isAsap) {
+      // ASAP → 1 week from creation
+      const d = new Date(now);
+      d.setDate(d.getDate() + 7);
+      draftEndDate = d.toISOString().slice(0, 10);
+    } else if (timelineJson?.durationText) {
+      // Try to parse "X weeks", "X months", "X days"
+      const match = timelineJson.durationText.match(/(\d+(?:\.\d+)?)\s*(day|week|month|year)/i);
+      if (match) {
+        const value = parseFloat(match[1]);
+        const unit = match[2].toLowerCase();
+        const d = new Date(now);
+        if (unit.startsWith('day')) d.setDate(d.getDate() + Math.round(value));
+        else if (unit.startsWith('week')) d.setDate(d.getDate() + Math.round(value * 7));
+        else if (unit.startsWith('month')) d.setMonth(d.getMonth() + Math.round(value));
+        else if (unit.startsWith('year')) d.setFullYear(d.getFullYear() + Math.round(value));
+        draftEndDate = d.toISOString().slice(0, 10);
+      }
+    }
+
     // Return pre-populated project draft data for the create-project page
     return {
       intakeId: intake.id,
@@ -554,6 +601,9 @@ OUTPUT SCHEMA
         tradesRequired: intake.trades,
         notes: intake.scope ?? intake.summary ?? '',
         userPrompt: intake.rawPrompt,
+        ...(draftBudget !== null ? { budget: draftBudget } : {}),
+        ...(draftEndDate ? { endDate: draftEndDate } : {}),
+        ...(isEmergency ? { isEmergency: true } : {}),
       },
     };
   }

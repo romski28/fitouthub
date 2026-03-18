@@ -153,6 +153,8 @@ export default function CreateProjectPage() {
       photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       userPrompt: descriptionData?.description || null,
       aiIntakeId: aiIntakeId || null,
+      endDate: formData.endDate || null,
+      isEmergency: formData.isEmergency ?? false,
     };
   };
 
