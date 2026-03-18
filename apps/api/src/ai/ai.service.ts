@@ -518,11 +518,44 @@ OUTPUT SCHEMA
     }
   }
 
-  async convertIntake(intakeId: string, context?: { userId?: string; sessionId?: string }) {
+  async convertIntake(
+    intakeId: string,
+    context?: {
+      userId?: string;
+      sessionId?: string;
+      followUpAnswers?: Array<{ question?: string; answer?: string }>;
+      finalSummary?: string;
+    },
+  ) {
     const userId = context?.userId;
     const sessionId = this.sanitizeSessionId(context?.sessionId);
     const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
     if (!intake) throw new NotFoundException('AI intake not found');
+
+    const normalizedFollowUpAnswers = Array.isArray(context?.followUpAnswers)
+      ? context.followUpAnswers
+          .map((item) => {
+            const question = typeof item?.question === 'string' ? item.question.trim() : '';
+            const answer = typeof item?.answer === 'string' ? item.answer.trim() : '';
+            if (!question || !answer) return null;
+            return { question, answer };
+          })
+          .filter(
+            (item): item is { question: string; answer: string } => Boolean(item),
+          )
+      : [];
+
+    const finalSummary =
+      typeof context?.finalSummary === 'string' && context.finalSummary.trim().length > 0
+        ? context.finalSummary.trim()
+        : null;
+
+    const projectJson =
+      intake.project && typeof intake.project === 'object' && !Array.isArray(intake.project)
+        ? ({ ...(intake.project as Record<string, unknown>) } as Record<string, unknown>)
+        : {};
+
+    const shouldPersistFollowUp = normalizedFollowUpAnswers.length > 0 || Boolean(finalSummary);
 
     // Access control: allow convert only for owning user or matching anonymous session
     if (intake.userId) {
@@ -542,6 +575,17 @@ OUTPUT SCHEMA
         status: 'pending_project',
         ...(userId ? { userId } : {}),
         ...(!intake.sessionId && sessionId ? { sessionId } : {}),
+        ...(shouldPersistFollowUp
+          ? {
+              project: {
+                ...projectJson,
+                ...(normalizedFollowUpAnswers.length > 0
+                  ? { followUpAnswers: normalizedFollowUpAnswers }
+                  : {}),
+                ...(finalSummary ? { finalSummary } : {}),
+              },
+            }
+          : {}),
       },
     });
 
@@ -599,6 +643,14 @@ OUTPUT SCHEMA
       }
     }
 
+    const followUpTranscript = normalizedFollowUpAnswers
+      .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
+      .join('\n\n');
+    const draftNotes = finalSummary ?? intake.scope ?? intake.summary ?? '';
+    const draftUserPrompt = followUpTranscript
+      ? `${intake.rawPrompt}\n\nFollow-up answers:\n${followUpTranscript}`
+      : intake.rawPrompt;
+
     // Return pre-populated project draft data for the create-project page
     return {
       intakeId: intake.id,
@@ -606,8 +658,8 @@ OUTPUT SCHEMA
         projectName: intake.title ?? intake.summary ?? '',
         region: intake.locationPrimary ?? '',
         tradesRequired: intake.trades,
-        notes: intake.scope ?? intake.summary ?? '',
-        userPrompt: intake.rawPrompt,
+        notes: draftNotes,
+        userPrompt: draftUserPrompt,
         aiFrom: {
           assumptions: toStringArray(intake.assumptions),
           risks: toStringArray(intake.risks),

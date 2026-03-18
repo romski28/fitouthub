@@ -37,6 +37,11 @@ interface AiStructured {
   overallConfidence: number | null;
 }
 
+interface FollowUpAnswer {
+  question: string;
+  answer: string;
+}
+
 function ThinkingIndicator() {
   const phases = ['Reading your request', 'Mapping trades and location', 'Structuring project requirements'];
   const [phaseIndex, setPhaseIndex] = useState(0);
@@ -108,7 +113,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
   const timelineLabel = (() => {
     if (!s.timeline) return null;
     const parts = [s.timeline.durationText, s.timeline.startText].filter(Boolean);
-    return parts.length ? parts.join(' Â· ') : null;
+    return parts.length ? parts.join(' · ') : null;
   })();
 
   const countMsg = (() => {
@@ -151,22 +156,22 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
         <div className="flex flex-wrap gap-1.5">
           {s.propertyType && (
             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 capitalize">
-              ðŸ  {s.propertyType}
+              🏠 {s.propertyType}
             </span>
           )}
           {s.size?.rawText && (
             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
-              ðŸ“ {s.size.rawText}
+              📐 {s.size.rawText}
             </span>
           )}
           {budgetLabel && (
             <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
-              ðŸ’° {budgetLabel}
+              💰 {budgetLabel}
             </span>
           )}
           {timelineLabel && (
             <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-medium text-amber-700">
-              â± {timelineLabel}
+              ⏱ {timelineLabel}
             </span>
           )}
         </div>
@@ -208,7 +213,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
           ) : (
             <ul className="space-y-0.5">
               {s.nextQuestions.slice(0, 4).map((q, i) => (
-                <li key={i} className="text-slate-500 flex gap-1.5"><span>â“</span>{q}</li>
+                <li key={i} className="text-slate-500 flex gap-1.5"><span>❓</span>{q}</li>
               ))}
             </ul>
           )}
@@ -270,10 +275,10 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
     <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8 space-y-6 animate-in fade-in zoom-in duration-200">
         <div className="text-5xl text-center">
-          {intent.action === 'find-professional' && 'ðŸ”'}
-          {intent.action === 'join' && 'â­'}
-          {intent.action === 'manage-projects' && 'ðŸ“‹'}
-          {intent.action === 'unknown' && 'ðŸ¤”'}
+          {intent.action === 'find-professional' && '🔍'}
+          {intent.action === 'join' && '⭐'}
+          {intent.action === 'manage-projects' && '📋'}
+          {intent.action === 'unknown' && '🤔'}
         </div>
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-slate-900">{intent.metadata.displayText}</h2>
@@ -351,6 +356,10 @@ export default function SearchFlow() {
   const [aiCountLoading, setAiCountLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [convertError, setConvertError] = useState<string | null>(null);
+  const [followUpAnswers, setFollowUpAnswers] = useState<FollowUpAnswer[]>([]);
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+  const [currentAnswer, setCurrentAnswer] = useState('');
+  const [finalSummary, setFinalSummary] = useState('');
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
@@ -469,6 +478,10 @@ export default function SearchFlow() {
     setAiMeta(null);
     setAiStructured(null);
     setConvertError(null);
+    setFollowUpAnswers([]);
+    setActiveQuestionIndex(0);
+    setCurrentAnswer('');
+    setFinalSummary('');
 
     try {
       const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
@@ -527,11 +540,38 @@ export default function SearchFlow() {
         nextQuestions: p?.nextQuestions ?? p?.followUpQuestions ?? [],
         overallConfidence: p?.overallConfidence ?? null,
       });
+
+      const aiSummary = [p?.scope ?? p?.project?.scopeText ?? null, p?.summary ?? null]
+        .filter((item): item is string => Boolean(item && item.trim()))
+        .join('\n\n');
+      setFinalSummary(aiSummary);
     } catch (error) {
       setAiError((error as Error).message || 'DeepSeek sandbox is unavailable');
     } finally {
       setAiLoading(false);
     }
+  };
+
+  const activeQuestion = aiStructured?.nextQuestions?.[activeQuestionIndex] ?? null;
+  const hasFollowUps = Boolean(aiStructured && aiStructured.nextQuestions.length > 0);
+  const followUpsComplete = hasFollowUps
+    ? followUpAnswers.length >= (aiStructured?.nextQuestions.length ?? 0)
+    : true;
+
+  const addFollowUpAnswer = () => {
+    if (!activeQuestion) return;
+    const answer = currentAnswer.trim();
+    if (!answer) return;
+
+    setFollowUpAnswers((prev) => [...prev, { question: activeQuestion, answer }]);
+    setCurrentAnswer('');
+    setActiveQuestionIndex((prev) => prev + 1);
+
+    setFinalSummary((prev) => {
+      const base = prev.trim();
+      const appended = `Q: ${activeQuestion}\nA: ${answer}`;
+      return base ? `${base}\n\n${appended}` : appended;
+    });
   };
 
   const handleSearch = (query: string) => {
@@ -559,7 +599,11 @@ export default function SearchFlow() {
       const res = await fetch(`${API_BASE_URL}/ai/intake/${aiStructured.intakeId}/convert`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: aiSessionId }),
+        body: JSON.stringify({
+          sessionId: aiSessionId,
+          followUpAnswers,
+          finalSummary: finalSummary.trim() || undefined,
+        }),
       });
       if (!res.ok) throw new Error(`Convert failed (${res.status})`);
       const data: { draft: Record<string, unknown> } = await res.json();
@@ -636,7 +680,7 @@ export default function SearchFlow() {
                 <span className="text-[11px] text-slate-500">Results</span>
                 <div className="inline-flex rounded border border-slate-200 bg-white p-0.5">
                   <button type="button" onClick={() => setAiViewMode('human')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'human' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    ðŸ“‹ Summary
+                    📋 Summary
                   </button>
                   <button type="button" onClick={() => setAiViewMode('json')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'json' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
                     {'{ }'} JSON
@@ -661,10 +705,73 @@ export default function SearchFlow() {
                   <pre className="whitespace-pre-wrap break-words text-slate-700 text-[11px]">{aiOutput}</pre>
                   {aiMeta && (
                     <p className="text-slate-500">
-                      model: {aiMeta.model} Â· duration: {aiMeta.durationMs}ms Â· tokens: {aiMeta.totalTokens ?? 'n/a'}
+                      model: {aiMeta.model} · duration: {aiMeta.durationMs}ms · tokens: {aiMeta.totalTokens ?? 'n/a'}
                     </p>
                   )}
                 </>
+              )}
+
+              {aiViewMode === 'human' && isLoggedIn !== false && hasFollowUps && (
+                <div className="rounded-lg border border-emerald-200 bg-white p-4 space-y-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">AI Follow-up</p>
+                    {!followUpsComplete && activeQuestion && (
+                      <p className="text-sm text-slate-700">{activeQuestion}</p>
+                    )}
+                    {followUpsComplete && (
+                      <p className="text-sm font-semibold text-emerald-700">
+                        We have all the information required to get started, thanks.
+                      </p>
+                    )}
+                  </div>
+
+                  {!followUpsComplete && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={currentAnswer}
+                        onChange={(event) => setCurrentAnswer(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            addFollowUpAnswer();
+                          }
+                        }}
+                        placeholder="Type your answer"
+                        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={addFollowUpAnswer}
+                        disabled={!currentAnswer.trim()}
+                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+
+                  {followUpAnswers.length > 0 && (
+                    <ul className="space-y-2 text-xs text-slate-600">
+                      {followUpAnswers.map((item, index) => (
+                        <li key={`${item.question}-${index}`} className="rounded border border-slate-200 bg-slate-50 p-2">
+                          <p className="font-semibold text-slate-700">Q: {item.question}</p>
+                          <p>A: {item.answer}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Project summary (editable)</p>
+                    <textarea
+                      value={finalSummary}
+                      onChange={(event) => setFinalSummary(event.target.value)}
+                      rows={6}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
               )}
 
               {/* Action buttons */}
@@ -680,7 +787,7 @@ export default function SearchFlow() {
                     }}
                     className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
                   >
-                    Continue â†’ Find Professionals
+                    Continue → Find Professionals
                   </button>
                 )}
                 {aiStructured.intakeId && (
