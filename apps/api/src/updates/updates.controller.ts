@@ -1,10 +1,26 @@
-import { Body, Controller, Get, Post, Req, UseGuards, Query, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Query, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { UpdatesService } from './updates.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 @Controller('updates')
 export class UpdatesController {
   constructor(private readonly updatesService: UpdatesService) {}
+
+  @Get('admin-ops-summary')
+  @UseGuards(CombinedAuthGuard)
+  async getAdminOpsSummary(@Req() req: any) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new BadRequestException('Missing user id in token');
+    }
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can access operations summary');
+    }
+
+    return this.updatesService.getAdminOpsSummary(userId);
+  }
 
   @Get('summary')
   @UseGuards(CombinedAuthGuard)

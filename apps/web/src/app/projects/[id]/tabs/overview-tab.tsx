@@ -142,7 +142,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const projectStatus = project.status ?? 'pending';
   const awardedPro = project.professionals?.find((pp) => pp.status === 'awarded');
   const projectCostValue = Number(awardedPro?.quoteAmount || project.approvedBudget || project.budget || 0);
-  const hasAiInsights = Boolean(project.aiIntake && (project.aiIntake.assumptions || project.aiIntake.risks));
+  const hasAiInsights = Boolean(
+    project.aiIntake &&
+      (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
+  );
 
   return (
     <div className="space-y-4">

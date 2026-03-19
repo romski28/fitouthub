@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type AssistRequest = {
   id: string;
@@ -26,7 +27,17 @@ type AssistMessage = {
 };
 
 export default function AdminAssistPage() {
-  const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">("open");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const initialStatus = (() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam === 'open' || statusParam === 'in_progress' || statusParam === 'closed') {
+      return statusParam;
+    }
+    return 'open';
+  })();
+  const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">(initialStatus);
   const [requests, setRequests] = useState<AssistRequest[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -55,6 +66,13 @@ export default function AdminAssistPage() {
   };
 
   useEffect(() => { fetchRequests(); }, [statusTab]);
+
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam === 'open' || statusParam === 'in_progress' || statusParam === 'closed') {
+      setStatusTab(statusParam);
+    }
+  }, [searchParams]);
 
   const openThread = async (id: string) => {
     setActiveId(id);
@@ -114,7 +132,10 @@ export default function AdminAssistPage() {
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setStatusTab(t.key)}
+            onClick={() => {
+              setStatusTab(t.key);
+              router.replace(`${pathname}?status=${t.key}`);
+            }}
             className={`rounded-md px-3 py-1.5 text-sm font-semibold border ${statusTab === t.key ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
           >
             {t.label}

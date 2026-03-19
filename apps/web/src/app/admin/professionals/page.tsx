@@ -789,6 +789,7 @@ export default function AdminProfessionalsPage() {
                     }
                     suggestions={tradeOptions}
                     multiple={false}
+                    allowCustom={false}
                   />
                 )}
 
@@ -805,6 +806,7 @@ export default function AdminProfessionalsPage() {
                     }
                     suggestions={tradeOptions}
                     multiple={true}
+                    allowCustom={false}
                   />
                 )}
 
@@ -821,6 +823,7 @@ export default function AdminProfessionalsPage() {
                     }
                     suggestions={supplyOptions}
                     multiple={true}
+                    allowCustom={false}
                   />
                 )}
 

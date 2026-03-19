@@ -10,6 +10,7 @@ interface TagInputProps {
   suggestions: string[];
   multiple?: boolean; // If false, only one tag allowed (converted to pill)
   disabled?: boolean;
+  allowCustom?: boolean;
 }
 
 export function TagInput({
@@ -20,6 +21,7 @@ export function TagInput({
   suggestions,
   multiple = true,
   disabled = false,
+  allowCustom = true,
 }: TagInputProps) {
   const [input, setInput] = useState("");
   const [filtered, setFiltered] = useState<string[]>([]);
@@ -54,14 +56,23 @@ export function TagInput({
   };
 
   const handleAddTag = (tag: string) => {
-    if (!tag.trim()) return;
+    const trimmed = tag.trim();
+    if (!trimmed) return;
+
+    const canonicalSuggestion = suggestions.find(
+      (suggestion) => suggestion.toLowerCase() === trimmed.toLowerCase(),
+    );
+    const resolvedTag = canonicalSuggestion || trimmed;
+    if (!allowCustom && !canonicalSuggestion) {
+      return;
+    }
 
     if (multiple) {
-      if (!tags.includes(tag)) {
-        onTagsChange([...tags, tag]);
+      if (!tags.includes(resolvedTag)) {
+        onTagsChange([...tags, resolvedTag]);
       }
     } else {
-      onTagsChange([tag]);
+      onTagsChange([resolvedTag]);
     }
 
     setInput("");

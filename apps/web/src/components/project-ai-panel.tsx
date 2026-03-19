@@ -91,8 +91,19 @@ export function ProjectAiPanel({
   const assumptions = toStringArray(aiIntake.assumptions);
   const risks = toStringArray(aiIntake.risks);
   const safety = parseSafetyAssessment(aiIntake);
+  const normalizedRiskLevel = (safety?.riskLevel || '').toLowerCase();
   const hasSafety = Boolean(
-    safety && (safety.isDangerous || safety.concerns.length > 0 || safety.temporaryMitigations.length > 0),
+    safety &&
+      (
+        safety.isDangerous ||
+        safety.shouldEscalateEmergency ||
+        safety.requiresImmediateHumanContact ||
+        Boolean(safety.emergencyReason) ||
+        safety.concerns.length > 0 ||
+        safety.temporaryMitigations.length > 0 ||
+        normalizedRiskLevel === 'high' ||
+        normalizedRiskLevel === 'critical'
+      ),
   );
   const isSafetyAcknowledged = safety?.adminReview?.status === 'acknowledged';
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type AssistRequest = {
   id: string;
@@ -44,10 +45,33 @@ type Message = {
 
 export default function AdminMessagingPage() {
   const { accessToken } = useAuth();
-  const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all'>('all');
-  const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">("open");
-  const [typeFilter, setTypeFilter] = useState<'all' | 'support' | 'supplier-client' | 'anonymous' | 'project'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closed'>('all');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const initialView = (() => {
+    const value = searchParams.get('view');
+    if (value === 'assist' || value === 'general' || value === 'all') return value;
+    return 'all';
+  })();
+  const initialAssistStatus = (() => {
+    const value = searchParams.get('assistStatus');
+    if (value === 'open' || value === 'in_progress' || value === 'closed') return value;
+    return 'open';
+  })();
+  const initialType = (() => {
+    const value = searchParams.get('type');
+    if (value === 'all' || value === 'support' || value === 'supplier-client' || value === 'anonymous' || value === 'project') return value;
+    return 'all';
+  })();
+  const initialStatus = (() => {
+    const value = searchParams.get('status');
+    if (value === 'all' || value === 'open' || value === 'in_progress' || value === 'closed') return value;
+    return 'all';
+  })();
+  const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all'>(initialView);
+  const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">(initialAssistStatus);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'support' | 'supplier-client' | 'anonymous' | 'project'>(initialType);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closed'>(initialStatus);
   
   // Assist requests state
   const [requests, setRequests] = useState<AssistRequest[]>([]);
@@ -112,6 +136,63 @@ export default function AdminMessagingPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, statusTab]);
+
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view === 'assist' || view === 'general' || view === 'all') {
+      setViewMode(view);
+    }
+
+    const assistStatus = searchParams.get('assistStatus');
+    if (assistStatus === 'open' || assistStatus === 'in_progress' || assistStatus === 'closed') {
+      setStatusTab(assistStatus);
+    }
+
+    const type = searchParams.get('type');
+    if (type === 'all' || type === 'support' || type === 'supplier-client' || type === 'anonymous' || type === 'project') {
+      setTypeFilter(type);
+    }
+
+    const status = searchParams.get('status');
+    if (status === 'all' || status === 'open' || status === 'in_progress' || status === 'closed') {
+      setStatusFilter(status);
+    }
+  }, [searchParams]);
+
+  const updateQuery = (updates: {
+    view?: 'assist' | 'general' | 'all';
+    assistStatus?: 'open' | 'in_progress' | 'closed';
+    type?: 'all' | 'support' | 'supplier-client' | 'anonymous' | 'project';
+    status?: 'all' | 'open' | 'in_progress' | 'closed';
+  }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (updates.view !== undefined) params.set('view', updates.view);
+    if (updates.assistStatus !== undefined) params.set('assistStatus', updates.assistStatus);
+    if (updates.type !== undefined) params.set('type', updates.type);
+    if (updates.status !== undefined) params.set('status', updates.status);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const handleViewModeChange = (mode: 'assist' | 'general' | 'all') => {
+    setViewMode(mode);
+    updateQuery({ view: mode });
+  };
+
+  const handleAssistStatusChange = (status: 'open' | 'in_progress' | 'closed') => {
+    setStatusTab(status);
+    updateQuery({ assistStatus: status });
+  };
+
+  const handleTypeFilterChange = (type: 'all' | 'support' | 'supplier-client' | 'anonymous' | 'project') => {
+    setTypeFilter(type);
+    updateQuery({ type });
+  };
+
+  const handleStatusFilterChange = (status: 'all' | 'open' | 'in_progress' | 'closed') => {
+    setStatusFilter(status);
+    updateQuery({ status });
+  };
 
   // Open assist request thread
   const openAssistThread = async (id: string) => {
@@ -377,7 +458,7 @@ export default function AdminMessagingPage() {
       {/* View Mode Toggle */}
       <div className="flex gap-2 flex-wrap">
         <button
-          onClick={() => setViewMode('all')}
+          onClick={() => handleViewModeChange('all')}
           className={`${filterButtonBase} ${
             viewMode === 'all'
               ? 'bg-slate-900 text-white border-slate-950'
@@ -387,7 +468,7 @@ export default function AdminMessagingPage() {
           🔔 All Messages
         </button>
         <button
-          onClick={() => setViewMode('assist')}
+          onClick={() => handleViewModeChange('assist')}
           className={`${filterButtonBase} ${
             viewMode === 'assist'
               ? 'bg-emerald-600 text-white border-emerald-700'
@@ -397,7 +478,7 @@ export default function AdminMessagingPage() {
           📋 Assist Requests
         </button>
         <button
-          onClick={() => setViewMode('general')}
+          onClick={() => handleViewModeChange('general')}
           className={`${filterButtonBase} ${
             viewMode === 'general'
               ? 'bg-blue-600 text-white border-blue-700'
@@ -412,7 +493,7 @@ export default function AdminMessagingPage() {
       {(viewMode === 'general' || viewMode === 'all') && (
         <div className="flex gap-2 overflow-x-auto pb-1 whitespace-nowrap">
           <button
-            onClick={() => setTypeFilter('all')}
+            onClick={() => handleTypeFilterChange('all')}
             className={`${smallFilterButtonBase} ${
               typeFilter === 'all'
                 ? 'bg-slate-900 text-white border-slate-950'
@@ -422,7 +503,7 @@ export default function AdminMessagingPage() {
             All Types
           </button>
           <button
-            onClick={() => setTypeFilter('support')}
+            onClick={() => handleTypeFilterChange('support')}
             className={`${smallFilterButtonBase} ${
               typeFilter === 'support'
                 ? 'bg-blue-600 text-white border-blue-700'
@@ -432,7 +513,7 @@ export default function AdminMessagingPage() {
             🆘 Support Requests
           </button>
           <button
-            onClick={() => setTypeFilter('supplier-client')}
+            onClick={() => handleTypeFilterChange('supplier-client')}
             className={`${smallFilterButtonBase} flex-shrink-0 ${
               typeFilter === 'supplier-client'
                 ? 'bg-indigo-600 text-white border-indigo-700'
@@ -442,7 +523,7 @@ export default function AdminMessagingPage() {
             🤝 Supplier/Client
           </button>
           <button
-            onClick={() => setTypeFilter('anonymous')}
+            onClick={() => handleTypeFilterChange('anonymous')}
             className={`${smallFilterButtonBase} flex-shrink-0 ${
               typeFilter === 'anonymous'
                 ? 'bg-gray-600 text-white border-gray-700'
@@ -452,7 +533,7 @@ export default function AdminMessagingPage() {
             👤 Anonymous
           </button>
           <button
-            onClick={() => setTypeFilter('project')}
+            onClick={() => handleTypeFilterChange('project')}
             className={`${smallFilterButtonBase} flex-shrink-0 ${
               typeFilter === 'project'
                 ? 'bg-purple-600 text-white border-purple-700'
@@ -468,7 +549,7 @@ export default function AdminMessagingPage() {
       {(viewMode === 'general' || viewMode === 'all') && statusEligible(effectiveTypeFilter) && (
         <div className="flex gap-2 flex-wrap">
           <button
-            onClick={() => setStatusFilter('all')}
+            onClick={() => handleStatusFilterChange('all')}
             className={`${smallFilterButtonBase} ${
               statusFilter === 'all'
                 ? 'bg-slate-900 text-white border-slate-950'
@@ -478,7 +559,7 @@ export default function AdminMessagingPage() {
             All Statuses
           </button>
           <button
-            onClick={() => setStatusFilter('open')}
+            onClick={() => handleStatusFilterChange('open')}
             className={`${smallFilterButtonBase} ${
               statusFilter === 'open'
                 ? 'bg-emerald-600 text-white border-emerald-700'
@@ -488,7 +569,7 @@ export default function AdminMessagingPage() {
             📖 Open
           </button>
           <button
-            onClick={() => setStatusFilter('in_progress')}
+            onClick={() => handleStatusFilterChange('in_progress')}
             className={`${smallFilterButtonBase} ${
               statusFilter === 'in_progress'
                 ? 'bg-amber-600 text-white border-amber-700'
@@ -498,7 +579,7 @@ export default function AdminMessagingPage() {
             ⏳ In Progress
           </button>
           <button
-            onClick={() => setStatusFilter('closed')}
+            onClick={() => handleStatusFilterChange('closed')}
             className={`${smallFilterButtonBase} ${
               statusFilter === 'closed'
                 ? 'bg-slate-700 text-white border-slate-800'
@@ -519,7 +600,7 @@ export default function AdminMessagingPage() {
             {(['open', 'in_progress', 'closed'] as const).map((status) => (
               <button
                 key={status}
-                onClick={() => setStatusTab(status)}
+                onClick={() => handleAssistStatusChange(status)}
                 className={`${smallFilterButtonBase} ${
                   statusTab === status
                     ? 'bg-emerald-600 text-white border-emerald-700'

@@ -37,6 +37,43 @@ export interface UpdatesSummary {
   totalCount: number;
 }
 
+export interface AdminOpsSummary {
+  support: {
+    unassigned: number;
+    claimed: number;
+    inProgress: number;
+    resolved: number;
+    myClaimed: number;
+    myInProgress: number;
+    totalOpen: number;
+  };
+  inbox: {
+    privateUnreadMessages: number;
+    privateUnreadThreads: number;
+    anonymousOpenThreads: number;
+    anonymousMessages: number;
+  };
+  assist: {
+    open: number;
+    inProgress: number;
+    closed: number;
+    unreadClientMessages: number;
+  };
+  adminActions: {
+    pending: number;
+    inReview: number;
+    escalated: number;
+    urgent: number;
+    assignedToMe: number;
+  };
+  safety: {
+    highOrCritical: number;
+    requiresEscalation: number;
+    emergencyNotTagged: number;
+  };
+  generatedAt: string;
+}
+
 @Injectable()
 export class UpdatesService {
   private readonly logger = new Logger(UpdatesService.name);
@@ -49,6 +86,199 @@ export class UpdatesService {
   );
 
   constructor(private prisma: PrismaService) {}
+
+  private normalizeSeverity(value: unknown): string {
+    if (typeof value !== 'string') return '';
+    return value.trim().toLowerCase();
+  }
+
+  private isEscalationSignal(safetyAssessment: any): boolean {
+    if (!safetyAssessment || typeof safetyAssessment !== 'object') return false;
+    const directFlags = [
+      safetyAssessment.requiresEscalation,
+      safetyAssessment.immediateActionRequired,
+      safetyAssessment.contactEmergencyServices,
+      safetyAssessment.escalationRequired,
+    ];
+    if (directFlags.some((flag) => flag === true)) return true;
+
+    const recommendedAction =
+      typeof safetyAssessment.recommendedAction === 'string'
+        ? safetyAssessment.recommendedAction.toLowerCase()
+        : '';
+    return (
+      recommendedAction.includes('emergency') ||
+      recommendedAction.includes('urgent') ||
+      recommendedAction.includes('escalat')
+    );
+  }
+
+  async getAdminOpsSummary(adminId: string): Promise<AdminOpsSummary> {
+    const [
+      supportCounts,
+      myClaimed,
+      myInProgress,
+      privateUnreadMessages,
+      privateUnreadThreads,
+      anonymousOpenThreads,
+      anonymousMessages,
+      assistOpen,
+      assistInProgress,
+      assistClosed,
+      unreadClientAssistMessages,
+      adminPending,
+      adminInReview,
+      adminEscalated,
+      adminUrgent,
+      adminAssignedToMe,
+      aiProjects,
+    ] = await Promise.all([
+      this.prisma.supportRequest.groupBy({
+        by: ['status'],
+        _count: { status: true },
+      }),
+      this.prisma.supportRequest.count({
+        where: { assignedAdminId: adminId, status: 'claimed' },
+      }),
+      this.prisma.supportRequest.count({
+        where: { assignedAdminId: adminId, status: 'in_progress' },
+      }),
+      this.prisma.privateChatMessage.count({
+        where: {
+          readByFohAt: null,
+          senderType: { not: 'foh' },
+        },
+      }),
+      this.prisma.privateChatThread.count({
+        where: {
+          messages: {
+            some: {
+              readByFohAt: null,
+              senderType: { not: 'foh' },
+            },
+          },
+        },
+      }),
+      this.prisma.anonymousChatThread.count({
+        where: {
+          messages: {
+            some: {
+              senderType: { not: 'foh' },
+            },
+          },
+        },
+      }),
+      this.prisma.anonymousChatMessage.count({
+        where: {
+          senderType: { not: 'foh' },
+        },
+      }),
+      this.prisma.projectAssistRequest.count({ where: { status: 'open' } }),
+      this.prisma.projectAssistRequest.count({ where: { status: 'in_progress' } }),
+      this.prisma.projectAssistRequest.count({ where: { status: 'closed' } }),
+      this.prisma.assistMessage.count({
+        where: {
+          senderType: 'client',
+          readByFohAt: null,
+        },
+      }),
+      this.prisma.adminAction.count({ where: { status: 'PENDING' } }),
+      this.prisma.adminAction.count({ where: { status: 'IN_REVIEW' } }),
+      this.prisma.adminAction.count({ where: { status: 'ESCALATED' } }),
+      this.prisma.adminAction.count({ where: { priority: 'URGENT', status: { not: 'APPROVED' } } }),
+      this.prisma.adminAction.count({
+        where: {
+          assignedToAdminId: adminId,
+          status: { in: ['PENDING', 'IN_REVIEW', 'ESCALATED'] },
+        },
+      }),
+      this.prisma.project.findMany({
+        where: {
+          status: { not: 'archived' },
+          aiIntake: { isNot: null },
+        },
+        select: {
+          id: true,
+          isEmergency: true,
+          aiIntake: {
+            select: {
+              project: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const support = {
+      unassigned: 0,
+      claimed: 0,
+      inProgress: 0,
+      resolved: 0,
+      myClaimed,
+      myInProgress,
+      totalOpen: 0,
+    };
+
+    for (const row of supportCounts) {
+      const count = row._count.status;
+      if (row.status === 'unassigned') support.unassigned = count;
+      if (row.status === 'claimed') support.claimed = count;
+      if (row.status === 'in_progress') support.inProgress = count;
+      if (row.status === 'resolved') support.resolved = count;
+    }
+    support.totalOpen = support.unassigned + support.claimed + support.inProgress;
+
+    let highOrCritical = 0;
+    let requiresEscalation = 0;
+    let emergencyNotTagged = 0;
+
+    for (const project of aiProjects) {
+      const projectJson = project.aiIntake?.project as Record<string, any> | null | undefined;
+      const safety = projectJson?.safetyAssessment;
+      if (!safety || typeof safety !== 'object') continue;
+
+      const severity = this.normalizeSeverity(
+        safety.level ?? safety.riskLevel ?? safety.severity,
+      );
+      const isHighOrCritical = ['high', 'critical', 'severe'].includes(severity);
+      const hasEscalation = this.isEscalationSignal(safety);
+
+      if (isHighOrCritical) highOrCritical += 1;
+      if (hasEscalation) requiresEscalation += 1;
+      if ((isHighOrCritical || hasEscalation) && !project.isEmergency) {
+        emergencyNotTagged += 1;
+      }
+    }
+
+    return {
+      support,
+      inbox: {
+        privateUnreadMessages,
+        privateUnreadThreads,
+        anonymousOpenThreads,
+        anonymousMessages,
+      },
+      assist: {
+        open: assistOpen,
+        inProgress: assistInProgress,
+        closed: assistClosed,
+        unreadClientMessages: unreadClientAssistMessages,
+      },
+      adminActions: {
+        pending: adminPending,
+        inReview: adminInReview,
+        escalated: adminEscalated,
+        urgent: adminUrgent,
+        assignedToMe: adminAssignedToMe,
+      },
+      safety: {
+        highOrCritical,
+        requiresEscalation,
+        emergencyNotTagged,
+      },
+      generatedAt: new Date().toISOString(),
+    };
+  }
 
   private getSummaryCacheKey(
     userId: string,

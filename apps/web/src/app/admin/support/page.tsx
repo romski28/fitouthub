@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type SupportRequestStatus = 'unassigned' | 'claimed' | 'in_progress' | 'resolved';
 type SupportRequestChannel = 'whatsapp' | 'callback';
@@ -55,6 +56,9 @@ const CHANNEL_LABELS: Record<SupportRequestChannel, string> = {
 
 export default function AdminSupportPage() {
   const { accessToken, user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +66,14 @@ export default function AdminSupportPage() {
   const [replyText, setReplyText] = useState('');
   const [notesText, setNotesText] = useState('');
   const [sending, setSending] = useState(false);
-  const [tab, setTab] = useState<'pool' | 'mine' | 'resolved'>('pool');
+  const initialTab = (() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'mine' || tabParam === 'resolved' || tabParam === 'pool') {
+      return tabParam;
+    }
+    return 'pool';
+  })();
+  const [tab, setTab] = useState<'pool' | 'mine' | 'resolved'>(initialTab);
   const [showResolved, setShowResolved] = useState(false);
   const [resolved, setResolved] = useState<SupportRequest[]>([]);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -120,6 +131,16 @@ export default function AdminSupportPage() {
   useEffect(() => {
     if (showResolved) loadResolved();
   }, [showResolved, loadResolved]);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'mine' || tabParam === 'resolved' || tabParam === 'pool') {
+      setTab(tabParam);
+      if (tabParam === 'resolved') {
+        setShowResolved(true);
+      }
+    }
+  }, [searchParams]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -230,6 +251,7 @@ export default function AdminSupportPage() {
               key={t}
               onClick={() => {
                 setTab(t);
+                router.replace(`${pathname}?tab=${t}`);
                 if (t === 'resolved') setShowResolved(true);
               }}
               className={`flex-1 rounded-md py-1.5 capitalize transition-colors ${

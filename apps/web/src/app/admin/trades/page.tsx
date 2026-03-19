@@ -33,6 +33,8 @@ export default function TradesAdminPage() {
   const [showAddMapping, setShowAddMapping] = useState(false);
   const [formData, setFormData] = useState<Partial<Trade>>({});
   const [aliasesInput, setAliasesInput] = useState('');
+  const [tradeEditData, setTradeEditData] = useState<Partial<Trade> | null>(null);
+  const [editAliasesInput, setEditAliasesInput] = useState('');
   const [mappingKeyword, setMappingKeyword] = useState('');
 
   const parseAliases = (input: string) =>
@@ -44,6 +46,25 @@ export default function TradesAdminPage() {
   useEffect(() => {
     fetchTrades();
   }, []);
+
+  useEffect(() => {
+    if (!selectedTrade) {
+      setTradeEditData(null);
+      setEditAliasesInput('');
+      return;
+    }
+
+    setTradeEditData({
+      name: selectedTrade.name,
+      category: selectedTrade.category,
+      professionType: selectedTrade.professionType || '',
+      description: selectedTrade.description || '',
+      featured: selectedTrade.featured,
+      sortOrder: selectedTrade.sortOrder,
+      enabled: selectedTrade.enabled,
+    });
+    setEditAliasesInput((selectedTrade.aliases || []).join(', '));
+  }, [selectedTrade]);
 
   const fetchTrades = async () => {
     try {
@@ -113,6 +134,24 @@ export default function TradesAdminPage() {
     } catch (error) {
       console.error('Failed to delete trade:', error);
     }
+  };
+
+  const handleSaveTradeDetails = async () => {
+    if (!selectedTrade || !tradeEditData) return;
+
+    await handleUpdateTrade(selectedTrade.id, {
+      name: (tradeEditData.name || '').toString().trim(),
+      category: (tradeEditData.category || '').toString().trim(),
+      professionType: (tradeEditData.professionType || '').toString().trim(),
+      description: (tradeEditData.description || '').toString().trim(),
+      aliases: parseAliases(editAliasesInput),
+      featured: Boolean(tradeEditData.featured),
+      sortOrder:
+        typeof tradeEditData.sortOrder === 'number'
+          ? tradeEditData.sortOrder
+          : Number(tradeEditData.sortOrder || 999),
+      enabled: Boolean(tradeEditData.enabled),
+    });
   };
 
   const handleAddMapping = async () => {
@@ -341,6 +380,126 @@ export default function TradesAdminPage() {
 
               {selectedTrade.description && (
                 <p className="text-sm text-slate-600 mb-4">{selectedTrade.description}</p>
+              )}
+
+              {tradeEditData && (
+                <div className="mb-4 rounded-md border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-900">Edit Trade Details</h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700">Name</label>
+                      <input
+                        type="text"
+                        value={tradeEditData.name || ''}
+                        onChange={(e) =>
+                          setTradeEditData((prev) => ({ ...(prev || {}), name: e.target.value }))
+                        }
+                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700">Category</label>
+                      <input
+                        type="text"
+                        value={tradeEditData.category || ''}
+                        onChange={(e) =>
+                          setTradeEditData((prev) => ({ ...(prev || {}), category: e.target.value }))
+                        }
+                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700">Profession Type</label>
+                      <input
+                        type="text"
+                        value={tradeEditData.professionType || ''}
+                        onChange={(e) =>
+                          setTradeEditData((prev) => ({ ...(prev || {}), professionType: e.target.value }))
+                        }
+                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700">Sort Order</label>
+                      <input
+                        type="number"
+                        value={tradeEditData.sortOrder ?? 999}
+                        onChange={(e) =>
+                          setTradeEditData((prev) => ({ ...(prev || {}), sortOrder: Number(e.target.value) }))
+                        }
+                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-slate-700">Description</label>
+                      <textarea
+                        value={tradeEditData.description || ''}
+                        onChange={(e) =>
+                          setTradeEditData((prev) => ({ ...(prev || {}), description: e.target.value }))
+                        }
+                        rows={2}
+                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-slate-700">Aliases (comma-separated)</label>
+                      <input
+                        type="text"
+                        value={editAliasesInput}
+                        onChange={(e) => setEditAliasesInput(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div className="md:col-span-2 flex items-center gap-4">
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(tradeEditData.featured)}
+                          onChange={(e) =>
+                            setTradeEditData((prev) => ({ ...(prev || {}), featured: e.target.checked }))
+                          }
+                        />
+                        Featured
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(tradeEditData.enabled)}
+                          onChange={(e) =>
+                            setTradeEditData((prev) => ({ ...(prev || {}), enabled: e.target.checked }))
+                          }
+                        />
+                        Enabled
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveTradeDetails}
+                      className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                    >
+                      Save Trade Details
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!selectedTrade) return;
+                        setTradeEditData({
+                          name: selectedTrade.name,
+                          category: selectedTrade.category,
+                          professionType: selectedTrade.professionType || '',
+                          description: selectedTrade.description || '',
+                          featured: selectedTrade.featured,
+                          sortOrder: selectedTrade.sortOrder,
+                          enabled: selectedTrade.enabled,
+                        });
+                        setEditAliasesInput((selectedTrade.aliases || []).join(', '));
+                      }}
+                      className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
               )}
 
               {selectedTrade.aliases && selectedTrade.aliases.length > 0 && (

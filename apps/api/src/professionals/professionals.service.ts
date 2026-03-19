@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import {
   CreateProfessionalDto,
@@ -8,6 +8,57 @@ import {
 @Injectable()
 export class ProfessionalsService {
   constructor(private prisma: PrismaService) {}
+
+  private async getMasterTradeMap() {
+    const masterTrades = await (this.prisma as any).tradesman.findMany({
+      select: { title: true },
+    });
+
+    const map = new Map<string, string>();
+    for (const trade of masterTrades as Array<{ title?: string | null }>) {
+      if (!trade?.title) continue;
+      const canonical = trade.title.trim();
+      if (!canonical) continue;
+      map.set(canonical.toLowerCase(), canonical);
+    }
+    return map;
+  }
+
+  private normalizeTradeInput(rawValue: string | undefined | null) {
+    if (typeof rawValue !== 'string') return null;
+    const trimmed = rawValue.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  private normalizeTradeList(rawValues: unknown): string[] {
+    if (!Array.isArray(rawValues)) return [];
+    const deduped = new Set<string>();
+    for (const value of rawValues) {
+      if (typeof value !== 'string') continue;
+      const trimmed = value.trim();
+      if (!trimmed) continue;
+      deduped.add(trimmed);
+    }
+    return Array.from(deduped);
+  }
+
+  private resolveCanonicalTrades(rawTrades: string[], masterTradeMap: Map<string, string>) {
+    const unknown: string[] = [];
+    const canonical: string[] = [];
+
+    for (const trade of rawTrades) {
+      const matched = masterTradeMap.get(trade.toLowerCase());
+      if (!matched) {
+        unknown.push(trade);
+        continue;
+      }
+      if (!canonical.includes(matched)) {
+        canonical.push(matched);
+      }
+    }
+
+    return { canonical, unknown };
+  }
 
   async create(createProfessionalDto: CreateProfessionalDto) {
     try {
@@ -109,12 +160,39 @@ export class ProfessionalsService {
       data.rating = updateProfessionalDto.rating;
     }
 
+    const requiresTradeValidation =
+      updateProfessionalDto.primary_trade !== undefined ||
+      updateProfessionalDto.trades_offered !== undefined;
+
+    let masterTradeMap: Map<string, string> | null = null;
+    if (requiresTradeValidation) {
+      masterTradeMap = await this.getMasterTradeMap();
+    }
+
     if (updateProfessionalDto.primary_trade !== undefined) {
-      data.primaryTrade = updateProfessionalDto.primary_trade;
+      const normalizedPrimaryTrade = this.normalizeTradeInput(updateProfessionalDto.primary_trade);
+      if (!normalizedPrimaryTrade) {
+        data.primaryTrade = null;
+      } else {
+        const canonical = masterTradeMap?.get(normalizedPrimaryTrade.toLowerCase());
+        if (!canonical) {
+          throw new BadRequestException(
+            `Unknown trade "${normalizedPrimaryTrade}". Please choose a trade from the master trade list.`,
+          );
+        }
+        data.primaryTrade = canonical;
+      }
     }
 
     if (updateProfessionalDto.trades_offered !== undefined) {
-      data.tradesOffered = updateProfessionalDto.trades_offered;
+      const normalizedTrades = this.normalizeTradeList(updateProfessionalDto.trades_offered);
+      const { canonical, unknown } = this.resolveCanonicalTrades(normalizedTrades, masterTradeMap || new Map());
+      if (unknown.length > 0) {
+        throw new BadRequestException(
+          `Unknown trades: ${unknown.join(', ')}. Please choose trades from the master trade list.`,
+        );
+      }
+      data.tradesOffered = canonical;
     }
 
     if (updateProfessionalDto.supplies_offered !== undefined) {
