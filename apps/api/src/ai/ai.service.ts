@@ -184,6 +184,7 @@ NORMALIZATION RULES
 - Temporary mitigations must be conservative, simple, and non-technical.
 - If there is possible immediate danger, advise leaving the area / isolating use only if safe and contacting emergency services or utility provider as appropriate.
 - Never suggest DIY repair steps for dangerous conditions.
+- Keep arrays concise unless essential: assumptions/risks/keyFacts/missingInfo/followUpQuestions max 4 items, concerns max 3 items, temporaryMitigations max 4 items.
 
 OUTPUT SCHEMA
 {
@@ -303,6 +304,158 @@ OUTPUT SCHEMA
     };
   }
 
+  private extractJsonStringValue(source: string, key: string): string | null {
+    const regex = new RegExp(`"${key}"\\s*:\\s*"((?:\\\\.|[^"\\])*)"`, 'i');
+    const match = source.match(regex);
+    if (!match) return null;
+    try {
+      return JSON.parse(`"${match[1]}"`) as string;
+    } catch {
+      return match[1];
+    }
+  }
+
+  private extractJsonNumberValue(source: string, key: string): number | null {
+    const regex = new RegExp(`"${key}"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)`, 'i');
+    const match = source.match(regex);
+    if (!match) return null;
+    const value = Number(match[1]);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  private extractJsonBooleanValue(source: string, key: string): boolean | null {
+    const regex = new RegExp(`"${key}"\\s*:\\s*(true|false)`, 'i');
+    const match = source.match(regex);
+    if (!match) return null;
+    return match[1].toLowerCase() === 'true';
+  }
+
+  private extractJsonStringArray(source: string, key: string): string[] {
+    const regex = new RegExp(`"${key}"\\s*:\\s*\\[([\\s\\S]*?)\\]`, 'i');
+    const match = source.match(regex);
+    if (!match) return [];
+    const inner = match[1];
+    const values: string[] = [];
+    const itemRegex = /"((?:\\.|[^"\\])*)"/g;
+    let itemMatch: RegExpExecArray | null;
+    while ((itemMatch = itemRegex.exec(inner)) !== null) {
+      try {
+        values.push(JSON.parse(`"${itemMatch[1]}"`) as string);
+      } catch {
+        values.push(itemMatch[1]);
+      }
+    }
+    return values.filter((item) => item.trim().length > 0);
+  }
+
+  private extractNestedObject(source: string, key: string): string | null {
+    const keyIndex = source.indexOf(`"${key}"`);
+    if (keyIndex === -1) return null;
+    const openIndex = source.indexOf('{', keyIndex);
+    if (openIndex === -1) return null;
+
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = openIndex; i < source.length; i++) {
+      const char = source[i];
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === '\\') {
+          escaped = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char === '"') {
+        inString = true;
+        continue;
+      }
+
+      if (char === '{') depth += 1;
+      if (char === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          return source.slice(openIndex, i + 1);
+        }
+      }
+    }
+
+    return source.slice(openIndex);
+  }
+
+  private extractPartialParsedOutput(rawOutput: string) {
+    const projectSource = this.extractNestedObject(rawOutput, 'project') ?? '';
+    const locationSource = this.extractNestedObject(rawOutput, 'location') ?? '';
+    const sizeSource = this.extractNestedObject(rawOutput, 'size') ?? '';
+    const budgetSource = this.extractNestedObject(rawOutput, 'budget') ?? '';
+    const timelineSource = this.extractNestedObject(rawOutput, 'timeline') ?? '';
+    const safetySource = this.extractNestedObject(rawOutput, 'safetyAssessment') ?? '';
+
+    const partial = {
+      title: this.extractJsonStringValue(rawOutput, 'title'),
+      summary: this.extractJsonStringValue(rawOutput, 'summary'),
+      scope: this.extractJsonStringValue(rawOutput, 'scope'),
+      assumptions: this.extractJsonStringArray(rawOutput, 'assumptions'),
+      risks: this.extractJsonStringArray(rawOutput, 'risks'),
+      nextQuestions: this.extractJsonStringArray(rawOutput, 'nextQuestions'),
+      followUpQuestions: this.extractJsonStringArray(rawOutput, 'followUpQuestions'),
+      trades: this.extractJsonStringArray(rawOutput, 'trades'),
+      keyFacts: this.extractJsonStringArray(rawOutput, 'keyFacts'),
+      overallConfidence: this.extractJsonNumberValue(rawOutput, 'overallConfidence'),
+      project: {
+        scopeText: this.extractJsonStringValue(projectSource, 'scopeText'),
+        propertyType: this.extractJsonStringValue(projectSource, 'propertyType'),
+        affectedAreas: this.extractJsonStringArray(projectSource, 'affectedAreas'),
+        works: this.extractJsonStringArray(projectSource, 'works'),
+        deliverables: this.extractJsonStringArray(projectSource, 'deliverables'),
+      },
+      location: {
+        primary: this.extractJsonStringValue(locationSource, 'primary'),
+        secondary: this.extractJsonStringValue(locationSource, 'secondary'),
+        tertiary: this.extractJsonStringValue(locationSource, 'tertiary'),
+      },
+      size: {
+        rawText: this.extractJsonStringValue(sizeSource, 'rawText'),
+        value: this.extractJsonNumberValue(sizeSource, 'value'),
+        unit: this.extractJsonStringValue(sizeSource, 'unit'),
+      },
+      budget: {
+        rawText: this.extractJsonStringValue(budgetSource, 'rawText'),
+        min: this.extractJsonNumberValue(budgetSource, 'min'),
+        max: this.extractJsonNumberValue(budgetSource, 'max'),
+        currency: this.extractJsonStringValue(budgetSource, 'currency'),
+      },
+      timeline: {
+        durationText: this.extractJsonStringValue(timelineSource, 'durationText'),
+        startText: this.extractJsonStringValue(timelineSource, 'startText'),
+        deadlineText: this.extractJsonStringValue(timelineSource, 'deadlineText'),
+      },
+      safetyAssessment: {
+        riskLevel: this.extractJsonStringValue(safetySource, 'riskLevel') ?? 'none',
+        isDangerous: this.extractJsonBooleanValue(safetySource, 'isDangerous') ?? false,
+        concerns: this.extractJsonStringArray(safetySource, 'concerns'),
+        temporaryMitigations: this.extractJsonStringArray(safetySource, 'temporaryMitigations'),
+        shouldEscalateEmergency:
+          this.extractJsonBooleanValue(safetySource, 'shouldEscalateEmergency') ?? false,
+        emergencyReason: this.extractJsonStringValue(safetySource, 'emergencyReason'),
+        requiresImmediateHumanContact:
+          this.extractJsonBooleanValue(safetySource, 'requiresImmediateHumanContact') ?? false,
+        disclaimer: this.extractJsonStringValue(safetySource, 'disclaimer'),
+      },
+    };
+
+    const hasUsefulContent = Boolean(
+      partial.title || partial.summary || partial.scope || partial.trades.length > 0,
+    );
+
+    return hasUsefulContent ? partial : null;
+  }
+
   private normalizeParsedOutput(parsedOutput: unknown) {
     if (!parsedOutput || typeof parsedOutput !== 'object' || Array.isArray(parsedOutput)) {
       return parsedOutput;
@@ -372,7 +525,7 @@ OUTPUT SCHEMA
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     const timeoutRaw = process.env.DEEPSEEK_TIMEOUT_MS;
     const timeoutMs = Number(timeoutRaw || '60000');
-    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '700');
+    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '1200');
     const apiKeyPresent = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
     const promptWrapper = await this.buildPromptWrapper();
 
@@ -419,7 +572,7 @@ OUTPUT SCHEMA
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
-    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '700');
+    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '1200');
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
@@ -490,6 +643,11 @@ OUTPUT SCHEMA
           parsedOutput = this.normalizeParsedOutput(JSON.parse(output));
         } catch {
           this.logger.warn(`[${requestId}] DeepSeek returned non-parseable JSON content`);
+          const salvaged = this.extractPartialParsedOutput(output);
+          if (salvaged) {
+            parsedOutput = this.normalizeParsedOutput(salvaged);
+            this.logger.warn(`[${requestId}] Recovered partial structured AI output after truncation/parse failure`);
+          }
         }
       }
 

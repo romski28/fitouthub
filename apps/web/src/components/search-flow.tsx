@@ -9,6 +9,7 @@ import { SearchHelpModal } from '@/components/search-help-modal';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
+import { AI_STATE_CLEAR_EVENT } from '@/lib/client-session';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -397,6 +398,22 @@ export default function SearchFlow() {
   const { isLoggedIn } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
 
+  const clearAiResponseState = () => {
+    setAiLoading(false);
+    setAiError(null);
+    setAiOutput(null);
+    setAiMeta(null);
+    setAiStructured(null);
+    setAiMatchCount(null);
+    setAiCountLoading(false);
+    setIsConverting(false);
+    setConvertError(null);
+    setFollowUpAnswers([]);
+    setActiveQuestionIndex(0);
+    setCurrentAnswer('');
+    setFinalSummary('');
+  };
+
   // Track previous login state to detect login events
   const prevLoggedIn = useRef<boolean | undefined>(undefined);
 
@@ -430,6 +447,18 @@ export default function SearchFlow() {
     } catch {
       setAiSessionId(null);
     }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleClearAiState = () => {
+      setAiSessionId(null);
+      clearAiResponseState();
+    };
+
+    window.addEventListener(AI_STATE_CLEAR_EVENT, handleClearAiState);
+    return () => window.removeEventListener(AI_STATE_CLEAR_EVENT, handleClearAiState);
   }, []);
 
   const checkSandboxHealth = async () => {

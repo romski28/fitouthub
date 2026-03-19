@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import type { CanonicalLocation } from '@/components/location-select';
 import { API_BASE_URL } from '@/config/api';
+import { clearAiClientState } from '@/lib/client-session';
 
 interface User {
   id: string;
@@ -229,9 +230,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('userLocation');
     localStorage.removeItem('professionalAccessToken');
     localStorage.removeItem('professionalRefreshToken');
     localStorage.removeItem('professional');
+    clearAiClientState();
     setAccessToken(null);
     setUser(null);
     setRole(null);

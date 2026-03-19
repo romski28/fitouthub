@@ -8,6 +8,7 @@ import React, {
   useEffect,
 } from 'react';
 import { API_BASE_URL } from '@/config/api';
+import { clearAiClientState } from '@/lib/client-session';
 
 export interface Professional {
   id: string;
@@ -233,6 +234,8 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('userLocation');
+    clearAiClientState();
     setAccessToken(null);
     setProfessional(null);
     setIsLoggedIn(false);
