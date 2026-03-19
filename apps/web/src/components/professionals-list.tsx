@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, memo } from 'react';
+import { useEffect, useMemo, useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
@@ -218,6 +218,27 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    const hasSelectedLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
+    const hasIncomingLocation = Boolean(
+      initialLocation?.primary || initialLocation?.secondary || initialLocation?.tertiary,
+    );
+
+    if (hasSelectedLocation || !hasIncomingLocation) return;
+
+    setLoc(initialLocation as CanonicalLocation);
+    setLocationDisplay(
+      initialLocation?.tertiary || initialLocation?.secondary || initialLocation?.primary || '',
+    );
+  }, [
+    initialLocation?.primary,
+    initialLocation?.secondary,
+    initialLocation?.tertiary,
+    loc.primary,
+    loc.secondary,
+    loc.tertiary,
+  ]);
+
   const suggestionPool = useMemo(() => {
     const pool = new Set<string>();
     professionals.forEach((pro) => {
@@ -348,7 +369,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         : typeof pro.serviceArea === 'string'
           ? pro.serviceArea.split(',')
           : [];
-      const areas = serviceAreasRaw.map((s) => s.trim().toLowerCase());
+      const areas = [
+        ...serviceAreasRaw.map((s) => s.trim().toLowerCase()),
+        ...(pro.locationPrimary ? [pro.locationPrimary.toLowerCase()] : []),
+        ...(pro.locationSecondary ? [pro.locationSecondary.toLowerCase()] : []),
+        ...(pro.locationTertiary ? [pro.locationTertiary.toLowerCase()] : []),
+      ].filter(Boolean);
 
       if (areas.length === 0) return -1;
 
@@ -391,8 +417,38 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const filtered = useMemo(() => {
     if (filteredBase.length >= 3 || (!loc.primary && !loc.secondary && !loc.tertiary)) return filteredBase;
-    // Widen scope: ignore location filter when fewer than 3 results
-    const widened = professionals.slice().sort((a, b) => {
+    // Widen scope: ignore location filter when fewer than 3 results, but preserve trade/search/rating intent
+    const needle = searchTerm.trim().toLowerCase();
+    const mappedProfession = needle ? matchServiceToProfession(needle) : null;
+    const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
+
+    const widened = professionals
+      .filter((pro) => {
+        const haystacks = [
+          pro.professionType,
+          pro.fullName,
+          pro.businessName,
+          pro.primaryTrade,
+          ...(pro.tradesOffered ?? []),
+          ...(pro.suppliesOffered ?? []),
+        ]
+          .filter(Boolean)
+          .map((s) => s!.toString().toLowerCase());
+
+        const textMatch = needle ? haystacks.some((s) => s.includes(needle)) : false;
+        const professionMatch = effectiveProfession
+          ? haystacks.some((s) => s.includes(effectiveProfession))
+          : false;
+
+        const bySearch = needle || effectiveProfession
+          ? textMatch || professionMatch || (!needle && professionMatch)
+          : true;
+        if (!bySearch) return false;
+
+        const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
+        return byRating;
+      })
+      .sort((a, b) => {
       const ra = typeof a.rating === 'number' ? a.rating : 0;
       const rb = typeof b.rating === 'number' ? b.rating : 0;
       if (rb !== ra) return rb - ra;
@@ -401,7 +457,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       return na.localeCompare(nb);
     });
     return widened;
-  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary]);
+  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating]);
 
   const maxSelect = Math.min(3, filtered.length);
   // Always start with empty selection - no persistence

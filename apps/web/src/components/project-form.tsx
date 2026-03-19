@@ -31,6 +31,7 @@ export interface ProjectFormData {
       concerns?: string[];
       temporaryMitigations?: string[];
       shouldEscalateEmergency?: boolean;
+      requiresImmediateHumanContact?: boolean;
       emergencyReason?: string | null;
       disclaimer?: string | null;
       adminReview?: {
@@ -95,6 +96,20 @@ type AvailableTrade = {
   aliases?: string[];
 };
 
+const inferEmergencyFromSafety = (initialData?: Partial<ProjectFormData>) => {
+  const safety = initialData?.aiFrom?.safety;
+  if (!safety) return false;
+
+  const riskLevel = (safety.riskLevel || '').toLowerCase();
+  return Boolean(
+    safety.isDangerous ||
+    safety.shouldEscalateEmergency ||
+    safety.requiresImmediateHumanContact ||
+    riskLevel === 'high' ||
+    riskLevel === 'critical',
+  );
+};
+
 const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectFormData => ({
   projectName: initialData?.projectName || '',
   clientName: initialData?.clientName || '',
@@ -106,7 +121,7 @@ const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectF
   photoUrls: initialData?.photoUrls || [],
   existingPhotos: initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []),
   tradesRequired: initialData?.tradesRequired || [],
-  isEmergency: initialData?.isEmergency ?? false,
+  isEmergency: initialData?.isEmergency ?? inferEmergencyFromSafety(initialData),
   onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
   endDate: initialData?.endDate || '',
   aiFrom: initialData?.aiFrom,

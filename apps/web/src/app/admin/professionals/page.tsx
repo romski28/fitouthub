@@ -26,7 +26,9 @@ export default function AdminProfessionalsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [professionalTypeFilter, setProfessionalTypeFilter] = useState('');
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [tradeFilter, setTradeFilter] = useState('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
   const [itemsToShow, setItemsToShow] = useState(10);
   const [tradeOptions, setTradeOptions] = useState<string[]>([]);
@@ -351,10 +353,40 @@ export default function AdminProfessionalsPage() {
     const matchesStatus =
       statusFilters.length === 0 || statusFilters.includes(p.status);
 
+    const matchesProfessionalType =
+      !professionalTypeFilter || p.professionType === professionalTypeFilter;
+
     const matchesDate = matchesDateRange(p);
 
-    return matchesSearch && matchesStatus && matchesDate;
+    const tradeNeedle = tradeFilter.trim().toLowerCase();
+    const tradeHaystack = [
+      p.primaryTrade,
+      ...(Array.isArray(p.tradesOffered) ? p.tradesOffered : []),
+      ...(Array.isArray(p.suppliesOffered) ? p.suppliesOffered : []),
+    ]
+      .filter(Boolean)
+      .map((item) => item!.toString().toLowerCase());
+    const matchesTrade = !tradeNeedle || tradeHaystack.some((trade) => trade.includes(tradeNeedle));
+
+    return matchesSearch && matchesStatus && matchesProfessionalType && matchesDate && matchesTrade;
   });
+
+  const availableTradeFilters = useMemo(() => {
+    const set = new Set<string>();
+    tradeOptions.forEach((trade) => {
+      if (trade?.trim()) set.add(trade.trim());
+    });
+    professionals.forEach((p) => {
+      if (p.primaryTrade?.trim()) set.add(p.primaryTrade.trim());
+      (Array.isArray(p.tradesOffered) ? p.tradesOffered : []).forEach((trade) => {
+        if (trade?.trim()) set.add(trade.trim());
+      });
+      (Array.isArray(p.suppliesOffered) ? p.suppliesOffered : []).forEach((supply) => {
+        if (supply?.trim()) set.add(supply.trim());
+      });
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [professionals, tradeOptions]);
 
   if (loading) {
     return <div className="text-center text-slate-600">Loading professionals...</div>;
@@ -421,7 +453,7 @@ export default function AdminProfessionalsPage() {
 
       {/* Filters */}
       <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 shadow-sm space-y-3">
-        <div className="grid gap-2 md:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-5">
           <div className="relative grid gap-0.5">
             <label className="text-xs font-medium text-slate-600">Search</label>
             <div className="relative">
@@ -464,6 +496,34 @@ export default function AdminProfessionalsPage() {
               onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
               className="rounded-md border border-slate-300 px-2.5 py-1.5 text-sm text-slate-900"
             />
+          </div>
+          <div className="grid gap-0.5">
+            <label className="text-xs font-medium text-slate-600">Trade</label>
+            <select
+              value={tradeFilter}
+              onChange={(e) => setTradeFilter(e.target.value)}
+              className="rounded-md border border-slate-300 px-2.5 py-1.5 text-sm text-slate-900"
+            >
+              <option value="">All trades</option>
+              {availableTradeFilters.map((trade) => (
+                <option key={trade} value={trade}>
+                  {trade}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-0.5">
+            <label className="text-xs font-medium text-slate-600">Professional Type</label>
+            <select
+              value={professionalTypeFilter}
+              onChange={(e) => setProfessionalTypeFilter(e.target.value)}
+              className="rounded-md border border-slate-300 px-2.5 py-1.5 text-sm text-slate-900"
+            >
+              <option value="">All types</option>
+              <option value="contractor">Contractor</option>
+              <option value="company">Company</option>
+              <option value="reseller">Reseller</option>
+            </select>
           </div>
         </div>
 

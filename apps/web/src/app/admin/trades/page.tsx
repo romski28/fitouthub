@@ -32,7 +32,14 @@ export default function TradesAdminPage() {
   const [showAddTrade, setShowAddTrade] = useState(false);
   const [showAddMapping, setShowAddMapping] = useState(false);
   const [formData, setFormData] = useState<Partial<Trade>>({});
+  const [aliasesInput, setAliasesInput] = useState('');
   const [mappingKeyword, setMappingKeyword] = useState('');
+
+  const parseAliases = (input: string) =>
+    input
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
 
   useEffect(() => {
     fetchTrades();
@@ -62,13 +69,19 @@ export default function TradesAdminPage() {
 
   const handleCreateTrade = async () => {
     try {
+      const payload: Partial<Trade> = {
+        ...formData,
+        aliases: parseAliases(aliasesInput),
+      };
+
       await fetch(`${API_BASE_URL}/trades`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       setShowAddTrade(false);
       setFormData({});
+      setAliasesInput('');
       fetchTrades();
     } catch (error) {
       console.error('Failed to create trade:', error);
@@ -149,6 +162,7 @@ export default function TradesAdminPage() {
           onClick={() => {
             setShowAddTrade(true);
             setFormData({ category: 'contractor', enabled: true, featured: false, sortOrder: 999, aliases: [] });
+            setAliasesInput('');
           }}
           className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
         >
@@ -250,11 +264,12 @@ export default function TradesAdminPage() {
                   <label className="block text-sm font-medium text-slate-700">Aliases (comma-separated)</label>
                   <input
                     type="text"
-                    value={formData.aliases?.join(', ') || ''}
-                    onChange={(e) =>
+                    value={aliasesInput}
+                    onChange={(e) => setAliasesInput(e.target.value)}
+                    onBlur={() =>
                       setFormData({
                         ...formData,
-                        aliases: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                        aliases: parseAliases(aliasesInput),
                       })
                     }
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
@@ -284,6 +299,7 @@ export default function TradesAdminPage() {
                     onClick={() => {
                       setShowAddTrade(false);
                       setFormData({});
+                      setAliasesInput('');
                     }}
                     className="rounded-md bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
                   >
