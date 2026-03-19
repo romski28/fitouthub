@@ -29,6 +29,17 @@ type DeepSeekChatResponse = {
   model?: string;
 };
 
+type SafetyAssessment = {
+  riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
+  isDangerous: boolean;
+  concerns: string[];
+  temporaryMitigations: string[];
+  shouldEscalateEmergency: boolean;
+  emergencyReason: string | null;
+  requiresImmediateHumanContact: boolean;
+  disclaimer: string | null;
+};
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -169,6 +180,10 @@ NORMALIZATION RULES
 - Normalize size units to sqft or sqm.
 - Capture durationText, startText, deadlineText separately.
 - Use country=Hong Kong. Set tertiary only if explicit in the user prompt.
+- Flag safety hazards if the request narrative suggests immediate risk.
+- Temporary mitigations must be conservative, simple, and non-technical.
+- If there is possible immediate danger, advise leaving the area / isolating use only if safe and contacting emergency services or utility provider as appropriate.
+- Never suggest DIY repair steps for dangerous conditions.
 
 OUTPUT SCHEMA
 {
@@ -222,6 +237,16 @@ OUTPUT SCHEMA
   "keyFacts": ["string"],
   "missingInfo": ["string"],
   "followUpQuestions": ["string"],
+  "safetyAssessment": {
+    "riskLevel": "none|low|medium|high|critical",
+    "isDangerous": true,
+    "concerns": ["string"],
+    "temporaryMitigations": ["string"],
+    "shouldEscalateEmergency": false,
+    "emergencyReason": "string|null",
+    "requiresImmediateHumanContact": false,
+    "disclaimer": "string|null"
+  },
   "overallConfidence": number
 }`;
 
@@ -229,6 +254,52 @@ OUTPUT SCHEMA
       systemPrompt,
       allowedTradesCount: allowedTrades.length,
       locationEntryCount: Object.keys(locationTaxonomy).length,
+    };
+  }
+
+  private normalizeSafetyAssessment(value: unknown): SafetyAssessment {
+    const source =
+      value && typeof value === 'object' && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
+
+    const concerns = Array.isArray(source.concerns)
+      ? source.concerns.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : [];
+    const temporaryMitigations = Array.isArray(source.temporaryMitigations)
+      ? source.temporaryMitigations.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : [];
+
+    const allowedRiskLevels = new Set(['none', 'low', 'medium', 'high', 'critical']);
+    const riskLevelRaw = typeof source.riskLevel === 'string' ? source.riskLevel.toLowerCase() : 'none';
+    const riskLevel = allowedRiskLevels.has(riskLevelRaw)
+      ? (riskLevelRaw as SafetyAssessment['riskLevel'])
+      : 'none';
+
+    return {
+      riskLevel,
+      isDangerous:
+        typeof source.isDangerous === 'boolean'
+          ? source.isDangerous
+          : concerns.length > 0 || riskLevel === 'high' || riskLevel === 'critical',
+      concerns,
+      temporaryMitigations,
+      shouldEscalateEmergency:
+        typeof source.shouldEscalateEmergency === 'boolean'
+          ? source.shouldEscalateEmergency
+          : riskLevel === 'high' || riskLevel === 'critical',
+      emergencyReason:
+        typeof source.emergencyReason === 'string' && source.emergencyReason.trim().length > 0
+          ? source.emergencyReason.trim()
+          : null,
+      requiresImmediateHumanContact:
+        typeof source.requiresImmediateHumanContact === 'boolean'
+          ? source.requiresImmediateHumanContact
+          : riskLevel === 'high' || riskLevel === 'critical',
+      disclaimer:
+        typeof source.disclaimer === 'string' && source.disclaimer.trim().length > 0
+          ? source.disclaimer.trim()
+          : 'If there is immediate danger, move to safety and contact emergency services or the relevant utility provider.',
     };
   }
 
@@ -264,10 +335,13 @@ OUTPUT SCHEMA
       : Array.isArray(result.followUpQuestions)
         ? result.followUpQuestions
         : [];
+    const safetyAssessment = this.normalizeSafetyAssessment(result.safetyAssessment);
 
     if (!project.scopeText && scope) {
       project.scopeText = scope;
     }
+
+    project.safetyAssessment = safetyAssessment;
 
     return {
       ...result,
@@ -280,6 +354,7 @@ OUTPUT SCHEMA
       followUpQuestions: Array.isArray(result.followUpQuestions)
         ? result.followUpQuestions
         : nextQuestions,
+      safetyAssessment,
       project,
       contractDocumentation: {
         title,
@@ -554,6 +629,7 @@ OUTPUT SCHEMA
       intake.project && typeof intake.project === 'object' && !Array.isArray(intake.project)
         ? ({ ...(intake.project as Record<string, unknown>) } as Record<string, unknown>)
         : {};
+    const safetyAssessment = this.normalizeSafetyAssessment(projectJson.safetyAssessment);
 
     const shouldPersistFollowUp = normalizedFollowUpAnswers.length > 0 || Boolean(finalSummary);
 
@@ -618,7 +694,11 @@ OUTPUT SCHEMA
 
     const asapKeywords = /\b(asap|immediately|urgent|today|tonight|right now|right away|straight away|as soon as possible)\b/i;
     const isAsap = asapKeywords.test(intake.rawPrompt) || asapKeywords.test(timelineJson?.startText ?? '');
-    const isEmergency = /\b(emergency|urgent|asap|immediately|today|tonight|right now)\b/i.test(intake.rawPrompt);
+    const isEmergency =
+      /\b(emergency|urgent|asap|immediately|today|tonight|right now)\b/i.test(intake.rawPrompt) ||
+      safetyAssessment.shouldEscalateEmergency ||
+      safetyAssessment.riskLevel === 'high' ||
+      safetyAssessment.riskLevel === 'critical';
 
     let draftEndDate: string | null = null;
     const now = new Date();
@@ -663,12 +743,80 @@ OUTPUT SCHEMA
         aiFrom: {
           assumptions: toStringArray(intake.assumptions),
           risks: toStringArray(intake.risks),
+          safety: safetyAssessment,
         },
         ...(draftBudget !== null ? { budget: draftBudget } : {}),
         ...(draftEndDate ? { endDate: draftEndDate } : {}),
         ...(isEmergency ? { isEmergency: true } : {}),
       },
     };
+  }
+
+  async acknowledgeSafetyTriage(
+    intakeId: string,
+    context: { adminUserId: string; adminName?: string },
+  ) {
+    const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
+    if (!intake) throw new NotFoundException('AI intake not found');
+
+    const projectJson =
+      intake.project && typeof intake.project === 'object' && !Array.isArray(intake.project)
+        ? ({ ...(intake.project as Record<string, unknown>) } as Record<string, unknown>)
+        : {};
+    const safetyAssessment = this.normalizeSafetyAssessment(projectJson.safetyAssessment);
+
+    if (!safetyAssessment.isDangerous && safetyAssessment.concerns.length === 0) {
+      throw new BadRequestException('No safety triage to acknowledge');
+    }
+
+    const reviewedSafety = {
+      ...safetyAssessment,
+      adminReview: {
+        status: 'acknowledged',
+        acknowledgedAt: new Date().toISOString(),
+        acknowledgedByUserId: context.adminUserId,
+        acknowledgedByName: context.adminName ?? null,
+      },
+    };
+
+    const updated = await this.prisma.aiIntake.update({
+      where: { id: intakeId },
+      data: {
+        project: {
+          ...projectJson,
+          safetyAssessment: reviewedSafety,
+        },
+      },
+      select: {
+        id: true,
+        project: true,
+      },
+    });
+
+    await (this.prisma as any).activityLog.create({
+      data: {
+        actorName: context.adminName || 'Admin',
+        actorType: 'admin',
+        userId: context.adminUserId,
+        action: 'ai_safety_acknowledged',
+        resource: 'AiIntake',
+        resourceId: intakeId,
+        details: 'AI safety triage acknowledged by admin',
+        metadata: {
+          intakeId,
+          projectId: intake.projectId,
+          riskLevel: safetyAssessment.riskLevel,
+          concerns: safetyAssessment.concerns,
+        },
+        status: 'warning',
+      },
+    }).catch((error) => {
+      this.logger.warn(
+        `[acknowledgeSafetyTriage] Failed to write activity log: ${(error as Error).message}`,
+      );
+    });
+
+    return updated;
   }
 
   async countProfessionals(trades?: string[], location?: string): Promise<{

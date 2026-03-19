@@ -279,6 +279,7 @@ export class ProjectsService {
               id: true,
               assumptions: true,
               risks: true,
+              project: true,
             },
           },
           photos: true,
@@ -954,6 +955,7 @@ Please review the project details and respond with your quote or decline the inv
     // Generate secure tokens and send invitation emails for each professional
     const tokenPromises: any[] = [];
     const emailPromises: any[] = [];
+    const directNotificationPromises: any[] = [];
 
     for (const professional of professionals) {
       const acceptToken = createId();
@@ -1020,10 +1022,94 @@ Please review the project details and respond with your quote or decline the inv
             return null;
           }),
       );
+
+      // Send direct notification via preferred communication channel (if configured)
+      if (professional.phone) {
+        directNotificationPromises.push(
+          (async () => {
+            try {
+              const preference = await this.prisma.notificationPreference.findUnique({
+                where: { professionalId: professional.id },
+                select: {
+                  primaryChannel: true,
+                  fallbackChannel: true,
+                  enableWhatsApp: true,
+                  enableSMS: true,
+                },
+              });
+
+              const preferredChannel = preference?.primaryChannel;
+              const fallbackChannel = preference?.fallbackChannel;
+
+              const isMessagingChannel = (channel?: NotificationChannel | null) =>
+                channel === NotificationChannel.WHATSAPP ||
+                channel === NotificationChannel.SMS;
+
+              const isChannelEnabled = (channel?: NotificationChannel | null) => {
+                if (!channel) return false;
+                if (channel === NotificationChannel.WHATSAPP) {
+                  return preference?.enableWhatsApp ?? true;
+                }
+                if (channel === NotificationChannel.SMS) {
+                  return preference?.enableSMS ?? true;
+                }
+                return false;
+              };
+
+              let directChannel: NotificationChannel | null = null;
+              if (
+                isMessagingChannel(preferredChannel) &&
+                isChannelEnabled(preferredChannel)
+              ) {
+                directChannel = preferredChannel as NotificationChannel;
+              } else if (
+                isMessagingChannel(fallbackChannel) &&
+                isChannelEnabled(fallbackChannel)
+              ) {
+                directChannel = fallbackChannel as NotificationChannel;
+              } else if (!preference) {
+                directChannel = NotificationChannel.WHATSAPP;
+              }
+
+              if (!directChannel) {
+                return;
+              }
+
+              const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. Check your email or log in to respond.`;
+              const sendResult = await this.notificationService.send({
+                professionalId: professional.id,
+                phoneNumber: professional.phone,
+                channel: directChannel,
+                eventType: 'project_invitation',
+                message: shortMsg,
+              });
+
+              if (!sendResult.success) {
+                console.error(
+                  '[ProjectsService.create] preferred direct invitation failed',
+                  {
+                    professionalId: professional.id,
+                    channel: directChannel,
+                    error: sendResult.error,
+                  },
+                );
+              }
+            } catch (err) {
+              console.error(
+                '[ProjectsService.create] preferred direct invitation failed',
+                {
+                  professionalId: professional.id,
+                  error: err?.message,
+                },
+              );
+            }
+          })(),
+        );
+      }
     }
 
     // Execute all token creations and email sends in parallel
-    await Promise.all([...tokenPromises, ...emailPromises]);
+    await Promise.all([...tokenPromises, ...emailPromises, ...directNotificationPromises]);
 
     // Link the AI intake to the project if provided
     if (aiIntakeId && userId) {

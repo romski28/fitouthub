@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post, Request, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, Query, ForbiddenException, UseGuards } from '@nestjs/common';
 import { AiService } from './ai.service';
+import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 @Controller('ai')
 export class AiController {
@@ -47,5 +48,20 @@ export class AiController {
     // Parse trades from comma-separated string to array
     const trades = tradesParam ? tradesParam.split(',').map((t) => t.trim()).filter(Boolean) : undefined;
     return this.aiService.countProfessionals(trades, location);
+  }
+
+  @Post('intake/:id/safety-ack')
+  @UseGuards(CombinedAuthGuard)
+  async acknowledgeSafety(@Param('id') id: string, @Request() req: any) {
+    const userId: string | undefined = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub ?? undefined;
+    const role: string | undefined = req?.user?.role;
+    if (!userId || role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    return this.aiService.acknowledgeSafetyTriage(id, {
+      adminUserId: userId,
+      adminName: req?.user?.email ?? req?.user?.nickname ?? 'Admin',
+    });
   }
 }

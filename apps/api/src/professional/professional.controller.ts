@@ -341,6 +341,7 @@ export class ProfessionalController {
                   id: true,
                   assumptions: true,
                   risks: true,
+                  project: true,
                 },
               },
             },

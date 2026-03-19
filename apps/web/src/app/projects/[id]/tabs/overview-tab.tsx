@@ -28,6 +28,7 @@ interface ProjectDetail {
     id?: string;
     assumptions?: unknown;
     risks?: unknown;
+    project?: unknown;
   } | null;
 }
 

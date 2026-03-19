@@ -80,6 +80,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [acknowledgingSafety, setAcknowledgingSafety] = useState(false);
 
   // Enforce admin-only access
   useRoleGuard(['admin'], { fallback: '/admin' });
@@ -165,6 +166,42 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
   const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
 
+  const handleAcknowledgeSafety = async () => {
+    if (!project.aiIntake?.id || !accessToken) return;
+    setAcknowledgingSafety(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/ai/intake/${project.aiIntake.id}/safety-ack`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        const message = await res.text().catch(() => 'Failed to acknowledge safety flag');
+        throw new Error(message);
+      }
+
+      const data = await res.json();
+      setProject((current) =>
+        current
+          ? {
+              ...current,
+              aiIntake: {
+                ...(current.aiIntake || {}),
+                ...(data || {}),
+              },
+            }
+          : current,
+      );
+    } catch (e: any) {
+      setError(e?.message || 'Failed to acknowledge safety flag');
+    } finally {
+      setAcknowledgingSafety(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
       <div className="flex items-center justify-between">
@@ -189,7 +226,12 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       />
 
       {project.aiIntake && (
-        <ProjectAiPanel aiIntake={project.aiIntake} mode="admin" />
+        <ProjectAiPanel
+          aiIntake={project.aiIntake}
+          mode="admin"
+          onAcknowledgeSafety={handleAcknowledgeSafety}
+          isAcknowledgingSafety={acknowledgingSafety}
+        />
       )}
 
       <ProjectProgressBar

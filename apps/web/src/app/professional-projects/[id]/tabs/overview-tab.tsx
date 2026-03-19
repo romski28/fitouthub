@@ -19,6 +19,7 @@ interface OverviewTabProps {
         id?: string;
         assumptions?: unknown;
         risks?: unknown;
+        project?: unknown;
       } | null;
     };
     status: string;
@@ -243,6 +244,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       {/* Project Info */}
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm p-5">
         <h2 className="text-lg font-bold text-slate-900 mb-4">Project Details</h2>
+
+        {project.project.notes && (
+          <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100 mb-4">
+            <p className="font-semibold text-slate-800 mb-1">Description</p>
+            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{project.project.notes}</p>
+          </div>
+        )}
         
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -281,13 +289,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </p>
           </div>
         </div>
-
-        {project.project.notes && (
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Project Notes</p>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.project.notes}</p>
-          </div>
-        )}
 
         {project.project.aiIntake && (
           <div className="mt-4 pt-4 border-t border-slate-200">

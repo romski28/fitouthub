@@ -36,6 +36,15 @@ interface AiStructured {
   nextQuestions: string[];
   assumptions: string[];
   risks: string[];
+  safetyAssessment: {
+    riskLevel: string;
+    isDangerous: boolean;
+    concerns: string[];
+    temporaryMitigations: string[];
+    shouldEscalateEmergency: boolean;
+    emergencyReason: string | null;
+    disclaimer: string | null;
+  } | null;
   overallConfidence: number | null;
 }
 
@@ -188,6 +197,26 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
               <li key={i} className="text-slate-600 flex gap-1.5"><span className="text-emerald-500">•</span>{fact}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {s.safetyAssessment && (s.safetyAssessment.isDangerous || s.safetyAssessment.concerns.length > 0) && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 mb-1">Safety flag</p>
+          <p className="text-sm font-semibold text-amber-900 capitalize">Risk: {s.safetyAssessment.riskLevel}</p>
+          {s.safetyAssessment.emergencyReason && (
+            <p className="text-sm text-amber-900 mt-1">{s.safetyAssessment.emergencyReason}</p>
+          )}
+          {s.safetyAssessment.temporaryMitigations.length > 0 && (
+            <ul className="mt-2 space-y-1 text-sm text-amber-900">
+              {s.safetyAssessment.temporaryMitigations.slice(0, 3).map((item, index) => (
+                <li key={`mitigation-${index}`} className="flex gap-2"><span>•</span><span>{item}</span></li>
+              ))}
+            </ul>
+          )}
+          {s.safetyAssessment.disclaimer && (
+            <p className="text-xs text-amber-800 mt-2">{s.safetyAssessment.disclaimer}</p>
+          )}
         </div>
       )}
 
@@ -514,6 +543,15 @@ export default function SearchFlow() {
           followUpQuestions?: string[];
           assumptions?: string[];
           risks?: string[];
+          safetyAssessment?: {
+            riskLevel?: string;
+            isDangerous?: boolean;
+            concerns?: string[];
+            temporaryMitigations?: string[];
+            shouldEscalateEmergency?: boolean;
+            emergencyReason?: string | null;
+            disclaimer?: string | null;
+          };
           overallConfidence?: number | null;
         } | null;
       } = await response.json();
@@ -544,6 +582,15 @@ export default function SearchFlow() {
         nextQuestions: p?.nextQuestions ?? p?.followUpQuestions ?? [],
         assumptions: Array.isArray(p?.assumptions) ? p.assumptions.filter((item): item is string => typeof item === 'string') : [],
         risks: Array.isArray(p?.risks) ? p.risks.filter((item): item is string => typeof item === 'string') : [],
+        safetyAssessment: p?.safetyAssessment ? {
+          riskLevel: p.safetyAssessment.riskLevel ?? 'none',
+          isDangerous: p.safetyAssessment.isDangerous ?? false,
+          concerns: Array.isArray(p.safetyAssessment.concerns) ? p.safetyAssessment.concerns.filter((item): item is string => typeof item === 'string') : [],
+          temporaryMitigations: Array.isArray(p.safetyAssessment.temporaryMitigations) ? p.safetyAssessment.temporaryMitigations.filter((item): item is string => typeof item === 'string') : [],
+          shouldEscalateEmergency: p.safetyAssessment.shouldEscalateEmergency ?? false,
+          emergencyReason: p.safetyAssessment.emergencyReason ?? null,
+          disclaimer: p.safetyAssessment.disclaimer ?? null,
+        } : null,
         overallConfidence: p?.overallConfidence ?? null,
       });
 
@@ -798,6 +845,7 @@ export default function SearchFlow() {
                           aiFrom: {
                             assumptions: aiStructured.assumptions,
                             risks: aiStructured.risks,
+                            safety: aiStructured.safetyAssessment,
                           },
                         },
                         ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),

@@ -25,6 +25,20 @@ export interface ProjectFormData {
   aiFrom?: {
     assumptions?: string[];
     risks?: string[];
+    safety?: {
+      riskLevel?: string;
+      isDangerous?: boolean;
+      concerns?: string[];
+      temporaryMitigations?: string[];
+      shouldEscalateEmergency?: boolean;
+      emergencyReason?: string | null;
+      disclaimer?: string | null;
+      adminReview?: {
+        status?: string;
+        acknowledgedAt?: string | null;
+        acknowledgedByName?: string | null;
+      } | null;
+    } | null;
   };
 }
 
@@ -562,7 +576,11 @@ export function ProjectForm({
           </button>
           {showAiExtract && (
             <ProjectAiPanel
-              aiIntake={{ assumptions: formData.aiFrom.assumptions, risks: formData.aiFrom.risks }}
+              aiIntake={{
+                assumptions: formData.aiFrom.assumptions,
+                risks: formData.aiFrom.risks,
+                safetyAssessment: formData.aiFrom.safety,
+              }}
               mode="client"
               className="mt-3"
             />
