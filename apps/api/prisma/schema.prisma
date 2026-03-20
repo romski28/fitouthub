@@ -138,10 +138,28 @@ model Tradesman {
   updatedAt       DateTime         @updatedAt
   serviceMappings ServiceMapping[]
   milestoneTemplates MilestoneTemplate[]
+  translations    TradesmanTranslation[]
 
   @@index([category])
   @@index([enabled])
   @@index([professionType])
+}
+
+model TradesmanTranslation {
+  id          String    @id @default(cuid())
+  tradeId     String
+  locale      String
+  title       String
+  description String?
+  jobs        String[]  @default([])
+  aliases     String[]  @default([])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  trade       Tradesman @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+  @@unique([tradeId, locale])
+  @@index([locale])
+  @@index([tradeId])
 }
 
 model MilestoneTemplate {

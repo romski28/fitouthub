@@ -3,18 +3,29 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 
+interface TradeTranslation {
+  locale: string;
+  name: string;
+  description?: string;
+  aliases: string[];
+  jobs: string[];
+}
+
 interface Trade {
   id: string;
   name: string;
+  locale: string;
   category: string;
   professionType?: string;
   aliases: string[];
+  jobs: string[];
   description?: string;
   enabled: boolean;
   featured: boolean;
   sortOrder: number;
   usageCount: number;
   serviceMappings?: ServiceMapping[];
+  translations?: TradeTranslation[];
 }
 
 interface ServiceMapping {
@@ -25,6 +36,11 @@ interface ServiceMapping {
   usageCount: number;
 }
 
+const SUPPORTED_LOCALES = [
+  { value: 'en', label: 'English' },
+  { value: 'zh-HK', label: 'Cantonese (zh-HK)' },
+];
+
 export default function TradesAdminPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,19 +49,27 @@ export default function TradesAdminPage() {
   const [showAddMapping, setShowAddMapping] = useState(false);
   const [formData, setFormData] = useState<Partial<Trade>>({});
   const [aliasesInput, setAliasesInput] = useState('');
+  const [jobsInput, setJobsInput] = useState('');
   const [tradeEditData, setTradeEditData] = useState<Partial<Trade> | null>(null);
   const [editAliasesInput, setEditAliasesInput] = useState('');
   const [mappingKeyword, setMappingKeyword] = useState('');
+  const [activeLocale, setActiveLocale] = useState('en');
+  const [translationLocale, setTranslationLocale] = useState('zh-HK');
+  const [translationName, setTranslationName] = useState('');
+  const [translationDescription, setTranslationDescription] = useState('');
+  const [translationAliasesInput, setTranslationAliasesInput] = useState('');
+  const [translationJobsInput, setTranslationJobsInput] = useState('');
+  const [seedLoading, setSeedLoading] = useState(false);
 
-  const parseAliases = (input: string) =>
+  const parseList = (input: string) =>
     input
       .split(',')
       .map((item) => item.trim())
       .filter(Boolean);
 
   useEffect(() => {
-    fetchTrades();
-  }, []);
+    fetchTrades(activeLocale);
+  }, [activeLocale]);
 
   useEffect(() => {
     if (!selectedTrade) {
@@ -66,9 +90,45 @@ export default function TradesAdminPage() {
     setEditAliasesInput((selectedTrade.aliases || []).join(', '));
   }, [selectedTrade]);
 
-  const fetchTrades = async () => {
+  useEffect(() => {
+    if (!selectedTrade) {
+      setTranslationName('');
+      setTranslationDescription('');
+      setTranslationAliasesInput('');
+      setTranslationJobsInput('');
+      return;
+    }
+
+    const normalizedLocale = translationLocale.toLowerCase();
+    const translation = selectedTrade.translations?.find(
+      (item) => item.locale.toLowerCase() === normalizedLocale,
+    );
+
+    if (translation) {
+      setTranslationName(translation.name || '');
+      setTranslationDescription(translation.description || '');
+      setTranslationAliasesInput((translation.aliases || []).join(', '));
+      setTranslationJobsInput((translation.jobs || []).join(', '));
+      return;
+    }
+
+    if (normalizedLocale === 'en') {
+      setTranslationName(selectedTrade.name || '');
+      setTranslationDescription(selectedTrade.description || '');
+      setTranslationAliasesInput((selectedTrade.aliases || []).join(', '));
+      setTranslationJobsInput((selectedTrade.jobs || []).join(', '));
+      return;
+    }
+
+    setTranslationName('');
+    setTranslationDescription('');
+    setTranslationAliasesInput('');
+    setTranslationJobsInput('');
+  }, [selectedTrade, translationLocale]);
+
+  const fetchTrades = async (locale: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/trades`);
+      const res = await fetch(`${API_BASE_URL}/trades?locale=${encodeURIComponent(locale)}`);
       const data = await res.json();
       setTrades(data);
     } catch (error) {
@@ -78,9 +138,11 @@ export default function TradesAdminPage() {
     }
   };
 
-  const fetchTradeDetail = async (id: string) => {
+  const fetchTradeDetail = async (id: string, locale = activeLocale) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/trades/${id}`);
+      const res = await fetch(
+        `${API_BASE_URL}/trades/${id}?locale=${encodeURIComponent(locale)}&includeTranslations=true`,
+      );
       const data = await res.json();
       setSelectedTrade(data);
     } catch (error) {
@@ -92,7 +154,8 @@ export default function TradesAdminPage() {
     try {
       const payload: Partial<Trade> = {
         ...formData,
-        aliases: parseAliases(aliasesInput),
+        aliases: parseList(aliasesInput),
+        jobs: parseList(jobsInput),
       };
 
       await fetch(`${API_BASE_URL}/trades`, {
@@ -103,7 +166,8 @@ export default function TradesAdminPage() {
       setShowAddTrade(false);
       setFormData({});
       setAliasesInput('');
-      fetchTrades();
+      setJobsInput('');
+      fetchTrades(activeLocale);
     } catch (error) {
       console.error('Failed to create trade:', error);
     }
@@ -116,7 +180,7 @@ export default function TradesAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      fetchTrades();
+      fetchTrades(activeLocale);
       if (selectedTrade?.id === id) {
         fetchTradeDetail(id);
       }
@@ -130,7 +194,7 @@ export default function TradesAdminPage() {
     try {
       await fetch(`${API_BASE_URL}/trades/${id}`, { method: 'DELETE' });
       setSelectedTrade(null);
-      fetchTrades();
+      fetchTrades(activeLocale);
     } catch (error) {
       console.error('Failed to delete trade:', error);
     }
@@ -144,7 +208,7 @@ export default function TradesAdminPage() {
       category: (tradeEditData.category || '').toString().trim(),
       professionType: (tradeEditData.professionType || '').toString().trim(),
       description: (tradeEditData.description || '').toString().trim(),
-      aliases: parseAliases(editAliasesInput),
+      aliases: parseList(editAliasesInput),
       featured: Boolean(tradeEditData.featured),
       sortOrder:
         typeof tradeEditData.sortOrder === 'number'
@@ -152,6 +216,57 @@ export default function TradesAdminPage() {
           : Number(tradeEditData.sortOrder || 999),
       enabled: Boolean(tradeEditData.enabled),
     });
+  };
+
+  const handleSaveTranslation = async () => {
+    if (!selectedTrade) return;
+    const name = translationName.trim();
+    if (!name) {
+      alert('Translation name is required');
+      return;
+    }
+
+    try {
+      await fetch(`${API_BASE_URL}/trades/${selectedTrade.id}/translations/${encodeURIComponent(translationLocale)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description: translationDescription.trim(),
+          aliases: parseList(translationAliasesInput),
+          jobs: parseList(translationJobsInput),
+        }),
+      });
+
+      await fetchTradeDetail(selectedTrade.id);
+      await fetchTrades(activeLocale);
+    } catch (error) {
+      console.error('Failed to save translation:', error);
+    }
+  };
+
+  const handleSeedTranslations = async () => {
+    setSeedLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/trades/seed-translations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale: 'zh-HK', overwrite: false }),
+      });
+      const data = await res.json();
+      alert(
+        `Draft zh-HK translations complete. Created: ${data.created || 0}, Updated: ${data.updated || 0}, Skipped: ${data.skipped || 0}`,
+      );
+      fetchTrades(activeLocale);
+      if (selectedTrade?.id) {
+        fetchTradeDetail(selectedTrade.id);
+      }
+    } catch (error) {
+      console.error('Failed to seed translations:', error);
+      alert('Failed to seed draft translations. Check API logs/migrations.');
+    } finally {
+      setSeedLoading(false);
+    }
   };
 
   const handleAddMapping = async () => {
@@ -165,7 +280,7 @@ export default function TradesAdminPage() {
       setMappingKeyword('');
       setShowAddMapping(false);
       fetchTradeDetail(selectedTrade.id);
-      fetchTrades();
+      fetchTrades(activeLocale);
     } catch (error) {
       console.error('Failed to add mapping:', error);
     }
@@ -178,7 +293,7 @@ export default function TradesAdminPage() {
         method: 'DELETE',
       });
       fetchTradeDetail(selectedTrade.id);
-      fetchTrades();
+      fetchTrades(activeLocale);
     } catch (error) {
       console.error('Failed to delete mapping:', error);
     }
@@ -190,27 +305,54 @@ export default function TradesAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Trades & Services</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Manage professional trades and service keyword mappings
+            Manage canonical trades and locale-specific translations
           </p>
         </div>
-        <button
-          onClick={() => {
-            setShowAddTrade(true);
-            setFormData({ category: 'contractor', enabled: true, featured: false, sortOrder: 999, aliases: [] });
-            setAliasesInput('');
-          }}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          + Add Trade
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            value={activeLocale}
+            onChange={(e) => setActiveLocale(e.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          >
+            {SUPPORTED_LOCALES.map((locale) => (
+              <option key={locale.value} value={locale.value}>
+                Browse: {locale.label}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleSeedTranslations}
+            disabled={seedLoading}
+            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {seedLoading ? 'Seeding…' : 'Seed zh-HK Drafts'}
+          </button>
+          <button
+            onClick={() => {
+              setShowAddTrade(true);
+              setFormData({
+                category: 'contractor',
+                enabled: true,
+                featured: false,
+                sortOrder: 999,
+                aliases: [],
+                jobs: [],
+              });
+              setAliasesInput('');
+              setJobsInput('');
+            }}
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            + Add Trade
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Trades List */}
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-900">All Trades ({trades.length})</h2>
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
@@ -252,11 +394,10 @@ export default function TradesAdminPage() {
           </div>
         </div>
 
-        {/* Trade Detail / Add Trade Form */}
         <div>
           {showAddTrade ? (
             <div className="rounded-lg border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">Add New Trade</h2>
+              <h2 className="mb-4 text-lg font-semibold text-slate-900">Add New Trade</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Name *</label>
@@ -308,11 +449,27 @@ export default function TradesAdminPage() {
                     onBlur={() =>
                       setFormData({
                         ...formData,
-                        aliases: parseAliases(aliasesInput),
+                        aliases: parseList(aliasesInput),
                       })
                     }
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                     placeholder="e.g., Plumbing, Drainage Specialist"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Jobs (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={jobsInput}
+                    onChange={(e) => setJobsInput(e.target.value)}
+                    onBlur={() =>
+                      setFormData({
+                        ...formData,
+                        jobs: parseList(jobsInput),
+                      })
+                    }
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    placeholder="e.g., install switch, fix socket"
                   />
                 </div>
                 <div className="flex items-center gap-4">
@@ -339,6 +496,7 @@ export default function TradesAdminPage() {
                       setShowAddTrade(false);
                       setFormData({});
                       setAliasesInput('');
+                      setJobsInput('');
                     }}
                     className="rounded-md bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
                   >
@@ -349,10 +507,10 @@ export default function TradesAdminPage() {
             </div>
           ) : selectedTrade ? (
             <div className="rounded-lg border border-slate-200 bg-white p-6">
-              <div className="flex items-start justify-between mb-4">
+              <div className="mb-4 flex items-start justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">{selectedTrade.name}</h2>
-                  <p className="text-sm text-slate-600 mt-1">
+                  <p className="mt-1 text-sm text-slate-600">
                     {selectedTrade.category} • {selectedTrade.professionType}
                   </p>
                 </div>
@@ -378,13 +536,9 @@ export default function TradesAdminPage() {
                 </div>
               </div>
 
-              {selectedTrade.description && (
-                <p className="text-sm text-slate-600 mb-4">{selectedTrade.description}</p>
-              )}
-
               {tradeEditData && (
-                <div className="mb-4 rounded-md border border-slate-200 bg-slate-50 p-4 space-y-3">
-                  <h3 className="text-sm font-semibold text-slate-900">Edit Trade Details</h3>
+                <div className="mb-4 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Edit Canonical Trade Details</h3>
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
                       <label className="block text-xs font-medium text-slate-700">Name</label>
@@ -480,46 +634,75 @@ export default function TradesAdminPage() {
                     >
                       Save Trade Details
                     </button>
-                    <button
-                      onClick={() => {
-                        if (!selectedTrade) return;
-                        setTradeEditData({
-                          name: selectedTrade.name,
-                          category: selectedTrade.category,
-                          professionType: selectedTrade.professionType || '',
-                          description: selectedTrade.description || '',
-                          featured: selectedTrade.featured,
-                          sortOrder: selectedTrade.sortOrder,
-                          enabled: selectedTrade.enabled,
-                        });
-                        setEditAliasesInput((selectedTrade.aliases || []).join(', '));
-                      }}
-                      className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"
-                    >
-                      Reset
-                    </button>
                   </div>
                 </div>
               )}
 
-              {selectedTrade.aliases && selectedTrade.aliases.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-semibold text-slate-700 mb-2">Aliases:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedTrade.aliases.map((alias, idx) => (
-                      <span
-                        key={idx}
-                        className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700"
-                      >
-                        {alias}
-                      </span>
+              <div className="mb-4 space-y-3 rounded-md border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900">Translation Editor</h3>
+                  <select
+                    value={translationLocale}
+                    onChange={(e) => setTranslationLocale(e.target.value)}
+                    className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                  >
+                    {SUPPORTED_LOCALES.map((locale) => (
+                      <option key={locale.value} value={locale.value}>
+                        {locale.label}
+                      </option>
                     ))}
+                  </select>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Localized Name *</label>
+                    <input
+                      type="text"
+                      value={translationName}
+                      onChange={(e) => setTranslationName(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700">Localized Description</label>
+                    <textarea
+                      value={translationDescription}
+                      onChange={(e) => setTranslationDescription(e.target.value)}
+                      rows={2}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700">Localized Aliases (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={translationAliasesInput}
+                      onChange={(e) => setTranslationAliasesInput(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700">Localized Jobs (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={translationJobsInput}
+                      onChange={(e) => setTranslationJobsInput(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
                   </div>
                 </div>
-              )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveTranslation}
+                    className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                  >
+                    Save {translationLocale} Translation
+                  </button>
+                </div>
+              </div>
 
-              <div className="border-t border-slate-200 pt-4 mt-4">
-                <div className="flex items-center justify-between mb-3">
+              <div className="border-t border-slate-200 pt-4">
+                <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900">
                     Service Mappings ({selectedTrade.serviceMappings?.length || 0})
                   </h3>
@@ -561,7 +744,7 @@ export default function TradesAdminPage() {
                   </div>
                 )}
 
-                <div className="space-y-1 max-h-[400px] overflow-y-auto">
+                <div className="max-h-[400px] space-y-1 overflow-y-auto">
                   {selectedTrade.serviceMappings?.map((mapping) => (
                     <div
                       key={mapping.id}
@@ -587,14 +770,16 @@ export default function TradesAdminPage() {
                     </div>
                   ))}
                   {(!selectedTrade.serviceMappings || selectedTrade.serviceMappings.length === 0) && (
-                    <p className="text-xs text-slate-500 py-4 text-center">No service mappings yet</p>
+                    <p className="py-4 text-center text-xs text-slate-500">No service mappings yet</p>
                   )}
                 </div>
               </div>
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-              <p className="text-sm text-slate-600">Select a trade to view details and manage service mappings</p>
+              <p className="text-sm text-slate-600">
+                Select a trade to view details, translations, and service mappings
+              </p>
             </div>
           )}
         </div>

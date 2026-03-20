@@ -15,8 +15,8 @@ export class TradesController {
   constructor(private readonly tradesService: TradesService) {}
 
   @Get()
-  async findAll() {
-    return this.tradesService.findAll();
+  async findAll(@Query('locale') locale?: string) {
+    return this.tradesService.findAllByLocale(locale);
   }
 
   @Get('match')
@@ -34,8 +34,55 @@ export class TradesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.tradesService.findById(id);
+  async findOne(
+    @Param('id') id: string,
+    @Query('locale') locale?: string,
+    @Query('includeTranslations') includeTranslations?: string,
+  ) {
+    return this.tradesService.findByIdWithLocale(
+      id,
+      locale,
+      includeTranslations === 'true',
+    );
+  }
+
+  @Get(':id/translations')
+  async listTranslations(@Param('id') id: string) {
+    return this.tradesService.listTranslations(id);
+  }
+
+  @Put(':id/translations/:locale')
+  async upsertTranslation(
+    @Param('id') id: string,
+    @Param('locale') locale: string,
+    @Body()
+    body: {
+      name?: string;
+      description?: string;
+      aliases?: string[];
+      jobs?: string[];
+    },
+  ) {
+    return this.tradesService.upsertTranslation(id, locale, {
+      name: body.name,
+      description: body.description,
+      aliases: body.aliases,
+      jobs: body.jobs,
+    });
+  }
+
+  @Post('seed-translations')
+  async seedTranslations(
+    @Body()
+    body: {
+      locale?: string;
+      overwrite?: boolean;
+    },
+  ) {
+    return this.tradesService.seedDraftTranslations(
+      body.locale,
+      Boolean(body.overwrite),
+    );
   }
 
   @Post()
@@ -46,6 +93,7 @@ export class TradesController {
       category: string;
       professionType?: string;
       aliases?: string[];
+      jobs?: string[];
       description?: string;
       featured?: boolean;
       sortOrder?: number;
@@ -63,6 +111,7 @@ export class TradesController {
       category: string;
       professionType: string;
       aliases: string[];
+      jobs: string[];
       description: string;
       enabled: boolean;
       featured: boolean;
