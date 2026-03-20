@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Tradesman } from '../../lib/types';
@@ -23,6 +23,7 @@ function Badge({ label }: { label: string }) {
 
 export default function TradesmenPage() {
   const t = useTranslations('tradesmen');
+  const locale = useLocale();
   const { isLoggedIn, userLocation } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [tradesmen, setTradesmen] = useState<Tradesman[]>([]);
@@ -35,7 +36,10 @@ export default function TradesmenPage() {
   useEffect(() => {
     const fetchTradesmen = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/tradesmen`, { cache: 'no-store' });
+        const response = await fetch(
+          `${API_BASE_URL}/trades?locale=${encodeURIComponent(locale === 'zh-HK' ? 'zh-HK' : 'en')}`,
+          { cache: 'no-store' },
+        );
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
@@ -48,11 +52,30 @@ export default function TradesmenPage() {
               throw new Error(`Expected JSON, got: ${text.slice(0, 120)}`);
             });
 
-        const data = Array.isArray(payload)
+        const rawData = Array.isArray(payload)
           ? payload
           : Array.isArray((payload as { data?: Tradesman[] }).data)
             ? (payload as { data: Tradesman[] }).data
             : [];
+
+        const data: Tradesman[] = (rawData as Array<{
+          id: string;
+          name?: string;
+          title?: string;
+          category?: string;
+          description?: string;
+          featured?: boolean;
+          jobs?: string[];
+          image?: string;
+        }>).map((trade) => ({
+          id: trade.id,
+          title: trade.name || trade.title || 'Unknown Trade',
+          category: trade.category || 'general',
+          description: trade.description,
+          featured: Boolean(trade.featured),
+          jobs: Array.isArray(trade.jobs) ? trade.jobs : [],
+          image: trade.image,
+        }));
 
         console.log(`Fetched ${data.length} tradesmen from API`);
         setTradesmen(data.length ? data : fallbackTradesmen);
@@ -66,7 +89,7 @@ export default function TradesmenPage() {
     };
 
     fetchTradesmen();
-  }, []);  // fetch on mount regardless of auth state
+  }, [locale]);  // refetch when locale changes
 
   const filterByTerm = (term: string) => {
     const needle = term.trim().toLowerCase();

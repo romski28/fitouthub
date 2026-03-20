@@ -242,11 +242,6 @@ export class TradesService {
             select: { keyword: true },
           },
           translations: {
-            where: {
-              locale: {
-                in: [normalizedLocale, this.DEFAULT_LOCALE],
-              },
-            },
             select: {
               locale: true,
               title: true,
@@ -268,14 +263,6 @@ export class TradesService {
   async findByIdWithLocale(id: string, locale?: string, includeTranslations = false) {
     const normalizedLocale = this.normalizeLocale(locale);
 
-    const translationWhere = includeTranslations
-      ? undefined
-      : {
-          locale: {
-            in: [normalizedLocale, this.DEFAULT_LOCALE],
-          },
-        };
-
     const trade = await this.prisma.tradesman.findUnique({
       where: { id },
       include: {
@@ -283,7 +270,6 @@ export class TradesService {
           orderBy: { keyword: 'asc' },
         },
         translations: {
-          ...(translationWhere ? { where: translationWhere } : {}),
           orderBy: { locale: 'asc' },
         },
       },
