@@ -6,6 +6,8 @@ export interface SearchBoxProps {
   onSubmit: (query: string) => void;
 }
 
+const MAX_QUERY_CHARS = 5000;
+
 export default function SearchBox({ onSubmit }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -88,6 +90,7 @@ export default function SearchBox({ onSubmit }: SearchBoxProps) {
   };
 
   const isExpanded = isFocused || query.trim().length > 0;
+  const characterCount = query.length;
 
   return (
     <div className="relative w-full">
@@ -101,15 +104,20 @@ export default function SearchBox({ onSubmit }: SearchBoxProps) {
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
-              rows={isExpanded ? 5 : 1}
-              className="flex-1 px-3 sm:px-4 py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 min-w-0 resize-none transition-all duration-200"
+              rows={1}
+              maxLength={MAX_QUERY_CHARS}
+              style={{ height: isExpanded ? '9rem' : '3.25rem' }}
+              className="flex-1 px-3 sm:px-4 py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 min-w-0 resize-none overflow-y-auto transition-[height] duration-300 ease-in-out"
             />
           </div>
 
-          <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+          <div className="flex items-center justify-between px-3 sm:px-4 pb-3 sm:pb-4 pt-1">
+            <span className="text-xs text-slate-400">
+              {characterCount}/{MAX_QUERY_CHARS}
+            </span>
             <button
               type="submit"
-              className="px-3 sm:px-6 py-2.5 sm:py-3 bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition flex-shrink-0 text-sm sm:text-base whitespace-nowrap rounded-md"
+              className="px-3 sm:px-6 py-2 sm:py-2.5 bg-emerald-600 text-white font-semibold hover:bg-emerald-700 active:bg-emerald-800 transition-colors duration-150 text-sm sm:text-base whitespace-nowrap rounded-md shadow-sm"
             >
               Search
             </button>
