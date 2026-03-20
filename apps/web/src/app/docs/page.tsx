@@ -42,7 +42,8 @@ export default function DocsPage() {
 
       {section("Key API Endpoints", [
         "GET /projects — list projects; /projects/:id — detail; /projects/:id/professionals — linked pros.",
-        "GET /tradesmen — reference trades.",
+        "GET /trades — canonical trades endpoint.",
+        "GET /tradesmen — legacy/deprecated (compatibility only; migrate to /trades).",
         "GET /professionals — list professionals (filters supported).",
         "GET /users — list users (after deploy).",
         "GET /patterns?includeCore=true — core + DB patterns (after migration).",

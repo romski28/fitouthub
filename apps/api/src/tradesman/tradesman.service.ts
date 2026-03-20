@@ -7,6 +7,7 @@ export class TradesmService {
 
   async findAll() {
     try {
+      console.warn('[DEPRECATED] GET /tradesmen called. Please migrate clients to GET /trades.');
       const trades = await this.prisma.tradesman.findMany({
         orderBy: { title: 'asc' },
       });

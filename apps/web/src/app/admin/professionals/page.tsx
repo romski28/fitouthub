@@ -99,7 +99,7 @@ export default function AdminProfessionalsPage() {
         }
       }
 
-      // Fallback to legacy /tradesmen endpoint
+      // Fallback to legacy /tradesmen endpoint (deprecated; remove after migration)
       const res2 = await fetch(`${API_BASE_URL}/tradesmen`);
       if (res2.ok) {
         const data = await res2.json();
