@@ -99,11 +99,13 @@ export default function AdminProfessionalsPage() {
         }
       }
 
-      // Fallback to legacy /tradesmen endpoint (deprecated; remove after migration)
-      const res2 = await fetch(`${API_BASE_URL}/tradesmen`);
+      // Fallback to canonical /trades endpoint
+      const res2 = await fetch(`${API_BASE_URL}/trades`);
       if (res2.ok) {
         const data = await res2.json();
-        const titles2 = (Array.isArray(data) ? data : []).map((t: { title: string }) => t.title);
+        const titles2 = (Array.isArray(data) ? data : []).map(
+          (t: { name?: string; title?: string }) => t.name || t.title || '',
+        ).filter(Boolean);
         if (Array.isArray(titles2) && titles2.length) {
           setTradeOptions(titles2);
           try { window.sessionStorage.setItem('admin.tradeOptions', JSON.stringify(titles2)); } catch {}
