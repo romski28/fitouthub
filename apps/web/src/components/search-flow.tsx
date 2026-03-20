@@ -373,7 +373,7 @@ export default function SearchFlow() {
   const t = useTranslations('home.searchFlow');
   const router = useRouter();
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
-  const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('legacy');
+  const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('ai');
   const [aiViewMode, setAiViewMode] = useState<'human' | 'json'>('human');
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
