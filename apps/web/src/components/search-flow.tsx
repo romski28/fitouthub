@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
 import { SearchHelpModal } from '@/components/search-help-modal';
+import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
@@ -395,8 +396,52 @@ export default function SearchFlow() {
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
-  const { isLoggedIn } = useAuth();
+  const [showBriefModal, setShowBriefModal] = useState(false);
+  const { isLoggedIn, userLocation } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
+
+  const handleContinueToProfessionals = (payload: {
+    title: string;
+    summary: string;
+    location: { primary?: string; secondary?: string; tertiary?: string };
+    isEmergency: boolean;
+    followUpAnswers: Array<{ question: string; answer: string }>;
+  }) => {
+    if (!aiStructured) return;
+
+    const resolvedRegion = [payload.location.secondary, payload.location.primary]
+      .filter((item): item is string => Boolean(item && item.trim()))
+      .join(', ');
+
+    const aiDraft = {
+      initialData: {
+        projectName: payload.title || aiStructured.title || aiStructured.summary || '',
+        notes: payload.summary || aiStructured.scope || aiStructured.summary || '',
+        tradesRequired: aiStructured.trades || [],
+        region: resolvedRegion,
+        location: payload.location,
+        isEmergency: payload.isEmergency,
+        aiFrom: {
+          assumptions: aiStructured.assumptions,
+          risks: aiStructured.risks,
+          safety: aiStructured.safetyAssessment,
+        },
+      },
+      ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
+    };
+
+    sessionStorage.setItem('createProjectDraft', JSON.stringify(aiDraft));
+
+    const params = new URLSearchParams();
+    if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
+    if (payload.location.tertiary) params.set('location', payload.location.tertiary);
+    else if (payload.location.secondary) params.set('location', payload.location.secondary);
+    else if (payload.location.primary) params.set('location', payload.location.primary);
+    else params.set('askRegion', '1');
+
+    setShowBriefModal(false);
+    router.push(`/professionals?${params.toString()}`);
+  };
 
   const clearAiResponseState = () => {
     setAiLoading(false);
@@ -861,33 +906,7 @@ export default function SearchFlow() {
                 {aiStructured.trades.length > 0 && (isLoggedIn === true || isLoggedIn === undefined) && (
                   <button
                     type="button"
-                    onClick={() => {
-                      const aiRegion = [aiStructured.locationSecondary, aiStructured.locationPrimary]
-                        .filter((item): item is string => Boolean(item && item.trim()))
-                        .join(', ');
-                      const aiDraft = {
-                        initialData: {
-                          projectName: aiStructured.title || aiStructured.summary || '',
-                          notes: finalSummary.trim() || aiStructured.scope || aiStructured.summary || '',
-                          tradesRequired: aiStructured.trades || [],
-                          region: aiRegion,
-                          aiFrom: {
-                            assumptions: aiStructured.assumptions,
-                            risks: aiStructured.risks,
-                            safety: aiStructured.safetyAssessment,
-                          },
-                        },
-                        ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
-                      };
-
-                      sessionStorage.setItem('createProjectDraft', JSON.stringify(aiDraft));
-
-                      const params = new URLSearchParams();
-                      if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
-                      if (aiStructured.locationPrimary) params.set('location', aiStructured.locationPrimary);
-                      else params.set('askRegion', '1');
-                      router.push(`/professionals?${params.toString()}`);
-                    }}
+                    onClick={() => setShowBriefModal(true)}
                     className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
                   >
                     Continue → Find Professionals
@@ -929,6 +948,33 @@ export default function SearchFlow() {
         countLoading={countLoading}
         isLoggedIn={isLoggedIn}
         openJoinModal={openJoinModal}
+      />
+      <AiProjectBriefModal
+        isOpen={showBriefModal && !!aiStructured}
+        onClose={() => setShowBriefModal(false)}
+        initialTitle={aiStructured?.title || aiStructured?.summary || ''}
+        initialSummary={finalSummary.trim() || aiStructured?.scope || aiStructured?.summary || ''}
+        initialLocation={
+          aiStructured?.locationPrimary
+            ? {
+                primary: aiStructured.locationPrimary,
+                secondary: aiStructured.locationSecondary || undefined,
+              }
+            : undefined
+        }
+        fallbackLocation={userLocation}
+        initialEmergency={
+          aiStructured?.safetyAssessment
+            ? Boolean(
+                aiStructured.safetyAssessment.shouldEscalateEmergency ||
+                  aiStructured.safetyAssessment.isDangerous ||
+                  (aiStructured.safetyAssessment.riskLevel || '').toLowerCase() === 'high' ||
+                  (aiStructured.safetyAssessment.riskLevel || '').toLowerCase() === 'critical',
+              )
+            : undefined
+        }
+        followUpQuestions={aiStructured?.nextQuestions || []}
+        onComplete={handleContinueToProfessionals}
       />
       <SearchHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
