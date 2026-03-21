@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/config/api';
+import { recordCacheHit, recordCacheMiss, recordStaleRead, recordInvalidation } from './cache-metrics';
 
 export type NextStepAction = {
   actionKey: string;
@@ -41,6 +42,7 @@ export function invalidateNextStepCache(projectId: string, cacheScope?: string, 
   const scope = cacheScope || (token ? token.slice(-16) : '');
   if (!scope) return;
   nextStepCache.delete(cacheKey(projectId, scope));
+  recordInvalidation('next-steps');
 }
 
 export class NextStepAuthError extends Error {
@@ -61,8 +63,15 @@ export async function fetchPrimaryNextStep(
 
   if (!options.forceRefresh) {
     const cached = nextStepCache.get(key);
-    if (cached && Date.now() - cached.updatedAt <= maxAgeMs) {
-      return cached.action;
+    if (cached) {
+      const ageMs = Date.now() - cached.updatedAt;
+      if (ageMs <= maxAgeMs) {
+        recordCacheHit('next-steps');
+        return cached.action;
+      }
+      recordStaleRead('next-steps');
+    } else {
+      recordCacheMiss('next-steps');
     }
   }
 
@@ -85,6 +94,7 @@ export async function fetchPrimaryNextStep(
   const data = (await response.json()) as NextStepResponse;
   const action = data.PRIMARY?.[0] ?? null;
   nextStepCache.set(key, { action, updatedAt: Date.now() });
+  console.log('[NextStepCache] SET', { projectId, actionKey: action?.actionKey });
   return action;
 }
 

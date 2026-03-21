@@ -1,3 +1,5 @@
+import { recordCacheHit, recordCacheMiss, recordStaleRead, recordInvalidation } from './cache-metrics';
+
 export interface FinancialActionItem {
   id: string;
   type: string;
@@ -55,10 +57,18 @@ export function getFreshUpdatesSummary(
   maxAgeMs: number = UPDATES_CACHE_TTL_MS,
 ): UpdatesCacheEntry | null {
   const entry = getUpdatesCacheEntry(token, actAsClientId);
-  if (!entry) return null;
+  if (!entry) {
+    recordCacheMiss('updates');
+    return null;
+  }
 
   const ageMs = Date.now() - entry.updatedAt;
-  return ageMs <= maxAgeMs ? entry : null;
+  if (ageMs <= maxAgeMs) {
+    recordCacheHit('updates');
+    return entry;
+  }
+  recordStaleRead('updates');
+  return null;
 }
 
 export function setUpdatesSummaryCache(
@@ -73,6 +83,7 @@ export function setUpdatesSummaryCache(
 
 export function clearUpdatesSummaryCache(token: string, actAsClientId?: string): void {
   updatesCache.delete(buildCacheKey(token, actAsClientId));
+  recordInvalidation('updates');
 }
 
 export function isUpdatesCacheStale(updatedAt: number, maxAgeMs: number = UPDATES_CACHE_TTL_MS): boolean {
