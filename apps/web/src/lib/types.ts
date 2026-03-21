@@ -31,6 +31,7 @@ export type Professional = {
   updatedAt?: string;
   profileImages?: string[];
   referenceProjects?: ReferenceProject[];
+  emergencyCalloutAvailable?: boolean;
 };
 
 export type ReferenceProject = {

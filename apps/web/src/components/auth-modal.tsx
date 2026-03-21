@@ -43,6 +43,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [clientPreferredLanguage, setClientPreferredLanguage] = useState<'en' | 'zh-HK'>(pageLanguage);
   const [professionalPreferredLanguage, setProfessionalPreferredLanguage] = useState<'en' | 'zh-HK'>(pageLanguage);
   const [professionType, setProfessionType] = useState<string>('general');
+  const [professionalEmergencyCallout, setProfessionalEmergencyCallout] = useState(false);
   const [pendingVerification, setPendingVerification] = useState<{
     email: string;
     userType: 'client' | 'professional';
@@ -71,6 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setClientPreferredLanguage(pageLanguage);
       setProfessionalPreferredLanguage(pageLanguage);
       setProfessionType('general');
+      setProfessionalEmergencyCallout(false);
       setPendingVerification(null);
       setOtpCode('');
       setVerificationSuccess(false);
@@ -225,6 +227,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         allowPartnerOffers: professionalAllowPartnerOffers,
         allowPlatformUpdates: professionalAllowPlatformUpdates,
         requireOtpVerification: true,
+        emergencyCalloutAvailable: professionalEmergencyCallout,
       });
 
       if ('otpRequired' in result && result.otpRequired) {
@@ -860,6 +863,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <option value="other">{modalT('professionOther')}</option>
                     </select>
                   </div>
+
+                  {(professionType === 'contractor' || professionType === 'company') && (
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <input
+                        type="checkbox"
+                        id="professionalEmergencyCallout"
+                        checked={professionalEmergencyCallout}
+                        onChange={(e) => setProfessionalEmergencyCallout(e.target.checked)}
+                        className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="professionalEmergencyCallout" className="text-sm text-gray-700">
+                        Emergency call out available 24/7
+                      </label>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

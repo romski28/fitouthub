@@ -46,4 +46,5 @@ export class UpdateProfessionalDto {
   primary_trade?: string;
   trades_offered?: string[];
   supplies_offered?: string[];
+  emergencyCalloutAvailable?: boolean;
 }

@@ -68,6 +68,7 @@ export class ProfessionalAuthService {
         agreedToSecurityStatementVersion: '1.0',
         otpCode,
         otpExpiresAt,
+        emergencyCalloutAvailable: dto.emergencyCalloutAvailable ?? false,
       },
     });
 

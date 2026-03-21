@@ -37,6 +37,7 @@ interface ProfessionalProfile {
     allowPlatformUpdates?: boolean;
     preferredLanguage?: string;
   } | null;
+  emergencyCalloutAvailable?: boolean;
 }
 
 const emptyProfile: ProfessionalProfile = {
@@ -75,6 +76,7 @@ export default function ProfessionalProfilePage() {
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
   const [preferredLanguage, setPreferredLanguage] = useState('en');
+  const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -136,6 +138,7 @@ export default function ProfessionalProfilePage() {
         setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
         setAllowPlatformUpdates(data.notificationPreferences?.allowPlatformUpdates ?? true);
         setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
+        setEmergencyCalloutAvailable(data.emergencyCalloutAvailable ?? false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load profile');
       } finally {
@@ -171,6 +174,7 @@ export default function ProfessionalProfilePage() {
           tradesOffered: profile.tradesOffered || [],
           primaryTrade: profile.primaryTrade || undefined,
           profileImages: profile.profileImages || [],
+          emergencyCalloutAvailable: emergencyCalloutAvailable,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -456,6 +460,24 @@ export default function ProfessionalProfilePage() {
             />
             <p className="mt-1 text-xs text-slate-500">Leave blank to keep your current password</p>
           </div>
+
+          {(profile.professionType === 'contractor' || profile.professionType === 'company') && (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
+              <h2 className="text-sm font-semibold text-slate-900">Availability</h2>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="professionalEmergencyCallout"
+                  checked={emergencyCalloutAvailable}
+                  onChange={(e) => setEmergencyCalloutAvailable(e.target.checked)}
+                  className="h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="professionalEmergencyCallout" className="text-sm text-slate-700">
+                  Emergency call out available 24/7
+                </label>
+              </div>
+            </div>
+          )}
 
           <div className="pt-6 border-t border-slate-200 space-y-4">
             <h2 className="text-lg font-semibold text-slate-900">Notification Preferences</h2>

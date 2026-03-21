@@ -10,4 +10,5 @@ export class ProfessionalRegisterDto {
   allowPartnerOffers?: boolean;
   allowPlatformUpdates?: boolean;
   requireOtpVerification?: boolean;
+  emergencyCalloutAvailable?: boolean;
 }

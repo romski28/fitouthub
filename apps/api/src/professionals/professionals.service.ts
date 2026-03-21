@@ -215,6 +215,10 @@ export class ProfessionalsService {
       data.locationTertiary = updateProfessionalDto.location_tertiary;
     }
 
+    if (updateProfessionalDto.emergencyCalloutAvailable !== undefined) {
+      data.emergencyCalloutAvailable = updateProfessionalDto.emergencyCalloutAvailable;
+    }
+
     // Check if we have any fields to update
     if (Object.keys(data).length === 0) {
       return (this.prisma as any).professional.findUnique({

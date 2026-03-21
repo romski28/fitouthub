@@ -38,6 +38,7 @@ interface ProfessionalAuthContextType {
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
+    emergencyCalloutAvailable?: boolean;
   }) => Promise<
     | { success: boolean; accessToken: string; refreshToken: string }
     | {
