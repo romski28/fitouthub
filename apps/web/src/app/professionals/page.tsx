@@ -67,6 +67,7 @@ function ProfessionalsPageInner() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId') || undefined;
   const tradeParam = searchParams.get('trade') || undefined;
+  const locationParam = searchParams.get('location') || undefined;
   const askRegion = searchParams.get('askRegion') === '1';
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
@@ -161,15 +162,29 @@ function ProfessionalsPageInner() {
       console.log('[ProfessionalsPage] matchLocation result:', { projectRegion, ml });
       if (ml) return { primary: ml.primary, secondary: ml.secondary, tertiary: ml.tertiary } as CanonicalLocation;
     }
+
+    if (locationParam) {
+      const matched = matchLocation(locationParam);
+      if (matched) {
+        return {
+          primary: matched.primary,
+          secondary: matched.secondary,
+          tertiary: matched.tertiary,
+        } as CanonicalLocation;
+      }
+
+      return { primary: locationParam } as CanonicalLocation;
+    }
+
     return userLocation;
-  }, [projectRegion, userLocation]);
+  }, [projectRegion, locationParam, userLocation]);
 
   const hasDefaultLocation = Boolean(
     defaultLocation?.primary || defaultLocation?.secondary || defaultLocation?.tertiary,
   );
   const shouldShowRegionNotice = askRegion && !hasDefaultLocation;
 
-  console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, projectName, defaultLocation });
+  console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, locationParam, projectName, defaultLocation });
 
   return (
     <>

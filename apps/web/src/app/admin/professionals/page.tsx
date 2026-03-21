@@ -62,13 +62,15 @@ export default function AdminProfessionalsPage() {
     "Kitchen Appliances",
   ];
 
+  const TRADE_OPTIONS_CACHE_KEY = 'admin.tradeOptions.master.v1';
+
   const tradesLoadedRef = useRef(false);
 
   useEffect(() => {
     fetchProfessionals();
-    // Attempt to load cached trades first to avoid repeated 404s
+    // Attempt to load cached master trades first
     try {
-      const cached = typeof window !== 'undefined' ? window.sessionStorage.getItem('admin.tradeOptions') : null;
+      const cached = typeof window !== 'undefined' ? window.sessionStorage.getItem(TRADE_OPTIONS_CACHE_KEY) : null;
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length) {
@@ -86,49 +88,16 @@ export default function AdminProfessionalsPage() {
   const fetchTrades = async () => {
     if (tradesLoadedRef.current) return;
     try {
-      // Try new meta endpoint first
-      const res = await fetch(`${API_BASE_URL}/professionals/meta/trades`);
+      // Use canonical master trades endpoint
+      const res = await fetch(`${API_BASE_URL}/trades`);
       if (res.ok) {
-        const response = await res.json();
-        const titles = (response?.data || []).map((t: { title: string }) => t.title);
-        if (Array.isArray(titles) && titles.length) {
-          setTradeOptions(titles);
-          try { window.sessionStorage.setItem('admin.tradeOptions', JSON.stringify(titles)); } catch {}
-          tradesLoadedRef.current = true;
-          return;
-        }
-      }
-
-      // Fallback to canonical /trades endpoint
-      const res2 = await fetch(`${API_BASE_URL}/trades`);
-      if (res2.ok) {
-        const data = await res2.json();
-        const titles2 = (Array.isArray(data) ? data : []).map(
+        const data = await res.json();
+        const titles = (Array.isArray(data) ? data : []).map(
           (t: { name?: string; title?: string }) => t.name || t.title || '',
         ).filter(Boolean);
-        if (Array.isArray(titles2) && titles2.length) {
-          setTradeOptions(titles2);
-          try { window.sessionStorage.setItem('admin.tradeOptions', JSON.stringify(titles2)); } catch {}
-          tradesLoadedRef.current = true;
-          return;
-        }
-      }
-
-      // Last attempt: derive trades from professionals list
-      const res3 = await fetch(`${API_BASE_URL}/professionals`);
-      if (res3.ok) {
-        const pros: Professional[] = await res3.json();
-        const set = new Set<string>();
-        pros.forEach((p) => {
-          if (p.primaryTrade) set.add(p.primaryTrade);
-          if (Array.isArray(p.tradesOffered)) {
-            p.tradesOffered.forEach((t) => t && set.add(t));
-          }
-        });
-        const titles3 = Array.from(set).filter(Boolean).sort();
-        if (titles3.length) {
-          setTradeOptions(titles3);
-          try { window.sessionStorage.setItem('admin.tradeOptions', JSON.stringify(titles3)); } catch {}
+        if (Array.isArray(titles) && titles.length) {
+          setTradeOptions(titles);
+          try { window.sessionStorage.setItem(TRADE_OPTIONS_CACHE_KEY, JSON.stringify(titles)); } catch {}
           tradesLoadedRef.current = true;
           return;
         }
@@ -148,7 +117,7 @@ export default function AdminProfessionalsPage() {
         "Landscaper",
       ];
       setTradeOptions(hardcoded);
-      try { window.sessionStorage.setItem('admin.tradeOptions', JSON.stringify(hardcoded)); } catch {}
+      try { window.sessionStorage.setItem(TRADE_OPTIONS_CACHE_KEY, JSON.stringify(hardcoded)); } catch {}
       tradesLoadedRef.current = true;
     } catch (err) {
       // Quietly fallback to avoid console spam in prod
@@ -165,7 +134,7 @@ export default function AdminProfessionalsPage() {
         "Landscaper",
       ];
       setTradeOptions(hardcoded);
-      try { window.sessionStorage.setItem('admin.tradeOptions', JSON.stringify(hardcoded)); } catch {}
+      try { window.sessionStorage.setItem(TRADE_OPTIONS_CACHE_KEY, JSON.stringify(hardcoded)); } catch {}
       tradesLoadedRef.current = true;
     }
   };
@@ -364,7 +333,6 @@ export default function AdminProfessionalsPage() {
     const tradeHaystack = [
       p.primaryTrade,
       ...(Array.isArray(p.tradesOffered) ? p.tradesOffered : []),
-      ...(Array.isArray(p.suppliesOffered) ? p.suppliesOffered : []),
     ]
       .filter(Boolean)
       .map((item) => item!.toString().toLowerCase());
@@ -378,17 +346,8 @@ export default function AdminProfessionalsPage() {
     tradeOptions.forEach((trade) => {
       if (trade?.trim()) set.add(trade.trim());
     });
-    professionals.forEach((p) => {
-      if (p.primaryTrade?.trim()) set.add(p.primaryTrade.trim());
-      (Array.isArray(p.tradesOffered) ? p.tradesOffered : []).forEach((trade) => {
-        if (trade?.trim()) set.add(trade.trim());
-      });
-      (Array.isArray(p.suppliesOffered) ? p.suppliesOffered : []).forEach((supply) => {
-        if (supply?.trim()) set.add(supply.trim());
-      });
-    });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [professionals, tradeOptions]);
+  }, [tradeOptions]);
 
   if (loading) {
     return <div className="text-center text-slate-600">Loading professionals...</div>;

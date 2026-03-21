@@ -103,6 +103,7 @@ export class ProfessionalController {
       tradesOffered?: string[];
       primaryTrade?: string;
       profileImages?: string[];
+      emergencyCalloutAvailable?: boolean;
     },
   ) {
     const professionalId = req.user.id || req.user.sub;
@@ -119,6 +120,7 @@ export class ProfessionalController {
       tradesOffered: body.tradesOffered,
       primaryTrade: body.primaryTrade,
       profileImages: body.profileImages,
+      emergencyCalloutAvailable: body.emergencyCalloutAvailable,
     };
     // Remove undefined to avoid overwriting
     Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);

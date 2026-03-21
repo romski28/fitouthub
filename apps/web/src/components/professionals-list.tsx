@@ -23,7 +23,7 @@ const Pill = memo(({ label }: { label: string }) => {
 });
 Pill.displayName = 'Pill';
 
-const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdmin }: { pro: Professional; onToggle: (pro: Professional) => void; onViewDetails: (pro: Professional) => void; isSelected: boolean; isAdmin: boolean }) => {
+const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdmin, disableSelection }: { pro: Professional; onToggle: (pro: Professional) => void; onViewDetails: (pro: Professional) => void; isSelected: boolean; isAdmin: boolean; disableSelection: boolean }) => {
   const t = useTranslations('professionalsPage.list');
   const serviceAreas = useMemo(() => 
     (pro.serviceArea ?? '')
@@ -137,7 +137,8 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
           <button
             type="button"
             onClick={() => onToggle(pro)}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${isSelected ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'}`}
+            disabled={disableSelection}
+            className={`rounded-lg px-4 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${isSelected ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'}`}
           >
             {isSelected ? t('selected') : t('askForHelp')}
           </button>
@@ -471,7 +472,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     selectedIds.forEach((id) => { if (currentIds.has(id)) next.add(id); });
     
     // If coming from home page (intentData), auto-preselect first N if none selected
-    if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession) {
+    const hasRequiredLocation = !requireLocation || Boolean(loc.primary || loc.secondary || loc.tertiary);
+    if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession && hasRequiredLocation) {
       for (let i = 0; i < Math.min(3, filtered.length); i++) {
         next.add(filtered[i].id);
       }
@@ -480,7 +482,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     if (Array.from(next).sort().join(',') !== Array.from(selectedIds).sort().join(',')) {
       setSelectedIds(next);
     }
-  }, [filtered, initialFromIntent.profession]);
+  }, [filtered, initialFromIntent.profession, requireLocation, loc.primary, loc.secondary, loc.tertiary]);
 
   const toggleSelection = (pro: Professional) => {
     setSelectedIds((prev) => {
@@ -719,6 +721,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         </div>
       </div>
 
+      {blockInviteForMissingLocation && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Please choose your project location first. We can&apos;t continue to professional selection without a location.
+        </div>
+      )}
+
       {/* List */}
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
@@ -734,6 +742,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               onToggle={toggleSelection}
               onViewDetails={openDetails}
               isAdmin={isAdmin}
+              disableSelection={blockInviteForMissingLocation}
             />
           ))}
         </div>
@@ -741,11 +750,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
       {selectedIds.size > 0 ? (
         <div className="fixed top-20 right-6 z-40 flex flex-col items-end gap-2">
-          {blockInviteForMissingLocation && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 shadow-sm max-w-[220px]">
-              Please set location before continuing.
-            </div>
-          )}
           <button
             type="button"
             onClick={handleInviteSelected}
