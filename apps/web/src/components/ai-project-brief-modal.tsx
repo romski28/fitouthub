@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import LocationSelect, { CanonicalLocation } from '@/components/location-select';
 
 type WizardStep =
@@ -62,15 +62,34 @@ export function AiProjectBriefModal({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [stepIndex, setStepIndex] = useState(0);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setTitle(initialTitle || '');
+    setSummary(initialSummary || '');
+    setLocation(mergedInitialLocation);
+    setIsEmergency(typeof initialEmergency === 'boolean' ? initialEmergency : null);
+    setAnswers({});
+    setStepIndex(0);
+  }, [
+    isOpen,
+    initialTitle,
+    initialSummary,
+    mergedInitialLocation,
+    initialEmergency,
+  ]);
+
   const steps = useMemo<WizardStep[]>(() => {
     const list: WizardStep[] = [];
 
-    if (!title.trim()) list.push({ kind: 'title' });
+    list.push({ kind: 'title' });
 
     const hasAiLocation = Boolean(
       initialLocation?.primary || initialLocation?.secondary || initialLocation?.tertiary,
     );
-    if (!hasAiLocation) list.push({ kind: 'location' });
+    const hasFallbackLocation = Boolean(
+      fallbackLocation?.primary || fallbackLocation?.secondary || fallbackLocation?.tertiary,
+    );
+    if (!hasAiLocation && !hasFallbackLocation) list.push({ kind: 'location' });
 
     list.push({ kind: 'emergency' });
 
@@ -79,10 +98,19 @@ export function AiProjectBriefModal({
       list.push({ kind: 'followup', question, id: `q-${index}` });
     });
 
-    if (!summary.trim()) list.push({ kind: 'scope' });
+    if (!(initialSummary || '').trim()) list.push({ kind: 'scope' });
 
     return list;
-  }, [title, initialLocation?.primary, initialLocation?.secondary, initialLocation?.tertiary, followUpQuestions, summary]);
+  }, [
+    initialLocation?.primary,
+    initialLocation?.secondary,
+    initialLocation?.tertiary,
+    fallbackLocation?.primary,
+    fallbackLocation?.secondary,
+    fallbackLocation?.tertiary,
+    followUpQuestions,
+    initialSummary,
+  ]);
 
   const totalSteps = steps.length;
   const currentStep = steps[Math.min(stepIndex, Math.max(0, totalSteps - 1))];
@@ -155,7 +183,11 @@ export function AiProjectBriefModal({
         <div className="min-h-[260px] rounded-xl border border-slate-200 bg-slate-50 p-4">
           {currentStep?.kind === 'title' && (
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-slate-900">📝 What should we call this project?</p>
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-slate-700">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Mini brief</p>
+                <p className="mt-1 whitespace-pre-wrap">{(initialSummary || summary || 'We extracted your project details from the prompt.').trim()}</p>
+              </div>
+              <p className="text-sm font-semibold text-slate-900">📝 Shall we call the project…</p>
               <input
                 type="text"
                 value={title}
@@ -236,7 +268,7 @@ export function AiProjectBriefModal({
             onClick={stepIndex === 0 ? onClose : () => setStepIndex((prev) => Math.max(0, prev - 1))}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            {stepIndex === 0 ? 'Cancel' : 'Back'}
+            {stepIndex === 0 ? 'Cancel' : 'Back to last question'}
           </button>
 
           <button
