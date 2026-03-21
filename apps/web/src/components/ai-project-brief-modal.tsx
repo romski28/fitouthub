@@ -31,10 +31,10 @@ interface AiBriefModalProps {
 }
 
 const MOTIVATION = [
-  'Great start — this only takes a minute.',
-  'Nice, you are building momentum.',
-  'Looking good — nearly there.',
-  'Final stretch, almost done.',
+  'Nice! Let’s build this in under a minute ✨',
+  'You’re on fire — one quick step at a time 🔥',
+  'Looking great. This is coming together 👌',
+  'Final stretch — let’s launch this 🚀',
 ];
 
 export function AiProjectBriefModal({
@@ -172,8 +172,8 @@ export function AiProjectBriefModal({
       <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-600">Project Mission</p>
-            <h2 className="text-xl font-bold text-slate-900">Let&apos;s finish your project brief</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-600">Project Quest</p>
+            <h2 className="text-xl font-bold text-slate-900">Let&apos;s craft your project vibe</h2>
             <p className="mt-1 text-sm text-slate-600">{currentMotivation}</p>
           </div>
           <div className="text-right">
@@ -213,7 +213,7 @@ export function AiProjectBriefModal({
                   )}
                 </div>
               </div>
-              <p className="text-sm font-semibold text-slate-900">📝 Shall we call the project…</p>
+              <p className="text-sm font-semibold text-slate-900">📝 Shall we call this project…</p>
               <input
                 type="text"
                 value={title}
@@ -227,7 +227,7 @@ export function AiProjectBriefModal({
           {currentStep?.kind === 'location' && (
             <div className="space-y-3">
               <p className="text-sm font-semibold text-slate-900">📍 Where is this project located?</p>
-              <p className="text-xs text-slate-600">We prefilled your registered location when available. Please confirm or adjust.</p>
+              <p className="text-xs text-slate-600">We prefilled your saved area when we could — tweak it if needed.</p>
               <LocationSelect
                 value={location}
                 onChange={setLocation}
@@ -246,7 +246,7 @@ export function AiProjectBriefModal({
                   className={`rounded-lg border px-4 py-3 text-left text-sm ${isEmergency === true ? 'border-red-400 bg-red-50 text-red-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}
                 >
                   <p className="font-semibold">Yes, urgent</p>
-                  <p className="mt-1 text-xs">We will prioritize emergency-capable professionals.</p>
+                  <p className="mt-1 text-xs">We’ll prioritize emergency-ready professionals.</p>
                 </button>
                 <button
                   type="button"
@@ -254,7 +254,7 @@ export function AiProjectBriefModal({
                   className={`rounded-lg border px-4 py-3 text-left text-sm ${isEmergency === false ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}
                 >
                   <p className="font-semibold">No, standard</p>
-                  <p className="mt-1 text-xs">Normal matching and timing.</p>
+                  <p className="mt-1 text-xs">Normal matching works perfectly.</p>
                 </button>
               </div>
             </div>
@@ -262,7 +262,7 @@ export function AiProjectBriefModal({
 
           {currentStep?.kind === 'followup' && (
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-slate-900">💡 Quick detail</p>
+              <p className="text-sm font-semibold text-slate-900">💡 Quick pit stop</p>
               <p className="text-sm text-slate-700">{currentStep.question}</p>
               <textarea
                 rows={4}
@@ -276,7 +276,7 @@ export function AiProjectBriefModal({
 
           {currentStep?.kind === 'scope' && (
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-slate-900">🧾 Anything else professionals should know?</p>
+              <p className="text-sm font-semibold text-slate-900">🧾 Any final notes for professionals?</p>
               <textarea
                 rows={5}
                 value={summary}
@@ -294,7 +294,7 @@ export function AiProjectBriefModal({
             onClick={stepIndex === 0 ? onClose : () => setStepIndex((prev) => Math.max(0, prev - 1))}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            {stepIndex === 0 ? 'Cancel' : 'Back to last question'}
+            {stepIndex === 0 ? 'Maybe later' : 'Back'}
           </button>
 
           <button
@@ -303,7 +303,7 @@ export function AiProjectBriefModal({
             onClick={handleNext}
             className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            {stepIndex < totalSteps - 1 ? 'Next' : 'Continue to professionals'}
+            {stepIndex < totalSteps - 1 ? 'Keep going' : 'Let’s meet professionals'}
           </button>
         </div>
       </div>
