@@ -129,18 +129,26 @@ export class ProjectsService {
     }
   }
 
-  private async getProjectSelectableProfessionals(ids: string[]) {
+  private async getProjectSelectableProfessionals(
+    ids: string[],
+    options?: { requireEmergencyCallout?: boolean },
+  ) {
     const professionals = await this.prisma.professional.findMany({
       where: {
         id: { in: ids },
         professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
+        ...(options?.requireEmergencyCallout
+          ? { emergencyCalloutAvailable: true }
+          : {}),
       },
       select: { id: true, email: true, phone: true, fullName: true, businessName: true },
     });
 
     if (professionals.length !== ids.length) {
       throw new BadRequestException(
-        'Only company and contractor professionals can be selected for projects',
+        options?.requireEmergencyCallout
+          ? 'Emergency projects can only select company/contractor professionals with 24/7 emergency callout availability'
+          : 'Only company and contractor professionals can be selected for projects',
       );
     }
 
@@ -559,7 +567,9 @@ export class ProjectsService {
     });
     if (!project) throw new BadRequestException('Project not found');
 
-    const professionals = await this.getProjectSelectableProfessionals(ids);
+    const professionals = await this.getProjectSelectableProfessionals(ids, {
+      requireEmergencyCallout: !!project.isEmergency,
+    });
     if (professionals.length === 0) {
       throw new BadRequestException('No professionals found for given ids');
     }
@@ -789,7 +799,9 @@ Please review the project details and respond with your quote or decline the inv
     });
     if (!project) throw new BadRequestException('Project not found');
 
-    await this.getProjectSelectableProfessionals(ids);
+    await this.getProjectSelectableProfessionals(ids, {
+      requireEmergencyCallout: !!project.isEmergency,
+    });
 
     const results: any[] = [];
     for (const proId of ids) {
@@ -859,7 +871,9 @@ Please review the project details and respond with your quote or decline the inv
     // Fetch professionals for email (if any)
     let professionals: any[] = [];
     if (ids.length > 0) {
-      professionals = await this.getProjectSelectableProfessionals(ids);
+      professionals = await this.getProjectSelectableProfessionals(ids, {
+        requireEmergencyCallout: !!createProjectDto.isEmergency,
+      });
     }
 
     // Transform userId into user relation for Prisma
