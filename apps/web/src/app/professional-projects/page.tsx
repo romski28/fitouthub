@@ -60,6 +60,7 @@ function getProfessionalShowMeHref(projectProfessionalId: string, actionKey: str
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
+  const nextStepCacheScope = `professional:${professional?.id || 'anonymous'}`;
   const [projects, setProjects] = useState<ProjectProfessional[]>([]);
 
   // Only professionals can access this page
@@ -140,7 +141,7 @@ export default function ProfessionalProjectsPage() {
       setDashboardLoading(true);
 
       const fetches = projects.map((projectProf) =>
-        fetchPrimaryNextStep(projectProf.project.id, accessToken)
+        fetchPrimaryNextStep(projectProf.project.id, accessToken, { cacheScope: nextStepCacheScope })
           .then((action) => {
             if (!cancelled) {
               setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: action }));
@@ -165,7 +166,7 @@ export default function ProfessionalProjectsPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, accessToken, projects]);
+  }, [isLoggedIn, accessToken, projects, nextStepCacheScope]);
 
   const handleCompleteNextStep = async (
     event: MouseEvent<HTMLButtonElement>,
@@ -180,10 +181,13 @@ export default function ProfessionalProjectsPage() {
 
     setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: true }));
     try {
-      const ok = await completeNextStep(projectId, action.actionKey, accessToken);
+      const ok = await completeNextStep(projectId, action.actionKey, accessToken, nextStepCacheScope);
       if (!ok) return;
 
-      const refreshed = await fetchPrimaryNextStep(projectId, accessToken);
+      const refreshed = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: nextStepCacheScope,
+        forceRefresh: true,
+      });
       setNextStepMap((prev) => ({ ...prev, [projectId]: refreshed }));
     } finally {
       setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: false }));

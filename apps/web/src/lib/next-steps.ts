@@ -14,6 +14,35 @@ type NextStepResponse = {
   ELECTIVE?: NextStepAction[];
 };
 
+type NextStepCacheEntry = {
+  action: NextStepAction | null;
+  updatedAt: number;
+};
+
+type NextStepFetchOptions = {
+  cacheScope?: string;
+  forceRefresh?: boolean;
+  maxAgeMs?: number;
+};
+
+export const NEXT_STEP_CACHE_TTL_MS = 15 * 60 * 1000;
+
+const nextStepCache = new Map<string, NextStepCacheEntry>();
+
+function buildScope(token: string, cacheScope?: string): string {
+  return cacheScope || token.slice(-16);
+}
+
+function cacheKey(projectId: string, scope: string): string {
+  return `${scope}::${projectId}`;
+}
+
+export function invalidateNextStepCache(projectId: string, cacheScope?: string, token?: string): void {
+  const scope = cacheScope || (token ? token.slice(-16) : '');
+  if (!scope) return;
+  nextStepCache.delete(cacheKey(projectId, scope));
+}
+
 export class NextStepAuthError extends Error {
   constructor() {
     super('Unauthorized to fetch next steps');
@@ -24,9 +53,20 @@ export class NextStepAuthError extends Error {
 export async function fetchPrimaryNextStep(
   projectId: string,
   token: string,
+  options: NextStepFetchOptions = {},
 ): Promise<NextStepAction | null> {
+  const scope = buildScope(token, options.cacheScope);
+  const key = cacheKey(projectId, scope);
+  const maxAgeMs = options.maxAgeMs ?? NEXT_STEP_CACHE_TTL_MS;
+
+  if (!options.forceRefresh) {
+    const cached = nextStepCache.get(key);
+    if (cached && Date.now() - cached.updatedAt <= maxAgeMs) {
+      return cached.action;
+    }
+  }
+
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
-    cache: 'no-store',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -38,17 +78,21 @@ export async function fetchPrimaryNextStep(
   }
 
   if (!response.ok) {
+    nextStepCache.set(key, { action: null, updatedAt: Date.now() });
     return null;
   }
 
   const data = (await response.json()) as NextStepResponse;
-  return data.PRIMARY?.[0] ?? null;
+  const action = data.PRIMARY?.[0] ?? null;
+  nextStepCache.set(key, { action, updatedAt: Date.now() });
+  return action;
 }
 
 export async function completeNextStep(
   projectId: string,
   actionKey: string,
   token: string,
+  cacheScope?: string,
 ): Promise<boolean> {
   const response = await fetch(
     `${API_BASE_URL}/projects/${projectId}/next-steps/${encodeURIComponent(actionKey)}`,
@@ -61,6 +105,10 @@ export async function completeNextStep(
       body: JSON.stringify({ userAction: 'COMPLETED' }),
     },
   );
+
+  if (response.ok) {
+    invalidateNextStepCache(projectId, cacheScope, token);
+  }
 
   return response.ok;
 }

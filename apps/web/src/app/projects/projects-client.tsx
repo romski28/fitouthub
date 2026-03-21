@@ -471,6 +471,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const t = useTranslations('project.list');
   const locale = useLocale();
   const { isLoggedIn, accessToken, user } = useAuth();
+  const nextStepCacheScope = `client:${user?.id || 'anonymous'}`;
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
@@ -620,7 +621,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       setDashboardLoading(true);
 
       const fetches = items.map((project) =>
-        fetchPrimaryNextStep(project.id, accessToken)
+        fetchPrimaryNextStep(project.id, accessToken, { cacheScope: nextStepCacheScope })
           .then((action) => {
             if (!cancelled) {
               setNextStepMap((prev) => ({ ...prev, [project.id]: action }));
@@ -645,7 +646,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, accessToken, items]);
+  }, [isLoggedIn, accessToken, items, nextStepCacheScope]);
 
   const handleCompleteNextStep = async (projectId: string) => {
     if (!accessToken) return;
@@ -654,10 +655,13 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
     setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: true }));
     try {
-      const ok = await completeNextStep(projectId, action.actionKey, accessToken);
+      const ok = await completeNextStep(projectId, action.actionKey, accessToken, nextStepCacheScope);
       if (!ok) return;
 
-      const refreshed = await fetchPrimaryNextStep(projectId, accessToken);
+      const refreshed = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: nextStepCacheScope,
+        forceRefresh: true,
+      });
       setNextStepMap((prev) => ({ ...prev, [projectId]: refreshed }));
     } finally {
       setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: false }));

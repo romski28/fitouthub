@@ -7,45 +7,24 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { colors, radii } from '@/styles/theme';
 import { StatusPill } from './status-pill';
-
-interface FinancialActionItem {
-  id: string;
-  type: string;
-  description: string;
-  amount: string;
-  status: string;
-  projectId: string;
-  projectName: string;
-  createdAt: string;
-}
-
-interface UnreadMessageGroup {
-  projectId: string;
-  projectName: string;
-  unreadCount: number;
-  latestMessage: {
-    content: string;
-    createdAt: string;
-    senderType: string;
-    senderName?: string;
-  };
-  chatType: 'project-professional' | 'project-general' | 'assist' | 'private-foh';
-  threadId?: string;
-}
-
-interface UpdatesSummary {
-  financialActions: FinancialActionItem[];
-  financialCount: number;
-  unreadMessages: UnreadMessageGroup[];
-  unreadCount: number;
-  totalCount: number;
-}
+import {
+  type FinancialActionItem,
+  type UnreadMessageGroup,
+  type UpdatesSummary,
+  getFreshUpdatesSummary,
+  getUpdatesCacheEntry,
+  isUpdatesCacheStale,
+  setUpdatesSummaryCache,
+} from '@/lib/updates-cache';
 
 interface UpdatesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRefresh: () => void;
   actAsClientId?: string; // when present, admin views a client's updates
+  initialData?: UpdatesSummary | null;
+  lastUpdatedAt?: number | null;
+  onDataUpdated?: (data: UpdatesSummary, updatedAt: number) => void;
 }
 
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
@@ -80,21 +59,50 @@ const fetchWithRetry = async (
     : new Error('Failed to fetch after retries');
 };
 
-export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: UpdatesModalProps) {
+export function UpdatesModal({
+  isOpen,
+  onClose,
+  onRefresh,
+  actAsClientId,
+  initialData,
+  lastUpdatedAt,
+  onDataUpdated,
+}: UpdatesModalProps) {
   const router = useRouter();
   const { accessToken: clientToken } = useAuth();
   const { accessToken: profToken } = useProfessionalAuth();
-  const [data, setData] = useState<UpdatesSummary | null>(null);
+  const [data, setData] = useState<UpdatesSummary | null>(initialData ?? null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Use whichever token is available
   const token = clientToken || profToken;
 
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
     if (!token) {
       setLoading(false);
       return;
+    }
+
+    if (!forceRefresh) {
+      const fresh = getFreshUpdatesSummary(token, actAsClientId);
+      if (fresh) {
+        setData(fresh.summary);
+        setLoading(false);
+        onDataUpdated?.(fresh.summary, fresh.updatedAt);
+        return;
+      }
+
+      const cached = getUpdatesCacheEntry(token, actAsClientId);
+      if (cached) {
+        setData(cached.summary);
+        onDataUpdated?.(cached.summary, cached.updatedAt);
+      }
+    }
+
+    if (forceRefresh) {
+      setRefreshing(true);
     }
 
     try {
@@ -109,22 +117,28 @@ export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: Upda
 
       if (response.ok) {
         const summary = await response.json();
-        setData(summary);
+        const entry = setUpdatesSummaryCache(token, summary, actAsClientId);
+        setData(entry.summary);
+        onDataUpdated?.(entry.summary, entry.updatedAt);
       }
     } catch (error) {
       console.error('Failed to fetch updates:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     if (isOpen) {
-      setLoading(true);
+      if (initialData) {
+        setData(initialData);
+      }
+      setLoading(!initialData);
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, token]);
+  }, [isOpen, token, actAsClientId]);
 
   const handleMessageClick = (group: UnreadMessageGroup) => {
     // Navigate to the appropriate chat and mark as read
@@ -171,7 +185,7 @@ export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: Upda
         throw new Error(message || 'Failed to mark message as read');
       }
 
-      await fetchData();
+      await fetchData(true);
       onRefresh();
     } catch (error) {
       console.error('Failed to mark message as read:', error);
@@ -196,13 +210,35 @@ export function UpdatesModal({ isOpen, onClose, onRefresh, actAsClientId }: Upda
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-xl font-semibold text-strong">Your Updates</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors text-2xl leading-none"
-          >
-            ×
-          </button>
+          <div>
+            <h2 className="text-xl font-semibold text-strong">Your Updates</h2>
+            {lastUpdatedAt ? (
+              <p className="text-xs text-sub">
+                Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
+                {isUpdatesCacheStale(lastUpdatedAt) ? ' · stale' : ''}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => fetchData(true)}
+              disabled={refreshing}
+              title="Refresh updates"
+              aria-label="Refresh updates"
+              className={`inline-flex h-9 w-9 items-center justify-center rounded border border-border bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 ${
+                refreshing ? 'animate-spin' : ''
+              }`}
+            >
+              ↻
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 transition-colors text-2xl leading-none"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Content */}
