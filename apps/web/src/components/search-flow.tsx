@@ -50,11 +50,6 @@ interface AiStructured {
   overallConfidence: number | null;
 }
 
-interface FollowUpAnswer {
-  question: string;
-  answer: string;
-}
-
 function ThinkingIndicator() {
   const phases = ['Reading your request', 'Mapping trades and location', 'Structuring project requirements'];
   const [phaseIndex, setPhaseIndex] = useState(0);
@@ -222,37 +217,6 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
         </div>
       )}
 
-      {/* Next questions – gated for anon */}
-      {s.nextQuestions.length > 0 && (
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">We may need to know</p>
-          {isLoggedIn === false ? (
-            <div className="relative">
-              <ul className="space-y-0.5 blur-sm select-none pointer-events-none">
-                {s.nextQuestions.slice(0, 3).map((q, i) => (
-                  <li key={i} className="text-slate-500 flex gap-1.5"><span>❓</span>{q}</li>
-                ))}
-              </ul>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={openJoinModal}
-                  className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 px-3 py-1 rounded-full hover:bg-emerald-100 transition"
-                >
-                  Join free to see full analysis →
-                </button>
-              </div>
-            </div>
-          ) : (
-            <ul className="space-y-0.5">
-              {s.nextQuestions.slice(0, 4).map((q, i) => (
-                <li key={i} className="text-slate-500 flex gap-1.5"><span>❓</span>{q}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
       {/* Professional count for anonymous users */}
       {isLoggedIn === false && countMsg && (
         <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2.5">
@@ -387,12 +351,6 @@ export default function SearchFlow() {
   const [aiStructured, setAiStructured] = useState<AiStructured | null>(null);
   const [aiMatchCount, setAiMatchCount] = useState<number | null>(null);
   const [aiCountLoading, setAiCountLoading] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
-  const [convertError, setConvertError] = useState<string | null>(null);
-  const [followUpAnswers, setFollowUpAnswers] = useState<FollowUpAnswer[]>([]);
-  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
-  const [currentAnswer, setCurrentAnswer] = useState('');
-  const [finalSummary, setFinalSummary] = useState('');
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
@@ -451,12 +409,6 @@ export default function SearchFlow() {
     setAiStructured(null);
     setAiMatchCount(null);
     setAiCountLoading(false);
-    setIsConverting(false);
-    setConvertError(null);
-    setFollowUpAnswers([]);
-    setActiveQuestionIndex(0);
-    setCurrentAnswer('');
-    setFinalSummary('');
   };
 
   // Track previous login state to detect login events
@@ -582,11 +534,6 @@ export default function SearchFlow() {
     setAiOutput(null);
     setAiMeta(null);
     setAiStructured(null);
-    setConvertError(null);
-    setFollowUpAnswers([]);
-    setActiveQuestionIndex(0);
-    setCurrentAnswer('');
-    setFinalSummary('');
 
     try {
       const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
@@ -668,37 +615,11 @@ export default function SearchFlow() {
         overallConfidence: p?.overallConfidence ?? null,
       });
 
-      const aiSummary = [p?.scope ?? p?.project?.scopeText ?? null, p?.summary ?? null]
-        .filter((item): item is string => Boolean(item && item.trim()))
-        .join('\n\n');
-      setFinalSummary(aiSummary);
     } catch (error) {
       setAiError((error as Error).message || 'DeepSeek sandbox is unavailable');
     } finally {
       setAiLoading(false);
     }
-  };
-
-  const activeQuestion = aiStructured?.nextQuestions?.[activeQuestionIndex] ?? null;
-  const hasFollowUps = Boolean(aiStructured && aiStructured.nextQuestions.length > 0);
-  const followUpsComplete = hasFollowUps
-    ? followUpAnswers.length >= (aiStructured?.nextQuestions.length ?? 0)
-    : true;
-
-  const addFollowUpAnswer = () => {
-    if (!activeQuestion) return;
-    const answer = currentAnswer.trim();
-    if (!answer) return;
-
-    setFollowUpAnswers((prev) => [...prev, { question: activeQuestion, answer }]);
-    setCurrentAnswer('');
-    setActiveQuestionIndex((prev) => prev + 1);
-
-    setFinalSummary((prev) => {
-      const base = prev.trim();
-      const appended = `Q: ${activeQuestion}\nA: ${answer}`;
-      return base ? `${base}\n\n${appended}` : appended;
-    });
   };
 
   const handleSearch = (query: string) => {
@@ -718,40 +639,6 @@ export default function SearchFlow() {
     setIntent(result);
   };
 
-  const handleConvertToProject = async () => {
-    if (!aiStructured?.intakeId) return;
-    setIsConverting(true);
-    setConvertError(null);
-    try {
-      const res = await fetch(`${API_BASE_URL}/ai/intake/${aiStructured.intakeId}/convert`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: aiSessionId,
-          followUpAnswers,
-          finalSummary: finalSummary.trim() || undefined,
-        }),
-      });
-      if (!res.ok) throw new Error(`Convert failed (${res.status})`);
-      const data: { draft: Record<string, unknown> } = await res.json();
-      sessionStorage.setItem('createProjectDraft', JSON.stringify({ 
-        initialData: data.draft,
-        aiIntakeId: aiStructured.intakeId,
-      }));
-
-      if (isLoggedIn === false) {
-        // Store redirect intent then prompt registration
-        sessionStorage.setItem('postLoginRedirect', '/create-project');
-        openJoinModal();
-      } else {
-        router.push('/create-project');
-      }
-    } catch (err) {
-      setConvertError((err as Error).message || 'Convert failed');
-    } finally {
-      setIsConverting(false);
-    }
-  };
 
   return (
     <div className="space-y-3">
@@ -838,91 +725,17 @@ export default function SearchFlow() {
                 </>
               )}
 
-              {aiViewMode === 'human' && isLoggedIn !== false && hasFollowUps && (
-                <div className="rounded-lg border border-emerald-200 bg-white p-4 space-y-3">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">AI Follow-up</p>
-                    {!followUpsComplete && activeQuestion && (
-                      <p className="text-sm text-slate-700">{activeQuestion}</p>
-                    )}
-                    {followUpsComplete && (
-                      <p className="text-sm font-semibold text-emerald-700">
-                        We have all the information required to get started, thanks.
-                      </p>
-                    )}
-                  </div>
-
-                  {!followUpsComplete && (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={currentAnswer}
-                        onChange={(event) => setCurrentAnswer(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') {
-                            event.preventDefault();
-                            addFollowUpAnswer();
-                          }
-                        }}
-                        placeholder="Type your answer"
-                        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={addFollowUpAnswer}
-                        disabled={!currentAnswer.trim()}
-                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  )}
-
-                  {followUpAnswers.length > 0 && (
-                    <ul className="space-y-2 text-xs text-slate-600">
-                      {followUpAnswers.map((item, index) => (
-                        <li key={`${item.question}-${index}`} className="rounded border border-slate-200 bg-slate-50 p-2">
-                          <p className="font-semibold text-slate-700">Q: {item.question}</p>
-                          <p>A: {item.answer}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Project summary (editable)</p>
-                    <textarea
-                      value={finalSummary}
-                      onChange={(event) => setFinalSummary(event.target.value)}
-                      rows={6}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                </div>
-              )}
-
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 pt-1 border-t border-emerald-100">
-                {aiStructured.trades.length > 0 && (isLoggedIn === true || isLoggedIn === undefined) && (
+                {(isLoggedIn === true || isLoggedIn === undefined) && (
                   <button
                     type="button"
                     onClick={() => setShowBriefModal(true)}
                     className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
                   >
-                    Continue → Find Professionals
+                    Continue
                   </button>
                 )}
-                {aiStructured.intakeId && (
-                  <button
-                    type="button"
-                    disabled={isConverting}
-                    onClick={handleConvertToProject}
-                    className="flex-1 min-w-[140px] rounded border border-emerald-400 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 transition disabled:opacity-50"
-                  >
-                    {isConverting ? 'Creating…' : isLoggedIn === false ? 'Create Project (join free →)' : 'Convert to Project'}
-                  </button>
-                )}
-                {convertError && <p className="w-full text-rose-600 text-[11px]">{convertError}</p>}
               </div>
             </>
           )}
@@ -953,7 +766,9 @@ export default function SearchFlow() {
         isOpen={showBriefModal && !!aiStructured}
         onClose={() => setShowBriefModal(false)}
         initialTitle={aiStructured?.title || aiStructured?.summary || ''}
-        initialSummary={finalSummary.trim() || aiStructured?.scope || aiStructured?.summary || ''}
+        initialSummary={aiStructured?.summary || ''}
+        initialScope={aiStructured?.scope || ''}
+        initialAssumptions={aiStructured?.assumptions || []}
         initialLocation={
           aiStructured?.locationPrimary
             ? {

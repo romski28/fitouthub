@@ -15,6 +15,8 @@ interface AiBriefModalProps {
   onClose: () => void;
   initialTitle?: string;
   initialSummary?: string;
+  initialScope?: string;
+  initialAssumptions?: string[];
   initialLocation?: CanonicalLocation;
   fallbackLocation?: CanonicalLocation;
   initialEmergency?: boolean;
@@ -40,6 +42,8 @@ export function AiProjectBriefModal({
   onClose,
   initialTitle,
   initialSummary,
+  initialScope,
+  initialAssumptions,
   initialLocation,
   fallbackLocation,
   initialEmergency,
@@ -54,7 +58,7 @@ export function AiProjectBriefModal({
   }, [initialLocation, fallbackLocation]);
 
   const [title, setTitle] = useState(initialTitle || '');
-  const [summary, setSummary] = useState(initialSummary || '');
+  const [summary, setSummary] = useState('');
   const [location, setLocation] = useState<CanonicalLocation>(mergedInitialLocation);
   const [isEmergency, setIsEmergency] = useState<boolean | null>(
     typeof initialEmergency === 'boolean' ? initialEmergency : null,
@@ -65,7 +69,7 @@ export function AiProjectBriefModal({
   useEffect(() => {
     if (!isOpen) return;
     setTitle(initialTitle || '');
-    setSummary(initialSummary || '');
+    setSummary('');
     setLocation(mergedInitialLocation);
     setIsEmergency(typeof initialEmergency === 'boolean' ? initialEmergency : null);
     setAnswers({});
@@ -98,7 +102,7 @@ export function AiProjectBriefModal({
       list.push({ kind: 'followup', question, id: `q-${index}` });
     });
 
-    if (!(initialSummary || '').trim()) list.push({ kind: 'scope' });
+    if (!(initialScope || '').trim() && !(initialSummary || '').trim()) list.push({ kind: 'scope' });
 
     return list;
   }, [
@@ -110,6 +114,7 @@ export function AiProjectBriefModal({
     fallbackLocation?.tertiary,
     followUpQuestions,
     initialSummary,
+    initialScope,
   ]);
 
   const totalSteps = steps.length;
@@ -145,10 +150,11 @@ export function AiProjectBriefModal({
       .map((step) => ({ question: step.question, answer: (answers[step.id] || '').trim() }))
       .filter((item) => item.answer.length > 0);
 
+    const baseSummary = (summary || initialScope || initialSummary || '').trim();
     const appendedSummary = followUpAnswers.reduce((acc, item) => {
       const line = `Q: ${item.question}\nA: ${item.answer}`;
       return acc ? `${acc}\n\n${line}` : line;
-    }, summary.trim());
+    }, baseSummary);
 
     onComplete({
       title: title.trim(),
@@ -185,7 +191,27 @@ export function AiProjectBriefModal({
             <div className="space-y-3">
               <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-slate-700">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Mini brief</p>
-                <p className="mt-1 whitespace-pre-wrap">{(initialSummary || summary || 'We extracted your project details from the prompt.').trim()}</p>
+                <div className="mt-1 space-y-2">
+                  {(initialSummary || '').trim() && (
+                    <p><span className="font-semibold text-slate-900">Summary:</span> {(initialSummary || '').trim()}</p>
+                  )}
+                  {(initialScope || '').trim() && (
+                    <p><span className="font-semibold text-slate-900">Scope:</span> {(initialScope || '').trim()}</p>
+                  )}
+                  {Array.isArray(initialAssumptions) && initialAssumptions.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-slate-900">Assumptions:</p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5">
+                        {initialAssumptions.slice(0, 3).map((assumption, index) => (
+                          <li key={`assumption-${index}`}>{assumption}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {!(initialSummary || '').trim() && !(initialScope || '').trim() && (!initialAssumptions || initialAssumptions.length === 0) && (
+                    <p>We extracted your project details from the prompt.</p>
+                  )}
+                </div>
               </div>
               <p className="text-sm font-semibold text-slate-900">📝 Shall we call the project…</p>
               <input
