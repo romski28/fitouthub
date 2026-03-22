@@ -340,8 +340,10 @@ export default function CreateProjectPage() {
               error={error}
               showAiOverview={Boolean(aiIntakeId || initialFormData.aiFrom || initialFormData.notes)}
               submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
-              showBudget={true}
+              showBudget={false}
               showService={true}
+              showClientName={false}
+              confirmationMode={true}
             />
           </div>
         )}

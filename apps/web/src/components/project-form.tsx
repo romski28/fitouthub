@@ -81,8 +81,14 @@ interface ProjectFormProps {
   /** Whether to show service selection */
   showService?: boolean;
 
+  /** Whether to show client name input */
+  showClientName?: boolean;
+
   /** Show AI-first overview block before full editable fields */
   showAiOverview?: boolean;
+
+  /** Render as confirmation-first screen when AI context exists */
+  confirmationMode?: boolean;
 }
 
 const MAX_FILES = 5;
@@ -179,7 +185,9 @@ export function ProjectForm({
   submitLabel,
   showBudget = true,
   showService = true,
+  showClientName = true,
   showAiOverview = false,
+  confirmationMode = false,
 }: ProjectFormProps) {
     const t = useTranslations('project');
     const commonT = useTranslations('common');
@@ -323,6 +331,8 @@ export function ProjectForm({
         formData.notes?.trim() ||
         formData.tradesRequired.length > 0),
   );
+
+  const isConfirmationView = confirmationMode && hasAiContext && !isOverviewEditing;
 
   const showEditableAiFields = !hasAiContext || isOverviewEditing;
 
@@ -575,6 +585,16 @@ export function ProjectForm({
                 <p className="mt-1 whitespace-pre-wrap">{formData.notes}</p>
               </div>
             )}
+            {confirmationMode && (
+              <p>
+                <span className="font-semibold text-slate-900">Project settings:</span>{' '}
+                {formData.isEmergency ? 'Emergency project' : 'Standard priority'} ·{' '}
+                {formData.onlySelectedProfessionalsCanBid ?? true
+                  ? 'Selected professionals only'
+                  : 'Open to all professionals'}
+                {formData.endDate ? ` · Target by ${formData.endDate}` : ''}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -620,19 +640,21 @@ export function ProjectForm({
       </div>
 
       {/* Client Name */}
-      <div>
-        <label className="block text-sm font-semibold text-slate-900 mb-2">
-          Your Name
-        </label>
-        <input
-          type="text"
-          placeholder="Your full name"
-          value={formData.clientName}
-          onChange={(e) => handleChange('clientName', e.target.value)}
-          disabled={isReadOnly || isSubmitting}
-          className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-      </div>
+      {showClientName && (
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Your Name
+          </label>
+          <input
+            type="text"
+            placeholder="Your full name"
+            value={formData.clientName}
+            onChange={(e) => handleChange('clientName', e.target.value)}
+            disabled={isReadOnly || isSubmitting}
+            className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+      )}
 
       {/* Location */}
       <div className={showEditableAiFields ? '' : 'hidden'}>
@@ -749,7 +771,7 @@ export function ProjectForm({
       </div>
 
       {/* Timescale */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={isConfirmationView ? 'hidden' : 'grid gap-3 sm:grid-cols-2'}>
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <input
