@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import Link from 'next/link';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
 import ProjectFinancialsCard from '@/components/project-financials-card';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
+import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 import toast from 'react-hot-toast';
 
 interface ProjectDetail {
@@ -74,6 +76,116 @@ const projectStatusBadge: Record<string, string> = {
   awarded: 'bg-blue-100 text-blue-800',
 };
 
+type TimelineStepDef = {
+  id: string;
+  title: string;
+  description: string;
+  actionKeys: string[];
+  tab: string;
+};
+
+const timelineSteps: TimelineStepDef[] = [
+  {
+    id: 'created-invite',
+    title: 'Project Created & Invite',
+    description: 'Create the project and invite professionals to bid.',
+    actionKeys: ['WAIT_FOR_QUOTES', 'INVITE_PROFESSIONALS'],
+    tab: 'professionals',
+  },
+  {
+    id: 'bidding',
+    title: 'Bidding & Quote Intake',
+    description: 'Collect and review incoming quotations.',
+    actionKeys: ['REVIEW_INCOMING_QUOTES', 'REQUEST_SITE_VISIT'],
+    tab: 'professionals',
+  },
+  {
+    id: 'site-visit',
+    title: 'Site Visit Coordination',
+    description: 'Confirm access and schedule site visit where needed.',
+    actionKeys: ['CONFIRM_SITE_VISIT'],
+    tab: 'site-access',
+  },
+  {
+    id: 'compare',
+    title: 'Compare Quotes',
+    description: 'Review and compare final offers.',
+    actionKeys: ['COMPARE_QUOTES'],
+    tab: 'professionals',
+  },
+  {
+    id: 'select',
+    title: 'Select Professional',
+    description: 'Choose who will execute the project.',
+    actionKeys: ['SELECT_PROFESSIONAL'],
+    tab: 'professionals',
+  },
+  {
+    id: 'contract',
+    title: 'Contract & Sign-off',
+    description: 'Review terms and finalise the contract.',
+    actionKeys: ['REVIEW_CONTRACT'],
+    tab: 'contract',
+  },
+  {
+    id: 'pre-work',
+    title: 'Pre-work Setup',
+    description: 'Confirm start details before works begin.',
+    actionKeys: ['CONFIRM_START_DETAILS'],
+    tab: 'overview',
+  },
+  {
+    id: 'work-progress',
+    title: 'Work In Progress',
+    description: 'Track updates and monitor delivery progress.',
+    actionKeys: ['REVIEW_PROGRESS'],
+    tab: 'schedule',
+  },
+  {
+    id: 'milestones',
+    title: 'Milestone Review',
+    description: 'Approve milestones and confirm next phase.',
+    actionKeys: ['APPROVE_MILESTONE', 'CONFIRM_NEXT_PHASE'],
+    tab: 'schedule',
+  },
+  {
+    id: 'final-inspection-plan',
+    title: 'Final Inspection Planning',
+    description: 'Arrange final walkthrough and close-out checks.',
+    actionKeys: ['SCHEDULE_FINAL_INSPECTION'],
+    tab: 'schedule',
+  },
+  {
+    id: 'handover',
+    title: 'Final Approval & Handover',
+    description: 'Approve final work and complete handover.',
+    actionKeys: ['APPROVE_FINAL_WORK'],
+    tab: 'schedule',
+  },
+  {
+    id: 'warranty',
+    title: 'Warranty Period',
+    description: 'Monitor defects and warranty support.',
+    actionKeys: ['ENTER_WARRANTY_PERIOD', 'REPORT_DEFECT'],
+    tab: 'schedule',
+  },
+];
+
+const inferTimelineIndexFromStatus = (status?: string) => {
+  const normalized = (status || '').toLowerCase();
+
+  if (normalized === 'completed' || normalized === 'rated') {
+    return timelineSteps.length;
+  }
+
+  if (normalized === 'started') return 7;
+  if (normalized === 'awarded' || normalized === 'approved') return 5;
+  if (normalized === 'quoted' || normalized === 'counter_requested') return 3;
+  if (normalized === 'pending') return 1;
+
+  return 0;
+};
+
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   project,
   expandedAccordions,
@@ -99,6 +211,34 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     phone: project.contractorContactPhone || '',
     email: project.contractorContactEmail || '',
   });
+  const [primaryNextStep, setPrimaryNextStep] = useState<NextStepAction | null>(null);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    let cancelled = false;
+
+    const loadNextStep = async () => {
+      setTimelineLoading(true);
+      try {
+        const action = await fetchPrimaryNextStep(project.id, accessToken, {
+          cacheScope: `client-project-timeline:${project.id}`,
+        });
+        if (!cancelled) setPrimaryNextStep(action);
+      } catch {
+        if (!cancelled) setPrimaryNextStep(null);
+      } finally {
+        if (!cancelled) setTimelineLoading(false);
+      }
+    };
+
+    loadNextStep();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [project.id, accessToken]);
 
   const handleScheduleSave = async () => {
     if (!scheduleForm.startDate && !scheduleForm.endDate) {
@@ -146,6 +286,30 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     project.aiIntake &&
       (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
   );
+
+  const currentTimelineStepIndex = useMemo(() => {
+    const actionKey = primaryNextStep?.actionKey;
+    if (actionKey) {
+      const indexFromAction = timelineSteps.findIndex((step) => step.actionKeys.includes(actionKey));
+      if (indexFromAction >= 0) return indexFromAction;
+    }
+    return inferTimelineIndexFromStatus(project.status);
+  }, [primaryNextStep?.actionKey, project.status]);
+
+  const currentTimelineStep =
+    currentTimelineStepIndex >= 0 && currentTimelineStepIndex < timelineSteps.length
+      ? timelineSteps[currentTimelineStepIndex]
+      : null;
+
+  const currentStepIsDelayed = useMemo(() => {
+    if (!currentTimelineStep) return false;
+    const referenceDate = project.updatedAt || project.createdAt;
+    if (!referenceDate) return false;
+
+    const ageMs = Date.now() - new Date(referenceDate).getTime();
+    const seventyTwoHoursMs = 72 * 60 * 60 * 1000;
+    return ageMs > seventyTwoHoursMs;
+  }, [currentTimelineStep, project.updatedAt, project.createdAt]);
 
   return (
     <div className="space-y-4">
@@ -211,6 +375,105 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <ProjectAiPanel aiIntake={project.aiIntake ?? null} mode="client" />
           </AccordionItem>
         )}
+
+        <AccordionItem
+          id="timeline-preview"
+          title="Process Timeline (Preview)"
+          isOpen={expandedAccordions['timeline-preview'] === true}
+          onToggle={onToggleAccordion}
+        >
+          <div className="space-y-3">
+            <p className="text-xs text-slate-600">
+              Temporary preview of the end-to-end process mapped to next-step workflow logic.
+            </p>
+
+            {timelineLoading && (
+              <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                Loading timeline status...
+              </div>
+            )}
+
+            {!timelineLoading && (
+              <div className="space-y-2">
+                {timelineSteps.map((step, index) => {
+                  const isComplete = index < currentTimelineStepIndex;
+                  const isCurrent = index === currentTimelineStepIndex;
+                  const isFuture = index > currentTimelineStepIndex;
+
+                  const toneClasses = isComplete
+                    ? {
+                        dot: 'bg-emerald-500',
+                        border: 'border-emerald-200',
+                        bg: 'bg-emerald-50',
+                        text: 'text-emerald-800',
+                        label: 'Complete',
+                      }
+                    : isCurrent
+                      ? currentStepIsDelayed
+                        ? {
+                            dot: 'bg-rose-500',
+                            border: 'border-rose-200',
+                            bg: 'bg-rose-50',
+                            text: 'text-rose-800',
+                            label: 'Delayed',
+                          }
+                        : {
+                            dot: 'bg-amber-500',
+                            border: 'border-amber-200',
+                            bg: 'bg-amber-50',
+                            text: 'text-amber-800',
+                            label: 'In progress',
+                          }
+                      : {
+                          dot: 'bg-slate-400',
+                          border: 'border-slate-200',
+                          bg: 'bg-slate-50',
+                          text: 'text-slate-700',
+                          label: 'Planned',
+                        };
+
+                  return (
+                    <div
+                      key={step.id}
+                      className={`rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <span className={`mt-1 h-2.5 w-2.5 rounded-full ${toneClasses.dot}`} />
+                          <div>
+                            <p className={`text-sm font-semibold ${toneClasses.text}`}>{step.title}</p>
+                            <p className="text-xs text-slate-600">{step.description}</p>
+                          </div>
+                        </div>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${toneClasses.text}`}>
+                          {toneClasses.label}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {!timelineLoading && currentTimelineStep && (
+              <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Current step action</p>
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-blue-900">{primaryNextStep?.actionLabel || currentTimelineStep.title}</p>
+                  <Link
+                    href={`/projects/${project.id}?tab=${encodeURIComponent(currentTimelineStep.tab)}`}
+                    className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                  >
+                    Open current step
+                  </Link>
+                </div>
+                {primaryNextStep?.description && (
+                  <p className="mt-1 text-xs text-blue-800">{primaryNextStep.description}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </AccordionItem>
 
         {/* Schedule & Contractor Contact */}
         <AccordionItem
