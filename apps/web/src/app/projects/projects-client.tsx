@@ -8,14 +8,11 @@ import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { ProjectDescriptionModal } from "@/components/project-description-modal";
-import ImageLightbox from "@/components/image-lightbox";
 import { ProjectForm, type ProjectFormData } from "@/components/project-form";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
-import { ProjectProgressBar } from "@/components/project-progress-bar";
 import { UpdatesButton } from "@/components/updates-button";
 import { useAuth } from "@/context/auth-context";
-import { useFundsSecured } from "@/hooks/use-funds-secured";
 import {
   NextStepAuthError,
   completeNextStep,
@@ -34,13 +31,6 @@ const statusColors: Record<string, string> = {
   declined: "bg-slate-100 text-slate-800",
   counter_requested: "bg-purple-100 text-purple-800",
 };
-
-// Wrapper component to provide fundsSecured for each card
-function ProjectProgressWrapper({ projectId, project, hasAssist, variant }: { projectId: string; project: any; hasAssist?: boolean; variant?: 'full' | 'compact' }) {
-  const { accessToken } = useAuth();
-  const fundsSecured = useFundsSecured(projectId, accessToken || undefined);
-  return <ProjectProgressBar project={project} hasAssist={hasAssist} variant={variant} fundsSecured={fundsSecured} />;
-}
 
 type AssistStatus = "open" | "in_progress" | "closed";
 
@@ -479,13 +469,12 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [showDescriptionModal, setShowDescriptionModal] = useState(initialShowCreateModal);
   const [items, setItems] = useState<ExtendedProject[]>(() => mapProjectsToItems(projects));
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
-  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
-  const [search, setSearch] = useState("");
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [showAllProjects, setShowAllProjects] = useState(false);
 
   console.log('[ProjectsClient] Render - projects.length:', projects.length, 'items.length:', items.length);
 
@@ -498,12 +487,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     setItems(mapProjectsToItems(projects));
   }, [projects]);
 
-  const subtitle = useMemo(
-    () => (clientId ? `Showing projects for client ${clientId}` : "Live data from the Nest API at /projects."),
-    [clientId],
-  );
-
-  const filtered = useMemo(() => {
+  const filteredByStatus = useMemo(() => {
     let result = items;
     
     // Filter by status if not 'all'
@@ -515,23 +499,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       }
     }
     
-    // Filter by search
-    if (!search.trim()) return result;
-    const needle = search.toLowerCase();
-    return result.filter((p) => {
-      const fields = [
-        p.projectName,
-        p.clientName,
-        p.contractorName,
-        p.region,
-        p.notes,
-        p.status,
-      ]
-        .filter(Boolean)
-        .map((v) => v!.toString().toLowerCase());
-      return fields.some((f) => f.includes(needle));
-    });
-  }, [items, search, filterStatus]);
+    return result;
+  }, [items, filterStatus]);
 
   const actionableProjects = useMemo(() => {
     return items
@@ -758,6 +727,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const action = nextStepMap[project.id];
               if (!action) return null;
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
+              const assistInfo = assistMap[project.id];
+              const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
               return (
                 <div key={`dash-${project.id}`} className="rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
                   <div className="grid gap-3">
@@ -775,6 +746,17 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               <span>•</span>
                               <span className="text-emerald-300 font-medium">{quotedCount} quote{quotedCount !== 1 ? 's' : ''}</span>
                             </>
+                          )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                          <StatusBadge status={project.status} t={t} />
+                          <span className={`rounded-full px-2 py-1 font-semibold ${assistInfo?.hasAssist ? 'bg-emerald-500/20 text-emerald-200' : 'bg-slate-500/20 text-slate-200'}`}>
+                            {assistInfo?.hasAssist ? 'Assist requested' : 'No assist'}
+                          </span>
+                          {unreadCount > 0 && (
+                            <span className="rounded-full bg-blue-500/20 px-2 py-1 font-semibold text-blue-200">
+                              {unreadCount > 99 ? '99+' : unreadCount} unread
+                            </span>
                           )}
                         </div>
                       </div>
@@ -804,38 +786,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         </div>
       )}
 
-      {/* Filters */}
-      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-        <div className="grid gap-2 md:grid-cols-2">
-          <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">{t('search')}</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={t('searchPlaceholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 pr-8 text-sm"
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                  aria-label={t('clearSearchAria')}
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Project List */}
-      {filtered.length === 0 ? (
+      {/* Compact Projects List */}
+      {filteredByStatus.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center space-y-3">
           <p className="text-base font-semibold text-slate-800">{t('empty')}</p>
           <p className="text-sm text-slate-600">{t('emptyHint')}</p>
@@ -847,210 +799,70 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((project) => {
-            const assistInfo = assistMap[project.id];
-            const description = stripPhotoSection(project.notes);
-            const awardedPro = project.professionals?.find((p) => p.status === 'awarded');
-            const isAwarded = project.status === 'awarded' || Boolean(awardedPro);
-            const projectCostValue = awardedPro?.quoteAmount ?? project.budget ?? 0;
-            const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any).escrowAmount ?? 0;
-            const paidValue = (project as any).paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
-            const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
-            return (
-              <div
-                key={project.id}
-                className="group relative rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                {/* Unread message bubble */}
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md" title={t('unreadMessages', { count: unreadCount })}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-                <div className={`flex flex-col md:flex-row md:items-start md:justify-between gap-3 px-4 py-3 text-white ${
-                  project.status === 'withdrawn'
-                    ? 'bg-gradient-to-r from-slate-400 to-slate-300'
-                    : 'bg-gradient-to-r from-slate-900 to-slate-800'
-                }`}>
-                  <div className="space-y-1">
-                    <div className={`text-base font-bold ${project.status === 'withdrawn' ? 'text-slate-700' : ''}`}>
-                      {project.projectName}
-                    </div>
-                    <div className={`text-xs font-semibold uppercase tracking-wide ${
-                      project.status === 'withdrawn'
-                        ? 'text-slate-600'
-                        : 'text-emerald-300'
-                    }`}>
-                      {project.region}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {assistInfo?.hasAssist && (
-                      <img
-                        src="/FOHAssistYes.png"
-                        alt={t('assistRequestedAlt')}
-                        title={t('assistRequestedTitle')}
-                        className="h-6 w-6 object-contain"
-                      />
-                    )}
-                    {!assistInfo?.hasAssist && (
-                      <img
-                        src="/FOHAssistNo.png"
-                        alt={t('noAssistAlt')}
-                        title={t('noAssistTitle')}
-                        className="h-6 w-6 object-contain opacity-40"
-                      />
-                    )}
-                    <StatusBadge status={project.status} t={t} />
-                    <Link
-                      href={`/projects/${project.id}`}
-                      className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={() => setShowAllProjects((prev) => !prev)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left"
+          >
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">All projects</p>
+              <p className="text-sm font-semibold text-slate-900">{filteredByStatus.length} project{filteredByStatus.length !== 1 ? 's' : ''} in this view</p>
+            </div>
+            <span className="text-sm font-semibold text-blue-600">{showAllProjects ? 'Hide' : 'Show'}</span>
+          </button>
+
+          {showAllProjects && (
+            <div className="border-t border-slate-100 px-3 py-2">
+              <div className="space-y-2">
+                {filteredByStatus.map((project) => {
+                  const assistInfo = assistMap[project.id];
+                  const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
+                  return (
+                    <div
+                      key={project.id}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                     >
-                      {t('manage')}
-                    </Link>
-                    {project.status !== 'withdrawn' && (
-                      <button
-                        type="button"
-                        onClick={() => setEditing(project)}
-                        className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10 transition"
-                      >
-                        {t('edit')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 space-y-3">
-                  {nextStepMap[project.id] && (
-                    <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2.5">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">Next step</p>
-                          <p className="text-sm font-semibold text-blue-900">{nextStepMap[project.id]?.actionLabel}</p>
-                          {nextStepMap[project.id]?.description ? (
-                            <p className="text-xs text-blue-800">{nextStepMap[project.id]?.description}</p>
-                          ) : null}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCompleteNextStep(project.id)}
-                          disabled={Boolean(nextStepLoadingMap[project.id])}
-                          className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {nextStepLoadingMap[project.id] ? "Updating..." : "Mark done"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <ProjectProgressWrapper
-                    projectId={project.id}
-                    project={{
-                      id: project.id,
-                      status: project.status,
-                      startDate: (project as any).startDate,
-                      endDate: (project as any).endDate,
-                      professionals:
-                        project.professionals?.map((p) => ({
-                          status: p.status,
-                          quoteAmount: p.quoteAmount,
-                          invoice: (p as any).invoice || null,
-                        })) || [],
-                    }}
-                    hasAssist={assistInfo?.hasAssist}
-                    variant="compact"
-                  />
-                <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
-                  {project.contractorName ? (
-                    <div className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                      <span className="font-semibold">{t('labels.contractor')}</span>
-                      <span className="text-slate-600">{project.contractorName}</span>
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* Budget or Professionals Section */}
-                {isAwarded ? (
-                  <div className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2.5">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-emerald-900">{t('labels.projectBudget')}</p>
-                      <span className="text-[10px] font-medium text-emerald-700">{t('labels.awarded')}</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-                        <p className="text-[11px] font-semibold text-emerald-800">{t('labels.budget')}</p>
-                        <p className="text-sm font-bold text-emerald-900">{formatHKD(project.budget)}</p>
-                      </div>
-                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-                        <p className="text-[11px] font-semibold text-emerald-800">{t('labels.projectCost')}</p>
-                        <p className="text-sm font-bold text-emerald-900">{formatHKD(projectCostValue)}</p>
-                      </div>
-                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-                        <p className="text-[11px] font-semibold text-emerald-800">{t('escrowAccount')}</p>
-                        <p className="text-sm font-bold text-emerald-900">{formatHKD(escrowValue)}</p>
-                      </div>
-                      <div className="rounded-md bg-white border border-emerald-100 px-3 py-2 shadow-[0_1px_3px_rgba(16,185,129,0.08)]">
-                        <p className="text-[11px] font-semibold text-emerald-800">{t('paid')}</p>
-                        <p className="text-sm font-bold text-emerald-900">{formatHKD(paidValue)}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : project.professionals && project.professionals.length > 0 ? (
-                  <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-slate-800">{t('invitedProfessionals', { count: project.professionals.length })}</p>
-                      <div className="flex gap-1.5 text-[10px] font-medium">
-                        <span className="text-blue-600">
-                          {project.professionals.filter(p => p.status === 'quoted').length} {t('quoted')}
-                        </span>
-                        <span className="text-slate-400">·</span>
-                        <span className="text-amber-600">
-                          {project.professionals.filter(p => p.status === 'pending').length} {t('stats.pending')}
-                        </span>
-                        <span className="text-slate-400">·</span>
-                        <span className="text-slate-500">
-                          {project.professionals.filter(p => p.status === 'declined').length} {t('declined')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      {project.professionals.map((pp) => (
-                        <div key={pp.id} className="flex items-center justify-between rounded-md bg-white px-2.5 py-1.5 border border-slate-100 hover:border-slate-300 transition">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                              {(pp.professional.fullName || pp.professional.businessName || pp.professional.email)[0].toUpperCase()}
-                            </div>
-                            <span className="text-xs font-medium text-slate-700 truncate">
-                              {pp.professional.fullName || pp.professional.businessName || pp.professional.email}
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">{project.projectName}</p>
+                          <p className="text-xs text-slate-500">{project.region}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                            <StatusBadge status={project.status} t={t} />
+                            <span className={`rounded-full px-2 py-1 font-semibold ${assistInfo?.hasAssist ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
+                              {assistInfo?.hasAssist ? 'Assist requested' : 'No assist'}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {pp.quoteAmount && (
-                              <span className="text-xs font-semibold text-blue-700">
-                                HK${typeof pp.quoteAmount === 'number' ? pp.quoteAmount.toLocaleString() : pp.quoteAmount}
+                            {unreadCount > 0 && (
+                              <span className="rounded-full bg-blue-100 px-2 py-1 font-semibold text-blue-700">
+                                {unreadCount > 99 ? '99+' : unreadCount} unread
                               </span>
                             )}
-                            <StatusBadge status={pp.status} t={t} />
                           </div>
                         </div>
-                      ))}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/projects/${project.id}`}
+                            className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
+                          >
+                            {t('manage')}
+                          </Link>
+                          {project.status !== 'withdrawn' && (
+                            <button
+                              type="button"
+                              onClick={() => setEditing(project)}
+                              className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
+                            >
+                              {t('edit')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-
-                <div className="flex items-center justify-between text-[11px] text-slate-500">
-                  <span>{t('id')} {project.id}</span>
-                  <div className="flex items-center gap-3">
-                    <span>{t('labels.created')} {formatDate(project.createdAt, locale)}</span>
-                    <span>{t('updated')} {formatDate(project.updatedAt, locale)}</span>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             </div>
-            );
-          })}
+          )}
         </div>
       )
       }
@@ -1064,14 +876,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         />
       ) : null}
 
-      {lightbox ? (
-        <ImageLightbox
-          images={lightbox.images}
-          startIndex={lightbox.index}
-          onClose={() => setLightbox(null)}
-        />
-      ) : null}
-      
       <BackToTop />
     </div>
   );
