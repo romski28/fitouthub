@@ -179,22 +179,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
 
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-md bg-slate-50 p-3 border border-slate-100">
-                <p className="text-xs text-slate-600 font-semibold uppercase">Status</p>
-                <span
-                  className={`inline-block rounded-full px-2 py-1 text-xs font-semibold capitalize mt-1 ${
-                    projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  {projectStatus.replace('_', ' ')}
-                </span>
-              </div>
-
-              <div className="rounded-md bg-slate-50 p-3 border border-slate-100">
-                <p className="text-xs text-slate-600 font-semibold uppercase">Region</p>
-                <p className="text-slate-900 font-medium mt-1">{project.region}</p>
-              </div>
-
               {project.budget && (
                 <div className="rounded-md bg-slate-50 p-3 border border-slate-100">
                   <p className="text-xs text-slate-600 font-semibold uppercase">Budget</p>
@@ -220,7 +204,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         {hasAiInsights && (
           <AccordionItem
             id="from-ai"
-            title="From AI"
+            title="Safety, Assumptions and Risks"
             isOpen={expandedAccordions['from-ai'] === true}
             onToggle={onToggleAccordion}
           >
