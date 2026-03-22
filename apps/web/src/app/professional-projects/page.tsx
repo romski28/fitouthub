@@ -67,7 +67,6 @@ export default function ProfessionalProjectsPage() {
 
   // Only professionals can access this page
   useRoleGuard(['professional'], { fallback: '/' });
-  const [visibleCount, setVisibleCount] = useState(30);
   const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +74,6 @@ export default function ProfessionalProjectsPage() {
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [dashboardLoading, setDashboardLoading] = useState(false);
-  const [showAllProjects, setShowAllProjects] = useState(false);
   const totals = {
     total: projects.length,
     pending: projects.filter(p => p.status === 'pending').length,
@@ -84,8 +82,8 @@ export default function ProfessionalProjectsPage() {
     awarded: projects.filter(p => p.status === 'awarded').length,
     declined: projects.filter(p => p.status === 'rejected' || p.status === 'declined').length,
   };
-  const actionableProjects = projects
-    .filter((projectProf) => Boolean(nextStepMap[projectProf.project.id]));
+  const dashboardProjects = projects
+    .filter((p) => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))));
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -310,26 +308,31 @@ export default function ProfessionalProjectsPage() {
               ))}
             </div>
           </div>
-        ) : actionableProjects.length > 0 && (
+        ) : dashboardProjects.length > 0 && (
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
-                <h2 className="text-xl font-bold text-white">{actionableProjects.length} Projects needing action</h2>
+                <h2 className="text-xl font-bold text-white">{dashboardProjects.length} Projects in this view</h2>
               </div>
             </div>
 
             <div className="space-y-2">
-              {actionableProjects.map((projectProf) => {
+              {dashboardProjects.map((projectProf) => {
                 const action = nextStepMap[projectProf.project.id];
-                if (!action) return null;
                 const statusBadge = projectProf.status === 'awarded' ? 'bg-purple-400/20 text-purple-200' : 
                   projectProf.status === 'quoted' ? 'bg-blue-400/20 text-blue-200' : 
                   projectProf.status === 'accepted' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-amber-400/20 text-amber-200';
                 const assistInfo = assistMap[projectProf.project.id];
                 const unreadCount = projectProf.unreadCount ?? 0;
+                const actionHref = action ? getProfessionalShowMeHref(projectProf.id, action.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
-                  <div key={`dash-${projectProf.id}`} className="rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
+                  <div key={`dash-${projectProf.id}`} className="relative rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                     <div className="grid gap-3">
                       {/* Title - Full Width */}
                       <p className="truncate text-sm font-bold text-white">{projectProf.project.projectName}</p>
@@ -355,28 +358,18 @@ export default function ProfessionalProjectsPage() {
                             <span className={`rounded-full px-2 py-1 font-semibold ${assistInfo?.hasAssist ? 'bg-emerald-500/20 text-emerald-200' : 'bg-slate-500/20 text-slate-200'}`}>
                               {assistInfo?.hasAssist ? 'Assist requested' : 'No assist'}
                             </span>
-                            {unreadCount > 0 && (
-                              <span className="rounded-full bg-blue-500/20 px-2 py-1 font-semibold text-blue-200">
-                                {unreadCount > 99 ? '99+' : unreadCount} unread
-                              </span>
-                            )}
                           </div>
+                          {action?.description ? (
+                            <p className="mt-2 text-xs text-slate-300">{action.description}</p>
+                          ) : null}
                         </div>
-                        
-                        {/* Badge */}
-                        <div className="flex items-center">
-                          <span className="rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200">
-                            {action.actionLabel}
-                          </span>
-                        </div>
-                        
-                        {/* Button */}
-                        <div className="flex items-center">
+
+                        <div className="flex items-center md:justify-end">
                           <Link
-                            href={getProfessionalShowMeHref(projectProf.id, action.actionKey)}
+                            href={actionHref}
                             className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
                           >
-                            Show me
+                            {action?.actionLabel || 'Open project'}
                           </Link>
                         </div>
                       </div>
@@ -394,82 +387,11 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {/* Compact Projects List */}
-        {
-          projects.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-              No projects assigned yet. Once you accept project invitations, they'll appear here.
-            </div>
-          ) : (
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <button
-              type="button"
-              onClick={() => setShowAllProjects((prev) => !prev)}
-              className="flex w-full items-center justify-between px-4 py-3 text-left"
-            >
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">All projects</p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {
-                    projects.filter(p => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined')))).length
-                  } project{
-                    projects.filter(p => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined')))).length !== 1 ? 's' : ''
-                  } in this view
-                </p>
-              </div>
-              <span className="text-sm font-semibold text-blue-600">{showAllProjects ? 'Hide' : 'Show'}</span>
-            </button>
-
-            {showAllProjects && (
-              <div className="border-t border-slate-100 p-3">
-              <div className="space-y-2">
-            {projects
-              .filter(p => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))))
-              .slice(0, visibleCount)
-              .map((projectProf) => (
-              <div key={projectProf.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">{projectProf.project.projectName}</p>
-                    <p className="text-xs text-slate-500">{projectProf.project.region}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                      <span className={`rounded-full px-2 py-1 font-semibold ${statusBadgeClass(projectProf.status)}`}>{projectProf.status}</span>
-                      <span className={`rounded-full px-2 py-1 font-semibold ${assistMap[projectProf.project.id]?.hasAssist ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
-                        {assistMap[projectProf.project.id]?.hasAssist ? 'Assist requested' : 'No assist'}
-                      </span>
-                      {(projectProf.unreadCount ?? 0) > 0 && (
-                        <span className="rounded-full bg-blue-100 px-2 py-1 font-semibold text-blue-700">
-                          {(projectProf.unreadCount ?? 0) > 99 ? '99+' : (projectProf.unreadCount ?? 0)} unread
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Link
-                    href={`/professional-projects/${projectProf.id}`}
-                    className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
-                  >
-                    Manage
-                  </Link>
-                </div>
-              </div>
-            ))}
-            
-            {projects.length > visibleCount && (
-              <div className="mt-4 flex justify-center">
-                <button
-                  onClick={() => setVisibleCount((c) => c + 30)}
-                  className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-md transition font-medium"
-                >
-                  Display More
-                </button>
-              </div>
-            )}
+        {!dashboardLoading && dashboardProjects.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+            No projects assigned yet. Once you accept project invitations, they'll appear here.
           </div>
-          </div>
-            )}
-          </div>
-          )
-        }
+        ) : null}
 
         <BackToTop />
       </div>
