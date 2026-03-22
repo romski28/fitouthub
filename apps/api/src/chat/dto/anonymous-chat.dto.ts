@@ -1,6 +1,11 @@
 export class CreateAnonymousMessageDto {
   content: string;
   attachments?: { url: string; filename: string }[];
+  context?: {
+    pageType?: 'project_creation' | 'project_view' | 'general';
+    pathname?: string;
+    projectId?: string | null;
+  };
 }
 
 export class AnonymousChatMessageDto {
@@ -9,6 +14,11 @@ export class AnonymousChatMessageDto {
   senderType: 'anonymous' | 'foh';
   content: string;
   attachments?: any[];
+  context?: {
+    pageType?: 'project_creation' | 'project_view' | 'general';
+    pathname?: string;
+    projectId?: string | null;
+  };
   createdAt: string;
 }
 

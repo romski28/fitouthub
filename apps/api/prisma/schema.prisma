@@ -526,6 +526,7 @@ model PrivateChatMessage {
   senderProId  String?
   content      String
   attachments  Json?             @default("[]")
+  context      Json?
   createdAt    DateTime          @default(now())
   readByFohAt  DateTime?
   readByUserAt DateTime?
@@ -557,6 +558,7 @@ model AnonymousChatMessage {
   senderType  String // 'anonymous' | 'foh'
   content     String
   attachments Json?               @default("[]")
+  context     Json?
   createdAt   DateTime            @default(now())
   thread      AnonymousChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 

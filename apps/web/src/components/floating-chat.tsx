@@ -13,8 +13,45 @@ interface ChatMessage {
   senderType: 'user' | 'foh' | 'client' | 'professional' | 'anonymous';
   content: string;
   attachments?: { url: string; filename: string }[];
+  context?: {
+    pageType: 'project_creation' | 'project_view' | 'general';
+    pathname: string;
+    projectId?: string | null;
+  };
   createdAt: string;
 }
+
+const resolveProjectIdFromPath = (path: string | null | undefined) => {
+  if (!path) return null;
+  const match = path.match(/^\/(?:projects|professional-projects)\/([^/?#]+)/i);
+  return match?.[1] ?? null;
+};
+
+const getChatContextFromPath = (path: string | null | undefined) => {
+  const pathname = path || '/';
+  if (pathname.startsWith('/create-project')) {
+    return {
+      pageType: 'project_creation' as const,
+      pathname,
+      projectId: null,
+    };
+  }
+
+  const projectId = resolveProjectIdFromPath(pathname);
+  if (projectId) {
+    return {
+      pageType: 'project_view' as const,
+      pathname,
+      projectId,
+    };
+  }
+
+  return {
+    pageType: 'general' as const,
+    pathname,
+    projectId: null,
+  };
+};
 
 export default function FloatingChat() {
   const pathname = usePathname();
@@ -34,6 +71,7 @@ export default function FloatingChat() {
   const isLoggedIn = clientLoggedIn || proLoggedIn;
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
+  const chatContext = getChatContextFromPath(pathname);
 
   // Close chat and clear state on logout
   useEffect(() => {
@@ -253,6 +291,7 @@ export default function FloatingChat() {
           senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
           content: message.trim(),
           attachments: pendingAttachments,
+          context: chatContext,
           createdAt: new Date().toISOString(),
         }]);
         setMessage('');
@@ -274,6 +313,7 @@ export default function FloatingChat() {
         body: JSON.stringify({ 
           content: message.trim(),
           attachments: pendingAttachments,
+          context: chatContext,
         }),
       });
 
@@ -286,6 +326,7 @@ export default function FloatingChat() {
           senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
           content: message.trim(),
           attachments: pendingAttachments,
+          context: chatContext,
           createdAt: new Date().toISOString(),
         }]);
         setMessage('');

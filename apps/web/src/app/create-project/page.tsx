@@ -335,7 +335,7 @@ export default function CreateProjectPage() {
               }}
               onAssistRequest={handleAssist}
               onSubmit={handleSubmit}
-              onCancel={() => router.push('/projects')}
+              onCancel={() => router.push('/')}
               isSubmitting={isSubmitting}
               error={error}
               showAiOverview={Boolean(aiIntakeId || initialFormData.aiFrom || initialFormData.notes)}

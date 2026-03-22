@@ -6,6 +6,11 @@ export class PrivateChatMessageDto {
   senderProId?: string;
   content: string;
   attachments?: any[];
+  context?: {
+    pageType?: 'project_creation' | 'project_view' | 'general';
+    pathname?: string;
+    projectId?: string | null;
+  };
   createdAt: string;
   readByFohAt?: string;
 }

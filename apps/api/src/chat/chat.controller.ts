@@ -82,6 +82,7 @@ export class ChatController {
       req.user.isProfessional ? req.user.id : null,
       dto.content || '',
       dto.attachments,
+      dto.context,
     );
 
     return { message };
@@ -145,6 +146,7 @@ export class ChatController {
       'anonymous',
       dto.content || '',
       dto.attachments,
+      dto.context,
     );
 
     return { message };

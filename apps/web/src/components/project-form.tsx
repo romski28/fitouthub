@@ -201,7 +201,10 @@ export function ProjectForm({
   const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []));
   const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
   const [isOverviewEditing, setIsOverviewEditing] = useState(false);
-  const [showAiExtract, setShowAiExtract] = useState(false);
+  const [showAiExtract, setShowAiExtract] = useState(() => {
+    const riskLevel = (initialData?.aiFrom?.safety?.riskLevel || '').toLowerCase();
+    return riskLevel === 'medium' || riskLevel === 'high' || riskLevel === 'critical';
+  });
   const isReadOnly = mode === 'view';
 
   useEffect(() => {
@@ -213,7 +216,8 @@ export function ProjectForm({
     setTradeSearchTerm('');
     setShowTradeDropdown(false);
     setIsOverviewEditing(false);
-    setShowAiExtract(false);
+    const riskLevel = (initialData?.aiFrom?.safety?.riskLevel || '').toLowerCase();
+    setShowAiExtract(riskLevel === 'medium' || riskLevel === 'high' || riskLevel === 'critical');
   }, [initialDataKey]);
 
   // Fetch available trades from API
@@ -551,7 +555,7 @@ export function ProjectForm({
       {hasAiContext && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold text-emerald-900">Overview from AI</h3>
+            <h3 className="text-sm font-bold text-emerald-900">Project Overview</h3>
             {!isReadOnly && (
               <button
                 type="button"
@@ -606,7 +610,7 @@ export function ProjectForm({
             onClick={() => setShowAiExtract((prev) => !prev)}
             className="w-full flex items-center justify-between text-left"
           >
-            <span className="text-sm font-semibold text-violet-900">AI extract</span>
+            <span className="text-sm font-semibold text-violet-900">Safety, Assumptions and Risks</span>
             <span className="text-xs font-semibold text-violet-700">{showAiExtract ? 'Hide' : 'Show'}</span>
           </button>
           {showAiExtract && (
@@ -877,7 +881,11 @@ export function ProjectForm({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting || isReadOnly}
-            className="flex-1 rounded-lg border border-slate-300 px-6 py-2.5 text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-50"
+            className={`flex-1 rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
+              mode === 'create'
+                ? 'border border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
+                : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
           >
             Cancel
           </button>

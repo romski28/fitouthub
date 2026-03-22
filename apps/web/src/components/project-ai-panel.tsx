@@ -189,8 +189,7 @@ export function ProjectAiPanel({
 
   return (
     <div className={`rounded-lg border border-violet-200 bg-violet-50 p-4 ${className}`}>
-      <h3 className="text-sm font-bold text-violet-900 mb-2">From AI</h3>
-      <p className="text-xs text-violet-700 mb-3">AI assumptions and risks to review before proceeding.</p>
+      <p className="text-xs text-violet-600 mb-3">Safety information prepared by Fitout Hub with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
 
       {safetyBlock && <div className="mb-3">{safetyBlock}</div>}
 

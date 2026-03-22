@@ -11,8 +11,19 @@ interface Message {
   content: string;
   senderType: 'user' | 'professional' | 'anonymous' | 'foh';
   senderName?: string;
+  context?: {
+    pageType?: 'project_creation' | 'project_view' | 'general';
+    pathname?: string;
+    projectId?: string | null;
+  };
   createdAt: string;
 }
+
+const contextLabelMap: Record<'project_creation' | 'project_view' | 'general', string> = {
+  project_creation: 'Project Creation',
+  project_view: 'Project View',
+  general: 'General',
+};
 
 interface ThreadDetail {
   id: string;
@@ -209,6 +220,11 @@ export default function FohInboxDetailPage() {
                           minute: '2-digit',
                         })}
                       </span>
+                      {msg.context?.pageType && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          {contextLabelMap[msg.context.pageType] || 'General'}
+                        </span>
+                      )}
                     </div>
                     <p className="mt-1 text-sm text-gray-700 break-words">
                       {msg.content}

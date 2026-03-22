@@ -82,6 +82,11 @@ export class ChatService {
     senderProId: string | null,
     content: string,
     attachments?: any[],
+    context?: {
+      pageType?: 'project_creation' | 'project_view' | 'general';
+      pathname?: string;
+      projectId?: string | null;
+    },
   ): Promise<PrivateChatMessageDto> {
     const thread = await this.prisma.privateChatThread.findUnique({
       where: { id: threadId },
@@ -99,6 +104,7 @@ export class ChatService {
         senderProId,
         content,
         attachments: attachments || [],
+        context: context || undefined,
       },
     });
 
@@ -169,6 +175,11 @@ export class ChatService {
     senderType: string,
     content: string,
     attachments?: any[],
+    context?: {
+      pageType?: 'project_creation' | 'project_view' | 'general';
+      pathname?: string;
+      projectId?: string | null;
+    },
   ): Promise<AnonymousChatMessageDto> {
     const thread = await this.prisma.anonymousChatThread.findUnique({
       where: { id: threadId },
@@ -184,6 +195,7 @@ export class ChatService {
         senderType,
         content,
         attachments: attachments || [],
+        context: context || undefined,
       },
     });
 
@@ -330,6 +342,7 @@ export class ChatService {
       senderProId: message.senderProId,
       content: message.content,
       attachments: message.attachments || [],
+      context: message.context || undefined,
       createdAt: message.createdAt.toISOString(),
       readByFohAt: message.readByFohAt?.toISOString(),
     };
@@ -353,6 +366,7 @@ export class ChatService {
       senderType: message.senderType,
       content: message.content,
       attachments: message.attachments || [],
+      context: message.context || undefined,
       createdAt: message.createdAt.toISOString(),
     };
   }
@@ -461,6 +475,7 @@ export class ChatService {
         updatedAt: thread.updatedAt.toISOString(),
         unreadCount: unreadMap[thread.id] || 0,
         lastMessage: thread.messages[0]?.content,
+        lastMessageContext: thread.messages[0]?.context || undefined,
       })),
       ...anonymousThreads.map((thread) => ({
         id: thread.id,
@@ -470,6 +485,7 @@ export class ChatService {
         updatedAt: thread.updatedAt.toISOString(),
         unreadCount: 0, // Anonymous threads don't track read status yet
         lastMessage: thread.messages[0]?.content,
+        lastMessageContext: thread.messages[0]?.context || undefined,
       })),
       ...projectThreads.map((thread) => ({
         id: thread.id,

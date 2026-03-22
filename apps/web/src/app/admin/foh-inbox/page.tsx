@@ -18,7 +18,18 @@ interface Thread {
   updatedAt: string;
   unreadCount: number;
   lastMessage?: string;
+  lastMessageContext?: {
+    pageType?: 'project_creation' | 'project_view' | 'general';
+    pathname?: string;
+    projectId?: string | null;
+  };
 }
+
+const contextLabelMap: Record<'project_creation' | 'project_view' | 'general', string> = {
+  project_creation: 'Project Creation',
+  project_view: 'Project View',
+  general: 'General',
+};
 
 export default function FohInboxPage() {
   const { accessToken } = useAuth();
@@ -223,6 +234,14 @@ export default function FohInboxPage() {
                             thread.projectName ||
                             `Anonymous ${thread.sessionId?.slice(0, 8)}`}
                         </h3>
+
+                        {thread.lastMessageContext?.pageType && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                              {contextLabelMap[thread.lastMessageContext.pageType] || 'General'}
+                            </span>
+                          </div>
+                        )}
 
                         {thread.lastMessage && (
                           <p className="mt-1 text-sm text-gray-600 truncate">
