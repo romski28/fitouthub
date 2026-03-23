@@ -133,17 +133,17 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
   };
 
   return (
-    <div className={`flex flex-col bg-white rounded-lg border border-slate-200 shadow-sm ${className}`}>
+    <div className={`flex flex-col bg-slate-900/60 rounded-lg border border-slate-700 shadow-sm ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-emerald-100">
+      <div className="px-4 py-3 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-emerald-900">Project Team Chat</h3>
-            <p className="text-xs text-emerald-700">Client, awarded professionals & Fitout Hub</p>
+            <h3 className="text-sm font-semibold text-white">Project Team Chat</h3>
+            <p className="text-xs text-slate-300">Client, awarded professionals & Fitout Hub</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="Live chat"></div>
-            <span className="text-xs text-emerald-700 font-medium">Active</span>
+            <span className="text-xs text-emerald-300 font-medium">Active</span>
           </div>
         </div>
       </div>
@@ -151,11 +151,11 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[500px]">
         {loading ? (
-          <div className="text-center text-slate-500 text-sm py-8">Loading chat...</div>
+          <div className="text-center text-slate-400 text-sm py-8">Loading chat...</div>
         ) : error ? (
-          <div className="text-center text-rose-600 text-sm py-8">{error}</div>
+          <div className="text-center text-rose-300 text-sm py-8">{error}</div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-slate-500 text-sm py-8">
+          <div className="text-center text-slate-400 text-sm py-8">
             <p>No messages yet.</p>
             <p className="mt-1 text-xs">Start the conversation with your project team!</p>
           </div>
@@ -169,14 +169,14 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
                 <div
                   className={`max-w-[75%] rounded-lg px-4 py-2 text-sm ${
                     isCurrent
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-emerald-600 text-white'
                       : isFoh
-                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-                      : 'bg-slate-100 text-slate-900'
+                      ? 'bg-emerald-500/15 text-white border border-emerald-500/40'
+                      : 'bg-slate-800 text-white border border-slate-700'
                   }`}
                 >
                   {!isCurrent && (
-                    <div className={`text-xs font-semibold mb-1 ${isFoh ? 'text-emerald-700' : 'text-slate-600'}`}>
+                    <div className={`text-xs font-semibold mb-1 ${isFoh ? 'text-emerald-300' : 'text-slate-300'}`}>
                       {getSenderLabel(msg)}
                     </div>
                   )}
@@ -199,7 +199,7 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
                     </div>
                   )}
                   
-                  <div className={`text-xs mt-1 ${isCurrent ? 'text-blue-100' : 'text-slate-500'}`}>
+                  <div className={`text-xs mt-1 ${isCurrent ? 'text-emerald-100' : 'text-slate-400'}`}>
                     {new Date(msg.createdAt).toLocaleString('en-GB', {
                       day: '2-digit',
                       month: 'short',
@@ -215,9 +215,9 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="border-t border-slate-200 p-4">
+      <form onSubmit={handleSend} className="border-t border-slate-700 p-4">
         {error && (
-          <div className="mb-2 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+          <div className="mb-2 text-xs text-rose-200 bg-rose-500/15 border border-rose-500/40 rounded px-2 py-1">
             {error}
           </div>
         )}
@@ -234,8 +234,8 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
 
         {/* Show pending attachments */}
         {pendingAttachments.length > 0 && (
-          <div className="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
-            <div className="text-xs text-slate-600 mb-2 font-medium">
+          <div className="mb-3 p-2 bg-slate-800/60 rounded-lg border border-slate-700">
+            <div className="text-xs text-slate-300 mb-2 font-medium">
               {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
             </div>
             <div className="flex flex-wrap gap-2">
@@ -269,12 +269,12 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message to the project team..."
             disabled={sending || loading}
-            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-100"
+            className="flex-1 px-3 py-2 border border-slate-600 bg-slate-800 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-900"
           />
           <button
             type="submit"
             disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending || loading}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-700 disabled:cursor-not-allowed transition"
           >
             {sending ? 'Sending...' : 'Send'}
           </button>

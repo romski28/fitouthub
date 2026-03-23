@@ -87,9 +87,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 
   if (!hasProfessionals && !assistRequestId) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
-        <h2 className="text-lg font-bold text-slate-900">Project Chat</h2>
-        <p className="text-sm text-slate-600 mt-2">No professionals have been awarded yet.</p>
+      <div className="rounded-xl border border-slate-700 bg-slate-900/60 shadow-sm p-6">
+        <h2 className="text-lg font-bold text-white">Project Chat</h2>
+        <p className="text-sm text-slate-300 mt-2">No professionals have been awarded yet.</p>
       </div>
     );
   }
@@ -98,14 +98,14 @@ export const ChatTab: React.FC<ChatTabProps> = ({
     <div className="space-y-5">
       <div>
         <div className="mb-3">
-          <h2 className="text-lg font-bold text-slate-900">Project Chat</h2>
-          <p className="text-sm text-slate-600">Communicate with all awarded professionals and Fitout Hub</p>
+          <h2 className="text-lg font-bold text-white">Project Chat</h2>
+          <p className="text-sm text-slate-300">Communicate with all awarded professionals and Fitout Hub</p>
         </div>
 
         {/* Chat Mode Selector - Dropdown */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-slate-200">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Chat with:</label>
+        <div className="rounded-xl border border-slate-700 bg-slate-900/60 shadow-sm">
+          <div className="p-4 border-b border-slate-700">
+            <label className="block text-sm font-semibold text-white mb-2">Chat with:</label>
             <select
               value={
                 isAssistView ? 'fitouthub' : 
@@ -129,7 +129,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   }
                 }
               }}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
             >
               {hasProfessionals && <option value="project">Project (All professionals)</option>}
               {hasProfessionals && professionals.map((pp) => {
@@ -147,8 +147,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
           {/* Team Chat View */}
           {hasProfessionals && !isAssistView && !selectedProfessional && (
             <div>
-              <div className="p-4 bg-blue-50">
-                <p className="text-sm text-blue-700">Chat with all awarded professionals</p>
+              <div className="p-4 bg-slate-800 border-b border-slate-700">
+                <p className="text-sm text-slate-200">Chat with all awarded professionals</p>
               </div>
               <ProjectChat
                 projectId={projectId}
@@ -160,20 +160,20 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 
           {/* Fitout Hub Assistance View */}
           {isAssistView && (
-            <div className="bg-indigo-50 border-t border-indigo-200">
+            <div className="bg-slate-900/40 border-t border-slate-700">
               <div className="p-4 space-y-4">
                 {assistError && (
-                  <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  <div className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
                     {assistError}
                   </div>
                 )}
 
                 {/* Assist Messages */}
-                <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-700 rounded-lg p-4 bg-slate-800/60">
                   {assistLoading ? (
-                    <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                    <div className="text-center text-sm text-slate-400">Loading messages...</div>
                   ) : assistMessages.length === 0 ? (
-                    <div className="text-center text-sm text-slate-500">
+                    <div className="text-center text-sm text-slate-400">
                       No messages yet. Reach out to Fitout Hub for assistance!
                     </div>
                   ) : (
@@ -185,12 +185,12 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                         <div
                           className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
                             msg.senderType === 'client'
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-white border border-indigo-200 text-slate-800'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-900 border border-slate-700 text-white'
                           }`}
                         >
                           <p>{msg.content}</p>
-                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-indigo-100' : 'text-slate-500'}`}>
+                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-emerald-100' : 'text-slate-400'}`}>
                             {new Date(msg.createdAt).toLocaleString()}
                           </p>
                         </div>
@@ -211,13 +211,13 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                       }
                     }}
                     placeholder="Ask Fitout Hub for help..."
-                    className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                    className="flex-1 rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                     disabled={assistSending}
                   />
                   <button
                     onClick={onSendAssistMessage}
                     disabled={assistSending || !assistNewMessage.trim()}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     {assistSending ? 'Sending...' : 'Send'}
                   </button>
@@ -228,21 +228,21 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 
           {/* Private Chat with Professional View */}
           {hasProfessionals && !isAssistView && selectedProfessional && (
-            <div className="bg-amber-50 border-t border-amber-200">
+            <div className="bg-slate-900/40 border-t border-slate-700">
               <div className="p-4 space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-amber-900 text-sm">
+                    <h3 className="font-bold text-white text-sm">
                       Private Chat with {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
                     </h3>
-                    <p className="text-xs text-amber-700">Only visible to you, this professional, and Fitout Hub</p>
+                    <p className="text-xs text-slate-300">Only visible to you, this professional, and Fitout Hub</p>
                   </div>
                   <button
                     onClick={() => onSelectProfessional(null)}
-                    className="text-amber-600 hover:text-amber-900 ml-auto"
+                    className="text-slate-300 hover:text-white ml-auto"
                     title="Back to contacts"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,17 +252,17 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 </div>
 
                 {messageError && (
-                  <div className="rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-amber-800">
+                  <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
                     {messageError}
                   </div>
                 )}
 
                 {/* Messages */}
-                <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-200 rounded-lg p-4 bg-white">
+                <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-700 rounded-lg p-4 bg-slate-800/60">
                   {loadingMessages ? (
-                    <div className="text-center text-sm text-slate-500">Loading messages...</div>
+                    <div className="text-center text-sm text-slate-400">Loading messages...</div>
                   ) : messages.length === 0 ? (
-                    <div className="text-center text-sm text-slate-500">
+                    <div className="text-center text-sm text-slate-400">
                       No messages yet. Start the conversation!
                     </div>
                   ) : (
@@ -274,8 +274,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                         <div
                           className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
                             msg.senderType === 'client'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-slate-100 border border-slate-200 text-slate-800'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-900 border border-slate-700 text-white'
                           }`}
                         >
                           {msg.content && <p>{msg.content}</p>}
@@ -292,14 +292,14 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                                   <img
                                     src={att.url}
                                     alt={att.filename}
-                                    className="w-24 h-24 rounded border border-slate-300 hover:opacity-80 transition object-cover"
+                                    className="w-24 h-24 rounded border border-slate-600 hover:opacity-80 transition object-cover"
                                     title={att.filename}
                                   />
                                 </a>
                               ))}
                             </div>
                           )}
-                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-blue-100' : 'text-slate-500'}`}>
+                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-emerald-100' : 'text-slate-400'}`}>
                             {new Date(msg.createdAt).toLocaleString()}
                           </p>
                         </div>
@@ -310,7 +310,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 
                 {/* Send Message - Disabled if professional declined */}
                 {selectedProfessional.status === 'declined' ? (
-                  <div className="p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm">
+                  <div className="p-3 rounded-md bg-rose-500/15 border border-rose-500/40 text-rose-200 text-sm">
                     This professional has declined the project. This chat is read-only.
                   </div>
                 ) : (
@@ -327,8 +327,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 
                     {/* Show pending attachments */}
                     {pendingAttachments.length > 0 && (
-                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className="text-xs text-slate-600 mb-2 font-medium">
+                      <div className="p-2 bg-slate-800/60 rounded-lg border border-slate-700">
+                        <div className="text-xs text-slate-300 mb-2 font-medium">
                           {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -337,7 +337,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                               <img 
                                 src={att.url} 
                                 alt={att.filename} 
-                                className="w-16 h-16 object-cover rounded border border-slate-300"
+                                className="w-16 h-16 object-cover rounded border border-slate-600"
                               />
                               <button
                                 type="button"
@@ -363,13 +363,13 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                           }
                         }}
                         placeholder="Type your message..."
-                        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                        className="flex-1 rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                         disabled={sending}
                       />
                       <button
                         onClick={onSendMessage}
                         disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending}
-                        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                       >
                         {sending ? 'Sending...' : 'Send'}
                       </button>

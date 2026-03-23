@@ -133,7 +133,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
   const blockedBorderClass = (fieldName: string) =>
     isFieldBlocked(fieldName)
-      ? 'border-rose-500 bg-rose-50'
+      ? 'border-rose-500 bg-rose-500/10'
       : '';
 
   return (
@@ -148,15 +148,15 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           onToggle={onToggleAccordion}
         >
           {siteAccessError && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 mb-4">
+            <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200 mb-4">
               {siteAccessError}
             </div>
           )}
 
           {siteAccessLoading ? (
-            <p className="text-sm text-slate-600">Loading requests...</p>
+            <p className="text-sm text-slate-300">Loading requests...</p>
           ) : siteAccessRequests.length === 0 ? (
-            <p className="text-sm text-slate-600">No site access requests yet. Requests will appear here when professionals ask for access.</p>
+            <p className="text-sm text-slate-300">No site access requests yet. Requests will appear here when professionals ask for access.</p>
           ) : (
             <div className="space-y-4">
               {siteAccessRequests.map((request) => {
@@ -167,20 +167,20 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 };
 
                 const statusColor = {
-                  pending: 'bg-amber-50 border-amber-200',
-                  approved_no_visit: 'bg-emerald-50 border-emerald-200',
-                  approved_visit_scheduled: 'bg-blue-50 border-blue-200',
-                  denied: 'bg-rose-50 border-rose-200',
-                }[request.status] || 'bg-slate-50 border-slate-200';
+                  pending: 'bg-amber-500/15 border-amber-500/40',
+                  approved_no_visit: 'bg-emerald-500/15 border-emerald-500/40',
+                  approved_visit_scheduled: 'bg-sky-900/30 border-sky-500/40',
+                  denied: 'bg-rose-500/15 border-rose-500/40',
+                }[request.status] || 'bg-slate-800/50 border-slate-700';
 
                 return (
                   <div key={request.id} className={`rounded-lg border p-4 ${statusColor}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="font-semibold text-slate-900">{displayName}</p>
-                        <p className="text-xs text-slate-600 mt-1">Requested: {formatDate(request.requestedAt)}</p>
+                        <p className="font-semibold text-white">{displayName}</p>
+                        <p className="text-xs text-slate-300 mt-1">Requested: {formatDate(request.requestedAt)}</p>
                       </div>
-                      <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-white text-slate-700 border border-slate-200">
+                      <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-slate-900 text-slate-200 border border-slate-600">
                         {request.status.replace(/_/g, ' ')}
                       </span>
                     </div>
@@ -190,8 +190,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                         <div
                           className={`rounded-md border px-3 py-2 text-xs font-medium ${
                             projectIsAwarded
-                              ? 'border-rose-300 bg-rose-50 text-rose-800'
-                              : 'border-amber-300 bg-amber-50 text-amber-800'
+                              ? 'border-rose-500/40 bg-rose-500/15 text-rose-200'
+                              : 'border-amber-500/40 bg-amber-500/15 text-amber-200'
                           }`}
                         >
                           {projectIsAwarded
@@ -200,32 +200,32 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                         </div>
 
                         {locationDetailsError && (
-                          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                          <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
                             {locationDetailsError}
                           </div>
                         )}
 
                         {siteAccessBlockers.length > 0 && (
-                          <div className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                          <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
                             <p className="font-semibold mb-1">Please complete required fields before submitting:</p>
                             <p>{siteAccessBlockers.join(', ')}</p>
                           </div>
                         )}
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2 flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
                             <span>Access Request Response</span>
-                            <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
                               Required now
                             </span>
                           </h4>
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-2">Decision</label>
+                            <label className="block text-xs font-semibold text-white mb-2">Decision</label>
                             <div className="flex gap-2 items-center">
                               <select
                                 value={form.status}
                                 onChange={(e) => onUpdateSiteAccessForm(request.id, { status: e.target.value })}
-                                className="flex-1 rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                                className="flex-1 rounded border border-slate-600 bg-slate-900 px-2 py-1.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
                               >
                                 <option value="approved_no_visit">Approve (no site visit)</option>
                                 <option value="approved_visit_scheduled">Approve (with site visit)</option>
@@ -236,12 +236,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
                           {form.status === 'denied' && (
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Reason for denial</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Reason for denial</label>
                               <textarea
                                 value={form.reasonDenied || ''}
                                 onChange={(e) => onUpdateSiteAccessForm(request.id, { reasonDenied: e.target.value })}
                                 placeholder="Brief explanation..."
-                                className="w-full rounded border border-slate-300 px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                                 rows={2}
                               />
                             </div>
@@ -250,21 +250,21 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                           {form.status === 'approved_visit_scheduled' && (
                             <div className="space-y-3">
                               <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-2">Visit date</label>
+                                <label className="block text-xs font-semibold text-white mb-2">Visit date</label>
                                 <input
                                   type="date"
                                   value={form.visitScheduledFor || ''}
                                   onChange={(e) => onUpdateSiteAccessForm(request.id, { visitScheduledFor: e.target.value })}
-                                  className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-2">Visit time</label>
+                                <label className="block text-xs font-semibold text-white mb-2">Visit time</label>
                                 <input
                                   type="time"
                                   value={form.visitScheduledAt || ''}
                                   onChange={(e) => onUpdateSiteAccessForm(request.id, { visitScheduledAt: e.target.value })}
-                                  className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
                                 />
                               </div>
                             </div>
@@ -272,52 +272,52 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2 flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
                             <span>Basic Location Information</span>
-                            <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
                               Required now
                             </span>
                           </h4>
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-2">Full Address *</label>
+                            <label className="block text-xs font-semibold text-white mb-2">Full Address *</label>
                             <input
                               type="text"
                               value={locationDetailsForm.addressFull}
                               onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
                               placeholder="e.g., 123 Main Street"
-                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Full Address') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                              className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Full Address') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                             />
                           </div>
 
                           <div className="grid grid-cols-3 gap-3">
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Unit Number</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Unit Number</label>
                               <input
                                 type="text"
                                 value={locationDetailsForm.unitNumber}
                                 onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
                                 placeholder="e.g., 101"
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Unit Number') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Unit Number') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Floor Level</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Floor Level</label>
                               <input
                                 type="text"
                                 value={locationDetailsForm.floorLevel}
                                 onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
                                 placeholder="e.g., G/F, 1/F"
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Floor Level') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Floor Level') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Postal Code / District</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Postal Code / District</label>
                               <input
                                 type="text"
                                 value={locationDetailsForm.postalCode}
                                 onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
                                 placeholder="e.g., Central, TST"
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Postal Code / District') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Postal Code / District') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               />
                             </div>
                           </div>
@@ -466,7 +466,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               }
                             }}
                             disabled={submittingSiteAccess === request.id || isSubmittingLocationDetails}
-                            className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 transition"
+                            className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded hover:bg-emerald-700 disabled:opacity-50 transition"
                           >
                             {submittingSiteAccess === request.id || isSubmittingLocationDetails ? 'Saving…' : 'Save and Send Response'}
                           </button>
@@ -476,11 +476,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
                     {request.status !== 'pending' && (
                       <div className="text-sm">
-                        <p className="text-slate-700 mb-2">
+                        <p className="text-white mb-2">
                           <strong>Decision:</strong> {request.status.replace(/_/g, ' ')}
                         </p>
                         {request.respondedAt && (
-                          <p className="text-xs text-slate-600">Responded: {formatDate(request.respondedAt)}</p>
+                          <p className="text-xs text-slate-300">Responded: {formatDate(request.respondedAt)}</p>
                         )}
                       </div>
                     )}
@@ -501,38 +501,38 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             onToggle={onToggleAccordion}
           >
             {siteVisitError && (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 mb-4">
+              <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200 mb-4">
                 {siteVisitError}
               </div>
             )}
 
             {siteVisitLoading ? (
-              <p className="text-sm text-slate-600">Loading visits...</p>
+              <p className="text-sm text-slate-300">Loading visits...</p>
             ) : (
               <div className="space-y-3">
                 {siteVisits.map((visit) => {
                   const displayName = visit.professional.fullName || visit.professional.businessName || visit.professional.email || 'Professional';
                   const statusColor = {
-                    proposed: 'bg-amber-50 border-amber-200',
-                    accepted: 'bg-emerald-50 border-emerald-200',
-                    declined: 'bg-rose-50 border-rose-200',
-                    completed: 'bg-blue-50 border-blue-200',
-                  }[visit.status] || 'bg-slate-50 border-slate-200';
+                    proposed: 'bg-amber-500/15 border-amber-500/40',
+                    accepted: 'bg-emerald-500/15 border-emerald-500/40',
+                    declined: 'bg-rose-500/15 border-rose-500/40',
+                    completed: 'bg-sky-900/30 border-sky-500/40',
+                  }[visit.status] || 'bg-slate-800/50 border-slate-700';
 
                   return (
                     <div key={visit.id} className={`rounded-lg border p-4 ${statusColor}`}>
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <p className="font-semibold text-slate-900">{displayName}</p>
-                          <p className="text-sm text-slate-700 mt-1">Proposed: {formatDateTime(visit.proposedAt)}</p>
+                          <p className="font-semibold text-white">{displayName}</p>
+                          <p className="text-sm text-slate-300 mt-1">Proposed: {formatDateTime(visit.proposedAt)}</p>
                         </div>
-                        <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-white text-slate-700 border border-slate-200">
+                        <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-slate-900 text-slate-200 border border-slate-600">
                           {visit.status}
                         </span>
                       </div>
 
                       {visit.notes && (
-                        <div className="text-sm text-slate-700 mt-2 bg-white bg-opacity-50 p-2 rounded">
+                        <div className="text-sm text-white mt-2 bg-slate-900/40 p-2 rounded border border-slate-700">
                           <strong>Notes:</strong> {visit.notes}
                         </div>
                       )}
@@ -541,12 +541,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                         <div className="space-y-3 mt-3">
                           {siteVisitResponseNotes[visit.id] !== undefined && (
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Response notes (optional)</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Response notes (optional)</label>
                               <textarea
                                 value={siteVisitResponseNotes[visit.id]}
                                 onChange={(e) => onUpdateSiteVisitResponseNotes(visit.id, e.target.value)}
                                 placeholder="Add any notes about this decision..."
-                                className="w-full rounded border border-slate-300 px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                                 rows={2}
                               />
                             </div>
@@ -583,20 +583,20 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                       )}
 
                       {visit.status === 'accepted' && (
-                        <p className="text-xs text-slate-600 mt-2">✓ You accepted this visit</p>
+                        <p className="text-xs text-slate-300 mt-2">✓ You accepted this visit</p>
                       )}
 
                       {visit.status === 'declined' && (
                         <div>
-                          <p className="text-xs text-slate-600 mt-2">✗ You declined this visit</p>
+                          <p className="text-xs text-slate-300 mt-2">✗ You declined this visit</p>
                           {visit.responseNotes && (
-                            <p className="text-xs text-slate-700 mt-1 italic">"{visit.responseNotes}"</p>
+                            <p className="text-xs text-white mt-1 italic">"{visit.responseNotes}"</p>
                           )}
                         </div>
                       )}
 
                       {visit.status === 'completed' && (
-                        <p className="text-xs text-slate-600 mt-2">✓ Visit completed on {formatDate(visit.completedAt ?? undefined)}</p>
+                        <p className="text-xs text-slate-300 mt-2">✓ Visit completed on {formatDate(visit.completedAt ?? undefined)}</p>
                       )}
                     </div>
                   );

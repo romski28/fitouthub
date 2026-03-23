@@ -141,18 +141,18 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Required Trades - always visible */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-1.5">Required Trades</p>
+      <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-white mb-1.5">Required Trades</p>
         {project.tradesRequired && project.tradesRequired.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {project.tradesRequired.map((trade: string) => (
-              <span key={trade} className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">
+              <span key={trade} className="inline-flex items-center rounded-full bg-sky-950 border border-sky-400 px-2.5 py-1 text-xs font-medium text-white">
                 {trade}
               </span>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-blue-700">No specific trades recorded for this project.</p>
+          <p className="text-sm text-slate-300">No specific trades recorded for this project.</p>
         )}
       </div>
 
@@ -166,7 +166,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
           onToggle={onToggleAccordion}
         >
           {biddingProfessionals.length === 0 ? (
-            <p className="text-sm text-slate-600">No professionals have submitted quotes yet.</p>
+            <p className="text-sm text-slate-300">No professionals have submitted quotes yet.</p>
           ) : (
             <div className="space-y-3">
               {biddingProfessionals.map((pp) => {
@@ -174,19 +174,19 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                 return (
                   <div
                     key={pp.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-4 hover:border-blue-300 transition"
+                    className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 hover:border-emerald-500/40 transition"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <p className="font-semibold text-slate-900">{displayName}</p>
+                        <p className="font-semibold text-white">{displayName}</p>
                       </div>
-                      <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-white text-slate-700 border border-slate-200">
+                      <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-slate-900 text-slate-200 border border-slate-600">
                         {pp.status}
                       </span>
                     </div>
 
                     {pp.quoteReminderSentAt && (
-                      <div className="mb-3 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      <div className="mb-3 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-xs text-amber-200">
                         <span>⏰</span>
                         <span>
                           <strong>+24h extension granted</strong>
@@ -198,20 +198,20 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     )}
 
                     {pp.quoteAmount && (
-                      <div className="mb-3 p-2 rounded-md bg-blue-50 border border-blue-100">
-                        <p className="text-xs text-blue-700 font-medium">Quote Price</p>
-                        <p className="text-lg font-bold text-blue-900">{formatHKD(pp.quoteAmount)}</p>
+                      <div className="mb-3 p-2 rounded-md bg-slate-900/60 border border-slate-700">
+                        <p className="text-xs text-white font-semibold">Quote Price</p>
+                        <p className="text-lg font-bold text-white">{formatHKD(pp.quoteAmount)}</p>
                       </div>
                     )}
 
                     {pp.quoteNotes && (
-                      <div className="mb-3 p-2 rounded-md bg-slate-100 text-sm text-slate-800">
-                        <p className="text-xs text-slate-600 font-semibold mb-1">Notes</p>
+                      <div className="mb-3 p-2 rounded-md bg-slate-900/60 text-sm text-slate-200 border border-slate-700">
+                        <p className="text-xs text-white font-semibold mb-1">Notes</p>
                         <p>{pp.quoteNotes}</p>
                       </div>
                     )}
 
-                    <div className="text-xs text-slate-600 mb-3">
+                    <div className="text-xs text-slate-400 mb-3">
                       Quoted: {formatDate(pp.quotedAt)}
                     </div>
 
@@ -220,7 +220,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenChat?.(pp)}
-                          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                          className="rounded-md bg-sky-900 border border-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 transition"
                         >
                           💬 Chat
                         </button>
@@ -258,10 +258,10 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
             onToggle={onToggleAccordion}
           >
             <div className="space-y-3">
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-semibold text-emerald-900">
+                    <p className="font-semibold text-white">
                       {awardedProfessional.professional.fullName || awardedProfessional.professional.businessName || awardedProfessional.professional.email}
                     </p>
                   </div>
@@ -274,39 +274,39 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenChat?.(null)}
-                    className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex items-center rounded-md bg-sky-900 border border-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 transition"
                   >
                     💬 Open project chat
                   </button>
                 </div>
 
                 <div className="grid gap-3 mb-3">
-                  <div className="rounded-md bg-white p-3 border border-emerald-200">
-                    <p className="text-xs text-emerald-700 font-semibold uppercase">Awarded Quote</p>
-                    <p className="text-lg font-bold text-emerald-900 mt-1">{formatHKD(awardedProfessional.quoteAmount)}</p>
+                  <div className="rounded-md bg-slate-900/60 p-3 border border-emerald-500/40">
+                    <p className="text-xs text-white font-semibold uppercase">Awarded Quote</p>
+                    <p className="text-lg font-bold text-white mt-1">{formatHKD(awardedProfessional.quoteAmount)}</p>
                   </div>
 
                   {awardedProfessional.invoice && (
-                    <div className="rounded-md bg-white p-3 border border-blue-200">
-                      <p className="text-xs text-blue-700 font-semibold uppercase">Invoice Status</p>
-                      <p className="text-sm font-semibold text-blue-900 mt-1 capitalize">
+                    <div className="rounded-md bg-slate-900/60 p-3 border border-sky-500/40">
+                      <p className="text-xs text-white font-semibold uppercase">Invoice Status</p>
+                      <p className="text-sm font-semibold text-white mt-1 capitalize">
                         {awardedProfessional.invoice.paymentStatus}
                       </p>
                       {awardedProfessional.invoice.paidAt && (
-                        <p className="text-xs text-blue-700 mt-1">Paid: {formatDate(awardedProfessional.invoice.paidAt)}</p>
+                        <p className="text-xs text-slate-300 mt-1">Paid: {formatDate(awardedProfessional.invoice.paidAt)}</p>
                       )}
                     </div>
                   )}
                 </div>
 
                 {awardedProfessional.quoteNotes && (
-                  <div className="rounded-md bg-white p-3 border border-slate-200 mb-3">
-                    <p className="text-xs text-slate-600 font-semibold mb-1">Quote Notes</p>
-                    <p className="text-sm text-slate-700">{awardedProfessional.quoteNotes}</p>
+                  <div className="rounded-md bg-slate-900/60 p-3 border border-slate-700 mb-3">
+                    <p className="text-xs text-white font-semibold mb-1">Quote Notes</p>
+                    <p className="text-sm text-slate-200">{awardedProfessional.quoteNotes}</p>
                   </div>
                 )}
 
-                <p className="text-xs text-emerald-700">
+                <p className="text-xs text-slate-200">
                   Awarded on: {formatDate(awardedProfessional.quotedAt)}
                 </p>
               </div>
@@ -327,18 +327,18 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
               {declinedProfessionals.map((pp) => {
                 const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
                 return (
-                  <div key={pp.id} className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+                  <div key={pp.id} className="rounded-lg border border-rose-500/40 bg-rose-500/15 p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <p className="font-semibold text-rose-900">{displayName}</p>
+                        <p className="font-semibold text-white">{displayName}</p>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-1 rounded bg-white text-rose-700 border border-rose-200">
+                      <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-900 text-rose-200 border border-rose-500/40">
                         Declined
                       </span>
                     </div>
 
                     {pp.quoteAmount && (
-                      <p className="text-sm text-rose-900 mt-2">
+                      <p className="text-sm text-white mt-2">
                         <strong>Quote was:</strong> {formatHKD(pp.quoteAmount)}
                       </p>
                     )}

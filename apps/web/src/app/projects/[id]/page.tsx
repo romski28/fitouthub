@@ -1663,7 +1663,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Site Access */}
         {activeTab === 'site-access' && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
             <SiteAccessTab
               siteAccessRequests={siteAccessRequests}
               siteAccessData={siteAccessData}
@@ -1713,7 +1713,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Professionals */}
           {activeTab === 'professionals' && project && (
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
               <ProfessionalsTab
                 project={project}
                 professionals={project.professionals || []}
@@ -1760,16 +1760,18 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Media */}
           {activeTab === 'media' && project && (
-            <MediaTab
-              photos={(project as any).photos || []}
-              onPhotoNoteUpdate={handleSaveImageNote}
-              isLoading={loading}
-            />
+            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+              <MediaTab
+                photos={(project as any).photos || []}
+                onPhotoNoteUpdate={handleSaveImageNote}
+                isLoading={loading}
+              />
+            </div>
           )}
 
         {/* Tab Content - Chat */}
         {activeTab === 'chat' && (isAwarded || !!assistRequestId || hasAnyProfessional) && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
             <ChatTab
               projectId={projectId}
               professionals={project.professionals || []}
