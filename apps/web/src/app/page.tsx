@@ -8,12 +8,21 @@ import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
+import { API_BASE_URL } from '@/config/api';
+import { HomeAnnouncementTicker } from '@/components/home-announcement-ticker';
+
+type ActiveAnnouncement = {
+  id: string;
+  title?: string | null;
+  content: string;
+};
 
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
+  const [activeAnnouncement, setActiveAnnouncement] = useState<ActiveAnnouncement | null>(null);
   
   const t = useTranslations('home');
 
@@ -34,8 +43,45 @@ export default function Home() {
     }
   }, [hydrated, user, profIsLoggedIn, router]);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    if (isLoggedIn || profIsLoggedIn) {
+      setActiveAnnouncement(null);
+      return;
+    }
+
+    const loadAnnouncement = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/announcements/active`);
+        if (!res.ok) {
+          setActiveAnnouncement(null);
+          return;
+        }
+        const data = await res.json();
+        if (data?.content) {
+          setActiveAnnouncement(data);
+        } else {
+          setActiveAnnouncement(null);
+        }
+      } catch {
+        setActiveAnnouncement(null);
+      }
+    };
+
+    loadAnnouncement();
+  }, [hydrated, isLoggedIn, profIsLoggedIn]);
+
   return (
     <div className="space-y-16">
+      {hydrated && !isLoggedIn && !profIsLoggedIn && activeAnnouncement && (
+        <div className="pt-4">
+          <HomeAnnouncementTicker
+            title={activeAnnouncement.title}
+            content={activeAnnouncement.content}
+          />
+        </div>
+      )}
+
       {/* Updates Button - Only for logged-in users (client or professional) */}
       {hydrated && (isLoggedIn || profIsLoggedIn) && (
         <div className="flex justify-center pt-4">

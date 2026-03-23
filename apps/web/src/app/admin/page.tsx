@@ -185,6 +185,13 @@ export default function AdminDashboard() {
       icon: "📄",
       stats: "Manage documents",
     },
+    {
+      title: "Home Ticker",
+      description: "Manage public home-page ticker announcements and reuse previous messages.",
+      href: "/admin/announcements",
+      icon: "📢",
+      stats: "Manage ticker text",
+    },
   ];
 
   return (

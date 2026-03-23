@@ -987,6 +987,19 @@ model Policy {
   @@index([type, isActive])
 }
 
+model AnnouncementTicker {
+  id        String   @id @default(cuid())
+  title     String?
+  content   String   @db.Text
+  isActive  Boolean  @default(false)
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
 // ── Support Request Pool ─────────────────────────────────────────────────────
 
 enum SupportRequestStatus {
