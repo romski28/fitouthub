@@ -72,6 +72,8 @@ type ExtendedProject = Omit<Project, 'photos' | 'photoUrls'> & {
   professionals?: Array<{
     id: string;
     status: string;
+    createdAt?: string;
+    respondedAt?: string;
     quoteAmount?: string | number;
     quoteNotes?: string;
     quotedAt?: string;
@@ -247,6 +249,31 @@ function formatHKD(value?: number | string): string {
   const num = typeof value === "number" ? value : Number(value);
   if (Number.isNaN(num)) return `HK$ ${value}`;
   return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+function isQuoteOverdueForProject(project: ExtendedProject): boolean {
+  const professionals = project.professionals || [];
+  if (professionals.length === 0) return false;
+
+  const hasAnyQuote = professionals.some((pp) => {
+    const status = (pp.status || '').toLowerCase();
+    return Boolean(pp.quotedAt) || status === 'quoted' || status === 'awarded' || status === 'counter_requested';
+  });
+  if (hasAnyQuote) return false;
+
+  const quoteWindowMs = (project as any).isEmergency
+    ? 12 * 60 * 60 * 1000
+    : 3 * 24 * 60 * 60 * 1000;
+
+  return professionals.some((pp) => {
+    const status = (pp.status || '').toLowerCase();
+    if (['declined', 'rejected', 'withdrawn'].includes(status)) return false;
+    if (pp.quotedAt) return false;
+    if (!pp.createdAt) return false;
+    const invitedAtMs = new Date(pp.createdAt).getTime();
+    if (!Number.isFinite(invitedAtMs)) return false;
+    return Date.now() > invitedAtMs + quoteWindowMs;
+  });
 }
 
 function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
@@ -740,9 +767,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               const assistInfo = assistMap[project.id];
               const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
+              const quoteOverdue = isQuoteOverdueForProject(project);
               const actionHref = action ? getClientShowMeHref(project.id, action.actionKey) : `/projects/${project.id}`;
               return (
-                <div key={`dash-${project.id}`} className="relative rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
+                <div key={`dash-${project.id}`} className={`relative rounded-lg px-4 py-3 transition ${
+                  quoteOverdue
+                    ? 'border border-rose-400/60 bg-rose-500/15 hover:bg-rose-500/20'
+                    : 'bg-white/10 hover:bg-white/15'
+                }`}>
                   {unreadCount > 0 && (
                     <span className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md" title={t('unreadMessages', { count: unreadCount })}>
                       {unreadCount > 99 ? '99+' : unreadCount}
@@ -763,6 +795,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                           <StatusBadge status={project.status} t={t} />
+                          {quoteOverdue && (
+                            <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-800">
+                              Quote overdue blocker
+                            </span>
+                          )}
                           <img
                             src={assistInfo?.hasAssist ? '/FOHAssistYes.png' : '/FOHAssistNo.png'}
                             alt={assistInfo?.hasAssist ? t('assistRequestedAlt') : t('noAssistAlt')}
@@ -770,7 +807,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                             className={`h-6 w-6 object-contain ${assistInfo?.hasAssist ? '' : 'opacity-70'}`}
                           />
                         </div>
-                        {action?.description ? <p className="mt-2 text-xs text-slate-300">{action.description}</p> : null}
+                        {quoteOverdue ? (
+                          <p className="mt-2 text-xs text-rose-200">
+                            No quote was submitted within the allowed window. Re-invite professionals or request assistance.
+                          </p>
+                        ) : action?.description ? <p className="mt-2 text-xs text-slate-300">{action.description}</p> : null}
                       </div>
 
                       <div className="flex items-center gap-2 md:justify-end">

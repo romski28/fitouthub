@@ -61,6 +61,7 @@ export class EmailService {
     authToken: string;
     projectId: string;
     baseUrl: string;
+    quoteWindowLabel?: string;
   }): Promise<void> {
     if (!this.resend) {
       console.log('📧 [MOCK] Would send project invitation to:', params.to);
@@ -70,6 +71,7 @@ export class EmailService {
     const acceptUrl = `${params.baseUrl}/api/projects/respond?token=${params.acceptToken}&action=accept`;
     const declineUrl = `${params.baseUrl}/api/projects/respond?token=${params.declineToken}&action=decline`;
     const magicAuthUrl = `${params.baseUrl}/api/auth/magic-link?token=${params.authToken}`;
+    const quoteWindowLabel = params.quoteWindowLabel || '3 days';
 
     try {
       await this.resend.emails.send({
@@ -113,7 +115,7 @@ export class EmailService {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
             
             <p style="color: #9ca3af; font-size: 12px;">
-              This invitation is valid for 2 hours. If you accept, you'll have 24 hours to submit your quote.
+              This invitation is valid for 2 hours. If you accept, initial quotes are due within ${quoteWindowLabel} from invitation.
             </p>
           </div>
         `,
@@ -136,6 +138,7 @@ export class EmailService {
     projectId: string;
     professionalId: string;
     baseUrl: string;
+    quoteWindowLabel?: string;
   }): Promise<void> {
     if (!this.resend) {
       console.log(
@@ -146,6 +149,7 @@ export class EmailService {
     }
 
     const projectUrl = `${params.baseUrl}/professional-projects/${params.projectId}?pro=${params.professionalId}`;
+    const quoteWindowLabel = params.quoteWindowLabel || '3 days';
 
     try {
       await this.resend.emails.send({
@@ -160,7 +164,7 @@ export class EmailService {
             
             <p>You've successfully accepted the project: <strong>${params.projectName}</strong></p>
             
-            <p>You now have <strong style="color: #dc2626;">24 hours</strong> to submit your quote.</p>
+            <p>Your initial quote window is <strong style="color: #dc2626;">${quoteWindowLabel}</strong> from invitation.</p>
             
             <div style="margin: 30px 0; text-align: center;">
               <a href="${projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">

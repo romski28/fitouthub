@@ -140,7 +140,7 @@ export default function ProjectProfessionalsPage() {
 
               {pp.status === "accepted" && !pp.quotedAt && (
                 <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-                  ✅ Professional accepted, quote pending (24 hour deadline)
+                  ✅ Professional accepted, initial quote pending (12 hours for emergency projects; 3 days for standard projects)
                 </div>
               )}
 

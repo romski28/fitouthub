@@ -13,6 +13,7 @@ interface OverviewTabProps {
       projectName: string;
       clientName: string;
       region: string;
+      isEmergency?: boolean;
       budget?: string;
       notes?: string;
       aiIntake?: {
@@ -60,9 +61,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // 3-day quote deadline countdown from invitation date
+  // Initial quote deadline countdown from invitation date
   const invitedAt = project.createdAt ? new Date(project.createdAt) : null;
-  const quoteDeadline = invitedAt ? new Date(invitedAt.getTime() + 3 * 24 * 60 * 60 * 1000) : null;
+  const quoteWindowMs = project.project?.isEmergency
+    ? 12 * 60 * 60 * 1000
+    : 3 * 24 * 60 * 60 * 1000;
+  const quoteWindowLabel = project.project?.isEmergency ? '12h' : '3d';
+  const quoteWindowLongLabel = project.project?.isEmergency
+    ? '12 hours from invitation'
+    : '3 days from invitation';
+  const quoteDeadline = invitedAt ? new Date(invitedAt.getTime() + quoteWindowMs) : null;
   const msRemaining = quoteDeadline && nowMs !== null ? quoteDeadline.getTime() - nowMs : null;
   const isOverdue = msRemaining !== null && msRemaining < 0;
   const daysLeft = msRemaining !== null && msRemaining > 0 ? Math.floor(msRemaining / (24 * 60 * 60 * 1000)) : 0;
@@ -79,7 +87,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       daysLeft === 0 ? 'bg-amber-100 text-amber-700' :
       'bg-blue-100 text-blue-700'
     }`}>
-      {isOverdue ? '⚠ Quote overdue' : daysLeft > 0 ? `⏱ ${daysLeft}d ${hoursLeft}h to quote` : `⏱ ${hoursLeft}h to quote`}
+      {isOverdue
+        ? '⚠ Quote overdue'
+        : daysLeft > 0
+          ? `⏱ ${daysLeft}d ${hoursLeft}h to quote`
+          : `⏱ ${hoursLeft}h to quote`} ({quoteWindowLabel})
     </span>
   ) : null;
 
@@ -125,7 +137,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           >
             {isInitialQuoteLocked && (
               <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                Initial quote window closed (3 days from invitation). Please contact the client to reopen bidding.
+                Initial quote window closed ({quoteWindowLongLabel}). Please contact the client to reopen bidding.
               </div>
             )}
 

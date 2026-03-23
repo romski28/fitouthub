@@ -27,6 +27,7 @@ interface ProjectDetail {
     projectName: string;
     clientName: string;
     region: string;
+    isEmergency?: boolean;
     budget?: string;
     notes?: string;
   };

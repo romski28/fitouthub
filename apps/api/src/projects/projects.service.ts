@@ -666,6 +666,7 @@ Please review the project details and respond with your quote or decline the inv
 
       const { professional, acceptToken, declineToken, authToken } = tokenData[i];
       const professionalName = professional.fullName || professional.businessName || 'Professional';
+      const quoteWindowLabel = project.isEmergency ? '12 hours' : '3 days';
       const recipientAudit: NotificationAuditRecipient = {
         actorType: 'professional',
         actorId: professional.id,
@@ -687,6 +688,7 @@ Please review the project details and respond with your quote or decline the inv
           authToken,
           projectId,
           baseUrl,
+          quoteWindowLabel,
         });
         recipientAudit.email.status = 'sent';
       } catch (err) {
@@ -1015,6 +1017,7 @@ Please review the project details and respond with your quote or decline the inv
       const professionalName =
         professional.fullName || professional.businessName || 'Professional';
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+      const quoteWindowLabel = project.isEmergency ? '12 hours' : '3 days';
 
       emailPromises.push(
         this.emailService
@@ -1029,6 +1032,7 @@ Please review the project details and respond with your quote or decline the inv
             authToken,
             projectId: project.id,
             baseUrl,
+            quoteWindowLabel,
           })
           .catch((err) => {
             console.error('[ProjectsService.create] failed to send invite', {
@@ -1421,6 +1425,7 @@ Please review the project details and respond with your quote or decline the inv
     if (action === 'accept') {
       const professionalName =
         professional.fullName || professional.businessName || 'Professional';
+      const quoteWindowLabel = project.isEmergency ? '12 hours' : '3 days';
       const webBaseUrl =
         process.env.WEB_BASE_URL ||
         process.env.FRONTEND_BASE_URL ||
@@ -1434,6 +1439,7 @@ Please review the project details and respond with your quote or decline the inv
         projectId: emailToken.projectId,
         professionalId: emailToken.professionalId,
         baseUrl: webBaseUrl,
+        quoteWindowLabel,
       });
     }
 
@@ -1441,7 +1447,7 @@ Please review the project details and respond with your quote or decline the inv
       success: true,
       message:
         action === 'accept'
-          ? 'Thank you for accepting! Please submit your quote within 24 hours.'
+          ? `Thank you for accepting! Please submit your quote within ${project.isEmergency ? '12 hours' : '3 days'} from invitation.`
           : 'Project declined. Thank you for your response.',
       projectId: emailToken.projectId,
       professionalId: emailToken.professionalId,
@@ -1543,6 +1549,24 @@ Please review the project details and respond with your quote or decline the inv
 
     if (projectProfessional.quotedAt) {
       throw new Error('You have already submitted a quote for this project');
+    }
+
+    const inviteCreatedAt = projectProfessional.createdAt
+      ? new Date(projectProfessional.createdAt)
+      : null;
+    const quoteWindowMs = projectProfessional.project?.isEmergency
+      ? 12 * 60 * 60 * 1000
+      : 3 * 24 * 60 * 60 * 1000;
+
+    if (inviteCreatedAt) {
+      const quoteDeadline = new Date(inviteCreatedAt.getTime() + quoteWindowMs);
+      if (new Date() > quoteDeadline) {
+        throw new Error(
+          projectProfessional.project?.isEmergency
+            ? 'Initial quote window closed (12 hours from invitation)'
+            : 'Initial quote window closed (3 days from invitation)',
+        );
+      }
     }
 
     const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({

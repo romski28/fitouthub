@@ -382,6 +382,13 @@ export class ProfessionalController {
           id: projectProfessionalId,
           professionalId,
         },
+        include: {
+          project: {
+            select: {
+              isEmergency: true,
+            },
+          },
+        },
       });
 
       if (!projectProfessional) {
@@ -391,6 +398,28 @@ export class ProfessionalController {
       const quoteAmount = parseFloat(String(body.quoteAmount));
       if (isNaN(quoteAmount) || quoteAmount < 0) {
         throw new BadRequestException('Invalid quote amount');
+      }
+
+      if (projectProfessional.quotedAt) {
+        throw new BadRequestException('You have already submitted a quote for this project');
+      }
+
+      const inviteCreatedAt = projectProfessional.createdAt
+        ? new Date(projectProfessional.createdAt)
+        : null;
+      const quoteWindowMs = projectProfessional.project?.isEmergency
+        ? 12 * 60 * 60 * 1000
+        : 3 * 24 * 60 * 60 * 1000;
+
+      if (inviteCreatedAt) {
+        const quoteDeadline = new Date(inviteCreatedAt.getTime() + quoteWindowMs);
+        if (new Date() > quoteDeadline) {
+          throw new BadRequestException(
+            projectProfessional.project?.isEmergency
+              ? 'Initial quote window closed (12 hours from invitation)'
+              : 'Initial quote window closed (3 days from invitation)',
+          );
+        }
       }
 
       await (this.prisma as any).projectProfessional.update({

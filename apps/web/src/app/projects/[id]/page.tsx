@@ -29,6 +29,8 @@ interface ProjectProfessional {
   professionalId: string;
   projectId: string;
   status: string;
+  createdAt?: string;
+  respondedAt?: string;
   quoteAmount?: string | number;
   quoteNotes?: string;
   quotedAt?: string;
@@ -157,6 +159,30 @@ const formatHKD = (value?: number | string) => {
   return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
 
+const hasQuoteOverdueBlocker = (project: ProjectDetail | null): boolean => {
+  if (!project?.professionals || project.professionals.length === 0) return false;
+
+  const hasAnyQuote = project.professionals.some((pp) => {
+    const status = (pp.status || '').toLowerCase();
+    return Boolean(pp.quotedAt) || status === 'quoted' || status === 'awarded' || status === 'counter_requested';
+  });
+  if (hasAnyQuote) return false;
+
+  const quoteWindowMs = (project as any).isEmergency
+    ? 12 * 60 * 60 * 1000
+    : 3 * 24 * 60 * 60 * 1000;
+
+  return project.professionals.some((pp) => {
+    const status = (pp.status || '').toLowerCase();
+    if (['declined', 'rejected', 'withdrawn'].includes(status)) return false;
+    if (pp.quotedAt) return false;
+    if (!pp.createdAt) return false;
+    const invitedAtMs = new Date(pp.createdAt).getTime();
+    if (!Number.isFinite(invitedAtMs)) return false;
+    return Date.now() > invitedAtMs + quoteWindowMs;
+  });
+};
+
 export default function ClientProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -273,6 +299,7 @@ export default function ClientProjectDetailPage() {
   const projectStatus = project?.status ?? 'pending';
   const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
   const isAwarded = projectStatus === 'awarded' || Boolean(awardedPro);
+  const quoteOverdueBlocker = hasQuoteOverdueBlocker(project);
   const projectCostValue = Number(awardedPro?.quoteAmount || project?.approvedBudget || project?.budget || 0);
   const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
   const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
@@ -1421,6 +1448,16 @@ export default function ClientProjectDetailPage() {
                   {withdrawing ? 'Withdrawing…' : 'Withdraw Project'}
                 </button>
               )}
+            </div>
+          )}
+
+          {quoteOverdueBlocker && (
+            <div className="border-b border-rose-200 bg-rose-50 px-5 py-3">
+              <p className="text-sm font-semibold text-rose-800">🚫 Quote overdue blocker</p>
+              <p className="mt-1 text-sm text-rose-700">
+                No quote was submitted within the allowed window ({(project as any)?.isEmergency ? '12 hours' : '3 days'} from invitation).
+                Re-invite professionals or request assistance to continue bidding.
+              </p>
             </div>
           )}
 
