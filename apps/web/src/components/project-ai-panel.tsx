@@ -109,10 +109,10 @@ export function ProjectAiPanel({
 
   const safetyTone =
     safety?.riskLevel === 'critical'
-      ? 'border-rose-500/50 bg-rose-500/15'
+      ? 'border-rose-500/70'
       : safety?.riskLevel === 'high'
-        ? 'border-amber-500/50 bg-amber-500/15'
-        : 'border-emerald-500/50 bg-emerald-500/15';
+        ? 'border-amber-500/70'
+        : 'border-emerald-500/70';
 
   const safetyFlagLevelTone =
     safety?.riskLevel === 'critical'
@@ -122,7 +122,7 @@ export function ProjectAiPanel({
         : 'text-emerald-300';
 
   const safetyBlock = hasSafety ? (
-    <div className={`rounded-lg border p-4 ${safetyTone}`}>
+    <div className={`mb-3 rounded-lg border-2 p-4 text-white ${safetyTone}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="text-sm font-bold text-white">
@@ -187,7 +187,7 @@ export function ProjectAiPanel({
           <h3 className="text-sm font-bold text-violet-200">From AI (Full Intake)</h3>
           {aiIntake.id && <span className="text-[11px] text-violet-300/70">Intake ID: {aiIntake.id}</span>}
         </div>
-        {safetyBlock && <div className="mb-3">{safetyBlock}</div>}
+        {safetyBlock}
         <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-900/50 p-3 text-[11px] text-slate-300 border border-violet-500/20">
           {JSON.stringify(aiIntake, null, 2)}
         </pre>
@@ -201,7 +201,7 @@ export function ProjectAiPanel({
     <div className={`rounded-lg border border-violet-500/40 bg-violet-500/15 p-4 ${className}`}>
       <p className="text-xs text-white mb-3">Safety information prepared by Fitout Hub with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
 
-      {safetyBlock && <div className="mb-3">{safetyBlock}</div>}
+      {safetyBlock}
 
       {assumptions.length > 0 && (
         <div className="mb-3">
