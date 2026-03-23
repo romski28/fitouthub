@@ -14,6 +14,9 @@ interface ProjectProfessional {
   quoteAmount?: string | number;
   quoteNotes?: string;
   quotedAt?: string;
+  createdAt?: string;
+  quoteReminderSentAt?: string;
+  quoteExtendedUntil?: string;
   professional: {
     id: string;
     email: string;
@@ -72,7 +75,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   onActionBusy,
   actionBusy,
 }) => {
-  const biddingProfessionals = professionals.filter((p) => ['pending', 'quoted'].includes(p.status));
+  const biddingProfessionals = professionals.filter((p) => ['pending', 'accepted', 'quoted'].includes(p.status));
   const awardedProfessional = professionals.find((p) => p.status === 'awarded');
   const declinedProfessionals = professionals.filter((p) => p.status === 'declined');
 
@@ -191,6 +194,18 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                         {pp.status}
                       </span>
                     </div>
+
+                    {pp.quoteReminderSentAt && (
+                      <div className="mb-3 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        <span>⏰</span>
+                        <span>
+                          <strong>+24h extension granted</strong>
+                          {pp.quoteExtendedUntil && (
+                            <> · New deadline: <strong>{formatDate(pp.quoteExtendedUntil)}</strong></>
+                          )}
+                        </span>
+                      </div>
+                    )}
 
                     {pp.quoteAmount && (
                       <div className="mb-3 p-2 rounded-md bg-blue-50 border border-blue-100">

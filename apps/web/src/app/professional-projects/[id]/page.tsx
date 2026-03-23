@@ -37,6 +37,8 @@ interface ProjectDetail {
   quotedAt?: string;
   respondedAt?: string;
   createdAt?: string;
+  quoteReminderSentAt?: string;
+  quoteExtendedUntil?: string;
   updatedAt?: string;
   paymentRequests?: {
     id: string;

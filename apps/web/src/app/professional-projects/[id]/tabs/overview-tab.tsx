@@ -28,6 +28,8 @@ interface OverviewTabProps {
     quoteNotes?: string;
     quotedAt?: string;
     createdAt?: string;
+    quoteReminderSentAt?: string;
+    quoteExtendedUntil?: string;
     updatedAt?: string;
   };
   quoteForm: {
@@ -70,7 +72,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const quoteWindowLongLabel = project.project?.isEmergency
     ? '12 hours from invitation'
     : '3 days from invitation';
-  const quoteDeadline = invitedAt ? new Date(invitedAt.getTime() + quoteWindowMs) : null;
+  const quoteDeadline = project.quoteExtendedUntil
+    ? new Date(project.quoteExtendedUntil)
+    : invitedAt
+      ? new Date(invitedAt.getTime() + quoteWindowMs)
+      : null;
   const msRemaining = quoteDeadline && nowMs !== null ? quoteDeadline.getTime() - nowMs : null;
   const isOverdue = msRemaining !== null && msRemaining < 0;
   const daysLeft = msRemaining !== null && msRemaining > 0 ? Math.floor(msRemaining / (24 * 60 * 60 * 1000)) : 0;
@@ -110,6 +116,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </h2>
             {countdownBadge}
           </div>
+
+          {project.quoteReminderSentAt && (
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900">
+              <span className="mt-0.5">⏰</span>
+              <span>
+                <strong>Your quote deadline has been extended by 24 hours.</strong>{' '}
+                {project.quoteExtendedUntil && (
+                  <>New deadline: <strong>{new Date(project.quoteExtendedUntil).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong></>
+                )}
+              </span>
+            </div>
+          )}
 
           {project.status === 'counter_requested' && (
             <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
