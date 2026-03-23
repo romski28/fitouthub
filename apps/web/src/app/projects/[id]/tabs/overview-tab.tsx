@@ -301,6 +301,32 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       ? timelineSteps[currentTimelineStepIndex]
       : null;
 
+  const maxTimelineStartIndex = Math.max(0, timelineSteps.length - 3);
+  const homeTimelineStartIndex = Math.min(
+    Math.max(currentTimelineStepIndex - 1, 0),
+    maxTimelineStartIndex,
+  );
+  const [timelineStartIndex, setTimelineStartIndex] = useState(homeTimelineStartIndex);
+
+  useEffect(() => {
+    setTimelineStartIndex((previous) => {
+      const clampedPrevious = Math.min(Math.max(previous, 0), maxTimelineStartIndex);
+      const windowEnd = clampedPrevious + 2;
+      if (currentTimelineStepIndex < clampedPrevious || currentTimelineStepIndex > windowEnd) {
+        return homeTimelineStartIndex;
+      }
+      return clampedPrevious;
+    });
+  }, [currentTimelineStepIndex, homeTimelineStartIndex, maxTimelineStartIndex]);
+
+  const timelineWindow = useMemo(
+    () =>
+      timelineSteps
+        .map((step, index) => ({ step, index }))
+        .slice(timelineStartIndex, timelineStartIndex + 3),
+    [timelineStartIndex],
+  );
+
   const currentStepIsDelayed = useMemo(() => {
     if (!currentTimelineStep) return false;
     const referenceDate = project.updatedAt || project.createdAt;
@@ -395,7 +421,42 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
             {!timelineLoading && (
               <div className="space-y-2">
-                {timelineSteps.map((step, index) => {
+                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTimelineStartIndex((prev) => Math.max(0, prev - 1))}
+                      disabled={timelineStartIndex === 0}
+                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                    >
+                      ↑ Up
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTimelineStartIndex(homeTimelineStartIndex)}
+                      disabled={timelineStartIndex === homeTimelineStartIndex}
+                      className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      Home
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTimelineStartIndex((prev) => Math.min(maxTimelineStartIndex, prev + 1))
+                      }
+                      disabled={timelineStartIndex >= maxTimelineStartIndex}
+                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                    >
+                      Down ↓
+                    </button>
+                  </div>
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Showing steps {timelineStartIndex + 1}–
+                    {Math.min(timelineStartIndex + 3, timelineSteps.length)} of {timelineSteps.length}
+                  </p>
+                </div>
+
+                {timelineWindow.map(({ step, index }) => {
                   const isComplete = index < currentTimelineStepIndex;
                   const isCurrent = index === currentTimelineStepIndex;
                   const isFuture = index > currentTimelineStepIndex;
