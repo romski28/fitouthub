@@ -1474,8 +1474,8 @@ export default function ClientProjectDetailPage() {
           </div>
 
         {/* Project Info & Tab Navigation */}
-        <div className="rounded-xl border border-slate-700 bg-slate-900/50 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 text-white rounded-t-xl bg-slate-900/50">
+        <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 text-white rounded-t-xl bg-gradient-to-r from-slate-900 to-slate-800">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-white">
@@ -1505,7 +1505,7 @@ export default function ClientProjectDetailPage() {
           </div>
 
           {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
-            <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-slate-700 bg-slate-900/50">
+            <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
               <div className="flex items-center gap-3">
                 {projectStatus === 'withdrawn' && (
                   <span className="text-sm text-slate-300">Project withdrawn from bidding.</span>
@@ -1620,7 +1620,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Overview */}
         {activeTab === 'overview' && project && (
-          <div className="rounded-xl border border-slate-700 bg-slate-900/50 shadow-sm p-5">
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
             <OverviewTab
               project={project}
               expandedAccordions={expandedAccordions}
