@@ -1704,8 +1704,9 @@ Please review the project details and respond with your quote or decline the inv
       (!project.userId && !project.clientId);
     if (!isOwner) throw new BadRequestException('You do not have access to this project');
 
-    if (pp.status !== 'accepted') {
-      throw new BadRequestException('Professional has not accepted this project yet');
+    const TERMINAL_STATUSES = ['declined', 'rejected', 'withdrawn', 'quoted', 'awarded', 'counter_requested'];
+    if (TERMINAL_STATUSES.includes(pp.status)) {
+      throw new BadRequestException('Cannot send reminder: professional is in a terminal state');
     }
 
     if (pp.quotedAt) throw new BadRequestException('Professional has already submitted a quote');

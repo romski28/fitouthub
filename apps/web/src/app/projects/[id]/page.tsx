@@ -1545,9 +1545,14 @@ export default function ClientProjectDetailPage() {
 
               {/* Step 1 — Remind each pending professional */}
               {(() => {
-                const pendingPros = project.professionals?.filter(
-                  (pp) => (pp.status || '').toLowerCase() === 'accepted' && !pp.quotedAt,
-                ) ?? [];
+                // Include any professional who hasn't quoted and isn't in a terminal state.
+                // This covers both 'accepted' (past quota window) AND 'pending' (never accepted
+                // but invitation window elapsed) so the client can always poke them.
+                const TERMINAL_STATUSES = ['declined', 'rejected', 'withdrawn', 'quoted', 'awarded', 'counter_requested'];
+                const pendingPros = project.professionals?.filter((pp) => {
+                  const st = (pp.status || '').toLowerCase();
+                  return !TERMINAL_STATUSES.includes(st) && !pp.quotedAt;
+                }) ?? [];
                 if (pendingPros.length === 0) return null;
                 return (
                   <div className="rounded-lg border border-rose-200 bg-white p-4 space-y-2">
