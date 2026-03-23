@@ -327,6 +327,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     [timelineStartIndex],
   );
 
+  const handleTimelineWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (event.deltaY === 0) return;
+
+    event.preventDefault();
+    setTimelineStartIndex((prev) => {
+      if (event.deltaY > 0) {
+        return Math.min(maxTimelineStartIndex, prev + 1);
+      }
+      return Math.max(0, prev - 1);
+    });
+  };
+
   const currentStepIsDelayed = useMemo(() => {
     if (!currentTimelineStep) return false;
     const referenceDate = project.updatedAt || project.createdAt;
@@ -420,7 +432,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
 
             {!timelineLoading && (
-              <div className="space-y-2">
+              <div className="space-y-2" onWheel={handleTimelineWheel}>
                 <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <button
