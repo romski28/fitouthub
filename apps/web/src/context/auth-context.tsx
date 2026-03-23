@@ -5,6 +5,8 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
+  useRef,
   ReactNode,
 } from 'react';
 import type { CanonicalLocation } from '@/components/location-select';
@@ -82,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [userLocation, setUserLocationState] = useState<CanonicalLocation>({} as CanonicalLocation);
+  const refreshInFlightRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -242,7 +245,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoggedIn(false);
   };
 
-  const refreshAccessToken = async () => {
+  const refreshAccessToken = useCallback(async () => {
+    if (refreshInFlightRef.current) return;
+
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       logout();
@@ -250,6 +255,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
+      refreshInFlightRef.current = true;
+
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -270,8 +277,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAccessToken(result.accessToken);
     } catch (error) {
       console.error('Failed to refresh token:', error);
+    } finally {
+      refreshInFlightRef.current = false;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!isLoggedIn) return;
+
+    const tryRefresh = () => {
+      const storedRefreshToken = localStorage.getItem('refreshToken');
+      if (!storedRefreshToken) return;
+      void refreshAccessToken();
+    };
+
+    tryRefresh();
+
+    const intervalId = window.setInterval(tryRefresh, 5 * 60 * 1000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        tryRefresh();
+      }
+    };
+
+    const handleFocus = () => {
+      tryRefresh();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isLoggedIn, refreshAccessToken]);
 
   return (
     <AuthContext.Provider

@@ -6,6 +6,8 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
+  useRef,
 } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { clearAiClientState } from '@/lib/client-session';
@@ -71,6 +73,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const refreshInFlightRef = useRef(false);
 
   const normalizeLocale = (language?: string | null): 'en' | 'zh-HK' => {
     return language === 'zh-HK' ? 'zh-HK' : 'en';
@@ -243,7 +246,9 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     setError(null);
   };
 
-  const refreshToken = async () => {
+  const refreshToken = useCallback(async () => {
+    if (refreshInFlightRef.current) return;
+
     const storedRefreshToken = localStorage.getItem('professionalRefreshToken');
 
     if (!storedRefreshToken) {
@@ -252,6 +257,8 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
+      refreshInFlightRef.current = true;
+
       const response = await fetch(`${API_BASE_URL}/professional/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -276,8 +283,44 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       setAccessToken(result.accessToken);
     } catch (err) {
       console.error('Token refresh failed:', err);
+    } finally {
+      refreshInFlightRef.current = false;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!isLoggedIn) return;
+
+    const tryRefresh = () => {
+      const storedRefreshToken = localStorage.getItem('professionalRefreshToken');
+      if (!storedRefreshToken) return;
+      void refreshToken();
+    };
+
+    tryRefresh();
+
+    const intervalId = window.setInterval(tryRefresh, 5 * 60 * 1000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        tryRefresh();
+      }
+    };
+
+    const handleFocus = () => {
+      tryRefresh();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isLoggedIn, refreshToken]);
 
   const clearError = () => setError(null);
 
