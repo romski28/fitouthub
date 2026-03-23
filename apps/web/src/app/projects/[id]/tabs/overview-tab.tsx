@@ -69,11 +69,11 @@ const formatHKD = (value?: number | string) => {
 };
 
 const projectStatusBadge: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-emerald-100 text-emerald-800',
-  rejected: 'bg-rose-100 text-rose-800',
-  withdrawn: 'bg-slate-200 text-slate-800',
-  awarded: 'bg-blue-100 text-blue-800',
+  pending: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
+  approved: 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40',
+  rejected: 'bg-rose-500/20 text-rose-200 border border-rose-500/40',
+  withdrawn: 'bg-slate-700 text-slate-300 border border-slate-600',
+  awarded: 'bg-blue-500/20 text-blue-200 border border-blue-500/40',
 };
 
 type TimelineStepDef = {
@@ -361,9 +361,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         >
           <div className="space-y-3">
             {project.notes && (
-              <div className="rounded-md bg-slate-50 px-3 py-2 text-sm border border-slate-100">
-                <p className="font-semibold text-slate-800 mb-1">Description</p>
-                <p className="text-slate-700 leading-relaxed">{project.notes}</p>
+              <div className="rounded-md bg-slate-800/50 px-3 py-2 text-sm border border-slate-700">
+                <p className="font-semibold text-white mb-1">Description</p>
+                <p className="text-slate-300 leading-relaxed">{project.notes}</p>
               </div>
             )}
 
@@ -382,9 +382,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               {project.budget && (
-                <div className="rounded-md bg-slate-50 p-3 border border-slate-100">
-                  <p className="text-xs text-slate-600 font-semibold uppercase">Budget</p>
-                  <p className="text-slate-900 font-medium mt-1">{formatHKD(project.budget)}</p>
+                <div className="rounded-md bg-slate-800/50 p-3 border border-slate-700">
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Budget</p>
+                  <p className="text-white font-medium mt-1">{formatHKD(project.budget)}</p>
                 </div>
               )}
 
@@ -396,7 +396,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               )}
             </div>
 
-            <div className="flex gap-3 text-xs text-slate-500 border-t border-slate-200 pt-3">
+            <div className="flex gap-3 text-xs text-slate-500 border-t border-slate-700 pt-3">
               {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
               {project.updatedAt && <span>Updated: {formatDate(project.updatedAt)}</span>}
             </div>
@@ -421,25 +421,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           onToggle={onToggleAccordion}
         >
           <div className="space-y-3">
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-slate-400">
               Temporary preview of the end-to-end process mapped to next-step workflow logic.
             </p>
 
             {timelineLoading && (
-              <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              <div className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-400">
                 Loading timeline status...
               </div>
             )}
 
             {!timelineLoading && (
               <div className="space-y-2" onWheel={handleTimelineWheel}>
-                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <button
                       type="button"
                       onClick={() => setTimelineStartIndex((prev) => Math.max(0, prev - 1))}
                       disabled={timelineStartIndex === 0}
-                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                      className="inline-flex items-center rounded-md border border-slate-600 bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-600 disabled:opacity-50 transition"
                     >
                       ↑ Up
                     </button>
@@ -447,7 +447,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       type="button"
                       onClick={() => setTimelineStartIndex(homeTimelineStartIndex)}
                       disabled={timelineStartIndex === homeTimelineStartIndex}
-                      className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                     >
                       Home
                     </button>
@@ -457,7 +457,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         setTimelineStartIndex((prev) => Math.min(maxTimelineStartIndex, prev + 1))
                       }
                       disabled={timelineStartIndex >= maxTimelineStartIndex}
-                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                      className="inline-flex items-center rounded-md border border-slate-600 bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-600 disabled:opacity-50 transition"
                     >
                       Down ↓
                     </button>
@@ -476,32 +476,32 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   const toneClasses = isComplete
                     ? {
                         dot: 'bg-emerald-500',
-                        border: 'border-emerald-200',
-                        bg: 'bg-emerald-50',
-                        text: 'text-emerald-800',
+                        border: 'border-emerald-500/40',
+                        bg: 'bg-emerald-500/15',
+                        text: 'text-emerald-200',
                         label: 'Complete',
                       }
                     : isCurrent
                       ? currentStepIsDelayed
                         ? {
                             dot: 'bg-rose-500',
-                            border: 'border-rose-200',
-                            bg: 'bg-rose-50',
-                            text: 'text-rose-800',
+                            border: 'border-rose-500/40',
+                            bg: 'bg-rose-500/15',
+                            text: 'text-rose-200',
                             label: 'Delayed',
                           }
                         : {
                             dot: 'bg-amber-500',
-                            border: 'border-amber-200',
-                            bg: 'bg-amber-50',
-                            text: 'text-amber-800',
+                            border: 'border-amber-500/40',
+                            bg: 'bg-amber-500/15',
+                            text: 'text-amber-200',
                             label: 'In progress',
                           }
                       : {
-                          dot: 'bg-slate-400',
-                          border: 'border-slate-200',
-                          bg: 'bg-slate-50',
-                          text: 'text-slate-700',
+                          dot: 'bg-slate-500',
+                          border: 'border-slate-600',
+                          bg: 'bg-slate-800/50',
+                          text: 'text-slate-300',
                           label: 'Planned',
                         };
 
@@ -515,7 +515,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           <span className={`mt-1 h-2.5 w-2.5 rounded-full ${toneClasses.dot}`} />
                           <div>
                             <p className={`text-sm font-semibold ${toneClasses.text}`}>{step.title}</p>
-                            <p className="text-xs text-slate-600">{step.description}</p>
+                            <p className="text-xs text-slate-400">{step.description}</p>
                           </div>
                         </div>
                         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${toneClasses.text}`}>
@@ -529,19 +529,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
 
             {!timelineLoading && currentTimelineStep && (
-              <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Current step action</p>
+              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Current step action</p>
                 <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-blue-900">{primaryNextStep?.actionLabel || currentTimelineStep.title}</p>
+                  <p className="text-sm font-semibold text-emerald-200">{primaryNextStep?.actionLabel || currentTimelineStep.title}</p>
                   <Link
                     href={`/projects/${project.id}?tab=${encodeURIComponent(currentTimelineStep.tab)}`}
-                    className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
                   >
                     Open current step
                   </Link>
                 </div>
                 {primaryNextStep?.description && (
-                  <p className="mt-1 text-xs text-blue-800">{primaryNextStep.description}</p>
+                  <p className="mt-1 text-xs text-emerald-300/80">{primaryNextStep.description}</p>
                 )}
               </div>
             )}
@@ -557,13 +557,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         >
           <div className="space-y-4">
             {/* Schedule Section */}
-            <div className="rounded-md bg-slate-50 p-4 border border-slate-100">
+            <div className="rounded-md bg-slate-800/50 p-4 border border-slate-700">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-slate-900">Schedule</h4>
+                <h4 className="font-semibold text-white">Schedule</h4>
                 {!editingSchedule && (
                   <button
                     onClick={() => setEditingSchedule(true)}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition"
                   >
                     ✏️ Edit
                   </button>
@@ -573,34 +573,34 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {editingSchedule ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Start Date</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Start Date</label>
                     <input
                       type="date"
                       value={scheduleForm.startDate}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, startDate: e.target.value })}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">End Date</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">End Date</label>
                     <input
                       type="date"
                       value={scheduleForm.endDate}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, endDate: e.target.value })}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                     />
                   </div>
                   <div className="flex gap-2 justify-end pt-2">
                     <button
                       onClick={() => setEditingSchedule(false)}
-                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-300 rounded-md hover:bg-slate-100 transition"
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-300 border border-slate-600 rounded-md hover:bg-slate-700/50 transition"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleScheduleSave}
                       disabled={isUpdatingSchedule}
-                      className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition"
+                      className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 disabled:opacity-50 transition"
                     >
                       {isUpdatingSchedule ? 'Saving…' : 'Save'}
                     </button>
@@ -609,25 +609,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               ) : (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-xs text-slate-600 mb-1">Start Date</p>
-                    <p className="font-medium text-slate-900">{formatDate(project.startDate)}</p>
+                    <p className="text-xs text-slate-400 mb-1">Start Date</p>
+                    <p className="font-medium text-white">{formatDate(project.startDate)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-600 mb-1">End Date</p>
-                    <p className="font-medium text-slate-900">{formatDate(project.endDate)}</p>
+                    <p className="text-xs text-slate-400 mb-1">End Date</p>
+                    <p className="font-medium text-white">{formatDate(project.endDate)}</p>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Contractor Contact Section */}
-            <div className="rounded-md bg-slate-50 p-4 border border-slate-100">
+            <div className="rounded-md bg-slate-800/50 p-4 border border-slate-700">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-slate-900">Contractor Contact</h4>
+                <h4 className="font-semibold text-white">Contractor Contact</h4>
                 {!editingContact && (
                   <button
                     onClick={() => setEditingContact(true)}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition"
                   >
                     ✏️ Edit
                   </button>
@@ -637,46 +637,46 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {editingContact ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Contact Name</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Contact Name</label>
                     <input
                       type="text"
                       value={contactForm.name}
                       onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                       placeholder="e.g., John Doe"
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Phone</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Phone</label>
                     <input
                       type="tel"
                       value={contactForm.phone}
                       onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
                       placeholder="e.g., +852 1234 5678"
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Email</label>
                     <input
                       type="email"
                       value={contactForm.email}
                       onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
                       placeholder="e.g., john@example.com"
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                     />
                   </div>
                   <div className="flex gap-2 justify-end pt-2">
                     <button
                       onClick={() => setEditingContact(false)}
-                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-300 rounded-md hover:bg-slate-100 transition"
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-300 border border-slate-600 rounded-md hover:bg-slate-700/50 transition"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleContactSave}
                       disabled={isUpdatingContact}
-                      className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition"
+                      className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 disabled:opacity-50 transition"
                     >
                       {isUpdatingContact ? 'Saving…' : 'Save'}
                     </button>
@@ -685,16 +685,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               ) : (
                 <div className="space-y-2 text-sm">
                   <div>
-                    <p className="text-xs text-slate-600 mb-1">Name</p>
-                    <p className="font-medium text-slate-900">{project.contractorContactName || '—'}</p>
+                    <p className="text-xs text-slate-400 mb-1">Name</p>
+                    <p className="font-medium text-white">{project.contractorContactName || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-600 mb-1">Phone</p>
-                    <p className="font-medium text-slate-900">{project.contractorContactPhone || '—'}</p>
+                    <p className="text-xs text-slate-400 mb-1">Phone</p>
+                    <p className="font-medium text-white">{project.contractorContactPhone || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-600 mb-1">Email</p>
-                    <p className="font-medium text-slate-900">{project.contractorContactEmail || '—'}</p>
+                    <p className="text-xs text-slate-400 mb-1">Email</p>
+                    <p className="font-medium text-white">{project.contractorContactEmail || '—'}</p>
                   </div>
                 </div>
               )}

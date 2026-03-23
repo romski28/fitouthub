@@ -78,25 +78,25 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full', funds
 
   const colorFor = (state: StepState) => {
     if (state === 'done') return 'from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-[0_2px_8px_rgba(16,185,129,0.35)]';
-    if (state === 'optional-skipped') return 'from-white to-white border-slate-300 text-slate-500 shadow-[0_2px_6px_rgba(15,23,42,0.08)]';
-    return 'from-slate-700 to-slate-800 border-slate-700 text-white shadow-[0_2px_8px_rgba(15,23,42,0.25)]';
+    if (state === 'optional-skipped') return 'from-slate-700 to-slate-800 border-slate-600 text-slate-400 shadow-[0_2px_6px_rgba(0,0,0,0.25)]';
+    return 'from-slate-600 to-slate-700 border-slate-500 text-slate-200 shadow-[0_2px_8px_rgba(15,23,42,0.5)]';
   };
 
-  const lineColor = (state: StepState) => (state === 'done' ? 'bg-emerald-200' : 'bg-slate-300');
+  const lineColor = (state: StepState) => (state === 'done' ? 'bg-emerald-400/60' : 'bg-slate-600');
 
   const columns = steps.length * 2 - 1;
   const gridTemplate = { gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))` };
   const colStart = (idx: number) => idx * 2 + 1; // dots on odd columns
 
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm ${variant === 'compact' ? 'p-3' : 'p-4'}`}>
+    <div className={`rounded-xl border border-slate-700 bg-slate-900/50 backdrop-blur-sm ${variant === 'compact' ? 'p-3' : 'p-4'}`}>
       <div className="flex flex-col gap-2">
         {/* Top labels row */}
         <div className="grid items-center" style={gridTemplate}>
           {steps.map((step, idx) => (
             <div key={`top-${step.key}`} className="flex justify-center" style={{ gridColumnStart: colStart(idx) }}>
               {idx % 2 === 0 ? (
-                <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
+                <span className={`${labelClass} font-semibold text-white whitespace-nowrap`}>{step.label}</span>
               ) : (
                 <span className={`${labelClass} text-transparent select-none`} aria-hidden>_</span>
               )}
@@ -134,7 +134,7 @@ export function ProjectProgressBar({ project, hasAssist, variant = 'full', funds
           {steps.map((step, idx) => (
             <div key={`bottom-${step.key}`} className="flex justify-center" style={{ gridColumnStart: colStart(idx) }}>
               {idx % 2 === 1 ? (
-                <span className={`${labelClass} font-semibold text-slate-800 whitespace-nowrap`}>{step.label}</span>
+                <span className={`${labelClass} font-semibold text-white whitespace-nowrap`}>{step.label}</span>
               ) : (
                 <span className={`${labelClass} text-transparent select-none`} aria-hidden>_</span>
               )}

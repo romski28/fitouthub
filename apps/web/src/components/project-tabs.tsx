@@ -33,7 +33,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
   return (
     <>
       {/* Desktop Tab Navigation */}
-      <div className="hidden sm:block sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+      <div className="hidden sm:block sticky top-0 z-40 bg-slate-950 border-b border-slate-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex overflow-x-auto">
             {resolvedTabs.map((tab) => (
@@ -45,8 +45,8 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
                 }}
                 className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+                    ? 'border-emerald-500 text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
                 }`}
                 aria-selected={activeTab === tab.id}
               >
@@ -59,17 +59,17 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
       </div>
 
       {/* Mobile Tab Navigation - Dropdown */}
-      <div className="sm:hidden sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+      <div className="sm:hidden sticky top-0 z-40 bg-slate-950 border-b border-slate-800 shadow-sm">
         <div className="px-4 py-3">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 transition"
           >
-            <span className="text-sm font-semibold text-slate-900">
+            <span className="text-sm font-semibold text-white">
               {resolvedTabs.find((t) => t.id === activeTab)?.icon} {activeTabLabel}
             </span>
             <svg
-              className={`w-4 h-4 text-slate-600 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-slate-400 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -90,8 +90,8 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
                   }}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition ${
                     activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
                   }`}
                 >
                   <span className="mr-2">{tab.icon}</span>
@@ -128,27 +128,27 @@ interface AccordionItemProps {
 
 export const AccordionItem: React.FC<AccordionItemProps> = ({ id, title, isOpen, onToggle, children, badge }) => {
   return (
-    <div className="border border-slate-200 rounded-lg overflow-hidden">
+    <div className="border border-slate-700 rounded-lg overflow-hidden bg-slate-900/50 backdrop-blur-sm">
       <button
         onClick={() => onToggle(id)}
         className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
-          isOpen ? 'bg-blue-50 border-b border-slate-200' : 'hover:bg-slate-50'
+          isOpen ? 'bg-emerald-500/15 border-b border-slate-700' : 'hover:bg-white/5'
         }`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
-          <h3 className="font-semibold text-slate-900">{title}</h3>
+          <h3 className="font-semibold text-white">{title}</h3>
           {badge && (
-            <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">
+            <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30">
               {badge}
             </span>
           )}
         </div>
-        <span className={`ml-3 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+        <span className={`ml-3 flex-shrink-0 transition-transform text-slate-400 ${isOpen ? 'rotate-180' : ''}`}>
           ▼
         </span>
       </button>
       {isOpen && (
-        <div className="px-4 py-3 border-t border-slate-200 bg-white">
+        <div className="px-4 py-3 border-t border-slate-700 bg-slate-950/50">
           {children}
         </div>
       )}

@@ -359,61 +359,61 @@ export default function ProjectFinancialsCard({
   const budgetTitle = escrowActive ? `${budgetLabel} · In escrow` : budgetLabel;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-700 bg-slate-900/50 backdrop-blur-sm">
       {/* Header */}
-      <div className="p-5 border-b border-slate-200 flex items-start justify-between">
+      <div className="p-5 border-b border-slate-700 flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
+          <h2 className="text-lg font-bold text-white">Project Financials</h2>
           <button
             onClick={handleViewStatement}
-            className="mt-1 text-xs text-blue-600 hover:underline"
+            className="mt-1 text-xs text-emerald-400 hover:text-emerald-300 transition"
           >
             View Statement
           </button>
         </div>
         {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
           <div className="text-right">
-            <p className="text-xs text-slate-600 uppercase tracking-wide font-semibold">Original Budget</p>
-            <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Original Budget</p>
+            <p className="text-lg font-bold text-white">{formatHKD(originalBudget)}</p>
           </div>
         )}
       </div>
 
       {loading ? (
-        <div className="p-5 text-sm text-slate-500">Loading financials...</div>
+        <div className="p-5 text-sm text-slate-400">Loading financials...</div>
       ) : error ? (
-        <div className="p-5 text-sm text-rose-600">{error}</div>
+        <div className="p-5 text-sm text-rose-400">{error}</div>
       ) : (
         <div className="p-5 space-y-6">
           {/* Three Mini Cards */}
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Project Value Card - Show for all roles */}
             {resolvedRole === 'professional' && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-                <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Project Value</p>
-                <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
+              <div className="rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
+                <p className="text-[11px] font-semibold text-slate-300 uppercase tracking-wide">Project Value</p>
+                <p className="text-xl font-bold text-white">{formatHKD(projectCost)}</p>
               </div>
             )}
             {(resolvedRole === 'client' || resolvedRole === 'admin') && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-                <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Approved Quote</p>
-                <p className="text-xl font-bold text-slate-900">{formatHKD(projectCost)}</p>
+              <div className="rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
+                <p className="text-[11px] font-semibold text-slate-300 uppercase tracking-wide">Approved Quote</p>
+                <p className="text-xl font-bold text-white">{formatHKD(projectCost)}</p>
               </div>
             )}
 
             {/* In Escrow Card */}
-            <div className={`rounded-lg border px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
+            <div className={`rounded-lg border px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.25)] ${
               escrowActive
-                ? 'border-emerald-100 bg-emerald-50'
-                : 'border-slate-200 bg-slate-50'
+                ? 'border-emerald-500/40 bg-emerald-500/15'
+                : 'border-slate-700 bg-slate-800/50'
             }`}>
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${
-                escrowActive ? 'text-emerald-700' : 'text-slate-700'
+                escrowActive ? 'text-emerald-300' : 'text-slate-300'
               }`}>
                 In Escrow
               </p>
               <p className={`text-xl font-bold ${
-                escrowActive ? 'text-emerald-900' : 'text-slate-900'
+                escrowActive ? 'text-emerald-200' : 'text-white'
               }`}>
                 {formatHKD(projectEscrowHeld || escrowConfirmed)}
               </p>
@@ -421,9 +421,9 @@ export default function ProjectFinancialsCard({
             </div>
 
             {/* Paid Card */}
-            <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 shadow-[0_1px_3px_rgba(59,130,246,0.08)]">
-              <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">Paid</p>
-              <p className="text-xl font-bold text-blue-900">{formatHKD(paymentsReleasedTotal)}</p>
+            <div className="rounded-lg border border-blue-500/40 bg-blue-500/15 px-4 py-3 shadow-[0_1px_3px_rgba(59,130,246,0.15)]">
+              <p className="text-[11px] font-semibold text-blue-300 uppercase tracking-wide">Paid</p>
+              <p className="text-xl font-bold text-blue-200">{formatHKD(paymentsReleasedTotal)}</p>
             </div>
           </div>
 
@@ -431,7 +431,7 @@ export default function ProjectFinancialsCard({
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-600 border-b border-slate-200">
+                <tr className="text-left text-slate-400 border-b border-slate-700">
                   <th className="py-2 pr-4">Date</th>
                   <th className="py-2 pr-4">Action On</th>
                   <th className="py-2 pr-4">Type</th>
