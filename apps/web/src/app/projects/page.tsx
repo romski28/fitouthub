@@ -7,6 +7,7 @@ import { ProjectsClient } from "./projects-client";
 import { Project } from "@/lib/types";
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
+import { getFreshProjectsCache, setProjectsCache } from '@/lib/projects-cache';
 import { useRoleGuard } from '@/hooks/use-role-guard';
 
 export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string; createNew?: string }> }) {
@@ -38,6 +39,14 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
         });
         return;
       }
+
+      const freshCache = getFreshProjectsCache(accessToken, params?.clientId);
+      if (freshCache) {
+        console.log('[ProjectsPage] Using cached projects:', freshCache.projects.length);
+        setProjects(freshCache.projects);
+        setLoading(false);
+        return;
+      }
       
       const url = `${API_BASE_URL}/projects${params?.clientId ? `?clientId=${params.clientId}` : ''}`;
       console.log('[ProjectsPage] Fetching projects from:', url);
@@ -53,6 +62,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
           const data = await response.json();
           console.log('[ProjectsPage] Successfully loaded', data?.length || 0, 'projects');
           setProjects(data);
+          setProjectsCache(accessToken, data, params?.clientId);
         } else {
           const errorText = await response.text();
           console.error('[ProjectsPage] Non-ok response:', {
