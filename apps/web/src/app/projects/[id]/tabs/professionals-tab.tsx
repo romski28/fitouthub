@@ -37,6 +37,7 @@ interface ProfessionalsTabProps {
   expandedAccordions: Record<string, boolean>;
   onToggleAccordion: (id: string) => void;
   accessToken: string;
+  onOpenChat?: (professional: ProjectProfessional | null) => void;
   onAwarded?: (professional: ProjectProfessional) => void;
   onActionBusy?: (kind: string | null) => void;
   actionBusy?: string | null;
@@ -70,6 +71,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   expandedAccordions,
   onToggleAccordion,
   accessToken,
+  onOpenChat,
   onAwarded,
   onActionBusy,
   actionBusy,
@@ -217,6 +219,13 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                       <div className="flex gap-2">
                         <button
                           type="button"
+                          onClick={() => onOpenChat?.(pp)}
+                          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                        >
+                          💬 Chat
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleAwarded(pp)}
                           disabled={actionBusy === 'award'}
                           className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
@@ -255,14 +264,20 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     <p className="font-semibold text-emerald-900">
                       {awardedProfessional.professional.fullName || awardedProfessional.professional.businessName || awardedProfessional.professional.email}
                     </p>
-                    <p className="text-sm text-emerald-700 mt-1">{awardedProfessional.professional.email}</p>
-                    {awardedProfessional.professional.phone && (
-                      <p className="text-sm text-emerald-700">{awardedProfessional.professional.phone}</p>
-                    )}
                   </div>
                   <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-600 text-white">
                     ✓ Awarded
                   </span>
+                </div>
+
+                <div className="mb-3">
+                  <button
+                    type="button"
+                    onClick={() => onOpenChat?.(null)}
+                    className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                  >
+                    💬 Open project chat
+                  </button>
                 </div>
 
                 <div className="grid gap-3 mb-3">
@@ -310,13 +325,12 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
           >
             <div className="space-y-3">
               {declinedProfessionals.map((pp) => {
-                const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
                 return (
                   <div key={pp.id} className="rounded-lg border border-rose-200 bg-rose-50 p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-semibold text-rose-900">{displayName}</p>
-                        <p className="text-xs text-rose-700">{pp.professional.email}</p>
                       </div>
                       <span className="text-xs font-semibold px-2 py-1 rounded bg-white text-rose-700 border border-rose-200">
                         Declined

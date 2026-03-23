@@ -308,6 +308,7 @@ export default function ClientProjectDetailPage() {
   const projectStatus = project?.status ?? 'pending';
   const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
   const isAwarded = projectStatus === 'awarded' || Boolean(awardedPro);
+  const hasAnyProfessional = (project?.professionals?.length ?? 0) > 0;
   const quoteOverdueBlocker = hasQuoteOverdueBlocker(project);
   const projectCostValue = Number(awardedPro?.quoteAmount || project?.approvedBudget || project?.budget || 0);
   const escrowValue = (awardedPro as any)?.invoice?.amount ?? (project as any)?.escrowAmount ?? 0;
@@ -330,7 +331,7 @@ export default function ClientProjectDetailPage() {
     if (!requestedTab) return;
 
     const allowedTabs = new Set(['overview', 'site-access', 'professionals', 'media']);
-    if (isAwarded || !!assistRequestId) {
+    if (isAwarded || !!assistRequestId || hasAnyProfessional) {
       allowedTabs.add('chat');
     }
     if (isAwarded) {
@@ -349,7 +350,7 @@ export default function ClientProjectDetailPage() {
     }
 
     setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
-  }, [searchParams, isAwarded, assistRequestId]);
+  }, [searchParams, isAwarded, assistRequestId, hasAnyProfessional]);
 
   const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
     const text = await response.text();
@@ -1729,6 +1730,11 @@ export default function ClientProjectDetailPage() {
                 expandedAccordions={expandedAccordions}
                 onToggleAccordion={toggleAccordion}
                 accessToken={accessToken || ''}
+                onOpenChat={(professional) => {
+                  setViewingAssistChat(false);
+                  setSelectedProfessional(professional);
+                  setActiveTab('chat');
+                }}
                 onAwarded={async () => {
                   await fetchProject();
                 }}
@@ -1772,7 +1778,7 @@ export default function ClientProjectDetailPage() {
           )}
 
         {/* Tab Content - Chat */}
-        {activeTab === 'chat' && (isAwarded || !!assistRequestId) && (
+        {activeTab === 'chat' && (isAwarded || !!assistRequestId || hasAnyProfessional) && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
             <ChatTab
               projectId={projectId}
