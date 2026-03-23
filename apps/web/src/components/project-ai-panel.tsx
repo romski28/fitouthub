@@ -197,8 +197,8 @@ export function ProjectAiPanel({
 
   if (!hasSafety && assumptions.length === 0 && risks.length === 0) return null;
 
-  return (
-    <div className={`rounded-lg border border-violet-500/40 bg-violet-500/15 p-4 ${className}`}>
+  const clientContent = (
+    <>
       <p className="text-xs text-white mb-3">Safety information prepared by Fitout Hub with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
 
       {safetyBlock}
@@ -230,6 +230,8 @@ export function ProjectAiPanel({
           </ul>
         </div>
       )}
-    </div>
+    </>
   );
+
+  return className ? <div className={className}>{clientContent}</div> : clientContent;
 }
