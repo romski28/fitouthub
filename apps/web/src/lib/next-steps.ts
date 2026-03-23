@@ -75,12 +75,19 @@ export async function fetchPrimaryNextStep(
     }
   }
 
-  const response = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch {
+    // Network error (CORS failure, server down, etc.) — degrade silently
+    nextStepCache.set(key, { action: null, updatedAt: Date.now() });
+    return null;
+  }
 
   if (response.status === 401 || response.status === 403) {
     throw new NextStepAuthError();

@@ -59,6 +59,7 @@ export class NextStepService {
     userId: string,
     role: string,
   ): Promise<NextStepResult> {
+    try {
     // Get project with current stage
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -66,6 +67,7 @@ export class NextStepService {
         currentStage: true,
         status: true,
         userId: true,
+        clientId: true,
         awardedProjectProfessionalId: true,
         clientSignedAt: true,
         professionalSignedAt: true,
@@ -81,8 +83,10 @@ export class NextStepService {
       throw new Error('Project not found');
     }
 
-    // Verify user has access to this project
-    const isClient = project.userId === userId;
+    // Verify user has access — project may use userId or clientId
+    const isClient =
+      (project.userId != null && project.userId === userId) ||
+      ((project as any).clientId != null && (project as any).clientId === userId);
 
     // Check if user is a professional on this project
     const isProfessional = await this.prisma.projectProfessional.findFirst({
@@ -112,11 +116,14 @@ export class NextStepService {
       ProjectStage.BIDDING_CLOSED,
     ];
 
+    // Guard against null currentStage (e.g. projects created before migration)
+    const safeStage: ProjectStage = project.currentStage ?? ProjectStage.CREATED;
+
     const effectiveStage =
       project.status === 'awarded' &&
-      awardedButPreContractStages.includes(project.currentStage)
+      awardedButPreContractStages.includes(safeStage)
         ? ProjectStage.CONTRACT_PHASE
-        : project.currentStage;
+        : safeStage;
 
     // Get available actions for this stage and role
     const nextSteps = await this.prisma.nextStepConfig.findMany({
@@ -328,6 +335,11 @@ export class NextStepService {
       status: project.status,
       stage: effectiveStage,
     };
+    } catch (error: any) {
+      // Never crash the process — return empty steps so the page still loads
+      console.error('[NextStepService.getNextSteps] error:', error?.message, { projectId, userId, role });
+      return { PRIMARY: [], ELECTIVE: [], status: 'unknown', stage: ProjectStage.CREATED };
+    }
   }
 
   /**
