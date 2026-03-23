@@ -135,10 +135,10 @@ interface SiteAccessVisit {
 }
 
 const projectStatusBadge: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-emerald-100 text-emerald-800',
-  rejected: 'bg-rose-100 text-rose-800',
-  withdrawn: 'bg-slate-200 text-slate-800',
+  pending: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
+  approved: 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40',
+  rejected: 'bg-rose-500/20 text-rose-200 border border-rose-500/40',
+  withdrawn: 'bg-slate-700 text-slate-300 border border-slate-600',
 };
 
 const formatDate = (date?: string) => {
@@ -1474,24 +1474,14 @@ export default function ClientProjectDetailPage() {
           </div>
 
         {/* Project Info & Tab Navigation */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <div className={`px-5 py-4 text-white rounded-t-xl ${
-            projectStatus === 'withdrawn'
-              ? 'bg-gradient-to-r from-slate-400 to-slate-300'
-              : 'bg-gradient-to-r from-slate-900 to-slate-800'
-          }`}>
+        <div className="rounded-xl border border-slate-700 bg-slate-900/50 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 text-white rounded-t-xl bg-slate-900/50">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h1 className={`text-2xl font-bold ${
-                  projectStatus === 'withdrawn' ? 'text-slate-700' : ''
-                }`}>
+                <h1 className="text-2xl font-bold text-white">
                   {project.projectName}
                 </h1>
-                <p className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
-                  projectStatus === 'withdrawn'
-                    ? 'text-slate-600'
-                    : 'text-emerald-300'
-                }`}>
+                <p className="text-sm font-semibold uppercase tracking-wide mt-1 text-emerald-300">
                   {project.region}
                 </p>
               </div>
@@ -1515,10 +1505,10 @@ export default function ClientProjectDetailPage() {
           </div>
 
           {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
-            <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-slate-200">
+            <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-slate-700 bg-slate-900/50">
               <div className="flex items-center gap-3">
                 {projectStatus === 'withdrawn' && (
-                  <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
+                  <span className="text-sm text-slate-300">Project withdrawn from bidding.</span>
                 )}
               </div>
               {!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn' && (
@@ -1630,7 +1620,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Overview */}
         {activeTab === 'overview' && project && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          <div className="rounded-xl border border-slate-700 bg-slate-900/50 shadow-sm p-5">
             <OverviewTab
               project={project}
               expandedAccordions={expandedAccordions}
