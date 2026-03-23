@@ -368,11 +368,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
 
             {project.tradesRequired && project.tradesRequired.length > 0 && (
-              <div className="rounded-md bg-blue-50 px-3 py-2 text-sm border border-blue-100">
-                <p className="font-semibold text-blue-800 mb-2">Required Trades</p>
+              <div className="rounded-md bg-slate-800/50 px-3 py-2 text-sm border border-slate-700">
+                <p className="font-semibold text-emerald-300 mb-2">Required Trades</p>
                 <div className="flex flex-wrap gap-1.5">
                   {project.tradesRequired.map((trade) => (
-                    <span key={trade} className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                    <span key={trade} className="inline-flex items-center rounded-full bg-sky-950 border border-sky-400 px-2.5 py-1 text-xs font-medium text-white">
                       {trade}
                     </span>
                   ))}
@@ -383,15 +383,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="grid grid-cols-2 gap-3 text-sm">
               {project.budget && (
                 <div className="rounded-md bg-slate-800/50 p-3 border border-slate-700">
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Budget</p>
-                  <p className="text-white font-medium mt-1">{formatHKD(project.budget)}</p>
+                  <p className="text-xs text-white font-bold uppercase">Budget</p>
+                  <p className="text-white font-normal mt-1">{formatHKD(project.budget)}</p>
                 </div>
               )}
 
               {project.approvedBudget && (
-                <div className="rounded-md bg-blue-50 p-3 border border-blue-100">
-                  <p className="text-xs text-blue-600 font-semibold uppercase">Approved Budget</p>
-                  <p className="text-blue-900 font-medium mt-1">{formatHKD(project.approvedBudget)}</p>
+                <div className="rounded-md bg-slate-800/50 p-3 border border-slate-700">
+                  <p className="text-xs text-white font-bold uppercase">Approved Budget</p>
+                  <p className="text-white font-normal mt-1">{formatHKD(project.approvedBudget)}</p>
                 </div>
               )}
             </div>
