@@ -74,6 +74,8 @@ type ExtendedProject = Omit<Project, 'photos' | 'photoUrls'> & {
     status: string;
     createdAt?: string;
     respondedAt?: string;
+    quoteReminderSentAt?: string;
+    quoteExtendedUntil?: string;
     quoteAmount?: string | number;
     quoteNotes?: string;
     quotedAt?: string;
@@ -272,7 +274,11 @@ function isQuoteOverdueForProject(project: ExtendedProject): boolean {
     if (!pp.createdAt) return false;
     const invitedAtMs = new Date(pp.createdAt).getTime();
     if (!Number.isFinite(invitedAtMs)) return false;
-    return Date.now() > invitedAtMs + quoteWindowMs;
+    // Use quoteExtendedUntil when a reminder has been sent
+    const effectiveDeadline = pp.quoteExtendedUntil
+      ? new Date(pp.quoteExtendedUntil).getTime()
+      : invitedAtMs + quoteWindowMs;
+    return Date.now() > effectiveDeadline;
   });
 }
 

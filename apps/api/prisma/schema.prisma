@@ -319,6 +319,8 @@ model ProjectProfessional {
   quotedAt                DateTime?
   directContactShared     Boolean                @default(false)
   directContactSharedAt   DateTime?
+  quoteReminderSentAt     DateTime?
+  quoteExtendedUntil      DateTime?
   visitApprovedButNotDone Boolean                @default(false)
   siteVisitedAt           DateTime?
   visitNotes              String?

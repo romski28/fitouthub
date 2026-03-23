@@ -250,6 +250,18 @@ export class ProjectsController {
     );
   }
 
+  @Post(':id/professionals/:ppId/remind-quote')
+  @UseGuards(CombinedAuthGuard)
+  async remindQuote(
+    @Param('id') projectId: string,
+    @Param('ppId') ppId: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.projectsService.remindQuote(projectId, ppId, userId);
+  }
+
   // Persist professional selections without inviting them yet
   @Post(':id/select')
   async select(

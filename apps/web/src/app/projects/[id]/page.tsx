@@ -31,6 +31,8 @@ interface ProjectProfessional {
   status: string;
   createdAt?: string;
   respondedAt?: string;
+  quoteReminderSentAt?: string;
+  quoteExtendedUntil?: string;
   quoteAmount?: string | number;
   quoteNotes?: string;
   quotedAt?: string;
@@ -179,7 +181,11 @@ const hasQuoteOverdueBlocker = (project: ProjectDetail | null): boolean => {
     if (!pp.createdAt) return false;
     const invitedAtMs = new Date(pp.createdAt).getTime();
     if (!Number.isFinite(invitedAtMs)) return false;
-    return Date.now() > invitedAtMs + quoteWindowMs;
+    // Use quoteExtendedUntil when a reminder has been sent
+    const effectiveDeadline = pp.quoteExtendedUntil
+      ? new Date(pp.quoteExtendedUntil).getTime()
+      : invitedAtMs + quoteWindowMs;
+    return Date.now() > effectiveDeadline;
   });
 };
 
@@ -193,6 +199,9 @@ export default function ClientProjectDetailPage() {
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Quote overdue recovery state
+  const [remindingPros, setRemindingPros] = useState<Set<string>>(new Set());
 
   // Messaging state
   const [selectedProfessional, setSelectedProfessional] = useState<ProjectProfessional | null>(null);
@@ -1261,6 +1270,78 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const handleRemindPro = async (pp: ProjectProfessional) => {
+    if (!accessToken || !projectId) return;
+    setRemindingPros((prev) => new Set([...prev, pp.id]));
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/professionals/${pp.id}/remind-quote`,
+        { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.message || 'Failed to send reminder');
+        return;
+      }
+      // Patch the professional record in state with the new fields
+      setProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              professionals: prev.professionals?.map((p) =>
+                p.id === pp.id
+                  ? {
+                      ...p,
+                      quoteReminderSentAt: data.quoteReminderSentAt,
+                      quoteExtendedUntil: data.quoteExtendedUntil,
+                    }
+                  : p,
+              ),
+            }
+          : null,
+      );
+      toast.success('Reminder sent — quote window extended by 24 hours');
+    } catch {
+      toast.error('Failed to send reminder');
+    } finally {
+      setRemindingPros((prev) => {
+        const next = new Set(prev);
+        next.delete(pp.id);
+        return next;
+      });
+    }
+  };
+
+  const handleOpenAssistFromBlocker = async () => {
+    if (!accessToken || !projectId) return;
+    if (assistRequestId) {
+      setViewingAssistChat(true);
+      setActiveTab('chat');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/assist-requests`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          notes: 'Quote overdue: no professional submitted a quote within the allowed window. Requesting assistance.',
+          contactMethod: 'chat',
+        }),
+      });
+      if (res.ok) {
+        const d = await res.json().catch(() => ({}));
+        if (d?.id) setAssistRequestId(d.id);
+        setViewingAssistChat(true);
+        setActiveTab('chat');
+      } else {
+        toast.error('Failed to create assistance request');
+      }
+    } catch {
+      toast.error('Failed to create assistance request');
+    }
+  };
+
   const handleWithdrawProject = async () => {
     if (!accessToken || !projectId) return;
 
@@ -1451,12 +1532,90 @@ export default function ClientProjectDetailPage() {
             </div>
           )}
 
-          {quoteOverdueBlocker && (
-            <div className="border-b border-rose-200 bg-rose-50 px-5 py-3">
-              <p className="text-sm font-semibold text-rose-800">🚫 Quote overdue blocker</p>
-              <p className="mt-1 text-sm text-rose-700">
-                No quote was submitted within the allowed window ({(project as any)?.isEmergency ? '12 hours' : '3 days'} from invitation).
-                Re-invite professionals or request assistance to continue bidding.
+          {quoteOverdueBlocker && projectStatus !== 'withdrawn' && (
+            <div className="border-b border-rose-200 bg-rose-50 p-5 space-y-4">
+              {/* Header */}
+              <div>
+                <p className="text-sm font-semibold text-rose-800">🚫 Quote window expired</p>
+                <p className="mt-1 text-sm text-rose-700">
+                  No quote was received within the {(project as any)?.isEmergency ? '12-hour' : '3-day'} window.
+                  Use the options below to continue.
+                </p>
+              </div>
+
+              {/* Step 1 — Remind each pending professional */}
+              {(() => {
+                const pendingPros = project.professionals?.filter(
+                  (pp) => (pp.status || '').toLowerCase() === 'accepted' && !pp.quotedAt,
+                ) ?? [];
+                if (pendingPros.length === 0) return null;
+                return (
+                  <div className="rounded-lg border border-rose-200 bg-white p-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Step 1 — Remind professional{pendingPros.length > 1 ? 's' : ''}</p>
+                    <p className="text-xs text-slate-500">Sends a notification and grants an additional 24-hour window (one-shot per professional).</p>
+                    <div className="flex flex-col gap-2 mt-1">
+                      {pendingPros.map((pp) => {
+                        const name = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                        const alreadySent = Boolean(pp.quoteReminderSentAt);
+                        const busy = remindingPros.has(pp.id);
+                        return (
+                          <div key={pp.id} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 text-sm">
+                            <span className="font-medium text-slate-700">{name}</span>
+                            {alreadySent ? (
+                              <span className="text-xs font-medium text-emerald-600">✅ Reminded (+24h granted)</span>
+                            ) : (
+                              <button
+                                onClick={() => handleRemindPro(pp)}
+                                disabled={busy}
+                                className="inline-flex items-center gap-1 rounded bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                              >
+                                {busy ? 'Sending…' : '⏰ Remind & extend 24h'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Step 2 — Invite more professionals (only if no quotes at all) */}
+              {!project.professionals?.some((pp) => Boolean(pp.quotedAt)) && (
+                <div className="rounded-lg border border-blue-200 bg-white p-4 space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Step 2 — Invite more professionals</p>
+                  <p className="text-xs text-slate-500">No quotes received yet. Browse available professionals to add to your project.</p>
+                  <Link
+                    href={`/professionals?projectId=${projectId}`}
+                    className="inline-flex items-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 mt-1"
+                  >
+                    👥 Find professionals
+                  </Link>
+                </div>
+              )}
+
+              {/* Step 3 — Ask Fitout Hub */}
+              <div className="rounded-lg border border-indigo-200 bg-white p-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Step 3 — Ask Fitout Hub for assistance</p>
+                <p className="text-xs text-slate-500">Our team can help source quotes or advise on next steps for your project.</p>
+                <button
+                  onClick={handleOpenAssistFromBlocker}
+                  className="inline-flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 mt-1"
+                >
+                  💬 Ask for help
+                </button>
+              </div>
+
+              {/* Step 4 */}
+              <p className="text-xs text-slate-500">
+                Step 4 —{' '}
+                <button
+                  onClick={() => setShowWithdrawConfirm(true)}
+                  className="underline hover:text-slate-800"
+                >
+                  Withdraw the project
+                </button>{' '}
+                if you no longer wish to proceed.
               </p>
             </div>
           )}

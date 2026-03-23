@@ -412,7 +412,10 @@ export class ProfessionalController {
         : 3 * 24 * 60 * 60 * 1000;
 
       if (inviteCreatedAt) {
-        const quoteDeadline = new Date(inviteCreatedAt.getTime() + quoteWindowMs);
+        const extendedUntil = projectProfessional.quoteExtendedUntil
+          ? new Date(projectProfessional.quoteExtendedUntil)
+          : null;
+        const quoteDeadline = extendedUntil ?? new Date(inviteCreatedAt.getTime() + quoteWindowMs);
         if (new Date() > quoteDeadline) {
           throw new BadRequestException(
             projectProfessional.project?.isEmergency

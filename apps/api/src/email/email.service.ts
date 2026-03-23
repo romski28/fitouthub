@@ -365,6 +365,71 @@ export class EmailService {
   }
 
   /**
+   * Notify professional that the client has extended their quote deadline by 24 hours (one-shot)
+   */
+  async sendQuoteExtensionReminder(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    projectId: string;
+    professionalId: string;
+    baseUrl: string;
+    newDeadline: Date;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send quote extension reminder to:', params.to);
+      return;
+    }
+
+    const projectUrl = `${params.baseUrl}/professional-projects/${params.projectId}?pro=${params.professionalId}`;
+    const deadline = params.newDeadline.toLocaleString('en-GB', {
+      timeZone: 'Asia/Hong_Kong',
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `⏰ Your quote deadline has been extended – ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4f46e5;">⏰ Quote Deadline Extended</h2>
+
+            <p>Hi ${params.professionalName},</p>
+
+            <p>The client for <strong>${params.projectName}</strong> has extended your quote window by <strong>24 hours</strong>.</p>
+
+            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #1e40af; font-weight: 600;">New deadline: ${deadline} (HKT)</p>
+            </div>
+
+            <p style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; color: #991b1b; margin: 20px 0;">
+              ⚠️ <strong>This is a one-time extension. No further extensions will be granted.</strong>
+            </p>
+
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                📝 Submit Quote Now
+              </a>
+            </div>
+          </div>
+        `,
+      });
+
+      console.log('✅ Quote extension reminder sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send quote extension reminder:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Send notification to winning professional when quote is awarded
    */
   async sendWinnerNotification(params: {

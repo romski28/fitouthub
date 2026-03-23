@@ -1559,7 +1559,10 @@ Please review the project details and respond with your quote or decline the inv
       : 3 * 24 * 60 * 60 * 1000;
 
     if (inviteCreatedAt) {
-      const quoteDeadline = new Date(inviteCreatedAt.getTime() + quoteWindowMs);
+      const extendedUntil = (projectProfessional as any).quoteExtendedUntil
+        ? new Date((projectProfessional as any).quoteExtendedUntil)
+        : null;
+      const quoteDeadline = extendedUntil ?? new Date(inviteCreatedAt.getTime() + quoteWindowMs);
       if (new Date() > quoteDeadline) {
         throw new Error(
           projectProfessional.project?.isEmergency
@@ -1679,6 +1682,102 @@ Please review the project details and respond with your quote or decline the inv
       message: 'Quote submitted successfully',
       quoteAmount,
       quoteIsRemote: isRemoteQuote,
+    };
+  }
+
+  async remindQuote(projectId: string, ppId: string, clientUserId: string) {
+    const pp = await this.prisma.projectProfessional.findFirst({
+      where: { id: ppId, projectId },
+      include: {
+        project: { include: { user: true } },
+        professional: true,
+      },
+    });
+
+    if (!pp) throw new BadRequestException('Professional record not found on this project');
+
+    // Verify client ownership
+    const project = pp.project as any;
+    const isOwner =
+      (project.userId && project.userId === clientUserId) ||
+      (project.clientId && project.clientId === clientUserId) ||
+      (!project.userId && !project.clientId);
+    if (!isOwner) throw new BadRequestException('You do not have access to this project');
+
+    if (pp.status !== 'accepted') {
+      throw new BadRequestException('Professional has not accepted this project yet');
+    }
+
+    if (pp.quotedAt) throw new BadRequestException('Professional has already submitted a quote');
+
+    if ((pp as any).quoteReminderSentAt) {
+      throw new BadRequestException('A reminder has already been sent to this professional (one-shot only)');
+    }
+
+    const quoteExtendedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const updated = await this.prisma.projectProfessional.update({
+      where: { id: ppId },
+      data: {
+        quoteReminderSentAt: new Date(),
+        quoteExtendedUntil,
+      } as any,
+    });
+
+    // Send email notification
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const professionalName = pp.professional.fullName || pp.professional.businessName || 'Professional';
+    try {
+      await this.emailService.sendQuoteExtensionReminder({
+        to: pp.professional.email,
+        professionalName,
+        projectName: project.projectName,
+        projectId,
+        professionalId: pp.professionalId,
+        baseUrl,
+        newDeadline: quoteExtendedUntil,
+      });
+    } catch (err) {
+      console.error('[ProjectsService.remindQuote] email failed:', err?.message);
+    }
+
+    // Also send WhatsApp/SMS if professional has a phone and messaging preference
+    if (pp.professional.phone) {
+      try {
+        const preference = await this.prisma.notificationPreference.findUnique({
+          where: { professionalId: pp.professionalId },
+          select: { primaryChannel: true, fallbackChannel: true, enableWhatsApp: true, enableSMS: true },
+        });
+        const preferredChannel = preference?.primaryChannel;
+        const isWhatsApp = preferredChannel === NotificationChannel.WHATSAPP && (preference?.enableWhatsApp ?? true);
+        const isSms = preferredChannel === NotificationChannel.SMS && (preference?.enableSMS ?? true);
+        const directChannel = isWhatsApp
+          ? NotificationChannel.WHATSAPP
+          : isSms
+          ? NotificationChannel.SMS
+          : !preference
+          ? NotificationChannel.WHATSAPP
+          : null;
+
+        if (directChannel) {
+          const msg = `\u23f0 Your quote deadline for \"${project.projectName}\" has been extended by 24 hours by the client. Log in to submit now.`;
+          await this.notificationService.send({
+            professionalId: pp.professionalId,
+            phoneNumber: pp.professional.phone,
+            channel: directChannel,
+            eventType: 'quote_extension_reminder',
+            message: msg,
+          });
+        }
+      } catch (err) {
+        console.error('[ProjectsService.remindQuote] WhatsApp/SMS failed:', err?.message);
+      }
+    }
+
+    return {
+      success: true,
+      quoteReminderSentAt: (updated as any).quoteReminderSentAt,
+      quoteExtendedUntil: (updated as any).quoteExtendedUntil,
     };
   }
 
