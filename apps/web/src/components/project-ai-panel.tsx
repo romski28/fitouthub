@@ -109,18 +109,28 @@ export function ProjectAiPanel({
 
   const safetyTone =
     safety?.riskLevel === 'critical'
-      ? 'border-rose-500/40 bg-rose-500/15 text-rose-200'
+      ? 'border-rose-500/50 bg-rose-500/15'
       : safety?.riskLevel === 'high'
-        ? 'border-amber-500/40 bg-amber-500/15 text-amber-200'
-        : 'border-yellow-500/40 bg-yellow-500/15 text-yellow-200';
+        ? 'border-amber-500/50 bg-amber-500/15'
+        : 'border-emerald-500/50 bg-emerald-500/15';
+
+  const safetyFlagLevelTone =
+    safety?.riskLevel === 'critical'
+      ? 'text-rose-300'
+      : safety?.riskLevel === 'high'
+        ? 'text-amber-300'
+        : 'text-emerald-300';
 
   const safetyBlock = hasSafety ? (
     <div className={`rounded-lg border p-4 ${safetyTone}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="text-sm font-bold">Safety flag: {safety?.riskLevel || 'review'}</h4>
+          <h4 className="text-sm font-bold text-white">
+            Safety flag:{' '}
+            <span className={safetyFlagLevelTone}>{safety?.riskLevel || 'review'}</span>
+          </h4>
           {safety?.emergencyReason && (
-            <p className="mt-1 text-sm font-medium">{safety.emergencyReason}</p>
+            <p className="mt-1 text-sm font-medium text-white">{safety.emergencyReason}</p>
           )}
         </div>
         {mode === 'admin' && onAcknowledgeSafety && (
@@ -137,10 +147,10 @@ export function ProjectAiPanel({
 
       {safety?.concerns && safety.concerns.length > 0 && (
         <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide mb-1">Concerns</p>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-white">Concerns</p>
           <ul className="space-y-1">
             {safety.concerns.map((item, index) => (
-              <li key={`safety-concern-${index}`} className="text-sm flex gap-2">
+              <li key={`safety-concern-${index}`} className="text-sm text-white flex gap-2">
                 <span>•</span>
                 <span>{item}</span>
               </li>
@@ -151,10 +161,10 @@ export function ProjectAiPanel({
 
       {safety?.temporaryMitigations && safety.temporaryMitigations.length > 0 && (
         <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide mb-1">Suggested mitigations</p>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-white">Suggested mitigations</p>
           <ul className="space-y-1">
             {safety.temporaryMitigations.map((item, index) => (
-              <li key={`safety-mitigation-${index}`} className="text-sm flex gap-2">
+              <li key={`safety-mitigation-${index}`} className="text-sm text-white flex gap-2">
                 <span>•</span>
                 <span>{item}</span>
               </li>
@@ -163,9 +173,9 @@ export function ProjectAiPanel({
         </div>
       )}
 
-      {safety?.disclaimer && <p className="mt-3 text-xs opacity-90">{safety.disclaimer}</p>}
+      {safety?.disclaimer && <p className="mt-3 text-xs text-white/90">{safety.disclaimer}</p>}
       {mode === 'admin' && isSafetyAcknowledged && safety?.adminReview?.acknowledgedByName && (
-        <p className="mt-2 text-xs opacity-80">Acknowledged by {safety.adminReview.acknowledgedByName}</p>
+        <p className="mt-2 text-xs text-white/80">Acknowledged by {safety.adminReview.acknowledgedByName}</p>
       )}
     </div>
   ) : null;
@@ -189,17 +199,17 @@ export function ProjectAiPanel({
 
   return (
     <div className={`rounded-lg border border-violet-500/40 bg-violet-500/15 p-4 ${className}`}>
-      <p className="text-xs text-violet-300/80 mb-3">Safety information prepared by Fitout Hub with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
+      <p className="text-xs text-white mb-3">Safety information prepared by Fitout Hub with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
 
       {safetyBlock && <div className="mb-3">{safetyBlock}</div>}
 
       {assumptions.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-300 mb-1">Assumptions</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-white mb-1">Assumptions</p>
           <ul className="space-y-1">
             {assumptions.map((item, index) => (
-              <li key={`assumption-${index}`} className="text-sm text-slate-300 flex gap-2">
-                <span className="text-violet-400">•</span>
+              <li key={`assumption-${index}`} className="text-sm text-white flex gap-2">
+                <span className="text-white">•</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -209,11 +219,11 @@ export function ProjectAiPanel({
 
       {risks.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-300 mb-1">Risks</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-white mb-1">Risks</p>
           <ul className="space-y-1">
             {risks.map((item, index) => (
-              <li key={`risk-${index}`} className="text-sm text-slate-300 flex gap-2">
-                <span className="text-violet-400">•</span>
+              <li key={`risk-${index}`} className="text-sm text-white flex gap-2">
+                <span className="text-white">•</span>
                 <span>{item}</span>
               </li>
             ))}

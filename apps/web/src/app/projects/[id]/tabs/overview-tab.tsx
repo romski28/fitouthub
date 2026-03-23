@@ -369,7 +369,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
             {project.tradesRequired && project.tradesRequired.length > 0 && (
               <div className="rounded-md bg-slate-800/50 px-3 py-2 text-sm border border-slate-700">
-                <p className="font-semibold text-emerald-300 mb-2">Required Trades</p>
+                <p className="font-semibold text-white mb-2">Required Trades</p>
                 <div className="flex flex-wrap gap-1.5">
                   {project.tradesRequired.map((trade) => (
                     <span key={trade} className="inline-flex items-center rounded-full bg-sky-950 border border-sky-400 px-2.5 py-1 text-xs font-medium text-white">
@@ -396,7 +396,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               )}
             </div>
 
-            <div className="flex gap-3 text-xs text-slate-500 border-t border-slate-700 pt-3">
+            <div className="flex gap-3 text-xs text-white border-t border-slate-700 pt-3">
               {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
               {project.updatedAt && <span>Updated: {formatDate(project.updatedAt)}</span>}
             </div>
