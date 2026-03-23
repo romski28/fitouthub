@@ -1736,7 +1736,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Contract */}
           {activeTab === 'contract' && isAwarded && project && (
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
               <ContractTab
                 projectId={project.id}
                 accessToken={accessToken || ''}
@@ -1747,7 +1747,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Schedule */}
           {activeTab === 'schedule' && isAwarded && project && (
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
               <ClientScheduleTab
                 tab="schedule"
                 projectId={projectId}

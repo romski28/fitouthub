@@ -156,59 +156,59 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   return (
     <div className="space-y-6">
       {!isAwarded ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm text-amber-800">
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/15 p-4">
+          <p className="text-sm text-amber-200">
             📅 Contractor's schedule will appear here once you award the project.
           </p>
         </div>
       ) : (
         <>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-800">{error}</p>
+            <div className="rounded-md bg-rose-500/15 border border-rose-500/40 p-4">
+              <p className="text-sm font-medium text-rose-200">{error}</p>
             </div>
           )}
 
           {loading ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm text-slate-600">Loading schedule...</p>
+            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
+              <p className="text-sm text-slate-300">Loading schedule...</p>
             </div>
           ) : milestones.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm text-slate-600">
+            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
+              <p className="text-sm text-slate-300">
                 📋 Contractor hasn't set up a project schedule yet. Check back soon for progress milestones and timeline.
               </p>
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-white p-6">
-              <div className="mb-5 rounded-md border border-slate-200 bg-slate-50 p-4">
-                <h4 className="text-sm font-semibold text-slate-900 mb-3">Site Access Requests by Task</h4>
+            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-6">
+              <div className="mb-5 rounded-md border border-slate-700 bg-slate-800/50 p-4">
+                <h4 className="text-sm font-semibold text-white mb-3">Site Access Requests by Task</h4>
                 <div className="space-y-3">
                   {milestones.filter((m) => m.siteAccessRequired).length === 0 ? (
-                    <p className="text-xs text-slate-600">No current tasks require site access.</p>
+                    <p className="text-xs text-slate-300">No current tasks require site access.</p>
                   ) : (
                     milestones
                       .filter((m) => m.siteAccessRequired)
                       .map((m) => (
-                        <div key={`access-${m.id}`} className="rounded-md border border-slate-200 bg-white p-3">
+                        <div key={`access-${m.id}`} className="rounded-md border border-slate-700 bg-slate-900/60 p-3">
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div>
-                              <p className="text-sm font-semibold text-slate-900">{m.title}</p>
-                              <p className="text-xs text-slate-600">Requested date(s): {formatDateRange(m.plannedStartDate, m.plannedEndDate)}</p>
+                              <p className="text-sm font-semibold text-white">{m.title}</p>
+                              <p className="text-xs text-slate-300">Requested date(s): {formatDateRange(m.plannedStartDate, m.plannedEndDate)}</p>
                             </div>
                             {m.accessDeclined ? (
-                              <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800">
+                              <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-1 text-[11px] font-semibold text-amber-200">
                                 Access Declined
                               </span>
                             ) : (
-                              <span className="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-800">
+                              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-1 text-[11px] font-semibold text-emerald-200">
                                 Access Requested
                               </span>
                             )}
                           </div>
 
                           {m.accessDeclined ? (
-                            <p className="text-xs text-amber-700">
+                            <p className="text-xs text-amber-200">
                               Reason: {m.accessDeclinedReason || 'No reason provided'}
                             </p>
                           ) : (
@@ -219,7 +219,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
                                   setDeclineReasonByMilestone((prev) => ({ ...prev, [m.id]: e.target.value }))
                                 }
                                 placeholder="Reason for declining these access dates"
-                                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs"
+                                className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-white"
                                 rows={2}
                               />
                               <button
@@ -237,7 +237,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
                 </div>
               </div>
 
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Project Timeline & Progress</h3>
+              <h3 className="text-lg font-semibold text-white mb-6">Project Timeline & Progress</h3>
               <MilestoneTimeline
                 milestones={milestones.map(m => ({
                   ...m,
