@@ -1082,7 +1082,7 @@ export default function ProjectDetailPage() {
               
               // Show Contract and Schedule tabs only when awarded
               if (project.status === 'awarded') {
-                tabsArray.push({ id: 'contract', label: 'Contract', icon: '📄' });
+                tabsArray.push({ id: 'contract', label: 'Agreement', icon: '📄' });
                 tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
               }
               

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
@@ -141,28 +140,18 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
     <div className="space-y-4">
       {/* Required Trades - always visible */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-1.5">Required Trades</p>
-            {project.tradesRequired && project.tradesRequired.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {project.tradesRequired.map((trade: string) => (
-                  <span key={trade} className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">
-                    {trade}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-blue-700">No specific trades recorded for this project.</p>
-            )}
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-1.5">Required Trades</p>
+        {project.tradesRequired && project.tradesRequired.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {project.tradesRequired.map((trade: string) => (
+              <span key={trade} className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">
+                {trade}
+              </span>
+            ))}
           </div>
-          <Link
-            href={`/professionals?projectId=${project.id}${project.tradesRequired?.[0] ? `&trade=${encodeURIComponent(project.tradesRequired[0])}` : ''}`}
-            className="shrink-0 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-          >
-            Search &amp; Invite Professionals
-          </Link>
-        </div>
+        ) : (
+          <p className="text-sm text-blue-700">No specific trades recorded for this project.</p>
+        )}
       </div>
 
       <AccordionGroup>
@@ -179,7 +168,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
           ) : (
             <div className="space-y-3">
               {biddingProfessionals.map((pp) => {
-                const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
                 return (
                   <div
                     key={pp.id}
@@ -188,7 +177,6 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <p className="font-semibold text-slate-900">{displayName}</p>
-                        <p className="text-xs text-slate-600 mt-1">{pp.professional.email}</p>
                       </div>
                       <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-white text-slate-700 border border-slate-200">
                         {pp.status}
@@ -231,7 +219,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                           type="button"
                           onClick={() => handleAwarded(pp)}
                           disabled={actionBusy === 'award'}
-                          className="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                          className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                         >
                           {actionBusy === 'award' ? '…' : '✓ Award'}
                         </button>
@@ -239,7 +227,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                           type="button"
                           onClick={() => handleReject(pp)}
                           disabled={actionBusy === `reject-${pp.id}`}
-                          className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+                          className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
                         >
                           ✕
                         </button>

@@ -1572,7 +1572,7 @@ export default function ClientProjectDetailPage() {
                               <button
                                 onClick={() => handleRemindPro(pp)}
                                 disabled={busy}
-                                className="inline-flex items-center gap-1 rounded bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                                className="inline-flex items-center gap-1 rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
                               >
                                 {busy ? 'Sending…' : '⏰ Remind & extend 24h'}
                               </button>
@@ -1585,27 +1585,13 @@ export default function ClientProjectDetailPage() {
                 );
               })()}
 
-              {/* Step 2 — Invite more professionals (only if no quotes at all) */}
-              {!project.professionals?.some((pp) => Boolean(pp.quotedAt)) && (
-                <div className="rounded-lg border border-blue-200 bg-white p-4 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Step 2 — Invite more professionals</p>
-                  <p className="text-xs text-slate-500">No quotes received yet. Browse available professionals to add to your project.</p>
-                  <Link
-                    href={`/professionals?projectId=${projectId}`}
-                    className="inline-flex items-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 mt-1"
-                  >
-                    👥 Find professionals
-                  </Link>
-                </div>
-              )}
-
               {/* Step 3 — Ask Fitout Hub */}
               <div className="rounded-lg border border-indigo-200 bg-white p-4 space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Step 3 — Ask Fitout Hub for assistance</p>
                 <p className="text-xs text-slate-500">Our team can help source quotes or advise on next steps for your project.</p>
                 <button
                   onClick={handleOpenAssistFromBlocker}
-                  className="inline-flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 mt-1"
+                  className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 mt-1"
                 >
                   💬 Ask for help
                 </button>
@@ -1633,7 +1619,7 @@ export default function ClientProjectDetailPage() {
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
-              { id: 'contract', label: 'Contract', icon: '📄' },
+              { id: 'contract', label: 'Agreement', icon: '📄' },
               { id: 'schedule', label: 'Schedule', icon: '📅' },
               { id: 'chat', label: 'Chat', icon: '💬' },
               { id: 'media', label: 'Media', icon: '🖼️' },
