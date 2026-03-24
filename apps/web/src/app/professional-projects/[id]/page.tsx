@@ -1047,7 +1047,7 @@ export default function ProjectDetailPage() {
     <>
       <Toaster position="top-right" />
       <div className="min-h-screen bg-slate-50 pb-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
           <div className="flex items-center justify-between">
             <Link href="/professional-projects" className="text-sm text-blue-600 hover:underline">
               ← Back to my projects

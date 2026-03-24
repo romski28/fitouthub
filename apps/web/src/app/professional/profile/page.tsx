@@ -317,7 +317,7 @@ export default function ProfessionalProfilePage() {
   if (!isLoggedIn) return null;
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="max-w-5xl mx-auto py-8 px-3 sm:px-6 lg:px-8 space-y-6">
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
