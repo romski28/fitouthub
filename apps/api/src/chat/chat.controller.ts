@@ -251,6 +251,22 @@ export class ChatController {
       // Not an anonymous thread either
     }
 
+    // Try project thread
+    try {
+      const thread = await this.chatService.getProjectThread(threadId);
+      const message = await this.chatService.addProjectMessage(
+        threadId,
+        'foh',
+        null,
+        null,
+        body.content,
+        undefined,
+      );
+      return { success: true, message };
+    } catch (e) {
+      // Not a project thread either
+    }
+
       throw new NotFoundException('Invalid thread type or thread not found');
   }
 

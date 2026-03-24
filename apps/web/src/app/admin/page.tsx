@@ -47,6 +47,10 @@ type AdminCommsFeedItem = {
   id: string;
   sourceType: string;
   sourceId: string;
+  conversationType?: "assist" | "chat" | "support" | "none";
+  conversationId?: string;
+  replyChannel?: "assist" | "chat" | "whatsapp" | "email" | "none";
+  actionRequired?: boolean;
   type: string;
   transport: string;
   context: string;
@@ -76,6 +80,13 @@ type AdminAssignee = {
 
 type AdminTabKey = "dashboard" | "messaging" | "data-control" | "analytics";
 type FeedScope = "all" | "my" | "unassigned";
+
+type DrawerMessage = {
+  id: string;
+  sender: string;
+  content: string;
+  createdAt: string;
+};
 
 const formatRelativeTime = (dateValue: string) => {
   const timestamp = new Date(dateValue).getTime();
@@ -157,10 +168,17 @@ export default function AdminDashboardPage() {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [feedScope, setFeedScope] = useState<FeedScope>("all");
+  const [includeInfo, setIncludeInfo] = useState(false);
   const [assignees, setAssignees] = useState<AdminAssignee[]>([]);
   const [selectedItem, setSelectedItem] = useState<AdminCommsFeedItem | null>(null);
   const [assigningToAdminId, setAssigningToAdminId] = useState<string>("");
   const [actionBusy, setActionBusy] = useState(false);
+  const [threadMessages, setThreadMessages] = useState<DrawerMessage[]>([]);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [threadError, setThreadError] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [replyBusy, setReplyBusy] = useState(false);
+  const [replyError, setReplyError] = useState<string | null>(null);
 
   const fetchFeed = useCallback(async () => {
     if (!accessToken || activeTab !== "dashboard") return;
@@ -169,7 +187,7 @@ export default function AdminDashboardPage() {
     setFeedError(null);
     try {
       const response = await fetch(
-        `${API_BASE_URL.replace(/\/$/, "")}/updates/admin-comms-feed?limit=80&scope=${feedScope}`,
+        `${API_BASE_URL.replace(/\/$/, "")}/updates/admin-comms-feed?limit=80&scope=${feedScope}&includeInfo=${includeInfo ? "1" : "0"}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -199,7 +217,7 @@ export default function AdminDashboardPage() {
     } finally {
       setFeedLoading(false);
     }
-  }, [accessToken, activeTab, feedScope]);
+  }, [accessToken, activeTab, feedScope, includeInfo]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -256,6 +274,216 @@ export default function AdminDashboardPage() {
     }
     setAssigningToAdminId(selectedItem.assignedToAdminId || "");
   }, [selectedItem]);
+
+  const loadConversation = useCallback(
+    async (item: AdminCommsFeedItem) => {
+      if (!accessToken || !item.conversationType || item.conversationType === "none" || !item.conversationId) {
+        setThreadMessages([]);
+        setThreadError(null);
+        return;
+      }
+
+      setThreadLoading(true);
+      setThreadError(null);
+      try {
+        if (item.conversationType === "assist") {
+          const response = await fetch(
+            `${API_BASE_URL.replace(/\/$/, "")}/assist-requests/${item.conversationId}/messages?limit=200`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              cache: "no-store",
+            },
+          );
+
+          if (!response.ok) throw new Error("Unable to load assist conversation");
+
+          const payload = (await response.json()) as Array<{
+            id: string;
+            senderType?: string;
+            sender?: string;
+            content?: string;
+            createdAt?: string;
+          }>;
+
+          setThreadMessages(
+            (payload || []).map((message) => ({
+              id: message.id,
+              sender: message.senderType || message.sender || "unknown",
+              content: message.content || "",
+              createdAt: message.createdAt || new Date().toISOString(),
+            })),
+          );
+          return;
+        }
+
+        if (item.conversationType === "chat") {
+          const response = await fetch(
+            `${API_BASE_URL.replace(/\/$/, "")}/chat/admin/threads/${item.conversationId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              cache: "no-store",
+            },
+          );
+
+          if (!response.ok) throw new Error("Unable to load chat thread");
+
+          const payload = (await response.json()) as {
+            messages?: Array<{
+              id: string;
+              senderType?: string;
+              content?: string;
+              createdAt?: string;
+            }>;
+          };
+
+          setThreadMessages(
+            (payload.messages || []).map((message) => ({
+              id: message.id,
+              sender: message.senderType || "unknown",
+              content: message.content || "",
+              createdAt: message.createdAt || new Date().toISOString(),
+            })),
+          );
+          return;
+        }
+
+        if (item.conversationType === "support") {
+          const response = await fetch(
+            `${API_BASE_URL.replace(/\/$/, "")}/support-requests/${item.conversationId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              cache: "no-store",
+            },
+          );
+
+          if (!response.ok) throw new Error("Unable to load support conversation");
+
+          const payload = (await response.json()) as {
+            id: string;
+            body?: string;
+            createdAt?: string;
+            replies?: Array<{
+              body?: string;
+              sentAt?: string;
+              direction?: string;
+            }>;
+          };
+
+          const history: DrawerMessage[] = [];
+          if (payload.body) {
+            history.push({
+              id: `${payload.id}-inbound` ,
+              sender: "client",
+              content: payload.body,
+              createdAt: payload.createdAt || new Date().toISOString(),
+            });
+          }
+
+          (payload.replies || []).forEach((entry, index) => {
+            history.push({
+              id: `${payload.id}-reply-${index}`,
+              sender: entry.direction === "outbound" ? "foh" : "client",
+              content: entry.body || "",
+              createdAt: entry.sentAt || new Date().toISOString(),
+            });
+          });
+
+          history.sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
+          setThreadMessages(history);
+          return;
+        }
+
+        setThreadMessages([]);
+      } catch (error) {
+        setThreadError(error instanceof Error ? error.message : "Unable to load conversation");
+        setThreadMessages([]);
+      } finally {
+        setThreadLoading(false);
+      }
+    },
+    [accessToken],
+  );
+
+  useEffect(() => {
+    if (!selectedItem) {
+      setThreadMessages([]);
+      setThreadError(null);
+      setReplyDraft("");
+      setReplyError(null);
+      return;
+    }
+
+    void loadConversation(selectedItem);
+  }, [selectedItem, loadConversation]);
+
+  const sendDrawerReply = async () => {
+    if (!accessToken || !selectedItem || !selectedItem.conversationId) return;
+    if (!replyDraft.trim()) return;
+
+    setReplyBusy(true);
+    setReplyError(null);
+    try {
+      if (selectedItem.replyChannel === "assist") {
+        const response = await fetch(
+          `${API_BASE_URL.replace(/\/$/, "")}/assist-requests/${selectedItem.conversationId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ sender: "foh", content: replyDraft.trim(), senderUserId: user?.id }),
+          },
+        );
+
+        if (!response.ok) throw new Error("Failed to send assist reply");
+      } else if (selectedItem.replyChannel === "chat") {
+        const response = await fetch(
+          `${API_BASE_URL.replace(/\/$/, "")}/chat/admin/threads/${selectedItem.conversationId}/reply`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ content: replyDraft.trim() }),
+          },
+        );
+
+        if (!response.ok) throw new Error("Failed to send chat reply");
+      } else if (selectedItem.replyChannel === "whatsapp") {
+        const response = await fetch(
+          `${API_BASE_URL.replace(/\/$/, "")}/support-requests/${selectedItem.conversationId}/reply`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ message: replyDraft.trim() }),
+          },
+        );
+
+        if (!response.ok) throw new Error("Failed to send support reply");
+      } else {
+        throw new Error("Reply is not available for this item");
+      }
+
+      setReplyDraft("");
+      await loadConversation(selectedItem);
+      await fetchFeed();
+    } catch (error) {
+      setReplyError(error instanceof Error ? error.message : "Failed to send reply");
+    } finally {
+      setReplyBusy(false);
+    }
+  };
 
   const postAssignmentAction = async (
     action: "claim" | "assign" | "release",
@@ -446,6 +674,17 @@ export default function AdminDashboardPage() {
                     </button>
                   ))}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIncludeInfo((previous) => !previous)}
+                  className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                    includeInfo
+                      ? "border-sky-400 text-sky-200 hover:bg-sky-500/10"
+                      : "border-slate-600 text-slate-300 hover:bg-slate-800"
+                  }`}
+                >
+                  {includeInfo ? "Info: on" : "Info: off"}
+                </button>
                 <Link
                   href="/admin/messaging?view=all"
                   className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
@@ -587,6 +826,62 @@ export default function AdminDashboardPage() {
               )}
               <p className="text-slate-200"><span className="text-slate-400">Preview:</span> {selectedItem.preview}</p>
             </div>
+
+            <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Conversation</p>
+              {threadLoading && <p className="mt-2 text-sm text-slate-300">Loading conversation...</p>}
+              {!threadLoading && threadError && <p className="mt-2 text-sm text-rose-300">{threadError}</p>}
+              {!threadLoading && !threadError && threadMessages.length === 0 && (
+                <p className="mt-2 text-sm text-slate-400">No conversation history for this item.</p>
+              )}
+              {!threadLoading && !threadError && threadMessages.length > 0 && (
+                <div className="mt-2 max-h-64 space-y-2 overflow-y-auto pr-1">
+                  {threadMessages.map((message) => {
+                    const isFoh = (message.sender || "").toLowerCase() === "foh";
+                    return (
+                      <div
+                        key={message.id}
+                        className={`rounded-md border px-2 py-2 text-sm ${
+                          isFoh
+                            ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-100"
+                            : "border-slate-600 bg-slate-900 text-slate-200"
+                        }`}
+                      >
+                        <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-wide">
+                          <span className="font-semibold">{message.sender}</span>
+                          <span className="text-slate-400">{formatRelativeTime(message.createdAt)}</span>
+                        </div>
+                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {(selectedItem.replyChannel === "assist" || selectedItem.replyChannel === "chat" || selectedItem.replyChannel === "whatsapp") && (
+              <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/50 p-3">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  Reply
+                </label>
+                <textarea
+                  value={replyDraft}
+                  onChange={(event) => setReplyDraft(event.target.value)}
+                  rows={3}
+                  className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                  placeholder="Type your reply..."
+                />
+                {replyError && <p className="mt-2 text-xs text-rose-300">{replyError}</p>}
+                <button
+                  type="button"
+                  disabled={replyBusy || !replyDraft.trim()}
+                  onClick={sendDrawerReply}
+                  className="mt-2 w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {replyBusy ? "Sending..." : "Send reply"}
+                </button>
+              </div>
+            )}
 
             <div className="mt-4 space-y-3">
               <button

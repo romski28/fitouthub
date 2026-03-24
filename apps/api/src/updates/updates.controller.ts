@@ -28,6 +28,7 @@ export class UpdatesController {
     @Req() req: any,
     @Query('limit') limit?: string,
     @Query('scope') scope?: 'all' | 'my' | 'unassigned',
+    @Query('includeInfo') includeInfo?: string,
   ) {
     const userId = req.user?.id || req.user?.sub;
     const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
@@ -40,7 +41,13 @@ export class UpdatesController {
     }
 
     const parsedLimit = limit ? Number(limit) : undefined;
-    return this.updatesService.getAdminCommsFeed(parsedLimit, userId, scope || 'all');
+    const shouldIncludeInfo = includeInfo === '1' || includeInfo === 'true';
+    return this.updatesService.getAdminCommsFeed(
+      parsedLimit,
+      userId,
+      scope || 'all',
+      shouldIncludeInfo,
+    );
   }
 
   @Get('admin-comms-assignees')

@@ -78,6 +78,10 @@ export interface AdminCommsFeedItem {
   id: string;
   sourceType: string;
   sourceId: string;
+  conversationType?: 'assist' | 'chat' | 'support' | 'none';
+  conversationId?: string;
+  replyChannel?: 'assist' | 'chat' | 'whatsapp' | 'email' | 'none';
+  actionRequired: boolean;
   type: string;
   transport: string;
   context: string;
@@ -438,10 +442,19 @@ export class UpdatesService {
     limit?: number,
     adminId?: string,
     scope: 'all' | 'my' | 'unassigned' = 'all',
+    includeInfo = false,
   ): Promise<AdminCommsFeed> {
     const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(Number(limit), 10), 300) : 120;
 
-    const [supportRequests, assistMessages, privateMessages, anonymousMessages, notificationLogs, aiProjects] =
+    const [
+      supportRequests,
+      assistMessages,
+      privateMessages,
+      anonymousMessages,
+      projectMessages,
+      notificationLogs,
+      aiProjects,
+    ] =
       await Promise.all([
         this.prisma.supportRequest.findMany({
           take: safeLimit,
@@ -533,6 +546,25 @@ export class UpdatesService {
             },
           },
         }),
+        this.prisma.projectChatMessage.findMany({
+          take: safeLimit,
+          where: {
+            senderType: { in: ['client', 'professional'] },
+          },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            thread: {
+              include: {
+                project: {
+                  select: {
+                    id: true,
+                    projectName: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
         this.prisma.notificationLog.findMany({
           take: safeLimit,
           orderBy: { createdAt: 'desc' },
@@ -584,6 +616,10 @@ export class UpdatesService {
         id: `support:${request.id}`,
         sourceType: 'support',
         sourceId: request.id,
+        conversationType: 'support',
+        conversationId: request.id,
+        replyChannel: request.channel === 'whatsapp' ? 'whatsapp' : 'none',
+        actionRequired: request.status !== 'resolved',
         type: 'Support Request',
         transport: request.channel === 'whatsapp' ? 'WhatsApp' : 'Callback',
         context: request.project
@@ -606,6 +642,10 @@ export class UpdatesService {
         id: `assist:${message.id}`,
         sourceType: 'assist',
         sourceId: message.id,
+        conversationType: 'assist',
+        conversationId: message.assistRequestId,
+        replyChannel: 'assist',
+        actionRequired: message.assistRequest.status !== 'closed',
         type: 'Assist Message',
         transport: message.assistRequest.contactMethod === 'whatsapp'
           ? 'WhatsApp'
@@ -636,6 +676,10 @@ export class UpdatesService {
         id: `private:${message.id}`,
         sourceType: 'private',
         sourceId: message.id,
+        conversationType: 'chat',
+        conversationId: message.threadId,
+        replyChannel: 'chat',
+        actionRequired: message.thread.status !== 'closed',
         type: message.senderType === 'professional' ? 'Professional Inbox' : 'Client Inbox',
         transport: 'In-app Chat',
         context: message.senderType === 'professional' ? 'FOH Professional Thread' : 'FOH Client Thread',
@@ -653,6 +697,10 @@ export class UpdatesService {
         id: `anonymous:${message.id}`,
         sourceType: 'anonymous',
         sourceId: message.id,
+        conversationType: 'chat',
+        conversationId: message.threadId,
+        replyChannel: 'chat',
+        actionRequired: message.thread.status !== 'closed',
         type: 'Anonymous Inbox',
         transport: 'In-app Chat',
         context: `Session · ${message.thread.sessionId.slice(0, 8)}`,
@@ -665,7 +713,32 @@ export class UpdatesService {
       });
     });
 
+    projectMessages.forEach((message) => {
+      feedItems.push({
+        id: `project-chat:${message.id}`,
+        sourceType: 'project-chat',
+        sourceId: message.id,
+        conversationType: 'chat',
+        conversationId: message.threadId,
+        replyChannel: 'chat',
+        actionRequired: true,
+        type: 'Project Chat',
+        transport: 'In-app Chat',
+        context: message.thread.project
+          ? `Project · ${message.thread.project.projectName}`
+          : 'Project Chat',
+        user: message.senderType === 'professional' ? 'Professional' : 'Client',
+        status: 'open',
+        assignmentStatus: 'unassigned',
+        preview: message.content,
+        createdAt: message.createdAt.toISOString(),
+        href: '/admin/messaging?view=general&type=project',
+      });
+    });
+
     notificationLogs.forEach((log) => {
+      const notificationStatus = String(log.status).toLowerCase();
+      const isActionRequired = notificationStatus === 'pending' || notificationStatus === 'failed' || notificationStatus === 'undeliverable';
       const recipient = log.user
         ? `${log.user.firstName || ''} ${log.user.surname || ''}`.trim() || log.user.email || 'Client'
         : log.professional?.fullName || log.professional?.businessName || log.professional?.email || 'Unknown recipient';
@@ -673,6 +746,10 @@ export class UpdatesService {
         id: `notification:${log.id}`,
         sourceType: 'notification',
         sourceId: log.id,
+        conversationType: 'none',
+        conversationId: undefined,
+        replyChannel: 'none',
+        actionRequired: isActionRequired,
         type: 'Platform Notification',
         transport: String(log.channel).toUpperCase(),
         context: log.eventType,
@@ -702,6 +779,10 @@ export class UpdatesService {
         id: `safety:${project.id}`,
         sourceType: 'safety',
         sourceId: project.id,
+        conversationType: 'none',
+        conversationId: undefined,
+        replyChannel: 'none',
+        actionRequired: true,
         type: 'Safety Triage',
         transport: 'Internal',
         context: `Project · ${project.projectName}`,
@@ -782,7 +863,11 @@ export class UpdatesService {
       }
     }
 
-    const scopedItems = feedItems.filter((item) => {
+    const actionableItems = includeInfo
+      ? feedItems
+      : feedItems.filter((item) => item.actionRequired);
+
+    const scopedItems = actionableItems.filter((item) => {
       if (scope === 'all') return true;
       if (scope === 'unassigned') return item.assignmentStatus === 'unassigned';
       if (scope === 'my') return item.isMine === true;
