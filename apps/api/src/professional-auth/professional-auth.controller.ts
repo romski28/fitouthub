@@ -57,4 +57,11 @@ export class ProfessionalAuthController {
   async refresh(@Body() body: { refreshToken: string }) {
     return this.professionalAuthService.refreshToken(body.refreshToken);
   }
+
+  @Post('logout-all')
+  @UseGuards(AuthGuard('jwt-professional'))
+  @HttpCode(HttpStatus.OK)
+  async logoutAll(@Request() req: any) {
+    return this.professionalAuthService.logoutAll(req.user.id);
+  }
 }

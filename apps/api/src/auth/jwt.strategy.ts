@@ -28,6 +28,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       return null;
     }
 
+    // Enforce single active session: reject if sessionToken in DB has been rotated
+    // (e.g. user logged in on another device after this token was issued)
+    if (user.sessionToken && payload.sessionToken !== user.sessionToken) {
+      return null;
+    }
+
     // Include role so downstream can authorize correctly (client vs admin)
     return {
       id: user.id,

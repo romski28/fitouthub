@@ -22,6 +22,6 @@ export class JwtProfessionalStrategy extends PassportStrategy(
       return null;
     }
 
-    return this.professionalAuthService.validateProfessional(payload.sub);
+    return this.professionalAuthService.validateProfessional(payload.sub, payload.sessionToken);
   }
 }

@@ -111,6 +111,7 @@ model User {
   otpCode                         String?
   otpExpiresAt                    DateTime?
   otpVerifiedAt                   DateTime?
+  sessionToken                    String?
   contractsSignedAsProfessional   Project[]               @relation("ProfessionalContractSignature")
   agreedToTermsAt                DateTime?
   agreedToTermsVersion            String?                 @default("1.0")
@@ -224,6 +225,7 @@ model Professional {
   otpCode                 String?
   otpExpiresAt            DateTime?
   otpVerifiedAt           DateTime?
+  sessionToken            String?
 }
 
 model Project {

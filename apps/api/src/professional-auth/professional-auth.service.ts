@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { ProfessionalLoginDto, ProfessionalRegisterDto } from './dto';
 import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
@@ -105,7 +106,12 @@ export class ProfessionalAuthService {
     }
 
     // Generate tokens
-    const tokens = this.generateTokens(professional.id);
+    const sessionToken = randomUUID();
+    await (this.prisma as any).professional.update({
+      where: { id: professional.id },
+      data: { sessionToken },
+    });
+    const tokens = this.generateTokens(professional.id, sessionToken);
 
     return {
       success: true,
@@ -204,8 +210,15 @@ export class ProfessionalAuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // Issue session token — invalidates any existing session on another device
+    const sessionToken = randomUUID();
+    await (this.prisma as any).professional.update({
+      where: { id: professional.id },
+      data: { sessionToken },
+    });
+
     // Generate tokens
-    const tokens = this.generateTokens(professional.id);
+    const tokens = this.generateTokens(professional.id, sessionToken);
 
     try {
       await (this.prisma as any).activityLog.create({
@@ -347,7 +360,7 @@ export class ProfessionalAuthService {
     };
   }
 
-  async validateProfessional(id: string) {
+  async validateProfessional(id: string, sessionToken?: string) {
     const professional = await (this.prisma as any).professional.findUnique({
       where: { id },
     });
@@ -356,11 +369,19 @@ export class ProfessionalAuthService {
       throw new UnauthorizedException('Professional not found');
     }
 
+    // Enforce single active session
+    if (sessionToken !== undefined && professional.sessionToken && sessionToken !== professional.sessionToken) {
+      throw new UnauthorizedException('Session expired — please log in again');
+    }
+
     return professional;
   }
 
-  private generateTokens(professionalId: string) {
-    const payload = { sub: professionalId, type: 'professional' };
+  private generateTokens(professionalId: string, sessionToken?: string) {
+    const payload: Record<string, any> = { sub: professionalId, type: 'professional' };
+    if (sessionToken) {
+      payload.sessionToken = sessionToken;
+    }
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m',
@@ -384,8 +405,15 @@ export class ProfessionalAuthService {
       // Validate professional still exists
       await this.validateProfessional(decoded.sub);
 
+      // Rotate session token on refresh
+      const sessionToken = randomUUID();
+      await (this.prisma as any).professional.update({
+        where: { id: decoded.sub },
+        data: { sessionToken },
+      });
+
       // Generate new tokens
-      const tokens = this.generateTokens(decoded.sub);
+      const tokens = this.generateTokens(decoded.sub, sessionToken);
 
       return {
         success: true,
@@ -395,6 +423,14 @@ export class ProfessionalAuthService {
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async logoutAll(professionalId: string) {
+    await (this.prisma as any).professional.update({
+      where: { id: professionalId },
+      data: { sessionToken: null },
+    });
+    return { success: true };
   }
 
   private async sendProfessionalOtp(

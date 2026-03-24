@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { RegisterDto, LoginDto } from './dto';
 import * as jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
 import { NotificationChannel } from '@prisma/client';
@@ -106,8 +107,15 @@ export class AuthService {
       };
     }
 
+    // Issue session token (last-writer-wins: new login invalidates older sessions)
+    const sessionToken = randomUUID();
+    await (this.prisma as any).user.update({
+      where: { id: user.id },
+      data: { sessionToken },
+    });
+
     // Generate tokens
-    const tokens = this.generateTokens(user.id, user.role);
+    const tokens = this.generateTokens(user.id, user.role, sessionToken);
 
     return {
       success: true,
@@ -160,7 +168,13 @@ export class AuthService {
       },
     });
 
-    const tokens = this.generateTokens(updatedUser.id, updatedUser.role);
+    const sessionToken = randomUUID();
+    await this.prisma.user.update({
+      where: { id: updatedUser.id },
+      data: { sessionToken } as any,
+    });
+
+    const tokens = this.generateTokens(updatedUser.id, updatedUser.role, sessionToken);
 
     return {
       success: true,
@@ -230,8 +244,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // Issue session token — invalidates any existing session on another device
+    const sessionToken = randomUUID();
+    await (this.prisma as any).user.update({
+      where: { id: user.id },
+      data: { sessionToken },
+    });
+
     // Generate tokens
-    const tokens = this.generateTokens(user.id, user.role);
+    const tokens = this.generateTokens(user.id, user.role, sessionToken);
 
     return {
       success: true,
@@ -269,8 +290,15 @@ export class AuthService {
         throw new UnauthorizedException('User not found');
       }
 
+      // Rotate session token on refresh to keep session aligned
+      const sessionToken = randomUUID();
+      await (this.prisma as any).user.update({
+        where: { id: userId },
+        data: { sessionToken },
+      });
+
       // Generate new tokens
-      const tokens = this.generateTokens(user.id, user.role);
+      const tokens = this.generateTokens(user.id, user.role, sessionToken);
 
       return {
         success: true,
@@ -282,7 +310,15 @@ export class AuthService {
     }
   }
 
-  private generateTokens(userId: string, role?: string) {
+  async logoutAll(userId: string) {
+    await (this.prisma as any).user.update({
+      where: { id: userId },
+      data: { sessionToken: null },
+    });
+    return { success: true };
+  }
+
+  private generateTokens(userId: string, role?: string, sessionToken?: string) {
     const jwtSecret = process.env.JWT_SECRET || 'secret-key';
     const jwtRefreshSecret =
       process.env.JWT_REFRESH_SECRET || 'refresh-secret-key';
@@ -292,6 +328,9 @@ export class AuthService {
     const payload: any = { sub: userId };
     if (role) {
       payload.role = role;
+    }
+    if (sessionToken) {
+      payload.sessionToken = sessionToken;
     }
 
     const accessToken = jwt.sign(payload, jwtSecret, {
