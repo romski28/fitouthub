@@ -471,7 +471,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   const isCurrent = index === currentTimelineStepIndex;
                   const isFuture = index > currentTimelineStepIndex;
                   const currentStepHref = `/projects/${project.id}?tab=${encodeURIComponent(step.tab)}`;
-                  const currentActionLabel = primaryNextStep?.actionLabel || step.title;
+                  const currentActionLabel =
+                    primaryNextStep?.actionLabel && primaryNextStep.actionLabel !== step.title
+                      ? primaryNextStep.actionLabel
+                      : null;
 
                   const toneClasses = isComplete
                     ? {
@@ -517,13 +520,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                               <div>
                                 <p className={`text-sm font-semibold ${toneClasses.text}`}>{step.title}</p>
-                                {isCurrent && currentActionLabel !== step.title && (
+                                {isCurrent && currentActionLabel && (
                                   <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/90">
-                                    Next action: {currentActionLabel}
+                                    Action: {currentActionLabel}
                                   </p>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 self-start">
+                              <div className="flex flex-col items-start gap-2 self-start">
                                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${toneClasses.text}`}>
                                   {toneClasses.label}
                                 </span>
@@ -532,7 +535,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                                     href={currentStepHref}
                                     className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
                                   >
-                                    Open current step
+                                    Open stage
                                   </Link>
                                 )}
                               </div>
