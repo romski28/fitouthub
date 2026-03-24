@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
@@ -45,11 +45,19 @@ type AdminOpsSummary = {
 
 type AdminCommsFeedItem = {
   id: string;
+  sourceType: string;
+  sourceId: string;
   type: string;
   transport: string;
   context: string;
   user: string;
   status: string;
+  assignmentStatus: string;
+  claimedByAdminId?: string;
+  claimedByAdminName?: string;
+  assignedToAdminId?: string;
+  assignedToAdminName?: string;
+  isMine?: boolean;
   preview: string;
   createdAt: string;
   href: string;
@@ -60,7 +68,14 @@ type AdminCommsFeed = {
   generatedAt: string;
 };
 
+type AdminAssignee = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 type AdminTabKey = "dashboard" | "messaging" | "data-control" | "analytics";
+type FeedScope = "all" | "my" | "unassigned";
 
 const formatRelativeTime = (dateValue: string) => {
   const timestamp = new Date(dateValue).getTime();
@@ -127,7 +142,7 @@ function QuickCard({
 }
 
 export default function AdminDashboardPage() {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab: AdminTabKey =
@@ -141,6 +156,48 @@ export default function AdminDashboardPage() {
   const [feed, setFeed] = useState<AdminCommsFeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
+  const [feedScope, setFeedScope] = useState<FeedScope>("all");
+  const [assignees, setAssignees] = useState<AdminAssignee[]>([]);
+  const [selectedItem, setSelectedItem] = useState<AdminCommsFeedItem | null>(null);
+  const [assigningToAdminId, setAssigningToAdminId] = useState<string>("");
+  const [actionBusy, setActionBusy] = useState(false);
+
+  const fetchFeed = useCallback(async () => {
+    if (!accessToken || activeTab !== "dashboard") return;
+
+    setFeedLoading(true);
+    setFeedError(null);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL.replace(/\/$/, "")}/updates/admin-comms-feed?limit=80&scope=${feedScope}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          cache: "no-store",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to load communications feed");
+      }
+
+      const payload = (await response.json()) as AdminCommsFeed;
+      setFeed(payload.items || []);
+
+      if (selectedItem) {
+        const refreshedSelected = (payload.items || []).find(
+          (item) =>
+            item.sourceType === selectedItem.sourceType && item.sourceId === selectedItem.sourceId,
+        );
+        setSelectedItem(refreshedSelected || null);
+      }
+    } catch (error) {
+      setFeedError(error instanceof Error ? error.message : "Unable to load communications feed");
+    } finally {
+      setFeedLoading(false);
+    }
+  }, [accessToken, activeTab, feedScope, selectedItem]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -165,34 +222,70 @@ export default function AdminDashboardPage() {
   }, [accessToken]);
 
   useEffect(() => {
+    void fetchFeed();
+  }, [fetchFeed]);
+
+  useEffect(() => {
     if (!accessToken || activeTab !== "dashboard") return;
 
-    const fetchFeed = async () => {
-      setFeedLoading(true);
-      setFeedError(null);
+    const fetchAssignees = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/updates/admin-comms-feed?limit=80`, {
+        const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/updates/admin-comms-assignees`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
           cache: "no-store",
         });
-
-        if (!response.ok) {
-          throw new Error("Unable to load communications feed");
-        }
-
-        const payload = (await response.json()) as AdminCommsFeed;
-        setFeed(payload.items || []);
-      } catch (error) {
-        setFeedError(error instanceof Error ? error.message : "Unable to load communications feed");
-      } finally {
-        setFeedLoading(false);
+        if (!response.ok) return;
+        const payload = (await response.json()) as AdminAssignee[];
+        setAssignees(payload || []);
+      } catch {
+        // non-blocking
       }
     };
 
-    fetchFeed();
+    fetchAssignees();
   }, [accessToken, activeTab]);
+
+  useEffect(() => {
+    if (!selectedItem) {
+      setAssigningToAdminId("");
+      return;
+    }
+    setAssigningToAdminId(selectedItem.assignedToAdminId || "");
+  }, [selectedItem]);
+
+  const postAssignmentAction = async (
+    action: "claim" | "assign" | "release",
+    body: { sourceType: string; sourceId: string; assignedToAdminId?: string },
+  ) => {
+    if (!accessToken) return;
+
+    setActionBusy(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL.replace(/\/$/, "")}/updates/admin-comms-feed/${action}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update assignment");
+      }
+
+      await fetchFeed();
+    } catch (error) {
+      setFeedError(error instanceof Error ? error.message : "Failed to update assignment");
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   const messagingCards = useMemo(
     () => [
@@ -334,12 +427,30 @@ export default function AdminDashboardPage() {
                   Type, transport, context, user, and status across all admin-facing message channels.
                 </p>
               </div>
-              <Link
-                href="/admin/messaging?view=all"
-                className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
-              >
-                Open messaging workspace
-              </Link>
+              <div className="flex items-center gap-2">
+                <div className="inline-flex rounded-md border border-slate-600 bg-slate-900/60 p-0.5 text-[11px]">
+                  {(["all", "my", "unassigned"] as FeedScope[]).map((scope) => (
+                    <button
+                      key={scope}
+                      type="button"
+                      onClick={() => setFeedScope(scope)}
+                      className={`rounded px-2 py-1 font-semibold uppercase tracking-wide transition ${
+                        feedScope === scope
+                          ? "bg-emerald-600 text-white"
+                          : "text-slate-300 hover:bg-slate-800"
+                      }`}
+                    >
+                      {scope === "my" ? "My msgs" : scope}
+                    </button>
+                  ))}
+                </div>
+                <Link
+                  href="/admin/messaging?view=all"
+                  className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                >
+                  Workspace
+                </Link>
+              </div>
             </div>
 
             {feedLoading && (
@@ -372,11 +483,22 @@ export default function AdminDashboardPage() {
                   </thead>
                   <tbody>
                     {feed.map((item) => (
-                      <tr key={item.id} className="border-b border-slate-700/70 hover:bg-slate-800/60">
+                      <tr
+                        key={item.id}
+                        className="cursor-pointer border-b border-slate-700/70 hover:bg-slate-800/60"
+                        onClick={() => setSelectedItem(item)}
+                      >
                         <td className="px-3 py-2 text-white">
-                          <Link href={item.href} className="font-semibold text-emerald-300 hover:text-emerald-200">
+                          <button
+                            type="button"
+                            className="font-semibold text-emerald-300 hover:text-emerald-200"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedItem(item);
+                            }}
+                          >
                             {item.type}
-                          </Link>
+                          </button>
                         </td>
                         <td className="px-3 py-2 text-slate-200">{item.transport}</td>
                         <td className="px-3 py-2 text-slate-200">{item.context}</td>
@@ -425,6 +547,115 @@ export default function AdminDashboardPage() {
             {analyticsCards.map((card) => (
               <QuickCard key={card.title} {...card} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {selectedItem && (
+        <div className="fixed inset-0 z-30 flex justify-end bg-slate-950/55" onClick={() => setSelectedItem(null)}>
+          <div
+            className="h-full w-full max-w-md overflow-y-auto border-l border-slate-700 bg-gradient-to-b from-slate-900 to-slate-800 p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Message Drawer</p>
+                <h3 className="mt-1 text-lg font-semibold text-white">{selectedItem.type}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                className="rounded-md border border-slate-600 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-2 rounded-lg border border-slate-700 bg-slate-950/50 p-3 text-sm">
+              <p className="text-slate-200"><span className="text-slate-400">Transport:</span> {selectedItem.transport}</p>
+              <p className="text-slate-200"><span className="text-slate-400">Context:</span> {selectedItem.context}</p>
+              <p className="text-slate-200"><span className="text-slate-400">User:</span> {selectedItem.user}</p>
+              <p className="text-slate-200"><span className="text-slate-400">Message status:</span> {selectedItem.status.replace(/_/g, " ")}</p>
+              <p className="text-slate-200"><span className="text-slate-400">Ownership:</span> {selectedItem.assignmentStatus}</p>
+              {selectedItem.assignedToAdminName && (
+                <p className="text-slate-200"><span className="text-slate-400">Assigned to:</span> {selectedItem.assignedToAdminName}</p>
+              )}
+              {selectedItem.claimedByAdminName && (
+                <p className="text-slate-200"><span className="text-slate-400">Claimed by:</span> {selectedItem.claimedByAdminName}</p>
+              )}
+              <p className="text-slate-200"><span className="text-slate-400">Preview:</span> {selectedItem.preview}</p>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <button
+                type="button"
+                disabled={actionBusy || selectedItem.assignedToAdminId === user?.id}
+                onClick={() =>
+                  postAssignmentAction("claim", {
+                    sourceType: selectedItem.sourceType,
+                    sourceId: selectedItem.sourceId,
+                  })
+                }
+                className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                Claim as mine
+              </button>
+
+              <div className="rounded-lg border border-slate-700 bg-slate-950/50 p-3">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  Assign to admin
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={assigningToAdminId}
+                    onChange={(event) => setAssigningToAdminId(event.target.value)}
+                    className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-white"
+                  >
+                    <option value="">Select admin</option>
+                    {assignees.map((assignee) => (
+                      <option key={assignee.id} value={assignee.id}>
+                        {assignee.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={actionBusy || !assigningToAdminId}
+                    onClick={() =>
+                      postAssignmentAction("assign", {
+                        sourceType: selectedItem.sourceType,
+                        sourceId: selectedItem.sourceId,
+                        assignedToAdminId: assigningToAdminId,
+                      })
+                    }
+                    className="rounded-md border border-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"
+                  >
+                    Assign
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={actionBusy}
+                onClick={() =>
+                  postAssignmentAction("release", {
+                    sourceType: selectedItem.sourceType,
+                    sourceId: selectedItem.sourceId,
+                  })
+                }
+                className="w-full rounded-md border border-slate-500 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-700/60 disabled:opacity-50"
+              >
+                Release ownership
+              </button>
+
+              <Link
+                href={selectedItem.href}
+                className="inline-flex w-full items-center justify-center rounded-md border border-sky-400 px-3 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-500/10"
+              >
+                Open origin workspace
+              </Link>
+            </div>
           </div>
         </div>
       )}

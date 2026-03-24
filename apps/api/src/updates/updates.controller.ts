@@ -24,7 +24,11 @@ export class UpdatesController {
 
   @Get('admin-comms-feed')
   @UseGuards(CombinedAuthGuard)
-  async getAdminCommsFeed(@Req() req: any, @Query('limit') limit?: string) {
+  async getAdminCommsFeed(
+    @Req() req: any,
+    @Query('limit') limit?: string,
+    @Query('scope') scope?: 'all' | 'my' | 'unassigned',
+  ) {
     const userId = req.user?.id || req.user?.sub;
     const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
 
@@ -36,7 +40,94 @@ export class UpdatesController {
     }
 
     const parsedLimit = limit ? Number(limit) : undefined;
-    return this.updatesService.getAdminCommsFeed(parsedLimit);
+    return this.updatesService.getAdminCommsFeed(parsedLimit, userId, scope || 'all');
+  }
+
+  @Get('admin-comms-assignees')
+  @UseGuards(CombinedAuthGuard)
+  async getAdminCommsAssignees(@Req() req: any) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new BadRequestException('Missing user id in token');
+    }
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can access assignee list');
+    }
+
+    return this.updatesService.listAdminAssignees();
+  }
+
+  @Post('admin-comms-feed/claim')
+  @UseGuards(CombinedAuthGuard)
+  async claimAdminCommsFeedItem(
+    @Req() req: any,
+    @Body() body: { sourceType: string; sourceId: string },
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new BadRequestException('Missing user id in token');
+    }
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can claim messages');
+    }
+    if (!body?.sourceType || !body?.sourceId) {
+      throw new BadRequestException('sourceType and sourceId are required');
+    }
+
+    return this.updatesService.claimAdminCommsItem(userId, body.sourceType, body.sourceId);
+  }
+
+  @Post('admin-comms-feed/assign')
+  @UseGuards(CombinedAuthGuard)
+  async assignAdminCommsFeedItem(
+    @Req() req: any,
+    @Body() body: { sourceType: string; sourceId: string; assignedToAdminId: string },
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new BadRequestException('Missing user id in token');
+    }
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can assign messages');
+    }
+    if (!body?.sourceType || !body?.sourceId || !body?.assignedToAdminId) {
+      throw new BadRequestException('sourceType, sourceId, and assignedToAdminId are required');
+    }
+
+    return this.updatesService.assignAdminCommsItem(
+      userId,
+      body.sourceType,
+      body.sourceId,
+      body.assignedToAdminId,
+    );
+  }
+
+  @Post('admin-comms-feed/release')
+  @UseGuards(CombinedAuthGuard)
+  async releaseAdminCommsFeedItem(
+    @Req() req: any,
+    @Body() body: { sourceType: string; sourceId: string },
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new BadRequestException('Missing user id in token');
+    }
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can release messages');
+    }
+    if (!body?.sourceType || !body?.sourceId) {
+      throw new BadRequestException('sourceType and sourceId are required');
+    }
+
+    return this.updatesService.releaseAdminCommsItem(userId, body.sourceType, body.sourceId);
   }
 
   @Get('summary')

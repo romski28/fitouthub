@@ -76,11 +76,19 @@ export interface AdminOpsSummary {
 
 export interface AdminCommsFeedItem {
   id: string;
+  sourceType: string;
+  sourceId: string;
   type: string;
   transport: string;
   context: string;
   user: string;
   status: string;
+  assignmentStatus: string;
+  claimedByAdminId?: string;
+  claimedByAdminName?: string;
+  assignedToAdminId?: string;
+  assignedToAdminName?: string;
+  isMine?: boolean;
   preview: string;
   createdAt: string;
   href: string;
@@ -89,6 +97,12 @@ export interface AdminCommsFeedItem {
 export interface AdminCommsFeed {
   items: AdminCommsFeedItem[];
   generatedAt: string;
+}
+
+export interface AdminCommsAssignee {
+  id: string;
+  name: string;
+  email: string;
 }
 
 @Injectable()
@@ -297,7 +311,134 @@ export class UpdatesService {
     };
   }
 
-  async getAdminCommsFeed(limit?: number): Promise<AdminCommsFeed> {
+  private feedKey(sourceType: string, sourceId: string) {
+    return `${sourceType}:${sourceId}`;
+  }
+
+  private displayAdminName(admin?: { firstName?: string | null; surname?: string | null; email?: string | null } | null) {
+    if (!admin) return undefined;
+    const fullName = `${admin.firstName || ''} ${admin.surname || ''}`.trim();
+    return fullName || admin.email || undefined;
+  }
+
+  async listAdminAssignees(): Promise<AdminCommsAssignee[]> {
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'admin' },
+      select: {
+        id: true,
+        firstName: true,
+        surname: true,
+        email: true,
+      },
+      orderBy: [{ firstName: 'asc' }, { surname: 'asc' }],
+    });
+
+    return admins.map((admin) => ({
+      id: admin.id,
+      name: `${admin.firstName || ''} ${admin.surname || ''}`.trim() || admin.email,
+      email: admin.email,
+    }));
+  }
+
+  async claimAdminCommsItem(adminId: string, sourceType: string, sourceId: string) {
+    const assignment = await this.prisma.adminMessageAssignment.upsert({
+      where: {
+        sourceType_sourceId: {
+          sourceType,
+          sourceId,
+        },
+      },
+      create: {
+        sourceType,
+        sourceId,
+        claimedByAdminId: adminId,
+        assignedToAdminId: adminId,
+        status: 'claimed',
+      },
+      update: {
+        claimedByAdminId: adminId,
+        assignedToAdminId: adminId,
+        status: 'claimed',
+      },
+    });
+
+    return { success: true, assignment };
+  }
+
+  async assignAdminCommsItem(
+    adminId: string,
+    sourceType: string,
+    sourceId: string,
+    assignedToAdminId: string,
+  ) {
+    const assignment = await this.prisma.adminMessageAssignment.upsert({
+      where: {
+        sourceType_sourceId: {
+          sourceType,
+          sourceId,
+        },
+      },
+      create: {
+        sourceType,
+        sourceId,
+        claimedByAdminId: adminId,
+        assignedToAdminId,
+        status: assignedToAdminId === adminId ? 'claimed' : 'assigned',
+      },
+      update: {
+        claimedByAdminId: adminId,
+        assignedToAdminId,
+        status: assignedToAdminId === adminId ? 'claimed' : 'assigned',
+      },
+    });
+
+    return { success: true, assignment };
+  }
+
+  async releaseAdminCommsItem(adminId: string, sourceType: string, sourceId: string) {
+    const existing = await this.prisma.adminMessageAssignment.findUnique({
+      where: {
+        sourceType_sourceId: {
+          sourceType,
+          sourceId,
+        },
+      },
+    });
+
+    if (!existing) {
+      return { success: true };
+    }
+
+    if (
+      existing.claimedByAdminId &&
+      existing.claimedByAdminId !== adminId &&
+      existing.assignedToAdminId !== adminId
+    ) {
+      throw new BadRequestException('Only the owning admin can release this message');
+    }
+
+    await this.prisma.adminMessageAssignment.update({
+      where: {
+        sourceType_sourceId: {
+          sourceType,
+          sourceId,
+        },
+      },
+      data: {
+        claimedByAdminId: null,
+        assignedToAdminId: null,
+        status: 'unassigned',
+      },
+    });
+
+    return { success: true };
+  }
+
+  async getAdminCommsFeed(
+    limit?: number,
+    adminId?: string,
+    scope: 'all' | 'my' | 'unassigned' = 'all',
+  ): Promise<AdminCommsFeed> {
     const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(Number(limit), 10), 300) : 120;
 
     const [supportRequests, assistMessages, privateMessages, anonymousMessages, notificationLogs, aiProjects] =
@@ -441,6 +582,8 @@ export class UpdatesService {
         : 'Unassigned';
       feedItems.push({
         id: `support:${request.id}`,
+        sourceType: 'support',
+        sourceId: request.id,
         type: 'Support Request',
         transport: request.channel === 'whatsapp' ? 'WhatsApp' : 'Callback',
         context: request.project
@@ -448,6 +591,7 @@ export class UpdatesService {
           : 'Support Pool',
         user: request.clientName || request.clientEmail || request.fromNumber || 'Unknown client',
         status: request.status,
+        assignmentStatus: 'unassigned',
         preview: request.body,
         createdAt: request.updatedAt.toISOString(),
         href: '/admin/messaging?view=general&type=support',
@@ -460,6 +604,8 @@ export class UpdatesService {
         : 'Client';
       feedItems.push({
         id: `assist:${message.id}`,
+        sourceType: 'assist',
+        sourceId: message.id,
         type: 'Assist Message',
         transport: message.assistRequest.contactMethod === 'whatsapp'
           ? 'WhatsApp'
@@ -471,6 +617,7 @@ export class UpdatesService {
           : 'Assist Queue',
         user: author,
         status: message.assistRequest.status,
+        assignmentStatus: 'unassigned',
         preview: message.content,
         createdAt: message.createdAt.toISOString(),
         href: '/admin/messaging?view=assist',
@@ -487,11 +634,14 @@ export class UpdatesService {
 
       feedItems.push({
         id: `private:${message.id}`,
+        sourceType: 'private',
+        sourceId: message.id,
         type: message.senderType === 'professional' ? 'Professional Inbox' : 'Client Inbox',
         transport: 'In-app Chat',
         context: message.senderType === 'professional' ? 'FOH Professional Thread' : 'FOH Client Thread',
         user: userLabel,
         status: message.thread.status,
+        assignmentStatus: 'unassigned',
         preview: message.content,
         createdAt: message.createdAt.toISOString(),
         href: '/admin/messaging?view=general&type=support',
@@ -501,11 +651,14 @@ export class UpdatesService {
     anonymousMessages.forEach((message) => {
       feedItems.push({
         id: `anonymous:${message.id}`,
+        sourceType: 'anonymous',
+        sourceId: message.id,
         type: 'Anonymous Inbox',
         transport: 'In-app Chat',
         context: `Session · ${message.thread.sessionId.slice(0, 8)}`,
         user: 'Anonymous visitor',
         status: message.thread.status,
+        assignmentStatus: 'unassigned',
         preview: message.content,
         createdAt: message.createdAt.toISOString(),
         href: '/admin/messaging?view=general&type=anonymous',
@@ -518,11 +671,14 @@ export class UpdatesService {
         : log.professional?.fullName || log.professional?.businessName || log.professional?.email || 'Unknown recipient';
       feedItems.push({
         id: `notification:${log.id}`,
+        sourceType: 'notification',
+        sourceId: log.id,
         type: 'Platform Notification',
         transport: String(log.channel).toUpperCase(),
         context: log.eventType,
         user: recipient,
         status: log.status,
+        assignmentStatus: 'unassigned',
         preview: log.message,
         createdAt: log.createdAt.toISOString(),
         href: '/admin/activity-log',
@@ -544,11 +700,14 @@ export class UpdatesService {
 
       feedItems.push({
         id: `safety:${project.id}`,
+        sourceType: 'safety',
+        sourceId: project.id,
         type: 'Safety Triage',
         transport: 'Internal',
         context: `Project · ${project.projectName}`,
         user: 'Platform signal',
         status: project.isEmergency ? 'tagged_emergency' : 'needs_review',
+        assignmentStatus: 'unassigned',
         preview:
           typeof safety.recommendedAction === 'string' && safety.recommendedAction.trim()
             ? safety.recommendedAction
@@ -558,7 +717,79 @@ export class UpdatesService {
       });
     });
 
-    const items = feedItems
+    const uniqueKeys = Array.from(
+      new Set(feedItems.map((item) => this.feedKey(item.sourceType, item.sourceId))),
+    );
+
+    if (uniqueKeys.length > 0) {
+      const assignmentWhereOr = uniqueKeys.map((key) => {
+        const [sourceType, ...rest] = key.split(':');
+        return {
+          sourceType,
+          sourceId: rest.join(':'),
+        };
+      });
+
+      const assignments = await this.prisma.adminMessageAssignment.findMany({
+        where: {
+          OR: assignmentWhereOr,
+        },
+        include: {
+          claimedByAdmin: {
+            select: {
+              firstName: true,
+              surname: true,
+              email: true,
+            },
+          },
+          assignedToAdmin: {
+            select: {
+              firstName: true,
+              surname: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      const assignmentByKey = new Map(
+        assignments.map((assignment) => [
+          this.feedKey(assignment.sourceType, assignment.sourceId),
+          assignment,
+        ]),
+      );
+
+      for (const item of feedItems) {
+        const assignment = assignmentByKey.get(this.feedKey(item.sourceType, item.sourceId));
+        if (!assignment) continue;
+
+        item.claimedByAdminId = assignment.claimedByAdminId || undefined;
+        item.claimedByAdminName = this.displayAdminName(assignment.claimedByAdmin);
+        item.assignedToAdminId = assignment.assignedToAdminId || undefined;
+        item.assignedToAdminName = this.displayAdminName(assignment.assignedToAdmin);
+
+        if (assignment.assignedToAdminId && assignment.assignedToAdminId !== assignment.claimedByAdminId) {
+          item.assignmentStatus = 'assigned';
+        } else if (assignment.claimedByAdminId) {
+          item.assignmentStatus = 'claimed';
+        } else {
+          item.assignmentStatus = 'unassigned';
+        }
+
+        item.isMine =
+          !!adminId &&
+          (assignment.assignedToAdminId === adminId || assignment.claimedByAdminId === adminId);
+      }
+    }
+
+    const scopedItems = feedItems.filter((item) => {
+      if (scope === 'all') return true;
+      if (scope === 'unassigned') return item.assignmentStatus === 'unassigned';
+      if (scope === 'my') return item.isMine === true;
+      return true;
+    });
+
+    const items = scopedItems
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, safeLimit);
 
