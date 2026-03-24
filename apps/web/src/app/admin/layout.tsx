@@ -10,6 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -45,61 +46,63 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="hidden md:flex items-center gap-8">
               <div className="flex gap-4">
                 <Link
-                  href="/admin/professionals"
+                  href="/admin?tab=dashboard"
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >
-                  Professionals
+                  Dashboard
                 </Link>
                 <Link
-                  href="/admin/profile"
+                  href="/admin?tab=messaging"
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >
-                  Profile
+                  Messaging
                 </Link>
                 <Link
-                  href="/admin/users"
+                  href="/admin?tab=data-control"
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >
-                  Users
+                  Data Control
                 </Link>
                 <Link
-                  href="/admin/projects"
+                  href="/admin?tab=analytics"
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >
-                  Projects
-                </Link>
-                <Link
-                  href="/admin/foh-inbox"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                >
-                  Support Inbox
-                </Link>
-                <Link
-                  href="/admin/support"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                >
-                  Support Pool
-                </Link>
-                <Link
-                  href="/admin/trades"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                >
-                  Trades
+                  Analytics
                 </Link>
               </div>
-              <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
-                <span className="text-sm text-slate-600">
-                  {user.firstName} {user.surname}
-                </span>
+              <div className="relative border-l border-slate-200 pl-6">
                 <button
-                  onClick={() => {
-                    logout();
-                    router.push("/");
-                  }}
-                  className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+                  type="button"
+                  onClick={() => setProfileMenuOpen((value) => !value)}
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
                 >
-                  Logout
+                  {user.firstName} {user.surname}
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
+
+                {profileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-44 rounded-md border border-slate-200 bg-white py-1 shadow-lg z-20">
+                    <Link
+                      href="/admin/profile"
+                      className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                      onClick={() => setProfileMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        logout();
+                        router.push("/");
+                      }}
+                      className="block w-full text-left px-3 py-2 text-sm text-rose-700 hover:bg-rose-50"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -141,11 +144,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="md:hidden border-t border-slate-200 bg-slate-50">
             <div className="px-4 py-3 space-y-2">
               <Link
-                href="/admin/professionals"
+                href="/admin?tab=dashboard"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Professionals
+                Dashboard
+              </Link>
+              <Link
+                href="/admin?tab=messaging"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Messaging
+              </Link>
+              <Link
+                href="/admin?tab=data-control"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Data Control
+              </Link>
+              <Link
+                href="/admin?tab=analytics"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Analytics
               </Link>
               <Link
                 href="/admin/profile"
@@ -153,41 +177,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Profile
-              </Link>
-              <Link
-                href="/admin/users"
-                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Users
-              </Link>
-              <Link
-                href="/admin/projects"
-                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Projects
-              </Link>
-              <Link
-                href="/admin/foh-inbox"
-                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Support Inbox
-              </Link>
-              <Link
-                href="/admin/support"
-                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Support Pool
-              </Link>
-              <Link
-                href="/admin/trades"
-                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Trades
               </Link>
               <hr className="my-2" />
               <button

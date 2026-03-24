@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type AdminOpsSummary = {
   support: {
@@ -149,12 +150,29 @@ function QuickCard({
 }
 
 export default function AdminDashboardPage() {
-  const { user, accessToken } = useAuth();
-  const [activeTab, setActiveTab] = useState<AdminTabKey>("dashboard");
+  const { accessToken } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const activeTab: AdminTabKey =
+    requestedTab === "dashboard" ||
+    requestedTab === "messaging" ||
+    requestedTab === "data-control" ||
+    requestedTab === "analytics"
+      ? requestedTab
+      : "dashboard";
   const [opsSummary, setOpsSummary] = useState<AdminOpsSummary | null>(null);
   const [feed, setFeed] = useState<AdminCommsFeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
+
+  const setAdminTab = (tab: AdminTabKey) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
 
   useEffect(() => {
     if (!accessToken) return;
@@ -318,16 +336,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Admin</p>
-        <h1 className="mt-1 text-3xl font-bold">
-          Control Center{user?.firstName ? ` · ${user.firstName}` : ""}
-        </h1>
-        <p className="mt-2 text-sm text-slate-200/90">
-          Four focused sections: Dashboard, Messaging, Data Control, and Analytics.
-        </p>
-      </div>
-
       <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {tabMeta.map((tab) => {
@@ -336,7 +344,7 @@ export default function AdminDashboardPage() {
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => setAdminTab(tab.key)}
                 className={`rounded-lg border px-3 py-2 text-left transition ${
                   isActive
                     ? "border-emerald-500/60 bg-emerald-500/10"
@@ -406,17 +414,17 @@ export default function AdminDashboardPage() {
             )}
 
             {!feedLoading && !feedError && feed.length > 0 && (
-              <div className="overflow-x-auto">
+              <div className="max-h-[65vh] overflow-auto">
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50/80">
-                      <th className="px-3 py-2 text-left font-semibold text-slate-700">Type</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-700">Transport</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-700">Context</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-700">User</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-700">Status</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-700">Message</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-700">Time</th>
+                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Type</th>
+                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Transport</th>
+                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Context</th>
+                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">User</th>
+                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Status</th>
+                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Message</th>
+                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Time</th>
                     </tr>
                   </thead>
                   <tbody>
