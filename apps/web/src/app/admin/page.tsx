@@ -382,7 +382,7 @@ export default function AdminDashboardPage() {
                         <td className="px-3 py-2 text-slate-200">{item.context}</td>
                         <td className="px-3 py-2 text-slate-200">{item.user}</td>
                         <td className="px-3 py-2">
-                          <span className={`inline-flex h-7 w-32 items-center justify-center rounded-full px-3 text-[11px] font-semibold uppercase tracking-wide leading-none ${statusBadgeClass(item.status)}`}>
+                          <span className={`inline-flex h-7 w-36 items-center justify-center rounded-full px-3 text-center text-[11px] font-semibold uppercase tracking-wide leading-none whitespace-nowrap ${statusBadgeClass(item.status)}`}>
                             {item.status.replace(/_/g, " ")}
                           </span>
                         </td>

@@ -283,19 +283,23 @@ export class AuthService {
       // Verify user still exists
       const user = await (this.prisma as any).user.findUnique({
         where: { id: userId },
-        select: { id: true, role: true },
+        select: { id: true, role: true, sessionToken: true },
       });
 
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
 
-      // Rotate session token on refresh to keep session aligned
-      const sessionToken = randomUUID();
-      await (this.prisma as any).user.update({
-        where: { id: userId },
-        data: { sessionToken },
-      });
+      // Keep existing session token during refresh to avoid invalidating
+      // in-flight requests on initial page load. Only initialize if missing.
+      let sessionToken = user.sessionToken;
+      if (!sessionToken) {
+        sessionToken = randomUUID();
+        await (this.prisma as any).user.update({
+          where: { id: userId },
+          data: { sessionToken },
+        });
+      }
 
       // Generate new tokens
       const tokens = this.generateTokens(user.id, user.role, sessionToken);

@@ -403,14 +403,24 @@ export class ProfessionalAuthService {
       });
 
       // Validate professional still exists
-      await this.validateProfessional(decoded.sub);
-
-      // Rotate session token on refresh
-      const sessionToken = randomUUID();
-      await (this.prisma as any).professional.update({
+      const professional = await (this.prisma as any).professional.findUnique({
         where: { id: decoded.sub },
-        data: { sessionToken },
+        select: { id: true, sessionToken: true },
       });
+
+      if (!professional) {
+        throw new UnauthorizedException('Professional not found');
+      }
+
+      // Keep existing session token during refresh; initialize only if missing.
+      let sessionToken = professional.sessionToken;
+      if (!sessionToken) {
+        sessionToken = randomUUID();
+        await (this.prisma as any).professional.update({
+          where: { id: decoded.sub },
+          data: { sessionToken },
+        });
+      }
 
       // Generate new tokens
       const tokens = this.generateTokens(decoded.sub, sessionToken);
