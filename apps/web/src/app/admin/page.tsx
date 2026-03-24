@@ -185,19 +185,21 @@ export default function AdminDashboardPage() {
       const payload = (await response.json()) as AdminCommsFeed;
       setFeed(payload.items || []);
 
-      if (selectedItem) {
+      setSelectedItem((previousSelected) => {
+        if (!previousSelected) return null;
         const refreshedSelected = (payload.items || []).find(
           (item) =>
-            item.sourceType === selectedItem.sourceType && item.sourceId === selectedItem.sourceId,
+            item.sourceType === previousSelected.sourceType &&
+            item.sourceId === previousSelected.sourceId,
         );
-        setSelectedItem(refreshedSelected || null);
-      }
+        return refreshedSelected || null;
+      });
     } catch (error) {
       setFeedError(error instanceof Error ? error.message : "Unable to load communications feed");
     } finally {
       setFeedLoading(false);
     }
-  }, [accessToken, activeTab, feedScope, selectedItem]);
+  }, [accessToken, activeTab, feedScope]);
 
   useEffect(() => {
     if (!accessToken) return;
