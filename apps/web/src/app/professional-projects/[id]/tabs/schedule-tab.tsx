@@ -346,28 +346,28 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   return (
     <div className="space-y-6">
       {!isAwarded ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm text-amber-800">
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/15 p-4">
+          <p className="text-sm text-amber-200">
             📅 Schedule details will be available once the project is awarded to you.
           </p>
         </div>
       ) : (
         <>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-800">{error}</p>
+            <div className="rounded-md border border-rose-500/40 bg-rose-500/15 p-4">
+              <p className="text-sm font-medium text-rose-200">{error}</p>
             </div>
           )}
 
           {loading ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm text-slate-600">Loading schedule...</p>
+            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
+              <p className="text-sm text-slate-300">Loading schedule...</p>
             </div>
           ) : isAddingNew || editingIndex !== null ? (
             // FORM VIEW: Add/Edit mode
-            <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-white">
                   {isAddingNew ? 'Add New Task' : 'Edit Task'}
                 </h3>
               </div>
@@ -412,7 +412,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                     setEditingIndex(null);
                     setIsAddingNew(false);
                   }}
-                  className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center rounded-md border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-100 hover:bg-slate-700"
                 >
                   Cancel
                 </button>
@@ -420,11 +420,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             </div>
           ) : milestones.length === 0 ? (
             // EMPTY STATE
-            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm text-slate-600 mb-4">📋 No tasks set up yet.</p>
+            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
+              <p className="text-sm text-slate-300 mb-4">📋 No tasks set up yet.</p>
               <button
                 onClick={() => setIsAddingNew(true)}
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
               >
                 Add Task
               </button>
@@ -433,10 +433,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             // LIST VIEW: Showing tasks
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900">Tasks</h3>
+                <h3 className="text-lg font-semibold text-white">Tasks</h3>
                 <button
                   onClick={() => setIsAddingNew(true)}
-                  className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                  className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
                 >
                   + Add Task
                 </button>
@@ -454,7 +454,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 return (
                   <div
                     key={milestone.id || index}
-                    className="bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition overflow-hidden"
+                    className="bg-slate-900/60 rounded-lg border border-slate-700 hover:bg-slate-800/60 transition overflow-hidden"
                   >
                     <div className="flex items-stretch">
                       {/* Date Box */}
@@ -485,23 +485,23 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                       <div className="flex-1 p-3 flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start gap-2 mb-2">
-                            <h4 className="text-base font-semibold text-slate-900">
+                            <h4 className="text-base font-semibold text-white">
                               {milestone.title}
                             </h4>
                           </div>
 
                           <div className="flex items-center gap-1 flex-wrap mb-2">
-                            <span className="text-xs text-slate-600">
+                            <span className="text-xs text-slate-300">
                               {statusLabel}
                             </span>
                             {showProgressBar && (
                               <div className="w-24">
-                                <div className="relative h-3 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                                <div className="relative h-3 bg-slate-700 rounded-full overflow-hidden border border-slate-600">
                                   <div
                                     className="absolute left-0 top-0 h-full bg-emerald-500"
                                     style={{ width: `${statusPercent}%` }}
                                   />
-                                  <span className="relative z-10 block text-[8px] font-semibold text-slate-800 text-center leading-3">
+                                  <span className="relative z-10 block text-[8px] font-semibold text-white text-center leading-3">
                                     {statusPercent}%
                                   </span>
                                 </div>
@@ -510,12 +510,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                           </div>
 
                           {milestone.accessDeclined && (
-                            <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1">
-                              <p className="text-[11px] font-semibold text-amber-800">
+                            <div className="mb-2 rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-1">
+                              <p className="text-[11px] font-semibold text-amber-200">
                                 ⚠ Access blocked for requested date{milestone.plannedEndDate ? 's' : ''}
                               </p>
                               {milestone.accessDeclinedReason && (
-                                <p className="text-[11px] text-amber-700">
+                                <p className="text-[11px] text-amber-300">
                                   Client reason: {milestone.accessDeclinedReason}
                                 </p>
                               )}
@@ -523,7 +523,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                           )}
 
                           {milestone.description && (
-                            <p className="text-xs text-slate-600 mb-2">
+                            <p className="text-xs text-slate-300 mb-2">
                               {milestone.description}
                             </p>
                           )}
@@ -533,14 +533,14 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                         <div className="flex gap-2 flex-shrink-0">
                           <button
                             onClick={() => setEditingIndex(index)}
-                            className="p-2 text-slate-600 hover:bg-slate-100 rounded transition"
+                            className="p-2 text-slate-300 hover:bg-slate-700 rounded transition"
                             title="Edit task"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteTask(index)}
-                            className="p-2 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded transition"
+                            className="p-2 text-slate-300 hover:bg-rose-500/20 hover:text-rose-200 rounded transition"
                             title="Delete task"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -558,22 +558,22 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm shadow-lg">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete Task?</h3>
-            <p className="text-sm text-slate-600 mb-6">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 max-w-sm shadow-lg">
+            <h3 className="text-lg font-semibold text-white mb-2">Delete Task?</h3>
+            <p className="text-sm text-slate-300 mb-6">
               Are you sure you want to delete <strong>{milestones[deleteConfirmIndex]?.title}</strong>? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirmIndex(null)}
-                className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded hover:bg-slate-200 transition"
+                className="flex-1 px-4 py-2 text-sm font-medium text-slate-100 bg-slate-800 rounded hover:bg-slate-700 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition"
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-rose-600 rounded hover:bg-rose-700 transition"
               >
                 Delete
               </button>

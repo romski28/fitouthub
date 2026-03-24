@@ -977,10 +977,10 @@ export default function ProjectDetailPage() {
 
   if (isLoggedIn === undefined || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-4 text-gray-600">Loading project...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+          <p className="mt-4 text-slate-300">Loading project...</p>
         </div>
       </div>
     );
@@ -994,12 +994,12 @@ export default function ProjectDetailPage() {
     return (
       <>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Project not found</p>
+          <p className="text-slate-300">Project not found</p>
           <Link
             href="/professional-projects"
-            className="mt-4 inline-block text-blue-600 hover:text-blue-700"
+            className="mt-4 inline-block text-emerald-400 hover:text-emerald-300"
           >
             Back to Projects
           </Link>

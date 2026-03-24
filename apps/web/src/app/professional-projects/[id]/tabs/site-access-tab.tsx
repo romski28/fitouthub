@@ -102,18 +102,18 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           onToggle={() => onToggleAccordion('site-access-status')}
         >
           {siteAccessError && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 mb-4">
+            <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200 mb-4">
               {siteAccessError}
             </div>
           )}
 
           {siteAccessLoading ? (
-            <p className="text-sm text-slate-600">Loading site access status...</p>
+            <p className="text-sm text-slate-300">Loading site access status...</p>
           ) : !siteAccessStatus ? (
-            <p className="text-sm text-slate-600">No site access data</p>
+            <p className="text-sm text-slate-300">No site access data</p>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm text-slate-700">
+              <div className="text-sm text-slate-200">
                 <span className="font-semibold">Status:</span>{' '}
                 {siteAccessStatus.requestStatus === 'none'
                   ? 'No request yet'
@@ -121,25 +121,25 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               </div>
 
               {siteAccessStatus.requestStatus === 'pending' && (
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
                   Awaiting client approval. You can still submit a quote without site access.
                 </div>
               )}
 
               {siteAccessStatus.requestStatus === 'denied' && (
-                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
                   Site access denied{siteAccessStatus.reasonDenied ? `: ${siteAccessStatus.reasonDenied}` : '.'}
                 </div>
               )}
 
               {siteAccessStatus.requestStatus === 'approved_no_visit' && (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                   Site access approved (no visit required)
                 </div>
               )}
 
               {siteAccessStatus.requestStatus === 'approved_visit_scheduled' && (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                   Visit approved
                   {siteAccessStatus.visitScheduledAt
                     ? ` for ${new Date(siteAccessStatus.visitScheduledAt).toLocaleString()}`
@@ -150,34 +150,34 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               )}
 
               {siteAccessStatus.requestStatus === 'visited' && (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                   Site visited{siteAccessStatus.visitedAt ? ` on ${new Date(siteAccessStatus.visitedAt).toLocaleDateString()}` : '.'}
                 </div>
               )}
 
               {siteAccessStatus.hasAccess && siteAccessStatus.siteAccessData && (
-                <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <div className="grid gap-3 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Address</p>
-                    <p className="font-medium text-slate-900">{siteAccessStatus.siteAccessData.addressFull}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Address</p>
+                    <p className="font-medium text-white">{siteAccessStatus.siteAccessData.addressFull}</p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Unit / Floor</p>
-                      <p className="text-slate-800">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Unit / Floor</p>
+                      <p className="text-slate-200">
                         {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
                           .filter(Boolean)
                           .join(' / ') || '—'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Access</p>
-                      <p className="text-slate-800">{siteAccessStatus.siteAccessData.accessDetails || '—'}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Access</p>
+                      <p className="text-slate-200">{siteAccessStatus.siteAccessData.accessDetails || '—'}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">On-site Contact</p>
-                    <p className="text-slate-800">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">On-site Contact</p>
+                    <p className="text-slate-200">
                       {[siteAccessStatus.siteAccessData.onSiteContactName, siteAccessStatus.siteAccessData.onSiteContactPhone]
                         .filter(Boolean)
                         .join(' · ') || '—'}
@@ -191,13 +191,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   type="button"
                   onClick={onRequestSiteAccess}
                   disabled={siteAccessActionLoading || siteAccessStatus.requestStatus === 'pending'}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition"
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                 >
                   {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
                 </button>
               )}
 
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 You can submit quotes without site access. Those quotes will be marked as remote.
               </p>
             </div>
@@ -215,58 +215,58 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           >
             <div className="space-y-4">
               {/* Request New Visit */}
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-4 space-y-3">
-                <h3 className="font-semibold text-slate-900 text-sm">Request Site Visit</h3>
+              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-3">
+                <h3 className="font-semibold text-white text-sm">Request Site Visit</h3>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <div className="flex-1">
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Date</label>
                     <input
                       type="date"
                       value={visitDate}
                       onChange={(e) => onUpdateVisitDate(e.target.value)}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Time</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Time</label>
                     <input
                       type="time"
                       value={visitTime}
                       onChange={(e) => onUpdateVisitTime(e.target.value)}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={onRequestSiteVisit}
                     disabled={siteVisitActionLoading}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition whitespace-nowrap"
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition whitespace-nowrap"
                   >
                     {siteVisitActionLoading ? 'Requesting...' : 'Request'}
                   </button>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Notes (optional)</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Notes (optional)</label>
                   <input
                     value={visitRequestNotes}
                     onChange={(e) => onUpdateVisitRequestNotes(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500"
                     placeholder="Access details, parking, timing, etc."
                   />
                 </div>
               </div>
 
               {siteVisitError && (
-                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
                   {siteVisitError}
                 </div>
               )}
 
               {/* Visit History */}
               {siteVisitLoading ? (
-                <p className="text-sm text-slate-600">Loading site visits...</p>
+                <p className="text-sm text-slate-300">Loading site visits...</p>
               ) : siteVisits.length === 0 ? (
-                <p className="text-sm text-slate-600">No site visits scheduled yet.</p>
+                <p className="text-sm text-slate-300">No site visits scheduled yet.</p>
               ) : (
                 <div className="space-y-3">
                   {siteVisits.map((visit) => {
@@ -274,24 +274,24 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                     const proposedByClient = visit.proposedByRole === 'client';
 
                     return (
-                      <div key={visit.id} className="rounded-md border border-slate-200 bg-white p-3 text-sm">
+                      <div key={visit.id} className="rounded-md border border-slate-700 bg-slate-900/60 p-3 text-sm">
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div>
-                            <p className="font-semibold text-slate-900">
+                            <p className="font-semibold text-white">
                               {proposedByClient ? 'Client proposed visit' : 'You proposed visit'}
                             </p>
-                            <p className="text-xs text-slate-500">{new Date(visit.proposedAt).toLocaleString()}</p>
+                            <p className="text-xs text-slate-400">{new Date(visit.proposedAt).toLocaleString()}</p>
                           </div>
-                          <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 whitespace-nowrap">
+                          <span className="rounded-full bg-slate-700 px-2 py-1 text-xs font-semibold text-slate-200 whitespace-nowrap border border-slate-600">
                             {visit.status.replace('_', ' ')}
                           </span>
                         </div>
 
-                        {visit.notes && <p className="text-xs text-slate-600 mb-2">Notes: {visit.notes}</p>}
-                        {visit.responseNotes && <p className="text-xs text-slate-600 mb-2">Response: {visit.responseNotes}</p>}
+                        {visit.notes && <p className="text-xs text-slate-300 mb-2">Notes: {visit.notes}</p>}
+                        {visit.responseNotes && <p className="text-xs text-slate-300 mb-2">Response: {visit.responseNotes}</p>}
 
                         {isPending && proposedByClient && (
-                          <div className="space-y-2 mt-3 pt-3 border-t border-slate-200">
+                          <div className="space-y-2 mt-3 pt-3 border-t border-slate-700">
                             <input
                               value={visitResponseNotes[visit.id] || ''}
                               onChange={(e) =>
@@ -300,7 +300,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                   [visit.id]: e.target.value,
                                 })
                               }
-                              className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs"
+                              className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500"
                               placeholder="Add a response note (optional)"
                             />
                             <div className="flex gap-2">
@@ -325,7 +325,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                         )}
 
                         {isPending && !proposedByClient && (
-                          <p className="text-xs text-slate-600 mt-2">Awaiting client response.</p>
+                          <p className="text-xs text-slate-400 mt-2">Awaiting client response.</p>
                         )}
                       </div>
                     );
@@ -335,13 +335,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
               {/* Complete Visit */}
               {acceptedVisit && (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-emerald-900">Complete Site Visit</p>
+                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-emerald-200">Complete Site Visit</p>
                   <textarea
                     value={visitNotes}
                     onChange={(e) => onUpdateVisitNotes(e.target.value)}
                     rows={3}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                     placeholder="Add any notes from the site visit"
                   />
                   <button

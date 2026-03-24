@@ -79,15 +79,15 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch contract');
+        throw new Error(errorData.message || 'Failed to fetch agreement');
       }
 
       const data = await response.json();
       setContract(data);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to load contract';
-      console.error('Error fetching contract:', err);
+        err instanceof Error ? err.message : 'Failed to load agreement';
+      console.error('Error fetching agreement:', err);
       setError(message);
       toast.error(message);
     } finally {
@@ -116,12 +116,12 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to sign contract');
+        throw new Error(errorData.message || 'Failed to sign agreement');
       }
 
       const result = await response.json();
       await showWorkflowSuccessToast({
-        successMessage: 'Contract signed successfully!',
+        successMessage: 'Agreement signed successfully!',
         projectId,
         token: accessToken,
         preferFallbackGuidance: true,
@@ -136,7 +136,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
               nextStepLabel: 'Wait for client signature',
               canActNow: false,
               waitReason:
-                'No action needed now; the client needs to sign the contract.',
+                'No action needed now; the client needs to sign the agreement.',
             },
       });
 
@@ -144,8 +144,8 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       await fetchContract();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to sign contract';
-      console.error('Error signing contract:', err);
+        err instanceof Error ? err.message : 'Failed to sign agreement';
+      console.error('Error signing agreement:', err);
       toast.error(message);
     } finally {
       setSigning(false);
@@ -162,9 +162,9 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
   if (error) {
     return (
-      <div className="rounded-lg bg-rose-50 border border-rose-200 p-6 text-center">
+      <div className="rounded-lg bg-rose-500/15 border border-rose-500/40 p-6 text-center">
         <svg
-          className="mx-auto h-12 w-12 text-rose-400 mb-3"
+          className="mx-auto h-12 w-12 text-rose-300 mb-3"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -176,7 +176,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
           />
         </svg>
-        <p className="text-rose-800 font-medium">{error}</p>
+        <p className="text-rose-200 font-medium">{error}</p>
       </div>
     );
   }
@@ -185,7 +185,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Contract Header */}
+      {/* Agreement Header */}
       <div className="rounded-lg bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-6">
         <div className="flex items-start justify-between">
           <div>
@@ -203,14 +203,14 @@ export const ContractTab: React.FC<ContractTabProps> = ({
           </div>
           <div>
             {contract.isFullySigned ? (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
                 <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 Fully Signed
               </span>
             ) : (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-200 border border-amber-500/40">
                 <svg className="w-4 h-4 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                 </svg>
@@ -224,22 +224,22 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       {/* Signature Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Client Signature */}
-        <div className="rounded-lg border border-slate-200 p-4">
-          <h3 className="text-sm font-medium text-slate-700 mb-3">Client Signature</h3>
+        <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+          <h3 className="text-sm font-medium text-slate-200 mb-3">Client Signature</h3>
           {contract.clientSignedAt ? (
             <div className="space-y-2">
-              <div className="flex items-center text-emerald-700">
+              <div className="flex items-center text-emerald-200">
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span className="font-medium">Signed</span>
               </div>
               {contract.clientSignedBy && (
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-300">
                   {contract.clientSignedBy.firstName} {contract.clientSignedBy.surname}
                 </p>
               )}
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 {formatDate(contract.clientSignedAt)}
               </p>
             </div>
@@ -254,22 +254,22 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         </div>
 
         {/* Professional Signature */}
-        <div className="rounded-lg border border-slate-200 p-4">
-          <h3 className="text-sm font-medium text-slate-700 mb-3">Professional Signature</h3>
+        <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+          <h3 className="text-sm font-medium text-slate-200 mb-3">Professional Signature</h3>
           {contract.professionalSignedAt ? (
             <div className="space-y-2">
-              <div className="flex items-center text-emerald-700">
+              <div className="flex items-center text-emerald-200">
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span className="font-medium">Signed</span>
               </div>
               {contract.professionalSignedBy && (
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-300">
                   {contract.professionalSignedBy.firstName} {contract.professionalSignedBy.surname}
                 </p>
               )}
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 {formatDate(contract.professionalSignedAt)}
               </p>
             </div>
@@ -284,14 +284,14 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         </div>
       </div>
 
-      {/* Contract Content */}
-      <div className="rounded-lg border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 p-4">
-          <h3 className="text-sm font-medium text-slate-700">Contract Document</h3>
+      {/* Agreement Content */}
+      <div className="rounded-lg border border-slate-700 bg-slate-900/60">
+        <div className="border-b border-slate-700 p-4">
+          <h3 className="text-sm font-medium text-white">Agreement</h3>
         </div>
         <div className="p-6">
-          <div className="bg-slate-50 rounded p-6 border border-slate-200 max-h-[600px] overflow-y-auto">
-            <pre className="whitespace-pre-wrap text-sm text-slate-800 font-mono leading-relaxed">
+          <div className="bg-slate-900 rounded p-6 border border-slate-700 max-h-[600px] overflow-y-auto">
+            <pre className="whitespace-pre-wrap text-sm text-slate-200 font-mono leading-relaxed">
               {contract.contractContent}
             </pre>
           </div>
@@ -304,7 +304,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
           <button
             onClick={handleSignContract}
             disabled={signing}
-            className="inline-flex items-center px-6 py-3 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {signing ? (
               <>
@@ -319,7 +319,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
                 <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
-                Sign Contract as Professional
+                Sign Agreement as Professional
               </>
             )}
           </button>
@@ -328,9 +328,9 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       {/* Fully Signed Notice */}
       {contract.isFullySigned && (
-        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-center">
+        <div className="rounded-lg bg-emerald-500/15 border border-emerald-500/40 p-4 text-center">
           <svg
-            className="mx-auto h-10 w-10 text-emerald-600 mb-2"
+            className="mx-auto h-10 w-10 text-emerald-300 mb-2"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -342,10 +342,10 @@ export const ContractTab: React.FC<ContractTabProps> = ({
               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <p className="text-emerald-800 font-medium">
-            Contract fully signed by both parties
+          <p className="text-emerald-200 font-medium">
+            Agreement fully signed by both parties
           </p>
-          <p className="text-emerald-700 text-sm mt-1">
+          <p className="text-emerald-300 text-sm mt-1">
             Work can now proceed according to the agreed terms
           </p>
         </div>
