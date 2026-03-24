@@ -329,8 +329,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   const handleTimelineWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     if (event.deltaY === 0) return;
-
-    event.preventDefault();
     setTimelineStartIndex((prev) => {
       if (event.deltaY > 0) {
         return Math.min(maxTimelineStartIndex, prev + 1);
@@ -472,6 +470,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   const isComplete = index < currentTimelineStepIndex;
                   const isCurrent = index === currentTimelineStepIndex;
                   const isFuture = index > currentTimelineStepIndex;
+                  const currentStepHref = `/projects/${project.id}?tab=${encodeURIComponent(step.tab)}`;
+                  const currentActionLabel = primaryNextStep?.actionLabel || step.title;
 
                   const toneClasses = isComplete
                     ? {
@@ -510,39 +510,45 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       key={step.id}
                       className={`rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-3 flex-1">
                           <span className={`mt-1 h-2.5 w-2.5 rounded-full ${toneClasses.dot}`} />
-                          <div>
-                            <p className={`text-sm font-semibold ${toneClasses.text}`}>{step.title}</p>
+                          <div className="flex-1 space-y-2">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <p className={`text-sm font-semibold ${toneClasses.text}`}>{step.title}</p>
+                                {isCurrent && currentActionLabel !== step.title && (
+                                  <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/90">
+                                    Next action: {currentActionLabel}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 self-start">
+                                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${toneClasses.text}`}>
+                                  {toneClasses.label}
+                                </span>
+                                {isCurrent && (
+                                  <Link
+                                    href={currentStepHref}
+                                    className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                                  >
+                                    Open current step
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
                             <p className="text-xs text-slate-400">{step.description}</p>
+                            {isCurrent && primaryNextStep?.description && (
+                              <p className="text-xs text-slate-300">
+                                {primaryNextStep.description}
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${toneClasses.text}`}>
-                          {toneClasses.label}
-                        </span>
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            )}
-
-            {!timelineLoading && currentTimelineStep && (
-              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Current step action</p>
-                <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-emerald-200">{primaryNextStep?.actionLabel || currentTimelineStep.title}</p>
-                  <Link
-                    href={`/projects/${project.id}?tab=${encodeURIComponent(currentTimelineStep.tab)}`}
-                    className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
-                  >
-                    Open current step
-                  </Link>
-                </div>
-                {primaryNextStep?.description && (
-                  <p className="mt-1 text-xs text-emerald-300/80">{primaryNextStep.description}</p>
-                )}
               </div>
             )}
           </div>
