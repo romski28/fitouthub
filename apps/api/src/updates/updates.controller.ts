@@ -22,6 +22,23 @@ export class UpdatesController {
     return this.updatesService.getAdminOpsSummary(userId);
   }
 
+  @Get('admin-comms-feed')
+  @UseGuards(CombinedAuthGuard)
+  async getAdminCommsFeed(@Req() req: any, @Query('limit') limit?: string) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new BadRequestException('Missing user id in token');
+    }
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can access communications feed');
+    }
+
+    const parsedLimit = limit ? Number(limit) : undefined;
+    return this.updatesService.getAdminCommsFeed(parsedLimit);
+  }
+
   @Get('summary')
   @UseGuards(CombinedAuthGuard)
   async getUpdatesSummary(@Req() req: any, @Query('actAs') actAs?: string, @Query('clientId') clientId?: string) {

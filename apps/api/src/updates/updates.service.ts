@@ -74,6 +74,23 @@ export interface AdminOpsSummary {
   generatedAt: string;
 }
 
+export interface AdminCommsFeedItem {
+  id: string;
+  type: string;
+  transport: string;
+  context: string;
+  user: string;
+  status: string;
+  preview: string;
+  createdAt: string;
+  href: string;
+}
+
+export interface AdminCommsFeed {
+  items: AdminCommsFeedItem[];
+  generatedAt: string;
+}
+
 @Injectable()
 export class UpdatesService {
   private readonly logger = new Logger(UpdatesService.name);
@@ -276,6 +293,277 @@ export class UpdatesService {
         requiresEscalation,
         emergencyNotTagged,
       },
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async getAdminCommsFeed(limit?: number): Promise<AdminCommsFeed> {
+    const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(Number(limit), 10), 300) : 120;
+
+    const [supportRequests, assistMessages, privateMessages, anonymousMessages, notificationLogs, aiProjects] =
+      await Promise.all([
+        this.prisma.supportRequest.findMany({
+          take: safeLimit,
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            project: {
+              select: {
+                id: true,
+                projectName: true,
+              },
+            },
+            assignedAdmin: {
+              select: {
+                id: true,
+                firstName: true,
+                surname: true,
+                email: true,
+              },
+            },
+          },
+        }),
+        this.prisma.assistMessage.findMany({
+          take: safeLimit,
+          where: {
+            senderType: 'client',
+          },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            assistRequest: {
+              include: {
+                project: {
+                  select: {
+                    id: true,
+                    projectName: true,
+                  },
+                },
+                user: {
+                  select: {
+                    firstName: true,
+                    surname: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        this.prisma.privateChatMessage.findMany({
+          take: safeLimit,
+          where: {
+            senderType: { in: ['user', 'professional'] },
+          },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            thread: {
+              include: {
+                user: {
+                  select: {
+                    firstName: true,
+                    surname: true,
+                    email: true,
+                  },
+                },
+                professional: {
+                  select: {
+                    fullName: true,
+                    businessName: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        this.prisma.anonymousChatMessage.findMany({
+          take: safeLimit,
+          where: {
+            senderType: 'anonymous',
+          },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            thread: {
+              select: {
+                id: true,
+                sessionId: true,
+                status: true,
+                updatedAt: true,
+              },
+            },
+          },
+        }),
+        this.prisma.notificationLog.findMany({
+          take: safeLimit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                surname: true,
+                email: true,
+              },
+            },
+            professional: {
+              select: {
+                fullName: true,
+                businessName: true,
+                email: true,
+              },
+            },
+          },
+        }),
+        this.prisma.project.findMany({
+          where: {
+            status: { not: 'archived' },
+            aiIntake: { isNot: null },
+          },
+          select: {
+            id: true,
+            projectName: true,
+            isEmergency: true,
+            updatedAt: true,
+            aiIntake: {
+              select: {
+                project: true,
+              },
+            },
+          },
+          take: safeLimit,
+          orderBy: { updatedAt: 'desc' },
+        }),
+      ]);
+
+    const feedItems: AdminCommsFeedItem[] = [];
+
+    supportRequests.forEach((request) => {
+      const assignedName = request.assignedAdmin
+        ? `${request.assignedAdmin.firstName || ''} ${request.assignedAdmin.surname || ''}`.trim() || request.assignedAdmin.email
+        : 'Unassigned';
+      feedItems.push({
+        id: `support:${request.id}`,
+        type: 'Support Request',
+        transport: request.channel === 'whatsapp' ? 'WhatsApp' : 'Callback',
+        context: request.project
+          ? `Project · ${request.project.projectName}`
+          : 'Support Pool',
+        user: request.clientName || request.clientEmail || request.fromNumber || 'Unknown client',
+        status: request.status,
+        preview: request.body,
+        createdAt: request.updatedAt.toISOString(),
+        href: '/admin/messaging?view=general&type=support',
+      });
+    });
+
+    assistMessages.forEach((message) => {
+      const author = message.assistRequest.user
+        ? `${message.assistRequest.user.firstName || ''} ${message.assistRequest.user.surname || ''}`.trim() || message.assistRequest.user.email || 'Client'
+        : 'Client';
+      feedItems.push({
+        id: `assist:${message.id}`,
+        type: 'Assist Message',
+        transport: message.assistRequest.contactMethod === 'whatsapp'
+          ? 'WhatsApp'
+          : message.assistRequest.contactMethod === 'call'
+            ? 'Call'
+            : 'In-app Chat',
+        context: message.assistRequest.project
+          ? `Project · ${message.assistRequest.project.projectName}`
+          : 'Assist Queue',
+        user: author,
+        status: message.assistRequest.status,
+        preview: message.content,
+        createdAt: message.createdAt.toISOString(),
+        href: '/admin/messaging?view=assist',
+      });
+    });
+
+    privateMessages.forEach((message) => {
+      const userLabel =
+        message.senderType === 'professional'
+          ? message.thread.professional?.fullName || message.thread.professional?.businessName || message.thread.professional?.email || 'Professional'
+          : message.thread.user
+            ? `${message.thread.user.firstName || ''} ${message.thread.user.surname || ''}`.trim() || message.thread.user.email || 'Client'
+            : 'Client';
+
+      feedItems.push({
+        id: `private:${message.id}`,
+        type: message.senderType === 'professional' ? 'Professional Inbox' : 'Client Inbox',
+        transport: 'In-app Chat',
+        context: message.senderType === 'professional' ? 'FOH Professional Thread' : 'FOH Client Thread',
+        user: userLabel,
+        status: message.thread.status,
+        preview: message.content,
+        createdAt: message.createdAt.toISOString(),
+        href: '/admin/messaging?view=general&type=support',
+      });
+    });
+
+    anonymousMessages.forEach((message) => {
+      feedItems.push({
+        id: `anonymous:${message.id}`,
+        type: 'Anonymous Inbox',
+        transport: 'In-app Chat',
+        context: `Session · ${message.thread.sessionId.slice(0, 8)}`,
+        user: 'Anonymous visitor',
+        status: message.thread.status,
+        preview: message.content,
+        createdAt: message.createdAt.toISOString(),
+        href: '/admin/messaging?view=general&type=anonymous',
+      });
+    });
+
+    notificationLogs.forEach((log) => {
+      const recipient = log.user
+        ? `${log.user.firstName || ''} ${log.user.surname || ''}`.trim() || log.user.email || 'Client'
+        : log.professional?.fullName || log.professional?.businessName || log.professional?.email || 'Unknown recipient';
+      feedItems.push({
+        id: `notification:${log.id}`,
+        type: 'Platform Notification',
+        transport: String(log.channel).toUpperCase(),
+        context: log.eventType,
+        user: recipient,
+        status: log.status,
+        preview: log.message,
+        createdAt: log.createdAt.toISOString(),
+        href: '/admin/activity-log',
+      });
+    });
+
+    aiProjects.forEach((project) => {
+      const projectJson = project.aiIntake?.project as Record<string, any> | null | undefined;
+      const safety = projectJson?.safetyAssessment;
+      if (!safety || typeof safety !== 'object') return;
+
+      const severity = this.normalizeSeverity(
+        safety.level ?? safety.riskLevel ?? safety.severity,
+      );
+      const isHighOrCritical = ['high', 'critical', 'severe'].includes(severity);
+      const hasEscalation = this.isEscalationSignal(safety);
+
+      if (!isHighOrCritical && !hasEscalation) return;
+
+      feedItems.push({
+        id: `safety:${project.id}`,
+        type: 'Safety Triage',
+        transport: 'Internal',
+        context: `Project · ${project.projectName}`,
+        user: 'Platform signal',
+        status: project.isEmergency ? 'tagged_emergency' : 'needs_review',
+        preview:
+          typeof safety.recommendedAction === 'string' && safety.recommendedAction.trim()
+            ? safety.recommendedAction
+            : 'High-risk safety signal detected and requires admin review.',
+        createdAt: project.updatedAt.toISOString(),
+        href: '/admin/projects',
+      });
+    });
+
+    const items = feedItems
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, safeLimit);
+
+    return {
+      items,
       generatedAt: new Date().toISOString(),
     };
   }
