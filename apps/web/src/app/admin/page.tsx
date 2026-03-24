@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 type AdminOpsSummary = {
   support: {
@@ -62,29 +62,6 @@ type AdminCommsFeed = {
 
 type AdminTabKey = "dashboard" | "messaging" | "data-control" | "analytics";
 
-const tabMeta: { key: AdminTabKey; label: string; blurb: string }[] = [
-  {
-    key: "dashboard",
-    label: "Dashboard",
-    blurb: "Unified message feed across support, assist, inbox, notifications, and safety triage.",
-  },
-  {
-    key: "messaging",
-    label: "Messaging",
-    blurb: "Execution pages for all queues and channels that require admin response.",
-  },
-  {
-    key: "data-control",
-    label: "Data Control",
-    blurb: "Core records, governance, and configuration surfaces.",
-  },
-  {
-    key: "analytics",
-    label: "Analytics",
-    blurb: "Metrics and audit views, with room to expand in future iterations.",
-  },
-];
-
 const formatRelativeTime = (dateValue: string) => {
   const timestamp = new Date(dateValue).getTime();
   if (!Number.isFinite(timestamp)) return "-";
@@ -103,18 +80,18 @@ const formatRelativeTime = (dateValue: string) => {
 const statusBadgeClass = (status: string) => {
   const normalized = status.toLowerCase();
   if (["unassigned", "open", "pending", "needs_review"].includes(normalized)) {
-    return "bg-amber-500/20 text-amber-200 border border-amber-500/40";
+    return "border-2 border-amber-400 text-white";
   }
   if (["in_progress", "in review", "claimed", "delivered", "read", "tagged_emergency"].includes(normalized)) {
-    return "bg-sky-500/20 text-sky-200 border border-sky-500/40";
+    return "border-2 border-sky-400 text-white";
   }
   if (["resolved", "closed", "sent", "success"].includes(normalized)) {
-    return "bg-emerald-500/20 text-emerald-200 border border-emerald-500/40";
+    return "border-2 border-emerald-400 text-white";
   }
   if (["failed", "undeliverable", "danger"].includes(normalized)) {
-    return "bg-rose-500/20 text-rose-200 border border-rose-500/40";
+    return "border-2 border-rose-400 text-white";
   }
-  return "bg-slate-700 text-slate-200 border border-slate-600";
+  return "border-2 border-violet-400 text-white";
 };
 
 function QuickCard({
@@ -151,8 +128,6 @@ function QuickCard({
 
 export default function AdminDashboardPage() {
   const { accessToken } = useAuth();
-  const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab: AdminTabKey =
@@ -166,13 +141,6 @@ export default function AdminDashboardPage() {
   const [feed, setFeed] = useState<AdminCommsFeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
-
-  const setAdminTab = (tab: AdminTabKey) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", tab);
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
-  };
 
   useEffect(() => {
     if (!accessToken) return;
@@ -336,58 +304,33 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {tabMeta.map((tab) => {
-            const isActive = tab.key === activeTab;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setAdminTab(tab.key)}
-                className={`rounded-lg border px-3 py-2 text-left transition ${
-                  isActive
-                    ? "border-emerald-500/60 bg-emerald-500/10"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                }`}
-              >
-                <p className={`text-sm font-semibold ${isActive ? "text-emerald-700" : "text-slate-900"}`}>
-                  {tab.label}
-                </p>
-                <p className="mt-1 text-xs text-slate-600">{tab.blurb}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {activeTab === "dashboard" && (
         <div className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Open Messaging Work</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{opsSummary?.support.totalOpen ?? 0}</p>
-              <p className="text-xs text-slate-600">Support pool + active support threads</p>
+            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Open Messaging Work</p>
+              <p className="mt-1 text-2xl font-bold text-white">{opsSummary?.support.totalOpen ?? 0}</p>
+              <p className="text-xs text-slate-300">Support pool + active support threads</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Unread Inbox</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">
+            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Unread Msgs</p>
+              <p className="mt-1 text-2xl font-bold text-white">
                 {(opsSummary?.inbox.privateUnreadMessages ?? 0) + (opsSummary?.assist.unreadClientMessages ?? 0)}
               </p>
-              <p className="text-xs text-slate-600">Private + assist unread messages</p>
+              <p className="text-xs text-slate-300">Inbox + assist</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Safety Triage</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{opsSummary?.safety.highOrCritical ?? 0}</p>
-              <p className="text-xs text-slate-600">High or critical platform alerts</p>
+            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Safety Triage</p>
+              <p className="mt-1 text-2xl font-bold text-white">{opsSummary?.safety.highOrCritical ?? 0}</p>
+              <p className="text-xs text-slate-300">High or critical platform alerts</p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 px-4 py-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Unified Messaging Feed</h2>
-                <p className="text-xs text-slate-600">
+                <h2 className="text-lg font-semibold text-white">Unified Messaging Feed</h2>
+                <p className="text-xs text-slate-300">
                   Type, transport, context, user, and status across all admin-facing message channels.
                 </p>
               </div>
@@ -400,7 +343,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {feedLoading && (
-              <div className="px-4 py-6 text-sm text-slate-600">Loading communications feed...</div>
+              <div className="px-4 py-6 text-sm text-slate-300">Loading communications feed...</div>
             )}
 
             {!feedLoading && feedError && (
@@ -410,43 +353,43 @@ export default function AdminDashboardPage() {
             )}
 
             {!feedLoading && !feedError && feed.length === 0 && (
-              <div className="px-4 py-6 text-sm text-slate-600">No feed items yet.</div>
+              <div className="px-4 py-6 text-sm text-slate-300">No feed items yet.</div>
             )}
 
             {!feedLoading && !feedError && feed.length > 0 && (
               <div className="max-h-[65vh] overflow-auto">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50/80">
-                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Type</th>
-                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Transport</th>
-                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Context</th>
-                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">User</th>
-                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Status</th>
-                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Message</th>
-                      <th className="sticky top-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700">Time</th>
+                    <tr className="border-b border-slate-700 bg-slate-950/90">
+                      <th className="sticky top-0 z-10 bg-slate-950 px-3 py-2 text-left font-semibold text-slate-200">Type</th>
+                      <th className="sticky top-0 z-10 bg-slate-950 px-3 py-2 text-left font-semibold text-slate-200">Transport</th>
+                      <th className="sticky top-0 z-10 bg-slate-950 px-3 py-2 text-left font-semibold text-slate-200">Context</th>
+                      <th className="sticky top-0 z-10 bg-slate-950 px-3 py-2 text-left font-semibold text-slate-200">User</th>
+                      <th className="sticky top-0 z-10 bg-slate-950 px-3 py-2 text-left font-semibold text-slate-200">Status</th>
+                      <th className="sticky top-0 z-10 bg-slate-950 px-3 py-2 text-left font-semibold text-slate-200">Message</th>
+                      <th className="sticky top-0 z-10 bg-slate-950 px-3 py-2 text-left font-semibold text-slate-200">Time</th>
                     </tr>
                   </thead>
                   <tbody>
                     {feed.map((item) => (
-                      <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/70">
-                        <td className="px-3 py-2 text-slate-900">
+                      <tr key={item.id} className="border-b border-slate-700/70 hover:bg-slate-800/60">
+                        <td className="px-3 py-2 text-white">
                           <Link href={item.href} className="font-semibold text-emerald-700 hover:text-emerald-800">
                             {item.type}
                           </Link>
                         </td>
-                        <td className="px-3 py-2 text-slate-700">{item.transport}</td>
-                        <td className="px-3 py-2 text-slate-700">{item.context}</td>
-                        <td className="px-3 py-2 text-slate-700">{item.user}</td>
+                        <td className="px-3 py-2 text-slate-200">{item.transport}</td>
+                        <td className="px-3 py-2 text-slate-200">{item.context}</td>
+                        <td className="px-3 py-2 text-slate-200">{item.user}</td>
                         <td className="px-3 py-2">
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
+                          <span className={`inline-flex h-7 min-w-[110px] items-center justify-center rounded-full px-3 text-[11px] font-semibold uppercase tracking-wide leading-none ${statusBadgeClass(item.status)}`}>
                             {item.status.replace(/_/g, " ")}
                           </span>
                         </td>
-                        <td className="max-w-[360px] truncate px-3 py-2 text-slate-700" title={item.preview}>
+                        <td className="max-w-[360px] truncate px-3 py-2 text-slate-200" title={item.preview}>
                           {item.preview}
                         </td>
-                        <td className="px-3 py-2 text-xs text-slate-500">{formatRelativeTime(item.createdAt)}</td>
+                        <td className="px-3 py-2 text-xs text-slate-400">{formatRelativeTime(item.createdAt)}</td>
                       </tr>
                     ))}
                   </tbody>
