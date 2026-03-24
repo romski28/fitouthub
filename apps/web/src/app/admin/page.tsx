@@ -173,6 +173,8 @@ export default function AdminDashboardPage() {
   const [selectedItem, setSelectedItem] = useState<AdminCommsFeedItem | null>(null);
   const [assigningToAdminId, setAssigningToAdminId] = useState<string>("");
   const [actionBusy, setActionBusy] = useState(false);
+  const [closeBusy, setCloseBusy] = useState(false);
+  const [closeError, setCloseError] = useState<string | null>(null);
   const [threadMessages, setThreadMessages] = useState<DrawerMessage[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
   const [threadError, setThreadError] = useState<string | null>(null);
@@ -491,6 +493,61 @@ export default function AdminDashboardPage() {
       setReplyError(error instanceof Error ? error.message : "Failed to send reply");
     } finally {
       setReplyBusy(false);
+    }
+  };
+
+  const CLOSEABLE_SOURCE_TYPES = ['support', 'assist', 'private', 'anonymous', 'safety'];
+
+  const closeCaseLabel = (sourceType: string) => {
+    if (sourceType === 'support') return 'Resolve support case';
+    if (sourceType === 'assist') return 'Close assist request';
+    if (sourceType === 'safety') return 'Acknowledge safety triage';
+    return 'Close thread';
+  };
+
+  const closeCase = async (item: AdminCommsFeedItem) => {
+    if (!accessToken) return;
+    setCloseBusy(true);
+    setCloseError(null);
+    try {
+      let url = '';
+      let method = 'POST';
+      let bodyPayload: Record<string, unknown> | null = null;
+      const base = API_BASE_URL.replace(/\/$/, '');
+      const id = item.conversationId || item.sourceId;
+
+      if (item.sourceType === 'support') {
+        url = `${base}/support-requests/${item.sourceId}/resolve`;
+        method = 'PATCH';
+      } else if (item.sourceType === 'assist') {
+        url = `${base}/assist-requests/${id}/status`;
+        method = 'PATCH';
+        bodyPayload = { status: 'closed' };
+      } else if (item.sourceType === 'private') {
+        url = `${base}/chat/private/${id}/close`;
+      } else if (item.sourceType === 'anonymous') {
+        url = `${base}/chat/anonymous/${id}/close`;
+      } else if (item.sourceType === 'safety') {
+        url = `${base}/ai/intake/${item.sourceId}/safety-ack`;
+      } else {
+        return;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        ...(bodyPayload ? { body: JSON.stringify(bodyPayload) } : {}),
+      });
+      if (!res.ok) throw new Error('Failed to close case');
+      setSelectedItem(null);
+      await fetchFeed();
+    } catch (error) {
+      setCloseError(error instanceof Error ? error.message : 'Failed to close case');
+    } finally {
+      setCloseBusy(false);
     }
   };
 
@@ -956,6 +1013,20 @@ export default function AdminDashboardPage() {
               >
                 Release ownership
               </button>
+
+              {CLOSEABLE_SOURCE_TYPES.includes(selectedItem.sourceType) && (
+                <div>
+                  <button
+                    type="button"
+                    disabled={closeBusy || actionBusy}
+                    onClick={() => void closeCase(selectedItem)}
+                    className="w-full rounded-md border border-rose-500 px-3 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
+                  >
+                    {closeBusy ? "Closing..." : closeCaseLabel(selectedItem.sourceType)}
+                  </button>
+                  {closeError && <p className="mt-1 text-xs text-rose-300">{closeError}</p>}
+                </div>
+              )}
 
               <Link
                 href={selectedItem.href}
