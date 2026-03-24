@@ -451,8 +451,8 @@ export class UpdatesService {
       assistMessages,
       privateMessages,
       anonymousMessages,
-      projectMessages,
-      notificationLogs,
+      escrowTransactions,
+      escrowAdminActions,
       aiProjects,
     ] =
       await Promise.all([
@@ -546,41 +546,32 @@ export class UpdatesService {
             },
           },
         }),
-        this.prisma.projectChatMessage.findMany({
+        this.prisma.financialTransaction.findMany({
           take: safeLimit,
           where: {
-            senderType: { in: ['client', 'professional'] },
+            type: { in: ['escrow_deposit', 'escrow_deposit_confirmation'] },
           },
           orderBy: { createdAt: 'desc' },
           include: {
-            thread: {
-              include: {
-                project: {
-                  select: {
-                    id: true,
-                    projectName: true,
-                  },
-                },
+            project: {
+              select: {
+                id: true,
+                projectName: true,
               },
             },
           },
         }),
-        this.prisma.notificationLog.findMany({
+        this.prisma.adminAction.findMany({
           take: safeLimit,
+          where: {
+            actionType: 'VERIFY_ESCROW_RECEIPT',
+          },
           orderBy: { createdAt: 'desc' },
           include: {
-            user: {
+            project: {
               select: {
-                firstName: true,
-                surname: true,
-                email: true,
-              },
-            },
-            professional: {
-              select: {
-                fullName: true,
-                businessName: true,
-                email: true,
+                id: true,
+                projectName: true,
               },
             },
           },
@@ -713,52 +704,62 @@ export class UpdatesService {
       });
     });
 
-    projectMessages.forEach((message) => {
-      feedItems.push({
-        id: `project-chat:${message.id}`,
-        sourceType: 'project-chat',
-        sourceId: message.id,
-        conversationType: 'chat',
-        conversationId: message.threadId,
-        replyChannel: 'chat',
-        actionRequired: true,
-        type: 'Project Chat',
-        transport: 'In-app Chat',
-        context: message.thread.project
-          ? `Project · ${message.thread.project.projectName}`
-          : 'Project Chat',
-        user: message.senderType === 'professional' ? 'Professional' : 'Client',
-        status: 'open',
-        assignmentStatus: 'unassigned',
-        preview: message.content,
-        createdAt: message.createdAt.toISOString(),
-        href: '/admin/messaging?view=general&type=project',
-      });
-    });
+    escrowTransactions.forEach((transaction) => {
+      const normalizedStatus = String(transaction.status || '').toLowerCase();
+      const actionRole = String(transaction.actionByRole || '').toLowerCase();
+      const isAdminFacing = actionRole === 'admin' || actionRole === 'platform' || normalizedStatus === 'pending';
+      if (!isAdminFacing) return;
 
-    notificationLogs.forEach((log) => {
-      const notificationStatus = String(log.status).toLowerCase();
-      const isActionRequired = notificationStatus === 'pending' || notificationStatus === 'failed' || notificationStatus === 'undeliverable';
-      const recipient = log.user
-        ? `${log.user.firstName || ''} ${log.user.surname || ''}`.trim() || log.user.email || 'Client'
-        : log.professional?.fullName || log.professional?.businessName || log.professional?.email || 'Unknown recipient';
+      const isActionRequired = !transaction.actionComplete && normalizedStatus === 'pending';
+      const transactionTypeLabel = transaction.type === 'escrow_deposit_confirmation'
+        ? 'Escrow Verification'
+        : 'Escrow Deposit';
+
       feedItems.push({
-        id: `notification:${log.id}`,
-        sourceType: 'notification',
-        sourceId: log.id,
+        id: `escrow-tx:${transaction.id}`,
+        sourceType: 'escrow-transaction',
+        sourceId: transaction.id,
         conversationType: 'none',
         conversationId: undefined,
         replyChannel: 'none',
         actionRequired: isActionRequired,
-        type: 'Platform Notification',
-        transport: String(log.channel).toUpperCase(),
-        context: log.eventType,
-        user: recipient,
-        status: log.status,
+        type: transactionTypeLabel,
+        transport: 'Financial Workflow',
+        context: transaction.project
+          ? `Project · ${transaction.project.projectName}`
+          : 'Escrow Workflow',
+        user: transaction.requestedByRole || 'platform',
+        status: transaction.status,
         assignmentStatus: 'unassigned',
-        preview: log.message,
-        createdAt: log.createdAt.toISOString(),
-        href: '/admin/activity-log',
+        preview: transaction.description,
+        createdAt: transaction.createdAt.toISOString(),
+        href: '/admin/projects',
+      });
+    });
+
+    escrowAdminActions.forEach((action) => {
+      const actionStatus = String(action.status || '').toLowerCase();
+      const isActionRequired = ['pending', 'in_review', 'escalated'].includes(actionStatus);
+
+      feedItems.push({
+        id: `escrow-action:${action.id}`,
+        sourceType: 'escrow-admin-action',
+        sourceId: action.id,
+        conversationType: 'none',
+        conversationId: undefined,
+        replyChannel: 'none',
+        actionRequired: isActionRequired,
+        type: 'Escrow Receipt Verification',
+        transport: 'Admin Action',
+        context: action.project
+          ? `Project · ${action.project.projectName}`
+          : 'Escrow Workflow',
+        user: 'Admin queue',
+        status: action.status,
+        assignmentStatus: 'unassigned',
+        preview: action.reason || 'Verify escrow receipt before milestone payment approval.',
+        createdAt: action.updatedAt.toISOString(),
+        href: '/admin/projects',
       });
     });
 
