@@ -109,7 +109,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       {/* Quote Form/Status */}
       {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && 
        !(project.status === 'declined' || project.status === 'rejected') ? (
-        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 shadow-sm p-5">
+        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-white">
               {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
@@ -153,43 +153,45 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             }}
             className="space-y-4"
           >
-            {isInitialQuoteLocked && (
-              <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
-                Initial quote window closed ({quoteWindowLongLabel}). Please contact the client to reopen bidding.
+            <div className="rounded-lg border border-slate-700 bg-slate-900/50 p-4 space-y-4">
+              {isInitialQuoteLocked && (
+                <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                  Initial quote window closed ({quoteWindowLongLabel}). Please contact the client to reopen bidding.
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="amount" className="block text-sm font-semibold text-white mb-1">
+                  Quote Amount ($) *
+                </label>
+                <input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  disabled={submittingQuote || isInitialQuoteLocked}
+                  value={quoteForm.amount}
+                  onChange={(e) => onUpdateQuoteForm({ amount: e.target.value })}
+                  className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                  placeholder="0.00"
+                />
               </div>
-            )}
 
-            <div>
-              <label htmlFor="amount" className="block text-sm font-semibold text-slate-300 mb-1">
-                Quote Amount ($) *
-              </label>
-              <input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                disabled={submittingQuote || isInitialQuoteLocked}
-                value={quoteForm.amount}
-                onChange={(e) => onUpdateQuoteForm({ amount: e.target.value })}
-                className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
-                placeholder="0.00"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="notes" className="block text-sm font-semibold text-slate-300 mb-1">
-                Quote Notes (Optional)
-              </label>
-              <textarea
-                id="notes"
-                rows={4}
-                disabled={submittingQuote || isInitialQuoteLocked}
-                value={quoteForm.notes}
-                onChange={(e) => onUpdateQuoteForm({ notes: e.target.value })}
-                className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
-                placeholder="Add any additional notes about your quote..."
-              />
+              <div>
+                <label htmlFor="notes" className="block text-sm font-semibold text-white mb-1">
+                  Quote Notes (Optional)
+                </label>
+                <textarea
+                  id="notes"
+                  rows={4}
+                  disabled={submittingQuote || isInitialQuoteLocked}
+                  value={quoteForm.notes}
+                  onChange={(e) => onUpdateQuoteForm({ notes: e.target.value })}
+                  className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                  placeholder="Add any additional notes about your quote..."
+                />
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -236,27 +238,27 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </form>
         </div>
       ) : project.quoteAmount && !(project.status === 'declined' || project.status === 'rejected') ? (
-        <div className="rounded-lg border border-slate-700 bg-slate-900/50 shadow-sm p-5">
+        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
           <h2 className="text-lg font-bold text-white mb-4">Your Quote</h2>
           <div className="grid gap-4 sm:grid-cols-4">
-            <div>
+            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Amount</p>
               <p className="text-2xl font-bold text-white">${project.quoteAmount}</p>
             </div>
             
-            <div>
+            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Submitted</p>
               <p className="text-sm font-semibold text-white">
                 {project.quotedAt ? new Date(project.quotedAt).toLocaleDateString() : '—'}
               </p>
             </div>
             
-            <div>
+            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Notes</p>
               <p className="text-sm text-slate-300 line-clamp-2">{project.quoteNotes || '—'}</p>
             </div>
             
-            <div>
+            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Status</p>
               <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
                 project.status === 'awarded' ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40' :
@@ -272,28 +274,28 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       ) : null}
 
       {/* Project Info */}
-      <div className="rounded-lg border border-slate-700 bg-slate-900/50 shadow-sm p-5">
+      <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
         <h2 className="text-lg font-bold text-white mb-4">Project Details</h2>
 
         {project.project.notes && (
-          <div className="rounded-md bg-slate-800/50 px-3 py-2 text-sm border border-slate-700 mb-4">
+          <div className="rounded-md bg-slate-900/50 px-3 py-3 text-sm border border-slate-700 mb-4">
             <p className="font-semibold text-white mb-1">Description</p>
             <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{project.project.notes}</p>
           </div>
         )}
         
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
+          <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Project Name</p>
             <p className="text-base font-semibold text-white">{project.project.projectName}</p>
           </div>
           
-          <div>
+          <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Client</p>
             <p className="text-base font-semibold text-white">{project.project.clientName}</p>
           </div>
           
-          <div>
+          <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3 sm:col-span-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Invited Date</p>
             <p className="text-sm font-semibold text-white">
               {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '—'}

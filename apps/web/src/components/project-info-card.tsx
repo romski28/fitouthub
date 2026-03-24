@@ -46,6 +46,7 @@ export default function ProjectInfoCard({
   onWithdraw,
 }: ProjectInfoProps) {
   const withdrawn = status === 'withdrawn';
+  const isProfessional = role === 'professional';
   
   const formatHKD = (amount?: string | number) => {
     if (!amount) return undefined;
@@ -54,7 +55,7 @@ export default function ProjectInfoCard({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface shadow-sm">
+    <div className={`rounded-xl shadow-sm ${isProfessional ? 'border border-slate-700 bg-slate-900/60' : 'border border-border bg-surface'}`}>
       <div
         className={`px-5 py-4 text-white rounded-t-xl ${
           withdrawn ? 'bg-gradient-to-r from-slate-400 to-slate-300' : 'bg-gradient-to-r from-slate-900 to-slate-800'
@@ -65,7 +66,7 @@ export default function ProjectInfoCard({
             <h1 className={`text-2xl font-bold ${withdrawn ? 'text-slate-700' : ''}`}>{title}</h1>
             <p
               className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
-                withdrawn ? 'text-slate-600' : 'text-emerald-300'
+                withdrawn ? 'text-slate-600' : isProfessional ? 'text-white' : 'text-emerald-300'
               }`}
             >
               {region}
@@ -78,19 +79,19 @@ export default function ProjectInfoCard({
               tone={statusToneFromStatus(status)}
             />
             {status === 'awarded' && awardedDisplayName && (
-              <span className="text-xs font-medium text-slate-300">{awardedDisplayName}</span>
+              <span className={`text-xs font-medium ${isProfessional ? 'text-slate-100' : 'text-slate-300'}`}>{awardedDisplayName}</span>
             )}
             {quoteAmount && (
-              <span className="text-sm font-bold text-emerald-300">{formatHKD(quoteAmount)}</span>
+              <span className={`text-sm font-bold ${isProfessional ? 'text-white' : 'text-emerald-300'}`}>{formatHKD(quoteAmount)}</span>
             )}
           </div>
         </div>
       </div>
 
       {(withdrawn || (showWithdrawButton && !withdrawn)) && (
-        <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className={`p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${isProfessional ? 'text-white' : ''}`}>
           <div className="flex items-center gap-3">
-            {withdrawn && <span className="text-sm text-muted">Project withdrawn from bidding.</span>}
+            {withdrawn && <span className={`text-sm ${isProfessional ? 'text-slate-300' : 'text-muted'}`}>Project withdrawn from bidding.</span>}
           </div>
           {showWithdrawButton && !withdrawn && (
             <button
@@ -106,10 +107,10 @@ export default function ProjectInfoCard({
 
       {notes && (
         <div className="p-5 space-y-4">
-          <div className="rounded-md bg-surface-muted px-3 py-2 text-sm border border-border">
-            <p className="font-semibold text-strong mb-1">Project description</p>
-            <p className="text-muted leading-relaxed">{notes}</p>
-            <div className="flex gap-4 mt-3 pt-2 border-t border-border text-xs text-muted">
+          <div className={`rounded-md px-3 py-2 text-sm border ${isProfessional ? 'bg-slate-800/50 border-slate-700' : 'bg-surface-muted border-border'}`}>
+            <p className={`font-semibold mb-1 ${isProfessional ? 'text-white' : 'text-strong'}`}>Project description</p>
+            <p className={`${isProfessional ? 'text-slate-200' : 'text-muted'} leading-relaxed`}>{notes}</p>
+            <div className={`flex gap-4 mt-3 pt-2 border-t text-xs ${isProfessional ? 'border-slate-700 text-slate-300' : 'border-border text-muted'}`}>
               <span>Created: {formatDate(createdAt)}</span>
               {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
             </div>
@@ -118,8 +119,8 @@ export default function ProjectInfoCard({
       )}
 
       {(createdAt || updatedAt) && !notes && (
-        <div className="p-5 border-t border-border">
-          <div className="flex gap-4 text-xs text-muted">
+        <div className={`p-5 border-t ${isProfessional ? 'border-slate-700' : 'border-border'}`}>
+          <div className={`flex gap-4 text-xs ${isProfessional ? 'text-slate-300' : 'text-muted'}`}>
             <span>Created: {formatDate(createdAt)}</span>
             {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
           </div>
