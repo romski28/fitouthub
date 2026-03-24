@@ -1054,45 +1054,48 @@ export default function ProjectDetailPage() {
             </Link>
           </div>
 
-          {/* Unified Top Project Info */}
-          <ProjectInfoCard
-            role="professional"
-            title={project!.project.projectName}
-            region={project!.project.region}
-            status={project!.status}
-            notes={project!.project.notes || undefined}
-            createdAt={project!.createdAt}
-            updatedAt={project!.updatedAt}
-            quoteAmount={project!.quoteAmount}
-          />
+          <div className="space-y-0">
+            {/* Unified Top Project Info */}
+            <ProjectInfoCard
+              role="professional"
+              title={project!.project.projectName}
+              region={project!.project.region}
+              status={project!.status}
+              notes={project!.project.notes || undefined}
+              createdAt={project!.createdAt}
+              updatedAt={project!.updatedAt}
+              quoteAmount={project!.quoteAmount}
+              attachTabs
+            />
 
-          <ProjectTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            tabs={(() => {
-              // Build tabs array conditionally
-              const tabsArray = [
-                { id: 'overview', label: 'Overview', icon: '📋' },
-              ];
-              
-              // Show Site Access tab only during bidding stage (not awarded)
-              if (project.status !== 'awarded') {
-                tabsArray.push({ id: 'site-access', label: 'Access & Schedule', icon: '📍' });
-              }
-              
-              // Show Contract and Schedule tabs only when awarded
-              if (project.status === 'awarded') {
-                tabsArray.push({ id: 'contract', label: 'Agreement', icon: '📄' });
-                tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
-              }
-              
-              // Always show financials and chat
-              tabsArray.push({ id: 'financials', label: 'Financials', icon: '💳' });
-              tabsArray.push({ id: 'chat', label: 'Chat', icon: '💬' });
-              
-              return tabsArray;
-            })()}
-          >
+            <div className="-mt-px">
+              <ProjectTabs
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                tabs={(() => {
+                  // Build tabs array conditionally
+                  const tabsArray = [
+                    { id: 'overview', label: 'Overview', icon: '📋' },
+                  ];
+                  
+                  // Show Site Access tab only during bidding stage (not awarded)
+                  if (project.status !== 'awarded') {
+                    tabsArray.push({ id: 'site-access', label: 'Access & Schedule', icon: '📍' });
+                  }
+                  
+                  // Show Contract and Schedule tabs only when awarded
+                  if (project.status === 'awarded') {
+                    tabsArray.push({ id: 'contract', label: 'Agreement', icon: '📄' });
+                    tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
+                  }
+                  
+                  // Always show financials and chat
+                  tabsArray.push({ id: 'financials', label: 'Financials', icon: '💳' });
+                  tabsArray.push({ id: 'chat', label: 'Chat', icon: '💬' });
+                  
+                  return tabsArray;
+                })()}
+              >
             <OverviewTab
               tab="overview"
               project={project}
@@ -1205,7 +1208,9 @@ export default function ProjectDetailPage() {
               sending={sending}
               messageError={messageError}
             />
-          </ProjectTabs>
+              </ProjectTabs>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -16,6 +16,7 @@ export type ProjectInfoProps = {
   showWithdrawButton?: boolean;
   withdrawing?: boolean;
   onWithdraw?: () => void;
+  attachTabs?: boolean;
 };
 
 const formatDate = (date?: string) => {
@@ -44,6 +45,7 @@ export default function ProjectInfoCard({
   showWithdrawButton,
   withdrawing,
   onWithdraw,
+  attachTabs,
 }: ProjectInfoProps) {
   const withdrawn = status === 'withdrawn';
   const isProfessional = role === 'professional';
@@ -55,10 +57,16 @@ export default function ProjectInfoCard({
   };
 
   return (
-    <div className={`rounded-xl shadow-sm ${isProfessional ? 'border border-slate-700 bg-slate-900/60' : 'border border-border bg-surface'}`}>
+    <div className={`shadow-sm ${isProfessional ? `border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 ${attachTabs ? 'rounded-t-xl rounded-b-none' : 'rounded-xl'}` : 'rounded-xl border border-border bg-surface'}`}>
       <div
-        className={`px-5 py-4 text-white rounded-t-xl ${
-          withdrawn ? 'bg-gradient-to-r from-slate-400 to-slate-300' : 'bg-gradient-to-r from-slate-900 to-slate-800'
+        className={`px-5 py-4 text-white ${
+          isProfessional
+            ? attachTabs
+              ? 'rounded-t-xl'
+              : 'rounded-t-xl'
+            : 'rounded-t-xl'
+        } ${
+          withdrawn ? 'bg-gradient-to-r from-slate-400 to-slate-300' : isProfessional ? 'bg-transparent' : 'bg-gradient-to-r from-slate-900 to-slate-800'
         }`}
       >
         <div className="flex items-start justify-between gap-4">
@@ -107,7 +115,7 @@ export default function ProjectInfoCard({
 
       {notes && (
         <div className="p-5 space-y-4">
-          <div className={`rounded-md px-3 py-2 text-sm border ${isProfessional ? 'bg-slate-800/50 border-slate-700' : 'bg-surface-muted border-border'}`}>
+          <div className={`rounded-md px-3 py-2 text-sm border ${isProfessional ? 'bg-slate-900/35 border-slate-700/80' : 'bg-surface-muted border-border'}`}>
             <p className={`font-semibold mb-1 ${isProfessional ? 'text-white' : 'text-strong'}`}>Project description</p>
             <p className={`${isProfessional ? 'text-slate-200' : 'text-muted'} leading-relaxed`}>{notes}</p>
             <div className={`flex gap-4 mt-3 pt-2 border-t text-xs ${isProfessional ? 'border-slate-700 text-slate-300' : 'border-border text-muted'}`}>
@@ -119,7 +127,7 @@ export default function ProjectInfoCard({
       )}
 
       {(createdAt || updatedAt) && !notes && (
-        <div className={`p-5 border-t ${isProfessional ? 'border-slate-700' : 'border-border'}`}>
+        <div className={`p-5 border-t ${isProfessional ? 'border-slate-700' : 'border-border'} ${isProfessional && attachTabs ? 'rounded-b-none' : ''}`}>
           <div className={`flex gap-4 text-xs ${isProfessional ? 'text-slate-300' : 'text-muted'}`}>
             <span>Created: {formatDate(createdAt)}</span>
             {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
