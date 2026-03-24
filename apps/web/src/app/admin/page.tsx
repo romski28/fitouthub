@@ -245,6 +245,15 @@ export default function AdminDashboardPage() {
     void fetchFeed();
   }, [fetchFeed]);
 
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    if (!accessToken || activeTab !== "dashboard") return;
+    const interval = setInterval(() => {
+      void fetchFeed();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [accessToken, activeTab, fetchFeed]);
+
   useEffect(() => {
     if (!accessToken || activeTab !== "dashboard") return;
 
@@ -685,12 +694,14 @@ export default function AdminDashboardPage() {
                 >
                   {includeInfo ? "Info: on" : "Info: off"}
                 </button>
-                <Link
-                  href="/admin/messaging?view=all"
-                  className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                <button
+                  type="button"
+                  onClick={() => void fetchFeed()}
+                  disabled={feedLoading}
+                  className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Workspace
-                </Link>
+                  {feedLoading ? "Refreshing…" : "Refresh"}
+                </button>
               </div>
             </div>
 
