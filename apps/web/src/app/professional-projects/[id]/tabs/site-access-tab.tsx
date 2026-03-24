@@ -92,7 +92,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const acceptedVisit = siteVisits.find((visit) => visit.status === 'accepted');
 
   return (
-    <div className="space-y-4">
+    <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
       <AccordionGroup>
         {/* Site Access Status */}
         <AccordionItem

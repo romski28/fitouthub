@@ -41,14 +41,14 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   const directChatLocked = isAwarded;
 
   return (
-    <div className="space-y-5">
+    <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
       <div>
         <div className="mb-3">
           <h2 className="text-lg font-bold text-white">Project Chat</h2>
           <p className="text-sm text-slate-300">Communicate with your client and project team</p>
         </div>
 
-        <div className="rounded-xl border border-slate-700 bg-slate-900/60 shadow-sm">
+        <div className="rounded-xl border border-slate-700 bg-slate-900/50 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-700">
           <label className="block text-sm font-semibold text-slate-200 mb-2">Chat with:</label>
           <select
@@ -63,7 +63,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 
         {chatMode === 'project' && (
           <div>
-            <div className="p-4 bg-slate-800/50 border-b border-slate-700">
+            <div className="p-4 bg-slate-900/50 border-b border-slate-700">
               <p className="text-sm text-sky-200">Chat with the full project team</p>
             </div>
             {!isAwarded ? (
@@ -85,7 +85,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
         )}
 
         {chatMode === 'direct' && (
-          <div className="bg-slate-800/40 border-t border-slate-700">
+          <div className="bg-slate-900/30 border-t border-slate-700">
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
@@ -115,7 +115,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 </div>
               )}
 
-              <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-700 rounded-lg p-4 bg-slate-900/70">
+              <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-700 rounded-lg p-4 bg-slate-950/70">
                 {messages.length === 0 ? (
                   <div className="text-center text-sm text-slate-400">
                     No messages yet. Start the conversation!

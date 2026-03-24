@@ -69,14 +69,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
   if (!isAwarded) {
     return (
-      <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-4 py-3 text-sm text-amber-200">
+      <div className="rounded-lg border border-amber-500/40 bg-amber-500/15 px-4 py-3 text-sm text-amber-200">
         Financials will be available once your quote is awarded.
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm space-y-6">
       {/* Financial Summary */}
       {projectFinancials && (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -108,7 +108,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       )}
 
       {/* Submit Payment Request */}
-      <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-3">
+      <div className="rounded-md border border-slate-700 bg-slate-900/50 p-4 space-y-3">
         <h3 className="font-semibold text-white">Submit Payment Request</h3>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -171,7 +171,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       </div>
 
       {/* Payment Request History */}
-      <div className="space-y-3">
+      <div className="rounded-md border border-slate-700 bg-slate-900/50 p-4 space-y-3">
         <h3 className="font-semibold text-white">Payment Request History</h3>
 
         {paymentRequestError && (
@@ -185,7 +185,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
         ) : paymentRequests.length === 0 ? (
           <p className="text-sm text-slate-300">No payment requests yet.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
+          <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/70">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-700">
@@ -234,7 +234,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
       {/* Payment Status */}
       {paymentRequests.length > 0 && (
-        <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-2 text-sm">
+        <div className="rounded-md border border-slate-700 bg-slate-900/50 p-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-slate-300">Pending ({paymentRequests.filter((p) => p.status === 'pending').length})</span>
             <span className="font-semibold text-white">
