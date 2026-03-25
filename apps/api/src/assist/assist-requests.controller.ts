@@ -78,12 +78,17 @@ export class AssistRequestsController {
   async addMessage(
     @Param('id') id: string,
     @Body()
-    body: { sender: 'client' | 'foh'; content: string; senderUserId?: string },
+    body: { sender?: 'client' | 'foh'; content: string; senderUserId?: string },
   ) {
     try {
+      const sender = body.sender ?? 'client';
+      if (sender !== 'client' && sender !== 'foh') {
+        throw new Error('Invalid sender');
+      }
+
       return await this.service.addMessage(
         id,
-        body.sender,
+        sender,
         body.content,
         body.senderUserId,
       );

@@ -196,7 +196,7 @@ export default function ClientProjectDetailPage() {
   const searchParams = useSearchParams();
   const projectId = params.id as string;
 
-  const { isLoggedIn, accessToken } = useAuth();
+  const { isLoggedIn, accessToken, user } = useAuth();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -916,7 +916,11 @@ export default function ClientProjectDetailPage() {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ content: assistNewMessage.trim() }),
+          body: JSON.stringify({
+            sender: 'client',
+            senderUserId: user?.id,
+            content: assistNewMessage.trim(),
+          }),
         },
       );
 
