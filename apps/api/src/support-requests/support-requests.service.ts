@@ -15,6 +15,8 @@ import { CreateCallbackDto } from './dto/support-request.dto';
 @Injectable()
 export class SupportRequestsService {
   private readonly logger = new Logger(SupportRequestsService.name);
+  private readonly emergencyCloseMs = 60 * 60 * 1000;
+  private readonly defaultCloseMs = 12 * 60 * 60 * 1000;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -34,18 +36,80 @@ export class SupportRequestsService {
     throw error;
   }
 
+  private appendTimelineEvent(
+    existing: unknown,
+    event: {
+      action: string;
+      status: string;
+      actorId?: string | null;
+      reason?: string | null;
+      mode?: string | null;
+      metadata?: Record<string, unknown>;
+    },
+  ) {
+    const timeline = Array.isArray(existing) ? [...existing] : [];
+    timeline.push({
+      at: new Date().toISOString(),
+      action: event.action,
+      status: event.status,
+      actorId: event.actorId ?? null,
+      reason: event.reason ?? null,
+      mode: event.mode ?? null,
+      ...(event.metadata ? { metadata: event.metadata } : {}),
+    });
+    return timeline;
+  }
+
+  private async finalizeExpiredClosures() {
+    const now = new Date();
+    const expiring = await (this.prisma as any).supportRequest.findMany({
+      where: {
+        status: 'closure_pending',
+        closureDueAt: { lte: now },
+      },
+      select: {
+        id: true,
+        statusTimeline: true,
+      },
+      take: 200,
+    });
+
+    if (!expiring.length) return;
+
+    await Promise.all(
+      expiring.map((item: any) =>
+        (this.prisma as any).supportRequest.update({
+          where: { id: item.id },
+          data: {
+            status: 'resolved',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(item.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'resolved',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+    );
+  }
+
   // ── Pool queries ─────────────────────────────────────────────────────────
 
   /** Return all non-resolved requests for the admin pool view */
   async getPool() {
+    await this.finalizeExpiredClosures();
     try {
-      return await this.prisma.supportRequest.findMany({
+      return await (this.prisma as any).supportRequest.findMany({
         where: { status: { not: 'resolved' } },
         include: {
           assignedAdmin: {
             select: { id: true, firstName: true, surname: true },
           },
-          project: { select: { id: true, projectName: true } },
+          project: { select: { id: true, projectName: true, isEmergency: true } },
         },
         orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
       });
@@ -56,8 +120,9 @@ export class SupportRequestsService {
 
   /** Return resolved requests (paginated) */
   async getResolved(limit = 50, offset = 0) {
+    await this.finalizeExpiredClosures();
     try {
-      return await this.prisma.supportRequest.findMany({
+      return await (this.prisma as any).supportRequest.findMany({
         where: { status: 'resolved' },
         include: {
           assignedAdmin: {
@@ -76,16 +141,17 @@ export class SupportRequestsService {
 
   /** Return a single request */
   async getOne(id: string) {
+    await this.finalizeExpiredClosures();
     let req;
 
     try {
-      req = await this.prisma.supportRequest.findUnique({
+      req = await (this.prisma as any).supportRequest.findUnique({
         where: { id },
         include: {
           assignedAdmin: {
             select: { id: true, firstName: true, surname: true },
           },
-          project: { select: { id: true, projectName: true } },
+          project: { select: { id: true, projectName: true, isEmergency: true } },
         },
       });
     } catch (error) {
@@ -105,12 +171,17 @@ export class SupportRequestsService {
         `Cannot claim a request with status "${req.status}"`,
       );
     }
-    return this.prisma.supportRequest.update({
+    return (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         status: 'claimed',
         assignedAdminId: adminId,
         claimedAt: new Date(),
+        statusTimeline: this.appendTimelineEvent(req.statusTimeline, {
+          action: 'claimed',
+          status: 'claimed',
+          actorId: adminId,
+        }),
       },
     });
   }
@@ -122,12 +193,17 @@ export class SupportRequestsService {
         'You can only release requests you have claimed',
       );
     }
-    return this.prisma.supportRequest.update({
+    return (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         status: 'unassigned',
         assignedAdminId: null,
         claimedAt: null,
+        statusTimeline: this.appendTimelineEvent(req.statusTimeline, {
+          action: 'released',
+          status: 'unassigned',
+          actorId: adminId,
+        }),
       },
     });
   }
@@ -139,24 +215,60 @@ export class SupportRequestsService {
         'Only the assigned admin can update this request',
       );
     }
-    return this.prisma.supportRequest.update({
+    return (this.prisma as any).supportRequest.update({
       where: { id },
-      data: { status: 'in_progress' },
+      data: {
+        status: 'in_progress',
+        statusTimeline: this.appendTimelineEvent(req.statusTimeline, {
+          action: 'marked_in_progress',
+          status: 'in_progress',
+          actorId: adminId,
+        }),
+      },
     });
   }
 
-  async resolve(id: string, adminId: string) {
+  async resolve(
+    id: string,
+    adminId: string,
+    options?: {
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
+  ) {
     const req = await this.getOne(id);
     if (req.assignedAdminId && req.assignedAdminId !== adminId) {
       throw new ForbiddenException(
         'Only the assigned admin can resolve this request',
       );
     }
-    return this.prisma.supportRequest.update({
+
+    const now = new Date();
+    const isEmergency = Boolean(req.project?.isEmergency);
+    const dueAt = new Date(now.getTime() + (isEmergency ? this.emergencyCloseMs : this.defaultCloseMs));
+    const resolutionReason = options?.resolutionReason || 'Admin requested closure';
+    const resolutionMode = options?.resolutionMode || 'user_confirmed';
+
+    return (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
-        status: 'resolved',
-        resolvedAt: new Date(),
+        status: 'closure_pending',
+        closureRequestedAt: now,
+        closureDueAt: dueAt,
+        resolvedBy: adminId,
+        resolutionReason,
+        resolutionMode,
+        statusTimeline: this.appendTimelineEvent(req.statusTimeline, {
+          action: 'closure_requested',
+          status: 'closure_pending',
+          actorId: adminId,
+          reason: resolutionReason,
+          mode: resolutionMode,
+          metadata: {
+            dueAt: dueAt.toISOString(),
+            emergency: isEmergency,
+          },
+        }),
       },
     });
   }
@@ -214,11 +326,27 @@ export class SupportRequestsService {
       direction: 'outbound',
     };
 
-    return this.prisma.supportRequest.update({
+    return (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         replies: [...existingReplies, newReply] as any,
-        status: req.status === 'claimed' ? 'in_progress' : req.status,
+        status:
+          req.status === 'closure_pending'
+            ? 'in_progress'
+            : req.status === 'claimed'
+              ? 'in_progress'
+              : req.status,
+        reopenedAt: req.status === 'closure_pending' ? new Date() : req.reopenedAt,
+        closureRequestedAt: req.status === 'closure_pending' ? null : req.closureRequestedAt,
+        closureDueAt: req.status === 'closure_pending' ? null : req.closureDueAt,
+        statusTimeline:
+          req.status === 'closure_pending'
+            ? this.appendTimelineEvent(req.statusTimeline, {
+                action: 'reopened_by_admin_reply',
+                status: 'in_progress',
+                actorId: adminId,
+              })
+            : req.statusTimeline,
       },
     });
   }
@@ -239,7 +367,7 @@ export class SupportRequestsService {
     let existing;
 
     try {
-      existing = await this.prisma.supportRequest.findFirst({
+      existing = await (this.prisma as any).supportRequest.findFirst({
         where: {
           fromNumber,
           channel: 'whatsapp',
@@ -263,9 +391,22 @@ export class SupportRequestsService {
         twilioMessageSid: payload.MessageSid,
       };
       try {
-        await this.prisma.supportRequest.update({
+        await (this.prisma as any).supportRequest.update({
           where: { id: existing.id },
-          data: { replies: [...existingReplies, inboundEntry] as any },
+          data: {
+            replies: [...existingReplies, inboundEntry] as any,
+            status: existing.status === 'closure_pending' ? 'in_progress' : existing.status,
+            reopenedAt: existing.status === 'closure_pending' ? new Date() : existing.reopenedAt,
+            closureRequestedAt: existing.status === 'closure_pending' ? null : existing.closureRequestedAt,
+            closureDueAt: existing.status === 'closure_pending' ? null : existing.closureDueAt,
+            statusTimeline:
+              existing.status === 'closure_pending'
+                ? this.appendTimelineEvent(existing.statusTimeline, {
+                    action: 'reopened_by_inbound',
+                    status: 'in_progress',
+                  })
+                : existing.statusTimeline,
+          },
         });
       } catch (error) {
         this.rethrowSupportPoolDatabaseError(error);
@@ -280,7 +421,7 @@ export class SupportRequestsService {
     let req;
 
     try {
-      req = await this.prisma.supportRequest.create({
+      req = await (this.prisma as any).supportRequest.create({
         data: {
           channel: 'whatsapp',
           fromNumber,
@@ -289,6 +430,10 @@ export class SupportRequestsService {
           twilioMessageSid: payload.MessageSid ?? null,
           status: 'unassigned',
           replies: [],
+          statusTimeline: this.appendTimelineEvent([], {
+            action: 'created',
+            status: 'unassigned',
+          }),
         },
       });
     } catch (error) {
@@ -302,7 +447,7 @@ export class SupportRequestsService {
   /** Create a SupportRequest from the website callback form */
   async createCallback(dto: CreateCallbackDto) {
     try {
-      return await this.prisma.supportRequest.create({
+      return await (this.prisma as any).supportRequest.create({
         data: {
           channel: 'callback',
           fromNumber: dto.phone ?? null,
@@ -312,6 +457,10 @@ export class SupportRequestsService {
           projectId: dto.projectId ?? null,
           status: 'unassigned',
           replies: [],
+          statusTimeline: this.appendTimelineEvent([], {
+            action: 'created',
+            status: 'unassigned',
+          }),
         },
       });
     } catch (error) {

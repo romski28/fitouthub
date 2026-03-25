@@ -7,6 +7,7 @@ import {
   UseGuards,
   Request,
   Headers,
+  Query,
   BadRequestException,
   UnauthorizedException,
   NotFoundException,
@@ -29,10 +30,17 @@ export class ChatController {
    */
   @Get('private')
   @UseGuards(CombinedAuthGuard)
-  async getOrCreatePrivateThread(@Request() req: any) {
+  async getOrCreatePrivateThread(
+    @Request() req: any,
+    @Query('includeArchived') includeArchived?: string,
+  ) {
     const userId = req.user.isProfessional ? undefined : req.user.id;
     const professionalId = req.user.isProfessional ? req.user.id : undefined;
-    return this.chatService.getOrCreatePrivateThread(userId, professionalId);
+    return this.chatService.getOrCreatePrivateThread(
+      userId,
+      professionalId,
+      includeArchived === '1',
+    );
   }
 
   /**
@@ -54,8 +62,11 @@ export class ChatController {
    */
   @Get('private/:threadId')
   @UseGuards(CombinedAuthGuard)
-  async getPrivateThread(@Param('threadId') threadId: string) {
-    return this.chatService.getPrivateThread(threadId);
+  async getPrivateThread(
+    @Param('threadId') threadId: string,
+    @Query('includeArchived') includeArchived?: string,
+  ) {
+    return this.chatService.getPrivateThread(threadId, includeArchived === '1');
   }
 
   /**
@@ -105,8 +116,16 @@ export class ChatController {
    */
   @Post('private/:threadId/close')
   @UseGuards(CombinedAuthGuard)
-  async closePrivateThread(@Param('threadId') threadId: string) {
-    await this.chatService.closePrivateThread(threadId);
+  async closePrivateThread(
+    @Param('threadId') threadId: string,
+    @Request() req: any,
+    @Body()
+    body?: {
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
+  ) {
+    await this.chatService.closePrivateThread(threadId, req.user?.id, body);
     return { success: true };
   }
 
@@ -125,8 +144,11 @@ export class ChatController {
    * GET /chat/anonymous/:threadId - Get an anonymous thread
    */
   @Get('anonymous/:threadId')
-  async getAnonymousThread(@Param('threadId') threadId: string) {
-    return this.chatService.getAnonymousThread(threadId);
+  async getAnonymousThread(
+    @Param('threadId') threadId: string,
+    @Query('includeArchived') includeArchived?: string,
+  ) {
+    return this.chatService.getAnonymousThread(threadId, includeArchived === '1');
   }
 
   /**
@@ -158,8 +180,16 @@ export class ChatController {
    */
   @Post('anonymous/:threadId/close')
   @UseGuards(CombinedAuthGuard)
-  async closeAnonymousThread(@Param('threadId') threadId: string) {
-    await this.chatService.closeAnonymousThread(threadId);
+  async closeAnonymousThread(
+    @Param('threadId') threadId: string,
+    @Request() req: any,
+    @Body()
+    body?: {
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
+  ) {
+    await this.chatService.closeAnonymousThread(threadId, req.user?.id, body);
     return { success: true };
   }
 
@@ -184,14 +214,14 @@ export class ChatController {
   async getAdminThread(@Param('threadId') threadId: string) {
     // Try private thread
     try {
-      return await this.chatService.getPrivateThread(threadId);
+      return await this.chatService.getPrivateThread(threadId, true);
     } catch (e) {
       // ignore and try next
     }
 
     // Try anonymous thread
     try {
-      return await this.chatService.getAnonymousThread(threadId);
+      return await this.chatService.getAnonymousThread(threadId, true);
     } catch (e) {
       // ignore and try next
     }

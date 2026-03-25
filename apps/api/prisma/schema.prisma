@@ -478,6 +478,14 @@ model ProjectAssistRequest {
   requestedCallAt DateTime?
   requestedCallTimezone String?
   notes     String?
+  closureRequestedAt DateTime?
+  closureDueAt DateTime?
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolutionReason String?
+  resolutionMode String?
+  reopenedAt DateTime?
+  statusTimeline Json?       @default("[]")
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
   project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -512,6 +520,14 @@ model PrivateChatThread {
   userId         String?              @unique // null for professionals
   professionalId String?              @unique // null for clients
   status         String               @default("open") // 'open' | 'in_progress' | 'closed'
+  closureRequestedAt DateTime?
+  closureDueAt DateTime?
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolutionReason String?
+  resolutionMode String?
+  reopenedAt DateTime?
+  statusTimeline Json?                @default("[]")
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
   messages       PrivateChatMessage[]
@@ -551,6 +567,14 @@ model AnonymousChatThread {
   id        String                 @id @default(cuid())
   sessionId String                 @unique // Anonymous session ID
   status    String                 @default("open") // 'open' | 'in_progress' | 'closed'
+  closureRequestedAt DateTime?
+  closureDueAt DateTime?
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolutionReason String?
+  resolutionMode String?
+  reopenedAt DateTime?
+  statusTimeline Json?             @default("[]")
   createdAt DateTime               @default(now())
   updatedAt DateTime               @updatedAt
   messages  AnonymousChatMessage[]
@@ -1029,6 +1053,7 @@ enum SupportRequestStatus {
   unassigned
   claimed
   in_progress
+  closure_pending
   resolved
 }
 
@@ -1048,10 +1073,17 @@ model SupportRequest {
   status           SupportRequestStatus  @default(unassigned)
   assignedAdminId  String?
   claimedAt        DateTime?
+  closureRequestedAt DateTime?
+  closureDueAt     DateTime?
   resolvedAt       DateTime?
+  resolvedBy       String?
+  resolutionReason String?
+  resolutionMode   String?
+  reopenedAt       DateTime?
   projectId        String?               // optional link to a project
   notes            String?               // internal admin notes
   replies          Json[]                // array of {body, sentAt, adminId, direction}
+  statusTimeline   Json?                 @default("[]")
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 

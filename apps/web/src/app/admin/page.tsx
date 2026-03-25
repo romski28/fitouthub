@@ -519,14 +519,31 @@ export default function AdminDashboardPage() {
       if (item.sourceType === 'support') {
         url = `${base}/support-requests/${item.sourceId}/resolve`;
         method = 'PATCH';
+        bodyPayload = {
+          resolutionMode: 'user_confirmed',
+          resolutionReason: 'Closed by admin from unified feed drawer',
+        };
       } else if (item.sourceType === 'assist') {
         url = `${base}/assist-requests/${id}/status`;
         method = 'PATCH';
-        bodyPayload = { status: 'closed' };
+        bodyPayload = {
+          status: 'closure_pending',
+          actorId: user?.id,
+          resolutionMode: 'user_confirmed',
+          resolutionReason: 'Closed by admin from unified feed drawer',
+        };
       } else if (item.sourceType === 'private') {
         url = `${base}/chat/private/${id}/close`;
+        bodyPayload = {
+          resolutionMode: 'user_confirmed',
+          resolutionReason: 'Closed by admin from unified feed drawer',
+        };
       } else if (item.sourceType === 'anonymous') {
         url = `${base}/chat/anonymous/${id}/close`;
+        bodyPayload = {
+          resolutionMode: 'user_confirmed',
+          resolutionReason: 'Closed by admin from unified feed drawer',
+        };
       } else if (item.sourceType === 'safety') {
         url = `${base}/ai/intake/${item.sourceId}/safety-ack`;
       } else {

@@ -26,6 +26,67 @@ interface MirrorSupportPoolParams {
 
 @Injectable()
 export class AssistRequestsService {
+  private readonly emergencyCloseMs = 60 * 60 * 1000;
+  private readonly defaultCloseMs = 12 * 60 * 60 * 1000;
+
+  private appendTimelineEvent(
+    existing: unknown,
+    event: {
+      action: string;
+      status: string;
+      actorId?: string | null;
+      reason?: string | null;
+      mode?: string | null;
+      metadata?: Record<string, unknown>;
+    },
+  ) {
+    const timeline = Array.isArray(existing) ? [...existing] : [];
+    timeline.push({
+      at: new Date().toISOString(),
+      action: event.action,
+      status: event.status,
+      actorId: event.actorId ?? null,
+      reason: event.reason ?? null,
+      mode: event.mode ?? null,
+      ...(event.metadata ? { metadata: event.metadata } : {}),
+    });
+    return timeline;
+  }
+
+  private async finalizeExpiredClosures() {
+    const now = new Date();
+    const expiring = await (this.prisma as any).projectAssistRequest.findMany({
+      where: {
+        status: 'closure_pending',
+        closureDueAt: { lte: now },
+      },
+      select: { id: true, statusTimeline: true },
+      take: 200,
+    });
+
+    if (!expiring.length) return;
+
+    await Promise.all(
+      expiring.map((item: any) =>
+        (this.prisma as any).projectAssistRequest.update({
+          where: { id: item.id },
+          data: {
+            status: 'closed',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(item.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'closed',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+    );
+  }
+
   private async mirrorToSupportPool(params: MirrorSupportPoolParams) {
     if (params.contactMethod === 'chat') return;
 
@@ -241,6 +302,7 @@ export class AssistRequestsService {
   }
 
   async list(params?: { status?: string; limit?: number; offset?: number }) {
+    await this.finalizeExpiredClosures();
     const { status, limit = 50, offset = 0 } = params || {};
     const where: any = {};
     if (status) where.status = status;
@@ -302,10 +364,28 @@ export class AssistRequestsService {
       },
     });
 
+    if (assist.status === 'closure_pending' || assist.status === 'closed') {
+      await (this.prisma as any).projectAssistRequest.update({
+        where: { id: assistRequestId },
+        data: {
+          status: 'in_progress',
+          reopenedAt: new Date(),
+          closureRequestedAt: null,
+          closureDueAt: null,
+          statusTimeline: this.appendTimelineEvent(assist.statusTimeline, {
+            action: 'reopened_by_message',
+            status: 'in_progress',
+            actorId: senderUserId || null,
+          }),
+        },
+      });
+    }
+
     return message;
   }
 
   async getMessages(assistRequestId: string, limit = 50, offset = 0) {
+    await this.finalizeExpiredClosures();
     if (!assistRequestId)
       throw new BadRequestException('assistRequestId is required');
     const messages = await (this.prisma as any).assistMessage.findMany({
@@ -318,6 +398,7 @@ export class AssistRequestsService {
   }
 
   async getLatestByProject(projectId: string) {
+    await this.finalizeExpiredClosures();
     if (!projectId) throw new BadRequestException('projectId is required');
     const assist = await (this.prisma as any).projectAssistRequest.findFirst({
       where: { projectId },
@@ -340,13 +421,69 @@ export class AssistRequestsService {
     return assist || null;
   }
 
-  async updateStatus(id: string, status: 'open' | 'in_progress' | 'closed') {
+  async updateStatus(
+    id: string,
+    status: 'open' | 'in_progress' | 'closed' | 'closure_pending',
+    options?: {
+      actorId?: string;
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
+  ) {
     if (!id) throw new BadRequestException('id is required');
-    if (!['open', 'in_progress', 'closed'].includes(status))
+    if (!['open', 'in_progress', 'closed', 'closure_pending'].includes(status))
       throw new BadRequestException('invalid status');
-    return this.prisma.projectAssistRequest.update({
+
+    const assist = await (this.prisma as any).projectAssistRequest.findUnique({
       where: { id },
-      data: { status },
+      include: { project: { select: { isEmergency: true } } },
+    });
+    if (!assist) throw new BadRequestException('Assist request not found');
+
+    if (status === 'closure_pending') {
+      const now = new Date();
+      const isEmergency = Boolean(assist.project?.isEmergency);
+      const dueAt = new Date(now.getTime() + (isEmergency ? this.emergencyCloseMs : this.defaultCloseMs));
+      return (this.prisma as any).projectAssistRequest.update({
+        where: { id },
+        data: {
+          status,
+          closureRequestedAt: now,
+          closureDueAt: dueAt,
+          resolvedBy: options?.actorId || null,
+          resolutionReason: options?.resolutionReason || 'Admin requested closure',
+          resolutionMode: options?.resolutionMode || 'user_confirmed',
+          statusTimeline: this.appendTimelineEvent(assist.statusTimeline, {
+            action: 'closure_requested',
+            status,
+            actorId: options?.actorId || null,
+            reason: options?.resolutionReason || 'Admin requested closure',
+            mode: options?.resolutionMode || 'user_confirmed',
+            metadata: {
+              dueAt: dueAt.toISOString(),
+              emergency: isEmergency,
+            },
+          }),
+        },
+      });
+    }
+
+    return (this.prisma as any).projectAssistRequest.update({
+      where: { id },
+      data: {
+        status,
+        resolvedAt: status === 'closed' ? new Date() : null,
+        reopenedAt: status === 'open' || status === 'in_progress' ? new Date() : assist.reopenedAt,
+        closureRequestedAt: status === 'open' || status === 'in_progress' ? null : assist.closureRequestedAt,
+        closureDueAt: status === 'open' || status === 'in_progress' ? null : assist.closureDueAt,
+        statusTimeline: this.appendTimelineEvent(assist.statusTimeline, {
+          action: status === 'closed' ? 'resolved' : 'status_updated',
+          status,
+          actorId: options?.actorId || null,
+          reason: options?.resolutionReason || null,
+          mode: options?.resolutionMode || null,
+        }),
+      },
     });
   }
 }

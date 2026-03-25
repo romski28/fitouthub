@@ -98,10 +98,20 @@ export class AssistRequestsController {
   @Patch(':id/status')
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: 'open' | 'in_progress' | 'closed' },
+    @Body()
+    body: {
+      status: 'open' | 'in_progress' | 'closed' | 'closure_pending';
+      actorId?: string;
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
   ) {
     try {
-      return await this.service.updateStatus(id, body.status);
+      return await this.service.updateStatus(id, body.status, {
+        actorId: body.actorId,
+        resolutionReason: body.resolutionReason,
+        resolutionMode: body.resolutionMode,
+      });
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to update status',

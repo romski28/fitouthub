@@ -117,9 +117,16 @@ export class SupportRequestsController {
 
   @Patch(':id/resolve')
   @UseGuards(AuthGuard('jwt'))
-  async resolve(@Req() req: any, @Param('id') id: string) {
+  async resolve(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body?: {
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
+  ) {
     this.requireAdmin(req);
-    return this.service.resolve(id, req.user.id);
+    return this.service.resolve(id, req.user.id, body);
   }
 
   @Post(':id/reply')

@@ -6,7 +6,111 @@ import { ProjectChatThreadDto, ProjectChatMessageDto } from './dto/project-chat.
 
 @Injectable()
 export class ChatService {
+  private readonly emergencyCloseMs = 60 * 60 * 1000;
+  private readonly defaultCloseMs = 12 * 60 * 60 * 1000;
+
   constructor(private prisma: PrismaService) {}
+
+  private appendTimelineEvent(
+    existing: unknown,
+    event: {
+      action: string;
+      status: string;
+      actorId?: string | null;
+      reason?: string | null;
+      mode?: string | null;
+      metadata?: Record<string, unknown>;
+    },
+  ) {
+    const timeline = Array.isArray(existing) ? [...existing] : [];
+    timeline.push({
+      at: new Date().toISOString(),
+      action: event.action,
+      status: event.status,
+      actorId: event.actorId ?? null,
+      reason: event.reason ?? null,
+      mode: event.mode ?? null,
+      ...(event.metadata ? { metadata: event.metadata } : {}),
+    });
+    return timeline;
+  }
+
+  private async detectEmergencyFromPrivateThread(threadId: string): Promise<boolean> {
+    const latest = await (this.prisma as any).privateChatMessage.findFirst({
+      where: { threadId },
+      select: { context: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    const projectId = latest?.context?.projectId;
+    if (!projectId) return false;
+    const project = await this.prisma.project.findUnique({
+      where: { id: String(projectId) },
+      select: { isEmergency: true },
+    });
+    return Boolean(project?.isEmergency);
+  }
+
+  private async finalizeExpiredPrivateClosures() {
+    const now = new Date();
+    const rows = await (this.prisma as any).privateChatThread.findMany({
+      where: {
+        status: 'closure_pending',
+        closureDueAt: { lte: now },
+      },
+      select: { id: true, statusTimeline: true },
+      take: 200,
+    });
+    await Promise.all(
+      rows.map((thread: any) =>
+        (this.prisma as any).privateChatThread.update({
+          where: { id: thread.id },
+          data: {
+            status: 'closed',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(thread.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'closed',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+    );
+  }
+
+  private async finalizeExpiredAnonymousClosures() {
+    const now = new Date();
+    const rows = await (this.prisma as any).anonymousChatThread.findMany({
+      where: {
+        status: 'closure_pending',
+        closureDueAt: { lte: now },
+      },
+      select: { id: true, statusTimeline: true },
+      take: 200,
+    });
+    await Promise.all(
+      rows.map((thread: any) =>
+        (this.prisma as any).anonymousChatThread.update({
+          where: { id: thread.id },
+          data: {
+            status: 'closed',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(thread.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'closed',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+    );
+  }
 
   // ===== PRIVATE CHAT (FOH Support) =====
 
@@ -16,7 +120,9 @@ export class ChatService {
   async getOrCreatePrivateThread(
     userId?: string,
     professionalId?: string,
+    includeArchived = false,
   ): Promise<PrivateChatThreadDto> {
+    await this.finalizeExpiredPrivateClosures();
     // Find thread by either userId or professionalId (whichever is provided)
     let thread = userId
       ? await this.prisma.privateChatThread.findUnique({
@@ -49,13 +155,28 @@ export class ChatService {
       });
     }
 
-    return this.mapPrivateThreadDto(thread);
+    const reopenedAtMs = thread.reopenedAt
+      ? new Date(thread.reopenedAt).getTime()
+      : null;
+    const filteredMessages =
+      !includeArchived && reopenedAtMs
+        ? (thread.messages || []).filter(
+            (message: any) =>
+              new Date(message.createdAt).getTime() >= reopenedAtMs,
+          )
+        : thread.messages || [];
+
+    return this.mapPrivateThreadDto({ ...thread, messages: filteredMessages });
   }
 
   /**
    * Get a private chat thread with messages
    */
-  async getPrivateThread(threadId: string): Promise<PrivateChatThreadDto> {
+  async getPrivateThread(
+    threadId: string,
+    includeArchived = false,
+  ): Promise<PrivateChatThreadDto> {
+    await this.finalizeExpiredPrivateClosures();
     const thread = await this.prisma.privateChatThread.findUnique({
       where: { id: threadId },
       include: {
@@ -69,7 +190,18 @@ export class ChatService {
       throw new NotFoundException('Chat thread not found');
     }
 
-    return this.mapPrivateThreadDto(thread);
+    const reopenedAtMs = thread.reopenedAt
+      ? new Date(thread.reopenedAt).getTime()
+      : null;
+    const filteredMessages =
+      !includeArchived && reopenedAtMs
+        ? (thread.messages || []).filter(
+            (message: any) =>
+              new Date(message.createdAt).getTime() >= reopenedAtMs,
+          )
+        : thread.messages || [];
+
+    return this.mapPrivateThreadDto({ ...thread, messages: filteredMessages });
   }
 
   /**
@@ -88,7 +220,7 @@ export class ChatService {
       projectId?: string | null;
     },
   ): Promise<PrivateChatMessageDto> {
-    const thread = await this.prisma.privateChatThread.findUnique({
+    const thread = await (this.prisma as any).privateChatThread.findUnique({
       where: { id: threadId },
     });
 
@@ -109,9 +241,22 @@ export class ChatService {
     });
 
     // Update thread's updatedAt
-    await this.prisma.privateChatThread.update({
+    await (this.prisma as any).privateChatThread.update({
       where: { id: threadId },
-      data: { updatedAt: new Date() },
+      data: {
+        updatedAt: new Date(),
+        status: thread.status === 'closure_pending' ? 'in_progress' : thread.status,
+        reopenedAt: thread.status === 'closure_pending' ? new Date() : thread.reopenedAt,
+        closureRequestedAt: thread.status === 'closure_pending' ? null : thread.closureRequestedAt,
+        closureDueAt: thread.status === 'closure_pending' ? null : thread.closureDueAt,
+        statusTimeline:
+          thread.status === 'closure_pending'
+            ? this.appendTimelineEvent(thread.statusTimeline, {
+                action: 'reopened_by_message',
+                status: 'in_progress',
+              })
+            : thread.statusTimeline,
+      },
     });
 
     return this.mapPrivateMessageDto(message);
@@ -130,10 +275,46 @@ export class ChatService {
   /**
    * Close a private thread
    */
-  async closePrivateThread(threadId: string): Promise<void> {
-    await this.prisma.privateChatThread.update({
+  async closePrivateThread(
+    threadId: string,
+    actorId?: string,
+    options?: {
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
+  ): Promise<void> {
+    const thread = await (this.prisma as any).privateChatThread.findUnique({
       where: { id: threadId },
-      data: { status: 'closed', updatedAt: new Date() },
+      select: { id: true, statusTimeline: true },
+    });
+    if (!thread) {
+      throw new NotFoundException('Chat thread not found');
+    }
+    const now = new Date();
+    const isEmergency = await this.detectEmergencyFromPrivateThread(threadId);
+    const dueAt = new Date(now.getTime() + (isEmergency ? this.emergencyCloseMs : this.defaultCloseMs));
+    await (this.prisma as any).privateChatThread.update({
+      where: { id: threadId },
+      data: {
+        status: 'closure_pending',
+        updatedAt: now,
+        closureRequestedAt: now,
+        closureDueAt: dueAt,
+        resolvedBy: actorId ?? null,
+        resolutionMode: options?.resolutionMode || 'user_confirmed',
+        resolutionReason: options?.resolutionReason || 'Admin requested closure',
+        statusTimeline: this.appendTimelineEvent(thread.statusTimeline, {
+          action: 'closure_requested',
+          status: 'closure_pending',
+          actorId: actorId ?? null,
+          reason: options?.resolutionReason || 'Admin requested closure',
+          mode: options?.resolutionMode || 'user_confirmed',
+          metadata: {
+            dueAt: dueAt.toISOString(),
+            emergency: isEmergency,
+          },
+        }),
+      },
     });
   }
 
@@ -143,6 +324,7 @@ export class ChatService {
    * Create an anonymous chat thread
    */
   async createAnonymousThread(sessionId: string): Promise<AnonymousChatThreadDto> {
+    await this.finalizeExpiredAnonymousClosures();
     const thread = await this.prisma.anonymousChatThread.create({
       data: { sessionId },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
@@ -154,7 +336,11 @@ export class ChatService {
   /**
    * Get an anonymous chat thread
    */
-  async getAnonymousThread(threadId: string): Promise<AnonymousChatThreadDto> {
+  async getAnonymousThread(
+    threadId: string,
+    includeArchived = false,
+  ): Promise<AnonymousChatThreadDto> {
+    await this.finalizeExpiredAnonymousClosures();
     const thread = await this.prisma.anonymousChatThread.findUnique({
       where: { id: threadId },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
@@ -164,7 +350,18 @@ export class ChatService {
       throw new NotFoundException('Anonymous chat thread not found');
     }
 
-    return this.mapAnonymousThreadDto(thread);
+    const reopenedAtMs = thread.reopenedAt
+      ? new Date(thread.reopenedAt).getTime()
+      : null;
+    const filteredMessages =
+      !includeArchived && reopenedAtMs
+        ? (thread.messages || []).filter(
+            (message: any) =>
+              new Date(message.createdAt).getTime() >= reopenedAtMs,
+          )
+        : thread.messages || [];
+
+    return this.mapAnonymousThreadDto({ ...thread, messages: filteredMessages });
   }
 
   /**
@@ -181,7 +378,7 @@ export class ChatService {
       projectId?: string | null;
     },
   ): Promise<AnonymousChatMessageDto> {
-    const thread = await this.prisma.anonymousChatThread.findUnique({
+    const thread = await (this.prisma as any).anonymousChatThread.findUnique({
       where: { id: threadId },
     });
 
@@ -200,9 +397,22 @@ export class ChatService {
     });
 
     // Update thread's updatedAt
-    await this.prisma.anonymousChatThread.update({
+    await (this.prisma as any).anonymousChatThread.update({
       where: { id: threadId },
-      data: { updatedAt: new Date() },
+      data: {
+        updatedAt: new Date(),
+        status: thread.status === 'closure_pending' ? 'in_progress' : thread.status,
+        reopenedAt: thread.status === 'closure_pending' ? new Date() : thread.reopenedAt,
+        closureRequestedAt: thread.status === 'closure_pending' ? null : thread.closureRequestedAt,
+        closureDueAt: thread.status === 'closure_pending' ? null : thread.closureDueAt,
+        statusTimeline:
+          thread.status === 'closure_pending'
+            ? this.appendTimelineEvent(thread.statusTimeline, {
+                action: 'reopened_by_message',
+                status: 'in_progress',
+              })
+            : thread.statusTimeline,
+      },
     });
 
     return this.mapAnonymousMessageDto(message);
@@ -211,10 +421,45 @@ export class ChatService {
   /**
    * Close an anonymous thread
    */
-  async closeAnonymousThread(threadId: string): Promise<void> {
-    await this.prisma.anonymousChatThread.update({
+  async closeAnonymousThread(
+    threadId: string,
+    actorId?: string,
+    options?: {
+      resolutionReason?: string;
+      resolutionMode?: 'user_confirmed' | 'sla_timeout';
+    },
+  ): Promise<void> {
+    const thread = await (this.prisma as any).anonymousChatThread.findUnique({
       where: { id: threadId },
-      data: { status: 'closed', updatedAt: new Date() },
+      select: { id: true, statusTimeline: true },
+    });
+    if (!thread) {
+      throw new NotFoundException('Anonymous chat thread not found');
+    }
+    const now = new Date();
+    const dueAt = new Date(now.getTime() + this.defaultCloseMs);
+    await (this.prisma as any).anonymousChatThread.update({
+      where: { id: threadId },
+      data: {
+        status: 'closure_pending',
+        updatedAt: now,
+        closureRequestedAt: now,
+        closureDueAt: dueAt,
+        resolvedBy: actorId ?? null,
+        resolutionMode: options?.resolutionMode || 'user_confirmed',
+        resolutionReason: options?.resolutionReason || 'Admin requested closure',
+        statusTimeline: this.appendTimelineEvent(thread.statusTimeline, {
+          action: 'closure_requested',
+          status: 'closure_pending',
+          actorId: actorId ?? null,
+          reason: options?.resolutionReason || 'Admin requested closure',
+          mode: options?.resolutionMode || 'user_confirmed',
+          metadata: {
+            dueAt: dueAt.toISOString(),
+            emergency: false,
+          },
+        }),
+      },
     });
   }
 
@@ -402,6 +647,10 @@ export class ChatService {
    * Get all threads for admin FOH inbox
    */
   async getAllThreadsForAdmin() {
+    await Promise.all([
+      this.finalizeExpiredPrivateClosures(),
+      this.finalizeExpiredAnonymousClosures(),
+    ]);
     // Fetch private threads
     const privateThreads = await this.prisma.privateChatThread.findMany({
       include: {

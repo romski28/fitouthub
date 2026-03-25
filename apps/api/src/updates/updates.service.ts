@@ -148,7 +148,128 @@ export class UpdatesService {
     );
   }
 
+  private appendTimelineEvent(
+    existing: unknown,
+    event: {
+      action: string;
+      status: string;
+      actorId?: string | null;
+      reason?: string | null;
+      mode?: string | null;
+    },
+  ) {
+    const timeline = Array.isArray(existing) ? [...existing] : [];
+    timeline.push({
+      at: new Date().toISOString(),
+      action: event.action,
+      status: event.status,
+      actorId: event.actorId ?? null,
+      reason: event.reason ?? null,
+      mode: event.mode ?? null,
+    });
+    return timeline;
+  }
+
+  private async finalizeExpiredClosuresForDashboard() {
+    const now = new Date();
+
+    const [support, assist, privateThreads, anonymousThreads] = await Promise.all([
+      this.prisma.supportRequest.findMany({
+        where: { status: 'closure_pending', closureDueAt: { lte: now } },
+        select: { id: true, statusTimeline: true },
+        take: 200,
+      }),
+      this.prisma.projectAssistRequest.findMany({
+        where: { status: 'closure_pending', closureDueAt: { lte: now } },
+        select: { id: true, statusTimeline: true },
+        take: 200,
+      }),
+      this.prisma.privateChatThread.findMany({
+        where: { status: 'closure_pending', closureDueAt: { lte: now } },
+        select: { id: true, statusTimeline: true },
+        take: 200,
+      }),
+      this.prisma.anonymousChatThread.findMany({
+        where: { status: 'closure_pending', closureDueAt: { lte: now } },
+        select: { id: true, statusTimeline: true },
+        take: 200,
+      }),
+    ]);
+
+    await Promise.all([
+      ...support.map((item) =>
+        this.prisma.supportRequest.update({
+          where: { id: item.id },
+          data: {
+            status: 'resolved',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(item.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'resolved',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+      ...assist.map((item) =>
+        this.prisma.projectAssistRequest.update({
+          where: { id: item.id },
+          data: {
+            status: 'closed',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(item.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'closed',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+      ...privateThreads.map((item) =>
+        this.prisma.privateChatThread.update({
+          where: { id: item.id },
+          data: {
+            status: 'closed',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(item.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'closed',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+      ...anonymousThreads.map((item) =>
+        this.prisma.anonymousChatThread.update({
+          where: { id: item.id },
+          data: {
+            status: 'closed',
+            resolvedAt: now,
+            resolutionMode: 'sla_timeout',
+            resolutionReason: 'SLA timeout after closure request',
+            statusTimeline: this.appendTimelineEvent(item.statusTimeline, {
+              action: 'auto_resolved',
+              status: 'closed',
+              mode: 'sla_timeout',
+              reason: 'SLA timeout after closure request',
+            }),
+          },
+        }),
+      ),
+    ]);
+  }
+
   async getAdminOpsSummary(adminId: string): Promise<AdminOpsSummary> {
+    await this.finalizeExpiredClosuresForDashboard();
     const [
       supportCounts,
       myClaimed,
@@ -444,6 +565,7 @@ export class UpdatesService {
     scope: 'all' | 'my' | 'unassigned' = 'all',
     includeInfo = false,
   ): Promise<AdminCommsFeed> {
+    await this.finalizeExpiredClosuresForDashboard();
     const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(Number(limit), 10), 300) : 120;
 
     const [
@@ -610,7 +732,7 @@ export class UpdatesService {
         conversationType: 'support',
         conversationId: request.id,
         replyChannel: request.channel === 'whatsapp' ? 'whatsapp' : 'none',
-        actionRequired: request.status !== 'resolved',
+        actionRequired: !['resolved', 'closure_pending'].includes(request.status),
         type: 'Support Request',
         transport: request.channel === 'whatsapp' ? 'WhatsApp' : 'Callback',
         context: request.project
@@ -636,7 +758,7 @@ export class UpdatesService {
         conversationType: 'assist',
         conversationId: message.assistRequestId,
         replyChannel: 'assist',
-        actionRequired: message.assistRequest.status !== 'closed',
+        actionRequired: !['closed', 'closure_pending'].includes(message.assistRequest.status),
         type: 'Assist Message',
         transport: message.assistRequest.contactMethod === 'whatsapp'
           ? 'WhatsApp'
@@ -670,7 +792,7 @@ export class UpdatesService {
         conversationType: 'chat',
         conversationId: message.threadId,
         replyChannel: 'chat',
-        actionRequired: message.thread.status !== 'closed',
+        actionRequired: !['closed', 'closure_pending'].includes(message.thread.status),
         type: message.senderType === 'professional' ? 'Professional Inbox' : 'Client Inbox',
         transport: 'In-app Chat',
         context: message.senderType === 'professional' ? 'FOH Professional Thread' : 'FOH Client Thread',
@@ -691,7 +813,7 @@ export class UpdatesService {
         conversationType: 'chat',
         conversationId: message.threadId,
         replyChannel: 'chat',
-        actionRequired: message.thread.status !== 'closed',
+        actionRequired: !['closed', 'closure_pending'].includes(message.thread.status),
         type: 'Anonymous Inbox',
         transport: 'In-app Chat',
         context: `Session · ${message.thread.sessionId.slice(0, 8)}`,
