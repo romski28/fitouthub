@@ -135,6 +135,13 @@ interface SiteAccessVisit {
   };
 }
 
+interface AssistThreadSummary {
+  id?: string;
+  status?: 'open' | 'in_progress' | 'closure_pending' | 'closed' | string;
+  closureDueAt?: string | null;
+  resolvedAt?: string | null;
+}
+
 const projectStatusBadge: Record<string, string> = {
   pending: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
   approved: 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40',
@@ -234,6 +241,11 @@ export default function ClientProjectDetailPage() {
 
   // Assistance (FOH) state
   const [assistRequestId, setAssistRequestId] = useState<string | null>(null);
+  const [assistStatus, setAssistStatus] = useState<
+    'open' | 'in_progress' | 'closure_pending' | 'closed' | string | null
+  >(null);
+  const [assistClosureDueAt, setAssistClosureDueAt] = useState<string | null>(null);
+  const [assistResolvedAt, setAssistResolvedAt] = useState<string | null>(null);
   const [assistMessages, setAssistMessages] = useState<Message[]>([]);
   const [assistLoading, setAssistLoading] = useState(false);
   const [assistError, setAssistError] = useState<string | null>(null);
@@ -833,10 +845,13 @@ export default function ClientProjectDetailPage() {
           const text = await res.text();
           throw new Error(text || 'Failed to load assistance');
         }
-        const data = await parseJsonResponse<{ assist?: { id?: string } }>(res);
+        const data = await parseJsonResponse<{ assist?: AssistThreadSummary }>(res);
         const assist = data?.assist;
         if (assist?.id) {
           setAssistRequestId(assist.id);
+          setAssistStatus(assist.status || null);
+          setAssistClosureDueAt(assist.closureDueAt || null);
+          setAssistResolvedAt(assist.resolvedAt || null);
           // Fetch messages
           const mres = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assist.id)}/messages`, {
             headers: { Authorization: `Bearer ${accessToken}` },
@@ -858,6 +873,9 @@ export default function ClientProjectDetailPage() {
           }
         } else {
           setAssistRequestId(null);
+          setAssistStatus(null);
+          setAssistClosureDueAt(null);
+          setAssistResolvedAt(null);
           setAssistMessages([]);
         }
       } catch (err) {
@@ -878,6 +896,17 @@ export default function ClientProjectDetailPage() {
       try {
         setAssistLoading(true);
         setAssistError(null);
+        const assistRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (assistRes.ok) {
+          const assistData = await parseJsonResponse<{ assist?: AssistThreadSummary }>(assistRes);
+          const assist = assistData?.assist;
+          setAssistStatus(assist?.status || null);
+          setAssistClosureDueAt(assist?.closureDueAt || null);
+          setAssistResolvedAt(assist?.resolvedAt || null);
+        }
+
         const res = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -900,7 +929,7 @@ export default function ClientProjectDetailPage() {
       }
     };
     refreshAssistMessages();
-  }, [viewingAssistChat, assistRequestId, accessToken]);
+  }, [viewingAssistChat, assistRequestId, accessToken, projectId]);
 
   const handleSendAssistMessage = async () => {
     if (!assistNewMessage.trim() || !assistRequestId || !accessToken) return;
@@ -935,6 +964,9 @@ export default function ClientProjectDetailPage() {
         createdAt: data.createdAt,
       };
       setAssistMessages((prev) => [...prev, mapped]);
+      setAssistStatus('in_progress');
+      setAssistClosureDueAt(null);
+      setAssistResolvedAt(null);
       setAssistNewMessage('');
     } catch (err) {
       console.error('Error sending assist message:', err);
@@ -1566,7 +1598,7 @@ export default function ClientProjectDetailPage() {
             </div>
           )}
 
-          {quoteOverdueBlocker && projectStatus !== 'withdrawn' && (
+          {quoteOverdueBlocker && projectStatus !== 'withdrawn' && activeTab === 'overview' && (
             <div className="border-b border-rose-200 bg-rose-50 p-5 space-y-4">
               {/* Header */}
               <div>
@@ -1646,6 +1678,14 @@ export default function ClientProjectDetailPage() {
                   Withdraw the project
                 </button>{' '}
                 if you no longer wish to proceed.
+              </p>
+            </div>
+          )}
+
+          {quoteOverdueBlocker && projectStatus !== 'withdrawn' && activeTab !== 'overview' && (
+            <div className="border-b border-rose-200 bg-rose-50 px-5 py-3">
+              <p className="text-sm text-rose-800">
+                🚫 Quote window expired — see <button onClick={() => setActiveTab('overview')} className="font-semibold underline hover:text-rose-900">Overview</button> for recovery actions.
               </p>
             </div>
           )}
@@ -1845,6 +1885,9 @@ export default function ClientProjectDetailPage() {
               assistLoading={assistLoading}
               assistSending={assistSending}
               assistError={assistError}
+              assistStatus={assistStatus}
+              assistClosureDueAt={assistClosureDueAt}
+              assistResolvedAt={assistResolvedAt}
             />
           </div>
         )}

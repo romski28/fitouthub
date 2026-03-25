@@ -54,6 +54,9 @@ interface ChatTabProps {
   assistLoading: boolean;
   assistSending: boolean;
   assistError: string | null;
+  assistStatus?: 'open' | 'in_progress' | 'closure_pending' | 'closed' | string | null;
+  assistClosureDueAt?: string | null;
+  assistResolvedAt?: string | null;
 }
 
 export const ChatTab: React.FC<ChatTabProps> = ({
@@ -81,6 +84,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   assistLoading,
   assistSending,
   assistError,
+  assistStatus,
+  assistClosureDueAt,
+  assistResolvedAt,
 }) => {
   const hasProfessionals = Array.isArray(professionals) && professionals.length > 0;
   const isAssistView = viewingAssistChat || (!hasProfessionals && !!assistRequestId);
@@ -165,6 +171,14 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 {assistError && (
                   <div className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
                     {assistError}
+                  </div>
+                )}
+
+                {(assistStatus === 'closure_pending' || assistStatus === 'closed') && (
+                  <div className="rounded-md border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                    {assistStatus === 'closure_pending'
+                      ? `Fitout Hub marked this assistance thread as pending closure${assistClosureDueAt ? ` (auto-close after ${new Date(assistClosureDueAt).toLocaleString()})` : ''}. Send a message here if you still need help.`
+                      : `This assistance thread was closed${assistResolvedAt ? ` on ${new Date(assistResolvedAt).toLocaleString()}` : ''}. Send a message here to reopen it.`}
                   </div>
                 )}
 
