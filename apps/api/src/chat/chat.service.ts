@@ -3,13 +3,17 @@ import { PrismaService } from '../prisma.service';
 import { PrivateChatThreadDto, PrivateChatMessageDto } from './dto/private-chat.dto';
 import { AnonymousChatThreadDto, AnonymousChatMessageDto } from './dto/anonymous-chat.dto';
 import { ProjectChatThreadDto, ProjectChatMessageDto } from './dto/project-chat.dto';
+import { RealtimeService } from '../realtime/realtime.service';
 
 @Injectable()
 export class ChatService {
   private readonly emergencyCloseMs = 60 * 60 * 1000;
   private readonly defaultCloseMs = 12 * 60 * 60 * 1000;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly realtime: RealtimeService,
+  ) {}
 
   private appendTimelineEvent(
     existing: unknown,
@@ -259,6 +263,43 @@ export class ChatService {
       },
     });
 
+    const realtimeEvent = {
+      type: 'chat.message.created',
+      payload: {
+        sourceType: 'private',
+        threadId,
+        senderType,
+        message: this.mapPrivateMessageDto(message),
+      },
+    };
+
+    if (thread.userId) {
+      this.realtime.emitToUser(thread.userId, realtimeEvent);
+    }
+    if (thread.professionalId) {
+      this.realtime.emitToProfessional(thread.professionalId, realtimeEvent);
+    }
+    void this.realtime.emitToAdmins(realtimeEvent);
+
+    if (thread.status === 'closure_pending') {
+      const reopenEvent = {
+        type: 'thread.status.changed',
+        payload: {
+          sourceType: 'private',
+          threadId,
+          status: 'in_progress',
+          reason: 'reopened_by_message',
+        },
+      };
+      if (thread.userId) {
+        this.realtime.emitToUser(thread.userId, reopenEvent);
+      }
+      if (thread.professionalId) {
+        this.realtime.emitToProfessional(thread.professionalId, reopenEvent);
+      }
+      void this.realtime.emitToAdmins(reopenEvent);
+    }
+
     return this.mapPrivateMessageDto(message);
   }
 
@@ -285,7 +326,7 @@ export class ChatService {
   ): Promise<void> {
     const thread = await (this.prisma as any).privateChatThread.findUnique({
       where: { id: threadId },
-      select: { id: true, statusTimeline: true },
+      select: { id: true, statusTimeline: true, userId: true, professionalId: true },
     });
     if (!thread) {
       throw new NotFoundException('Chat thread not found');
@@ -316,6 +357,23 @@ export class ChatService {
         }),
       },
     });
+
+    const statusEvent = {
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'private',
+        threadId,
+        status: 'closure_pending',
+      },
+    };
+
+    if (thread.userId) {
+      this.realtime.emitToUser(thread.userId, statusEvent);
+    }
+    if (thread.professionalId) {
+      this.realtime.emitToProfessional(thread.professionalId, statusEvent);
+    }
+    void this.realtime.emitToAdmins(statusEvent);
   }
 
   // ===== ANONYMOUS CHAT =====
@@ -415,6 +473,29 @@ export class ChatService {
       },
     });
 
+    const realtimeEvent = {
+      type: 'chat.message.created',
+      payload: {
+        sourceType: 'anonymous',
+        threadId,
+        senderType,
+        message: this.mapAnonymousMessageDto(message),
+      },
+    };
+    void this.realtime.emitToAdmins(realtimeEvent);
+
+    if (thread.status === 'closure_pending') {
+      void this.realtime.emitToAdmins({
+        type: 'thread.status.changed',
+        payload: {
+          sourceType: 'anonymous',
+          threadId,
+          status: 'in_progress',
+          reason: 'reopened_by_message',
+        },
+      });
+    }
+
     return this.mapAnonymousMessageDto(message);
   }
 
@@ -459,6 +540,15 @@ export class ChatService {
             emergency: false,
           },
         }),
+      },
+    });
+
+    void this.realtime.emitToAdmins({
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'anonymous',
+        threadId,
+        status: 'closure_pending',
       },
     });
   }

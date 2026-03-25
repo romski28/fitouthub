@@ -35,6 +35,7 @@ import { PoliciesModule } from './policies/policies.module';
 import { SupportRequestsModule } from './support-requests/support-requests.module';
 import { AiModule } from './ai/ai.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     NotificationModule,
     PoliciesModule,
     AnnouncementsModule,
+    RealtimeModule,
     SupportRequestsModule,
     AiModule,
     JwtModule.register({

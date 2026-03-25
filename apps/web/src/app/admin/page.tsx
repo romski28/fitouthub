@@ -433,6 +433,60 @@ export default function AdminDashboardPage() {
     void loadConversation(selectedItem);
   }, [selectedItem, loadConversation]);
 
+  useEffect(() => {
+    if (!accessToken || activeTab !== "dashboard") return;
+
+    const streamUrl = `${API_BASE_URL.replace(/\/$/, "")}/realtime/stream?token=${encodeURIComponent(accessToken)}`;
+    const eventSource = new EventSource(streamUrl);
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleRefresh = () => {
+      if (refreshTimer) return;
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        void fetchFeed();
+      }, 250);
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data || "{}");
+        const eventType = data?.type as string | undefined;
+        const payload = (data?.payload || {}) as Record<string, unknown>;
+
+        if (
+          eventType === "admin.feed.changed" ||
+          eventType === "support.message.created" ||
+          eventType === "assist.message.created" ||
+          eventType === "chat.message.created" ||
+          eventType === "thread.status.changed"
+        ) {
+          scheduleRefresh();
+
+          if (selectedItem) {
+            const sourceType = String(payload.sourceType || "");
+            const sourceId = String(payload.sourceId || "");
+            const threadId = String(payload.threadId || "");
+            const matchesSelected =
+              (sourceType && sourceType === selectedItem.sourceType && sourceId && sourceId === selectedItem.sourceId) ||
+              (sourceType && sourceType === selectedItem.sourceType && threadId && threadId === selectedItem.conversationId);
+
+            if (matchesSelected) {
+              void loadConversation(selectedItem);
+            }
+          }
+        }
+      } catch {
+        // ignore malformed events
+      }
+    };
+
+    return () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      eventSource.close();
+    };
+  }, [accessToken, activeTab, fetchFeed, loadConversation, selectedItem]);
+
   const sendDrawerReply = async () => {
     if (!accessToken || !selectedItem || !selectedItem.conversationId) return;
     if (!replyDraft.trim()) return;

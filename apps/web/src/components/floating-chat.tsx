@@ -215,42 +215,64 @@ export default function FloatingChat() {
     }
   }, [isOpen, threadId, isLoggedIn, accessToken, unreadCount]);
 
-  // Poll for new messages when modal is closed
+  // Live updates for logged-in users (SSE)
   useEffect(() => {
-    // Only poll if:
-    // 1. Chat is NOT open (we're checking for unread messages)
-    // 2. ThreadId exists and is NOT a stub
-    // 3. User is logged in with a valid token
-    if (isOpen || !threadId || threadId.startsWith('stub-') || !isLoggedIn || !accessToken) return;
+    if (!threadId || threadId.startsWith('stub-') || !isLoggedIn || !accessToken) return;
 
-    const pollInterval = setInterval(() => {
-      fetch(`${API_BASE_URL}/chat/private/${threadId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-        .then((res) => {
-          if (res.status === 404) {
-            // Thread doesn't exist, clear it
-            console.warn('[FloatingChat] Thread not found (404), clearing thread ID');
-            setThreadId(null);
-            return null;
-          }
-          return res.ok ? res.json() : null;
-        })
-        .then((data) => {
-          if (data && data.messages) {
-            setMessages(data.messages);
-            // Update unreadCount when modal is closed
-            if (!isOpen) {
-              setUnreadCount(data.unreadCount || 0);
-            }
-          }
-        })
-        .catch((e) => {
-          console.warn('[FloatingChat] Poll error:', e);
-        });
-    }, 3000); // Poll every 3 seconds
+    const streamUrl = `${API_BASE_URL.replace(/\/$/, '')}/realtime/stream?token=${encodeURIComponent(accessToken)}`;
+    const eventSource = new EventSource(streamUrl);
 
-    return () => clearInterval(pollInterval);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data || '{}');
+        const eventType = data?.type as string | undefined;
+        const payload = (data?.payload || {}) as Record<string, any>;
+
+        if (
+          eventType === 'chat.message.created' &&
+          payload.sourceType === 'private' &&
+          payload.threadId === threadId &&
+          payload.message
+        ) {
+          const incoming = payload.message as ChatMessage;
+          setMessages((prev) => {
+            if (prev.some((item) => item.id === incoming.id)) return prev;
+            return [...prev, incoming];
+          });
+
+          if (!isOpen && incoming.senderType === 'foh') {
+            setUnreadCount((prev) => prev + 1);
+          }
+        }
+
+        if (
+          eventType === 'thread.status.changed' &&
+          payload.sourceType === 'private' &&
+          payload.threadId === threadId
+        ) {
+          fetch(`${API_BASE_URL}/chat/private/${threadId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((thread) => {
+              if (!thread) return;
+              setMessages(thread.messages || []);
+              if (!isOpen) {
+                setUnreadCount(thread.unreadCount || 0);
+              }
+            })
+            .catch(() => {
+              // no-op
+            });
+        }
+      } catch {
+        // ignore malformed events
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [isOpen, threadId, isLoggedIn, accessToken]);
 
   const handleSend = async (e: React.FormEvent) => {

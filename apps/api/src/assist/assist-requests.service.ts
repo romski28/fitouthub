@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
+import { RealtimeService } from '../realtime/realtime.service';
 
 interface CreateAssistRequestDto {
   projectId: string;
@@ -143,6 +144,7 @@ export class AssistRequestsService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private realtime: RealtimeService,
   ) {}
 
   async createRequest(dto: CreateAssistRequestDto) {
@@ -232,6 +234,34 @@ export class AssistRequestsService {
           content: dto.notes.trim(),
         },
       });
+
+      void this.realtime.emitToAdmins({
+        type: 'admin.feed.changed',
+        payload: {
+          sourceType: 'assist',
+          sourceId: created.id,
+        },
+      });
+      void this.realtime.emitToAdmins({
+        type: 'assist.message.created',
+        payload: {
+          sourceType: 'assist',
+          sourceId: created.id,
+          projectId: created.projectId,
+          sender: 'client',
+        },
+      });
+      if (created.userId) {
+        this.realtime.emitToUser(created.userId, {
+          type: 'assist.message.created',
+          payload: {
+            sourceType: 'assist',
+            sourceId: created.id,
+            projectId: created.projectId,
+            sender: 'client',
+          },
+        });
+      }
     }
 
     try {
@@ -352,6 +382,7 @@ export class AssistRequestsService {
 
     const assist = await (this.prisma as any).projectAssistRequest.findUnique({
       where: { id: assistRequestId },
+      select: { id: true, status: true, statusTimeline: true, userId: true, projectId: true },
     });
     if (!assist) throw new BadRequestException('Assist request not found');
 
@@ -379,6 +410,43 @@ export class AssistRequestsService {
           }),
         },
       });
+      void this.realtime.emitToAdmins({
+        type: 'thread.status.changed',
+        payload: {
+          sourceType: 'assist',
+          sourceId: assistRequestId,
+          status: 'in_progress',
+          reason: 'reopened_by_message',
+        },
+      });
+      void this.realtime.emitToAdmins({
+        type: 'admin.feed.changed',
+        payload: {
+          sourceType: 'assist',
+          sourceId: assistRequestId,
+        },
+      });
+    }
+
+    const event = {
+      type: 'assist.message.created',
+      payload: {
+        sourceType: 'assist',
+        sourceId: assistRequestId,
+        projectId: assist.projectId,
+        sender,
+      },
+    };
+    void this.realtime.emitToAdmins({
+      type: 'admin.feed.changed',
+      payload: {
+        sourceType: 'assist',
+        sourceId: assistRequestId,
+      },
+    });
+    void this.realtime.emitToAdmins(event);
+    if (assist.userId) {
+      this.realtime.emitToUser(assist.userId, event);
     }
 
     return message;
@@ -444,7 +512,7 @@ export class AssistRequestsService {
       const now = new Date();
       const isEmergency = Boolean(assist.project?.isEmergency);
       const dueAt = new Date(now.getTime() + (isEmergency ? this.emergencyCloseMs : this.defaultCloseMs));
-      return (this.prisma as any).projectAssistRequest.update({
+      const updated = await (this.prisma as any).projectAssistRequest.update({
         where: { id },
         data: {
           status,
@@ -466,9 +534,36 @@ export class AssistRequestsService {
           }),
         },
       });
+
+      void this.realtime.emitToAdmins({
+        type: 'thread.status.changed',
+        payload: {
+          sourceType: 'assist',
+          sourceId: id,
+          status: 'closure_pending',
+        },
+      });
+      void this.realtime.emitToAdmins({
+        type: 'admin.feed.changed',
+        payload: {
+          sourceType: 'assist',
+          sourceId: id,
+        },
+      });
+      if (assist.userId) {
+        this.realtime.emitToUser(assist.userId, {
+          type: 'thread.status.changed',
+          payload: {
+            sourceType: 'assist',
+            sourceId: id,
+            status: 'closure_pending',
+          },
+        });
+      }
+      return updated;
     }
 
-    return (this.prisma as any).projectAssistRequest.update({
+    const updated = await (this.prisma as any).projectAssistRequest.update({
       where: { id },
       data: {
         status,
@@ -485,5 +580,32 @@ export class AssistRequestsService {
         }),
       },
     });
+
+    void this.realtime.emitToAdmins({
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'assist',
+        sourceId: id,
+        status,
+      },
+    });
+    void this.realtime.emitToAdmins({
+      type: 'admin.feed.changed',
+      payload: {
+        sourceType: 'assist',
+        sourceId: id,
+      },
+    });
+    if (assist.userId) {
+      this.realtime.emitToUser(assist.userId, {
+        type: 'thread.status.changed',
+        payload: {
+          sourceType: 'assist',
+          sourceId: id,
+          status,
+        },
+      });
+    }
+    return updated;
   }
 }

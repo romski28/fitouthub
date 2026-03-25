@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma.service';
 import { TwilioProvider } from '../notifications/twilio.provider';
 import { WhatsAppInboundDto } from './dto/whatsapp-inbound.dto';
 import { CreateCallbackDto } from './dto/support-request.dto';
+import { RealtimeService } from '../realtime/realtime.service';
 
 @Injectable()
 export class SupportRequestsService {
@@ -21,7 +22,18 @@ export class SupportRequestsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly twilio: TwilioProvider,
+    private readonly realtime: RealtimeService,
   ) {}
+
+  private emitAdminFeedChanged(sourceId?: string) {
+    void this.realtime.emitToAdmins({
+      type: 'admin.feed.changed',
+      payload: {
+        sourceType: 'support',
+        sourceId,
+      },
+    });
+  }
 
   private rethrowSupportPoolDatabaseError(error: unknown): never {
     if (
@@ -171,7 +183,7 @@ export class SupportRequestsService {
         `Cannot claim a request with status "${req.status}"`,
       );
     }
-    return (this.prisma as any).supportRequest.update({
+    const updated = await (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         status: 'claimed',
@@ -184,6 +196,17 @@ export class SupportRequestsService {
         }),
       },
     });
+
+    this.emitAdminFeedChanged(id);
+    void this.realtime.emitToAdmins({
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'support',
+        sourceId: id,
+        status: 'claimed',
+      },
+    });
+    return updated;
   }
 
   async release(id: string, adminId: string) {
@@ -193,7 +216,7 @@ export class SupportRequestsService {
         'You can only release requests you have claimed',
       );
     }
-    return (this.prisma as any).supportRequest.update({
+    const updated = await (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         status: 'unassigned',
@@ -206,6 +229,17 @@ export class SupportRequestsService {
         }),
       },
     });
+
+    this.emitAdminFeedChanged(id);
+    void this.realtime.emitToAdmins({
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'support',
+        sourceId: id,
+        status: 'unassigned',
+      },
+    });
+    return updated;
   }
 
   async markInProgress(id: string, adminId: string) {
@@ -215,7 +249,7 @@ export class SupportRequestsService {
         'Only the assigned admin can update this request',
       );
     }
-    return (this.prisma as any).supportRequest.update({
+    const updated = await (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         status: 'in_progress',
@@ -226,6 +260,17 @@ export class SupportRequestsService {
         }),
       },
     });
+
+    this.emitAdminFeedChanged(id);
+    void this.realtime.emitToAdmins({
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'support',
+        sourceId: id,
+        status: 'in_progress',
+      },
+    });
+    return updated;
   }
 
   async resolve(
@@ -249,7 +294,7 @@ export class SupportRequestsService {
     const resolutionReason = options?.resolutionReason || 'Admin requested closure';
     const resolutionMode = options?.resolutionMode || 'user_confirmed';
 
-    return (this.prisma as any).supportRequest.update({
+    const updated = await (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         status: 'closure_pending',
@@ -271,6 +316,17 @@ export class SupportRequestsService {
         }),
       },
     });
+
+    this.emitAdminFeedChanged(id);
+    void this.realtime.emitToAdmins({
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'support',
+        sourceId: id,
+        status: 'closure_pending',
+      },
+    });
+    return updated;
   }
 
   async updateNotes(id: string, adminId: string, notes: string) {
@@ -326,7 +382,7 @@ export class SupportRequestsService {
       direction: 'outbound',
     };
 
-    return (this.prisma as any).supportRequest.update({
+    const updated = await (this.prisma as any).supportRequest.update({
       where: { id },
       data: {
         replies: [...existingReplies, newReply] as any,
@@ -349,6 +405,28 @@ export class SupportRequestsService {
             : req.statusTimeline,
       },
     });
+
+    this.emitAdminFeedChanged(id);
+    void this.realtime.emitToAdmins({
+      type: 'support.message.created',
+      payload: {
+        sourceType: 'support',
+        sourceId: id,
+        direction: 'outbound',
+      },
+    });
+    if (req.status === 'closure_pending') {
+      void this.realtime.emitToAdmins({
+        type: 'thread.status.changed',
+        payload: {
+          sourceType: 'support',
+          sourceId: id,
+          status: 'in_progress',
+          reason: 'reopened_by_admin_reply',
+        },
+      });
+    }
+    return updated;
   }
 
   // ── Inbound creation ──────────────────────────────────────────────────────
@@ -414,6 +492,15 @@ export class SupportRequestsService {
       this.logger.log(
         `Appended message to existing support request ${existing.id}`,
       );
+      this.emitAdminFeedChanged(existing.id);
+      void this.realtime.emitToAdmins({
+        type: 'support.message.created',
+        payload: {
+          sourceType: 'support',
+          sourceId: existing.id,
+          direction: 'inbound',
+        },
+      });
       return existing;
     }
 
@@ -441,13 +528,22 @@ export class SupportRequestsService {
     }
 
     this.logger.log(`Created new support request ${req.id} from ${fromNumber}`);
+    this.emitAdminFeedChanged(req.id);
+    void this.realtime.emitToAdmins({
+      type: 'support.message.created',
+      payload: {
+        sourceType: 'support',
+        sourceId: req.id,
+        direction: 'inbound',
+      },
+    });
     return req;
   }
 
   /** Create a SupportRequest from the website callback form */
   async createCallback(dto: CreateCallbackDto) {
     try {
-      return await (this.prisma as any).supportRequest.create({
+      const created = await (this.prisma as any).supportRequest.create({
         data: {
           channel: 'callback',
           fromNumber: dto.phone ?? null,
@@ -463,6 +559,8 @@ export class SupportRequestsService {
           }),
         },
       });
+      this.emitAdminFeedChanged(created.id);
+      return created;
     } catch (error) {
       this.rethrowSupportPoolDatabaseError(error);
     }
