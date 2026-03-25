@@ -20,6 +20,7 @@ type AssistRequestModalProps = {
   error?: string | null;
   initialNotes?: string;
   projectName?: string;
+  submitPrefix?: string;
 };
 
 const SLOT_INTERVAL_MINUTES = 30;
@@ -81,6 +82,7 @@ export function AssistRequestModal({
   error,
   initialNotes = "",
   projectName,
+  submitPrefix = "Create project & request",
 }: AssistRequestModalProps) {
   const [contactMethod, setContactMethod] = useState<AssistContactMethod>("chat");
   const [notes, setNotes] = useState(initialNotes);
@@ -260,7 +262,13 @@ export function AssistRequestModal({
             disabled={isSubmitting}
             className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            {isSubmitting ? "Submitting..." : contactMethod === "chat" ? "Create project & request chat" : contactMethod === "call" ? "Create project & request call" : "Create project & request WhatsApp"}
+            {isSubmitting
+              ? "Submitting..."
+              : contactMethod === "chat"
+                ? `${submitPrefix} chat`
+                : contactMethod === "call"
+                  ? `${submitPrefix} call`
+                  : `${submitPrefix} WhatsApp`}
           </button>
         </div>
       </div>

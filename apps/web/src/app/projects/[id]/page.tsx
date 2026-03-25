@@ -22,6 +22,7 @@ import { ClientScheduleTab } from '@/app/projects/[id]/tabs/schedule-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
+import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -237,6 +238,8 @@ export default function ClientProjectDetailPage() {
   const [assistLoading, setAssistLoading] = useState(false);
   const [assistError, setAssistError] = useState<string | null>(null);
   const [assistOpen, setAssistOpen] = useState(false);
+  const [assistModalSubmitting, setAssistModalSubmitting] = useState(false);
+  const [assistModalError, setAssistModalError] = useState<string | null>(null);
   const [assistNewMessage, setAssistNewMessage] = useState('');
   const [assistSending, setAssistSending] = useState(false);
   const [viewingAssistChat, setViewingAssistChat] = useState(false);
@@ -1314,32 +1317,68 @@ export default function ClientProjectDetailPage() {
   };
 
   const handleOpenAssistFromBlocker = async () => {
-    if (!accessToken || !projectId) return;
+    if (!projectId) return;
     if (assistRequestId) {
       setViewingAssistChat(true);
       setActiveTab('chat');
       return;
     }
+
+    if (!accessToken) {
+      toast.error('Please sign in to request assistance.');
+      return;
+    }
+
+    setAssistModalError(null);
+    setAssistOpen(true);
+  };
+
+  const handleSubmitAssistFromBlocker = async (assistConfig: AssistRequestModalSubmit) => {
+    if (!accessToken || !projectId) return;
+
+    setAssistModalError(null);
+    setAssistModalSubmitting(true);
+
     try {
       const res = await fetch(`${API_BASE_URL}/assist-requests`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          notes: 'Quote overdue: no professional submitted a quote within the allowed window. Requesting assistance.',
-          contactMethod: 'chat',
+          notes: assistConfig.notes,
+          contactMethod: assistConfig.contactMethod,
+          requestedCallAt: assistConfig.requestedCallAt,
+          requestedCallTimezone: assistConfig.requestedCallTimezone,
         }),
       });
+
       if (res.ok) {
         const d = await res.json().catch(() => ({}));
         if (d?.id) setAssistRequestId(d.id);
+        setAssistOpen(false);
+
+        toast.success(
+          assistConfig.contactMethod === 'call'
+            ? 'Call request sent to Fitout Hub.'
+            : assistConfig.contactMethod === 'whatsapp'
+              ? 'WhatsApp request sent to Fitout Hub.'
+              : 'Chat assistance request sent to Fitout Hub.',
+        );
+
         setViewingAssistChat(true);
         setActiveTab('chat');
       } else {
-        toast.error('Failed to create assistance request');
+        const data = await res.json().catch(() => ({}));
+        const message = data?.message || 'Failed to create assistance request';
+        setAssistModalError(message);
+        toast.error(message);
       }
-    } catch {
-      toast.error('Failed to create assistance request');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create assistance request';
+      setAssistModalError(message);
+      toast.error(message);
+    } finally {
+      setAssistModalSubmitting(false);
     }
   };
 
@@ -1582,10 +1621,15 @@ export default function ClientProjectDetailPage() {
                 <p className="text-xs text-slate-500">Our team can help source quotes or advise on next steps for your project.</p>
                 <button
                   onClick={handleOpenAssistFromBlocker}
-                  className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 mt-1"
+                  className={`inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-semibold text-white transition mt-1 ${
+                    assistRequestId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
                 >
-                  💬 Ask for help
+                  {assistRequestId ? '✅ Assistance requested (open chat)' : '💬 Ask for help'}
                 </button>
+                {assistRequestId && (
+                  <p className="text-xs text-emerald-700">Your request has been sent to Fitout Hub.</p>
+                )}
               </div>
 
               {/* Step 4 */}
@@ -2084,6 +2128,20 @@ export default function ClientProjectDetailPage() {
           </div>
         </div>
       )}
+
+      <AssistRequestModal
+        isOpen={assistOpen}
+        onClose={() => {
+          if (assistModalSubmitting) return;
+          setAssistOpen(false);
+        }}
+        onSubmit={handleSubmitAssistFromBlocker}
+        isSubmitting={assistModalSubmitting}
+        error={assistModalError}
+        initialNotes="Quote overdue: no professional submitted a quote within the allowed window. Requesting assistance."
+        projectName={project?.projectName}
+        submitPrefix="Request"
+      />
     </div>
     </>
   );
