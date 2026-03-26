@@ -39,6 +39,73 @@ export class ChatService {
     return timeline;
   }
 
+  private normalizePage(limit?: number, offset?: number) {
+    const safeLimit = Number.isFinite(limit)
+      ? Math.min(Math.max(Number(limit), 1), 100)
+      : undefined;
+    const safeOffset = Number.isFinite(offset)
+      ? Math.max(Number(offset), 0)
+      : 0;
+
+    return { safeLimit, safeOffset };
+  }
+
+  private async getPagedPrivateMessages(threadId: string, limit?: number, offset?: number) {
+    const { safeLimit, safeOffset } = this.normalizePage(limit, offset);
+    const total = await this.prisma.privateChatMessage.count({ where: { threadId } });
+
+    if (!safeLimit) {
+      const messages = await this.prisma.privateChatMessage.findMany({
+        where: { threadId },
+        orderBy: { createdAt: 'asc' },
+      });
+      return { messages, total, hasMoreMessages: false, messagePageOffset: 0, messagePageLimit: total };
+    }
+
+    const messagesDesc = await this.prisma.privateChatMessage.findMany({
+      where: { threadId },
+      orderBy: { createdAt: 'desc' },
+      skip: safeOffset,
+      take: safeLimit,
+    });
+
+    return {
+      messages: [...messagesDesc].reverse(),
+      total,
+      hasMoreMessages: total > safeOffset + messagesDesc.length,
+      messagePageOffset: safeOffset,
+      messagePageLimit: safeLimit,
+    };
+  }
+
+  private async getPagedAnonymousMessages(threadId: string, limit?: number, offset?: number) {
+    const { safeLimit, safeOffset } = this.normalizePage(limit, offset);
+    const total = await this.prisma.anonymousChatMessage.count({ where: { threadId } });
+
+    if (!safeLimit) {
+      const messages = await this.prisma.anonymousChatMessage.findMany({
+        where: { threadId },
+        orderBy: { createdAt: 'asc' },
+      });
+      return { messages, total, hasMoreMessages: false, messagePageOffset: 0, messagePageLimit: total };
+    }
+
+    const messagesDesc = await this.prisma.anonymousChatMessage.findMany({
+      where: { threadId },
+      orderBy: { createdAt: 'desc' },
+      skip: safeOffset,
+      take: safeLimit,
+    });
+
+    return {
+      messages: [...messagesDesc].reverse(),
+      total,
+      hasMoreMessages: total > safeOffset + messagesDesc.length,
+      messagePageOffset: safeOffset,
+      messagePageLimit: safeLimit,
+    };
+  }
+
   private formatClosureNotice(dueAt: Date, reason?: string | null): string {
     const formattedDueAt = dueAt.toLocaleString('en-GB', {
       weekday: 'short',
@@ -144,6 +211,8 @@ export class ChatService {
     userId?: string,
     professionalId?: string,
     includeArchived = false,
+    messageLimit?: number,
+    messageOffset?: number,
   ): Promise<PrivateChatThreadDto> {
     await this.finalizeExpiredPrivateClosures();
     // Find thread by either userId or professionalId (whichever is provided)
@@ -151,7 +220,6 @@ export class ChatService {
       ? await this.prisma.privateChatThread.findUnique({
           where: { userId },
           include: {
-            messages: { orderBy: { createdAt: 'asc' } },
             user: { select: { firstName: true, surname: true, email: true } },
             professional: { select: { businessName: true, email: true } },
           },
@@ -160,7 +228,6 @@ export class ChatService {
       ? await this.prisma.privateChatThread.findUnique({
           where: { professionalId },
           include: {
-            messages: { orderBy: { createdAt: 'asc' } },
             user: { select: { firstName: true, surname: true, email: true } },
             professional: { select: { businessName: true, email: true } },
           },
@@ -171,14 +238,21 @@ export class ChatService {
       thread = await this.prisma.privateChatThread.create({
         data: userId ? { userId } : { professionalId },
         include: {
-          messages: { orderBy: { createdAt: 'asc' } },
           user: { select: { firstName: true, surname: true, email: true } },
           professional: { select: { businessName: true, email: true } },
         },
       });
     }
 
-    return this.mapPrivateThreadDto(thread);
+    const page = await this.getPagedPrivateMessages(thread.id, messageLimit, messageOffset);
+    const unreadCount = await this.prisma.privateChatMessage.count({
+      where: {
+        threadId: thread.id,
+        senderType: 'foh',
+        readByFohAt: null,
+      },
+    });
+    return this.mapPrivateThreadDto({ ...thread, ...page, messages: page.messages, unreadCount });
   }
 
   /**
@@ -187,12 +261,13 @@ export class ChatService {
   async getPrivateThread(
     threadId: string,
     includeArchived = false,
+    messageLimit?: number,
+    messageOffset?: number,
   ): Promise<PrivateChatThreadDto> {
     await this.finalizeExpiredPrivateClosures();
     const thread = await this.prisma.privateChatThread.findUnique({
       where: { id: threadId },
       include: {
-        messages: { orderBy: { createdAt: 'asc' } },
         user: { select: { firstName: true, surname: true, email: true } },
         professional: { select: { businessName: true, email: true } },
       },
@@ -202,7 +277,15 @@ export class ChatService {
       throw new NotFoundException('Chat thread not found');
     }
 
-    return this.mapPrivateThreadDto(thread);
+    const page = await this.getPagedPrivateMessages(thread.id, messageLimit, messageOffset);
+    const unreadCount = await this.prisma.privateChatMessage.count({
+      where: {
+        threadId: thread.id,
+        senderType: 'foh',
+        readByFohAt: null,
+      },
+    });
+    return this.mapPrivateThreadDto({ ...thread, ...page, messages: page.messages, unreadCount });
   }
 
   /**
@@ -431,18 +514,20 @@ export class ChatService {
   async getAnonymousThread(
     threadId: string,
     includeArchived = false,
+    messageLimit?: number,
+    messageOffset?: number,
   ): Promise<AnonymousChatThreadDto> {
     await this.finalizeExpiredAnonymousClosures();
     const thread = await this.prisma.anonymousChatThread.findUnique({
       where: { id: threadId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
 
     if (!thread) {
       throw new NotFoundException('Anonymous chat thread not found');
     }
 
-    return this.mapAnonymousThreadDto(thread);
+    const page = await this.getPagedAnonymousMessages(thread.id, messageLimit, messageOffset);
+    return this.mapAnonymousThreadDto({ ...thread, ...page, messages: page.messages });
   }
 
   /**
@@ -724,7 +809,11 @@ export class ChatService {
       createdAt: thread.createdAt.toISOString(),
       updatedAt: thread.updatedAt.toISOString(),
       messages: thread.messages.map((m: any) => this.mapPrivateMessageDto(m)),
-      unreadCount: thread.messages.filter((m: any) => m.senderType === 'foh' && !m.readByFohAt).length,
+      unreadCount: thread.unreadCount ?? thread.messages.filter((m: any) => m.senderType === 'foh' && !m.readByFohAt).length,
+      totalMessages: thread.total ?? thread.totalMessages,
+      hasMoreMessages: thread.hasMoreMessages,
+      messagePageOffset: thread.messagePageOffset,
+      messagePageLimit: thread.messagePageLimit,
     };
   }
 
@@ -756,6 +845,10 @@ export class ChatService {
       createdAt: thread.createdAt.toISOString(),
       updatedAt: thread.updatedAt.toISOString(),
       messages: thread.messages.map((m: any) => this.mapAnonymousMessageDto(m)),
+      totalMessages: thread.total ?? thread.totalMessages,
+      hasMoreMessages: thread.hasMoreMessages,
+      messagePageOffset: thread.messagePageOffset,
+      messagePageLimit: thread.messagePageLimit,
     };
   }
 

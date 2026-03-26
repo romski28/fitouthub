@@ -33,5 +33,9 @@ export class AnonymousChatThreadDto {
   createdAt: string;
   updatedAt: string;
   messages: AnonymousChatMessageDto[];
+  totalMessages?: number;
+  hasMoreMessages?: boolean;
+  messagePageOffset?: number;
+  messagePageLimit?: number;
   threadId?: string; // alias for id
 }

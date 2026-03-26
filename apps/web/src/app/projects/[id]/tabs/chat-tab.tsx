@@ -54,6 +54,9 @@ interface ChatTabProps {
   assistLoading: boolean;
   assistSending: boolean;
   assistError: string | null;
+  assistHasMore?: boolean;
+  assistLoadingOlder?: boolean;
+  onLoadOlderAssistMessages?: () => void;
   assistStatus?: 'open' | 'in_progress' | 'closure_pending' | 'closed' | string | null;
   assistClosureDueAt?: string | null;
   assistResolvedAt?: string | null;
@@ -84,6 +87,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   assistLoading,
   assistSending,
   assistError,
+  assistHasMore = false,
+  assistLoadingOlder = false,
+  onLoadOlderAssistMessages = () => undefined,
   assistStatus,
   assistClosureDueAt,
   assistResolvedAt,
@@ -184,6 +190,18 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 
                 {/* Assist Messages */}
                 <div className="max-h-96 overflow-y-auto space-y-3 border border-slate-700 rounded-lg p-4 bg-slate-800/60">
+                  {assistHasMore && !assistLoading && (
+                    <div className="flex justify-center pb-2">
+                      <button
+                        type="button"
+                        onClick={onLoadOlderAssistMessages}
+                        disabled={assistLoadingOlder}
+                        className="rounded-md border border-slate-600 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        {assistLoadingOlder ? 'Loading…' : 'Load older messages'}
+                      </button>
+                    </div>
+                  )}
                   {assistLoading ? (
                     <div className="text-center text-sm text-slate-400">Loading messages...</div>
                   ) : assistMessages.length === 0 ? (

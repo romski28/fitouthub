@@ -152,6 +152,32 @@ function QuickCard({
   );
 }
 
+function SummaryMetric({
+  label,
+  value,
+  tone = 'slate',
+}: {
+  label: string;
+  value: string | number;
+  tone?: 'slate' | 'emerald' | 'amber' | 'blue' | 'purple' | 'rose';
+}) {
+  const toneMap: Record<string, string> = {
+    slate: 'text-white',
+    emerald: 'text-emerald-300',
+    amber: 'text-amber-200',
+    blue: 'text-blue-200',
+    purple: 'text-purple-200',
+    rose: 'text-rose-200',
+  };
+
+  return (
+    <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
+      <p className="text-[11px] uppercase tracking-wide text-slate-200">{label}</p>
+      <p className={`text-lg font-bold ${toneMap[tone] || toneMap.slate}`}>{value}</p>
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const { accessToken, user } = useAuth();
   const searchParams = useSearchParams();
@@ -766,24 +792,16 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       {activeTab === "dashboard" && (
         <div className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Open Messaging Work</p>
-              <p className="mt-1 text-2xl font-bold text-white">{opsSummary?.support.totalOpen ?? 0}</p>
-              <p className="text-xs text-slate-300">Support pool + active support threads</p>
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-4 shadow-sm">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+              <SummaryMetric label="Open Work" value={opsSummary?.support.totalOpen ?? 0} tone="slate" />
+              <SummaryMetric label="Unread Msgs" value={(opsSummary?.inbox.privateUnreadMessages ?? 0) + (opsSummary?.assist.unreadClientMessages ?? 0)} tone="emerald" />
+              <SummaryMetric label="Assist Open" value={opsSummary?.assist.open ?? 0} tone="blue" />
+              <SummaryMetric label="My Queue" value={(opsSummary?.support.myClaimed ?? 0) + (opsSummary?.support.myInProgress ?? 0)} tone="amber" />
+              <SummaryMetric label="Safety" value={opsSummary?.safety.highOrCritical ?? 0} tone="rose" />
+              <SummaryMetric label="Admin Acts" value={opsSummary?.adminActions.pending ?? 0} tone="purple" />
             </div>
-            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Unread Msgs</p>
-              <p className="mt-1 text-2xl font-bold text-white">
-                {(opsSummary?.inbox.privateUnreadMessages ?? 0) + (opsSummary?.assist.unreadClientMessages ?? 0)}
-              </p>
-              <p className="text-xs text-slate-300">Inbox + assist</p>
-            </div>
-            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Safety Triage</p>
-              <p className="mt-1 text-2xl font-bold text-white">{opsSummary?.safety.highOrCritical ?? 0}</p>
-              <p className="text-xs text-slate-300">High or critical platform alerts</p>
-            </div>
+            <p className="mt-2 text-[10px] text-center italic text-slate-300">Compact operational summary</p>
           </div>
 
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm">

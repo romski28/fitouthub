@@ -33,6 +33,8 @@ export class ChatController {
   async getOrCreatePrivateThread(
     @Request() req: any,
     @Query('includeArchived') includeArchived?: string,
+    @Query('messageLimit') messageLimit?: string,
+    @Query('messageOffset') messageOffset?: string,
   ) {
     const userId = req.user.isProfessional ? undefined : req.user.id;
     const professionalId = req.user.isProfessional ? req.user.id : undefined;
@@ -40,6 +42,8 @@ export class ChatController {
       userId,
       professionalId,
       includeArchived === '1',
+      messageLimit ? parseInt(messageLimit, 10) : undefined,
+      messageOffset ? parseInt(messageOffset, 10) : undefined,
     );
   }
 
@@ -65,8 +69,15 @@ export class ChatController {
   async getPrivateThread(
     @Param('threadId') threadId: string,
     @Query('includeArchived') includeArchived?: string,
+    @Query('messageLimit') messageLimit?: string,
+    @Query('messageOffset') messageOffset?: string,
   ) {
-    return this.chatService.getPrivateThread(threadId, includeArchived === '1');
+    return this.chatService.getPrivateThread(
+      threadId,
+      includeArchived === '1',
+      messageLimit ? parseInt(messageLimit, 10) : undefined,
+      messageOffset ? parseInt(messageOffset, 10) : undefined,
+    );
   }
 
   /**
@@ -147,8 +158,15 @@ export class ChatController {
   async getAnonymousThread(
     @Param('threadId') threadId: string,
     @Query('includeArchived') includeArchived?: string,
+    @Query('messageLimit') messageLimit?: string,
+    @Query('messageOffset') messageOffset?: string,
   ) {
-    return this.chatService.getAnonymousThread(threadId, includeArchived === '1');
+    return this.chatService.getAnonymousThread(
+      threadId,
+      includeArchived === '1',
+      messageLimit ? parseInt(messageLimit, 10) : undefined,
+      messageOffset ? parseInt(messageOffset, 10) : undefined,
+    );
   }
 
   /**

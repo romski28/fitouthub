@@ -471,10 +471,38 @@ export class AssistRequestsService {
     return message;
   }
 
-  async getMessages(assistRequestId: string, limit = 50, offset = 0) {
+  async getMessages(
+    assistRequestId: string,
+    limit = 50,
+    offset = 0,
+    fromLatest = false,
+  ) {
     await this.finalizeExpiredClosures();
     if (!assistRequestId)
       throw new BadRequestException('assistRequestId is required');
+
+    if (fromLatest) {
+      const safeLimit = Math.min(Math.max(limit, 1), 200);
+      const safeOffset = Math.max(offset, 0);
+      const total = await (this.prisma as any).assistMessage.count({
+        where: { assistRequestId },
+      });
+      const messagesDesc = await (this.prisma as any).assistMessage.findMany({
+        where: { assistRequestId },
+        orderBy: { createdAt: 'desc' },
+        take: safeLimit,
+        skip: safeOffset,
+      });
+
+      return {
+        messages: [...messagesDesc].reverse(),
+        total,
+        hasMore: total > safeOffset + messagesDesc.length,
+        offset: safeOffset,
+        limit: safeLimit,
+      };
+    }
+
     const messages = await (this.prisma as any).assistMessage.findMany({
       where: { assistRequestId },
       orderBy: { createdAt: 'asc' },

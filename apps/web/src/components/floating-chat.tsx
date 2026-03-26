@@ -30,7 +30,11 @@ interface PrivateThreadResponse {
   resolutionReason?: string;
   messages?: ChatMessage[];
   unreadCount?: number;
+  totalMessages?: number;
+  hasMoreMessages?: boolean;
 }
+
+const CHAT_PAGE_SIZE = 30;
 
 const resolveProjectIdFromPath = (path: string | null | undefined) => {
   if (!path) return null;
@@ -81,6 +85,8 @@ export default function FloatingChat() {
   const [threadClosureDueAt, setThreadClosureDueAt] = useState<string | null>(null);
   const [threadResolvedAt, setThreadResolvedAt] = useState<string | null>(null);
   const [threadResolutionReason, setThreadResolutionReason] = useState<string | null>(null);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
 
   const isAdminPage = pathname?.startsWith('/admin');
   const isLoggedIn = clientLoggedIn || proLoggedIn;
@@ -101,6 +107,7 @@ export default function FloatingChat() {
       setThreadClosureDueAt(null);
       setThreadResolvedAt(null);
       setThreadResolutionReason(null);
+      setHasOlderMessages(false);
       console.log('[FloatingChat] User logged out, clearing chat state');
     }
   }, [isLoggedIn]);
@@ -126,6 +133,18 @@ export default function FloatingChat() {
       setThreadClosureDueAt(data?.closureDueAt || null);
       setThreadResolvedAt(data?.resolvedAt || null);
       setThreadResolutionReason(data?.resolutionReason || null);
+      setHasOlderMessages(Boolean(data?.hasMoreMessages));
+    };
+
+    const getThreadUrl = (currentThreadId: string, offset = 0, limit = CHAT_PAGE_SIZE) => {
+      if (isLoggedIn && accessToken) {
+        if (currentThreadId) {
+          return `${API_BASE_URL}/chat/private/${currentThreadId}?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}`;
+        }
+        return `${API_BASE_URL}/chat/private?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}`;
+      }
+
+      return `${API_BASE_URL}/chat/anonymous/${currentThreadId}?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}`;
     };
 
     const loadThread = async () => {
@@ -135,7 +154,7 @@ export default function FloatingChat() {
           console.log('[FloatingChat] Loading logged-in user thread...');
           // Try to fetch or create user's private FOH thread
           try {
-            const res = await fetch(`${API_BASE_URL}/chat/private?includeArchived=1`, {
+            const res = await fetch(getThreadUrl('', 0, CHAT_PAGE_SIZE), {
               method: 'GET',
               headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -216,7 +235,7 @@ export default function FloatingChat() {
             setThreadId(anonId);
             // Try to fetch messages
             try {
-              const res = await fetch(`${API_BASE_URL}/chat/anonymous/${anonId}`);
+              const res = await fetch(getThreadUrl(anonId, 0, CHAT_PAGE_SIZE));
               if (res.ok) {
                 const data = await res.json();
                 setMessages(data.messages || []);
@@ -238,6 +257,36 @@ export default function FloatingChat() {
       loadThread();
     }
   }, [isOpen, isLoggedIn, accessToken, userRole]);
+
+  const loadOlderMessages = async () => {
+    if (!threadId || threadId.startsWith('stub-') || loadingOlderMessages || !hasOlderMessages) return;
+
+    setLoadingOlderMessages(true);
+    try {
+      const offset = messages.length;
+      const url = isLoggedIn && accessToken
+        ? `${API_BASE_URL}/chat/private/${threadId}?includeArchived=1&messageLimit=${CHAT_PAGE_SIZE}&messageOffset=${offset}`
+        : `${API_BASE_URL}/chat/anonymous/${threadId}?includeArchived=1&messageLimit=${CHAT_PAGE_SIZE}&messageOffset=${offset}`;
+      const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+      const res = await fetch(url, { headers });
+      if (!res.ok) throw new Error('Failed to load older messages');
+      const data = (await res.json()) as PrivateThreadResponse;
+      setMessages((prev) => {
+        const incoming = data.messages || [];
+        const deduped = incoming.filter((msg) => !prev.some((existing) => existing.id === msg.id));
+        return [...deduped, ...prev];
+      });
+      setHasOlderMessages(Boolean(data.hasMoreMessages));
+      setThreadStatus(data.status || 'open');
+      setThreadClosureDueAt(data.closureDueAt || null);
+      setThreadResolvedAt(data.resolvedAt || null);
+      setThreadResolutionReason(data.resolutionReason || null);
+    } catch (error) {
+      console.warn('[FloatingChat] Failed to load older messages:', error);
+    } finally {
+      setLoadingOlderMessages(false);
+    }
+  };
 
   // Mark as read when opened (skip stub threads)
   useEffect(() => {
@@ -284,7 +333,8 @@ export default function FloatingChat() {
           payload.sourceType === 'private' &&
           payload.threadId === threadId
         ) {
-          fetch(`${API_BASE_URL}/chat/private/${threadId}?includeArchived=1`, {
+          const currentLimit = Math.max(messages.length || CHAT_PAGE_SIZE, CHAT_PAGE_SIZE);
+          fetch(`${API_BASE_URL}/chat/private/${threadId}?includeArchived=1&messageLimit=${currentLimit}&messageOffset=0`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           })
             .then((res) => (res.ok ? res.json() : null))
@@ -295,6 +345,7 @@ export default function FloatingChat() {
               setThreadClosureDueAt(thread.closureDueAt || null);
               setThreadResolvedAt(thread.resolvedAt || null);
               setThreadResolutionReason(thread.resolutionReason || null);
+              setHasOlderMessages(Boolean(thread.hasMoreMessages));
               if (!isOpen) {
                 setUnreadCount(thread.unreadCount || 0);
               }
@@ -311,7 +362,7 @@ export default function FloatingChat() {
     return () => {
       eventSource.close();
     };
-  }, [isOpen, threadId, isLoggedIn, accessToken]);
+  }, [isOpen, threadId, isLoggedIn, accessToken, messages.length]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -391,6 +442,9 @@ export default function FloatingChat() {
         }]);
         setMessage('');
         setPendingAttachments([]);
+        setThreadStatus('in_progress');
+        setThreadClosureDueAt(null);
+        setThreadResolvedAt(null);
       } else {
         const errorText = await res.text();
         console.error('[FloatingChat] Failed to send message:', res.status, errorText);
@@ -434,6 +488,18 @@ export default function FloatingChat() {
                 {threadStatus === 'closure_pending'
                   ? `Fitout Hub marked this conversation as pending closure${threadClosureDueAt ? ` until ${new Date(threadClosureDueAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here if you still need help.`
                   : `This conversation was closed${threadResolvedAt ? ` on ${new Date(threadResolvedAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here to reopen it.`}
+              </div>
+            )}
+            {hasOlderMessages && !loading && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => void loadOlderMessages()}
+                  disabled={loadingOlderMessages}
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {loadingOlderMessages ? 'Loading…' : 'Load older messages'}
+                </button>
               </div>
             )}
             {loading ? (

@@ -66,11 +66,13 @@ export class AssistRequestsController {
     @Param('id') id: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('fromLatest') fromLatest?: string,
   ) {
     return this.service.getMessages(
       id,
       limit ? parseInt(limit, 10) : undefined,
       offset ? parseInt(offset, 10) : undefined,
+      fromLatest === '1',
     );
   }
 

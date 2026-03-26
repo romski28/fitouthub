@@ -30,5 +30,9 @@ export class PrivateChatThreadDto {
   updatedAt: string;
   messages: PrivateChatMessageDto[];
   unreadCount?: number;
+  totalMessages?: number;
+  hasMoreMessages?: boolean;
+  messagePageOffset?: number;
+  messagePageLimit?: number;
   threadId?: string; // alias for id (for compatibility with frontend)
 }

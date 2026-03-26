@@ -142,6 +142,8 @@ interface AssistThreadSummary {
   resolvedAt?: string | null;
 }
 
+const ASSIST_PAGE_SIZE = 30;
+
 const projectStatusBadge: Record<string, string> = {
   pending: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
   approved: 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40',
@@ -247,6 +249,8 @@ export default function ClientProjectDetailPage() {
   const [assistClosureDueAt, setAssistClosureDueAt] = useState<string | null>(null);
   const [assistResolvedAt, setAssistResolvedAt] = useState<string | null>(null);
   const [assistMessages, setAssistMessages] = useState<Message[]>([]);
+  const [assistHasMore, setAssistHasMore] = useState(false);
+  const [assistLoadingOlder, setAssistLoadingOlder] = useState(false);
   const [assistLoading, setAssistLoading] = useState(false);
   const [assistError, setAssistError] = useState<string | null>(null);
   const [assistOpen, setAssistOpen] = useState(false);
@@ -375,6 +379,49 @@ export default function ClientProjectDetailPage() {
     } catch {
       return null;
     }
+  };
+
+  const loadAssistMessages = async (
+    requestId: string,
+    options?: { appendOlder?: boolean; refreshCurrentWindow?: boolean },
+  ) => {
+    if (!accessToken) return;
+
+    const appendOlder = Boolean(options?.appendOlder);
+    const refreshCurrentWindow = Boolean(options?.refreshCurrentWindow);
+    const currentCount = appendOlder ? assistMessages.length : refreshCurrentWindow ? Math.max(assistMessages.length, ASSIST_PAGE_SIZE) : ASSIST_PAGE_SIZE;
+    const offset = appendOlder ? assistMessages.length : 0;
+
+    const res = await fetch(
+      `${API_BASE_URL}/assist-requests/${encodeURIComponent(requestId)}/messages?limit=${currentCount}&offset=${offset}&fromLatest=1`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+    if (!res.ok) {
+      throw new Error('Failed to load assistance messages');
+    }
+
+    const payload = await parseJsonResponse<{ messages?: any[]; hasMore?: boolean } | any[]>(res);
+    const normalized = Array.isArray(payload) ? payload : (payload?.messages || []);
+    const mapped: Message[] = normalized.map((m: any) => ({
+      id: m.id,
+      projectProfessionalId: '',
+      senderType: (m.senderType as any) || 'foh',
+      content: m.content,
+      createdAt: m.createdAt,
+    }));
+
+    setAssistHasMore(Array.isArray(payload) ? false : Boolean(payload?.hasMore));
+    if (appendOlder) {
+      setAssistMessages((prev) => {
+        const incoming = mapped.filter((message) => !prev.some((existing) => existing.id === message.id));
+        return [...incoming, ...prev];
+      });
+      return;
+    }
+
+    setAssistMessages(mapped);
   };
 
   // Helper: fetch project details (reusable)
@@ -838,6 +885,7 @@ export default function ClientProjectDetailPage() {
         });
         if (res.status === 404) {
           setAssistRequestId(null);
+          setAssistHasMore(false);
           setAssistMessages([]);
           return;
         }
@@ -852,31 +900,14 @@ export default function ClientProjectDetailPage() {
           setAssistStatus(assist.status || null);
           setAssistClosureDueAt(assist.closureDueAt || null);
           setAssistResolvedAt(assist.resolvedAt || null);
-          // Fetch messages
-          const mres = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assist.id)}/messages`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (mres.ok) {
-            const msgs = await parseJsonResponse<any>(mres);
-            const normalized = Array.isArray(msgs) ? msgs : (msgs?.messages || []);
-            // Map to Message shape
-            const mapped: Message[] = normalized.map((m: any) => ({
-              id: m.id,
-              projectProfessionalId: '',
-              senderType: (m.senderType as any) || 'foh',
-              content: m.content,
-              createdAt: m.createdAt,
-            }));
-            setAssistMessages(mapped);
-          } else {
-            setAssistMessages([]);
-          }
+          await loadAssistMessages(assist.id);
         } else {
           setAssistRequestId(null);
           setAssistStatus(null);
           setAssistClosureDueAt(null);
           setAssistResolvedAt(null);
           setAssistMessages([]);
+          setAssistHasMore(false);
         }
       } catch (err) {
         console.error('[Assist] load failed', err);
@@ -907,21 +938,7 @@ export default function ClientProjectDetailPage() {
           setAssistResolvedAt(assist?.resolvedAt || null);
         }
 
-        const res = await fetch(`${API_BASE_URL}/assist-requests/${encodeURIComponent(assistRequestId)}/messages`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (res.ok) {
-          const msgs = await res.json();
-          const normalized = Array.isArray(msgs) ? msgs : (msgs.messages || []);
-          const mapped: Message[] = normalized.map((m: any) => ({
-            id: m.id,
-            projectProfessionalId: '',
-            senderType: (m.senderType as any) || 'foh',
-            content: m.content,
-            createdAt: m.createdAt,
-          }));
-          setAssistMessages(mapped);
-        }
+        await loadAssistMessages(assistRequestId, { refreshCurrentWindow: true });
       } catch (err) {
         console.error('Error refreshing assist messages:', err);
       } finally {
@@ -973,6 +990,19 @@ export default function ClientProjectDetailPage() {
       setAssistError('Failed to send message');
     } finally {
       setAssistSending(false);
+    }
+  };
+
+  const handleLoadOlderAssistMessages = async () => {
+    if (!assistRequestId || !accessToken || assistLoadingOlder || !assistHasMore) return;
+    try {
+      setAssistLoadingOlder(true);
+      await loadAssistMessages(assistRequestId, { appendOlder: true });
+    } catch (err) {
+      console.error('Error loading older assist messages:', err);
+      setAssistError('Failed to load older messages');
+    } finally {
+      setAssistLoadingOlder(false);
     }
   };
 
@@ -1885,6 +1915,9 @@ export default function ClientProjectDetailPage() {
               assistLoading={assistLoading}
               assistSending={assistSending}
               assistError={assistError}
+              assistHasMore={assistHasMore}
+              assistLoadingOlder={assistLoadingOlder}
+              onLoadOlderAssistMessages={handleLoadOlderAssistMessages}
               assistStatus={assistStatus}
               assistClosureDueAt={assistClosureDueAt}
               assistResolvedAt={assistResolvedAt}
