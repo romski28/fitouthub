@@ -11,6 +11,7 @@ import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import { AI_STATE_CLEAR_EVENT } from '@/lib/client-session';
+import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -388,7 +389,10 @@ export default function SearchFlow() {
       ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
     };
 
-    sessionStorage.setItem('createProjectDraft', JSON.stringify(aiDraft));
+    const saved = writeCreateProjectDraftSafely(aiDraft);
+    if (!saved) {
+      console.warn('[search-flow] Unable to persist full createProjectDraft due to storage limits.');
+    }
 
     const params = new URLSearchParams();
     if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);

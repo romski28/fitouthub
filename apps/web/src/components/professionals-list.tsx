@@ -13,6 +13,7 @@ import { ProjectShareModal } from '@/components/project-share-modal';
 import { useAuth } from '@/context/auth-context';
 import { BackToTop } from '@/components/back-to-top';
 import type { ProjectFormData } from '@/components/project-form';
+import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 
 const Pill = memo(({ label }: { label: string }) => {
   return (
@@ -583,14 +584,26 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       }),
     );
 
-    sessionStorage.setItem(
-      'createProjectDraft',
-      JSON.stringify({
-        initialData: mergedInitialData,
-        selectedProfessionals,
-        ...(existingDraft?.aiIntakeId ? { aiIntakeId: existingDraft.aiIntakeId } : {}),
-      }),
-    );
+    const selectedProfessionalsForDraft = selectedProfessionals.map((professional) => ({
+      id: professional.id,
+      professionType: professional.professionType,
+      email: professional.email || '',
+      phone: professional.phone || '',
+      status: professional.status || 'approved',
+      rating: Number.isFinite(professional.rating) ? professional.rating : 0,
+      fullName: professional.fullName ?? null,
+      businessName: professional.businessName ?? null,
+    }));
+
+    const saved = writeCreateProjectDraftSafely({
+      initialData: mergedInitialData,
+      selectedProfessionals: selectedProfessionalsForDraft,
+      ...(existingDraft?.aiIntakeId ? { aiIntakeId: existingDraft.aiIntakeId } : {}),
+    });
+
+    if (!saved) {
+      console.warn('[professionals-list] Unable to persist full createProjectDraft due to storage limits.');
+    }
 
     router.push('/create-project');
   };
