@@ -368,6 +368,26 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
   }) => {
     if (!aiStructured) return;
 
+    const normalizeBlock = (value?: string | null) => (value || '').trim();
+    const summaryBlock = normalizeBlock(payload.summary) || normalizeBlock(aiStructured.summary);
+    const scopeBlock = normalizeBlock(aiStructured.scope);
+    const assumptionsBlock = (aiStructured.assumptions || [])
+      .map((assumption) => (assumption || '').trim())
+      .filter((assumption) => assumption.length > 0);
+
+    const notesSections: string[] = [];
+    if (summaryBlock) {
+      notesSections.push(`Summary:\n${summaryBlock}`);
+    }
+    if (scopeBlock && scopeBlock !== summaryBlock) {
+      notesSections.push(`Scope:\n${scopeBlock}`);
+    }
+    if (assumptionsBlock.length > 0) {
+      notesSections.push(`Assumptions:\n${assumptionsBlock.map((assumption) => `- ${assumption}`).join('\n')}`);
+    }
+
+    const combinedNotes = notesSections.join('\n\n').trim();
+
     const resolvedRegion = [payload.location.secondary, payload.location.primary]
       .filter((item): item is string => Boolean(item && item.trim()))
       .join(', ');
@@ -375,7 +395,7 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
     const aiDraft = {
       initialData: {
         projectName: payload.title || aiStructured.title || aiStructured.summary || '',
-        notes: payload.summary || aiStructured.scope || aiStructured.summary || '',
+        notes: combinedNotes || payload.summary || aiStructured.scope || aiStructured.summary || '',
         tradesRequired: aiStructured.trades || [],
         region: resolvedRegion,
         location: payload.location,
