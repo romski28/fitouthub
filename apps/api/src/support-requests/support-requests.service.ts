@@ -72,6 +72,25 @@ export class SupportRequestsService {
     return timeline;
   }
 
+  private formatClosureNotice(dueAt: Date, reason?: string | null) {
+    const formattedDueAt = dueAt.toLocaleString('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return [
+      'Fitout Hub marked this support case as pending closure.',
+      reason ? `Reason: ${reason}.` : null,
+      `It will auto-close after ${formattedDueAt}. Reply if you still need help.`,
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
   private async finalizeExpiredClosures() {
     const now = new Date();
     const expiring = await (this.prisma as any).supportRequest.findMany({
@@ -199,6 +218,14 @@ export class SupportRequestsService {
 
     this.emitAdminFeedChanged(id);
     void this.realtime.emitToAdmins({
+      type: 'support.message.created',
+      payload: {
+        sourceType: 'support',
+        sourceId: id,
+        direction: 'outbound',
+      },
+    });
+    void this.realtime.emitToAdmins({
       type: 'thread.status.changed',
       payload: {
         sourceType: 'support',
@@ -293,6 +320,30 @@ export class SupportRequestsService {
     const dueAt = new Date(now.getTime() + (isEmergency ? this.emergencyCloseMs : this.defaultCloseMs));
     const resolutionReason = options?.resolutionReason || 'Admin requested closure';
     const resolutionMode = options?.resolutionMode || 'user_confirmed';
+    const closureMessage = this.formatClosureNotice(dueAt, resolutionReason);
+
+    if (req.channel === 'whatsapp' && req.fromNumber) {
+      const result = await this.twilio.sendWhatsApp(req.fromNumber, closureMessage);
+      if (!result.success) {
+        this.logger.error(
+          `WhatsApp closure notice failed for support request ${id}:`,
+          result.error,
+        );
+      }
+    } else {
+      this.logger.log(
+        `[SupportRequest ${id}] Closure notice recorded by admin ${adminId}`,
+      );
+    }
+
+    const existingReplies = Array.isArray(req.replies) ? req.replies : [];
+    const closureReply = {
+      body: closureMessage,
+      sentAt: now.toISOString(),
+      adminId,
+      direction: 'outbound',
+      kind: 'closure_notice',
+    };
 
     const updated = await (this.prisma as any).supportRequest.update({
       where: { id },
@@ -303,6 +354,7 @@ export class SupportRequestsService {
         resolvedBy: adminId,
         resolutionReason,
         resolutionMode,
+        replies: [...existingReplies, closureReply] as any,
         statusTimeline: this.appendTimelineEvent(req.statusTimeline, {
           action: 'closure_requested',
           status: 'closure_pending',

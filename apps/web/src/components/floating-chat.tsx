@@ -21,6 +21,17 @@ interface ChatMessage {
   createdAt: string;
 }
 
+interface PrivateThreadResponse {
+  threadId?: string;
+  id?: string;
+  status?: 'open' | 'in_progress' | 'closure_pending' | 'closed' | string;
+  closureDueAt?: string;
+  resolvedAt?: string;
+  resolutionReason?: string;
+  messages?: ChatMessage[];
+  unreadCount?: number;
+}
+
 const resolveProjectIdFromPath = (path: string | null | undefined) => {
   if (!path) return null;
   const match = path.match(/^\/(?:projects|professional-projects)\/([^/?#]+)/i);
@@ -66,6 +77,10 @@ export default function FloatingChat() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [threadStatus, setThreadStatus] = useState<'open' | 'in_progress' | 'closure_pending' | 'closed' | string>('open');
+  const [threadClosureDueAt, setThreadClosureDueAt] = useState<string | null>(null);
+  const [threadResolvedAt, setThreadResolvedAt] = useState<string | null>(null);
+  const [threadResolutionReason, setThreadResolutionReason] = useState<string | null>(null);
 
   const isAdminPage = pathname?.startsWith('/admin');
   const isLoggedIn = clientLoggedIn || proLoggedIn;
@@ -82,6 +97,10 @@ export default function FloatingChat() {
       setMessages([]);
       setMessage('');
       setUnreadCount(0);
+      setThreadStatus('open');
+      setThreadClosureDueAt(null);
+      setThreadResolvedAt(null);
+      setThreadResolutionReason(null);
       console.log('[FloatingChat] User logged out, clearing chat state');
     }
   }, [isLoggedIn]);
@@ -102,6 +121,13 @@ export default function FloatingChat() {
 
   // Load or create thread
   useEffect(() => {
+    const applyThreadState = (data: PrivateThreadResponse | null | undefined) => {
+      setThreadStatus(data?.status || 'open');
+      setThreadClosureDueAt(data?.closureDueAt || null);
+      setThreadResolvedAt(data?.resolvedAt || null);
+      setThreadResolutionReason(data?.resolutionReason || null);
+    };
+
     const loadThread = async () => {
       setLoading(true);
       try {
@@ -109,7 +135,7 @@ export default function FloatingChat() {
           console.log('[FloatingChat] Loading logged-in user thread...');
           // Try to fetch or create user's private FOH thread
           try {
-            const res = await fetch(`${API_BASE_URL}/chat/private`, {
+            const res = await fetch(`${API_BASE_URL}/chat/private?includeArchived=1`, {
               method: 'GET',
               headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -118,12 +144,15 @@ export default function FloatingChat() {
             });
             
             if (res.ok) {
-              const data = await res.json();
+              const data = (await res.json()) as PrivateThreadResponse;
               console.log('[FloatingChat] Fetched thread:', data);
               const realThreadId = data.threadId || data.id;
-              setThreadId(realThreadId);
+              if (realThreadId) {
+                setThreadId(realThreadId);
+              }
               setMessages(data.messages || []);
               setUnreadCount(data.unreadCount || 0);
+              applyThreadState(data);
               return;
             } else if (res.status === 404) {
               console.log('[FloatingChat] Thread not found, creating new one...');
@@ -139,8 +168,11 @@ export default function FloatingChat() {
                 const data = await createRes.json();
                 const realThreadId = data.threadId || data.id;
                 console.log('[FloatingChat] Created new thread:', realThreadId);
-                setThreadId(realThreadId);
+                if (realThreadId) {
+                  setThreadId(realThreadId);
+                }
                 setMessages([]);
+                applyThreadState(data);
                 return;
               }
             }
@@ -152,6 +184,7 @@ export default function FloatingChat() {
           console.log('[FloatingChat] Using fallback stub threadId:', stubId);
           setThreadId(stubId);
           setMessages([]);
+          applyThreadState(null);
         } else {
           console.log('[FloatingChat] Loading anonymous user thread...');
           // Anonymous user - use local storage
@@ -187,6 +220,7 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = await res.json();
                 setMessages(data.messages || []);
+                applyThreadState(data);
               }
             } catch (e) {
               console.warn('[FloatingChat] Could not fetch anon messages:', e);
@@ -250,13 +284,17 @@ export default function FloatingChat() {
           payload.sourceType === 'private' &&
           payload.threadId === threadId
         ) {
-          fetch(`${API_BASE_URL}/chat/private/${threadId}`, {
+          fetch(`${API_BASE_URL}/chat/private/${threadId}?includeArchived=1`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           })
             .then((res) => (res.ok ? res.json() : null))
             .then((thread) => {
               if (!thread) return;
               setMessages(thread.messages || []);
+              setThreadStatus(thread.status || 'open');
+              setThreadClosureDueAt(thread.closureDueAt || null);
+              setThreadResolvedAt(thread.resolvedAt || null);
+              setThreadResolutionReason(thread.resolutionReason || null);
               if (!isOpen) {
                 setUnreadCount(thread.unreadCount || 0);
               }
@@ -391,6 +429,13 @@ export default function FloatingChat() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {(threadStatus === 'closure_pending' || threadStatus === 'closed') && (
+              <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+                {threadStatus === 'closure_pending'
+                  ? `Fitout Hub marked this conversation as pending closure${threadClosureDueAt ? ` until ${new Date(threadClosureDueAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here if you still need help.`
+                  : `This conversation was closed${threadResolvedAt ? ` on ${new Date(threadResolvedAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here to reopen it.`}
+              </div>
+            )}
             {loading ? (
               <div className="text-center text-slate-500 text-sm mt-8">Loading chat...</div>
             ) : messages.length === 0 ? (

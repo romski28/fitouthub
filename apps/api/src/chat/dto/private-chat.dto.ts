@@ -19,6 +19,11 @@ export class PrivateChatThreadDto {
   id: string;
   userId?: string;
   professionalId?: string;
+  status?: string;
+  closureRequestedAt?: string;
+  closureDueAt?: string;
+  resolvedAt?: string;
+  resolutionReason?: string;
   userName?: string;
   professionalName?: string;
   createdAt: string;

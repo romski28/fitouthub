@@ -55,7 +55,7 @@ export default function AdminMessagingPage() {
   })();
   const initialAssistStatus = (() => {
     const value = searchParams.get('assistStatus');
-    if (value === 'open' || value === 'in_progress' || value === 'closed') return value;
+    if (value === 'open' || value === 'in_progress' || value === 'closure_pending' || value === 'closed') return value;
     return 'open';
   })();
   const initialType = (() => {
@@ -65,13 +65,13 @@ export default function AdminMessagingPage() {
   })();
   const initialStatus = (() => {
     const value = searchParams.get('status');
-    if (value === 'all' || value === 'open' || value === 'in_progress' || value === 'closed') return value;
+    if (value === 'all' || value === 'open' || value === 'in_progress' || value === 'closure_pending' || value === 'closed') return value;
     return 'all';
   })();
   const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all'>(initialView);
-  const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closed">(initialAssistStatus);
+  const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closure_pending" | "closed">(initialAssistStatus);
   const [typeFilter, setTypeFilter] = useState<'all' | 'support' | 'supplier-client' | 'anonymous' | 'project'>(initialType);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closed'>(initialStatus);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed'>(initialStatus);
   
   // Assist requests state
   const [requests, setRequests] = useState<AssistRequest[]>([]);
@@ -144,7 +144,7 @@ export default function AdminMessagingPage() {
     }
 
     const assistStatus = searchParams.get('assistStatus');
-    if (assistStatus === 'open' || assistStatus === 'in_progress' || assistStatus === 'closed') {
+    if (assistStatus === 'open' || assistStatus === 'in_progress' || assistStatus === 'closure_pending' || assistStatus === 'closed') {
       setStatusTab(assistStatus);
     }
 
@@ -154,16 +154,16 @@ export default function AdminMessagingPage() {
     }
 
     const status = searchParams.get('status');
-    if (status === 'all' || status === 'open' || status === 'in_progress' || status === 'closed') {
+    if (status === 'all' || status === 'open' || status === 'in_progress' || status === 'closure_pending' || status === 'closed') {
       setStatusFilter(status);
     }
   }, [searchParams]);
 
   const updateQuery = (updates: {
     view?: 'assist' | 'general' | 'all';
-    assistStatus?: 'open' | 'in_progress' | 'closed';
+    assistStatus?: 'open' | 'in_progress' | 'closure_pending' | 'closed';
     type?: 'all' | 'support' | 'supplier-client' | 'anonymous' | 'project';
-    status?: 'all' | 'open' | 'in_progress' | 'closed';
+    status?: 'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed';
   }) => {
     const params = new URLSearchParams(searchParams.toString());
     if (updates.view !== undefined) params.set('view', updates.view);
@@ -179,7 +179,7 @@ export default function AdminMessagingPage() {
     updateQuery({ view: mode });
   };
 
-  const handleAssistStatusChange = (status: 'open' | 'in_progress' | 'closed') => {
+  const handleAssistStatusChange = (status: 'open' | 'in_progress' | 'closure_pending' | 'closed') => {
     setStatusTab(status);
     updateQuery({ assistStatus: status });
   };
@@ -189,7 +189,7 @@ export default function AdminMessagingPage() {
     updateQuery({ type });
   };
 
-  const handleStatusFilterChange = (status: 'all' | 'open' | 'in_progress' | 'closed') => {
+  const handleStatusFilterChange = (status: 'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed') => {
     setStatusFilter(status);
     updateQuery({ status });
   };
@@ -588,6 +588,16 @@ export default function AdminMessagingPage() {
           >
             ✅ Closed
           </button>
+          <button
+            onClick={() => handleStatusFilterChange('closure_pending')}
+            className={`${smallFilterButtonBase} ${
+              statusFilter === 'closure_pending'
+                ? 'bg-sky-700 text-white border-sky-800'
+                : 'bg-white text-sky-700 border-sky-300 hover:bg-sky-50'
+            }`}
+          >
+            💤 Pending Closure
+          </button>
         </div>
       )}
 
@@ -597,7 +607,7 @@ export default function AdminMessagingPage() {
           {/* Status Tabs for Assist Requests */}
           <div className="flex gap-2 items-center">
             <span className="text-sm font-medium text-slate-600">Assist Request Status:</span>
-            {(['open', 'in_progress', 'closed'] as const).map((status) => (
+            {(['open', 'in_progress', 'closure_pending', 'closed'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => handleAssistStatusChange(status)}
@@ -607,7 +617,13 @@ export default function AdminMessagingPage() {
                     : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                {status === 'open' ? '📖 Open' : status === 'in_progress' ? '⏳ In Progress' : '✅ Closed'}
+                {status === 'open'
+                  ? '📖 Open'
+                  : status === 'in_progress'
+                    ? '⏳ In Progress'
+                    : status === 'closure_pending'
+                      ? '💤 Pending Closure'
+                      : '✅ Closed'}
               </button>
             ))}
             <div className="ml-auto text-sm text-slate-600">

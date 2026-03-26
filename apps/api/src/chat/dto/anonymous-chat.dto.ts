@@ -25,6 +25,11 @@ export class AnonymousChatMessageDto {
 export class AnonymousChatThreadDto {
   id: string;
   sessionId: string;
+  status?: string;
+  closureRequestedAt?: string;
+  closureDueAt?: string;
+  resolvedAt?: string;
+  resolutionReason?: string;
   createdAt: string;
   updatedAt: string;
   messages: AnonymousChatMessageDto[];

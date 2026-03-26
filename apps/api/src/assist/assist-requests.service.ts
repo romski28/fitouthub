@@ -30,6 +30,25 @@ export class AssistRequestsService {
   private readonly emergencyCloseMs = 60 * 60 * 1000;
   private readonly defaultCloseMs = 12 * 60 * 60 * 1000;
 
+  private formatClosureNotice(dueAt: Date, reason?: string | null): string {
+    const formattedDueAt = dueAt.toLocaleString('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return [
+      'Fitout Hub marked this assistance thread as pending closure.',
+      reason ? `Reason: ${reason}.` : null,
+      `It will auto-close after ${formattedDueAt}. Reply here if you still need help.`,
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
   private appendTimelineEvent(
     existing: unknown,
     event: {
@@ -512,6 +531,7 @@ export class AssistRequestsService {
       const now = new Date();
       const isEmergency = Boolean(assist.project?.isEmergency);
       const dueAt = new Date(now.getTime() + (isEmergency ? this.emergencyCloseMs : this.defaultCloseMs));
+      const resolutionReason = options?.resolutionReason || 'Admin requested closure';
       const updated = await (this.prisma as any).projectAssistRequest.update({
         where: { id },
         data: {
@@ -519,13 +539,13 @@ export class AssistRequestsService {
           closureRequestedAt: now,
           closureDueAt: dueAt,
           resolvedBy: options?.actorId || null,
-          resolutionReason: options?.resolutionReason || 'Admin requested closure',
+          resolutionReason,
           resolutionMode: options?.resolutionMode || 'user_confirmed',
           statusTimeline: this.appendTimelineEvent(assist.statusTimeline, {
             action: 'closure_requested',
             status,
             actorId: options?.actorId || null,
-            reason: options?.resolutionReason || 'Admin requested closure',
+            reason: resolutionReason,
             mode: options?.resolutionMode || 'user_confirmed',
             metadata: {
               dueAt: dueAt.toISOString(),
@@ -534,6 +554,26 @@ export class AssistRequestsService {
           }),
         },
       });
+
+      const closureMessage = await (this.prisma as any).assistMessage.create({
+        data: {
+          assistRequestId: id,
+          senderType: 'foh',
+          senderUserId: options?.actorId || null,
+          content: this.formatClosureNotice(dueAt, resolutionReason),
+        },
+      });
+
+      const messageEvent = {
+        type: 'assist.message.created',
+        payload: {
+          sourceType: 'assist',
+          sourceId: id,
+          projectId: assist.projectId,
+          sender: 'foh',
+          message: closureMessage,
+        },
+      };
 
       void this.realtime.emitToAdmins({
         type: 'thread.status.changed',
@@ -550,7 +590,9 @@ export class AssistRequestsService {
           sourceId: id,
         },
       });
+      void this.realtime.emitToAdmins(messageEvent);
       if (assist.userId) {
+        this.realtime.emitToUser(assist.userId, messageEvent);
         this.realtime.emitToUser(assist.userId, {
           type: 'thread.status.changed',
           payload: {

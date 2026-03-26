@@ -39,6 +39,25 @@ export class ChatService {
     return timeline;
   }
 
+  private formatClosureNotice(dueAt: Date, reason?: string | null): string {
+    const formattedDueAt = dueAt.toLocaleString('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return [
+      'Fitout Hub marked this support conversation as pending closure.',
+      reason ? `Reason: ${reason}.` : null,
+      `It will auto-close after ${formattedDueAt}. Reply here if you still need help.`,
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
   private async detectEmergencyFromPrivateThread(threadId: string): Promise<boolean> {
     const latest = await (this.prisma as any).privateChatMessage.findFirst({
       where: { threadId },
@@ -159,18 +178,7 @@ export class ChatService {
       });
     }
 
-    const reopenedAtMs = thread.reopenedAt
-      ? new Date(thread.reopenedAt).getTime()
-      : null;
-    const filteredMessages =
-      !includeArchived && reopenedAtMs
-        ? (thread.messages || []).filter(
-            (message: any) =>
-              new Date(message.createdAt).getTime() >= reopenedAtMs,
-          )
-        : thread.messages || [];
-
-    return this.mapPrivateThreadDto({ ...thread, messages: filteredMessages });
+    return this.mapPrivateThreadDto(thread);
   }
 
   /**
@@ -194,18 +202,7 @@ export class ChatService {
       throw new NotFoundException('Chat thread not found');
     }
 
-    const reopenedAtMs = thread.reopenedAt
-      ? new Date(thread.reopenedAt).getTime()
-      : null;
-    const filteredMessages =
-      !includeArchived && reopenedAtMs
-        ? (thread.messages || []).filter(
-            (message: any) =>
-              new Date(message.createdAt).getTime() >= reopenedAtMs,
-          )
-        : thread.messages || [];
-
-    return this.mapPrivateThreadDto({ ...thread, messages: filteredMessages });
+    return this.mapPrivateThreadDto(thread);
   }
 
   /**
@@ -249,12 +246,24 @@ export class ChatService {
       where: { id: threadId },
       data: {
         updatedAt: new Date(),
-        status: thread.status === 'closure_pending' ? 'in_progress' : thread.status,
-        reopenedAt: thread.status === 'closure_pending' ? new Date() : thread.reopenedAt,
-        closureRequestedAt: thread.status === 'closure_pending' ? null : thread.closureRequestedAt,
-        closureDueAt: thread.status === 'closure_pending' ? null : thread.closureDueAt,
+        status:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? 'in_progress'
+            : thread.status,
+        reopenedAt:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? new Date()
+            : thread.reopenedAt,
+        closureRequestedAt:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? null
+            : thread.closureRequestedAt,
+        closureDueAt:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? null
+            : thread.closureDueAt,
         statusTimeline:
-          thread.status === 'closure_pending'
+          thread.status === 'closure_pending' || thread.status === 'closed'
             ? this.appendTimelineEvent(thread.statusTimeline, {
                 action: 'reopened_by_message',
                 status: 'in_progress',
@@ -281,7 +290,7 @@ export class ChatService {
     }
     void this.realtime.emitToAdmins(realtimeEvent);
 
-    if (thread.status === 'closure_pending') {
+    if (thread.status === 'closure_pending' || thread.status === 'closed') {
       const reopenEvent = {
         type: 'thread.status.changed',
         payload: {
@@ -334,6 +343,7 @@ export class ChatService {
     const now = new Date();
     const isEmergency = await this.detectEmergencyFromPrivateThread(threadId);
     const dueAt = new Date(now.getTime() + (isEmergency ? this.emergencyCloseMs : this.defaultCloseMs));
+    const resolutionReason = options?.resolutionReason || 'Admin requested closure';
     await (this.prisma as any).privateChatThread.update({
       where: { id: threadId },
       data: {
@@ -343,12 +353,12 @@ export class ChatService {
         closureDueAt: dueAt,
         resolvedBy: actorId ?? null,
         resolutionMode: options?.resolutionMode || 'user_confirmed',
-        resolutionReason: options?.resolutionReason || 'Admin requested closure',
+        resolutionReason,
         statusTimeline: this.appendTimelineEvent(thread.statusTimeline, {
           action: 'closure_requested',
           status: 'closure_pending',
           actorId: actorId ?? null,
-          reason: options?.resolutionReason || 'Admin requested closure',
+          reason: resolutionReason,
           mode: options?.resolutionMode || 'user_confirmed',
           metadata: {
             dueAt: dueAt.toISOString(),
@@ -357,6 +367,27 @@ export class ChatService {
         }),
       },
     });
+
+    const closureMessage = await this.prisma.privateChatMessage.create({
+      data: {
+        threadId,
+        senderType: 'foh',
+        senderUserId: null,
+        senderProId: null,
+        content: this.formatClosureNotice(dueAt, resolutionReason),
+        attachments: [],
+      },
+    });
+
+    const messageEvent = {
+      type: 'chat.message.created',
+      payload: {
+        sourceType: 'private',
+        threadId,
+        senderType: 'foh',
+        message: this.mapPrivateMessageDto(closureMessage),
+      },
+    };
 
     const statusEvent = {
       type: 'thread.status.changed',
@@ -368,11 +399,14 @@ export class ChatService {
     };
 
     if (thread.userId) {
+      this.realtime.emitToUser(thread.userId, messageEvent);
       this.realtime.emitToUser(thread.userId, statusEvent);
     }
     if (thread.professionalId) {
+      this.realtime.emitToProfessional(thread.professionalId, messageEvent);
       this.realtime.emitToProfessional(thread.professionalId, statusEvent);
     }
+    void this.realtime.emitToAdmins(messageEvent);
     void this.realtime.emitToAdmins(statusEvent);
   }
 
@@ -408,18 +442,7 @@ export class ChatService {
       throw new NotFoundException('Anonymous chat thread not found');
     }
 
-    const reopenedAtMs = thread.reopenedAt
-      ? new Date(thread.reopenedAt).getTime()
-      : null;
-    const filteredMessages =
-      !includeArchived && reopenedAtMs
-        ? (thread.messages || []).filter(
-            (message: any) =>
-              new Date(message.createdAt).getTime() >= reopenedAtMs,
-          )
-        : thread.messages || [];
-
-    return this.mapAnonymousThreadDto({ ...thread, messages: filteredMessages });
+    return this.mapAnonymousThreadDto(thread);
   }
 
   /**
@@ -459,12 +482,24 @@ export class ChatService {
       where: { id: threadId },
       data: {
         updatedAt: new Date(),
-        status: thread.status === 'closure_pending' ? 'in_progress' : thread.status,
-        reopenedAt: thread.status === 'closure_pending' ? new Date() : thread.reopenedAt,
-        closureRequestedAt: thread.status === 'closure_pending' ? null : thread.closureRequestedAt,
-        closureDueAt: thread.status === 'closure_pending' ? null : thread.closureDueAt,
+        status:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? 'in_progress'
+            : thread.status,
+        reopenedAt:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? new Date()
+            : thread.reopenedAt,
+        closureRequestedAt:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? null
+            : thread.closureRequestedAt,
+        closureDueAt:
+          thread.status === 'closure_pending' || thread.status === 'closed'
+            ? null
+            : thread.closureDueAt,
         statusTimeline:
-          thread.status === 'closure_pending'
+          thread.status === 'closure_pending' || thread.status === 'closed'
             ? this.appendTimelineEvent(thread.statusTimeline, {
                 action: 'reopened_by_message',
                 status: 'in_progress',
@@ -484,7 +519,7 @@ export class ChatService {
     };
     void this.realtime.emitToAdmins(realtimeEvent);
 
-    if (thread.status === 'closure_pending') {
+    if (thread.status === 'closure_pending' || thread.status === 'closed') {
       void this.realtime.emitToAdmins({
         type: 'thread.status.changed',
         payload: {
@@ -519,6 +554,7 @@ export class ChatService {
     }
     const now = new Date();
     const dueAt = new Date(now.getTime() + this.defaultCloseMs);
+    const resolutionReason = options?.resolutionReason || 'Admin requested closure';
     await (this.prisma as any).anonymousChatThread.update({
       where: { id: threadId },
       data: {
@@ -528,18 +564,37 @@ export class ChatService {
         closureDueAt: dueAt,
         resolvedBy: actorId ?? null,
         resolutionMode: options?.resolutionMode || 'user_confirmed',
-        resolutionReason: options?.resolutionReason || 'Admin requested closure',
+        resolutionReason,
         statusTimeline: this.appendTimelineEvent(thread.statusTimeline, {
           action: 'closure_requested',
           status: 'closure_pending',
           actorId: actorId ?? null,
-          reason: options?.resolutionReason || 'Admin requested closure',
+          reason: resolutionReason,
           mode: options?.resolutionMode || 'user_confirmed',
           metadata: {
             dueAt: dueAt.toISOString(),
             emergency: false,
           },
         }),
+      },
+    });
+
+    const closureMessage = await this.prisma.anonymousChatMessage.create({
+      data: {
+        threadId,
+        senderType: 'foh',
+        content: this.formatClosureNotice(dueAt, resolutionReason),
+        attachments: [],
+      },
+    });
+
+    void this.realtime.emitToAdmins({
+      type: 'chat.message.created',
+      payload: {
+        sourceType: 'anonymous',
+        threadId,
+        senderType: 'foh',
+        message: this.mapAnonymousMessageDto(closureMessage),
       },
     });
 
@@ -659,6 +714,11 @@ export class ChatService {
       threadId: thread.id, // Alias for frontend compatibility
       userId: thread.userId,
       professionalId: thread.professionalId,
+      status: thread.status,
+      closureRequestedAt: thread.closureRequestedAt?.toISOString(),
+      closureDueAt: thread.closureDueAt?.toISOString(),
+      resolvedAt: thread.resolvedAt?.toISOString(),
+      resolutionReason: thread.resolutionReason || undefined,
       userName: thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined,
       professionalName: thread.professional?.businessName,
       createdAt: thread.createdAt.toISOString(),
@@ -688,6 +748,11 @@ export class ChatService {
       id: thread.id,
       threadId: thread.id,
       sessionId: thread.sessionId,
+      status: thread.status,
+      closureRequestedAt: thread.closureRequestedAt?.toISOString(),
+      closureDueAt: thread.closureDueAt?.toISOString(),
+      resolvedAt: thread.resolvedAt?.toISOString(),
+      resolutionReason: thread.resolutionReason || undefined,
       createdAt: thread.createdAt.toISOString(),
       updatedAt: thread.updatedAt.toISOString(),
       messages: thread.messages.map((m: any) => this.mapAnonymousMessageDto(m)),
