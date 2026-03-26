@@ -394,6 +394,22 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
       console.warn('[search-flow] Unable to persist full createProjectDraft due to storage limits.');
     }
 
+    try {
+      sessionStorage.setItem(
+        'projectDescription',
+        JSON.stringify({
+          title: aiDraft.initialData.projectName || '',
+          description: aiDraft.initialData.notes || '',
+          isEmergency: Boolean(aiDraft.initialData.isEmergency),
+          profession: aiDraft.initialData.tradesRequired?.[0],
+          location: aiDraft.initialData.location,
+          tradesRequired: aiDraft.initialData.tradesRequired || [],
+        }),
+      );
+    } catch {
+      // ignore storage failures; createProjectDraft is the primary handoff
+    }
+
     const params = new URLSearchParams();
     if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
     if (payload.location.tertiary) params.set('location', payload.location.tertiary);

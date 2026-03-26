@@ -17,6 +17,7 @@ import type { Professional } from '@/lib/types';
 interface ProjectDescriptionData {
   title?: string;
   description: string;
+  isEmergency?: boolean;
   profession?: string;
   location?: CanonicalLocation;
   tradesRequired: string[];
@@ -330,6 +331,7 @@ export default function CreateProjectPage() {
                 clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
                 projectName: initialFormData.projectName || descriptionData?.title || '',
                 notes: initialFormData.notes || descriptionData?.description || '',
+                isEmergency: initialFormData.isEmergency ?? descriptionData?.isEmergency,
                 tradesRequired: initialFormData.tradesRequired?.length
                   ? initialFormData.tradesRequired
                   : (descriptionData?.tradesRequired || []),

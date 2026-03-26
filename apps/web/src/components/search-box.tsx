@@ -96,7 +96,6 @@ export default function SearchBox({ onSubmit, autoFocus = false }: SearchBoxProp
     e.preventDefault();
     if (query.trim()) {
       onSubmit(query.trim());
-      setQuery('');
     }
   };
 
@@ -124,9 +123,20 @@ export default function SearchBox({ onSubmit, autoFocus = false }: SearchBoxProp
           </div>
 
           <div className="flex items-center justify-between px-3 sm:px-4 pb-3 sm:pb-4 pt-1">
-            <span className="text-xs text-slate-400">
-              {characterCount}/{MAX_QUERY_CHARS}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">
+                {characterCount}/{MAX_QUERY_CHARS}
+              </span>
+              {query.trim().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             <button
               type="submit"
               className="px-3 sm:px-6 py-2 sm:py-2.5 bg-emerald-600 text-white font-semibold hover:bg-emerald-700 active:bg-emerald-800 transition-colors duration-150 text-sm sm:text-base whitespace-nowrap rounded-md shadow-sm"

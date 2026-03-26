@@ -547,6 +547,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       initialData?: Partial<ProjectFormData>;
       aiIntakeId?: string;
     } | null = null;
+    let existingProjectDescription: {
+      title?: string;
+      description?: string;
+      isEmergency?: boolean;
+      tradesRequired?: string[];
+      location?: CanonicalLocation;
+    } | null = null;
     try {
       const rawDraft = sessionStorage.getItem('createProjectDraft');
       if (rawDraft) {
@@ -555,8 +562,20 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           aiIntakeId?: string;
         };
       }
+
+      const rawDescription = sessionStorage.getItem('projectDescription');
+      if (rawDescription) {
+        existingProjectDescription = JSON.parse(rawDescription) as {
+          title?: string;
+          description?: string;
+          isEmergency?: boolean;
+          tradesRequired?: string[];
+          location?: CanonicalLocation;
+        };
+      }
     } catch {
       existingDraft = null;
+      existingProjectDescription = null;
     }
 
     const mergedInitialData: Partial<ProjectFormData> = {
@@ -564,13 +583,19 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       ...shareInitialData,
       projectName:
         existingDraft?.initialData?.projectName ||
+        existingProjectDescription?.title ||
         shareInitialData.projectName ||
         '',
       notes:
         existingDraft?.initialData?.notes ||
+        existingProjectDescription?.description ||
         shareInitialData.notes ||
         initialFromIntent.description ||
         '',
+      isEmergency:
+        existingDraft?.initialData?.isEmergency ??
+        existingProjectDescription?.isEmergency ??
+        shareInitialData.isEmergency,
       aiFrom: shareInitialData.aiFrom || existingDraft?.initialData?.aiFrom,
     };
 
@@ -579,6 +604,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       JSON.stringify({
         title: mergedInitialData.projectName || '',
         description: mergedInitialData.notes || '',
+          isEmergency: Boolean(mergedInitialData.isEmergency),
         profession: mergedInitialData.tradesRequired?.[0],
         location: mergedInitialData.location,
         tradesRequired: mergedInitialData.tradesRequired || [],

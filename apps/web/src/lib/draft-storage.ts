@@ -101,6 +101,7 @@ export const writeCreateProjectDraftSafely = (value: CreateProjectDraftValue): b
         notes: cropText(value.initialData?.notes, 2500),
         tradesRequired: toLimitedStringArray(value.initialData?.tradesRequired, 8, 80),
         location: value.initialData?.location,
+        isEmergency: Boolean(value.initialData?.isEmergency),
       },
       aiIntakeId: value.aiIntakeId,
     },
