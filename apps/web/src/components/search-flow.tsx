@@ -436,6 +436,13 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
     else if (payload.location.secondary) params.set('location', payload.location.secondary);
     else if (payload.location.primary) params.set('location', payload.location.primary);
     else params.set('askRegion', '1');
+    if (aiDraft.initialData.projectName) {
+      params.set('aiTitle', aiDraft.initialData.projectName.slice(0, 180));
+    }
+    if (aiDraft.initialData.notes) {
+      params.set('aiScope', aiDraft.initialData.notes.slice(0, 1800));
+    }
+    params.set('aiEmergency', aiDraft.initialData.isEmergency ? '1' : '0');
 
     setShowBriefModal(false);
     router.push(`/professionals?${params.toString()}`);

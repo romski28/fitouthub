@@ -525,6 +525,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         ? prefill.tradesRequired
         : (mainTrade ? [mainTrade] : []),
       notes: prefill.notes || initialFromIntent.description || '',
+      isEmergency: prefill.isEmergency,
       photoUrls: prefill.photoUrls,
       onlySelectedProfessionalsCanBid: prefill.onlySelectedProfessionalsCanBid ?? true,
     };

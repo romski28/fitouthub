@@ -68,6 +68,9 @@ function ProfessionalsPageInner() {
   const projectId = searchParams.get('projectId') || undefined;
   const tradeParam = searchParams.get('trade') || undefined;
   const locationParam = searchParams.get('location') || undefined;
+  const aiTitleParam = searchParams.get('aiTitle') || undefined;
+  const aiScopeParam = searchParams.get('aiScope') || undefined;
+  const aiEmergencyParam = searchParams.get('aiEmergency') || undefined;
   const askRegion = searchParams.get('askRegion') === '1';
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
@@ -184,6 +187,23 @@ function ProfessionalsPageInner() {
   );
   const shouldShowRegionNotice = askRegion && !hasDefaultLocation;
 
+  const aiPrefill = useMemo<Partial<ProjectFormData>>(() => {
+    if (!aiTitleParam && !aiScopeParam && !aiEmergencyParam) return {};
+    return {
+      projectName: aiTitleParam,
+      notes: aiScopeParam,
+      isEmergency: aiEmergencyParam === '1',
+    };
+  }, [aiTitleParam, aiScopeParam, aiEmergencyParam]);
+
+  const mergedPrefill = useMemo<Partial<ProjectFormData>>(
+    () => ({
+      ...aiPrefill,
+      ...projectPrefill,
+    }),
+    [aiPrefill, projectPrefill],
+  );
+
   console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, locationParam, projectName, defaultLocation });
 
   return (
@@ -241,7 +261,7 @@ function ProfessionalsPageInner() {
             initialLocation={defaultLocation}
             projectId={projectId}
             initialSearchTerm={tradeParam || projectName}
-            initialProjectData={projectPrefill}
+            initialProjectData={mergedPrefill}
             requireLocation={shouldShowRegionNotice}
           />
         )}
