@@ -66,6 +66,34 @@ export class UpdatesController {
     return this.updatesService.listAdminAssignees();
   }
 
+  @Get('admin-conversations')
+  @UseGuards(CombinedAuthGuard)
+  async getAdminConversationIndex(
+    @Req() req: any,
+    @Query('limit') limit?: string,
+    @Query('clientId') clientId?: string,
+    @Query('status') status?: string,
+    @Query('channel') channel?: string,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new BadRequestException('Missing user id in token');
+    }
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can access conversation index');
+    }
+
+    const parsedLimit = limit ? Number(limit) : undefined;
+    return this.updatesService.getAdminConversationIndex({
+      limit: parsedLimit,
+      clientId: clientId || undefined,
+      status: status || undefined,
+      channel: channel || undefined,
+    });
+  }
+
   @Post('admin-comms-feed/claim')
   @UseGuards(CombinedAuthGuard)
   async claimAdminCommsFeedItem(

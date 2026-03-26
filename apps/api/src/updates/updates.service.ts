@@ -109,6 +109,31 @@ export interface AdminCommsAssignee {
   email: string;
 }
 
+export interface AdminConversationIndexItem {
+  id: string;
+  sourceType: 'support' | 'assist' | 'private' | 'project';
+  sourceId: string;
+  channel: 'support_whatsapp' | 'support_callback' | 'assist' | 'private_chat' | 'project_chat';
+  status: string;
+  clientId?: string;
+  clientName: string;
+  clientEmail?: string;
+  initiatedBy: 'client' | 'professional' | 'foh' | 'anonymous' | 'unknown';
+  startedAt: string;
+  latestAt: string;
+  initialMessage: string;
+  mediaCount: number;
+  projectId?: string;
+  projectName?: string;
+  openThreadType: 'assist' | 'private' | 'project' | 'support';
+  openThreadId: string;
+}
+
+export interface AdminConversationIndex {
+  items: AdminConversationIndexItem[];
+  generatedAt: string;
+}
+
 @Injectable()
 export class UpdatesService {
   private readonly logger = new Logger(UpdatesService.name);
@@ -444,6 +469,317 @@ export class UpdatesService {
     if (!admin) return undefined;
     const fullName = `${admin.firstName || ''} ${admin.surname || ''}`.trim();
     return fullName || admin.email || undefined;
+  }
+
+  private trimPreview(content: string | null | undefined, maxLength = 180) {
+    const normalized = (content || '').trim();
+    if (!normalized) return '';
+    if (normalized.length <= maxLength) return normalized;
+    return `${normalized.slice(0, maxLength - 1)}…`;
+  }
+
+  private countAttachmentItems(payload: unknown): number {
+    if (!Array.isArray(payload)) return 0;
+    return payload.length;
+  }
+
+  async getAdminConversationIndex(params: {
+    limit?: number;
+    clientId?: string;
+    status?: string;
+    channel?: string;
+  }): Promise<AdminConversationIndex> {
+    await this.finalizeExpiredClosuresForDashboard();
+    const safeLimit = Number.isFinite(params.limit)
+      ? Math.min(Math.max(Number(params.limit), 10), 300)
+      : 120;
+    const statusFilter = (params.status || 'all').trim().toLowerCase();
+    const channelFilter = (params.channel || 'all').trim().toLowerCase();
+
+    const [supportRequests, assistRequests, privateThreads, projectThreads] = await Promise.all([
+      this.prisma.supportRequest.findMany({
+        where: {
+          ...(params.clientId
+            ? {
+                project: {
+                  OR: [{ userId: params.clientId }, { clientId: params.clientId }],
+                },
+              }
+            : {}),
+        },
+        take: safeLimit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          project: {
+            select: {
+              id: true,
+              projectName: true,
+              userId: true,
+              clientId: true,
+              clientName: true,
+              user: {
+                select: {
+                  firstName: true,
+                  surname: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.projectAssistRequest.findMany({
+        where: {
+          ...(params.clientId ? { userId: params.clientId } : {}),
+        },
+        take: safeLimit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            take: 1,
+            select: {
+              content: true,
+              senderType: true,
+              createdAt: true,
+            },
+          },
+          project: {
+            select: {
+              id: true,
+              projectName: true,
+              clientName: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              surname: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      this.prisma.privateChatThread.findMany({
+        where: {
+          userId: { not: null },
+          ...(params.clientId ? { userId: params.clientId } : {}),
+        },
+        take: safeLimit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            take: 1,
+            select: {
+              content: true,
+              senderType: true,
+              createdAt: true,
+              attachments: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              surname: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      this.prisma.projectChatThread.findMany({
+        where: {
+          project: {
+            ...(params.clientId
+              ? {
+                  OR: [{ userId: params.clientId }, { clientId: params.clientId }],
+                }
+              : {}),
+          },
+        },
+        take: safeLimit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            take: 1,
+            select: {
+              content: true,
+              senderType: true,
+              createdAt: true,
+              attachments: true,
+            },
+          },
+          project: {
+            select: {
+              id: true,
+              projectName: true,
+              userId: true,
+              clientId: true,
+              clientName: true,
+              user: {
+                select: {
+                  firstName: true,
+                  surname: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const items: AdminConversationIndexItem[] = [];
+
+    supportRequests.forEach((request) => {
+      const channel = request.channel === 'whatsapp' ? 'support_whatsapp' : 'support_callback';
+      const projectClientId = request.project?.userId || request.project?.clientId || undefined;
+      const projectUserName = request.project?.user
+        ? `${request.project.user.firstName || ''} ${request.project.user.surname || ''}`.trim()
+        : '';
+      const clientName =
+        request.clientName ||
+        request.project?.clientName ||
+        projectUserName ||
+        request.clientEmail ||
+        request.fromNumber ||
+        'Client';
+
+      items.push({
+        id: `support:${request.id}`,
+        sourceType: 'support',
+        sourceId: request.id,
+        channel,
+        status: String(request.status || '').toLowerCase(),
+        clientId: projectClientId,
+        clientName,
+        clientEmail: request.clientEmail || request.project?.user?.email || undefined,
+        initiatedBy: 'client',
+        startedAt: request.createdAt.toISOString(),
+        latestAt: request.updatedAt.toISOString(),
+        initialMessage: this.trimPreview(request.body),
+        mediaCount: 0,
+        projectId: request.projectId || undefined,
+        projectName: request.project?.projectName || undefined,
+        openThreadType: 'support',
+        openThreadId: request.id,
+      });
+    });
+
+    assistRequests.forEach((request) => {
+      const firstMessage = request.messages[0];
+      const displayName = request.user
+        ? `${request.user.firstName || ''} ${request.user.surname || ''}`.trim() || request.user.email || 'Client'
+        : request.project?.clientName || 'Client';
+
+      items.push({
+        id: `assist:${request.id}`,
+        sourceType: 'assist',
+        sourceId: request.id,
+        channel: 'assist',
+        status: String(request.status || '').toLowerCase(),
+        clientId: request.userId || undefined,
+        clientName: displayName,
+        clientEmail: request.user?.email || undefined,
+        initiatedBy: firstMessage?.senderType === 'foh' ? 'foh' : 'client',
+        startedAt: (firstMessage?.createdAt || request.createdAt).toISOString(),
+        latestAt: request.updatedAt.toISOString(),
+        initialMessage: this.trimPreview(firstMessage?.content || request.notes || ''),
+        mediaCount: 0,
+        projectId: request.projectId,
+        projectName: request.project?.projectName || undefined,
+        openThreadType: 'assist',
+        openThreadId: request.id,
+      });
+    });
+
+    privateThreads.forEach((thread) => {
+      const firstMessage = thread.messages[0];
+      const displayName = thread.user
+        ? `${thread.user.firstName || ''} ${thread.user.surname || ''}`.trim() || thread.user.email || 'Client'
+        : 'Client';
+
+      items.push({
+        id: `private:${thread.id}`,
+        sourceType: 'private',
+        sourceId: thread.id,
+        channel: 'private_chat',
+        status: String(thread.status || 'open').toLowerCase(),
+        clientId: thread.userId || undefined,
+        clientName: displayName,
+        clientEmail: thread.user?.email || undefined,
+        initiatedBy:
+          firstMessage?.senderType === 'foh'
+            ? 'foh'
+            : firstMessage?.senderType === 'professional'
+              ? 'professional'
+              : firstMessage?.senderType === 'user'
+                ? 'client'
+                : 'unknown',
+        startedAt: (firstMessage?.createdAt || thread.createdAt).toISOString(),
+        latestAt: thread.updatedAt.toISOString(),
+        initialMessage: this.trimPreview(firstMessage?.content || ''),
+        mediaCount: this.countAttachmentItems(firstMessage?.attachments),
+        openThreadType: 'private',
+        openThreadId: thread.id,
+      });
+    });
+
+    projectThreads.forEach((thread) => {
+      const firstMessage = thread.messages[0];
+      const projectUserName = thread.project?.user
+        ? `${thread.project.user.firstName || ''} ${thread.project.user.surname || ''}`.trim()
+        : '';
+      const clientName =
+        thread.project?.clientName ||
+        projectUserName ||
+        thread.project?.user?.email ||
+        'Client';
+
+      items.push({
+        id: `project:${thread.id}`,
+        sourceType: 'project',
+        sourceId: thread.id,
+        channel: 'project_chat',
+        status: 'active',
+        clientId: thread.project?.userId || thread.project?.clientId || undefined,
+        clientName,
+        clientEmail: thread.project?.user?.email || undefined,
+        initiatedBy:
+          firstMessage?.senderType === 'foh'
+            ? 'foh'
+            : firstMessage?.senderType === 'professional'
+              ? 'professional'
+              : firstMessage?.senderType === 'client'
+                ? 'client'
+                : 'unknown',
+        startedAt: (firstMessage?.createdAt || thread.createdAt).toISOString(),
+        latestAt: thread.updatedAt.toISOString(),
+        initialMessage: this.trimPreview(firstMessage?.content || ''),
+        mediaCount: this.countAttachmentItems(firstMessage?.attachments),
+        projectId: thread.projectId,
+        projectName: thread.project?.projectName || undefined,
+        openThreadType: 'project',
+        openThreadId: thread.id,
+      });
+    });
+
+    const filtered = items.filter((item) => {
+      if (channelFilter !== 'all' && item.channel !== channelFilter) return false;
+      if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+      if (params.clientId && item.clientId && item.clientId !== params.clientId) return false;
+      return true;
+    });
+
+    return {
+      items: filtered
+        .sort((a, b) => new Date(b.latestAt).getTime() - new Date(a.latestAt).getTime())
+        .slice(0, safeLimit),
+      generatedAt: new Date().toISOString(),
+    };
   }
 
   async listAdminAssignees(): Promise<AdminCommsAssignee[]> {

@@ -43,6 +43,26 @@ type Message = {
   createdAt: string;
 };
 
+type ConversationItem = {
+  id: string;
+  sourceType: 'support' | 'assist' | 'private' | 'project';
+  sourceId: string;
+  channel: 'support_whatsapp' | 'support_callback' | 'assist' | 'private_chat' | 'project_chat';
+  status: string;
+  clientId?: string;
+  clientName: string;
+  clientEmail?: string;
+  initiatedBy: 'client' | 'professional' | 'foh' | 'anonymous' | 'unknown';
+  startedAt: string;
+  latestAt: string;
+  initialMessage: string;
+  mediaCount: number;
+  projectId?: string;
+  projectName?: string;
+  openThreadType: 'assist' | 'private' | 'project' | 'support';
+  openThreadId: string;
+};
+
 export default function AdminMessagingPage() {
   const { accessToken } = useAuth();
   const router = useRouter();
@@ -50,7 +70,7 @@ export default function AdminMessagingPage() {
   const searchParams = useSearchParams();
   const initialView = (() => {
     const value = searchParams.get('view');
-    if (value === 'assist' || value === 'general' || value === 'all') return value;
+    if (value === 'assist' || value === 'general' || value === 'all' || value === 'conversations') return value;
     return 'all';
   })();
   const initialAssistStatus = (() => {
@@ -68,10 +88,46 @@ export default function AdminMessagingPage() {
     if (value === 'all' || value === 'open' || value === 'in_progress' || value === 'closure_pending' || value === 'closed') return value;
     return 'all';
   })();
-  const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all'>(initialView);
+  const initialConversationChannel = (() => {
+    const value = searchParams.get('channel');
+    if (
+      value === 'all' ||
+      value === 'private_chat' ||
+      value === 'project_chat' ||
+      value === 'assist' ||
+      value === 'support_whatsapp' ||
+      value === 'support_callback'
+    ) {
+      return value;
+    }
+    return 'all';
+  })();
+  const initialConversationStatus = (() => {
+    const value = searchParams.get('conversationStatus');
+    if (
+      value === 'all' ||
+      value === 'open' ||
+      value === 'in_progress' ||
+      value === 'closure_pending' ||
+      value === 'closed' ||
+      value === 'resolved' ||
+      value === 'active' ||
+      value === 'unassigned' ||
+      value === 'claimed'
+    ) {
+      return value;
+    }
+    return 'all';
+  })();
+  const initialClientId = searchParams.get('clientId') || '';
+
+  const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all' | 'conversations'>(initialView);
   const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closure_pending" | "closed">(initialAssistStatus);
   const [typeFilter, setTypeFilter] = useState<'all' | 'support' | 'supplier-client' | 'anonymous' | 'project'>(initialType);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed'>(initialStatus);
+  const [conversationChannel, setConversationChannel] = useState<'all' | 'private_chat' | 'project_chat' | 'assist' | 'support_whatsapp' | 'support_callback'>(initialConversationChannel);
+  const [conversationStatus, setConversationStatus] = useState<'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed' | 'resolved' | 'active' | 'unassigned' | 'claimed'>(initialConversationStatus);
+  const [conversationClientId, setConversationClientId] = useState<string>(initialClientId);
   
   // Assist requests state
   const [requests, setRequests] = useState<AssistRequest[]>([]);
@@ -81,6 +137,8 @@ export default function AdminMessagingPage() {
   // General chat threads state
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [threadsLoading, setThreadsLoading] = useState(false);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
 
   // Active thread/request state
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -127,6 +185,30 @@ export default function AdminMessagingPage() {
     }
   };
 
+  const fetchConversations = async () => {
+    if (!accessToken) return;
+    setConversationsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', '200');
+      if (conversationChannel !== 'all') params.set('channel', conversationChannel);
+      if (conversationStatus !== 'all') params.set('status', conversationStatus);
+      if (conversationClientId.trim()) params.set('clientId', conversationClientId.trim());
+
+      const url = `${API_BASE_URL.replace(/\/$/, "")}/updates/admin-conversations?${params.toString()}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setConversations(data.items || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load conversations');
+    } finally {
+      setConversationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (viewMode === 'assist' || viewMode === 'all') {
       fetchAssistRequests();
@@ -134,12 +216,15 @@ export default function AdminMessagingPage() {
     if (viewMode === 'general' || viewMode === 'all') {
       fetchChatThreads();
     }
+    if (viewMode === 'conversations') {
+      fetchConversations();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, statusTab]);
+  }, [viewMode, statusTab, conversationChannel, conversationStatus, conversationClientId]);
 
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view === 'assist' || view === 'general' || view === 'all') {
+    if (view === 'assist' || view === 'general' || view === 'all' || view === 'conversations') {
       setViewMode(view);
     }
 
@@ -157,24 +242,62 @@ export default function AdminMessagingPage() {
     if (status === 'all' || status === 'open' || status === 'in_progress' || status === 'closure_pending' || status === 'closed') {
       setStatusFilter(status);
     }
+
+    const channel = searchParams.get('channel');
+    if (
+      channel === 'all' ||
+      channel === 'private_chat' ||
+      channel === 'project_chat' ||
+      channel === 'assist' ||
+      channel === 'support_whatsapp' ||
+      channel === 'support_callback'
+    ) {
+      setConversationChannel(channel);
+    }
+
+    const conversationStatusParam = searchParams.get('conversationStatus');
+    if (
+      conversationStatusParam === 'all' ||
+      conversationStatusParam === 'open' ||
+      conversationStatusParam === 'in_progress' ||
+      conversationStatusParam === 'closure_pending' ||
+      conversationStatusParam === 'closed' ||
+      conversationStatusParam === 'resolved' ||
+      conversationStatusParam === 'active' ||
+      conversationStatusParam === 'unassigned' ||
+      conversationStatusParam === 'claimed'
+    ) {
+      setConversationStatus(conversationStatusParam);
+    }
+
+    setConversationClientId(searchParams.get('clientId') || '');
   }, [searchParams]);
 
   const updateQuery = (updates: {
-    view?: 'assist' | 'general' | 'all';
+    view?: 'assist' | 'general' | 'all' | 'conversations';
     assistStatus?: 'open' | 'in_progress' | 'closure_pending' | 'closed';
     type?: 'all' | 'support' | 'supplier-client' | 'anonymous' | 'project';
     status?: 'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed';
+    channel?: 'all' | 'private_chat' | 'project_chat' | 'assist' | 'support_whatsapp' | 'support_callback';
+    conversationStatus?: 'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed' | 'resolved' | 'active' | 'unassigned' | 'claimed';
+    clientId?: string;
   }) => {
     const params = new URLSearchParams(searchParams.toString());
     if (updates.view !== undefined) params.set('view', updates.view);
     if (updates.assistStatus !== undefined) params.set('assistStatus', updates.assistStatus);
     if (updates.type !== undefined) params.set('type', updates.type);
     if (updates.status !== undefined) params.set('status', updates.status);
+    if (updates.channel !== undefined) params.set('channel', updates.channel);
+    if (updates.conversationStatus !== undefined) params.set('conversationStatus', updates.conversationStatus);
+    if (updates.clientId !== undefined) {
+      if (updates.clientId.trim()) params.set('clientId', updates.clientId.trim());
+      else params.delete('clientId');
+    }
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname);
   };
 
-  const handleViewModeChange = (mode: 'assist' | 'general' | 'all') => {
+  const handleViewModeChange = (mode: 'assist' | 'general' | 'all' | 'conversations') => {
     setViewMode(mode);
     updateQuery({ view: mode });
   };
@@ -192,6 +315,21 @@ export default function AdminMessagingPage() {
   const handleStatusFilterChange = (status: 'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed') => {
     setStatusFilter(status);
     updateQuery({ status });
+  };
+
+  const handleConversationChannelChange = (channel: 'all' | 'private_chat' | 'project_chat' | 'assist' | 'support_whatsapp' | 'support_callback') => {
+    setConversationChannel(channel);
+    updateQuery({ channel });
+  };
+
+  const handleConversationStatusChange = (status: 'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed' | 'resolved' | 'active' | 'unassigned' | 'claimed') => {
+    setConversationStatus(status);
+    updateQuery({ conversationStatus: status });
+  };
+
+  const handleConversationClientIdChange = (value: string) => {
+    setConversationClientId(value);
+    updateQuery({ clientId: value });
   };
 
   // Open assist request thread
@@ -302,6 +440,32 @@ export default function AdminMessagingPage() {
   };
 
   const sendMessage = activeType === 'assist' ? sendAssistMessage : sendChatMessage;
+
+  const openConversationItem = async (item: ConversationItem) => {
+    if (item.openThreadType === 'support') {
+      router.push('/admin/support?tab=pool');
+      return;
+    }
+
+    if (item.openThreadType === 'assist') {
+      handleViewModeChange('assist');
+      await openAssistThread(item.openThreadId);
+      return;
+    }
+
+    if (item.openThreadType === 'private' || item.openThreadType === 'project') {
+      handleViewModeChange('general');
+      await openChatThread({
+        id: item.openThreadId,
+        type: item.openThreadType,
+        projectId: item.projectId,
+        projectName: item.projectName,
+        updatedAt: item.latestAt,
+        unreadCount: 0,
+        status: item.status,
+      });
+    }
+  };
 
   // Mark thread as read
   const markThreadAsRead = async () => {
@@ -487,7 +651,90 @@ export default function AdminMessagingPage() {
         >
           💬 Support Chat
         </button>
+        <button
+          onClick={() => handleViewModeChange('conversations')}
+          className={`${filterButtonBase} ${
+            viewMode === 'conversations'
+              ? 'bg-indigo-700 text-white border-indigo-800'
+              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          🧭 Conversations
+        </button>
       </div>
+
+      {viewMode === 'conversations' && (
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleConversationChannelChange('all')}
+              className={`${smallFilterButtonBase} ${conversationChannel === 'all' ? 'bg-slate-900 text-white border-slate-950' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
+            >
+              All Channels
+            </button>
+            <button
+              onClick={() => handleConversationChannelChange('private_chat')}
+              className={`${smallFilterButtonBase} ${conversationChannel === 'private_chat' ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}
+            >
+              Private Chat
+            </button>
+            <button
+              onClick={() => handleConversationChannelChange('project_chat')}
+              className={`${smallFilterButtonBase} ${conversationChannel === 'project_chat' ? 'bg-purple-600 text-white border-purple-700' : 'bg-white text-purple-700 border-purple-300 hover:bg-purple-50'}`}
+            >
+              Project Chat
+            </button>
+            <button
+              onClick={() => handleConversationChannelChange('assist')}
+              className={`${smallFilterButtonBase} ${conversationChannel === 'assist' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50'}`}
+            >
+              Assist
+            </button>
+            <button
+              onClick={() => handleConversationChannelChange('support_whatsapp')}
+              className={`${smallFilterButtonBase} ${conversationChannel === 'support_whatsapp' ? 'bg-green-700 text-white border-green-800' : 'bg-white text-green-700 border-green-300 hover:bg-green-50'}`}
+            >
+              WhatsApp
+            </button>
+            <button
+              onClick={() => handleConversationChannelChange('support_callback')}
+              className={`${smallFilterButtonBase} ${conversationChannel === 'support_callback' ? 'bg-amber-600 text-white border-amber-700' : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'}`}
+            >
+              Callback
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'open', 'in_progress', 'closure_pending', 'closed', 'resolved', 'active', 'unassigned', 'claimed'] as const).map((statusValue) => (
+              <button
+                key={statusValue}
+                onClick={() => handleConversationStatusChange(statusValue)}
+                className={`${smallFilterButtonBase} ${conversationStatus === statusValue ? 'bg-slate-900 text-white border-slate-950' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
+              >
+                {statusValue === 'all' ? 'All Status' : statusValue.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Client Id</label>
+            <input
+              value={conversationClientId}
+              onChange={(e) => handleConversationClientIdChange(e.target.value)}
+              className="h-9 w-full max-w-sm rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Filter by client id"
+            />
+            {conversationClientId && (
+              <button
+                onClick={() => handleConversationClientIdChange('')}
+                className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Message Type Filters (for chat view) */}
       {(viewMode === 'general' || viewMode === 'all') && (
@@ -996,6 +1243,70 @@ export default function AdminMessagingPage() {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {viewMode === 'conversations' && (
+        <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+          {conversationsLoading ? (
+            <div className="p-6 text-sm text-slate-600">Loading conversations...</div>
+          ) : conversations.length === 0 ? (
+            <div className="p-6 text-sm text-slate-600">No conversations match the current filters.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-100 text-left text-xs uppercase tracking-[0.08em] text-slate-600">
+                  <tr>
+                    <th className="px-4 py-3">Started</th>
+                    <th className="px-4 py-3">Initiator</th>
+                    <th className="px-4 py-3">Channel</th>
+                    <th className="px-4 py-3">Client</th>
+                    <th className="px-4 py-3">Initial Message</th>
+                    <th className="px-4 py-3">Media</th>
+                    <th className="px-4 py-3">Latest</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Project</th>
+                    <th className="px-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {conversations.map((item) => (
+                    <tr key={item.id} className="border-t border-slate-200 align-top">
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{new Date(item.startedAt).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{item.initiatedBy}</td>
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{item.channel.replace('_', ' ')}</td>
+                      <td className="px-4 py-3 text-slate-900">
+                        <div className="font-semibold">{item.clientName}</div>
+                        {item.clientEmail && <div className="text-xs text-slate-500">{item.clientEmail}</div>}
+                        {item.clientId && <div className="text-xs text-slate-500">{item.clientId}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 max-w-xs">{item.initialMessage || '-'}</td>
+                      <td className="px-4 py-3 text-slate-700 text-center">{item.mediaCount}</td>
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{new Date(item.latestAt).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{item.status}</td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {item.projectId ? (
+                          <Link href={`/projects/${item.projectId}`} className="text-indigo-700 hover:underline">
+                            {item.projectName || item.projectId}
+                          </Link>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <button
+                          onClick={() => openConversationItem(item)}
+                          className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                        >
+                          Open
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

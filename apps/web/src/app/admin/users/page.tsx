@@ -291,7 +291,7 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
                         <Link
-                          href={`/admin/messaging?view=general&type=support&clientId=${encodeURIComponent(user.id)}`}
+                          href={`/admin/messaging?view=conversations&clientId=${encodeURIComponent(user.id)}`}
                           className={`rounded-md px-3 py-1.5 text-xs font-semibold text-white transition ${
                             isClient
                               ? 'bg-sky-600 hover:bg-sky-700'
