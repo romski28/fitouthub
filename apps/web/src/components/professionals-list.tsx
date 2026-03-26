@@ -645,17 +645,21 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       });
     }
 
-    sessionStorage.setItem(
-      'projectDescription',
-      JSON.stringify({
-        title: mergedInitialData.projectName || '',
-        description: mergedInitialData.notes || '',
+    try {
+      sessionStorage.setItem(
+        'projectDescription',
+        JSON.stringify({
+          title: mergedInitialData.projectName || '',
+          description: mergedInitialData.notes || '',
           isEmergency: Boolean(mergedInitialData.isEmergency),
-        profession: mergedInitialData.tradesRequired?.[0],
-        location: mergedInitialData.location,
-        tradesRequired: mergedInitialData.tradesRequired || [],
-      }),
-    );
+          profession: mergedInitialData.tradesRequired?.[0],
+          location: mergedInitialData.location,
+          tradesRequired: mergedInitialData.tradesRequired || [],
+        }),
+      );
+    } catch {
+      console.warn('[professionals-list] Unable to persist projectDescription due to storage limits.');
+    }
 
     setProjectDescriptionHandoff({
       title: mergedInitialData.projectName || '',
