@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { EditModal, FieldDefinition } from "@/components/edit-modal";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -184,7 +185,7 @@ export default function AdminUsersPage() {
   ];
 
   if (loading) {
-    return <div className="text-center text-slate-600">Loading users...</div>;
+    return <div className="text-center text-slate-300">Loading users...</div>;
   }
 
   return (
@@ -219,7 +220,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Actions/Filters */}
-      <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 shadow-sm space-y-3">
+      <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-3 shadow-sm space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <button
             onClick={() => setCreatingNew(true)}
@@ -234,13 +235,13 @@ export default function AdminUsersPage() {
             placeholder="Search by name or email..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 pr-8 text-sm text-slate-900"
+            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1.5 pr-8 text-sm text-white placeholder:text-slate-400"
           />
           {filter && (
             <button
               type="button"
               onClick={() => setFilter('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition"
               aria-label="Clear search"
             >
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,69 +252,94 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.slice(0, itemsToShow).map((user) => (
-          <div key={user.id} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-            <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
-              <div>
-                <div className="text-base font-bold">
-                  {user.firstName} {user.surname}
-                </div>
-                <div className="text-xs text-slate-300">{user.email}</div>
-              </div>
-              <span
-                className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                  user.role === "admin"
-                    ? "bg-purple-500/20 text-purple-200"
-                    : user.role === "professional"
-                      ? "bg-blue-500/20 text-blue-200"
-                      : "bg-slate-500/20 text-slate-200"
-                }`}
-              >
-                {user.role}
-              </span>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <div className="flex items-center gap-2 text-xs text-slate-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                <span className="font-semibold">Joined:</span>
-                <span className="text-slate-600">{formatDate(user.createdAt)}</span>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-slate-500">
-                <span>ID: {user.id}</span>
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => setEditingUser(user)}
-                  className="flex-1 rounded-md border border-emerald-600 px-3 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setDeletingId(user.id)}
-                  className="flex-1 rounded-md border border-rose-600 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filtered.length > itemsToShow && (
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={() => setItemsToShow(prev => prev + 10)}
-            className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
-          >
-            Show Next 10 Results ({filtered.length - itemsToShow} remaining)
-          </button>
+      <div className="overflow-hidden rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm text-white">
+            <thead className="border-b border-slate-700 bg-slate-900/60 text-xs uppercase tracking-wide text-slate-300">
+              <tr>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Joined</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-700">
+              {filtered.slice(0, itemsToShow).map((user) => {
+                const isClient = user.role === 'client' || user.role === 'homeowner';
+                const clientFilter = `${user.firstName || ''} ${user.surname || ''}`.trim() || user.email;
+                return (
+                  <tr key={user.id} className="bg-slate-900/30 hover:bg-slate-900/50 transition">
+                    <td className="px-4 py-3 font-semibold text-white">
+                      {user.firstName} {user.surname}
+                    </td>
+                    <td className="px-4 py-3 text-slate-200">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          user.role === 'admin'
+                            ? 'bg-purple-600 text-white'
+                            : user.role === 'professional'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-emerald-600 text-white'
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-300">{formatDate(user.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href={`/admin/messaging?view=general&type=support&clientId=${encodeURIComponent(user.id)}`}
+                          className={`rounded-md px-3 py-1.5 text-xs font-semibold text-white transition ${
+                            isClient
+                              ? 'bg-sky-600 hover:bg-sky-700'
+                              : 'bg-slate-600 pointer-events-none opacity-60'
+                          }`}
+                          aria-disabled={!isClient}
+                        >
+                          Client Chats
+                        </Link>
+                        <Link
+                          href={`/admin/projects?client=${encodeURIComponent(clientFilter)}`}
+                          className={`rounded-md px-3 py-1.5 text-xs font-semibold text-white transition ${
+                            isClient
+                              ? 'bg-indigo-600 hover:bg-indigo-700'
+                              : 'bg-slate-600 pointer-events-none opacity-60'
+                          }`}
+                          aria-disabled={!isClient}
+                        >
+                          Client Projects
+                        </Link>
+                        <button
+                          onClick={() => setEditingUser(user)}
+                          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(user.id)}
+                          className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-300">
+                    No users match the current filter.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {filtered.length > itemsToShow && (
         <div className="mt-6 flex justify-center">

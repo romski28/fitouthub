@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { EditModal, FieldDefinition } from "@/components/edit-modal";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -216,6 +217,7 @@ function ProjectCard({
 
 export default function AdminProjectsPage() {
   const { accessToken } = useAuth();
+  const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -245,6 +247,13 @@ export default function AdminProjectsPage() {
   useEffect(() => {
     fetchProjects();
   }, [accessToken]);
+
+  useEffect(() => {
+    const clientFilter = searchParams.get('client');
+    if (clientFilter) {
+      setFilter(clientFilter);
+    }
+  }, [searchParams]);
 
   const fetchProjects = async () => {
     if (!accessToken) return;
