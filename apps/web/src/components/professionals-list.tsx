@@ -577,6 +577,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     sessionStorage.setItem(
       'projectDescription',
       JSON.stringify({
+        title: mergedInitialData.projectName || '',
         description: mergedInitialData.notes || '',
         profession: mergedInitialData.tradesRequired?.[0],
         location: mergedInitialData.location,

@@ -556,7 +556,12 @@ export function ProjectForm({
       {hasAiContext && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold text-emerald-900">Project Overview</h3>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-emerald-700">Project Overview</p>
+              <h3 className="text-base font-bold text-emerald-900">
+                {formData.projectName?.trim() || 'Untitled project'}
+              </h3>
+            </div>
             {!isReadOnly && (
               <button
                 type="button"
@@ -586,7 +591,7 @@ export function ProjectForm({
             )}
             {formData.notes?.trim() && (
               <div>
-                <p className="font-semibold text-slate-900">Project scope</p>
+                <p className="font-semibold text-slate-900">Scope</p>
                 <p className="mt-1 whitespace-pre-wrap">{formData.notes}</p>
               </div>
             )}

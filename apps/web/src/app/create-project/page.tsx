@@ -15,6 +15,7 @@ import type { CanonicalLocation } from '@/components/location-select';
 import type { Professional } from '@/lib/types';
 
 interface ProjectDescriptionData {
+  title?: string;
   description: string;
   profession?: string;
   location?: CanonicalLocation;
@@ -327,7 +328,7 @@ export default function CreateProjectPage() {
               initialData={{
                 ...initialFormData,
                 clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
-                projectName: initialFormData.projectName || '',
+                projectName: initialFormData.projectName || descriptionData?.title || '',
                 notes: initialFormData.notes || descriptionData?.description || '',
                 tradesRequired: initialFormData.tradesRequired?.length
                   ? initialFormData.tradesRequired
