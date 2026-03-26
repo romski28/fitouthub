@@ -327,6 +327,7 @@ export default function CreateProjectPage() {
               initialData={{
                 ...initialFormData,
                 clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
+                projectName: initialFormData.projectName || '',
                 notes: initialFormData.notes || descriptionData?.description || '',
                 tradesRequired: initialFormData.tradesRequired?.length
                   ? initialFormData.tradesRequired
@@ -338,7 +339,7 @@ export default function CreateProjectPage() {
               onCancel={() => router.push('/')}
               isSubmitting={isSubmitting}
               error={error}
-              showAiOverview={Boolean(aiIntakeId || initialFormData.aiFrom || initialFormData.notes)}
+              showAiOverview={true}
               submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
               showBudget={false}
               showService={true}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import LocationSelect, { CanonicalLocation } from '@/components/location-select';
 
 type WizardStep =
@@ -65,6 +65,7 @@ export function AiProjectBriefModal({
   );
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [stepIndex, setStepIndex] = useState(0);
+  const stepPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -136,6 +137,24 @@ export function AiProjectBriefModal({
 
   const progress = totalSteps > 0 ? Math.round(((stepIndex + 1) / totalSteps) * 100) : 100;
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const timeoutId = window.setTimeout(() => {
+      const panel = stepPanelRef.current;
+      if (!panel) return;
+
+      const preferredSelector =
+        currentStep?.kind === 'emergency'
+          ? 'button'
+          : 'input, textarea, select, button';
+
+      const target = panel.querySelector<HTMLElement>(preferredSelector);
+      target?.focus();
+    }, 40);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isOpen, stepIndex, currentStep?.kind]);
+
   const handleNext = () => {
     if (!canContinue) return;
     if (stepIndex < totalSteps - 1) {
@@ -186,7 +205,7 @@ export function AiProjectBriefModal({
           <div className="h-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
         </div>
 
-        <div className="min-h-[260px] rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div ref={stepPanelRef} className="min-h-[260px] rounded-xl border border-slate-200 bg-slate-50 p-4">
           {currentStep?.kind === 'title' && (
             <div className="space-y-3">
               <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-slate-700">

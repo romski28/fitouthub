@@ -330,7 +330,8 @@ export function ProjectForm({
 
   const hasAiContext = Boolean(
     showAiOverview &&
-      (formData.aiFrom ||
+      (confirmationMode ||
+        formData.aiFrom ||
         formData.projectName?.trim() ||
         formData.notes?.trim() ||
         formData.tradesRequired.length > 0),
