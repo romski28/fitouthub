@@ -368,6 +368,11 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
   }) => {
     if (!aiStructured) return;
 
+    const handoffDebug =
+      typeof window !== 'undefined' &&
+      (new URLSearchParams(window.location.search).get('debugFlow') === '1' ||
+        window.localStorage.getItem('fh_debug_handoff') === '1');
+
     const normalizeBlock = (value?: string | null) => (value || '').trim();
     const summaryBlock = normalizeBlock(payload.summary) || normalizeBlock(aiStructured.summary);
     const scopeBlock = normalizeBlock(aiStructured.scope);
@@ -384,6 +389,21 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
     }
     if (assumptionsBlock.length > 0) {
       notesSections.push(`Assumptions:\n${assumptionsBlock.map((assumption) => `- ${assumption}`).join('\n')}`);
+    }
+
+    const followUpBlock = (payload.followUpAnswers || [])
+      .map((item) => ({
+        question: (item.question || '').trim(),
+        answer: (item.answer || '').trim(),
+      }))
+      .filter((item) => item.question.length > 0 && item.answer.length > 0);
+
+    if (followUpBlock.length > 0) {
+      notesSections.push(
+        `Follow-up Q&A:\n${followUpBlock
+          .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
+          .join('\n\n')}`,
+      );
     }
 
     const combinedNotes = notesSections.join('\n\n').trim();
@@ -443,6 +463,18 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
       params.set('aiScope', aiDraft.initialData.notes.slice(0, 1800));
     }
     params.set('aiEmergency', aiDraft.initialData.isEmergency ? '1' : '0');
+
+    if (handoffDebug) {
+      console.info('[AI-HANDOFF][search-flow] prepared draft', {
+        title: aiDraft.initialData.projectName,
+        notesLength: (aiDraft.initialData.notes || '').length,
+        isEmergency: aiDraft.initialData.isEmergency,
+        tradesRequired: aiDraft.initialData.tradesRequired,
+        location: aiDraft.initialData.location,
+        followUpAnswers: payload.followUpAnswers,
+        route: `/professionals?${params.toString()}`,
+      });
+    }
 
     setShowBriefModal(false);
     router.push(`/professionals?${params.toString()}`);

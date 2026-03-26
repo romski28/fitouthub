@@ -544,6 +544,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const selectedProfessionals = filtered.filter((p) => selectedIds.has(p.id));
     if (selectedProfessionals.length === 0) return;
 
+    const handoffDebug =
+      typeof window !== 'undefined' &&
+      (new URLSearchParams(window.location.search).get('debugFlow') === '1' ||
+        window.localStorage.getItem('fh_debug_handoff') === '1');
+
     let existingDraft: {
       initialData?: Partial<ProjectFormData>;
       aiIntakeId?: string;
@@ -583,22 +588,47 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       ...(existingDraft?.initialData || {}),
       ...shareInitialData,
       projectName:
-        existingDraft?.initialData?.projectName ||
         existingProjectDescription?.title ||
+        existingDraft?.initialData?.projectName ||
         shareInitialData.projectName ||
         '',
       notes:
-        existingDraft?.initialData?.notes ||
         existingProjectDescription?.description ||
+        existingDraft?.initialData?.notes ||
         shareInitialData.notes ||
         initialFromIntent.description ||
         '',
       isEmergency:
-        existingDraft?.initialData?.isEmergency ??
         existingProjectDescription?.isEmergency ??
+        existingDraft?.initialData?.isEmergency ??
         shareInitialData.isEmergency,
       aiFrom: shareInitialData.aiFrom || existingDraft?.initialData?.aiFrom,
     };
+
+    if (handoffDebug) {
+      console.info('[AI-HANDOFF][professionals-list] merged initial data', {
+        sourceDraft: {
+          projectName: existingDraft?.initialData?.projectName,
+          notesLength: (existingDraft?.initialData?.notes || '').length,
+          isEmergency: existingDraft?.initialData?.isEmergency,
+        },
+        sourceProjectDescription: {
+          title: existingProjectDescription?.title,
+          descriptionLength: (existingProjectDescription?.description || '').length,
+          isEmergency: existingProjectDescription?.isEmergency,
+        },
+        sourceShareInitial: {
+          projectName: shareInitialData.projectName,
+          notesLength: (shareInitialData.notes || '').length,
+          isEmergency: shareInitialData.isEmergency,
+        },
+        resolved: {
+          projectName: mergedInitialData.projectName,
+          notesLength: (mergedInitialData.notes || '').length,
+          isEmergency: mergedInitialData.isEmergency,
+        },
+      });
+    }
 
     sessionStorage.setItem(
       'projectDescription',

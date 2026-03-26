@@ -68,10 +68,17 @@ export default function CreateProjectPage() {
 
   useEffect(() => {
     if (hydrated && isLoggedIn) {
+      const handoffDebug =
+        typeof window !== 'undefined' &&
+        (new URLSearchParams(window.location.search).get('debugFlow') === '1' ||
+          window.localStorage.getItem('fh_debug_handoff') === '1');
+
       const storedDraft = sessionStorage.getItem('createProjectDraft');
+      let parsedDraftForDebug: CreateProjectDraft | null = null;
       if (storedDraft) {
         try {
           const parsed = JSON.parse(storedDraft) as CreateProjectDraft;
+          parsedDraftForDebug = parsed;
           setInitialFormData(parsed.initialData || {});
           setSelectedProfessionals(
             Array.isArray(parsed.selectedProfessionals)
@@ -90,14 +97,46 @@ export default function CreateProjectPage() {
 
       // Check if we have description data from sessionStorage (from projects list)
       const stored = sessionStorage.getItem('projectDescription');
+      let parsedDescriptionForDebug: ProjectDescriptionData | null = null;
       if (stored) {
         try {
-          setDescriptionData(JSON.parse(stored));
+          const parsedDescription = JSON.parse(stored) as ProjectDescriptionData;
+          parsedDescriptionForDebug = parsedDescription;
+          setDescriptionData(parsedDescription);
           sessionStorage.removeItem('projectDescription');
         } catch (e) {
           console.warn('[create-project] Failed to parse sessionStorage data:', e);
         }
       }
+
+      if (handoffDebug) {
+        const resolvedTitle =
+          parsedDraftForDebug?.initialData?.projectName || parsedDescriptionForDebug?.title || '';
+        const resolvedNotes =
+          parsedDraftForDebug?.initialData?.notes || parsedDescriptionForDebug?.description || '';
+        const resolvedEmergency =
+          parsedDraftForDebug?.initialData?.isEmergency ?? parsedDescriptionForDebug?.isEmergency;
+
+        console.info('[AI-HANDOFF][create-project] loaded handoff data', {
+          draft: {
+            title: parsedDraftForDebug?.initialData?.projectName,
+            notesLength: (parsedDraftForDebug?.initialData?.notes || '').length,
+            isEmergency: parsedDraftForDebug?.initialData?.isEmergency,
+            selectedProfessionals: parsedDraftForDebug?.selectedProfessionals?.length || 0,
+          },
+          projectDescription: {
+            title: parsedDescriptionForDebug?.title,
+            notesLength: (parsedDescriptionForDebug?.description || '').length,
+            isEmergency: parsedDescriptionForDebug?.isEmergency,
+          },
+          resolved: {
+            title: resolvedTitle,
+            notesLength: resolvedNotes.length,
+            isEmergency: resolvedEmergency,
+          },
+        });
+      }
+
       // Show description modal if no data stored
       if (!stored && !storedDraft) {
         setShowDescriptionModal(true);
