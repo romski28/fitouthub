@@ -14,6 +14,12 @@ import { useAuth } from '@/context/auth-context';
 import { BackToTop } from '@/components/back-to-top';
 import type { ProjectFormData } from '@/components/project-form';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
+import {
+  getCreateProjectDraftHandoff,
+  getProjectDescriptionHandoff,
+  setCreateProjectDraftHandoff,
+  setProjectDescriptionHandoff,
+} from '@/lib/create-project-handoff';
 
 const Pill = memo(({ label }: { label: string }) => {
   return (
@@ -584,25 +590,34 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       existingProjectDescription = null;
     }
 
+    const memoryDraft = getCreateProjectDraftHandoff();
+    const memoryProjectDescription = getProjectDescriptionHandoff();
+
     const mergedInitialData: Partial<ProjectFormData> = {
-      ...(existingDraft?.initialData || {}),
+      ...(memoryDraft?.initialData || existingDraft?.initialData || {}),
       ...shareInitialData,
       projectName:
+        memoryProjectDescription?.title ||
         existingProjectDescription?.title ||
+        memoryDraft?.initialData?.projectName ||
         existingDraft?.initialData?.projectName ||
         shareInitialData.projectName ||
         '',
       notes:
+        memoryProjectDescription?.description ||
         existingProjectDescription?.description ||
+        memoryDraft?.initialData?.notes ||
         existingDraft?.initialData?.notes ||
         shareInitialData.notes ||
         initialFromIntent.description ||
         '',
       isEmergency:
+        memoryProjectDescription?.isEmergency ??
         existingProjectDescription?.isEmergency ??
+        memoryDraft?.initialData?.isEmergency ??
         existingDraft?.initialData?.isEmergency ??
         shareInitialData.isEmergency,
-      aiFrom: shareInitialData.aiFrom || existingDraft?.initialData?.aiFrom,
+      aiFrom: shareInitialData.aiFrom || memoryDraft?.initialData?.aiFrom || existingDraft?.initialData?.aiFrom,
     };
 
     if (handoffDebug) {
@@ -642,6 +657,15 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       }),
     );
 
+    setProjectDescriptionHandoff({
+      title: mergedInitialData.projectName || '',
+      description: mergedInitialData.notes || '',
+      isEmergency: Boolean(mergedInitialData.isEmergency),
+      profession: mergedInitialData.tradesRequired?.[0],
+      location: mergedInitialData.location,
+      tradesRequired: mergedInitialData.tradesRequired || [],
+    });
+
     const selectedProfessionalsForDraft = selectedProfessionals.map((professional) => ({
       id: professional.id,
       professionType: professional.professionType,
@@ -656,7 +680,17 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const saved = writeCreateProjectDraftSafely({
       initialData: mergedInitialData,
       selectedProfessionals: selectedProfessionalsForDraft,
-      ...(existingDraft?.aiIntakeId ? { aiIntakeId: existingDraft.aiIntakeId } : {}),
+      ...(memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId
+        ? { aiIntakeId: memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId }
+        : {}),
+    });
+
+    setCreateProjectDraftHandoff({
+      initialData: mergedInitialData,
+      selectedProfessionals: selectedProfessionalsForDraft,
+      ...(memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId
+        ? { aiIntakeId: memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId }
+        : {}),
     });
 
     if (!saved) {

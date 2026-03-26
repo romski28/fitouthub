@@ -12,6 +12,7 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import { AI_STATE_CLEAR_EVENT } from '@/lib/client-session';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
+import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -430,21 +431,25 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
     };
 
     const saved = writeCreateProjectDraftSafely(aiDraft);
+    setCreateProjectDraftHandoff(aiDraft);
     if (!saved) {
       console.warn('[search-flow] Unable to persist full createProjectDraft due to storage limits.');
     }
 
+    const projectDescriptionPayload = {
+      title: aiDraft.initialData.projectName || '',
+      description: aiDraft.initialData.notes || '',
+      isEmergency: Boolean(aiDraft.initialData.isEmergency),
+      profession: aiDraft.initialData.tradesRequired?.[0],
+      location: aiDraft.initialData.location,
+      tradesRequired: aiDraft.initialData.tradesRequired || [],
+    };
+    setProjectDescriptionHandoff(projectDescriptionPayload);
+
     try {
       sessionStorage.setItem(
         'projectDescription',
-        JSON.stringify({
-          title: aiDraft.initialData.projectName || '',
-          description: aiDraft.initialData.notes || '',
-          isEmergency: Boolean(aiDraft.initialData.isEmergency),
-          profession: aiDraft.initialData.tradesRequired?.[0],
-          location: aiDraft.initialData.location,
-          tradesRequired: aiDraft.initialData.tradesRequired || [],
-        }),
+        JSON.stringify(projectDescriptionPayload),
       );
     } catch {
       // ignore storage failures; createProjectDraft is the primary handoff

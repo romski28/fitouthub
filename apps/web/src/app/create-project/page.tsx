@@ -13,6 +13,12 @@ import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/
 import type { ProjectFormData } from '@/components/project-form';
 import type { CanonicalLocation } from '@/components/location-select';
 import type { Professional } from '@/lib/types';
+import {
+  clearCreateProjectDraftHandoff,
+  clearProjectDescriptionHandoff,
+  getCreateProjectDraftHandoff,
+  getProjectDescriptionHandoff,
+} from '@/lib/create-project-handoff';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -95,6 +101,22 @@ export default function CreateProjectPage() {
         }
       }
 
+      if (!storedDraft) {
+        const memoryDraft = getCreateProjectDraftHandoff();
+        if (memoryDraft) {
+          parsedDraftForDebug = memoryDraft;
+          setInitialFormData(memoryDraft.initialData || {});
+          setSelectedProfessionals(
+            Array.isArray(memoryDraft.selectedProfessionals)
+              ? filterProjectSelectableProfessionals(memoryDraft.selectedProfessionals)
+              : [],
+          );
+          if (memoryDraft.aiIntakeId) {
+            setAiIntakeId(memoryDraft.aiIntakeId);
+          }
+        }
+      }
+
       // Check if we have description data from sessionStorage (from projects list)
       const stored = sessionStorage.getItem('projectDescription');
       let parsedDescriptionForDebug: ProjectDescriptionData | null = null;
@@ -106,6 +128,21 @@ export default function CreateProjectPage() {
           sessionStorage.removeItem('projectDescription');
         } catch (e) {
           console.warn('[create-project] Failed to parse sessionStorage data:', e);
+        }
+      }
+
+      if (!stored) {
+        const memoryDescription = getProjectDescriptionHandoff();
+        if (memoryDescription) {
+          parsedDescriptionForDebug = {
+            description: memoryDescription.description || '',
+            title: memoryDescription.title,
+            isEmergency: memoryDescription.isEmergency,
+            profession: memoryDescription.profession,
+            location: memoryDescription.location,
+            tradesRequired: memoryDescription.tradesRequired || [],
+          };
+          setDescriptionData(parsedDescriptionForDebug);
         }
       }
 
@@ -137,8 +174,11 @@ export default function CreateProjectPage() {
         });
       }
 
+      clearCreateProjectDraftHandoff();
+      clearProjectDescriptionHandoff();
+
       // Show description modal if no data stored
-      if (!stored && !storedDraft) {
+      if (!stored && !storedDraft && !parsedDraftForDebug && !parsedDescriptionForDebug) {
         setShowDescriptionModal(true);
       }
     }
