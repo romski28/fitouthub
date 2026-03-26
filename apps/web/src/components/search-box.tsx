@@ -4,13 +4,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 export interface SearchBoxProps {
   onSubmit: (query: string) => void;
+  autoFocus?: boolean;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const prompts = useMemo(
     () => [
       'What do you want to do today?',
@@ -81,6 +83,15 @@ export default function SearchBox({ onSubmit }: SearchBoxProps) {
     };
   }, [query, prompts, promptIndex]);
 
+  useEffect(() => {
+    if (!autoFocus) return;
+    const id = window.setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [autoFocus]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
@@ -99,6 +110,7 @@ export default function SearchBox({ onSubmit }: SearchBoxProps) {
           <div className="flex items-start gap-0">
             <span className="px-3 sm:px-4 pt-3 sm:pt-4 text-slate-400 flex-shrink-0">🔍</span>
             <textarea
+              ref={textareaRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setIsFocused(true)}

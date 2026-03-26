@@ -334,7 +334,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
   );
 }
 
-export default function SearchFlow() {
+export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPrompt?: boolean }) {
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const t = useTranslations('home.searchFlow');
   const router = useRouter();
@@ -654,7 +654,7 @@ export default function SearchFlow() {
           </button>
         </p>
       </div>
-      <SearchBox onSubmit={handleSearch} />
+      <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} />
 
       {deepSeekSandboxEnabled && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 text-xs text-slate-700 space-y-2">

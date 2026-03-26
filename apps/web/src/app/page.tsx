@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import SearchFlow from '@/components/search-flow';
 import InformationSection from '@/components/information-section';
@@ -21,10 +21,12 @@ export default function Home() {
   const { isLoggedIn, user } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [hydrated, setHydrated] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState<ActiveAnnouncement | null>(null);
   
   const t = useTranslations('home');
+  const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
 
   useEffect(() => {
     setHydrated(true);
@@ -90,7 +92,7 @@ export default function Home() {
       )}
 
       {/* Search Flow - Single entry point for all users */}
-      <section className="relative -mx-6 -mt-10 bg-gradient-to-b from-emerald-50 to-white px-6 py-16">
+      <section id="project-prompt" className="relative -mx-6 -mt-10 bg-gradient-to-b from-emerald-50 to-white px-6 py-16">
         <div className="mx-auto max-w-2xl">
           <div className="text-center mb-8">
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-600 mb-2">
@@ -100,7 +102,7 @@ export default function Home() {
               {t('quickStart.title')}
             </h2>
           </div>
-          <SearchFlow />
+          <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
         </div>
       </section>
 

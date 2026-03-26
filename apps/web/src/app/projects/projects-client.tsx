@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
-import { ProjectDescriptionModal } from "@/components/project-description-modal";
 import { ProjectForm, type ProjectFormData } from "@/components/project-form";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
@@ -522,7 +521,16 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [hydrated, setHydrated] = useState(false);
   const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
-  const [showDescriptionModal, setShowDescriptionModal] = useState(initialShowCreateModal);
+  const openAiCreateFlow = () => {
+    router.push('/?focusPrompt=1#project-prompt');
+  };
+
+  useEffect(() => {
+    if (initialShowCreateModal) {
+      openAiCreateFlow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialShowCreateModal]);
   const [items, setItems] = useState<ExtendedProject[]>(() => mapProjectsToItems(projects));
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
@@ -709,17 +717,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
   return (
     <div className="space-y-5">
-      <ProjectDescriptionModal
-        isOpen={showDescriptionModal}
-        onSubmit={(data) => {
-          // Store description data in sessionStorage for create-project page to consume
-          sessionStorage.setItem('projectDescription', JSON.stringify(data));
-          setShowDescriptionModal(false);
-          router.push('/create-project');
-        }}
-        onCancel={() => setShowDescriptionModal(false)}
-      />
-
       {/* Updates Button */}
       <div className="flex justify-center">
         <UpdatesButton />
@@ -733,7 +730,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           </div>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => setShowDescriptionModal(true)}
+              onClick={openAiCreateFlow}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
               {t('createNew')}
@@ -850,7 +847,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
             <p className="text-base font-semibold text-white">{t('empty')}</p>
             <p className="text-sm text-slate-300">{t('emptyHint')}</p>
             <button
-              onClick={() => setShowDescriptionModal(true)}
+              onClick={openAiCreateFlow}
               className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
             >
               {t('startProject')}
