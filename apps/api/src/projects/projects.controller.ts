@@ -632,6 +632,65 @@ export class ProjectsController {
     return this.projectsService.hardRemove(id);
   }
 
+  @Post('admin/bulk-clean-preview')
+  @UseGuards(CombinedAuthGuard)
+  async bulkCleanPreview(
+    @Request() req: any,
+    @Body()
+    body: {
+      statuses?: string[];
+      olderThanDays?: number;
+      createdBefore?: string;
+      includeArchived?: boolean;
+      limit?: number;
+    },
+  ) {
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can run bulk clean preview');
+    }
+
+    return this.projectsService.bulkCleanPreview({
+      statuses: body?.statuses,
+      olderThanDays: body?.olderThanDays,
+      createdBefore: body?.createdBefore,
+      includeArchived: body?.includeArchived,
+      limit: body?.limit,
+    });
+  }
+
+  @Post('admin/bulk-clean-execute')
+  @UseGuards(CombinedAuthGuard)
+  async bulkCleanExecute(
+    @Request() req: any,
+    @Body()
+    body: {
+      action: 'archive' | 'permanent_delete';
+      statuses?: string[];
+      olderThanDays?: number;
+      createdBefore?: string;
+      includeArchived?: boolean;
+      limit?: number;
+    },
+  ) {
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can run bulk clean execute');
+    }
+    if (!body?.action || !['archive', 'permanent_delete'].includes(body.action)) {
+      throw new BadRequestException('action must be archive or permanent_delete');
+    }
+
+    return this.projectsService.bulkCleanExecute({
+      action: body.action,
+      statuses: body?.statuses,
+      olderThanDays: body?.olderThanDays,
+      createdBefore: body?.createdBefore,
+      includeArchived: body?.includeArchived,
+      limit: body?.limit,
+    });
+  }
+
   // ===== PROJECT PHOTO ENDPOINTS =====
 
   /**

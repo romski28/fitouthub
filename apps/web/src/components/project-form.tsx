@@ -591,12 +591,9 @@ export function ProjectForm({
             )}
             {confirmationMode && (
               <p>
-                <span className="font-semibold text-slate-900">Project settings:</span>{' '}
-                {formData.isEmergency ? 'Emergency project' : 'Standard priority'} ·{' '}
-                {formData.onlySelectedProfessionalsCanBid ?? true
-                  ? 'Selected professionals only'
-                  : 'Open to all professionals'}
-                {formData.endDate ? ` · Target by ${formData.endDate}` : ''}
+                <span className="font-semibold text-slate-900">Priority:</span>{' '}
+                {formData.isEmergency ? 'Emergency project' : 'Standard priority'}
+                {!formData.isEmergency && formData.endDate ? ` · Target by ${formData.endDate}` : ''}
               </p>
             )}
           </div>
@@ -775,44 +772,63 @@ export function ProjectForm({
       </div>
 
       {/* Timescale */}
-      <div className={isConfirmationView ? 'hidden' : 'grid gap-3 sm:grid-cols-2'}>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
+      {isConfirmationView ? (
+        !formData.isEmergency ? (
+          <div className="grid gap-1">
+            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
             <input
-              id="isEmergency"
-              type="checkbox"
-              checked={!!formData.isEmergency}
-              onChange={(e) => handleChange('isEmergency', e.target.checked)}
+              type="date"
+              value={formData.endDate || ''}
+              onChange={(e) => handleChange('endDate', e.target.value)}
               disabled={isReadOnly || isSubmitting}
-              className="h-4 w-4 rounded border-slate-300"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             />
-            <label htmlFor="isEmergency" className="text-sm font-medium text-slate-800">This is an emergency</label>
           </div>
-          <div className="flex items-start gap-2">
+        ) : (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            Emergency project detected — completion-by date is optional and hidden in this quick confirmation view.
+          </div>
+        )
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                id="isEmergency"
+                type="checkbox"
+                checked={!!formData.isEmergency}
+                onChange={(e) => handleChange('isEmergency', e.target.checked)}
+                disabled={isReadOnly || isSubmitting}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              <label htmlFor="isEmergency" className="text-sm font-medium text-slate-800">This is an emergency</label>
+            </div>
+            <div className="flex items-start gap-2">
+              <input
+                id="onlySelectedProfessionalsCanBid"
+                type="checkbox"
+                checked={formData.onlySelectedProfessionalsCanBid ?? true}
+                onChange={(e) => handleChange('onlySelectedProfessionalsCanBid', e.target.checked)}
+                disabled={isReadOnly || isSubmitting}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300"
+              />
+              <label htmlFor="onlySelectedProfessionalsCanBid" className="text-sm font-medium text-slate-800">
+                Only allow professionals that I select to bid on this project
+              </label>
+            </div>
+          </div>
+          <div className="grid gap-1">
+            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
             <input
-              id="onlySelectedProfessionalsCanBid"
-              type="checkbox"
-              checked={formData.onlySelectedProfessionalsCanBid ?? true}
-              onChange={(e) => handleChange('onlySelectedProfessionalsCanBid', e.target.checked)}
+              type="date"
+              value={formData.endDate || ''}
+              onChange={(e) => handleChange('endDate', e.target.value)}
               disabled={isReadOnly || isSubmitting}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             />
-            <label htmlFor="onlySelectedProfessionalsCanBid" className="text-sm font-medium text-slate-800">
-              Only allow professionals that I select to bid on this project
-            </label>
           </div>
         </div>
-        <div className="grid gap-1">
-          <label className="text-sm font-medium text-slate-800">I need this completed by</label>
-          <input
-            type="date"
-            value={formData.endDate || ''}
-            onChange={(e) => handleChange('endDate', e.target.value)}
-            disabled={isReadOnly || isSubmitting}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-      </div>
+      )}
 
       {/* File Upload */}
       {!isReadOnly && (

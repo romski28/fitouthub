@@ -44,6 +44,28 @@ type Project = {
   updatedAt?: string;
 };
 
+type BulkCleanAction = "archive" | "permanent_delete";
+
+type BulkCleanPreviewResult = {
+  totalMatched: number;
+  sampled: number;
+  statusBreakdown: Array<{ status: string; count: number }>;
+  sampleProjects: Array<{ id: string; projectName: string; status: string; createdAt: string }>;
+  sampleImpact: {
+    projectPhotos: number;
+    projectProfessionals: number;
+    projectAssistRequests: number;
+    projectChatThreads: number;
+    financialTransactions: number;
+    siteAccessRequests: number;
+    siteAccessVisits: number;
+    projectMilestones: number;
+    nextStepActions: number;
+    adminActions: number;
+    supportRequestsLinked: number;
+  };
+};
+
 function formatDate(date?: string): string {
   if (!date) return "—";
   try {
@@ -228,7 +250,28 @@ export default function AdminProjectsPage() {
   const [statusFilter, setStatusFilter] = useState<
     "active" | "pending" | "onsite" | "completed" | "cancelled" | "archived"
   >("active");
+  const [bulkCleanOpen, setBulkCleanOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState<BulkCleanAction>("archive");
+  const [bulkStatuses, setBulkStatuses] = useState<string[]>(["completed", "withdrawn", "declined"]);
+  const [bulkOlderThanDays, setBulkOlderThanDays] = useState<string>("30");
+  const [bulkCreatedBefore, setBulkCreatedBefore] = useState<string>("");
+  const [bulkIncludeArchived, setBulkIncludeArchived] = useState<boolean>(false);
+  const [bulkLimit, setBulkLimit] = useState<string>("200");
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkCleanPreviewResult | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
   const cancelledStatuses = ["rejected", "withdrawn", "declined"];
+  const bulkStatusOptions = [
+    "pending",
+    "approved",
+    "awarded",
+    "quoted",
+    "completed",
+    "withdrawn",
+    "declined",
+    "rejected",
+    "archived",
+  ];
 
   const totals = useMemo(() => {
     const activeProjects = projects.filter(
@@ -349,6 +392,68 @@ export default function AdminProjectsPage() {
     setProjects((prev) => prev.filter((p) => p.id !== deletingId));
     setDeletingId(null);
     setDeleteConfirmStep(1);
+  };
+
+  const buildBulkPayload = () => {
+    const parsedOlderThanDays = Number.parseInt(bulkOlderThanDays, 10);
+    const parsedLimit = Number.parseInt(bulkLimit, 10);
+
+    return {
+      action: bulkAction,
+      statuses: bulkStatuses,
+      olderThanDays: Number.isFinite(parsedOlderThanDays) && parsedOlderThanDays > 0 ? parsedOlderThanDays : undefined,
+      createdBefore: bulkCreatedBefore || undefined,
+      includeArchived: bulkIncludeArchived,
+      limit: Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 200,
+    };
+  };
+
+  const runBulkPreview = async () => {
+    if (!accessToken) return;
+    setBulkLoading(true);
+    setBulkError(null);
+    try {
+      const payload = buildBulkPayload();
+      const res = await fetch(`${API_BASE_URL}/projects/admin/bulk-clean-preview`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setBulkResult(data);
+    } catch (err) {
+      setBulkError(err instanceof Error ? err.message : "Failed to run preview");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const runBulkExecute = async () => {
+    if (!accessToken) return;
+    setBulkLoading(true);
+    setBulkError(null);
+    try {
+      const payload = buildBulkPayload();
+      const res = await fetch(`${API_BASE_URL}/projects/admin/bulk-clean-execute`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      await runBulkPreview();
+      await fetchProjects();
+    } catch (err) {
+      setBulkError(err instanceof Error ? err.message : "Failed to run bulk execute");
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   const filtered = projects.filter((p) => {
@@ -517,6 +622,19 @@ export default function AdminProjectsPage() {
               )}
             </div>
           </div>
+          <div className="flex items-end justify-start md:justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setBulkCleanOpen(true);
+                setBulkResult(null);
+                setBulkError(null);
+              }}
+              className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+            >
+              Bulk Clean
+            </button>
+          </div>
         </div>
       </div>
 
@@ -627,6 +745,187 @@ export default function AdminProjectsPage() {
                   Yes, Delete Permanently
                 </button>
               )}
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {bulkCleanOpen && (
+        <ModalOverlay
+          isOpen={bulkCleanOpen}
+          onClose={() => {
+            if (bulkLoading) return;
+            setBulkCleanOpen(false);
+          }}
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Bulk Clean Projects</h3>
+              <p className="text-sm text-slate-600">Preview and then archive or permanently delete projects in bulk.</p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Action</label>
+                <select
+                  value={bulkAction}
+                  onChange={(e) => setBulkAction(e.target.value as BulkCleanAction)}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  disabled={bulkLoading}
+                >
+                  <option value="archive">Archive matched projects</option>
+                  <option value="permanent_delete">Permanently delete matched projects</option>
+                </select>
+              </div>
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Limit per run</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={bulkLimit}
+                  onChange={(e) => setBulkLimit(e.target.value)}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  disabled={bulkLoading}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Older than days</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={bulkOlderThanDays}
+                  onChange={(e) => setBulkOlderThanDays(e.target.value)}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  disabled={bulkLoading}
+                />
+              </div>
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Created before</label>
+                <input
+                  type="date"
+                  value={bulkCreatedBefore}
+                  onChange={(e) => setBulkCreatedBefore(e.target.value)}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  disabled={bulkLoading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Statuses</p>
+              <div className="flex flex-wrap gap-2">
+                {bulkStatusOptions.map((statusOption) => {
+                  const selected = bulkStatuses.includes(statusOption);
+                  return (
+                    <button
+                      key={statusOption}
+                      type="button"
+                      onClick={() => {
+                        setBulkStatuses((prev) =>
+                          prev.includes(statusOption)
+                            ? prev.filter((status) => status !== statusOption)
+                            : [...prev, statusOption],
+                        );
+                      }}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                        selected
+                          ? 'border-indigo-600 bg-indigo-600 text-white'
+                          : 'border-slate-300 bg-white text-slate-700'
+                      }`}
+                      disabled={bulkLoading}
+                    >
+                      {statusOption}
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={bulkIncludeArchived}
+                  onChange={(e) => setBulkIncludeArchived(e.target.checked)}
+                  disabled={bulkLoading}
+                />
+                Include archived projects even when status filter is empty
+              </label>
+            </div>
+
+            {bulkError && (
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {bulkError}
+              </div>
+            )}
+
+            {bulkResult && (
+              <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="text-sm text-slate-700">
+                  Matched <span className="font-semibold text-slate-900">{bulkResult.totalMatched}</span> projects (preview sampled {bulkResult.sampled}).
+                </div>
+                <div className="grid gap-2 md:grid-cols-2 text-xs text-slate-700">
+                  <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                    <p className="font-semibold text-slate-900 mb-1">Status Breakdown</p>
+                    {bulkResult.statusBreakdown.length === 0 ? (
+                      <p>No matches.</p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {bulkResult.statusBreakdown.map((row) => (
+                          <li key={row.status} className="flex justify-between">
+                            <span>{row.status}</span>
+                            <span className="font-semibold">{row.count}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                    <p className="font-semibold text-slate-900 mb-1">Sample Impact</p>
+                    <ul className="space-y-1">
+                      <li>Project photos: {bulkResult.sampleImpact.projectPhotos}</li>
+                      <li>Project-professionals: {bulkResult.sampleImpact.projectProfessionals}</li>
+                      <li>Assist requests: {bulkResult.sampleImpact.projectAssistRequests}</li>
+                      <li>Project chat threads: {bulkResult.sampleImpact.projectChatThreads}</li>
+                      <li>Financial transactions: {bulkResult.sampleImpact.financialTransactions}</li>
+                      <li>Milestones: {bulkResult.sampleImpact.projectMilestones}</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setBulkCleanOpen(false)}
+                disabled={bulkLoading}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={runBulkPreview}
+                disabled={bulkLoading}
+                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+              >
+                {bulkLoading ? "Running..." : "Preview"}
+              </button>
+              <button
+                type="button"
+                onClick={runBulkExecute}
+                disabled={bulkLoading || !bulkResult || bulkResult.totalMatched === 0}
+                className={`rounded-md px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                  bulkAction === "permanent_delete"
+                    ? 'bg-rose-700 hover:bg-rose-800'
+                    : 'bg-amber-600 hover:bg-amber-700'
+                }`}
+              >
+                {bulkAction === "permanent_delete" ? "Execute Permanent Delete" : "Execute Archive"}
+              </button>
             </div>
           </div>
         </ModalOverlay>

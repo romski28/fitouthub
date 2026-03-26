@@ -3697,6 +3697,187 @@ Please review the project details and respond with your quote or decline the inv
     return this.archive(id);
   }
 
+  private buildBulkCleanWhere(criteria: {
+    statuses?: string[];
+    olderThanDays?: number;
+    createdBefore?: string;
+    includeArchived?: boolean;
+  }): Prisma.ProjectWhereInput {
+    const where: Prisma.ProjectWhereInput = {};
+
+    const normalizedStatuses = Array.isArray(criteria.statuses)
+      ? criteria.statuses
+          .map((status) => String(status || '').trim().toLowerCase())
+          .filter((status) => status.length > 0)
+      : [];
+
+    if (normalizedStatuses.length > 0) {
+      where.status = { in: normalizedStatuses };
+    } else if (!criteria.includeArchived) {
+      where.status = { not: this.ARCHIVED_STATUS };
+    }
+
+    if (Number.isFinite(criteria.olderThanDays) && Number(criteria.olderThanDays) > 0) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - Number(criteria.olderThanDays));
+      where.createdAt = { ...(where.createdAt as Prisma.DateTimeFilter || {}), lte: cutoff };
+    }
+
+    if (criteria.createdBefore) {
+      const parsed = new Date(criteria.createdBefore);
+      if (!Number.isNaN(parsed.getTime())) {
+        where.createdAt = { ...(where.createdAt as Prisma.DateTimeFilter || {}), lte: parsed };
+      }
+    }
+
+    return where;
+  }
+
+  async bulkCleanPreview(criteria: {
+    statuses?: string[];
+    olderThanDays?: number;
+    createdBefore?: string;
+    includeArchived?: boolean;
+    limit?: number;
+  }) {
+    const where = this.buildBulkCleanWhere(criteria);
+    const safeLimit = Number.isFinite(criteria.limit)
+      ? Math.min(Math.max(Number(criteria.limit), 1), 500)
+      : 200;
+
+    const [totalMatched, statusBreakdown, sampleProjects] = await Promise.all([
+      this.prisma.project.count({ where }),
+      this.prisma.project.groupBy({
+        by: ['status'],
+        where,
+        _count: { status: true },
+      }),
+      this.prisma.project.findMany({
+        where,
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          projectName: true,
+          status: true,
+          createdAt: true,
+        },
+        take: safeLimit,
+      }),
+    ]);
+
+    const projectIds = sampleProjects.map((project) => project.id);
+    const affected = projectIds.length
+      ? await Promise.all([
+          this.prisma.projectPhoto.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.projectProfessional.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.projectAssistRequest.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.projectChatThread.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.financialTransaction.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.siteAccessRequest.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.siteAccessVisit.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.projectMilestone.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.nextStepAction.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.adminAction.count({ where: { projectId: { in: projectIds } } }),
+          this.prisma.supportRequest.count({ where: { projectId: { in: projectIds } } }),
+        ])
+      : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    return {
+      criteria: {
+        statuses: criteria.statuses || [],
+        olderThanDays: criteria.olderThanDays || null,
+        createdBefore: criteria.createdBefore || null,
+        includeArchived: !!criteria.includeArchived,
+      },
+      totalMatched,
+      sampled: sampleProjects.length,
+      statusBreakdown: statusBreakdown.map((row) => ({ status: row.status, count: row._count.status })),
+      sampleProjects,
+      sampleImpact: {
+        projectPhotos: affected[0],
+        projectProfessionals: affected[1],
+        projectAssistRequests: affected[2],
+        projectChatThreads: affected[3],
+        financialTransactions: affected[4],
+        siteAccessRequests: affected[5],
+        siteAccessVisits: affected[6],
+        projectMilestones: affected[7],
+        nextStepActions: affected[8],
+        adminActions: affected[9],
+        supportRequestsLinked: affected[10],
+      },
+    };
+  }
+
+  async bulkCleanExecute(criteria: {
+    action: 'archive' | 'permanent_delete';
+    statuses?: string[];
+    olderThanDays?: number;
+    createdBefore?: string;
+    includeArchived?: boolean;
+    limit?: number;
+  }) {
+    const where = this.buildBulkCleanWhere(criteria);
+    const safeLimit = Number.isFinite(criteria.limit)
+      ? Math.min(Math.max(Number(criteria.limit), 1), 500)
+      : 200;
+
+    const candidates = await this.prisma.project.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        status: true,
+      },
+      take: safeLimit,
+    });
+
+    if (criteria.action === 'archive') {
+      const targetIds = candidates
+        .filter((project) => (project.status || '').toLowerCase() !== this.ARCHIVED_STATUS)
+        .map((project) => project.id);
+
+      if (targetIds.length === 0) {
+        return {
+          action: criteria.action,
+          selected: candidates.length,
+          affected: 0,
+          skipped: candidates.length,
+        };
+      }
+
+      const result = await this.prisma.project.updateMany({
+        where: {
+          id: { in: targetIds },
+        },
+        data: {
+          status: this.ARCHIVED_STATUS,
+          updatedAt: new Date(),
+        },
+      });
+
+      return {
+        action: criteria.action,
+        selected: candidates.length,
+        affected: result.count,
+        skipped: candidates.length - result.count,
+      };
+    }
+
+    let deleted = 0;
+    for (const project of candidates) {
+      await this.hardRemove(project.id);
+      deleted += 1;
+    }
+
+    return {
+      action: criteria.action,
+      selected: candidates.length,
+      affected: deleted,
+      skipped: candidates.length - deleted,
+    };
+  }
+
   async hardRemove(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
