@@ -375,8 +375,10 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
         window.localStorage.getItem('fh_debug_handoff') === '1');
 
     const normalizeBlock = (value?: string | null) => (value || '').trim();
-    const summaryBlock = normalizeBlock(payload.summary) || normalizeBlock(aiStructured.summary);
-    const scopeBlock = normalizeBlock(aiStructured.scope);
+    const summaryBlock =
+      normalizeBlock(payload.summary) ||
+      normalizeBlock(aiStructured.summary) ||
+      normalizeBlock(aiStructured.scope);
     const assumptionsBlock = (aiStructured.assumptions || [])
       .map((assumption) => (assumption || '').trim())
       .filter((assumption) => assumption.length > 0);
@@ -385,26 +387,8 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
     if (summaryBlock) {
       notesSections.push(`Summary:\n${summaryBlock}`);
     }
-    if (scopeBlock && scopeBlock !== summaryBlock) {
-      notesSections.push(`Scope:\n${scopeBlock}`);
-    }
     if (assumptionsBlock.length > 0) {
       notesSections.push(`Assumptions:\n${assumptionsBlock.map((assumption) => `- ${assumption}`).join('\n')}`);
-    }
-
-    const followUpBlock = (payload.followUpAnswers || [])
-      .map((item) => ({
-        question: (item.question || '').trim(),
-        answer: (item.answer || '').trim(),
-      }))
-      .filter((item) => item.question.length > 0 && item.answer.length > 0);
-
-    if (followUpBlock.length > 0) {
-      notesSections.push(
-        `Follow-up Q&A:\n${followUpBlock
-          .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
-          .join('\n\n')}`,
-      );
     }
 
     const combinedNotes = notesSections.join('\n\n').trim();
@@ -847,6 +831,7 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
         openJoinModal={openJoinModal}
       />
       <AiProjectBriefModal
+        key={`${showBriefModal ? 'open' : 'closed'}-${aiStructured?.intakeId || aiStructured?.title || aiStructured?.summary || 'ai-brief'}`}
         isOpen={showBriefModal && !!aiStructured}
         onClose={() => setShowBriefModal(false)}
         initialTitle={aiStructured?.title || aiStructured?.summary || ''}

@@ -49,7 +49,7 @@ const filterProjectSelectableProfessionals = (professionals: Professional[]) => 
 
 export default function CreateProjectPage() {
   const router = useRouter();
-    const t = useTranslations('project');
+  const t = useTranslations('project');
   const { isLoggedIn, accessToken, user, userLocation } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,7 +185,7 @@ export default function CreateProjectPage() {
   }, [hydrated, isLoggedIn]);
 
   if (!hydrated || isLoggedIn === undefined) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" />;
+    return <div className="min-h-screen bg-slate-50" />;
   }
 
   if (isLoggedIn === false) return null;
@@ -356,8 +356,16 @@ export default function CreateProjectPage() {
     }
   };
 
+  const invitedCount = selectedProfessionals.length;
+  const tradeSummary = initialFormData.tradesRequired?.length
+    ? initialFormData.tradesRequired.join(', ')
+    : descriptionData?.tradesRequired?.length
+      ? descriptionData.tradesRequired.join(', ')
+      : 'General project';
+  const emergencySummary = initialFormData.isEmergency ?? descriptionData?.isEmergency;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
+    <div className="min-h-screen bg-slate-50">
       <ProjectDescriptionModal
         isOpen={showDescriptionModal}
         onSubmit={(data) => {
@@ -382,52 +390,84 @@ export default function CreateProjectPage() {
         projectName={assistDraft?.formData.projectName || descriptionData?.profession}
       />
 
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/projects" className="text-sm text-blue-600 hover:underline mb-4 inline-block">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900"
+          >
+            <span aria-hidden="true">←</span>
             {t('create.backLink')}
           </Link>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">{t('create.title')}</h1>
-          <p className="text-lg text-slate-600">
-              {t('create.description')}
-          </p>
         </div>
 
-        {/* Form Card */}
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-sm">
+          <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Project creation</p>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t('create.title')}</h1>
+              <p className="max-w-2xl text-sm text-slate-300 sm:text-base">{t('create.description')}</p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px] lg:grid-cols-1 xl:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Invited pros</p>
+                <p className="mt-1 text-2xl font-bold text-white">{invitedCount}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Trade focus</p>
+                <p className="mt-1 text-sm font-semibold text-white">{tradeSummary}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Priority</p>
+                <p className="mt-1 text-sm font-semibold text-white">{emergencySummary ? 'Emergency' : 'Standard'}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {!showDescriptionModal && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-8">
-            <ProjectForm
-              mode="create"
-              key={JSON.stringify({
-                descriptionData,
-                initialFormData,
-                selectedProfessionalIds: selectedProfessionals.map((professional) => professional.id),
-              })}
-              professionals={selectedProfessionals}
-              initialData={{
-                ...initialFormData,
-                clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
-                projectName: initialFormData.projectName || descriptionData?.title || '',
-                notes: initialFormData.notes || descriptionData?.description || '',
-                isEmergency: initialFormData.isEmergency ?? descriptionData?.isEmergency,
-                tradesRequired: initialFormData.tradesRequired?.length
-                  ? initialFormData.tradesRequired
-                  : (descriptionData?.tradesRequired || []),
-                location: initialFormData.location || descriptionData?.location || userLocation || undefined,
-              }}
-              onAssistRequest={handleAssist}
-              onSubmit={handleSubmit}
-              onCancel={() => router.push('/')}
-              isSubmitting={isSubmitting}
-              error={error}
-              showAiOverview={true}
-              submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
-              showBudget={false}
-              showService={true}
-              showClientName={false}
-              confirmationMode={true}
-            />
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-6 py-4">
+              <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Confirm the AI brief and invited professionals before opening bidding.
+              </p>
+            </div>
+
+            <div className="p-6 sm:p-8">
+              <ProjectForm
+                mode="create"
+                key={JSON.stringify({
+                  descriptionData,
+                  initialFormData,
+                  selectedProfessionalIds: selectedProfessionals.map((professional) => professional.id),
+                })}
+                professionals={selectedProfessionals}
+                initialData={{
+                  ...initialFormData,
+                  clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
+                  projectName: initialFormData.projectName || descriptionData?.title || '',
+                  notes: initialFormData.notes || descriptionData?.description || '',
+                  isEmergency: initialFormData.isEmergency ?? descriptionData?.isEmergency,
+                  tradesRequired: initialFormData.tradesRequired?.length
+                    ? initialFormData.tradesRequired
+                    : (descriptionData?.tradesRequired || []),
+                  location: initialFormData.location || descriptionData?.location || userLocation || undefined,
+                }}
+                onAssistRequest={handleAssist}
+                onSubmit={handleSubmit}
+                onCancel={() => router.push('/')}
+                isSubmitting={isSubmitting}
+                error={error}
+                showAiOverview={true}
+                submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
+                showBudget={false}
+                showService={true}
+                showClientName={false}
+                confirmationMode={true}
+              />
+            </div>
           </div>
         )}
       </div>

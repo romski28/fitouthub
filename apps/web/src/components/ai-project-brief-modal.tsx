@@ -67,22 +67,6 @@ export function AiProjectBriefModal({
   const [stepIndex, setStepIndex] = useState(0);
   const stepPanelRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setTitle(initialTitle || '');
-    setSummary('');
-    setLocation(mergedInitialLocation);
-    setIsEmergency(typeof initialEmergency === 'boolean' ? initialEmergency : null);
-    setAnswers({});
-    setStepIndex(0);
-  }, [
-    isOpen,
-    initialTitle,
-    initialSummary,
-    mergedInitialLocation,
-    initialEmergency,
-  ]);
-
   const steps = useMemo<WizardStep[]>(() => {
     const list: WizardStep[] = [];
 
@@ -170,14 +154,10 @@ export function AiProjectBriefModal({
       .filter((item) => item.answer.length > 0);
 
     const baseSummary = (summary || initialScope || initialSummary || '').trim();
-    const appendedSummary = followUpAnswers.reduce((acc, item) => {
-      const line = `Q: ${item.question}\nA: ${item.answer}`;
-      return acc ? `${acc}\n\n${line}` : line;
-    }, baseSummary);
 
     onComplete({
       title: title.trim(),
-      summary: appendedSummary,
+      summary: baseSummary,
       location,
       isEmergency,
       followUpAnswers,
