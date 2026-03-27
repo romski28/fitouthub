@@ -140,7 +140,31 @@ interface AssistThreadSummary {
   status?: 'open' | 'in_progress' | 'closure_pending' | 'closed' | string;
   closureDueAt?: string | null;
   resolvedAt?: string | null;
+  createdAt?: string;
+  case?: {
+    caseNumber?: string;
+  } | null;
 }
+
+const buildClientAssistInitialNotes = (
+  status: string,
+  hasQuoteOverdue: boolean,
+): string => {
+  if (hasQuoteOverdue) {
+    return 'Status: quote window expired.\nNext step needed: help me decide whether to re-invite professionals or source additional quotes.';
+  }
+
+  switch ((status || '').toLowerCase()) {
+    case 'awarded':
+      return 'Status: project awarded.\nNext step needed: support with coordination, schedule alignment, and issue resolution.';
+    case 'pending':
+      return 'Status: project in bidding stage.\nNext step needed: support with quote review and selecting the right next action.';
+    case 'withdrawn':
+      return 'Status: project withdrawn.\nNext step needed: guidance on reopening or restarting with the right setup.';
+    default:
+      return 'Status: project active.\nNext step needed: please advise the best immediate action and coordination approach.';
+  }
+};
 
 const ASSIST_PAGE_SIZE = 30;
 
@@ -243,6 +267,7 @@ export default function ClientProjectDetailPage() {
 
   // Assistance (FOH) state
   const [assistRequestId, setAssistRequestId] = useState<string | null>(null);
+  const [assistThreads, setAssistThreads] = useState<AssistThreadSummary[]>([]);
   const [assistStatus, setAssistStatus] = useState<
     'open' | 'in_progress' | 'closure_pending' | 'closed' | string | null
   >(null);
@@ -334,6 +359,7 @@ export default function ClientProjectDetailPage() {
   const paidValue = (project as any)?.paidAmount ?? (awardedPro as any)?.invoice?.paidAmount ?? 0;
   const refreshRequestTemplate =
     'Thanks for your quotation — we have received other offers and would like to give you the opportunity to rebid with your best price.';
+  const assistInitialNotes = buildClientAssistInitialNotes(projectStatus, quoteOverdueBlocker);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -422,6 +448,24 @@ export default function ClientProjectDetailPage() {
     }
 
     setAssistMessages(mapped);
+  };
+
+  const applyActiveAssistThread = async (thread: AssistThreadSummary | null | undefined) => {
+    if (!thread?.id) {
+      setAssistRequestId(null);
+      setAssistStatus(null);
+      setAssistClosureDueAt(null);
+      setAssistResolvedAt(null);
+      setAssistMessages([]);
+      setAssistHasMore(false);
+      return;
+    }
+
+    setAssistRequestId(thread.id);
+    setAssistStatus(thread.status || null);
+    setAssistClosureDueAt(thread.closureDueAt || null);
+    setAssistResolvedAt(thread.resolvedAt || null);
+    await loadAssistMessages(thread.id);
   };
 
   // Helper: fetch project details (reusable)
@@ -880,35 +924,22 @@ export default function ClientProjectDetailPage() {
       try {
         setAssistLoading(true);
         setAssistError(null);
-        const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
+        const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}/all?limit=200`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (res.status === 404) {
-          setAssistRequestId(null);
-          setAssistHasMore(false);
-          setAssistMessages([]);
+          setAssistThreads([]);
+          await applyActiveAssistThread(null);
           return;
         }
         if (!res.ok) {
           const text = await res.text();
           throw new Error(text || 'Failed to load assistance');
         }
-        const data = await parseJsonResponse<{ assist?: AssistThreadSummary }>(res);
-        const assist = data?.assist;
-        if (assist?.id) {
-          setAssistRequestId(assist.id);
-          setAssistStatus(assist.status || null);
-          setAssistClosureDueAt(assist.closureDueAt || null);
-          setAssistResolvedAt(assist.resolvedAt || null);
-          await loadAssistMessages(assist.id);
-        } else {
-          setAssistRequestId(null);
-          setAssistStatus(null);
-          setAssistClosureDueAt(null);
-          setAssistResolvedAt(null);
-          setAssistMessages([]);
-          setAssistHasMore(false);
-        }
+        const data = await parseJsonResponse<{ assists?: AssistThreadSummary[] }>(res);
+        const allThreads = data?.assists || [];
+        setAssistThreads(allThreads);
+        await applyActiveAssistThread(allThreads[0]);
       } catch (err) {
         console.error('[Assist] load failed', err);
         setAssistError('Failed to load assistance messages');
@@ -927,15 +958,17 @@ export default function ClientProjectDetailPage() {
       try {
         setAssistLoading(true);
         setAssistError(null);
-        const assistRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
+        const assistRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}/all?limit=200`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (assistRes.ok) {
-          const assistData = await parseJsonResponse<{ assist?: AssistThreadSummary }>(assistRes);
-          const assist = assistData?.assist;
-          setAssistStatus(assist?.status || null);
-          setAssistClosureDueAt(assist?.closureDueAt || null);
-          setAssistResolvedAt(assist?.resolvedAt || null);
+          const assistData = await parseJsonResponse<{ assists?: AssistThreadSummary[] }>(assistRes);
+          const threads = assistData?.assists || [];
+          setAssistThreads(threads);
+          const active = threads.find((thread) => thread.id === assistRequestId);
+          setAssistStatus(active?.status || null);
+          setAssistClosureDueAt(active?.closureDueAt || null);
+          setAssistResolvedAt(active?.resolvedAt || null);
         }
 
         await loadAssistMessages(assistRequestId, { refreshCurrentWindow: true });
@@ -947,6 +980,13 @@ export default function ClientProjectDetailPage() {
     };
     refreshAssistMessages();
   }, [viewingAssistChat, assistRequestId, accessToken, projectId]);
+
+  const handleSelectAssistThread = async (selectedAssistId: string) => {
+    const selectedThread = assistThreads.find((thread) => thread.id === selectedAssistId);
+    if (!selectedThread?.id) return;
+    await applyActiveAssistThread(selectedThread);
+    setViewingAssistChat(true);
+  };
 
   const handleSendAssistMessage = async () => {
     if (!assistNewMessage.trim() || !assistRequestId || !accessToken) return;
@@ -1385,6 +1425,12 @@ export default function ClientProjectDetailPage() {
   const handleOpenAssistFromBlocker = async () => {
     if (!projectId) return;
     if (assistRequestId) {
+      const preferredThread =
+        assistThreads.find((thread) => (thread.status || '').toLowerCase() !== 'closed') ||
+        assistThreads[0];
+      if (preferredThread?.id && preferredThread.id !== assistRequestId) {
+        await applyActiveAssistThread(preferredThread);
+      }
       setViewingAssistChat(true);
       setActiveTab('chat');
       return;
@@ -1422,7 +1468,19 @@ export default function ClientProjectDetailPage() {
 
       if (res.ok) {
         const d = await res.json().catch(() => ({}));
-        if (d?.id) setAssistRequestId(d.id);
+        if (d?.id) {
+          const createdThread: AssistThreadSummary = {
+            id: d.id,
+            status: d.status,
+            closureDueAt: d.closureDueAt || null,
+            resolvedAt: d.resolvedAt || null,
+            createdAt: d.createdAt,
+            case: d.caseNumber ? { caseNumber: d.caseNumber } : null,
+          };
+          setAssistThreads((prev) => [createdThread, ...prev.filter((item) => item.id !== createdThread.id)]);
+          setAssistRequestId(d.id);
+          setAssistStatus(d.status || 'open');
+        }
         if (!d?.caseNumber) {
           setAssistOpen(false);
           toast.success(
@@ -1924,6 +1982,15 @@ export default function ClientProjectDetailPage() {
               viewingAssistChat={viewingAssistChat}
               onViewingAssistChatChange={setViewingAssistChat}
               assistRequestId={assistRequestId}
+              assistThreads={assistThreads
+                .filter((thread) => !!thread.id)
+                .map((thread) => ({
+                  id: thread.id as string,
+                  status: thread.status,
+                  caseNumber: thread.case?.caseNumber,
+                  createdAt: thread.createdAt,
+                }))}
+              onSelectAssistThread={handleSelectAssistThread}
               messages={messages}
               newMessage={newMessage}
               onNewMessageChange={setNewMessage}
@@ -2243,7 +2310,7 @@ export default function ClientProjectDetailPage() {
         onSubmit={handleSubmitAssistFromBlocker}
         isSubmitting={assistModalSubmitting}
         error={assistModalError}
-        initialNotes="Quote overdue: no professional submitted a quote within the allowed window. Requesting assistance."
+        initialNotes={assistInitialNotes}
         projectName={project?.projectName}
         context="active"
         submitPrefix="Request"

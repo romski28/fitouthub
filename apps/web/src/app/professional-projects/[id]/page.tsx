@@ -91,6 +91,19 @@ interface SiteAccessVisit {
   completedAt?: string | null;
 }
 
+const buildProfessionalAssistInitialNotes = (status: string): string => {
+  switch ((status || '').toLowerCase()) {
+    case 'awarded':
+      return 'Status: project awarded.\nNext step needed: support with schedule coordination, approvals, and issue resolution.';
+    case 'quoted':
+      return 'Status: quote submitted.\nNext step needed: guidance on follow-up and decision timeline.';
+    case 'pending':
+      return 'Status: bid in progress.\nNext step needed: support on what action is needed now to move forward.';
+    default:
+      return 'Status: project active.\nNext step needed: please advise on the best immediate coordination action.';
+  }
+};
+
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -1095,6 +1108,7 @@ export default function ProjectDetailPage() {
         balance: awardedAmountValue !== undefined ? awardedAmountValue - totalPaid : undefined,
       }
     : null;
+  const assistInitialNotes = buildProfessionalAssistInitialNotes(project.status);
 
   return (
     <>
@@ -1288,7 +1302,7 @@ export default function ProjectDetailPage() {
         onSubmit={handleSubmitAssistRequest}
         isSubmitting={assistModalSubmitting}
         error={assistModalError}
-        initialNotes="Professional support request for active project coordination."
+        initialNotes={assistInitialNotes}
         projectName={project?.project?.projectName}
         context="active"
         submitPrefix="Request"

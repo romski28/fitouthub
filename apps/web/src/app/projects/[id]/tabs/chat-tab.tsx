@@ -27,6 +27,13 @@ interface Message {
   createdAt: string;
 }
 
+interface AssistThreadOption {
+  id: string;
+  status?: 'open' | 'in_progress' | 'closure_pending' | 'closed' | string;
+  caseNumber?: string;
+  createdAt?: string;
+}
+
 interface ChatTabProps {
   projectId: string;
   professionals: ProjectProfessional[];
@@ -36,6 +43,8 @@ interface ChatTabProps {
   viewingAssistChat: boolean;
   onViewingAssistChatChange: (viewing: boolean) => void;
   assistRequestId: string | null;
+  assistThreads?: AssistThreadOption[];
+  onSelectAssistThread?: (assistRequestId: string) => void;
   // Team chat
   messages: Message[];
   newMessage: string;
@@ -71,6 +80,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   viewingAssistChat,
   onViewingAssistChatChange,
   assistRequestId,
+  assistThreads = [],
+  onSelectAssistThread = () => undefined,
   messages,
   newMessage,
   onNewMessageChange,
@@ -96,6 +107,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 }) => {
   const hasProfessionals = Array.isArray(professionals) && professionals.length > 0;
   const isAssistView = viewingAssistChat || (!hasProfessionals && !!assistRequestId);
+  const selectedAssistOptionValue = assistRequestId ? `assist-${assistRequestId}` : 'fitouthub';
 
   if (!hasProfessionals && !assistRequestId) {
     return (
@@ -120,13 +132,22 @@ export const ChatTab: React.FC<ChatTabProps> = ({
             <label className="block text-sm font-semibold text-white mb-2">Chat with:</label>
             <select
               value={
-                isAssistView ? 'fitouthub' : 
-                selectedProfessional ? `professional-${selectedProfessional.id}` : 
-                (hasProfessionals ? 'project' : 'fitouthub')
+                isAssistView
+                  ? selectedAssistOptionValue
+                  : selectedProfessional
+                    ? `professional-${selectedProfessional.id}`
+                    : hasProfessionals
+                      ? 'project'
+                      : 'fitouthub'
               }
               onChange={(e) => {
                 const val = e.target.value;
-                if (val === 'fitouthub') {
+                if (val.startsWith('assist-')) {
+                  const selectedAssistId = val.replace('assist-', '');
+                  onSelectAssistThread(selectedAssistId);
+                  onViewingAssistChatChange(true);
+                  onSelectProfessional(null);
+                } else if (val === 'fitouthub') {
                   onViewingAssistChatChange(true);
                   onSelectProfessional(null);
                 } else if (val === 'project') {
@@ -134,7 +155,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   onSelectProfessional(null);
                 } else {
                   const profId = val.replace('professional-', '');
-                  const prof = professionals.find(p => p.id === profId);
+                  const prof = professionals.find((pp) => pp.id === profId);
                   if (prof) {
                     onSelectProfessional(prof);
                     onViewingAssistChatChange(false);
@@ -152,7 +173,16 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   </option>
                 );
               })}
-              {assistRequestId && <option value="fitouthub">Fitout Hub</option>}
+              {assistThreads.map((thread) => {
+                const caseLabel = thread.caseNumber || `Assist-${thread.id.slice(0, 8)}`;
+                const statusLabel = (thread.status || 'open').replace('_', ' ');
+                return (
+                  <option key={thread.id} value={`assist-${thread.id}`}>
+                    {`~ PM Case ${caseLabel} (${statusLabel})`}
+                  </option>
+                );
+              })}
+              {assistThreads.length === 0 && assistRequestId && <option value="fitouthub">~ PM Case</option>}
             </select>
           </div>
 
@@ -174,6 +204,11 @@ export const ChatTab: React.FC<ChatTabProps> = ({
           {isAssistView && (
             <div className="bg-slate-900/40 border-t border-slate-700">
               <div className="p-4 space-y-4">
+                  {assistRequestId && (
+                    <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                      Active PM case: {assistThreads.find((thread) => thread.id === assistRequestId)?.caseNumber || assistRequestId}
+                    </div>
+                  )}
                 {assistError && (
                   <div className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
                     {assistError}

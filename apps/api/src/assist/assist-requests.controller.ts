@@ -145,4 +145,23 @@ export class AssistRequestsController {
       );
     }
   }
+
+  @Get('by-project/:projectId/all')
+  async listByProject(
+    @Param('projectId') projectId: string,
+    @Query('limit') limit?: string,
+  ) {
+    try {
+      const assists = await this.service.listByProject(
+        projectId,
+        limit ? parseInt(limit, 10) : undefined,
+      );
+      return { assists };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to fetch project assistance threads',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 }

@@ -649,6 +649,34 @@ export class AssistRequestsService {
     return assist || null;
   }
 
+  async listByProject(projectId: string, limit = 100) {
+    await this.finalizeExpiredClosures();
+    if (!projectId) throw new BadRequestException('projectId is required');
+
+    const assists = await (this.prisma as any).projectAssistRequest.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(Math.max(limit, 1), 200),
+      include: {
+        case: {
+          select: {
+            id: true,
+            caseNumber: true,
+            status: true,
+            category: true,
+            raisedBy: true,
+            slaDeadline: true,
+            firstRepliedAt: true,
+            resolvedAt: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    return assists;
+  }
+
   async updateStatus(
     id: string,
     status: 'open' | 'in_progress' | 'closed' | 'closure_pending',
