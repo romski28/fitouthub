@@ -27,9 +27,23 @@ type NextStepFetchOptions = {
 };
 
 export const NEXT_STEP_CACHE_TTL_MS = 15 * 60 * 1000;
+const NEXT_STEP_ENDPOINT_BACKOFF_MS = 2 * 60 * 1000;
 
 const nextStepCache = new Map<string, NextStepCacheEntry>();
 const nextStepInFlight = new Map<string, Promise<NextStepAction | null>>();
+let nextStepEndpointBackoffUntil = 0;
+let nextStepEndpointFailureCount = 0;
+
+function applyEndpointBackoff() {
+  nextStepEndpointFailureCount += 1;
+  const multiplier = Math.min(nextStepEndpointFailureCount, 3);
+  nextStepEndpointBackoffUntil = Date.now() + NEXT_STEP_ENDPOINT_BACKOFF_MS * multiplier;
+}
+
+function clearEndpointBackoff() {
+  nextStepEndpointFailureCount = 0;
+  nextStepEndpointBackoffUntil = 0;
+}
 
 function buildScope(token: string, cacheScope?: string): string {
   return cacheScope || token.slice(-16);
@@ -62,6 +76,11 @@ export async function fetchPrimaryNextStep(
   const key = cacheKey(projectId, scope);
   const maxAgeMs = options.maxAgeMs ?? NEXT_STEP_CACHE_TTL_MS;
 
+  if (!options.forceRefresh && Date.now() < nextStepEndpointBackoffUntil) {
+    nextStepCache.set(key, { action: null, updatedAt: Date.now() });
+    return null;
+  }
+
   if (!options.forceRefresh) {
     const inFlight = nextStepInFlight.get(key);
     if (inFlight) return inFlight;
@@ -90,6 +109,7 @@ export async function fetchPrimaryNextStep(
       });
     } catch {
       // Network error (CORS failure, server down, etc.) — degrade silently
+      applyEndpointBackoff();
       nextStepCache.set(key, { action: null, updatedAt: Date.now() });
       return null;
     }
@@ -99,11 +119,15 @@ export async function fetchPrimaryNextStep(
     }
 
     if (!response.ok) {
+      if (response.status === 404 || response.status >= 500) {
+        applyEndpointBackoff();
+      }
       nextStepCache.set(key, { action: null, updatedAt: Date.now() });
       return null;
     }
 
     const data = (await response.json()) as NextStepResponse;
+    clearEndpointBackoff();
     const action = data.PRIMARY?.[0] ?? null;
     nextStepCache.set(key, { action, updatedAt: Date.now() });
     return action;
