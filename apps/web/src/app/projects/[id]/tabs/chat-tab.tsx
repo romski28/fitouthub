@@ -107,7 +107,10 @@ export const ChatTab: React.FC<ChatTabProps> = ({
 }) => {
   const hasProfessionals = Array.isArray(professionals) && professionals.length > 0;
   const isAssistView = viewingAssistChat || (!hasProfessionals && !!assistRequestId);
-  const selectedAssistOptionValue = assistRequestId ? `assist-${assistRequestId}` : 'fitouthub';
+  const selectedAssistOptionValue =
+    assistRequestId && assistThreads.some((thread) => thread.id === assistRequestId)
+      ? `assist-${assistRequestId}`
+      : 'fitouthub';
 
   if (!hasProfessionals && !assistRequestId) {
     return (
@@ -164,15 +167,16 @@ export const ChatTab: React.FC<ChatTabProps> = ({
               }}
               className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
             >
-              {hasProfessionals && <option value="project">Project (All professionals)</option>}
+              {hasProfessionals && <option value="project">Project (Team chat)</option>}
               {hasProfessionals && professionals.map((pp) => {
                 const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
                 return (
                   <option key={pp.id} value={`professional-${pp.id}`}>
-                    {displayName}
+                    {`Contractor — ${displayName}`}
                   </option>
                 );
               })}
+              <option value="fitouthub">FoH General</option>
               {assistThreads.map((thread) => {
                 const caseLabel = thread.caseNumber || `Assist-${thread.id.slice(0, 8)}`;
                 const statusLabel = (thread.status || 'open').replace('_', ' ');
@@ -182,7 +186,6 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   </option>
                 );
               })}
-              {assistThreads.length === 0 && assistRequestId && <option value="fitouthub">~ PM Case</option>}
             </select>
           </div>
 
