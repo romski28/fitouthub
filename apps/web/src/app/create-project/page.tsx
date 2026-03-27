@@ -427,15 +427,15 @@ export default function CreateProjectPage() {
         </section>
 
         {!showDescriptionModal && (
-          <div className="mt-8 rounded-2xl border border-slate-700/60 bg-white shadow-xl shadow-slate-950/30">
-            <div className="border-b border-slate-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
-              <p className="mt-1 text-sm text-slate-600">
+          <div className="mt-8 overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-r from-slate-900 to-slate-800 shadow-xl shadow-slate-950/30">
+            <div className="border-b border-slate-700/70 px-6 py-4">
+              <h2 className="text-lg font-semibold text-white">Review project brief</h2>
+              <p className="mt-1 text-sm text-slate-300">
                 Confirm the AI brief and invited professionals before opening bidding.
               </p>
             </div>
 
-            <div className="p-6 sm:p-8">
+            <div className="bg-white p-6 sm:p-8">
               <ProjectForm
                 mode="create"
                 key={JSON.stringify({

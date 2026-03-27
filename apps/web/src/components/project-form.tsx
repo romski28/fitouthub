@@ -905,7 +905,7 @@ export function ProjectForm({
             disabled={isSubmitting || isReadOnly}
             className={`flex-1 rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
               mode === 'create'
-                ? 'border border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
+                ? 'bg-red-600 text-white hover:bg-red-700'
                 : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
             }`}
           >
@@ -917,7 +917,11 @@ export function ProjectForm({
             type="button"
             onClick={handleAssistClick}
             disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
-            className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-6 py-2.5 text-indigo-700 font-semibold hover:bg-indigo-100 transition disabled:opacity-50"
+            className={`flex-1 rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
+              mode === 'create'
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+            }`}
           >
             Ask for advice
           </button>
@@ -926,7 +930,11 @@ export function ProjectForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 rounded-lg bg-blue-600 text-white font-semibold py-2.5 hover:bg-blue-700 disabled:opacity-50 transition"
+            className={`flex-1 rounded-lg py-2.5 font-semibold text-white transition disabled:opacity-50 ${
+              mode === 'create'
+                ? 'bg-emerald-600 hover:bg-emerald-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
           </button>
