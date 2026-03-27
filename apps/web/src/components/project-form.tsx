@@ -536,15 +536,25 @@ export function ProjectForm({
     <form onSubmit={handleFormSubmit} className="space-y-6">
       {/* Professional List (if applicable) */}
       {displayNames.length > 0 && (
-        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold text-slate-700">
+        <div className={`rounded-md border p-3 ${
+          mode === 'create'
+            ? 'border-slate-700/40 bg-white/5 text-white'
+            : 'border-slate-200 bg-slate-50 text-slate-700'
+        }`}>
+          <p className={`text-xs font-semibold ${
+            mode === 'create' ? 'text-slate-300' : 'text-slate-700'
+          }`}>
             Professional{displayNames.length !== 1 ? 's' : ''} ({displayNames.length})
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {displayNames.map((name, idx) => (
               <span
                 key={`${name}-${idx}`}
-                className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700"
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  mode === 'create'
+                    ? 'bg-emerald-500/30 text-emerald-200'
+                    : 'bg-emerald-100 text-emerald-700'
+                }`}
               >
                 {name}
               </span>
@@ -554,11 +564,19 @@ export function ProjectForm({
       )}
 
       {hasAiContext && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
+        <div className={`rounded-lg border p-4 space-y-3 ${
+          mode === 'create'
+            ? 'border-emerald-500/40 bg-emerald-500/10'
+            : 'border-emerald-200 bg-emerald-50'
+        }`}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-emerald-700">Project Overview</p>
-              <h3 className="text-base font-bold text-emerald-900">
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.1em] ${
+                mode === 'create' ? 'text-emerald-300' : 'text-emerald-700'
+              }`}>Project Overview</p>
+              <h3 className={`text-base font-bold ${
+                mode === 'create' ? 'text-white' : 'text-emerald-900'
+              }`}>
                 {formData.projectName?.trim() || 'Untitled project'}
               </h3>
             </div>
@@ -566,38 +584,54 @@ export function ProjectForm({
               <button
                 type="button"
                 onClick={() => setIsOverviewEditing((prev) => !prev)}
-                className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+                className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                  mode === 'create'
+                    ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
+                    : 'border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-100'
+                }`}
               >
                 {isOverviewEditing ? 'Done editing overview' : 'Edit overview'}
               </button>
             )}
           </div>
 
-          <div className="space-y-2 text-sm text-slate-700">
+          <div className={`space-y-2 text-sm ${
+            mode === 'create' ? 'text-slate-200' : 'text-slate-700'
+          }`}>
             {formData.projectName?.trim() && (
               <p>
-                <span className="font-semibold text-slate-900">Project:</span> {formData.projectName}
+                <span className={`font-semibold ${
+                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                }`}>Project:</span> {formData.projectName}
               </p>
             )}
             {(locationSummary || formData.region?.trim()) && (
               <p>
-                <span className="font-semibold text-slate-900">Location:</span> {locationSummary || formData.region}
+                <span className={`font-semibold ${
+                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                }`}>Location:</span> {locationSummary || formData.region}
               </p>
             )}
             {formData.tradesRequired.length > 0 && (
               <p>
-                <span className="font-semibold text-slate-900">Trades:</span> {formData.tradesRequired.join(', ')}
+                <span className={`font-semibold ${
+                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                }`}>Trades:</span> {formData.tradesRequired.join(', ')}
               </p>
             )}
             {formData.notes?.trim() && (
               <div>
-                <p className="font-semibold text-slate-900">Scope</p>
+                <p className={`font-semibold ${
+                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                }`}>Scope</p>
                 <p className="mt-1 whitespace-pre-wrap">{formData.notes}</p>
               </div>
             )}
             {confirmationMode && (
               <p>
-                <span className="font-semibold text-slate-900">Priority:</span>{' '}
+                <span className={`font-semibold ${
+                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                }`}>Priority:</span>{' '}
                 {formData.isEmergency ? 'Emergency project' : 'Standard priority'}
                 {!formData.isEmergency && formData.endDate ? ` · Target by ${formData.endDate}` : ''}
               </p>
@@ -607,14 +641,22 @@ export function ProjectForm({
       )}
 
       {formData.aiFrom && (
-        <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
+        <div className={`rounded-lg border p-3 ${
+          mode === 'create'
+            ? 'border-violet-500/40 bg-violet-500/10'
+            : 'border-violet-200 bg-violet-50'
+        }`}>
           <button
             type="button"
             onClick={() => setShowAiExtract((prev) => !prev)}
             className="w-full flex items-center justify-between text-left"
           >
-            <span className="text-sm font-semibold text-violet-900">Safety, Assumptions and Risks</span>
-            <span className="text-xs font-semibold text-violet-700">{showAiExtract ? 'Hide' : 'Show'}</span>
+            <span className={`text-sm font-semibold ${
+              mode === 'create' ? 'text-violet-300' : 'text-violet-900'
+            }`}>Safety, Assumptions and Risks</span>
+            <span className={`text-xs font-semibold ${
+              mode === 'create' ? 'text-violet-300' : 'text-violet-700'
+            }`}>{showAiExtract ? 'Hide' : 'Show'}</span>
           </button>
           {showAiExtract && (
             <ProjectAiPanel
@@ -624,7 +666,9 @@ export function ProjectForm({
                 safetyAssessment: formData.aiFrom.safety,
               }}
               mode="client"
-              className="mt-3"
+              className={`mt-3 ${
+                mode === 'create' ? 'text-white' : ''
+              }`}
             />
           )}
         </div>
@@ -632,7 +676,9 @@ export function ProjectForm({
 
       {/* Project Name */}
       <div className={showEditableAiFields ? '' : 'hidden'}>
-        <label className="block text-sm font-semibold text-slate-900 mb-2">
+        <label className={`block text-sm font-semibold mb-2 ${
+          mode === 'create' ? 'text-white' : 'text-slate-900'
+        }`}>
           Project Name {!isReadOnly && '*'}
         </label>
         <input
@@ -642,14 +688,20 @@ export function ProjectForm({
           value={formData.projectName}
           onChange={(e) => handleChange('projectName', e.target.value)}
           disabled={isReadOnly || isSubmitting}
-          className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={`w-full rounded-lg border px-4 py-2.5 text-base focus:outline-none focus:ring-1 ${
+            mode === 'create'
+              ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
+              : 'border-slate-300 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:ring-blue-500'
+          }`}
         />
       </div>
 
       {/* Client Name */}
       {showClientName && (
         <div>
-          <label className="block text-sm font-semibold text-slate-900 mb-2">
+          <label className={`block text-sm font-semibold mb-2 ${
+            mode === 'create' ? 'text-white' : 'text-slate-900'
+          }`}>
             Your Name
           </label>
           <input
@@ -658,14 +710,20 @@ export function ProjectForm({
             value={formData.clientName}
             onChange={(e) => handleChange('clientName', e.target.value)}
             disabled={isReadOnly || isSubmitting}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className={`w-full rounded-lg border px-4 py-2.5 text-base focus:outline-none focus:ring-1 ${
+              mode === 'create'
+                ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
+                : 'border-slate-300 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:ring-blue-500'
+            }`}
           />
         </div>
       )}
 
       {/* Location */}
       <div className={showEditableAiFields ? '' : 'hidden'}>
-        <label className="block text-sm font-semibold text-slate-900 mb-2">
+        <label className={`block text-sm font-semibold mb-2 ${
+          mode === 'create' ? 'text-white' : 'text-slate-900'
+        }`}>
           Region/Location {!isReadOnly && '*'}
         </label>
         <LocationSelect
@@ -678,7 +736,9 @@ export function ProjectForm({
       {/* Trades Required */}
       {showService && (
         <div className={showEditableAiFields ? '' : 'hidden'}>
-          <label className="block text-sm font-semibold text-slate-900 mb-2">
+          <label className={`block text-sm font-semibold mb-2 ${
+            mode === 'create' ? 'text-white' : 'text-slate-900'
+          }`}>
             Required Trades/Services {!isReadOnly && '*'}
           </label>
           <div className="flex flex-wrap gap-2 rounded-lg border border-slate-300 px-4 py-2.5 min-h-[46px] focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
@@ -742,11 +802,17 @@ export function ProjectForm({
       {/* Budget */}
       {showBudget && (
         <div>
-          <label className="block text-sm font-semibold text-slate-900 mb-2">
-            Budget (HKD) <span className="text-slate-500 font-normal">(Optional)</span>
+          <label className={`block text-sm font-semibold mb-2 ${
+            mode === 'create' ? 'text-white' : 'text-slate-900'
+          }`}>
+            Budget (HKD) <span className={`font-normal ${
+              mode === 'create' ? 'text-slate-300' : 'text-slate-500'
+            }`}>(Optional)</span>
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-3 text-slate-500 font-medium">$</span>
+            <span className={`absolute left-4 top-3 font-medium ${
+              mode === 'create' ? 'text-slate-400' : 'text-slate-500'
+            }`}>$</span>
             <input
               type="number"
               placeholder="100,000"
@@ -755,7 +821,11 @@ export function ProjectForm({
               disabled={isReadOnly || isSubmitting}
               min="0"
               step="1000"
-              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 pl-8 text-base disabled:bg-slate-50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className={`w-full rounded-lg border px-4 py-2.5 pl-8 text-base focus:outline-none focus:ring-1 ${
+              mode === 'create'
+                ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
+                : 'border-slate-300 disabled:bg-slate-50 focus:border-blue-500 focus:ring-blue-500'
+            }`}
             />
           </div>
         </div>
@@ -763,8 +833,12 @@ export function ProjectForm({
 
       {/* Project Scope & Notes */}
       <div className={showEditableAiFields ? '' : 'hidden'}>
-        <label className="block text-sm font-semibold text-slate-900 mb-2">
-          Project Scope & Details <span className="text-slate-500 font-normal">(Optional)</span>
+        <label className={`block text-sm font-semibold mb-2 ${
+          mode === 'create' ? 'text-white' : 'text-slate-900'
+        }`}>
+          Project Scope & Details <span className={`font-normal ${
+            mode === 'create' ? 'text-slate-300' : 'text-slate-500'
+          }`}>(Optional)</span>
         </label>
         <textarea
           placeholder="Describe your project scope, requirements, timeline, and any specific needs. This helps professionals understand your project better."
@@ -772,26 +846,42 @@ export function ProjectForm({
           onChange={(e) => handleChange('notes', e.target.value)}
           disabled={isReadOnly || isSubmitting}
           rows={6}
-          className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base disabled:bg-slate-50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+          className={`w-full rounded-lg border px-4 py-2.5 text-base focus:outline-none focus:ring-1 resize-none ${
+            mode === 'create'
+              ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
+              : 'border-slate-300 disabled:bg-slate-50 focus:border-blue-500 focus:ring-blue-500'
+          }`}
         />
-        <p className="text-xs text-slate-500 mt-1">You can add photos and more details after creating the project.</p>
+        <p className={`text-xs mt-1 ${
+          mode === 'create' ? 'text-slate-400' : 'text-slate-500'
+        }`}>You can add photos and more details after creating the project.</p>
       </div>
 
       {/* Timescale */}
       {isConfirmationView ? (
         !formData.isEmergency ? (
           <div className="grid gap-1">
-            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
+            <label className={`text-sm font-medium ${
+              mode === 'create' ? 'text-white' : 'text-slate-800'
+            }`}>I need this completed by</label>
             <input
               type="date"
               value={formData.endDate || ''}
               onChange={(e) => handleChange('endDate', e.target.value)}
               disabled={isReadOnly || isSubmitting}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className={`rounded-md border px-3 py-2 text-sm ${
+                mode === 'create'
+                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400'
+                  : 'border-slate-300'
+              }`}
             />
           </div>
         ) : (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className={`rounded-md border px-3 py-2 text-sm ${
+            mode === 'create'
+              ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
+              : 'border-rose-200 bg-rose-50 text-rose-700'
+          }`}>
             Emergency project detected — completion-by date is optional and hidden in this quick confirmation view.
           </div>
         )
@@ -805,9 +895,13 @@ export function ProjectForm({
                 checked={!!formData.isEmergency}
                 onChange={(e) => handleChange('isEmergency', e.target.checked)}
                 disabled={isReadOnly || isSubmitting}
-                className="h-4 w-4 rounded border-slate-300"
+                className={`h-4 w-4 rounded ${
+                  mode === 'create' ? 'border-slate-600 accent-blue-400' : 'border-slate-300'
+                }`}
               />
-              <label htmlFor="isEmergency" className="text-sm font-medium text-slate-800">This is an emergency</label>
+              <label htmlFor="isEmergency" className={`text-sm font-medium ${
+                mode === 'create' ? 'text-white' : 'text-slate-800'
+              }`}>This is an emergency</label>
             </div>
             <div className="flex items-start gap-2">
               <input
@@ -816,21 +910,31 @@ export function ProjectForm({
                 checked={formData.onlySelectedProfessionalsCanBid ?? true}
                 onChange={(e) => handleChange('onlySelectedProfessionalsCanBid', e.target.checked)}
                 disabled={isReadOnly || isSubmitting}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                className={`mt-0.5 h-4 w-4 rounded ${
+                  mode === 'create' ? 'border-slate-600 accent-blue-400' : 'border-slate-300'
+                }`}
               />
-              <label htmlFor="onlySelectedProfessionalsCanBid" className="text-sm font-medium text-slate-800">
+              <label htmlFor="onlySelectedProfessionalsCanBid" className={`text-sm font-medium ${
+                mode === 'create' ? 'text-white' : 'text-slate-800'
+              }`}>
                 Only allow professionals that I select to bid on this project
               </label>
             </div>
           </div>
           <div className="grid gap-1">
-            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
+            <label className={`text-sm font-medium ${
+              mode === 'create' ? 'text-white' : 'text-slate-800'
+            }`}>I need this completed by</label>
             <input
               type="date"
               value={formData.endDate || ''}
               onChange={(e) => handleChange('endDate', e.target.value)}
               disabled={isReadOnly || isSubmitting}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className={`rounded-md border px-3 py-2 text-sm ${
+                mode === 'create'
+                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400'
+                  : 'border-slate-300'
+              }`}
             />
           </div>
         </div>
@@ -839,7 +943,9 @@ export function ProjectForm({
       {/* File Upload */}
       {!isReadOnly && (
         <div>
-          <label className="block text-sm font-semibold text-slate-900 mb-2">Photos (optional)</label>
+          <label className={`block text-sm font-semibold mb-2 ${
+            mode === 'create' ? 'text-white' : 'text-slate-900'
+          }`}>Photos (optional)</label>
           <FileUploader
             maxFiles={MAX_FILES}
             maxFileSize={MAX_FILE_SIZE}
@@ -847,32 +953,43 @@ export function ProjectForm({
             showUploadAction={false}
           />
           {pendingFiles.length > 0 && (
-            <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700 mt-2">
+            <div className={`rounded-md border px-3 py-2 text-xs mt-2 ${
+              mode === 'create'
+                ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
+                : 'bg-blue-50 border-blue-200 text-blue-700'
+            }`}>
               📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
             </div>
           )}
           {existingPhotos.length > 0 && (
-            <div className="mt-3 space-y-2 text-xs text-slate-700">
-              <div className="font-semibold text-slate-900">Existing photos</div>
+            <div className={`mt-3 space-y-2 text-xs ${
+              mode === 'create' ? 'text-slate-300' : 'text-slate-700'
+            }`}>
+              <div className={`font-semibold ${
+                mode === 'create' ? 'text-white' : 'text-slate-900'
+              }`}>Existing photos</div>
               <div className="flex flex-wrap gap-2">
-                {existingPhotos.map((photo) => (
-                  <div
-                    key={photo.id || photo.url}
-                    className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
-                  >
-                    <img src={photo.url} alt="Project photo" className="h-full w-full object-cover" />
-                    {!isReadOnly && (
-                      <button
-                        type="button"
-                        className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
-                        onClick={() => handleRemoveExistingPhoto(photo.id || photo.url)}
-                        aria-label="Remove photo"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {existingPhotos.map((photo) => {
+                  // Keep existing photo styling consistent
+                  return (
+                    <div
+                      key={photo.id || photo.url}
+                      className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+                    >
+                      <img src={photo.url} alt="Project photo" className="h-full w-full object-cover" />
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
+                          onClick={() => handleRemoveExistingPhoto(photo.id || photo.url)}
+                          aria-label="Remove photo"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -881,7 +998,11 @@ export function ProjectForm({
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 p-4 text-sm">
+        <div className={`rounded-lg border p-4 text-sm ${
+          mode === 'create'
+            ? 'border-red-500/40 bg-red-500/10 text-red-200'
+            : 'bg-red-50 border-red-200 text-red-700'
+        }`}>
           {error}
         </div>
       )}
@@ -962,3 +1083,4 @@ export function ProjectForm({
     </form>
   );
 }
+
