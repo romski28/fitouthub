@@ -22,6 +22,9 @@ export class AssistRequestsController {
       projectId: string;
       notes?: string;
       userId?: string;
+      professionalId?: string;
+      raisedBy?: 'client' | 'professional' | 'foh';
+      category?: 'payment' | 'delay' | 'quality' | 'safety' | 'dispute' | 'general';
       clientName?: string;
       projectName?: string;
       contactMethod?: 'chat' | 'call' | 'whatsapp';
@@ -33,6 +36,9 @@ export class AssistRequestsController {
       return await this.service.createRequest({
         projectId: body.projectId,
         userId: body.userId,
+        professionalId: body.professionalId,
+        raisedBy: body.raisedBy,
+        category: body.category,
         notes: body.notes,
         clientName: body.clientName,
         projectName: body.projectName,

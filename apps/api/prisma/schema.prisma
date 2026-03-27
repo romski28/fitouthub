@@ -472,7 +472,10 @@ model Message {
 model ProjectAssistRequest {
   id        String          @id @default(cuid())
   projectId String
-  userId    String?
+  userId    String?         // client who raised
+  professionalId String?    // professional who raised (if applicable)
+  category  String          @default("general") // payment | delay | quality | safety | dispute | general
+  raisedBy  String          @default("client")  // client | professional | foh
   status    String          @default("open") // open | in_progress | closed
   contactMethod String      @default("chat") // chat | call | whatsapp
   requestedCallAt DateTime?
@@ -486,16 +489,21 @@ model ProjectAssistRequest {
   resolutionMode String?
   reopenedAt DateTime?
   statusTimeline Json?       @default("[]")
+  caseId    String?          // backlink to Case
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
   project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user      User?           @relation("UserAssistRequests", fields: [userId], references: [id], onDelete: SetNull)
   messages  AssistMessage[]
+  case      Case?           @relation(fields: [caseId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([status])
   @@index([contactMethod])
   @@index([requestedCallAt])
+  @@index([professionalId])
+  @@index([category])
+  @@index([caseId])
 }
 
 model AssistMessage {
@@ -1135,3 +1143,60 @@ model SupportRequest {
     @@index([projectId])
     @@map("ai_intakes")
   }
+
+// ============================================================
+// Case Management
+// ============================================================
+
+model Case {
+  id              String    @id @default(cuid())
+  caseNumber      String    @unique // FOH-YYYY-NNNNN
+  title           String?
+  category        String    @default("general") // payment | delay | quality | safety | dispute | general
+  status          String    @default("open")     // open | awaiting_client | in_progress | resolved | closed
+  priority        String    @default("normal")   // low | normal | high | urgent
+  raisedBy        String    @default("client")   // client | professional | foh
+
+  projectId       String?
+  clientUserId    String?
+  professionalId  String?   // professional who raised or is subject
+  assignedAdminId String?
+
+  // binds to exactly one thread source
+  assistRequestId String?   @unique
+  privateChatId   String?   @unique
+  supportRequestId String?  @unique
+
+  // SLA
+  slaDeadline     DateTime  // createdAt + 1 hour
+  firstRepliedAt  DateTime?
+  slaBreachedAt   DateTime?
+  resolvedAt      DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  notes           CaseNote[]
+  assistRequests  ProjectAssistRequest[]
+
+  @@index([status])
+  @@index([projectId])
+  @@index([clientUserId])
+  @@index([professionalId])
+  @@index([assignedAdminId])
+  @@index([slaDeadline])
+  @@index([createdAt])
+  @@index([category])
+}
+
+model CaseNote {
+  id        String   @id @default(cuid())
+  caseId    String
+  adminId   String
+  content   String
+  createdAt DateTime @default(now())
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([adminId])
+}

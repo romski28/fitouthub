@@ -17,6 +17,7 @@ import { ContractTab } from './tabs/contract-tab';
 import { FinancialsTab } from './tabs/financials-tab';
 import { ScheduleTab } from './tabs/schedule-tab';
 import { ChatTab } from './tabs/chat-tab';
+import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 
 interface ProjectDetail {
   id: string;
@@ -133,6 +134,9 @@ export default function ProjectDetailPage() {
   const [visitResponseNotes, setVisitResponseNotes] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({});
+  const [assistOpen, setAssistOpen] = useState(false);
+  const [assistModalSubmitting, setAssistModalSubmitting] = useState(false);
+  const [assistModalError, setAssistModalError] = useState<string | null>(null);
 
   const toggleAccordion = (id: string) => {
     setExpandedAccordions((prev) => ({
@@ -1026,6 +1030,55 @@ export default function ProjectDetailPage() {
       ? advanceRequestForm.amount
       : advanceRequestForm.percentage;
 
+  const handleSubmitAssistRequest = async (assistConfig: AssistRequestModalSubmit) => {
+    if (!project?.project?.id) return;
+
+    setAssistModalError(null);
+    setAssistModalSubmitting(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/assist-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          projectId: project.project.id,
+          professionalId: project.professionalId || undefined,
+          raisedBy: 'professional',
+          category: assistConfig.category,
+          notes: assistConfig.notes,
+          projectName: project.project.projectName,
+          contactMethod: assistConfig.contactMethod,
+          requestedCallAt: assistConfig.requestedCallAt,
+          requestedCallTimezone: assistConfig.requestedCallTimezone,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const message = data?.message || 'Failed to create support request';
+        setAssistModalError(message);
+        toast.error(message);
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!data?.caseNumber) {
+        setAssistOpen(false);
+        toast.success('Support request sent to Fitout Hub.');
+      }
+      return { caseNumber: data?.caseNumber };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create support request';
+      setAssistModalError(message);
+      toast.error(message);
+    } finally {
+      setAssistModalSubmitting(false);
+    }
+  };
+
   const awardedAmountValue = project.quoteAmount ? Number(project.quoteAmount) : undefined;
   const projectBudgetValue = project.project.budget ? Number(project.project.budget) : undefined;
   const totalRequested = mappedPaymentRequests.reduce((sum, request) => sum + request.amount, 0);
@@ -1052,6 +1105,16 @@ export default function ProjectDetailPage() {
             <Link href="/professional-projects" className="text-sm text-blue-600 hover:underline">
               ← Back to my projects
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setAssistModalError(null);
+                setAssistOpen(true);
+              }}
+              className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
+            >
+              Request PM Support
+            </button>
           </div>
 
           <div className="space-y-0">
@@ -1215,6 +1278,21 @@ export default function ProjectDetailPage() {
       </div>
 
       <Toaster position="top-right" />
+
+      <AssistRequestModal
+        isOpen={assistOpen}
+        onClose={() => {
+          if (assistModalSubmitting) return;
+          setAssistOpen(false);
+        }}
+        onSubmit={handleSubmitAssistRequest}
+        isSubmitting={assistModalSubmitting}
+        error={assistModalError}
+        initialNotes="Professional support request for active project coordination."
+        projectName={project?.project?.projectName}
+        context="active"
+        submitPrefix="Request"
+      />
     </>
   );
 }

@@ -6,6 +6,9 @@ import { RealtimeService } from '../realtime/realtime.service';
 interface CreateAssistRequestDto {
   projectId: string;
   userId?: string;
+  professionalId?: string;  // professional raising the request
+  raisedBy?: 'client' | 'professional' | 'foh';
+  category?: 'payment' | 'delay' | 'quality' | 'safety' | 'dispute' | 'general';
   notes?: string;
   clientName?: string;
   projectName?: string;
@@ -166,6 +169,53 @@ export class AssistRequestsService {
     private realtime: RealtimeService,
   ) {}
 
+  /**
+   * Generate a case number and create a Case row, then backlink the AssistRequest.
+   * Case number format: FOH-YYYY-NNNNN (uses DB sequence function)
+   */
+  private async createCaseForAssist(params: {
+    assistRequestId: string;
+    projectId: string;
+    category: string;
+    raisedBy: string;
+    clientUserId?: string | null;
+    professionalId?: string | null;
+    title?: string;
+  }): Promise<{ caseId: string; caseNumber: string }> {
+    // Use the DB function to get the next case number
+    const seqResult = await this.prisma.$queryRaw<[{ next_case_number: string }]>`
+      SELECT next_case_number() AS next_case_number
+    `;
+    const caseNumber = seqResult[0]?.next_case_number;
+    if (!caseNumber) throw new Error('Failed to generate case number');
+
+    const slaDeadline = new Date(Date.now() + 60 * 60 * 1000); // +1 hour
+
+    const created = await (this.prisma as any).case.create({
+      data: {
+        caseNumber,
+        title: params.title || null,
+        category: params.category,
+        status: 'open',
+        priority: params.category === 'safety' ? 'urgent' : params.category === 'dispute' ? 'high' : 'normal',
+        raisedBy: params.raisedBy,
+        projectId: params.projectId,
+        clientUserId: params.clientUserId || null,
+        professionalId: params.professionalId || null,
+        assistRequestId: params.assistRequestId,
+        slaDeadline,
+      },
+    } as any);
+
+    // Write caseId back to the assist request
+    await (this.prisma as any).projectAssistRequest.update({
+      where: { id: params.assistRequestId },
+      data: { caseId: created.id },
+    });
+
+    return { caseId: created.id, caseNumber };
+  }
+
   async createRequest(dto: CreateAssistRequestDto) {
     if (!dto.projectId) throw new BadRequestException('projectId is required');
 
@@ -234,7 +284,10 @@ export class AssistRequestsService {
     const created = await (this.prisma as any).projectAssistRequest.create({
       data: {
         projectId: dto.projectId,
-        userId: dto.userId,
+        userId: dto.userId || null,
+        professionalId: dto.professionalId || null,
+        raisedBy: dto.raisedBy || (dto.professionalId ? 'professional' : 'client'),
+        category: dto.category || 'general',
         status: 'open',
         contactMethod,
         requestedCallAt,
@@ -242,6 +295,24 @@ export class AssistRequestsService {
         notes: dto.notes?.trim() || null,
       },
     });
+
+    // Auto-create a Case and link it
+    let caseNumber: string | null = null;
+    try {
+      const caseResult = await this.createCaseForAssist({
+        assistRequestId: created.id,
+        projectId: dto.projectId,
+        category: dto.category || 'general',
+        raisedBy: dto.raisedBy || (dto.professionalId ? 'professional' : 'client'),
+        clientUserId: dto.userId || null,
+        professionalId: dto.professionalId || null,
+        title: dto.projectName ? `${dto.projectName} – ${dto.category || 'general'}` : undefined,
+      });
+      caseNumber = caseResult.caseNumber;
+      created.caseNumber = caseNumber; // attach to returned object
+    } catch (err) {
+      console.warn('[AssistRequestsService] Case creation failed (non-fatal):', err);
+    }
 
     // Seed an initial message so FOH has context
     if (dto.notes?.trim()) {
@@ -380,6 +451,20 @@ export class AssistRequestsService {
               email: true,
             },
           },
+          case: {
+            select: {
+              id: true,
+              caseNumber: true,
+              category: true,
+              status: true,
+              raisedBy: true,
+              slaDeadline: true,
+              firstRepliedAt: true,
+              slaBreachedAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
         },
       }),
       (this.prisma as any).projectAssistRequest.count({ where }),
@@ -401,7 +486,7 @@ export class AssistRequestsService {
 
     const assist = await (this.prisma as any).projectAssistRequest.findUnique({
       where: { id: assistRequestId },
-      select: { id: true, status: true, statusTimeline: true, userId: true, projectId: true },
+      select: { id: true, status: true, statusTimeline: true, userId: true, projectId: true, caseId: true },
     });
     if (!assist) throw new BadRequestException('Assist request not found');
 
@@ -413,6 +498,34 @@ export class AssistRequestsService {
         content: content.trim(),
       },
     });
+
+    if (sender === 'foh' && assist.caseId) {
+      const linkedCase = await (this.prisma as any).case.findUnique({
+        where: { id: assist.caseId },
+        select: {
+          id: true,
+          status: true,
+          slaDeadline: true,
+          firstRepliedAt: true,
+          slaBreachedAt: true,
+        },
+      });
+
+      if (linkedCase && !linkedCase.firstRepliedAt) {
+        const now = new Date();
+        await (this.prisma as any).case.update({
+          where: { id: linkedCase.id },
+          data: {
+            firstRepliedAt: now,
+            slaBreachedAt:
+              linkedCase.slaDeadline && now.getTime() > new Date(linkedCase.slaDeadline).getTime()
+                ? linkedCase.slaBreachedAt || now
+                : linkedCase.slaBreachedAt || null,
+            status: linkedCase.status === 'open' ? 'in_progress' : linkedCase.status,
+          },
+        });
+      }
+    }
 
     if (assist.status === 'closure_pending' || assist.status === 'closed') {
       await (this.prisma as any).projectAssistRequest.update({

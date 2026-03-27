@@ -1412,6 +1412,8 @@ export default function ClientProjectDetailPage() {
         body: JSON.stringify({
           projectId,
           notes: assistConfig.notes,
+          category: assistConfig.category,
+          raisedBy: 'client',
           contactMethod: assistConfig.contactMethod,
           requestedCallAt: assistConfig.requestedCallAt,
           requestedCallTimezone: assistConfig.requestedCallTimezone,
@@ -1421,18 +1423,20 @@ export default function ClientProjectDetailPage() {
       if (res.ok) {
         const d = await res.json().catch(() => ({}));
         if (d?.id) setAssistRequestId(d.id);
-        setAssistOpen(false);
-
-        toast.success(
-          assistConfig.contactMethod === 'call'
-            ? 'Call request sent to Fitout Hub.'
-            : assistConfig.contactMethod === 'whatsapp'
-              ? 'WhatsApp request sent to Fitout Hub.'
-              : 'Chat assistance request sent to Fitout Hub.',
-        );
+        if (!d?.caseNumber) {
+          setAssistOpen(false);
+          toast.success(
+            assistConfig.contactMethod === 'call'
+              ? 'Call request sent to Fitout Hub.'
+              : assistConfig.contactMethod === 'whatsapp'
+                ? 'WhatsApp request sent to Fitout Hub.'
+                : 'Chat assistance request sent to Fitout Hub.',
+          );
+        }
 
         setViewingAssistChat(true);
         setActiveTab('chat');
+        return { caseNumber: d?.caseNumber };
       } else {
         const data = await res.json().catch(() => ({}));
         const message = data?.message || 'Failed to create assistance request';
@@ -2220,6 +2224,7 @@ export default function ClientProjectDetailPage() {
         error={assistModalError}
         initialNotes="Quote overdue: no professional submitted a quote within the allowed window. Requesting assistance."
         projectName={project?.projectName}
+        context="active"
         submitPrefix="Request"
       />
     </div>

@@ -9,12 +9,27 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 type AssistRequest = {
   id: string;
   status: string;
+  category?: string;
+  raisedBy?: string;
+  professionalId?: string | null;
   contactMethod?: 'chat' | 'call' | 'whatsapp' | string;
   requestedCallAt?: string | null;
   requestedCallTimezone?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
+  case?: {
+    id: string;
+    caseNumber: string;
+    category?: string;
+    status: string;
+    raisedBy?: string;
+    slaDeadline?: string | null;
+    firstRepliedAt?: string | null;
+    slaBreachedAt?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
   project: { id: string; projectName: string; status: string; region: string; clientName: string };
   user?: { id: string; firstName?: string; surname?: string; email?: string } | null;
 };
@@ -70,7 +85,7 @@ export default function AdminMessagingPage() {
   const searchParams = useSearchParams();
   const initialView = (() => {
     const value = searchParams.get('view');
-    if (value === 'assist' || value === 'general' || value === 'all' || value === 'conversations') return value;
+    if (value === 'assist' || value === 'general' || value === 'all' || value === 'conversations' || value === 'cases') return value;
     return 'all';
   })();
   const initialAssistStatus = (() => {
@@ -121,7 +136,7 @@ export default function AdminMessagingPage() {
   })();
   const initialClientId = searchParams.get('clientId') || '';
 
-  const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all' | 'conversations'>(initialView);
+  const [viewMode, setViewMode] = useState<'assist' | 'general' | 'all' | 'conversations' | 'cases'>(initialView);
   const [statusTab, setStatusTab] = useState<"open" | "in_progress" | "closure_pending" | "closed">(initialAssistStatus);
   const [typeFilter, setTypeFilter] = useState<'all' | 'support' | 'supplier-client' | 'anonymous' | 'project'>(initialType);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed'>(initialStatus);
@@ -213,6 +228,9 @@ export default function AdminMessagingPage() {
     if (viewMode === 'assist' || viewMode === 'all') {
       fetchAssistRequests();
     }
+    if (viewMode === 'cases') {
+      fetchAssistRequests();
+    }
     if (viewMode === 'general' || viewMode === 'all') {
       fetchChatThreads();
     }
@@ -223,8 +241,17 @@ export default function AdminMessagingPage() {
   }, [viewMode, statusTab, conversationChannel, conversationStatus, conversationClientId]);
 
   useEffect(() => {
+    if (viewMode !== 'cases') return;
+    const interval = window.setInterval(() => {
+      fetchAssistRequests();
+    }, 30000);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, statusTab]);
+
+  useEffect(() => {
     const view = searchParams.get('view');
-    if (view === 'assist' || view === 'general' || view === 'all' || view === 'conversations') {
+    if (view === 'assist' || view === 'general' || view === 'all' || view === 'conversations' || view === 'cases') {
       setViewMode(view);
     }
 
@@ -274,7 +301,7 @@ export default function AdminMessagingPage() {
   }, [searchParams]);
 
   const updateQuery = (updates: {
-    view?: 'assist' | 'general' | 'all' | 'conversations';
+    view?: 'assist' | 'general' | 'all' | 'conversations' | 'cases';
     assistStatus?: 'open' | 'in_progress' | 'closure_pending' | 'closed';
     type?: 'all' | 'support' | 'supplier-client' | 'anonymous' | 'project';
     status?: 'all' | 'open' | 'in_progress' | 'closure_pending' | 'closed';
@@ -298,6 +325,11 @@ export default function AdminMessagingPage() {
   };
 
   const handleViewModeChange = (mode: 'assist' | 'general' | 'all' | 'conversations') => {
+    setViewMode(mode);
+    updateQuery({ view: mode });
+  };
+
+  const handleCaseViewModeChange = (mode: 'assist' | 'general' | 'all' | 'conversations' | 'cases') => {
     setViewMode(mode);
     updateQuery({ view: mode });
   };
@@ -600,6 +632,46 @@ export default function AdminMessagingPage() {
     return 'In-platform chat';
   };
 
+  const getSlaVisual = (req: AssistRequest) => {
+    const now = Date.now();
+    const createdAt = new Date(req.createdAt).getTime();
+    const isNew = now - createdAt <= 5 * 60 * 1000;
+    const firstRepliedAt = req.case?.firstRepliedAt ? new Date(req.case.firstRepliedAt).getTime() : null;
+    const slaDeadline = req.case?.slaDeadline ? new Date(req.case.slaDeadline).getTime() : null;
+    const isBreached = !firstRepliedAt && !!slaDeadline && now > slaDeadline;
+    const isDueSoon = !firstRepliedAt && !!slaDeadline && slaDeadline - now <= 20 * 60 * 1000 && slaDeadline - now > 0;
+
+    if (isBreached) {
+      return {
+        wrapper: 'border-rose-300 ring-2 ring-rose-100',
+        badge: 'bg-rose-100 text-rose-800 border border-rose-200',
+        label: 'SLA breached',
+      };
+    }
+
+    if (isDueSoon) {
+      return {
+        wrapper: 'border-amber-300 ring-2 ring-amber-100',
+        badge: 'bg-amber-100 text-amber-800 border border-amber-200',
+        label: 'SLA due soon',
+      };
+    }
+
+    if (isNew) {
+      return {
+        wrapper: 'border-emerald-300 ring-2 ring-emerald-100',
+        badge: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+        label: 'New (<5 min)',
+      };
+    }
+
+    return {
+      wrapper: 'border-slate-200',
+      badge: 'bg-slate-100 text-slate-700 border border-slate-200',
+      label: 'Within SLA',
+    };
+  };
+
   const statusEligible = (msgType: string) => ['support', 'supplier-client', 'anonymous'].includes(msgType);
   const filterButtonBase = 'min-w-[150px] h-10 rounded-md px-4 text-sm font-semibold border transition flex items-center justify-center gap-2';
   const smallFilterButtonBase = 'min-w-[150px] h-9 rounded-md px-3 text-sm font-semibold border transition flex items-center justify-center gap-2';
@@ -661,7 +733,180 @@ export default function AdminMessagingPage() {
         >
           🧭 Conversations
         </button>
+        <button
+          onClick={() => handleCaseViewModeChange('cases')}
+          className={`${filterButtonBase} ${
+            viewMode === 'cases'
+              ? 'bg-rose-700 text-white border-rose-800'
+              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          🗂️ Cases
+        </button>
       </div>
+
+      {viewMode === 'cases' && (
+        <>
+          <div className="flex gap-2 items-center">
+            <span className="text-sm font-medium text-slate-600">Case Status:</span>
+            {(['open', 'in_progress', 'closure_pending', 'closed'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => handleAssistStatusChange(status)}
+                className={`${smallFilterButtonBase} ${
+                  statusTab === status
+                    ? 'bg-rose-600 text-white border-rose-700'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {status === 'open'
+                  ? '📖 Open'
+                  : status === 'in_progress'
+                    ? '⏳ In Progress'
+                    : status === 'closure_pending'
+                      ? '💤 Pending Closure'
+                      : '✅ Closed'}
+              </button>
+            ))}
+            <div className="ml-auto text-sm text-slate-600">
+              {requests.filter((req) => !!req.case).length} cases
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              {assistLoading ? (
+                <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">Loading...</div>
+              ) : requests.filter((req) => !!req.case).length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">No cases found.</div>
+              ) : (
+                requests
+                  .filter((req) => !!req.case)
+                  .map((req) => {
+                    const visual = getSlaVisual(req);
+                    return (
+                      <div
+                        key={req.id}
+                        className={`rounded-lg border ${
+                          activeId === req.id && activeType === 'assist'
+                            ? 'border-emerald-300 ring-2 ring-emerald-100'
+                            : visual.wrapper
+                        } bg-white p-4 shadow-sm cursor-pointer hover:border-slate-300 transition`}
+                        onClick={() => openAssistThread(req.id)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${visual.badge}`}>
+                                {visual.label}
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 border border-indigo-200">
+                                {req.case?.caseNumber || 'Case pending'}
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
+                                {(req.case?.category || req.category || 'general').replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div className="text-sm font-semibold text-slate-900">{req.project.projectName}</div>
+                            <div className="text-xs text-slate-600">
+                              {req.project.region} • {req.project.clientName}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-600">
+                              Raised by: {req.case?.raisedBy || req.raisedBy || 'client'}
+                            </div>
+                            {req.case?.slaDeadline && !req.case?.firstRepliedAt && (
+                              <div className="mt-1 text-xs text-slate-600">
+                                SLA deadline: {new Date(req.case.slaDeadline).toLocaleString('en-GB')}
+                              </div>
+                            )}
+                            {req.notes && (
+                              <p className="mt-1 text-xs text-slate-700 line-clamp-2">{req.notes}</p>
+                            )}
+                            <div className="mt-1 text-xs text-slate-500">{new Date(req.createdAt).toLocaleString()}</div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span className="inline-block rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                              {req.status.replace('_', ' ')}
+                            </span>
+                            <div className="mt-2">
+                              <Link
+                                href={`/projects/${req.project.id}`}
+                                className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Open project
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+
+            {activeId && activeType === 'assist' && (
+              <div className="rounded-lg border border-slate-200 bg-white shadow-sm flex flex-col h-[600px]">
+                <div className="p-4 border-b border-slate-200">
+                  <h3 className="text-sm font-semibold text-slate-900">Case Messages</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {msgLoading ? (
+                    <div className="text-center text-slate-500 text-sm">Loading messages...</div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center text-slate-500 text-sm">No messages yet.</div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isFoh = msg.senderType === 'foh';
+                      return (
+                        <div key={msg.id} className={`flex ${isFoh ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                              isFoh ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-900'
+                            }`}
+                          >
+                            {!isFoh && <div className="text-xs font-semibold mb-1 text-slate-600">User</div>}
+                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                            <div className={`text-xs mt-1 ${isFoh ? 'text-emerald-100' : 'text-slate-500'}`}>
+                              {new Date(msg.createdAt).toLocaleString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                day: '2-digit',
+                                month: 'short',
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                <div className="p-4 border-t border-slate-200">
+                  {error && <div className="mb-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">{error}</div>}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={msgText}
+                      onChange={(e) => setMsgText(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !msgSubmitting && sendMessage()}
+                      placeholder="Type a message..."
+                      disabled={msgSubmitting}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!msgText.trim() || msgSubmitting}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+                    >
+                      {msgSubmitting ? '...' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {viewMode === 'conversations' && (
         <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
