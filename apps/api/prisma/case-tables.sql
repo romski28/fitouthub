@@ -76,6 +76,10 @@ ALTER TABLE "ProjectAssistRequest"
 ALTER TABLE "ProjectAssistRequest"
     ADD COLUMN IF NOT EXISTS "category" TEXT NOT NULL DEFAULT 'general';
 
+-- Who raised it
+ALTER TABLE "ProjectAssistRequest"
+    ADD COLUMN IF NOT EXISTS "raisedBy" TEXT NOT NULL DEFAULT 'client';
+
 -- Binding link back to the Case
 ALTER TABLE "ProjectAssistRequest"
     ADD COLUMN IF NOT EXISTS "caseId" TEXT;
