@@ -382,6 +382,12 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
     const assumptionsBlock = (aiStructured.assumptions || [])
       .map((assumption) => (assumption || '').trim())
       .filter((assumption) => assumption.length > 0);
+    const followUpBlock = (payload.followUpAnswers || [])
+      .map((item) => ({
+        question: (item.question || '').trim(),
+        answer: (item.answer || '').trim(),
+      }))
+      .filter((item) => item.question.length > 0 && item.answer.length > 0);
 
     const notesSections: string[] = [];
     if (summaryBlock) {
@@ -389,6 +395,13 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
     }
     if (assumptionsBlock.length > 0) {
       notesSections.push(`Assumptions:\n${assumptionsBlock.map((assumption) => `- ${assumption}`).join('\n')}`);
+    }
+    if (followUpBlock.length > 0) {
+      notesSections.push(
+        `Additional Questions & Answers:\n${followUpBlock
+          .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
+          .join('\n\n')}`,
+      );
     }
 
     const combinedNotes = notesSections.join('\n\n').trim();

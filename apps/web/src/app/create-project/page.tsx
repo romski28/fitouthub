@@ -185,7 +185,7 @@ export default function CreateProjectPage() {
   }, [hydrated, isLoggedIn]);
 
   if (!hydrated || isLoggedIn === undefined) {
-    return <div className="min-h-screen bg-slate-50" />;
+    return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />;
   }
 
   if (isLoggedIn === false) return null;
@@ -365,7 +365,7 @@ export default function CreateProjectPage() {
   const emergencySummary = initialFormData.isEmergency ?? descriptionData?.isEmergency;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
       <ProjectDescriptionModal
         isOpen={showDescriptionModal}
         onSubmit={(data) => {
@@ -394,14 +394,14 @@ export default function CreateProjectPage() {
         <div className="mb-6">
           <Link
             href="/projects"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200 transition hover:text-white"
           >
             <span aria-hidden="true">←</span>
             {t('create.backLink')}
           </Link>
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-sm">
+        <section className="overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-sm">
           <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Project creation</p>
@@ -427,7 +427,7 @@ export default function CreateProjectPage() {
         </section>
 
         {!showDescriptionModal && (
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="mt-8 rounded-2xl border border-slate-700/60 bg-white shadow-xl shadow-slate-950/30">
             <div className="border-b border-slate-200 px-6 py-4">
               <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
               <p className="mt-1 text-sm text-slate-600">
