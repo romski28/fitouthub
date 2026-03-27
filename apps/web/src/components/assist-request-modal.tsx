@@ -79,12 +79,12 @@ function formatRequestedSlot(dateValue: string, timeValue: string) {
 }
 
 const CATEGORIES: { value: AssistCategory; label: string; emoji: string }[] = [
-  { value: "payment",  label: "Payment issue",    emoji: "??" },
-  { value: "delay",    label: "Schedule / delay", emoji: "??" },
-  { value: "quality",  label: "Quality concern",  emoji: "??" },
-  { value: "safety",   label: "Safety concern",   emoji: "??" },
-  { value: "dispute",  label: "Dispute",          emoji: "??" },
-  { value: "general",  label: "General advice",   emoji: "??" },
+  { value: "payment",  label: "Payment issue",    emoji: "\u{1F4B0}" },
+  { value: "delay",    label: "Schedule / delay", emoji: "\u{1F4C5}" },
+  { value: "quality",  label: "Quality concern",  emoji: "\u{1F50D}" },
+  { value: "safety",   label: "Safety concern",   emoji: "\u{26A0}\u{FE0F}" },
+  { value: "dispute",  label: "Dispute",          emoji: "\u{2696}\u{FE0F}" },
+  { value: "general",  label: "General advice",   emoji: "\u{1F4AC}" },
 ];
 
 export function AssistRequestModal({
@@ -153,7 +153,7 @@ export function AssistRequestModal({
     return (
       <ModalOverlay isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
         <div className="space-y-5 text-center py-4">
-          <div className="text-5xl">?</div>
+          <div className="text-5xl">{"\u{2705}"}</div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-600 mb-1">Case raised</p>
             <h2 className="text-2xl font-bold text-slate-900">We are on it</h2>
@@ -231,9 +231,9 @@ export function AssistRequestModal({
           )}
           <div className="grid gap-3 md:grid-cols-3">
             {[
-              { value: "chat",      title: "In-platform chat",    description: "Continue in the FoH chat thread.",             emoji: "??" },
-              { value: "call",      title: "Book a call",         description: "Request a call with a coordinator.",           emoji: "??" },
-              { value: "whatsapp",  title: "Please WhatsApp me",  description: "FoH will follow up on WhatsApp.",              emoji: "??" },
+              { value: "chat",      title: "In-platform chat",    description: "Continue in the FoH chat thread.",             emoji: "\u{1F4AC}" },
+              { value: "call",      title: "Book a call",         description: "Request a call with a coordinator.",           emoji: "\u{1F4DE}" },
+              { value: "whatsapp",  title: "Please WhatsApp me",  description: "FoH will follow up on WhatsApp.",              emoji: "\u{1F7E2}" },
             ].map((option) => {
               const active = contactMethod === option.value;
               return (

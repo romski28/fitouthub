@@ -93,7 +93,6 @@ export default function FloatingChat() {
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
   const chatContext = getChatContextFromPath(pathname);
-  const isProjectDetailPage = chatContext.pageType === 'project_view';
 
   // Close chat and clear state on logout
   useEffect(() => {
@@ -457,9 +456,8 @@ export default function FloatingChat() {
     }
   };
 
-  // Don't show on admin pages or project detail pages.
-  // Project pages now have their own explicit PM support / case entry points.
-  if (isAdminPage || isProjectDetailPage) return null;
+  // Don't show on admin pages.
+  if (isAdminPage) return null;
 
   return (
     <>
@@ -470,7 +468,7 @@ export default function FloatingChat() {
           <div className="flex items-center justify-between bg-blue-600 text-white px-4 py-3 rounded-t-lg">
             <div>
               <h3 className="font-semibold">Chat with Fitout Hub</h3>
-              <p className="text-xs text-blue-100">{isLoggedIn ? 'Private support chat' : 'Anonymous chat'}</p>
+              <p className="text-xs text-blue-100">{isLoggedIn ? 'Private general support chat.' : 'Anonymous chat'}</p>
             </div>
             <button
               onClick={() => setIsOpen(false)}
