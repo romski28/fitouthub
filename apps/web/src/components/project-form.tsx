@@ -533,7 +533,10 @@ export function ProjectForm({
 
   // Full project creation/edit form
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-6">
+    <form
+      onSubmit={handleFormSubmit}
+      className={mode === 'create' ? 'space-y-6 px-6 py-6 text-white sm:px-8 sm:py-8' : 'space-y-6'}
+    >
       {/* Professional List (if applicable) */}
       {displayNames.length > 0 && (
         <div className={`rounded-md border p-3 ${
@@ -741,18 +744,26 @@ export function ProjectForm({
           }`}>
             Required Trades/Services {!isReadOnly && '*'}
           </label>
-          <div className="flex flex-wrap gap-2 rounded-lg border border-slate-300 px-4 py-2.5 min-h-[46px] focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+          <div className={`flex min-h-[46px] flex-wrap gap-2 rounded-lg border px-4 py-2.5 ${
+            mode === 'create'
+              ? 'border-slate-600 bg-white/5 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400'
+              : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500'
+          }`}>
             {formData.tradesRequired.map((trade, idx) => (
               <span
                 key={`${trade}-${idx}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700"
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
+                  mode === 'create'
+                    ? 'bg-blue-500/20 text-blue-100'
+                    : 'bg-blue-100 text-blue-700'
+                }`}
               >
                 {trade}
                 <button
                   type="button"
                   onClick={() => handleChange('tradesRequired', formData.tradesRequired.filter((_, i) => i !== idx))}
                   disabled={isReadOnly || isSubmitting}
-                  className="hover:text-blue-900 disabled:opacity-50"
+                  className={mode === 'create' ? 'hover:text-white disabled:opacity-50' : 'hover:text-blue-900 disabled:opacity-50'}
                 >
                   ×
                 </button>
@@ -770,10 +781,18 @@ export function ProjectForm({
                 placeholder={formData.tradesRequired.length === 0 ? "Select trades..." : "Add another..."}
                 disabled={isReadOnly || isSubmitting}
                 required={!isReadOnly && formData.tradesRequired.length === 0}
-                className="w-full border-0 bg-transparent px-2 py-1 text-base outline-none disabled:bg-slate-50"
+                className={`w-full border-0 bg-transparent px-2 py-1 text-base outline-none ${
+                  mode === 'create'
+                    ? 'text-white placeholder-slate-400 disabled:text-slate-500'
+                    : 'disabled:bg-slate-50'
+                }`}
               />
               {showTradeDropdown && filteredTrades.length > 0 && !isReadOnly && !isSubmitting && (
-                <div className="absolute top-full left-0 z-10 mt-1 max-h-60 w-full min-w-[250px] overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                <div className={`absolute top-full left-0 z-10 mt-1 max-h-60 w-full min-w-[250px] overflow-y-auto rounded-md border shadow-lg ${
+                  mode === 'create'
+                    ? 'border-slate-700 bg-slate-900/95 shadow-slate-950/50 backdrop-blur'
+                    : 'border-slate-200 bg-white'
+                }`}>
                   {filteredTrades.slice(0, 20).map((trade) => (
                     <button
                       key={trade.id}
@@ -785,17 +804,25 @@ export function ProjectForm({
                         setTradeSearchTerm('');
                         setShowTradeDropdown(false);
                       }}
-                      className="w-full px-3 py-2.5 text-left hover:bg-blue-50 flex items-center justify-between border-b border-slate-100 last:border-0"
+                      className={`flex w-full items-center justify-between border-b px-3 py-2.5 text-left last:border-0 ${
+                        mode === 'create'
+                          ? 'border-slate-800 hover:bg-blue-500/10'
+                          : 'border-slate-100 hover:bg-blue-50'
+                      }`}
                     >
-                      <span className="font-medium text-slate-900">{trade.name}</span>
-                      <span className="text-xs text-slate-500 uppercase tracking-wide">{trade.category}</span>
+                      <span className={mode === 'create' ? 'font-medium text-white' : 'font-medium text-slate-900'}>{trade.name}</span>
+                      <span className={`text-xs uppercase tracking-wide ${
+                        mode === 'create' ? 'text-slate-400' : 'text-slate-500'
+                      }`}>{trade.category}</span>
                     </button>
                   ))}
                 </div>
               )}
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Select from available trades. Type to search, click to add.</p>
+          <p className={`mt-1 text-xs ${mode === 'create' ? 'text-slate-400' : 'text-slate-500'}`}>
+            Select from available trades. Type to search, click to add.
+          </p>
         </div>
       )}
 
@@ -1009,9 +1036,15 @@ export function ProjectForm({
 
       {/* Assistance Explanation */}
       {onAssistRequest && !isReadOnly && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-          <p className="text-sm font-semibold text-blue-900 mb-1">💡 Need Help Executing This Project?</p>
-          <p className="text-sm text-blue-800">
+        <div className={`rounded-lg border px-4 py-3 ${
+          mode === 'create'
+            ? 'border-blue-500/40 bg-blue-500/10 text-blue-100'
+            : 'border-blue-200 bg-blue-50'
+        }`}>
+          <p className={`mb-1 text-sm font-semibold ${mode === 'create' ? 'text-white' : 'text-blue-900'}`}>
+            💡 Need Help Executing This Project?
+          </p>
+          <p className={`text-sm ${mode === 'create' ? 'text-blue-100' : 'text-blue-800'}`}>
             <strong>Ask for advice:</strong> Get personalized guidance from Fitout Hub experts. We&apos;ll help you scope your project, find the right professionals, negotiate quotes, and manage the entire process from start to finish.
           </p>
         </div>

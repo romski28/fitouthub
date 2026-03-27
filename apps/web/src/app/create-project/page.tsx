@@ -405,8 +405,8 @@ export default function CreateProjectPage() {
           <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Project creation</p>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t('create.title')}</h1>
-              <p className="max-w-2xl text-sm text-slate-300 sm:text-base">{t('create.description')}</p>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{initialFormData.projectName || descriptionData?.title || 'New Project'}</h1>
+              <p className="max-w-2xl text-sm text-slate-300 sm:text-base">Please confirm your project's details and add images.</p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px] lg:grid-cols-1 xl:grid-cols-3">
@@ -427,7 +427,7 @@ export default function CreateProjectPage() {
         </section>
 
         {!showDescriptionModal && (
-          <div className="mt-8 overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-r from-slate-900 to-slate-800 shadow-xl shadow-slate-950/30">
+          <div className="mt-8 overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 shadow-xl shadow-slate-950/30">
             <div className="border-b border-slate-700/70 px-6 py-4">
               <h2 className="text-lg font-semibold text-white">Review project brief</h2>
               <p className="mt-1 text-sm text-slate-300">
@@ -435,39 +435,37 @@ export default function CreateProjectPage() {
               </p>
             </div>
 
-            <div className="bg-white p-6 sm:p-8">
-              <ProjectForm
-                mode="create"
-                key={JSON.stringify({
-                  descriptionData,
-                  initialFormData,
-                  selectedProfessionalIds: selectedProfessionals.map((professional) => professional.id),
-                })}
-                professionals={selectedProfessionals}
-                initialData={{
-                  ...initialFormData,
-                  clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
-                  projectName: initialFormData.projectName || descriptionData?.title || '',
-                  notes: initialFormData.notes || descriptionData?.description || '',
-                  isEmergency: initialFormData.isEmergency ?? descriptionData?.isEmergency,
-                  tradesRequired: initialFormData.tradesRequired?.length
-                    ? initialFormData.tradesRequired
-                    : (descriptionData?.tradesRequired || []),
-                  location: initialFormData.location || descriptionData?.location || userLocation || undefined,
-                }}
-                onAssistRequest={handleAssist}
-                onSubmit={handleSubmit}
-                onCancel={() => router.push('/')}
-                isSubmitting={isSubmitting}
-                error={error}
-                showAiOverview={true}
-                submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
-                showBudget={false}
-                showService={true}
-                showClientName={false}
-                confirmationMode={true}
-              />
-            </div>
+            <ProjectForm
+              mode="create"
+              key={JSON.stringify({
+                descriptionData,
+                initialFormData,
+                selectedProfessionalIds: selectedProfessionals.map((professional) => professional.id),
+              })}
+              professionals={selectedProfessionals}
+              initialData={{
+                ...initialFormData,
+                clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
+                projectName: initialFormData.projectName || descriptionData?.title || '',
+                notes: initialFormData.notes || descriptionData?.description || '',
+                isEmergency: initialFormData.isEmergency ?? descriptionData?.isEmergency,
+                tradesRequired: initialFormData.tradesRequired?.length
+                  ? initialFormData.tradesRequired
+                  : (descriptionData?.tradesRequired || []),
+                location: initialFormData.location || descriptionData?.location || userLocation || undefined,
+              }}
+              onAssistRequest={handleAssist}
+              onSubmit={handleSubmit}
+              onCancel={() => router.push('/')}
+              isSubmitting={isSubmitting}
+              error={error}
+              showAiOverview={true}
+              submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
+              showBudget={false}
+              showService={true}
+              showClientName={false}
+              confirmationMode={true}
+            />
           </div>
         )}
       </div>
