@@ -537,16 +537,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [dashboardLoading, setDashboardLoading] = useState(false);
-
-  console.log('[ProjectsClient] Render - projects.length:', projects.length, 'items.length:', items.length);
+  const itemProjectIds = useMemo(() => items.map((project) => project.id), [items]);
+  const itemProjectIdsKey = useMemo(() => itemProjectIds.join('|'), [itemProjectIds]);
 
   useEffect(() => {
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    console.log('[ProjectsClient] projects prop changed, length:', projects.length);
     setItems(mapProjectsToItems(projects));
   }, [projects]);
 
@@ -616,23 +614,23 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
   // Fetch assistance presence per project
   useEffect(() => {
-    if (!isLoggedIn || !accessToken || items.length === 0) return;
+    if (!isLoggedIn || !accessToken || itemProjectIds.length === 0) return;
     let cancelled = false;
     const load = async () => {
       try {
         const entries = await Promise.all(
-          items.map(async (p) => {
+          itemProjectIds.map(async (projectId) => {
             try {
-              const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(p.id)}`, {
+              const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
               });
-              if (!res.ok) return [p.id, false, undefined] as const;
+              if (!res.ok) return [projectId, false, undefined] as const;
               const data = await res.json();
               const hasAssist = !!data?.assist?.id;
               const status = (data?.assist?.status as AssistStatus | undefined) || undefined;
-              return [p.id, hasAssist, status] as const;
+              return [projectId, hasAssist, status] as const;
             } catch {
-              return [p.id, false, undefined] as const;
+              return [projectId, false, undefined] as const;
             }
           })
         );
@@ -647,36 +645,31 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     };
     load();
     return () => { cancelled = true; };
-  }, [isLoggedIn, accessToken, items]);
+  }, [isLoggedIn, accessToken, itemProjectIdsKey]);
 
   // Fetch primary next-step action per project (client view)
   useEffect(() => {
-    if (!isLoggedIn || !accessToken || items.length === 0) return;
+    if (!isLoggedIn || !accessToken || itemProjectIds.length === 0) return;
 
     let cancelled = false;
 
     const loadNextSteps = async () => {
-      setDashboardLoading(true);
-
-      const fetches = items.map((project) =>
-        fetchPrimaryNextStep(project.id, accessToken, { cacheScope: nextStepCacheScope })
-          .then((action) => {
-            if (!cancelled) {
-              setNextStepMap((prev) => ({ ...prev, [project.id]: action }));
-            }
-            return { id: project.id, action };
-          })
-          .catch((error) => {
-            if (!cancelled) {
-              setNextStepMap((prev) => ({ ...prev, [project.id]: null }));
-            }
-            return { id: project.id, action: null, error };
-          }),
+      const fetches = itemProjectIds.map((projectId) =>
+        fetchPrimaryNextStep(projectId, accessToken, { cacheScope: nextStepCacheScope })
+          .then((action) => ({ id: projectId, action }))
+          .catch(() => ({ id: projectId, action: null })),
       );
 
-      await Promise.allSettled(fetches);
+      const resolved = await Promise.allSettled(fetches);
+      if (cancelled) return;
 
-      if (!cancelled) setDashboardLoading(false);
+      const batch: Record<string, NextStepAction | null> = {};
+      resolved.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          batch[result.value.id] = result.value.action;
+        }
+      });
+      setNextStepMap((prev) => ({ ...prev, ...batch }));
     };
 
     loadNextSteps();
@@ -684,7 +677,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, accessToken, items, nextStepCacheScope]);
+  }, [isLoggedIn, accessToken, itemProjectIdsKey, nextStepCacheScope]);
 
   const handleCompleteNextStep = async (projectId: string) => {
     if (!accessToken) return;
@@ -744,26 +737,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           </div>
         </div>
 
-        {dashboardLoading && (
-          <div className="space-y-2">
-            {[1, 2, 3].map((i) => (
-              <div key={`skeleton-${i}`} className="animate-pulse rounded-lg bg-white/10 px-4 py-3">
-                <div className="grid gap-3">
-                  <div className="h-4 w-3/4 rounded bg-white/20"></div>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
-                    <div className="col-span-2 md:col-span-1">
-                      <div className="h-3 w-1/2 rounded bg-white/20"></div>
-                    </div>
-                    <div className="h-8 w-24 rounded bg-white/20"></div>
-                    <div className="h-9 w-20 rounded bg-white/20"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!dashboardLoading && dashboardProjects.length > 0 && (
+        {dashboardProjects.length > 0 && (
           <div className="space-y-2">
             {dashboardProjects.map((project) => {
               const action = nextStepMap[project.id];
@@ -842,7 +816,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           </div>
         )}
 
-        {!dashboardLoading && dashboardProjects.length === 0 && (
+        {dashboardProjects.length === 0 && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center space-y-3">
             <p className="text-base font-semibold text-white">{t('empty')}</p>
             <p className="text-sm text-slate-300">{t('emptyHint')}</p>

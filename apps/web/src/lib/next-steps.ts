@@ -29,6 +29,7 @@ type NextStepFetchOptions = {
 export const NEXT_STEP_CACHE_TTL_MS = 15 * 60 * 1000;
 
 const nextStepCache = new Map<string, NextStepCacheEntry>();
+const nextStepInFlight = new Map<string, Promise<NextStepAction | null>>();
 
 function buildScope(token: string, cacheScope?: string): string {
   return cacheScope || token.slice(-16);
@@ -62,6 +63,9 @@ export async function fetchPrimaryNextStep(
   const maxAgeMs = options.maxAgeMs ?? NEXT_STEP_CACHE_TTL_MS;
 
   if (!options.forceRefresh) {
+    const inFlight = nextStepInFlight.get(key);
+    if (inFlight) return inFlight;
+
     const cached = nextStepCache.get(key);
     if (cached) {
       const ageMs = Date.now() - cached.updatedAt;
@@ -75,34 +79,42 @@ export async function fetchPrimaryNextStep(
     }
   }
 
-  let response: Response;
+  const request = (async () => {
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch {
+      // Network error (CORS failure, server down, etc.) — degrade silently
+      nextStepCache.set(key, { action: null, updatedAt: Date.now() });
+      return null;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new NextStepAuthError();
+    }
+
+    if (!response.ok) {
+      nextStepCache.set(key, { action: null, updatedAt: Date.now() });
+      return null;
+    }
+
+    const data = (await response.json()) as NextStepResponse;
+    const action = data.PRIMARY?.[0] ?? null;
+    nextStepCache.set(key, { action, updatedAt: Date.now() });
+    return action;
+  })();
+
+  nextStepInFlight.set(key, request);
   try {
-    response = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-  } catch {
-    // Network error (CORS failure, server down, etc.) — degrade silently
-    nextStepCache.set(key, { action: null, updatedAt: Date.now() });
-    return null;
+    return await request;
+  } finally {
+    nextStepInFlight.delete(key);
   }
-
-  if (response.status === 401 || response.status === 403) {
-    throw new NextStepAuthError();
-  }
-
-  if (!response.ok) {
-    nextStepCache.set(key, { action: null, updatedAt: Date.now() });
-    return null;
-  }
-
-  const data = (await response.json()) as NextStepResponse;
-  const action = data.PRIMARY?.[0] ?? null;
-  nextStepCache.set(key, { action, updatedAt: Date.now() });
-  console.log('[NextStepCache] SET', { projectId, actionKey: action?.actionKey });
-  return action;
 }
 
 export async function completeNextStep(

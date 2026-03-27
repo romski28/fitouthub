@@ -17,8 +17,6 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
   const [loading, setLoading] = useState(true);
   const [params, setParams] = useState<{ clientId?: string; createNew?: string }>({});
 
-  console.log('[ProjectsPage] Render - isLoggedIn:', isLoggedIn, 'hasToken:', !!accessToken, 'user:', user);
-
   // Only clients can access this page
   // useRoleGuard(['client'], { fallback: '/admin' }); // TEMPORARILY DISABLED FOR DEBUGGING
 
@@ -33,34 +31,25 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
   useEffect(() => {
     const loadProjects = async () => {
       if (!accessToken || !isLoggedIn) {
-        console.log('[ProjectsPage] Skipping fetch: accessToken or isLoggedIn not ready', { 
-          hasToken: !!accessToken, 
-          isLoggedIn 
-        });
         return;
       }
 
       const freshCache = getFreshProjectsCache(accessToken, params?.clientId);
       if (freshCache) {
-        console.log('[ProjectsPage] Using cached projects:', freshCache.projects.length);
         setProjects(freshCache.projects);
         setLoading(false);
         return;
       }
       
       const url = `${API_BASE_URL}/projects${params?.clientId ? `?clientId=${params.clientId}` : ''}`;
-      console.log('[ProjectsPage] Fetching projects from:', url);
       
       try {
         const response = await fetchWithRetry(url, {
           headers: { Authorization: `Bearer ${accessToken}` } 
         });
         
-        console.log('[ProjectsPage] Response status:', response.status, response.statusText);
-        
         if (response.ok) {
           const data = await response.json();
-          console.log('[ProjectsPage] Successfully loaded', data?.length || 0, 'projects');
           setProjects(data);
           setProjectsCache(accessToken, data, params?.clientId);
         } else {
