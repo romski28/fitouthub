@@ -22,6 +22,7 @@ interface UpdatesModalProps {
   onClose: () => void;
   onRefresh: () => void;
   actAsClientId?: string; // when present, admin views a client's updates
+  projectIdFilter?: string;
   initialData?: UpdatesSummary | null;
   lastUpdatedAt?: number | null;
   onDataUpdated?: (data: UpdatesSummary, updatedAt: number) => void;
@@ -64,6 +65,7 @@ export function UpdatesModal({
   onClose,
   onRefresh,
   actAsClientId,
+  projectIdFilter,
   initialData,
   lastUpdatedAt,
   onDataUpdated,
@@ -200,6 +202,18 @@ export function UpdatesModal({
     onClose();
   };
 
+  const filteredFinancialActions = projectIdFilter
+    ? (data?.financialActions || []).filter((action) => action.projectId === projectIdFilter)
+    : (data?.financialActions || []);
+
+  const filteredUnreadMessages = projectIdFilter
+    ? (data?.unreadMessages || []).filter((group) => group.projectId === projectIdFilter)
+    : (data?.unreadMessages || []);
+
+  const filteredFinancialCount = filteredFinancialActions.length;
+  const filteredUnreadCount = filteredUnreadMessages.reduce((sum, group) => sum + (group.unreadCount || 0), 0);
+  const hasFilteredUpdates = filteredFinancialActions.length > 0 || filteredUnreadMessages.length > 0;
+
   if (!isOpen) return null;
 
   return (
@@ -245,21 +259,23 @@ export function UpdatesModal({
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="text-center py-12 text-sub">Loading...</div>
-          ) : !data || data.totalCount === 0 ? (
-            <div className="text-center py-12 text-sub">No updates at this time</div>
+          ) : !hasFilteredUpdates ? (
+            <div className="text-center py-12 text-sub">
+              {projectIdFilter ? 'No updates for this project' : 'No updates at this time'}
+            </div>
           ) : (
             <div className="space-y-8">
               {/* Financial Actions */}
-              {data.financialActions.length > 0 && (
+              {filteredFinancialActions.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-strong mb-4 flex items-center gap-2">
                     💰 Financial Actions
                     <span className="text-sm font-normal text-sub">
-                      ({data.financialCount})
+                      ({filteredFinancialCount})
                     </span>
                   </h3>
                   <div className="space-y-3">
-                    {data.financialActions.map((action) => (
+                    {filteredFinancialActions.map((action) => (
                       <div
                         key={action.id}
                         className="border border-border rounded-lg p-4 bg-surface hover:bg-surface-hover transition-colors"
@@ -298,16 +314,16 @@ export function UpdatesModal({
               )}
 
               {/* Unread Messages */}
-              {data.unreadMessages.length > 0 && (
+              {filteredUnreadMessages.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-strong mb-4 flex items-center gap-2">
                     💬 Unread Messages
                     <span className="text-sm font-normal text-sub">
-                      ({data.unreadCount} total)
+                      ({filteredUnreadCount} total)
                     </span>
                   </h3>
                   <div className="space-y-3">
-                    {data.unreadMessages.map((group, idx) => (
+                    {filteredUnreadMessages.map((group, idx) => (
                       <div
                         key={idx}
                         className="border border-border rounded-lg p-4 bg-surface hover:bg-surface-hover transition-colors"
@@ -366,7 +382,7 @@ export function UpdatesModal({
         </div>
 
         {/* Footer */}
-        {data && data.totalCount > 0 && (
+        {data && hasFilteredUpdates && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface">
             <button
               onClick={handleMarkAllRead}

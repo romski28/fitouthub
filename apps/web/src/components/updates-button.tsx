@@ -16,6 +16,7 @@ import {
 
 interface UpdatesButtonProps {
   className?: string;
+  onSummaryChange?: (summary: UpdatesSummary | null) => void;
 }
 
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
@@ -59,7 +60,7 @@ const INSPIRATIONAL_MESSAGES = [
   "All done! Your next big project awaits! 🌟",
 ];
 
-export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
+export function UpdatesButton({ className = '', onSummaryChange }: UpdatesButtonProps) {
   const { accessToken: clientToken, isLoggedIn } = useAuth();
   const { accessToken: profToken, isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -68,6 +69,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [projectIdFilter, setProjectIdFilter] = useState<string | undefined>(undefined);
 
   // Use whichever token is available
   const token = clientToken || profToken;
@@ -81,6 +83,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
     if (!token) {
       console.log('No token available, skipping fetch');
       setLoading(false);
+      onSummaryChange?.(null);
       return;
     }
 
@@ -89,6 +92,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
       if (fresh) {
         setSummary(fresh.summary);
         setLastUpdatedAt(fresh.updatedAt);
+        onSummaryChange?.(fresh.summary);
         setLoading(false);
         return;
       }
@@ -97,6 +101,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
       if (cached) {
         setSummary(cached.summary);
         setLastUpdatedAt(cached.updatedAt);
+        onSummaryChange?.(cached.summary);
       }
     }
 
@@ -125,6 +130,7 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
         setSummary(nextSummary);
         const entry = setUpdatesSummaryCache(token, nextSummary);
         setLastUpdatedAt(entry.updatedAt);
+        onSummaryChange?.(nextSummary);
       } else {
         console.warn('Failed to fetch updates summary:', response.status, response.statusText);
       }
@@ -164,7 +170,23 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
     return () => clearInterval(interval);
   }, [token, lastUpdatedAt]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleOpenUpdates = (event: Event) => {
+      const customEvent = event as CustomEvent<{ projectId?: string }>;
+      setProjectIdFilter(customEvent.detail?.projectId || undefined);
+      setIsOpen(true);
+    };
+
+    window.addEventListener('fitouthub:open-updates', handleOpenUpdates as EventListener);
+    return () => {
+      window.removeEventListener('fitouthub:open-updates', handleOpenUpdates as EventListener);
+    };
+  }, []);
+
   const handleOpen = () => {
+    setProjectIdFilter(undefined);
     setIsOpen(true);
   };
 
@@ -235,11 +257,13 @@ export function UpdatesButton({ className = '' }: UpdatesButtonProps) {
         isOpen={isOpen}
         onClose={handleClose}
         onRefresh={() => fetchSummary(true)}
+        projectIdFilter={projectIdFilter}
         initialData={summary}
         lastUpdatedAt={lastUpdatedAt}
         onDataUpdated={(nextSummary, updatedAt) => {
           setSummary(nextSummary);
           setLastUpdatedAt(updatedAt);
+          onSummaryChange?.(nextSummary);
         }}
       />
     </>

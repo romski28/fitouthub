@@ -16,6 +16,7 @@ import {
   fetchPrimaryNextStep,
   type NextStepAction,
 } from '@/lib/next-steps';
+import type { UpdatesSummary } from '@/lib/updates-cache';
 
 interface ProjectProfessional {
   id: string;
@@ -74,8 +75,18 @@ export default function ProfessionalProjectsPage() {
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
+  const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const projectIds = useMemo(() => projects.map((p) => p.project.id), [projects]);
   const projectIdsKey = useMemo(() => projectIds.join('|'), [projectIds]);
+  const activityProjectIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!updatesSummary) return ids;
+    updatesSummary.unreadMessages.forEach((group) => {
+      if (group.unreadCount > 0) ids.add(group.projectId);
+    });
+    updatesSummary.financialActions.forEach((action) => ids.add(action.projectId));
+    return ids;
+  }, [updatesSummary]);
   const totals = {
     total: projects.length,
     pending: projects.filter(p => p.status === 'pending').length,
@@ -260,7 +271,7 @@ export default function ProfessionalProjectsPage() {
         <div id="recent-activity" className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Recent Activity</p>
           <div className="flex justify-center md:justify-start">
-            <UpdatesButton />
+            <UpdatesButton onSummaryChange={setUpdatesSummary} />
           </div>
         </div>
 
@@ -350,6 +361,21 @@ export default function ProfessionalProjectsPage() {
                         </div>
 
                         <div className="flex items-center md:justify-end">
+                          {activityProjectIds.has(projectProf.project.id) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (typeof window !== 'undefined') {
+                                  window.dispatchEvent(
+                                    new CustomEvent('fitouthub:open-updates', { detail: { projectId: projectProf.project.id } }),
+                                  );
+                                }
+                              }}
+                              className="mr-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition whitespace-nowrap"
+                            >
+                              View activity
+                            </button>
+                          )}
                           {nextStepsLoading && !action ? (
                             <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                           ) : (

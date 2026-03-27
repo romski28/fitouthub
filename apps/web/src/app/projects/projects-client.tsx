@@ -18,6 +18,7 @@ import {
   fetchPrimaryNextStep,
   type NextStepAction,
 } from "@/lib/next-steps";
+import type { UpdatesSummary } from "@/lib/updates-cache";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -537,6 +538,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
+  const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const itemProjectIds = useMemo(() => items.map((project) => project.id), [items]);
   const itemProjectIdsKey = useMemo(() => itemProjectIds.join('|'), [itemProjectIds]);
@@ -579,6 +581,16 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         return bUpdated - aUpdated;
       });
   }, [items, filterStatus]);
+
+  const activityProjectIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!updatesSummary) return ids;
+    updatesSummary.unreadMessages.forEach((group) => {
+      if (group.unreadCount > 0) ids.add(group.projectId);
+    });
+    updatesSummary.financialActions.forEach((action) => ids.add(action.projectId));
+    return ids;
+  }, [updatesSummary]);
 
   const totals = useMemo(() => {
     return {
@@ -717,7 +729,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       <div id="recent-activity" className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Recent Activity</p>
         <div className="flex justify-center md:justify-start">
-          <UpdatesButton />
+          <UpdatesButton onSummaryChange={setUpdatesSummary} />
         </div>
       </div>
 
@@ -808,6 +820,21 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       </div>
 
                       <div className="flex items-center gap-2 md:justify-end">
+                        {activityProjectIds.has(project.id) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (typeof window !== 'undefined') {
+                                window.dispatchEvent(
+                                  new CustomEvent('fitouthub:open-updates', { detail: { projectId: project.id } }),
+                                );
+                              }
+                            }}
+                            className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition whitespace-nowrap"
+                          >
+                            View activity
+                          </button>
+                        )}
                         {nextStepsLoading && !nextStepMap[project.id] ? (
                           <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                         ) : (
