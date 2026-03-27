@@ -221,9 +221,9 @@ export function UpdatesModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-100/70 p-4 backdrop-blur-md" onClick={onClose}>
       <div
-        className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl"
+        className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-300/70 ring-1 ring-white/40 bg-slate-900 text-white shadow-2xl shadow-slate-500/40"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
