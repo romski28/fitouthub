@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
-import { colors, radii } from '@/styles/theme';
 import { StatusPill } from './status-pill';
 import {
   type FinancialActionItem,
@@ -213,25 +212,37 @@ export function UpdatesModal({
   const filteredFinancialCount = filteredFinancialActions.length;
   const filteredUnreadCount = filteredUnreadMessages.reduce((sum, group) => sum + (group.unreadCount || 0), 0);
   const hasFilteredUpdates = filteredFinancialActions.length > 0 || filteredUnreadMessages.length > 0;
+  const filteredProjectName = projectIdFilter
+    ? filteredFinancialActions[0]?.projectName ||
+      filteredUnreadMessages[0]?.projectName ||
+      `Project ${projectIdFilter.slice(0, 8)}`
+    : null;
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div className="border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4">
+          <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-strong">Your Updates</h2>
+              <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
             {lastUpdatedAt ? (
-              <p className="text-xs text-sub">
+                <p className="text-xs text-slate-300">
                 Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
                 {isUpdatesCacheStale(lastUpdatedAt) ? ' · stale' : ''}
               </p>
             ) : null}
+              {projectIdFilter && filteredProjectName ? (
+                <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-300" />
+                  Filtered by project: {filteredProjectName}
+                </div>
+              ) : null}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -240,7 +251,7 @@ export function UpdatesModal({
               disabled={refreshing}
               title="Refresh updates"
               aria-label="Refresh updates"
-              className={`inline-flex h-9 w-9 items-center justify-center rounded border border-border bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 ${
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/10 text-slate-100 transition-colors hover:bg-white/20 disabled:opacity-50 ${
                 refreshing ? 'animate-spin' : ''
               }`}
             >
@@ -248,19 +259,20 @@ export function UpdatesModal({
             </button>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors text-2xl leading-none"
+              className="text-2xl leading-none text-slate-300 transition-colors hover:text-white"
             >
               ×
             </button>
           </div>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto bg-slate-900 p-6">
           {loading ? (
-            <div className="text-center py-12 text-sub">Loading...</div>
+            <div className="py-12 text-center text-slate-300">Loading...</div>
           ) : !hasFilteredUpdates ? (
-            <div className="text-center py-12 text-sub">
+            <div className="py-12 text-center text-slate-300">
               {projectIdFilter ? 'No updates for this project' : 'No updates at this time'}
             </div>
           ) : (
@@ -268,9 +280,9 @@ export function UpdatesModal({
               {/* Financial Actions */}
               {filteredFinancialActions.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-strong mb-4 flex items-center gap-2">
+                  <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
                     💰 Financial Actions
-                    <span className="text-sm font-normal text-sub">
+                    <span className="text-sm font-normal text-slate-300">
                       ({filteredFinancialCount})
                     </span>
                   </h3>
@@ -278,17 +290,17 @@ export function UpdatesModal({
                     {filteredFinancialActions.map((action) => (
                       <div
                         key={action.id}
-                        className="border border-border rounded-lg p-4 bg-surface hover:bg-surface-hover transition-colors"
+                        className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-medium text-strong">{action.projectName}</h4>
+                              <h4 className="font-medium text-white">{action.projectName}</h4>
                               <StatusPill status={action.status} />
                             </div>
-                            <p className="text-sm text-sub mb-1">{action.description}</p>
-                            <p className="text-lg font-semibold text-action">HK${action.amount}</p>
-                            <p className="text-xs text-sub mt-1">
+                            <p className="mb-1 text-sm text-slate-300">{action.description}</p>
+                            <p className="text-lg font-semibold text-emerald-300">HK${action.amount}</p>
+                            <p className="mt-1 text-xs text-slate-400">
                               {new Date(action.createdAt).toLocaleString()}
                             </p>
                           </div>
@@ -297,11 +309,7 @@ export function UpdatesModal({
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleFinancialActionClick(action)}
-                              style={{
-                                backgroundColor: colors.action,
-                                color: colors.background,
-                              }}
-                              className={`px-4 py-2 font-medium text-sm ${radii.sm} transition-opacity hover:opacity-90`}
+                              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
                             >
                               View
                             </button>
@@ -316,9 +324,9 @@ export function UpdatesModal({
               {/* Unread Messages */}
               {filteredUnreadMessages.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-strong mb-4 flex items-center gap-2">
+                  <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
                     💬 Unread Messages
-                    <span className="text-sm font-normal text-sub">
+                    <span className="text-sm font-normal text-slate-300">
                       ({filteredUnreadCount} total)
                     </span>
                   </h3>
@@ -326,25 +334,25 @@ export function UpdatesModal({
                     {filteredUnreadMessages.map((group, idx) => (
                       <div
                         key={idx}
-                        className="border border-border rounded-lg p-4 bg-surface hover:bg-surface-hover transition-colors"
+                        className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-medium text-strong">{group.projectName}</h4>
-                              <span className="px-2 py-0.5 bg-action text-white rounded-full text-xs font-semibold">
+                              <h4 className="font-medium text-white">{group.projectName}</h4>
+                              <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">
                                 {group.unreadCount}
                               </span>
                             </div>
                             {group.latestMessage.senderName && (
-                              <p className="text-xs font-semibold text-strong mb-1">
+                              <p className="mb-1 text-xs font-semibold text-slate-200">
                                 From: {group.latestMessage.senderName}
                               </p>
                             )}
-                            <p className="text-sm text-sub line-clamp-2">
+                            <p className="line-clamp-2 text-sm text-slate-300">
                               {group.latestMessage.content}
                             </p>
-                            <p className="text-xs text-sub mt-1">
+                            <p className="mt-1 text-xs text-slate-400">
                               {new Date(group.latestMessage.createdAt).toLocaleString()}
                             </p>
                           </div>
@@ -352,21 +360,13 @@ export function UpdatesModal({
                             <button
                               onClick={(e) => handleMarkMessageAsRead(e, group)}
                               disabled={actionLoading === `msg-${group.threadId}`}
-                              style={{
-                                backgroundColor: colors.success,
-                                color: colors.background,
-                              }}
-                              className={`px-3 py-2 font-medium text-sm ${radii.sm} transition-opacity hover:opacity-90 disabled:opacity-50`}
+                              className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
                             >
                               {actionLoading === `msg-${group.threadId}` ? 'Processing...' : 'OK'}
                             </button>
                             <button
                               onClick={() => handleMessageClick(group)}
-                              style={{
-                                backgroundColor: colors.action,
-                                color: colors.background,
-                              }}
-                              className={`px-3 py-2 font-medium text-sm ${radii.sm} transition-opacity hover:opacity-90`}
+                              className="rounded-md bg-slate-200 px-3 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-white"
                             >
                               View
                             </button>
@@ -383,16 +383,16 @@ export function UpdatesModal({
 
         {/* Footer */}
         {data && hasFilteredUpdates && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface">
+          <div className="flex items-center justify-between border-t border-slate-700 bg-slate-800/80 px-6 py-4">
             <button
               onClick={handleMarkAllRead}
-              className="text-sm text-action hover:text-action-hover font-medium"
+              className="text-sm font-medium text-slate-200 transition-colors hover:text-white"
             >
               Mark all messages as read
             </button>
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-action text-white rounded hover:bg-action-hover font-medium"
+              className="rounded-md bg-emerald-600 px-6 py-2 font-medium text-white transition-colors hover:bg-emerald-700"
             >
               Done
             </button>
