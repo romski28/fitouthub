@@ -407,6 +407,37 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const fetchAssistThreadsForProject = async (): Promise<AssistThreadSummary[]> => {
+    if (!accessToken || !projectId) return [];
+
+    const allRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}/all?limit=200`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (allRes.ok) {
+      const data = await parseJsonResponse<{ assists?: AssistThreadSummary[] }>(allRes);
+      return data?.assists || [];
+    }
+
+    if (allRes.status === 404) {
+      const latestRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (latestRes.status === 404) return [];
+      if (!latestRes.ok) {
+        const text = await latestRes.text();
+        throw new Error(text || 'Failed to load assistance');
+      }
+
+      const latestData = await parseJsonResponse<{ assist?: AssistThreadSummary | null }>(latestRes);
+      return latestData?.assist ? [latestData.assist] : [];
+    }
+
+    const text = await allRes.text();
+    throw new Error(text || 'Failed to load assistance');
+  };
+
   const loadAssistMessages = async (
     requestId: string,
     options?: { appendOlder?: boolean; refreshCurrentWindow?: boolean },
@@ -924,20 +955,7 @@ export default function ClientProjectDetailPage() {
       try {
         setAssistLoading(true);
         setAssistError(null);
-        const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}/all?limit=200`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (res.status === 404) {
-          setAssistThreads([]);
-          await applyActiveAssistThread(null);
-          return;
-        }
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || 'Failed to load assistance');
-        }
-        const data = await parseJsonResponse<{ assists?: AssistThreadSummary[] }>(res);
-        const allThreads = data?.assists || [];
+        const allThreads = await fetchAssistThreadsForProject();
         setAssistThreads(allThreads);
         await applyActiveAssistThread(allThreads[0]);
       } catch (err) {
@@ -958,18 +976,12 @@ export default function ClientProjectDetailPage() {
       try {
         setAssistLoading(true);
         setAssistError(null);
-        const assistRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}/all?limit=200`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (assistRes.ok) {
-          const assistData = await parseJsonResponse<{ assists?: AssistThreadSummary[] }>(assistRes);
-          const threads = assistData?.assists || [];
-          setAssistThreads(threads);
-          const active = threads.find((thread) => thread.id === assistRequestId);
-          setAssistStatus(active?.status || null);
-          setAssistClosureDueAt(active?.closureDueAt || null);
-          setAssistResolvedAt(active?.resolvedAt || null);
-        }
+        const threads = await fetchAssistThreadsForProject();
+        setAssistThreads(threads);
+        const active = threads.find((thread) => thread.id === assistRequestId);
+        setAssistStatus(active?.status || null);
+        setAssistClosureDueAt(active?.closureDueAt || null);
+        setAssistResolvedAt(active?.resolvedAt || null);
 
         await loadAssistMessages(assistRequestId, { refreshCurrentWindow: true });
       } catch (err) {
