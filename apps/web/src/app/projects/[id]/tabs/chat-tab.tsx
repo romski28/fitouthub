@@ -106,20 +106,11 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   assistResolvedAt,
 }) => {
   const hasProfessionals = Array.isArray(professionals) && professionals.length > 0;
-  const isAssistView = viewingAssistChat || (!hasProfessionals && !!assistRequestId);
+  const isAssistView = !hasProfessionals || viewingAssistChat;
   const selectedAssistOptionValue =
     assistRequestId && assistThreads.some((thread) => thread.id === assistRequestId)
       ? `assist-${assistRequestId}`
       : 'fitouthub';
-
-  if (!hasProfessionals && !assistRequestId) {
-    return (
-      <div className="rounded-xl border border-slate-700 bg-slate-900/60 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-white">Project Chat</h2>
-        <p className="text-sm text-slate-300 mt-2">No professionals have been awarded yet.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-5">
@@ -127,6 +118,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
         <div className="mb-3">
           <h2 className="text-lg font-bold text-white">Project Chat</h2>
           <p className="text-sm text-slate-300">Communicate with all awarded professionals and Fitout Hub</p>
+          {!hasProfessionals && (
+            <p className="text-xs text-slate-400 mt-1">No professionals invited yet. FoH General chat is still available.</p>
+          )}
         </div>
 
         {/* Chat Mode Selector - Dropdown */}

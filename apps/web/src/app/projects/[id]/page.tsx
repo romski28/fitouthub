@@ -375,10 +375,7 @@ export default function ClientProjectDetailPage() {
     const requestedTab = searchParams.get('tab');
     if (!requestedTab) return;
 
-    const allowedTabs = new Set(['overview', 'site-access', 'professionals', 'media']);
-    if (isAwarded || !!assistRequestId || hasAnyProfessional) {
-      allowedTabs.add('chat');
-    }
+    const allowedTabs = new Set(['overview', 'site-access', 'professionals', 'chat', 'media']);
     if (isAwarded) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
@@ -410,32 +407,18 @@ export default function ClientProjectDetailPage() {
   const fetchAssistThreadsForProject = async (): Promise<AssistThreadSummary[]> => {
     if (!accessToken || !projectId) return [];
 
-    const allRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}/all?limit=200`, {
+    const latestRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (allRes.ok) {
-      const data = await parseJsonResponse<{ assists?: AssistThreadSummary[] }>(allRes);
-      return data?.assists || [];
+    if (latestRes.status === 404) return [];
+    if (!latestRes.ok) {
+      const text = await latestRes.text();
+      throw new Error(text || 'Failed to load assistance');
     }
 
-    if (allRes.status === 404) {
-      const latestRes = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (latestRes.status === 404) return [];
-      if (!latestRes.ok) {
-        const text = await latestRes.text();
-        throw new Error(text || 'Failed to load assistance');
-      }
-
-      const latestData = await parseJsonResponse<{ assist?: AssistThreadSummary | null }>(latestRes);
-      return latestData?.assist ? [latestData.assist] : [];
-    }
-
-    const text = await allRes.text();
-    throw new Error(text || 'Failed to load assistance');
+    const latestData = await parseJsonResponse<{ assist?: AssistThreadSummary | null }>(latestRes);
+    return latestData?.assist ? [latestData.assist] : [];
   };
 
   const loadAssistMessages = async (
@@ -1657,7 +1640,7 @@ export default function ClientProjectDetailPage() {
                 assistRequestId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'
               }`}
             >
-              {assistRequestId ? 'Open PM Case' : 'Request PM Support'}
+              {assistRequestId ? 'Open active PM case' : 'Request PM Support'}
             </button>
           </div>
 
@@ -1687,18 +1670,6 @@ export default function ClientProjectDetailPage() {
                      project.professionals.find((pp) => pp.status === 'awarded')?.professional.businessName || 
                      'Professional'}
                   </span>
-                )}
-                {assistRequestId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setViewingAssistChat(true);
-                      setActiveTab('chat');
-                    }}
-                    className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/25"
-                  >
-                    PM case active
-                  </button>
                 )}
               </div>
             </div>
@@ -1983,7 +1954,7 @@ export default function ClientProjectDetailPage() {
           )}
 
         {/* Tab Content - Chat */}
-        {activeTab === 'chat' && (isAwarded || !!assistRequestId || hasAnyProfessional) && (
+        {activeTab === 'chat' && (
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
             <ChatTab
               projectId={projectId}
