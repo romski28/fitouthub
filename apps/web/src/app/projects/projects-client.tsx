@@ -536,6 +536,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
+  const [nextStepsLoading, setNextStepsLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const itemProjectIds = useMemo(() => items.map((project) => project.id), [items]);
   const itemProjectIdsKey = useMemo(() => itemProjectIds.join('|'), [itemProjectIds]);
@@ -654,6 +655,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     let cancelled = false;
 
     const loadNextSteps = async () => {
+      setNextStepsLoading(true);
       const fetches = itemProjectIds.map((projectId) =>
         fetchPrimaryNextStep(projectId, accessToken, { cacheScope: nextStepCacheScope })
           .then((action) => ({ id: projectId, action }))
@@ -670,6 +672,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         }
       });
       setNextStepMap((prev) => ({ ...prev, ...batch }));
+      setNextStepsLoading(false);
     };
 
     loadNextSteps();
@@ -719,7 +722,15 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
-            <h1 className="text-2xl font-bold leading-tight">My projects</h1>
+            <h1 className="text-2xl font-bold leading-tight">
+              My projects
+              {nextStepsLoading && (
+                <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-300">
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+                  Gathering action items&hellip;
+                </span>
+              )}
+            </h1>
           </div>
           <div className="flex flex-col gap-3">
             <button
@@ -792,12 +803,16 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       </div>
 
                       <div className="flex items-center gap-2 md:justify-end">
-                        <Link
-                          href={actionHref}
-                          className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-                        >
-                          {action?.actionLabel || 'Open project'}
-                        </Link>
+                        {nextStepsLoading && !nextStepMap[project.id] ? (
+                          <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
+                        ) : (
+                          <Link
+                            href={actionHref}
+                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                          >
+                            {action?.actionLabel || 'Open project'}
+                          </Link>
+                        )}
                         {project.status !== 'withdrawn' && (
                           <button
                             type="button"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -73,7 +73,9 @@ export default function ProfessionalProjectsPage() {
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
-  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [nextStepsLoading, setNextStepsLoading] = useState(false);
+  const projectIds = useMemo(() => projects.map((p) => p.project.id), [projects]);
+  const projectIdsKey = useMemo(() => projectIds.join('|'), [projectIds]);
   const totals = {
     total: projects.length,
     pending: projects.filter(p => p.status === 'pending').length,
@@ -135,32 +137,30 @@ export default function ProfessionalProjectsPage() {
   }, [isLoggedIn, accessToken, router]);
 
   useEffect(() => {
-    if (!isLoggedIn || !accessToken || projects.length === 0) return;
+    if (!isLoggedIn || !accessToken || projectIds.length === 0) return;
 
     let cancelled = false;
 
     const loadNextSteps = async () => {
-      setDashboardLoading(true);
+      setNextStepsLoading(true);
 
-      const fetches = projects.map((projectProf) =>
-        fetchPrimaryNextStep(projectProf.project.id, accessToken, { cacheScope: nextStepCacheScope })
-          .then((action) => {
-            if (!cancelled) {
-              setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: action }));
-            }
-            return { id: projectProf.project.id, action };
-          })
-          .catch((error) => {
-            if (!cancelled) {
-              setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: null }));
-            }
-            return { id: projectProf.project.id, action: null, error };
-          }),
+      const fetches = projectIds.map((projectId) =>
+        fetchPrimaryNextStep(projectId, accessToken, { cacheScope: nextStepCacheScope })
+          .then((action) => ({ id: projectId, action }))
+          .catch(() => ({ id: projectId, action: null })),
       );
 
-      await Promise.allSettled(fetches);
+      const resolved = await Promise.allSettled(fetches);
+      if (cancelled) return;
 
-      if (!cancelled) setDashboardLoading(false);
+      const batch: Record<string, NextStepAction | null> = {};
+      resolved.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          batch[result.value.id] = result.value.action;
+        }
+      });
+      setNextStepMap((prev) => ({ ...prev, ...batch }));
+      setNextStepsLoading(false);
     };
 
     loadNextSteps();
@@ -168,7 +168,7 @@ export default function ProfessionalProjectsPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, accessToken, projects, nextStepCacheScope]);
+  }, [isLoggedIn, accessToken, projectIdsKey, nextStepCacheScope]);
 
   useEffect(() => {
     if (!isLoggedIn || !accessToken || projects.length === 0) return;
@@ -210,7 +210,7 @@ export default function ProfessionalProjectsPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, accessToken, projects]);
+  }, [isLoggedIn, accessToken, projectIdsKey]);
 
   const handleCompleteNextStep = async (
     event: MouseEvent<HTMLButtonElement>,
@@ -283,40 +283,22 @@ export default function ProfessionalProjectsPage() {
         </div>
 
         {/* Action Dashboard */}
-        {dashboardLoading ? (
+        {dashboardProjects.length > 0 && (
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
-                <h2 className="text-xl font-bold text-white">Loading your action items...</h2>
+                <h2 className="text-xl font-bold text-white">
+                  {dashboardProjects.length} Projects in this view
+                  {nextStepsLoading && (
+                    <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-300">
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+                      Gathering action items&hellip;
+                    </span>
+                  )}
+                </h2>
               </div>
             </div>
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={`skeleton-${i}`} className="animate-pulse rounded-lg bg-white/10 px-4 py-3">
-                  <div className="grid gap-3">
-                    <div className="h-4 bg-white/20 rounded w-3/4"></div>
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
-                      <div className="col-span-2 md:col-span-1">
-                        <div className="h-3 bg-white/20 rounded w-1/2"></div>
-                      </div>
-                      <div className="h-8 bg-white/20 rounded w-24"></div>
-                      <div className="h-9 bg-white/20 rounded w-20"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : dashboardProjects.length > 0 && (
-          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
-                <h2 className="text-xl font-bold text-white">{dashboardProjects.length} Projects in this view</h2>
-              </div>
-            </div>
-
             <div className="space-y-2">
               {dashboardProjects.map((projectProf) => {
                 const action = nextStepMap[projectProf.project.id];
@@ -365,12 +347,16 @@ export default function ProfessionalProjectsPage() {
                         </div>
 
                         <div className="flex items-center md:justify-end">
-                          <Link
-                            href={actionHref}
-                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-                          >
-                            {action?.actionLabel || 'Open project'}
-                          </Link>
+                          {nextStepsLoading && !action ? (
+                            <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
+                          ) : (
+                            <Link
+                              href={actionHref}
+                              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                            >
+                              {action?.actionLabel || 'Open project'}
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -387,7 +373,7 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {!dashboardLoading && dashboardProjects.length === 0 ? (
+        {dashboardProjects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
             No projects assigned yet. Once you accept project invitations, they'll appear here.
           </div>
