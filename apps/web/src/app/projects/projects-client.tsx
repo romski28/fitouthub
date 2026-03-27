@@ -772,7 +772,23 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     </span>
                   )}
                   <div className="grid gap-3">
-                    <p className="truncate text-sm font-bold text-white">{project.projectName}</p>
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <p className="truncate text-sm font-bold text-white">{project.projectName}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
+                        <StatusBadge status={project.status} t={t} />
+                        {quoteOverdue && (
+                          <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-800">
+                            Quote overdue blocker
+                          </span>
+                        )}
+                        <img
+                          src={assistInfo?.hasAssist ? '/FOHAssistYes.png' : '/FOHAssistNo.png'}
+                          alt={assistInfo?.hasAssist ? t('assistRequestedAlt') : t('noAssistAlt')}
+                          title={assistInfo?.hasAssist ? t('assistRequestedTitle') : t('noAssistTitle')}
+                          className={`h-6 w-6 object-contain ${assistInfo?.hasAssist ? '' : 'opacity-70'}`}
+                        />
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
                       <div className="col-span-2 md:col-span-1">
                         <div className="flex items-center gap-2 text-xs text-slate-300">
@@ -783,20 +799,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               <span className="text-emerald-300 font-medium">{quotedCount} quote{quotedCount !== 1 ? 's' : ''}</span>
                             </>
                           )}
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                          <StatusBadge status={project.status} t={t} />
-                          {quoteOverdue && (
-                            <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-800">
-                              Quote overdue blocker
-                            </span>
-                          )}
-                          <img
-                            src={assistInfo?.hasAssist ? '/FOHAssistYes.png' : '/FOHAssistNo.png'}
-                            alt={assistInfo?.hasAssist ? t('assistRequestedAlt') : t('noAssistAlt')}
-                            title={assistInfo?.hasAssist ? t('assistRequestedTitle') : t('noAssistTitle')}
-                            className={`h-6 w-6 object-contain ${assistInfo?.hasAssist ? '' : 'opacity-70'}`}
-                          />
                         </div>
                         {quoteOverdue ? (
                           <p className="mt-2 text-xs text-rose-200">
@@ -813,15 +815,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                             href={actionHref}
                             className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
                           >
-                            {action ? 'Show me' : 'Open project'}
+                            {action?.actionLabel || 'Open project'}
                           </Link>
                         )}
-                        <a
-                          href="#recent-activity"
-                          className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition whitespace-nowrap"
-                        >
-                          View activity
-                        </a>
                         {project.status !== 'withdrawn' && (
                           <button
                             type="button"
