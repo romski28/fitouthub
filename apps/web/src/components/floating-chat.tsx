@@ -93,6 +93,7 @@ export default function FloatingChat() {
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
   const chatContext = getChatContextFromPath(pathname);
+  const isProjectDetailPage = chatContext.pageType === 'project_view';
 
   // Close chat and clear state on logout
   useEffect(() => {
@@ -456,8 +457,9 @@ export default function FloatingChat() {
     }
   };
 
-  // Don't show on admin pages
-  if (isAdminPage) return null;
+  // Don't show on admin pages or project detail pages.
+  // Project pages now have their own explicit PM support / case entry points.
+  if (isAdminPage || isProjectDetailPage) return null;
 
   return (
     <>

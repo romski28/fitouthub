@@ -1580,6 +1580,15 @@ export default function ClientProjectDetailPage() {
             <Link href="/projects" className="text-sm text-blue-600 hover:underline">
               ← Back to projects
             </Link>
+            <button
+              type="button"
+              onClick={handleOpenAssistFromBlocker}
+              className={`inline-flex items-center rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition ${
+                assistRequestId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+            >
+              {assistRequestId ? 'Open PM Case' : 'Request PM Support'}
+            </button>
           </div>
 
         {/* Project Info & Tab Navigation */}
@@ -1608,6 +1617,18 @@ export default function ClientProjectDetailPage() {
                      project.professionals.find((pp) => pp.status === 'awarded')?.professional.businessName || 
                      'Professional'}
                   </span>
+                )}
+                {assistRequestId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewingAssistChat(true);
+                      setActiveTab('chat');
+                    }}
+                    className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/25"
+                  >
+                    PM case active
+                  </button>
                 )}
               </div>
             </div>
