@@ -19,6 +19,7 @@ import {
   type NextStepAction,
 } from "@/lib/next-steps";
 import type { UpdatesSummary } from "@/lib/updates-cache";
+import { fetchAssistPresenceByProject } from "@/lib/assist-requests";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -634,13 +635,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         const entries = await Promise.all(
           itemProjectIds.map(async (projectId) => {
             try {
-              const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectId)}`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
+              const assist = await fetchAssistPresenceByProject(projectId, accessToken, {
+                cacheScope: nextStepCacheScope,
               });
-              if (!res.ok) return [projectId, false, undefined] as const;
-              const data = await res.json();
-              const hasAssist = !!data?.assist?.id;
-              const status = (data?.assist?.status as AssistStatus | undefined) || undefined;
+              const hasAssist = !!assist.hasAssist;
+              const status = (assist.status as AssistStatus | undefined) || undefined;
               return [projectId, hasAssist, status] as const;
             } catch {
               return [projectId, false, undefined] as const;

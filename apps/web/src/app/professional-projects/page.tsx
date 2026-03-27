@@ -17,6 +17,7 @@ import {
   type NextStepAction,
 } from '@/lib/next-steps';
 import type { UpdatesSummary } from '@/lib/updates-cache';
+import { fetchAssistPresenceByProject } from '@/lib/assist-requests';
 
 interface ProjectProfessional {
   id: string;
@@ -191,13 +192,11 @@ export default function ProfessionalProjectsPage() {
         const entries = await Promise.all(
           projects.map(async (projectProf) => {
             try {
-              const res = await fetch(`${API_BASE_URL}/assist-requests/by-project/${encodeURIComponent(projectProf.project.id)}`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
+              const assist = await fetchAssistPresenceByProject(projectProf.project.id, accessToken, {
+                cacheScope: nextStepCacheScope,
               });
-              if (!res.ok) return [projectProf.project.id, false, undefined] as const;
-              const data = await res.json();
-              const hasAssist = !!data?.assist?.id;
-              const status = (data?.assist?.status as AssistStatus | undefined) || undefined;
+              const hasAssist = !!assist.hasAssist;
+              const status = (assist.status as AssistStatus | undefined) || undefined;
               return [projectProf.project.id, hasAssist, status] as const;
             } catch {
               return [projectProf.project.id, false, undefined] as const;
