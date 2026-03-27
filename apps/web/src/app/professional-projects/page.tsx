@@ -256,9 +256,12 @@ export default function ProfessionalProjectsPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
-        {/* Updates Button */}
-        <div className="flex justify-center">
-          <UpdatesButton />
+        {/* Recent Activity (secondary) */}
+        <div id="recent-activity" className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Recent Activity</p>
+          <div className="flex justify-center md:justify-start">
+            <UpdatesButton />
+          </div>
         </div>
 
         {/* Hero (match client styling) */}
@@ -287,7 +290,7 @@ export default function ProfessionalProjectsPage() {
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Dashboard</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Action Required</p>
                 <h2 className="text-xl font-bold text-white">
                   {dashboardProjects.length} Projects in this view
                   {nextStepsLoading && (
@@ -354,9 +357,15 @@ export default function ProfessionalProjectsPage() {
                               href={actionHref}
                               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
                             >
-                              {action?.actionLabel || 'Open project'}
+                              {action ? 'Show me' : 'Open project'}
                             </Link>
                           )}
+                          <a
+                            href="#recent-activity"
+                            className="ml-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition whitespace-nowrap"
+                          >
+                            View activity
+                          </a>
                         </div>
                       </div>
                     </div>
@@ -375,7 +384,7 @@ export default function ProfessionalProjectsPage() {
 
         {dashboardProjects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-            No projects assigned yet. Once you accept project invitations, they'll appear here.
+            No immediate actions. Check Recent Activity for updates.
           </div>
         ) : null}
 
