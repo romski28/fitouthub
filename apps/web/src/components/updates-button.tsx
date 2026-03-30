@@ -232,7 +232,7 @@ export function UpdatesButton({ className = '', onSummaryChange }: UpdatesButton
               'Loading...'
             ) : hasUpdates ? (
               <>
-                You have {summary.totalCount} {summary.totalCount === 1 ? 'update' : 'updates'}
+                {summary.totalCount} unread message{summary.totalCount === 1 ? '' : 's'}
               </>
             ) : (
               inspirationalMessage

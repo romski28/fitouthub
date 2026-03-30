@@ -230,7 +230,14 @@ export function UpdatesModal({
         <div className="border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4">
           <div className="flex items-start justify-between gap-4">
           <div>
-              <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
+              <h2 className="text-xl font-semibold text-white">
+                Recent Activity
+                {!projectIdFilter && filteredUnreadMessages.length > 0 && (
+                  <span className="text-sm font-normal text-slate-400 ml-3">
+                    {filteredUnreadCount} message{filteredUnreadCount === 1 ? '' : 's'} • {filteredUnreadMessages.length} conversation{filteredUnreadMessages.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </h2>
             {lastUpdatedAt ? (
                 <p className="text-xs text-slate-300">
                 Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
