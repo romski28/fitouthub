@@ -20,6 +20,11 @@ type NextStepCacheEntry = {
   updatedAt: number;
 };
 
+type NextStepListCacheEntry = {
+  actions: NextStepAction[];
+  updatedAt: number;
+};
+
 type NextStepFetchOptions = {
   cacheScope?: string;
   forceRefresh?: boolean;
@@ -31,6 +36,8 @@ const NEXT_STEP_ENDPOINT_BACKOFF_MS = 2 * 60 * 1000;
 
 const nextStepCache = new Map<string, NextStepCacheEntry>();
 const nextStepInFlight = new Map<string, Promise<NextStepAction | null>>();
+const nextStepListCache = new Map<string, NextStepListCacheEntry>();
+const nextStepListInFlight = new Map<string, Promise<NextStepAction[]>>();
 let nextStepEndpointBackoffUntil = 0;
 let nextStepEndpointFailureCount = 0;
 
@@ -138,6 +145,79 @@ export async function fetchPrimaryNextStep(
     return await request;
   } finally {
     nextStepInFlight.delete(key);
+  }
+}
+
+export async function fetchPrimaryNextSteps(
+  projectId: string,
+  token: string,
+  options: NextStepFetchOptions = {},
+): Promise<NextStepAction[]> {
+  const scope = buildScope(token, options.cacheScope);
+  const key = cacheKey(projectId, scope);
+  const maxAgeMs = options.maxAgeMs ?? NEXT_STEP_CACHE_TTL_MS;
+
+  if (!options.forceRefresh && Date.now() < nextStepEndpointBackoffUntil) {
+    nextStepListCache.set(key, { actions: [], updatedAt: Date.now() });
+    return [];
+  }
+
+  if (!options.forceRefresh) {
+    const inFlight = nextStepListInFlight.get(key);
+    if (inFlight) return inFlight;
+
+    const cached = nextStepListCache.get(key);
+    if (cached) {
+      const ageMs = Date.now() - cached.updatedAt;
+      if (ageMs <= maxAgeMs) {
+        recordCacheHit('next-steps');
+        return cached.actions;
+      }
+      recordStaleRead('next-steps');
+    } else {
+      recordCacheMiss('next-steps');
+    }
+  }
+
+  const request = (async () => {
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch {
+      applyEndpointBackoff();
+      nextStepListCache.set(key, { actions: [], updatedAt: Date.now() });
+      return [];
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new NextStepAuthError();
+    }
+
+    if (!response.ok) {
+      if (response.status === 404 || response.status >= 500) {
+        applyEndpointBackoff();
+      }
+      nextStepListCache.set(key, { actions: [], updatedAt: Date.now() });
+      return [];
+    }
+
+    const data = (await response.json()) as NextStepResponse;
+    clearEndpointBackoff();
+    const actions = Array.isArray(data.PRIMARY) ? data.PRIMARY : [];
+    nextStepListCache.set(key, { actions, updatedAt: Date.now() });
+    return actions;
+  })();
+
+  nextStepListInFlight.set(key, request);
+  try {
+    return await request;
+  } finally {
+    nextStepListInFlight.delete(key);
   }
 }
 

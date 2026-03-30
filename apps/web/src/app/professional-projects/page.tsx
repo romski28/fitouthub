@@ -13,6 +13,7 @@ import { fetchWithRetry } from '@/lib/http';
 import {
   NextStepAuthError,
   completeNextStep,
+  fetchPrimaryNextSteps,
   fetchPrimaryNextStep,
   type NextStepAction,
 } from '@/lib/next-steps';
@@ -74,7 +75,7 @@ export default function ProfessionalProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
-  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
+  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
@@ -157,18 +158,18 @@ export default function ProfessionalProjectsPage() {
       setNextStepsLoading(true);
 
       const fetches = projectIds.map((projectId) =>
-        fetchPrimaryNextStep(projectId, accessToken, { cacheScope: nextStepCacheScope })
-          .then((action) => ({ id: projectId, action }))
-          .catch(() => ({ id: projectId, action: null })),
+        fetchPrimaryNextSteps(projectId, accessToken, { cacheScope: nextStepCacheScope })
+          .then((actions) => ({ id: projectId, actions }))
+          .catch(() => ({ id: projectId, actions: [] })),
       );
 
       const resolved = await Promise.allSettled(fetches);
       if (cancelled) return;
 
-      const batch: Record<string, NextStepAction | null> = {};
+      const batch: Record<string, NextStepAction[]> = {};
       resolved.forEach((result) => {
         if (result.status === 'fulfilled') {
-          batch[result.value.id] = result.value.action;
+          batch[result.value.id] = result.value.actions;
         }
       });
       setNextStepMap((prev) => ({ ...prev, ...batch }));
@@ -230,7 +231,7 @@ export default function ProfessionalProjectsPage() {
     event.stopPropagation();
 
     if (!accessToken) return;
-    const action = nextStepMap[projectId];
+    const action = nextStepMap[projectId]?.[0];
     if (!action) return;
 
     setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: true }));
@@ -238,7 +239,7 @@ export default function ProfessionalProjectsPage() {
       const ok = await completeNextStep(projectId, action.actionKey, accessToken, nextStepCacheScope);
       if (!ok) return;
 
-      const refreshed = await fetchPrimaryNextStep(projectId, accessToken, {
+      const refreshed = await fetchPrimaryNextSteps(projectId, accessToken, {
         cacheScope: nextStepCacheScope,
         forceRefresh: true,
       });
@@ -314,13 +315,17 @@ export default function ProfessionalProjectsPage() {
             </div>
             <div className="space-y-2">
               {dashboardProjects.map((projectProf) => {
-                const action = nextStepMap[projectProf.project.id];
+                const actions = nextStepMap[projectProf.project.id] || [];
+                const primaryAction = actions[0] || null;
+                const secondaryAction = actions[1] || null;
+                const additionalActionCount = Math.max(actions.length - 2, 0);
                 const statusBadge = projectProf.status === 'awarded' ? 'bg-purple-400/20 text-purple-200' : 
                   projectProf.status === 'quoted' ? 'bg-blue-400/20 text-blue-200' : 
                   projectProf.status === 'accepted' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-amber-400/20 text-amber-200';
                 const assistInfo = assistMap[projectProf.project.id];
                 const unreadCount = projectProf.unreadCount ?? 0;
-                const actionHref = action ? getProfessionalShowMeHref(projectProf.id, action.actionKey) : `/professional-projects/${projectProf.id}`;
+                const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
+                const secondaryActionHref = secondaryAction ? getProfessionalShowMeHref(projectProf.id, secondaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
                   <div key={`dash-${projectProf.id}`} className="relative rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
                     {unreadCount > 0 && (
@@ -354,8 +359,8 @@ export default function ProfessionalProjectsPage() {
                               </>
                             )}
                           </div>
-                          {action?.description ? (
-                            <p className="mt-2 text-xs text-slate-300">{action.description}</p>
+                          {primaryAction?.description ? (
+                            <p className="mt-2 text-xs text-slate-300">{primaryAction.description}</p>
                           ) : null}
                         </div>
 
@@ -375,15 +380,30 @@ export default function ProfessionalProjectsPage() {
                               View activity
                             </button>
                           )}
-                          {nextStepsLoading && !action ? (
+                          {nextStepsLoading && !nextStepMap[projectProf.project.id] ? (
                             <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                           ) : (
-                            <Link
-                              href={actionHref}
-                              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-                            >
-                              {action?.actionLabel || 'Open project'}
-                            </Link>
+                            <>
+                              <Link
+                                href={primaryActionHref}
+                                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                              >
+                                {primaryAction?.actionLabel || 'Open project'}
+                              </Link>
+                              {secondaryAction && (
+                                <Link
+                                  href={secondaryActionHref}
+                                  className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap"
+                                >
+                                  {secondaryAction.actionLabel}
+                                </Link>
+                              )}
+                              {additionalActionCount > 0 && (
+                                <span className="text-xs text-slate-300 whitespace-nowrap">
+                                  +{additionalActionCount} more
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>

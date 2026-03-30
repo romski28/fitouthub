@@ -15,6 +15,7 @@ import { useAuth } from "@/context/auth-context";
 import {
   NextStepAuthError,
   completeNextStep,
+  fetchPrimaryNextSteps,
   fetchPrimaryNextStep,
   type NextStepAction,
 } from "@/lib/next-steps";
@@ -537,7 +538,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [items, setItems] = useState<ExtendedProject[]>(() => mapProjectsToItems(projects));
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
-  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction | null>>({});
+  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
@@ -668,18 +669,18 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     const loadNextSteps = async () => {
       setNextStepsLoading(true);
       const fetches = itemProjectIds.map((projectId) =>
-        fetchPrimaryNextStep(projectId, accessToken, { cacheScope: nextStepCacheScope })
-          .then((action) => ({ id: projectId, action }))
-          .catch(() => ({ id: projectId, action: null })),
+        fetchPrimaryNextSteps(projectId, accessToken, { cacheScope: nextStepCacheScope })
+          .then((actions) => ({ id: projectId, actions }))
+          .catch(() => ({ id: projectId, actions: [] })),
       );
 
       const resolved = await Promise.allSettled(fetches);
       if (cancelled) return;
 
-      const batch: Record<string, NextStepAction | null> = {};
+      const batch: Record<string, NextStepAction[]> = {};
       resolved.forEach((result) => {
         if (result.status === 'fulfilled') {
-          batch[result.value.id] = result.value.action;
+          batch[result.value.id] = result.value.actions;
         }
       });
       setNextStepMap((prev) => ({ ...prev, ...batch }));
@@ -695,7 +696,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
   const handleCompleteNextStep = async (projectId: string) => {
     if (!accessToken) return;
-    const action = nextStepMap[projectId];
+    const action = nextStepMap[projectId]?.[0];
     if (!action) return;
 
     setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: true }));
@@ -703,7 +704,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       const ok = await completeNextStep(projectId, action.actionKey, accessToken, nextStepCacheScope);
       if (!ok) return;
 
-      const refreshed = await fetchPrimaryNextStep(projectId, accessToken, {
+      const refreshed = await fetchPrimaryNextSteps(projectId, accessToken, {
         cacheScope: nextStepCacheScope,
         forceRefresh: true,
       });
@@ -765,12 +766,16 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         {dashboardProjects.length > 0 && (
           <div className="space-y-2">
             {dashboardProjects.map((project) => {
-              const action = nextStepMap[project.id];
+              const actions = nextStepMap[project.id] || [];
+              const primaryAction = actions[0] || null;
+              const secondaryAction = actions[1] || null;
+              const additionalActionCount = Math.max(actions.length - 2, 0);
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               const assistInfo = assistMap[project.id];
               const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
               const quoteOverdue = isQuoteOverdueForProject(project);
-              const actionHref = action ? getClientShowMeHref(project.id, action.actionKey) : `/projects/${project.id}`;
+              const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
+              const secondaryActionHref = secondaryAction ? getClientShowMeHref(project.id, secondaryAction.actionKey) : `/projects/${project.id}`;
               return (
                 <div key={`dash-${project.id}`} className={`relative rounded-lg px-4 py-3 transition ${
                   quoteOverdue
@@ -815,7 +820,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           <p className="mt-2 text-xs text-rose-200">
                             No quote was submitted within the allowed window. Re-invite professionals or request assistance.
                           </p>
-                        ) : action?.description ? <p className="mt-2 text-xs text-slate-300">{action.description}</p> : null}
+                        ) : primaryAction?.description ? <p className="mt-2 text-xs text-slate-300">{primaryAction.description}</p> : null}
                       </div>
 
                       <div className="flex items-center gap-2 md:justify-end">
@@ -837,12 +842,27 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         {nextStepsLoading && !nextStepMap[project.id] ? (
                           <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                         ) : (
-                          <Link
-                            href={actionHref}
-                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-                          >
-                            {action?.actionLabel || 'Open project'}
-                          </Link>
+                          <>
+                            <Link
+                              href={primaryActionHref}
+                              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                            >
+                              {primaryAction?.actionLabel || 'Open project'}
+                            </Link>
+                            {secondaryAction && (
+                              <Link
+                                href={secondaryActionHref}
+                                className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap"
+                              >
+                                {secondaryAction.actionLabel}
+                              </Link>
+                            )}
+                            {additionalActionCount > 0 && (
+                              <span className="text-xs text-slate-300 whitespace-nowrap">
+                                +{additionalActionCount} more
+                              </span>
+                            )}
+                          </>
                         )}
                         {project.status !== 'withdrawn' && (
                           <button
