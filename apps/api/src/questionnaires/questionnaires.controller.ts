@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   UnauthorizedException,
   UseGuards,
@@ -47,8 +48,11 @@ export class QuestionnairesController {
   }
 
   @Get('public/:token')
-  getPublicQuestionnaire(@Param('token') token: string) {
-    return this.questionnairesService.getPublicQuestionnaire(token);
+  getPublicQuestionnaire(
+    @Param('token') token: string,
+    @Query('locale') locale?: string,
+  ) {
+    return this.questionnairesService.getPublicQuestionnaire(token, locale);
   }
 
   @Post('public/:token/start')
@@ -80,6 +84,17 @@ export class QuestionnairesController {
   getOne(@Req() req: any, @Param('id') id: string) {
     this.requireAdmin(req);
     return this.questionnairesService.getQuestionnaire(id);
+  }
+
+  @Get(':id/preview')
+  @UseGuards(AuthGuard('jwt'))
+  getPreview(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('locale') locale?: string,
+  ) {
+    this.requireAdmin(req);
+    return this.questionnairesService.previewQuestionnaire(id, locale);
   }
 
   @Post(':id/invites')

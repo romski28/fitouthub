@@ -502,6 +502,7 @@ model Questionnaire {
   invites         QuestionnaireInvite[]
   questions       QuestionnaireQuestion[]
   submissions     QuestionnaireSubmission[]
+  translations    QuestionnaireTranslation[]
 
   @@index([audienceKey])
   @@index([status])
@@ -522,6 +523,7 @@ model QuestionnaireQuestion {
   answers         QuestionnaireAnswer[]
   options         QuestionnaireQuestionOption[]
   questionnaire   Questionnaire             @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+  translations    QuestionnaireQuestionTranslation[]
 
   @@unique([questionnaireId, code])
   @@index([questionnaireId, sortOrder])
@@ -534,9 +536,62 @@ model QuestionnaireQuestionOption {
   label      String
   sortOrder  Int                   @default(0)
   question   QuestionnaireQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  translations QuestionnaireQuestionOptionTranslation[]
 
   @@unique([questionId, value])
   @@index([questionId, sortOrder])
+}
+
+model QuestionnaireTranslation {
+  id              String        @id @default(cuid())
+  questionnaireId String
+  locale          String
+  title           String?
+  description     String?
+  welcomeTitle    String?
+  welcomeMessage  String?
+  thankYouTitle   String?
+  thankYouMessage String?
+  joinCtaLabel    String?
+  joinCtaUrl      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@unique([questionnaireId, locale])
+  @@index([locale])
+  @@index([questionnaireId])
+}
+
+model QuestionnaireQuestionTranslation {
+  id          String                @id @default(cuid())
+  questionId  String
+  locale      String
+  title       String?
+  description String?
+  placeholder String?
+  helpText    String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  question    QuestionnaireQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, locale])
+  @@index([locale])
+  @@index([questionId])
+}
+
+model QuestionnaireQuestionOptionTranslation {
+  id        String                      @id @default(cuid())
+  optionId  String
+  locale    String
+  label     String?
+  createdAt DateTime                    @default(now())
+  updatedAt DateTime                    @updatedAt
+  option    QuestionnaireQuestionOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, locale])
+  @@index([locale])
+  @@index([optionId])
 }
 
 model QuestionnaireTemplate {

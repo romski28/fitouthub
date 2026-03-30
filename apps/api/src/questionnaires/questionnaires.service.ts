@@ -12,6 +12,7 @@ import { SaveQuestionnaireAnswerDto } from './dto/save-questionnaire-answer.dto'
 
 const STARTER_AUDIENCE = 'contractor_tradesman';
 const STARTER_SLUG = 'contractor-tradesman-screening';
+const DEFAULT_LOCALE = 'en';
 
 type QuestionnaireQuestionTypeValue =
   | 'short_text'
@@ -299,6 +300,154 @@ export class QuestionnairesService {
     return item;
   }
 
+  async previewQuestionnaire(id: string, locale?: string) {
+    const item = await this.prisma.questionnaire.findUnique({
+      where: { id },
+      include: {
+        translations: {
+          orderBy: [{ locale: 'asc' }],
+        },
+        questions: {
+          orderBy: [{ sortOrder: 'asc' }],
+          include: {
+            translations: {
+              orderBy: [{ locale: 'asc' }],
+            },
+            options: {
+              orderBy: [{ sortOrder: 'asc' }],
+              include: {
+                translations: {
+                  orderBy: [{ locale: 'asc' }],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Questionnaire not found');
+    }
+
+    const resolvedLocale = this.normaliseLocale(locale);
+    const availableLocales = new Set<string>([DEFAULT_LOCALE]);
+
+    for (const translation of item.translations || []) {
+      availableLocales.add(this.normaliseLocale(translation.locale));
+    }
+
+    for (const question of item.questions || []) {
+      for (const translation of question.translations || []) {
+        availableLocales.add(this.normaliseLocale(translation.locale));
+      }
+      for (const option of question.options || []) {
+        for (const translation of option.translations || []) {
+          availableLocales.add(this.normaliseLocale(translation.locale));
+        }
+      }
+    }
+
+    const questionnaireTranslation = this.pickTranslation(
+      item.translations,
+      resolvedLocale,
+    );
+
+    return {
+      id: item.id,
+      slug: item.slug,
+      status: item.status,
+      locale: resolvedLocale,
+      fallbackLocale: DEFAULT_LOCALE,
+      availableLocales: Array.from(availableLocales.values()).sort(),
+      title:
+        this.pickTranslatedField(questionnaireTranslation, 'title', item.title) ||
+        item.title,
+      description: this.pickTranslatedField(
+        questionnaireTranslation,
+        'description',
+        item.description,
+      ),
+      welcomeTitle: this.pickTranslatedField(
+        questionnaireTranslation,
+        'welcomeTitle',
+        item.welcomeTitle,
+      ),
+      welcomeMessage: this.pickTranslatedField(
+        questionnaireTranslation,
+        'welcomeMessage',
+        item.welcomeMessage,
+      ),
+      thankYouTitle: this.pickTranslatedField(
+        questionnaireTranslation,
+        'thankYouTitle',
+        item.thankYouTitle,
+      ),
+      thankYouMessage: this.pickTranslatedField(
+        questionnaireTranslation,
+        'thankYouMessage',
+        item.thankYouMessage,
+      ),
+      joinCtaLabel: this.pickTranslatedField(
+        questionnaireTranslation,
+        'joinCtaLabel',
+        item.joinCtaLabel,
+      ),
+      joinCtaUrl: this.pickTranslatedField(
+        questionnaireTranslation,
+        'joinCtaUrl',
+        item.joinCtaUrl,
+      ),
+      questions: item.questions.map((question) => {
+        const questionTranslation = this.pickTranslation(
+          question.translations,
+          resolvedLocale,
+        );
+
+        return {
+          id: question.id,
+          code: question.code,
+          title:
+            this.pickTranslatedField(questionTranslation, 'title', question.title) ||
+            question.title,
+          description: this.pickTranslatedField(
+            questionTranslation,
+            'description',
+            question.description,
+          ),
+          type: question.type,
+          placeholder: this.pickTranslatedField(
+            questionTranslation,
+            'placeholder',
+            question.placeholder,
+          ),
+          helpText: this.pickTranslatedField(
+            questionTranslation,
+            'helpText',
+            question.helpText,
+          ),
+          isRequired: question.isRequired,
+          sortOrder: question.sortOrder,
+          options: question.options.map((option) => {
+            const optionTranslation = this.pickTranslation(
+              option.translations,
+              resolvedLocale,
+            );
+
+            return {
+              id: option.id,
+              value: option.value,
+              sortOrder: option.sortOrder,
+              label:
+                this.pickTranslatedField(optionTranslation, 'label', option.label) ||
+                option.label,
+            };
+          }),
+        };
+      }),
+    };
+  }
+
   async listResponses(questionnaireId: string) {
     const questionnaire = await this.prisma.questionnaire.findUnique({
       where: { id: questionnaireId },
@@ -514,9 +663,9 @@ export class QuestionnairesService {
     };
   }
 
-  async getPublicQuestionnaire(token: string) {
+  async getPublicQuestionnaire(token: string, locale?: string) {
     const invite = await this.getInviteForPublic(token);
-    return this.toPublicQuestionnaire(invite);
+    return this.toPublicQuestionnaire(invite, locale);
   }
 
   async startPublicQuestionnaire(token: string) {
@@ -707,11 +856,22 @@ export class QuestionnairesService {
       include: {
         questionnaire: {
           include: {
+            translations: {
+              orderBy: [{ locale: 'asc' }],
+            },
             questions: {
               orderBy: [{ sortOrder: 'asc' }],
               include: {
+                translations: {
+                  orderBy: [{ locale: 'asc' }],
+                },
                 options: {
                   orderBy: [{ sortOrder: 'asc' }],
+                  include: {
+                    translations: {
+                      orderBy: [{ locale: 'asc' }],
+                    },
+                  },
                 },
               },
             },
@@ -750,9 +910,33 @@ export class QuestionnairesService {
     return invite;
   }
 
-  private toPublicQuestionnaire(invite: Awaited<ReturnType<QuestionnairesService['getInviteForPublic']>>) {
+  private toPublicQuestionnaire(
+    invite: Awaited<ReturnType<QuestionnairesService['getInviteForPublic']>>,
+    locale?: string,
+  ) {
+    const resolvedLocale = this.normaliseLocale(locale);
     const answers = Object.fromEntries(
       (invite.submission?.answers || []).map((answer) => [answer.questionId, answer.value]),
+    );
+
+    const availableLocales = new Set<string>([DEFAULT_LOCALE]);
+    for (const translation of invite.questionnaire.translations || []) {
+      availableLocales.add(this.normaliseLocale(translation.locale));
+    }
+    for (const question of invite.questionnaire.questions || []) {
+      for (const translation of question.translations || []) {
+        availableLocales.add(this.normaliseLocale(translation.locale));
+      }
+      for (const option of question.options || []) {
+        for (const translation of option.translations || []) {
+          availableLocales.add(this.normaliseLocale(translation.locale));
+        }
+      }
+    }
+
+    const questionnaireTranslation = this.pickTranslation(
+      invite.questionnaire.translations,
+      resolvedLocale,
     );
 
     return {
@@ -770,26 +954,101 @@ export class QuestionnairesService {
       questionnaire: {
         id: invite.questionnaire.id,
         slug: invite.questionnaire.slug,
-        title: invite.questionnaire.title,
-        description: invite.questionnaire.description,
-        welcomeTitle: invite.questionnaire.welcomeTitle,
-        welcomeMessage: invite.questionnaire.welcomeMessage,
-        thankYouTitle: invite.questionnaire.thankYouTitle,
-        thankYouMessage: invite.questionnaire.thankYouMessage,
-        joinCtaLabel: invite.questionnaire.joinCtaLabel,
-        joinCtaUrl: invite.questionnaire.joinCtaUrl,
+        locale: resolvedLocale,
+        fallbackLocale: DEFAULT_LOCALE,
+        availableLocales: Array.from(availableLocales.values()).sort(),
+        title:
+          this.pickTranslatedField(
+            questionnaireTranslation,
+            'title',
+            invite.questionnaire.title,
+          ) || invite.questionnaire.title,
+        description: this.pickTranslatedField(
+          questionnaireTranslation,
+          'description',
+          invite.questionnaire.description,
+        ),
+        welcomeTitle: this.pickTranslatedField(
+          questionnaireTranslation,
+          'welcomeTitle',
+          invite.questionnaire.welcomeTitle,
+        ),
+        welcomeMessage: this.pickTranslatedField(
+          questionnaireTranslation,
+          'welcomeMessage',
+          invite.questionnaire.welcomeMessage,
+        ),
+        thankYouTitle: this.pickTranslatedField(
+          questionnaireTranslation,
+          'thankYouTitle',
+          invite.questionnaire.thankYouTitle,
+        ),
+        thankYouMessage: this.pickTranslatedField(
+          questionnaireTranslation,
+          'thankYouMessage',
+          invite.questionnaire.thankYouMessage,
+        ),
+        joinCtaLabel: this.pickTranslatedField(
+          questionnaireTranslation,
+          'joinCtaLabel',
+          invite.questionnaire.joinCtaLabel,
+        ),
+        joinCtaUrl: this.pickTranslatedField(
+          questionnaireTranslation,
+          'joinCtaUrl',
+          invite.questionnaire.joinCtaUrl,
+        ),
         questions: invite.questionnaire.questions.map((question) => ({
+          ...(() => {
+            const questionTranslation = this.pickTranslation(
+              question.translations,
+              resolvedLocale,
+            );
+            return {
+              title:
+                this.pickTranslatedField(
+                  questionTranslation,
+                  'title',
+                  question.title,
+                ) || question.title,
+              description: this.pickTranslatedField(
+                questionTranslation,
+                'description',
+                question.description,
+              ),
+              placeholder: this.pickTranslatedField(
+                questionTranslation,
+                'placeholder',
+                question.placeholder,
+              ),
+              helpText: this.pickTranslatedField(
+                questionTranslation,
+                'helpText',
+                question.helpText,
+              ),
+            };
+          })(),
           id: question.id,
           code: question.code,
-          title: question.title,
-          description: question.description,
           type: question.type,
-          placeholder: question.placeholder,
-          helpText: question.helpText,
           isRequired: question.isRequired,
           sortOrder: question.sortOrder,
           settings: question.settings,
-          options: question.options,
+          options: question.options.map((option) => {
+            const optionTranslation = this.pickTranslation(
+              option.translations,
+              resolvedLocale,
+            );
+            return {
+              id: option.id,
+              questionId: option.questionId,
+              value: option.value,
+              sortOrder: option.sortOrder,
+              label:
+                this.pickTranslatedField(optionTranslation, 'label', option.label) ||
+                option.label,
+            };
+          }),
         })),
       },
       submission: invite.submission
@@ -803,6 +1062,52 @@ export class QuestionnairesService {
           }
         : null,
     };
+  }
+
+  private normaliseLocale(locale?: string | null) {
+    if (!locale || typeof locale !== 'string') {
+      return DEFAULT_LOCALE;
+    }
+
+    const normalized = locale.trim().replace('_', '-').toLowerCase();
+    return normalized || DEFAULT_LOCALE;
+  }
+
+  private pickTranslation<T extends { locale: string }>(
+    translations: T[] | null | undefined,
+    locale: string,
+  ): T | null {
+    const rows = Array.isArray(translations) ? translations : [];
+    if (!rows.length) {
+      return null;
+    }
+
+    const normalizedLocale = this.normaliseLocale(locale);
+    const exact = rows.find(
+      (item) => this.normaliseLocale(item.locale) === normalizedLocale,
+    );
+
+    if (exact) {
+      return exact;
+    }
+
+    const fallback = rows.find(
+      (item) => this.normaliseLocale(item.locale) === DEFAULT_LOCALE,
+    );
+
+    return fallback || null;
+  }
+
+  private pickTranslatedField<T extends Record<string, unknown>>(
+    translation: T | null,
+    key: keyof T,
+    fallback: string | null | undefined,
+  ) {
+    const value = translation?.[key];
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value;
+    }
+    return fallback ?? null;
   }
 
   private normaliseSlug(input: string) {

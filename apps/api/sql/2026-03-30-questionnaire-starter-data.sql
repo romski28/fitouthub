@@ -188,4 +188,117 @@ BEGIN
   ON CONFLICT ("questionId", "value") DO UPDATE SET
     "label" = EXCLUDED."label",
     "sortOrder" = EXCLUDED."sortOrder";
+
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'QuestionnaireTranslation'
+  ) THEN
+    INSERT INTO "QuestionnaireTranslation" (
+      "id", "questionnaireId", "locale", "title", "description", "welcomeTitle", "welcomeMessage", "thankYouTitle", "thankYouMessage", "joinCtaLabel", "joinCtaUrl", "createdAt", "updatedAt"
+    )
+    VALUES (
+      'qnrtr_contractors_zh_hk',
+      starter_questionnaire_id,
+      'zh-HK',
+      '承建商及裝修技工入職問卷',
+      '為承建商及裝修技工而設的基礎持份者問卷。',
+      '歡迎填寫承建商及裝修技工問卷',
+      '我們會先收集你的基本資料，以便用更少來回溝通，配對合適項目邀請。',
+      '多謝你提供資料',
+      '你的答案已儲存，我們會用於後續邀請及入駐流程。',
+      '探索加入 FitOut Hub',
+      '/professionals',
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    )
+    ON CONFLICT ("questionnaireId", "locale") DO UPDATE SET
+      "title" = EXCLUDED."title",
+      "description" = EXCLUDED."description",
+      "welcomeTitle" = EXCLUDED."welcomeTitle",
+      "welcomeMessage" = EXCLUDED."welcomeMessage",
+      "thankYouTitle" = EXCLUDED."thankYouTitle",
+      "thankYouMessage" = EXCLUDED."thankYouMessage",
+      "joinCtaLabel" = EXCLUDED."joinCtaLabel",
+      "joinCtaUrl" = EXCLUDED."joinCtaUrl",
+      "updatedAt" = CURRENT_TIMESTAMP;
+
+    INSERT INTO "QuestionnaireQuestionTranslation" (
+      "id", "questionId", "locale", "title", "description", "placeholder", "helpText", "createdAt", "updatedAt"
+    )
+    SELECT
+      CONCAT('qqtr_', item.code, '_zh_hk'),
+      q."id",
+      'zh-HK',
+      item.title,
+      item.description,
+      item.placeholder,
+      item.help_text,
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    FROM (
+      VALUES
+        ('business_name', '你的公司或商業名稱是甚麼？', NULL, '例如：Harbour Build & Fitout Ltd', NULL),
+        ('primary_trade', '哪一個工種最能代表你的主要工作？', NULL, NULL, NULL),
+        ('coverage_areas', '你目前主要服務哪些地區？', '請列出你經常施工的區域、島嶼或地區。', '例如：港島、九龍東、將軍澳', NULL),
+        ('experience_years', '你有多少年相關經驗？', NULL, '例如：12', NULL),
+        ('insurance_ready', '你目前是否持有有效的公眾責任保險或同等保障？', NULL, NULL, '此項日後可配合文件上載流程再細化。'),
+        ('certifications', '你有哪些牌照、註冊或專業資格可供客戶參考？', NULL, '請列出註冊編號、卡號或認證', NULL),
+        ('team_size', '你一般的施工團隊規模是？', NULL, NULL, NULL),
+        ('project_size', '你最擅長承接哪類型項目規模？', NULL, NULL, NULL),
+        ('availability', '你通常最快可於何時開始新項目？', NULL, '例如：兩星期內', NULL),
+        ('contact_email', '哪個電郵最適合接收項目邀請？', NULL, 'name@company.com', NULL),
+        ('contact_phone', '哪個手機或 WhatsApp 號碼最適合聯絡？', NULL, '+852 ...', NULL),
+        ('why_fitouthub', '在邀請你加入平台前，還有甚麼想讓 FitOut Hub 知道？', NULL, '可分享你的強項、偏好項目或其他重要資訊', NULL)
+    ) AS item(code, title, description, placeholder, help_text)
+    JOIN "QuestionnaireQuestion" q
+      ON q."questionnaireId" = starter_questionnaire_id
+     AND q."code" = item.code
+    ON CONFLICT ("questionId", "locale") DO UPDATE SET
+      "title" = EXCLUDED."title",
+      "description" = EXCLUDED."description",
+      "placeholder" = EXCLUDED."placeholder",
+      "helpText" = EXCLUDED."helpText",
+      "updatedAt" = CURRENT_TIMESTAMP;
+
+    INSERT INTO "QuestionnaireQuestionOptionTranslation" (
+      "id", "optionId", "locale", "label", "createdAt", "updatedAt"
+    )
+    SELECT
+      CONCAT('qqoptr_', item.question_code, '_', item.value, '_zh_hk'),
+      o."id",
+      'zh-HK',
+      item.label,
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    FROM (
+      VALUES
+        ('primary_trade', 'general_contractor', '總承建商'),
+        ('primary_trade', 'builder', '裝修／工程承建商'),
+        ('primary_trade', 'electrical', '電工'),
+        ('primary_trade', 'plumbing', '水喉／排水'),
+        ('primary_trade', 'hvac', '冷暖通風（HVAC）'),
+        ('primary_trade', 'joinery', '木工／細木'),
+        ('primary_trade', 'decorating', '油漆／裝飾'),
+        ('primary_trade', 'other', '其他專業工種'),
+        ('team_size', 'solo', '個人作業'),
+        ('team_size', '2_5', '2 至 5 人'),
+        ('team_size', '6_15', '6 至 15 人'),
+        ('team_size', '16_plus', '16 人以上'),
+        ('project_size', 'minor_repairs', '小型維修／快修工程'),
+        ('project_size', 'single_room', '單房翻新'),
+        ('project_size', 'full_home', '全屋翻新'),
+        ('project_size', 'commercial_fitout', '商業裝修')
+    ) AS item(question_code, value, label)
+    JOIN "QuestionnaireQuestion" q
+      ON q."questionnaireId" = starter_questionnaire_id
+     AND q."code" = item.question_code
+    JOIN "QuestionnaireQuestionOption" o
+      ON o."questionId" = q."id"
+     AND o."value" = item.value
+    ON CONFLICT ("optionId", "locale") DO UPDATE SET
+      "label" = EXCLUDED."label",
+      "updatedAt" = CURRENT_TIMESTAMP;
+  END IF;
 END $$;

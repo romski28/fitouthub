@@ -81,6 +81,40 @@ type QuestionnaireDetail = {
   submissions: QuestionnaireResponse[];
 };
 
+type QuestionnairePreview = {
+  id: string;
+  slug: string;
+  status: "draft" | "active" | "archived";
+  locale: string;
+  fallbackLocale: string;
+  availableLocales: string[];
+  title: string;
+  description?: string | null;
+  welcomeTitle?: string | null;
+  welcomeMessage?: string | null;
+  thankYouTitle?: string | null;
+  thankYouMessage?: string | null;
+  joinCtaLabel?: string | null;
+  joinCtaUrl?: string | null;
+  questions: Array<{
+    id: string;
+    code: string;
+    title: string;
+    description?: string | null;
+    type: string;
+    placeholder?: string | null;
+    helpText?: string | null;
+    isRequired: boolean;
+    sortOrder: number;
+    options: Array<{
+      id: string;
+      value: string;
+      sortOrder: number;
+      label: string;
+    }>;
+  }>;
+};
+
 export default function AdminQuestionnairesPage() {
   const router = useRouter();
   const { user, accessToken } = useAuth();
@@ -94,6 +128,9 @@ export default function AdminQuestionnairesPage() {
   const [creatingStarter, setCreatingStarter] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
   const [lastInviteUrl, setLastInviteUrl] = useState<string>("");
+  const [previewLocale, setPreviewLocale] = useState("en");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [preview, setPreview] = useState<QuestionnairePreview | null>(null);
   const [inviteForm, setInviteForm] = useState({
     email: "",
     recipientName: "",
@@ -174,6 +211,10 @@ export default function AdminQuestionnairesPage() {
   useEffect(() => {
     loadDetail();
   }, [loadDetail]);
+
+  useEffect(() => {
+    setPreview(null);
+  }, [selectedId]);
 
   const handleCreateStarter = async () => {
     if (!accessToken) return;
@@ -260,6 +301,36 @@ export default function AdminQuestionnairesPage() {
       setError(err instanceof Error ? err.message : "Failed to send invite");
     } finally {
       setSendingInvite(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    if (!accessToken || !detail) return;
+
+    try {
+      setPreviewLoading(true);
+      setError(null);
+
+      const res = await fetch(
+        `${API_BASE_URL}/questionnaires/${detail.id}/preview?locale=${encodeURIComponent(previewLocale)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.message || "Failed to load preview");
+      }
+
+      const data = (await res.json()) as QuestionnairePreview;
+      setPreview(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load preview");
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -358,6 +429,28 @@ export default function AdminQuestionnairesPage() {
 
                 <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
                   <h3 className="text-lg font-semibold text-slate-900">Send invitation</h3>
+                  <div className="flex flex-wrap items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                    <label className="text-sm text-blue-900">Preview language</label>
+                    <select
+                      value={previewLocale}
+                      onChange={(event) => setPreviewLocale(event.target.value)}
+                      className="rounded-md border border-blue-300 bg-white px-2 py-1 text-sm"
+                    >
+                      {((preview?.availableLocales?.length ? preview.availableLocales : ["en", "zh-hk"]) || ["en", "zh-hk"]).map((locale) => (
+                        <option key={locale} value={locale}>
+                          {locale.toLowerCase() === "zh-hk" ? "Cantonese (zh-HK)" : locale.toLowerCase() === "en" ? "English" : locale}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handlePreview}
+                      disabled={previewLoading}
+                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                    >
+                      {previewLoading ? "Loading preview…" : "Preview questionnaire"}
+                    </button>
+                  </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     <input
                       value={inviteForm.email}
@@ -424,6 +517,47 @@ export default function AdminQuestionnairesPage() {
                     )}
                   </div>
                 </div>
+
+                {preview && (
+                  <div className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-lg font-semibold text-slate-900">Preview</h3>
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">
+                        Locale: {preview.locale}
+                      </span>
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Welcome</p>
+                      <p className="mt-1 text-base font-semibold text-slate-900">{preview.welcomeTitle || preview.title}</p>
+                      <p className="mt-1 text-sm text-slate-700">{preview.welcomeMessage || preview.description || "No welcome copy."}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      {preview.questions.map((question) => (
+                        <div key={question.id} className="rounded-lg border border-slate-200 p-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-900">{question.sortOrder}. {question.title}</p>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{question.type}</span>
+                            {question.isRequired && (
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">Required</span>
+                            )}
+                          </div>
+                          {question.description && <p className="mt-1 text-xs text-slate-600">{question.description}</p>}
+                          {question.options.length > 0 && (
+                            <p className="mt-1 text-xs text-slate-600">Options: {question.options.map((option) => option.label).join(", ")}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Thank you</p>
+                      <p className="mt-1 text-base font-semibold text-slate-900">{preview.thankYouTitle || "Thank you"}</p>
+                      <p className="mt-1 text-sm text-slate-700">{preview.thankYouMessage || "No thank-you copy."}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h3 className="text-lg font-semibold text-slate-900 mb-3">Questions</h3>

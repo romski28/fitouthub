@@ -44,6 +44,9 @@ type PublicPayload = {
   };
   questionnaire: {
     id: string;
+    locale?: string;
+    fallbackLocale?: string;
+    availableLocales?: string[];
     title: string;
     description?: string | null;
     welcomeTitle?: string | null;
@@ -62,6 +65,68 @@ type PublicPayload = {
     answers: Record<string, unknown>;
   } | null;
 };
+
+function getUiText(locale: string) {
+  if (locale.toLowerCase() === "zh-hk") {
+    return {
+      loading: "正在載入問卷…",
+      unavailableTitle: "問卷暫時無法使用",
+      unavailableFallback: "未能載入問卷",
+      invitation: "問卷邀請",
+      recipient: "收件人",
+      role: "角色",
+      company: "公司",
+      expiresOn: "此邀請連結將於以下時間失效",
+      start: "開始填寫",
+      starting: "正在開始…",
+      questionOf: "第 {current} 題，共 {total} 題",
+      yourAnswer: "你的答案",
+      yes: "是",
+      no: "否",
+      requiredError: "請先回答此問題再繼續。",
+      back: "返回",
+      next: "下一題",
+      saving: "儲存中…",
+      submit: "提交",
+      submitting: "提交中…",
+      responseReceived: "已收到你的回覆",
+      thankYou: "多謝你",
+      submittedSuccess: "你的答案已成功提交。",
+      joinFallback: "加入 FitOut Hub",
+      language: "語言",
+      inviteFallback: "請回答以下問題。",
+    };
+  }
+
+  return {
+    loading: "Loading questionnaire…",
+    unavailableTitle: "Questionnaire unavailable",
+    unavailableFallback: "Failed to load questionnaire",
+    invitation: "Questionnaire invitation",
+    recipient: "Recipient",
+    role: "Role",
+    company: "Company",
+    expiresOn: "This invitation expires on",
+    start: "Start questionnaire",
+    starting: "Starting…",
+    questionOf: "Question {current} of {total}",
+    yourAnswer: "Your answer",
+    yes: "Yes",
+    no: "No",
+    requiredError: "Please answer this question before continuing.",
+    back: "Back",
+    next: "Next",
+    saving: "Saving…",
+    submit: "Submit",
+    submitting: "Submitting…",
+    responseReceived: "Response received",
+    thankYou: "Thank you",
+    submittedSuccess: "Your answers have been submitted successfully.",
+    joinFallback: "Join FitOut Hub",
+    language: "Language",
+    inviteFallback: "Please answer the following questions.",
+  };
+}
 
 function normaliseQuestionAnswer(type: PublicQuestion["type"], value: unknown) {
   if (type === "multi_select") {
@@ -96,6 +161,7 @@ function isMissingAnswer(question: PublicQuestion, value: unknown) {
 export default function PublicQuestionnairePage() {
   const params = useParams<{ token: string }>();
   const [token, setToken] = useState<string>("");
+  const [locale, setLocale] = useState<string>("en");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [payload, setPayload] = useState<PublicPayload | null>(null);
@@ -105,6 +171,7 @@ export default function PublicQuestionnairePage() {
   const [starting, setStarting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const uiText = useMemo(() => getUiText(locale), [locale]);
 
   useEffect(() => {
     if (params?.token) {
@@ -120,9 +187,12 @@ export default function PublicQuestionnairePage() {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`${API_BASE_URL}/questionnaires/public/${token}`, {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `${API_BASE_URL}/questionnaires/public/${token}?locale=${encodeURIComponent(locale)}`,
+          {
+            cache: "no-store",
+          },
+        );
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -140,7 +210,15 @@ export default function PublicQuestionnairePage() {
         }
 
         setPayload(data);
-        setAnswers(initialAnswers);
+        setAnswers((prev) => {
+          const merged = { ...initialAnswers };
+          for (const [questionId, value] of Object.entries(prev)) {
+            if (questionId in merged && (merged[questionId] === "" || merged[questionId] === null)) {
+              merged[questionId] = value;
+            }
+          }
+          return merged;
+        });
 
         if (data.invite.status === "submitted" || data.submission?.status === "completed") {
           setStep("thanks");
@@ -155,7 +233,7 @@ export default function PublicQuestionnairePage() {
     };
 
     load();
-  }, [token]);
+  }, [token, locale]);
 
   const questions = payload?.questionnaire.questions || [];
   const currentQuestion = questions[Math.min(questionIndex, Math.max(questions.length - 1, 0))] || null;
@@ -190,7 +268,7 @@ export default function PublicQuestionnairePage() {
 
     const value = answers[currentQuestion.id];
     if (isMissingAnswer(currentQuestion, value)) {
-      setError("Please answer this question before continuing.");
+      setError(uiText.requiredError);
       return false;
     }
 
@@ -264,7 +342,7 @@ export default function PublicQuestionnairePage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-        <p className="text-slate-700">Loading questionnaire…</p>
+        <p className="text-slate-700">{uiText.loading}</p>
       </main>
     );
   }
@@ -273,8 +351,8 @@ export default function PublicQuestionnairePage() {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
         <div className="max-w-lg rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
-          <h1 className="text-lg font-semibold">Questionnaire unavailable</h1>
-          <p className="mt-2 text-sm">{error}</p>
+          <h1 className="text-lg font-semibold">{uiText.unavailableTitle}</h1>
+          <p className="mt-2 text-sm">{error || uiText.unavailableFallback}</p>
         </div>
       </main>
     );
@@ -285,32 +363,56 @@ export default function PublicQuestionnairePage() {
   }
 
   const joinCtaUrl = payload.questionnaire.joinCtaUrl || "/professionals";
-  const joinCtaLabel = payload.questionnaire.joinCtaLabel || "Join FitOut Hub";
+  const joinCtaLabel = payload.questionnaire.joinCtaLabel || uiText.joinFallback;
+  const availableLocales = payload.questionnaire.availableLocales || ["en", "zh-hk"];
+  const languageLabel = (value: string) => {
+    const normalized = value.toLowerCase();
+    if (normalized === "zh-hk") return "繁體中文（廣東話）";
+    if (normalized === "en") return "English";
+    return value;
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
       <div className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex justify-end">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <span>{uiText.language}</span>
+            <select
+              value={locale}
+              onChange={(event) => setLocale(event.target.value)}
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+            >
+              {availableLocales.map((itemLocale) => (
+                <option key={itemLocale} value={itemLocale}>
+                  {languageLabel(itemLocale)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         {step === "welcome" && (
           <section className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Questionnaire invitation</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{uiText.invitation}</p>
             <h1 className="text-2xl font-bold text-slate-900">
               {payload.questionnaire.welcomeTitle || payload.questionnaire.title}
             </h1>
             <p className="text-sm text-slate-700">
-              {payload.questionnaire.welcomeMessage || payload.questionnaire.description || "Please answer the following questions."}
+              {payload.questionnaire.welcomeMessage || payload.questionnaire.description || uiText.inviteFallback}
             </p>
 
             {(payload.invite.recipientName || payload.invite.roleLabel || payload.invite.companyName) && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                {payload.invite.recipientName && <p>Recipient: {payload.invite.recipientName}</p>}
-                {payload.invite.roleLabel && <p>Role: {payload.invite.roleLabel}</p>}
-                {payload.invite.companyName && <p>Company: {payload.invite.companyName}</p>}
+                {payload.invite.recipientName && <p>{uiText.recipient}: {payload.invite.recipientName}</p>}
+                {payload.invite.roleLabel && <p>{uiText.role}: {payload.invite.roleLabel}</p>}
+                {payload.invite.companyName && <p>{uiText.company}: {payload.invite.companyName}</p>}
               </div>
             )}
 
             {payload.invite.expiresAt && (
               <p className="text-xs text-amber-700">
-                This invitation expires on {new Date(payload.invite.expiresAt).toLocaleString()}.
+                {uiText.expiresOn} {new Date(payload.invite.expiresAt).toLocaleString()}.
               </p>
             )}
 
@@ -320,7 +422,7 @@ export default function PublicQuestionnairePage() {
               disabled={starting}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
             >
-              {starting ? "Starting…" : "Start questionnaire"}
+              {starting ? uiText.starting : uiText.start}
             </button>
           </section>
         )}
@@ -329,7 +431,9 @@ export default function PublicQuestionnairePage() {
           <section className="space-y-5">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                Question {questionIndex + 1} of {questions.length}
+                {uiText.questionOf
+                  .replace("{current}", String(questionIndex + 1))
+                  .replace("{total}", String(questions.length))}
               </p>
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                 <div className="h-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
@@ -366,7 +470,7 @@ export default function PublicQuestionnairePage() {
                   onChange={(event) =>
                     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: event.target.value }))
                   }
-                  placeholder={currentQuestion.placeholder || "Your answer"}
+                  placeholder={currentQuestion.placeholder || uiText.yourAnswer}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 />
               )}
@@ -378,7 +482,7 @@ export default function PublicQuestionnairePage() {
                   onChange={(event) =>
                     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: event.target.value }))
                   }
-                  placeholder={currentQuestion.placeholder || "Your answer"}
+                  placeholder={currentQuestion.placeholder || uiText.yourAnswer}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 />
               )}
@@ -396,7 +500,7 @@ export default function PublicQuestionnairePage() {
                         : "border-slate-300 bg-white text-slate-700"
                     }`}
                   >
-                    Yes
+                    {uiText.yes}
                   </button>
                   <button
                     type="button"
@@ -409,7 +513,7 @@ export default function PublicQuestionnairePage() {
                         : "border-slate-300 bg-white text-slate-700"
                     }`}
                   >
-                    No
+                    {uiText.no}
                   </button>
                 </div>
               )}
@@ -487,7 +591,7 @@ export default function PublicQuestionnairePage() {
                 disabled={questionIndex === 0 || saving || completing}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
-                Back
+                {uiText.back}
               </button>
 
               <button
@@ -498,11 +602,11 @@ export default function PublicQuestionnairePage() {
               >
                 {questionIndex < questions.length - 1
                   ? saving
-                    ? "Saving…"
-                    : "Next"
+                    ? uiText.saving
+                    : uiText.next
                   : completing
-                    ? "Submitting…"
-                    : "Submit"}
+                    ? uiText.submitting
+                    : uiText.submit}
               </button>
             </div>
           </section>
@@ -510,12 +614,12 @@ export default function PublicQuestionnairePage() {
 
         {step === "thanks" && (
           <section className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Response received</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{uiText.responseReceived}</p>
             <h1 className="text-2xl font-bold text-slate-900">
-              {payload.questionnaire.thankYouTitle || "Thank you"}
+              {payload.questionnaire.thankYouTitle || uiText.thankYou}
             </h1>
             <p className="text-sm text-slate-700">
-              {payload.questionnaire.thankYouMessage || "Your answers have been submitted successfully."}
+              {payload.questionnaire.thankYouMessage || uiText.submittedSuccess}
             </p>
             <div className="pt-2">
               <Link
