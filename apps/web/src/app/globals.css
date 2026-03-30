@@ -55,8 +55,8 @@
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  padding-right: 4rem;
-  font-size: 0.875rem;
+  padding-right: 3rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: rgb(146 64 14);
 }

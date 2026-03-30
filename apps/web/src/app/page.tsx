@@ -74,9 +74,9 @@ export default function Home() {
   }, [hydrated, isLoggedIn, profIsLoggedIn]);
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-12">
       {hydrated && !isLoggedIn && !profIsLoggedIn && activeAnnouncement && (
-        <div className="pt-2">
+        <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
           <HomeAnnouncementTicker
             title={activeAnnouncement.title}
             content={activeAnnouncement.content}

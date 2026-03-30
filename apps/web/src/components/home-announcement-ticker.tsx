@@ -14,7 +14,7 @@ export const HomeAnnouncementTicker: React.FC<HomeAnnouncementTickerProps> = ({
   const text = title?.trim() ? `${title.trim()}: ${content}` : content;
 
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 overflow-hidden">
+    <div className="overflow-hidden border-y border-amber-200 bg-amber-50/95 px-2 py-1">
       <div className="home-ticker-track">
         <span className="home-ticker-item">📢 {text}</span>
         <span className="home-ticker-item" aria-hidden>
