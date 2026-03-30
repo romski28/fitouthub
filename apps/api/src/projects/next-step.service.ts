@@ -237,20 +237,75 @@ export class NextStepService {
       }
 
       if (role === 'PROFESSIONAL' && clientSigned && !professionalSigned) {
-        availableConfigSteps = nextSteps.filter((step) =>
+        const contractSigningSteps = nextSteps.filter((step) =>
           ['REVIEW_CONTRACT', 'SIGN_CONTRACT'].includes(step.actionKey),
         );
+        availableConfigSteps =
+          contractSigningSteps.length > 0
+            ? contractSigningSteps
+            : [
+                createSyntheticPrimaryStep(
+                  'SIGN_CONTRACT',
+                  'Sign contract',
+                  true,
+                  role,
+                  effectiveStage,
+                  'Sign the contract so the client can proceed to escrow funding.',
+                ),
+              ];
+      }
+
+      if (role === 'PROFESSIONAL' && clientSigned && professionalSigned) {
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'CONFIRM_START_DATE',
+            'Confirm start plan',
+            true,
+            role,
+            effectiveStage,
+            'Set proposed start date, expected duration, and site access requirements while escrow is being secured.',
+          ),
+        ];
       }
     }
 
     if (role === 'CLIENT' && project.status === 'awarded') {
+      const pendingPaymentRequest =
+        await this.prisma.financialTransaction.findFirst({
+          where: {
+            projectId,
+            type: 'payment_request',
+            status: 'pending',
+            actionComplete: false,
+            actionBy: userId,
+            actionByRole: 'client',
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+      if (pendingPaymentRequest) {
+        availableConfigSteps = [
+          {
+            actionKey: 'REVIEW_PAYMENT_REQUEST',
+            actionLabel: 'Review payment request',
+            description:
+              'A professional has requested payment. Review and approve or reject the request.',
+            isPrimary: true,
+            isElective: false,
+            requiresAction: true,
+            estimatedDurationMinutes: 8,
+            displayOrder: 1,
+          } as any,
+        ];
+      }
+
       const contractFullySigned =
         Boolean(project.clientSignedAt) &&
         Boolean(project.professionalSignedAt);
 
       // Only offer escrow deposit AFTER both parties have signed the contract.
       // Until then, the standard CONTRACT_PHASE step (sign contract) should show.
-      if (contractFullySigned) {
+      if (!pendingPaymentRequest && contractFullySigned) {
         const pendingEscrowRequest =
           await this.prisma.financialTransaction.findFirst({
             where: {

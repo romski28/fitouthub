@@ -47,6 +47,7 @@ const clientActionTabMap: Record<string, string> = {
   REVIEW_CONTRACT: 'contract',
   SIGN_CONTRACT: 'contract',
   DEPOSIT_ESCROW_FUNDS: 'overview',
+  REVIEW_PAYMENT_REQUEST: 'overview',
   REVIEW_PROGRESS: 'schedule',
   APPROVE_MILESTONE: 'schedule',
   SCHEDULE_FINAL_INSPECTION: 'schedule',
