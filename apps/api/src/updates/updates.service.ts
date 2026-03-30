@@ -30,8 +30,6 @@ export interface UnreadMessageGroup {
 }
 
 export interface UpdatesSummary {
-  financialActions: FinancialActionItem[];
-  financialCount: number;
   unreadMessages: UnreadMessageGroup[];
   unreadCount: number;
   totalCount: number;
@@ -2208,30 +2206,19 @@ export class UpdatesService {
     }
 
     try {
-      const [financialActions, unreadMessages] = await Promise.all([
-        this.getFinancialActions(userId, role).catch(err => {
-          this.logger.error(
-            `[getUpdatesSummary] Error fetching financial actions for userId=${userId}, role=${role}: ${err instanceof Error ? err.message : 'unknown error'}`,
-          );
-          return [] as FinancialActionItem[];
-        }),
-        this.getUnreadMessages(userId, role).catch(err => {
-          this.logger.error(
-            `[getUpdatesSummary] Error fetching unread messages for userId=${userId}, role=${role}: ${err instanceof Error ? err.message : 'unknown error'}`,
-          );
-          return [] as UnreadMessageGroup[];
-        }),
-      ]);
+      const unreadMessages = await this.getUnreadMessages(userId, role).catch(err => {
+        this.logger.error(
+          `[getUpdatesSummary] Error fetching unread messages for userId=${userId}, role=${role}: ${err instanceof Error ? err.message : 'unknown error'}`,
+        );
+        return [] as UnreadMessageGroup[];
+      });
 
-      const financialCount = financialActions.length;
       const unreadCount = unreadMessages.reduce((sum, g) => sum + g.unreadCount, 0);
 
       const summary: UpdatesSummary = {
-        financialActions,
-        financialCount,
         unreadMessages,
         unreadCount,
-        totalCount: financialCount + unreadCount,
+        totalCount: unreadCount,
       };
 
       this.setCachedSummary(userId, role, summary);
@@ -2242,8 +2229,6 @@ export class UpdatesService {
       );
       // Return empty summary instead of crashing
       return {
-        financialActions: [],
-        financialCount: 0,
         unreadMessages: [],
         unreadCount: 0,
         totalCount: 0,

@@ -122,9 +122,7 @@ export function UpdatesButton({ className = '', onSummaryChange }: UpdatesButton
         console.log('Updates summary fetched:', data);
         const nextSummary: UpdatesSummary = {
           totalCount: data.totalCount,
-          financialCount: data.financialCount,
           unreadCount: data.unreadCount,
-          financialActions: Array.isArray(data.financialActions) ? data.financialActions : [],
           unreadMessages: Array.isArray(data.unreadMessages) ? data.unreadMessages : [],
         };
         setSummary(nextSummary);
@@ -243,8 +241,8 @@ export function UpdatesButton({ className = '', onSummaryChange }: UpdatesButton
           type="button"
           onClick={handleManualRefresh}
           disabled={refreshing}
-          title="Refresh updates"
-          aria-label="Refresh updates"
+          title="Refresh messages"
+          aria-label="Refresh messages"
           className={`inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 ${
             refreshing ? 'animate-spin' : ''
           }`}

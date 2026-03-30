@@ -26,8 +26,6 @@ export interface UnreadMessageGroup {
 }
 
 export interface UpdatesSummary {
-  financialActions: FinancialActionItem[];
-  financialCount: number;
   unreadMessages: UnreadMessageGroup[];
   unreadCount: number;
   totalCount: number;

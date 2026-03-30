@@ -589,7 +589,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     updatesSummary.unreadMessages.forEach((group) => {
       if (group.unreadCount > 0) ids.add(group.projectId);
     });
-    updatesSummary.financialActions.forEach((action) => ids.add(action.projectId));
     return ids;
   }, [updatesSummary]);
 

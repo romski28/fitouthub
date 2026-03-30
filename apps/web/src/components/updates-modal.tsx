@@ -5,9 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
-import { StatusPill } from './status-pill';
 import {
-  type FinancialActionItem,
   type UnreadMessageGroup,
   type UpdatesSummary,
   getFreshUpdatesSummary,
@@ -158,12 +156,6 @@ export function UpdatesModal({
     onClose();
   };
 
-  const handleFinancialActionClick = (action: FinancialActionItem) => {
-    // Navigate to the project
-    router.push(`/projects/${action.projectId}`);
-    onClose();
-  };
-
   const handleMarkMessageAsRead = async (e: MouseEvent, group: UnreadMessageGroup) => {
     e.stopPropagation();
     if (!token || !group.threadId) {
@@ -201,20 +193,14 @@ export function UpdatesModal({
     onClose();
   };
 
-  const filteredFinancialActions = projectIdFilter
-    ? (data?.financialActions || []).filter((action) => action.projectId === projectIdFilter)
-    : (data?.financialActions || []);
-
   const filteredUnreadMessages = projectIdFilter
     ? (data?.unreadMessages || []).filter((group) => group.projectId === projectIdFilter)
     : (data?.unreadMessages || []);
 
-  const filteredFinancialCount = filteredFinancialActions.length;
   const filteredUnreadCount = filteredUnreadMessages.reduce((sum, group) => sum + (group.unreadCount || 0), 0);
-  const hasFilteredUpdates = filteredFinancialActions.length > 0 || filteredUnreadMessages.length > 0;
+  const hasFilteredUpdates = filteredUnreadMessages.length > 0;
   const filteredProjectName = projectIdFilter
-    ? filteredFinancialActions[0]?.projectName ||
-      filteredUnreadMessages[0]?.projectName ||
+    ? filteredUnreadMessages[0]?.projectName ||
       `Project ${projectIdFilter.slice(0, 8)}`
     : null;
 
@@ -231,7 +217,7 @@ export function UpdatesModal({
           <div className="flex items-start justify-between gap-4">
           <div>
               <h2 className="text-xl font-semibold text-white">
-                Recent Activity
+                Message Center
                 {!projectIdFilter && filteredUnreadMessages.length > 0 && (
                   <span className="text-sm font-normal text-slate-400 ml-3">
                     {filteredUnreadCount} message{filteredUnreadCount === 1 ? '' : 's'} • {filteredUnreadMessages.length} conversation{filteredUnreadMessages.length === 1 ? '' : 's'}
@@ -256,8 +242,8 @@ export function UpdatesModal({
               type="button"
               onClick={() => fetchData(true)}
               disabled={refreshing}
-              title="Refresh updates"
-              aria-label="Refresh updates"
+              title="Refresh messages"
+              aria-label="Refresh messages"
               className={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/10 text-slate-100 transition-colors hover:bg-white/20 disabled:opacity-50 ${
                 refreshing ? 'animate-spin' : ''
               }`}
@@ -280,54 +266,10 @@ export function UpdatesModal({
             <div className="py-12 text-center text-slate-300">Loading...</div>
           ) : !hasFilteredUpdates ? (
             <div className="py-12 text-center text-slate-300">
-              {projectIdFilter ? 'No updates for this project' : 'No updates at this time'}
+              {projectIdFilter ? 'No unread messages for this project' : 'No unread messages'}
             </div>
           ) : (
             <div className="space-y-8">
-              {/* Financial Actions */}
-              {filteredFinancialActions.length > 0 && (
-                <div>
-                  <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
-                    💰 Financial Actions
-                    <span className="text-sm font-normal text-slate-300">
-                      ({filteredFinancialCount})
-                    </span>
-                  </h3>
-                  <div className="space-y-3">
-                    {filteredFinancialActions.map((action) => (
-                      <div
-                        key={action.id}
-                        className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-medium text-white">{action.projectName}</h4>
-                              <StatusPill status={action.status} />
-                            </div>
-                            <p className="mb-1 text-sm text-slate-300">{action.description}</p>
-                            <p className="text-lg font-semibold text-emerald-300">HK${action.amount}</p>
-                            <p className="mt-1 text-xs text-slate-400">
-                              {new Date(action.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleFinancialActionClick(action)}
-                              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-                            >
-                              View
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Unread Messages */}
               {filteredUnreadMessages.length > 0 && (
                 <div>
