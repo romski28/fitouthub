@@ -103,7 +103,7 @@ export default function Home() {
                 {t('quickStart.title')}
               </h2>
             </div>
-            <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
+            <SearchFlow autoFocusPrompt={shouldFocusPrompt} resultsPortalId="ai-results-portal" />
           </div>
 
           <div className="order-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:order-1 lg:mt-2">
@@ -119,6 +119,16 @@ export default function Home() {
               What is FitOut Hub and why you should use it — see Sarah's story.
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* AI Analysis Results — standalone full-width panel, portal target for SearchFlow */}
+      <section
+        id="ai-results-section"
+        className="scroll-mt-20 -mx-6 px-6"
+      >
+        <div className="mx-auto max-w-3xl">
+          <div id="ai-results-portal" />
         </div>
       </section>
 

@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
@@ -335,7 +336,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
   );
 }
 
-export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPrompt?: boolean }) {
+export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }: { autoFocusPrompt?: boolean; resultsPortalId?: string }) {
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const t = useTranslations('home.searchFlow');
   const router = useRouter();
@@ -359,6 +360,15 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
   const [showBriefModal, setShowBriefModal] = useState(false);
   const { isLoggedIn, userLocation } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
+
+  // Portal support: render AI results panel into an external DOM node
+  const [portalEl, setPortalEl] = useState<Element | null>(null);
+  useEffect(() => {
+    if (resultsPortalId) {
+      const el = document.getElementById(resultsPortalId);
+      setPortalEl(el);
+    }
+  }, [resultsPortalId]);
 
   const handleContinueToProfessionals = (payload: {
     title: string;
@@ -710,6 +720,12 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
       setIntent(null);
       setMatchCount(null);
       runSandbox(trimmed);
+      // Scroll to the results panel after a short delay to allow state to update
+      if (resultsPortalId) {
+        setTimeout(() => {
+          document.getElementById(resultsPortalId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 120);
+      }
       return;
     }
     setAiOutput(null);
@@ -733,7 +749,7 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
       </div>
       <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} />
 
-      {deepSeekSandboxEnabled && (
+      {(() => { const _panel = !deepSeekSandboxEnabled ? null : (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 text-xs text-slate-700 space-y-2">
           {/* Mode toggle */}
           <div className="flex items-center justify-between gap-2">
@@ -821,7 +837,7 @@ export default function SearchFlow({ autoFocusPrompt = false }: { autoFocusPromp
             </>
           )}
         </div>
-      )}
+      ); return portalEl ? createPortal(_panel, portalEl) : _panel; })()} 
 
       {/* Auth nudge for non-logged-in users */}
       {isLoggedIn === false && (
