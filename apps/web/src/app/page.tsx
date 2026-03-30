@@ -74,9 +74,9 @@ export default function Home() {
   }, [hydrated, isLoggedIn, profIsLoggedIn]);
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-14">
       {hydrated && !isLoggedIn && !profIsLoggedIn && activeAnnouncement && (
-        <div className="pt-4">
+        <div className="pt-2">
           <HomeAnnouncementTicker
             title={activeAnnouncement.title}
             content={activeAnnouncement.content}
@@ -86,23 +86,41 @@ export default function Home() {
 
       {/* Updates Button - Only for logged-in users (client or professional) */}
       {hydrated && (isLoggedIn || profIsLoggedIn) && (
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-2">
           <UpdatesButton />
         </div>
       )}
 
       {/* Search Flow - Single entry point for all users */}
-      <section id="project-prompt" className="relative -mx-6 -mt-10 bg-gradient-to-b from-emerald-50 to-white px-6 py-16">
-        <div className="mx-auto max-w-2xl">
-          <div className="text-center mb-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-600 mb-2">
-              {t('quickStart.tagline')}
-            </p>
-            <h2 className="text-2xl font-bold text-slate-900">
-              {t('quickStart.title')}
-            </h2>
+      <section id="project-prompt" className="relative -mx-6 -mt-6 bg-gradient-to-b from-emerald-50 to-white px-6 py-12">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
+          <div className="max-w-2xl">
+            <div className="mb-8 text-center lg:text-left">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-600">
+                {t('quickStart.tagline')}
+              </p>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {t('quickStart.title')}
+              </h2>
+            </div>
+            <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
           </div>
-          <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:mt-2">
+            <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
+              <video
+                className="h-full w-full"
+                controls
+                preload="metadata"
+              >
+                <source src="/assets/video/FitOut-Hub-CIP-Animation-v2.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <div className="mt-3 text-sm text-slate-600">
+              Purpose, problems solved, and a quick walkthrough of the core FitOutHub flow.
+            </div>
+          </div>
         </div>
       </section>
 
