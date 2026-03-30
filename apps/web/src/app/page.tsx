@@ -94,7 +94,7 @@ export default function Home() {
       {/* Search Flow - Single entry point for all users */}
       <section id="project-prompt" className="relative -mx-6 -mt-6 bg-gradient-to-b from-emerald-50 to-white px-6 py-12">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
-          <div className="max-w-2xl">
+          <div className="order-2 max-w-2xl lg:order-2">
             <div className="mb-8 text-center lg:text-left">
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-600">
                 {t('quickStart.tagline')}
@@ -106,19 +106,17 @@ export default function Home() {
             <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:mt-2">
+          <div className="order-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:order-1 lg:mt-2">
             <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
               <video
                 className="h-full w-full"
+                src="/assets/video/FitOut-Hub-CIP-Animation-v2.mp4"
                 controls
                 preload="metadata"
-              >
-                <source src="/assets/video/FitOut-Hub-CIP-Animation-v2.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              />
             </div>
             <div className="mt-3 text-sm text-slate-600">
-              Purpose, problems solved, and a quick walkthrough of the core FitOutHub flow.
+              What is FitOut Hub and why you should use it — see Sarah's story.
             </div>
           </div>
         </div>
