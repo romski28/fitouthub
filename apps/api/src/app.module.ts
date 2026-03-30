@@ -36,6 +36,7 @@ import { SupportRequestsModule } from './support-requests/support-requests.modul
 import { AiModule } from './ai/ai.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { RealtimeModule } from './realtime/realtime.module';
     NotificationModule,
     PoliciesModule,
     AnnouncementsModule,
+    QuestionnairesModule,
     RealtimeModule,
     SupportRequestsModule,
     AiModule,

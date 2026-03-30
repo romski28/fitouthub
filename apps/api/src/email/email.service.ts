@@ -364,6 +364,54 @@ export class EmailService {
     }
   }
 
+  async sendQuestionnaireInvitation(params: {
+    to: string;
+    recipientName?: string;
+    questionnaireTitle: string;
+    inviteUrl: string;
+    welcomeSummary?: string;
+    expiresAt?: Date;
+    customMessage?: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send questionnaire invitation to:', params.to);
+      return;
+    }
+
+    const greeting = params.recipientName ? `Hi ${params.recipientName},` : 'Hi,';
+    const expiryLabel = params.expiresAt
+      ? `This link is available until ${params.expiresAt.toLocaleString()}.`
+      : 'This link is unique to you and can be completed when convenient.';
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Questionnaire invitation: ${params.questionnaireTitle}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4f46e5;">Questionnaire invitation</h2>
+            <p>${greeting}</p>
+            <p>We would value your input for: <strong>${params.questionnaireTitle}</strong>.</p>
+            ${params.welcomeSummary ? `<p style="color: #475569;">${params.welcomeSummary}</p>` : ''}
+            ${params.customMessage ? `<div style="background-color: #f8fafc; padding: 14px; border-radius: 8px; margin: 16px 0; color: #334155;">${params.customMessage}</div>` : ''}
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${params.inviteUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Open questionnaire
+              </a>
+            </div>
+            <p style="color: #64748b; font-size: 13px;">${expiryLabel}</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Questionnaire invitation sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send questionnaire invitation:', error);
+      throw error;
+    }
+  }
+
   /**
    * Notify professional that the client has extended their quote deadline by 24 hours (one-shot)
    */

@@ -766,6 +766,12 @@ export default function AdminDashboardPage() {
       stat: "Policy control",
     },
     {
+      title: "Questionnaires",
+      description: "Stakeholder forms, invite links, and submitted responses.",
+      href: "/admin/questionnaires",
+      stat: "Forms and invites",
+    },
+    {
       title: "Activity Log",
       description: "Detailed audit history of operations and edits.",
       href: "/admin/activity-log",

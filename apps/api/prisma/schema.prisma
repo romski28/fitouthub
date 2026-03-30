@@ -74,6 +74,38 @@ enum PolicyType {
   CONTRACT_TEMPLATE
 }
 
+enum QuestionnaireStatus {
+  draft
+  active
+  archived
+}
+
+enum QuestionnaireQuestionType {
+  short_text
+  long_text
+  single_select
+  multi_select
+  yes_no
+  number
+  email
+  phone
+  date
+}
+
+enum QuestionnaireInviteStatus {
+  pending
+  opened
+  submitted
+  expired
+  cancelled
+}
+
+enum QuestionnaireSubmissionStatus {
+  in_progress
+  completed
+  abandoned
+}
+
 model User {
   id                              String                   @id @default(cuid())
   nickname                        String                   @unique
@@ -449,6 +481,151 @@ model EmailToken {
 
   @@index([token])
   @@index([projectId])
+}
+
+model Questionnaire {
+  id              String                  @id @default(cuid())
+  slug            String                  @unique
+  title           String
+  audienceKey     String
+  description     String?
+  welcomeTitle    String?
+  welcomeMessage  String?
+  thankYouTitle   String?
+  thankYouMessage String?
+  joinCtaLabel    String?
+  joinCtaUrl      String?
+  status          QuestionnaireStatus     @default(draft)
+  createdBy       String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  invites         QuestionnaireInvite[]
+  questions       QuestionnaireQuestion[]
+  submissions     QuestionnaireSubmission[]
+
+  @@index([audienceKey])
+  @@index([status])
+}
+
+model QuestionnaireQuestion {
+  id              String                    @id @default(cuid())
+  questionnaireId String
+  code            String
+  title           String
+  description     String?
+  type            QuestionnaireQuestionType
+  placeholder     String?
+  helpText        String?
+  isRequired      Boolean                   @default(true)
+  sortOrder       Int
+  settings        Json?
+  answers         QuestionnaireAnswer[]
+  options         QuestionnaireQuestionOption[]
+  questionnaire   Questionnaire             @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@unique([questionnaireId, code])
+  @@index([questionnaireId, sortOrder])
+}
+
+model QuestionnaireQuestionOption {
+  id         String                @id @default(cuid())
+  questionId String
+  value      String
+  label      String
+  sortOrder  Int                   @default(0)
+  question   QuestionnaireQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, value])
+  @@index([questionId, sortOrder])
+}
+
+model QuestionnaireTemplate {
+  id          String                    @id @default(cuid())
+  key         String                    @unique
+  label       String
+  prompt      String
+  type        QuestionnaireQuestionType
+  description String?
+  placeholder String?
+  helpText    String?
+  audienceKey String?
+  settings    Json?
+  isSystem    Boolean                   @default(false)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  options     QuestionnaireTemplateOption[]
+
+  @@index([audienceKey])
+}
+
+model QuestionnaireTemplateOption {
+  id         String                @id @default(cuid())
+  templateId String
+  value      String
+  label      String
+  sortOrder  Int                   @default(0)
+  template   QuestionnaireTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, value])
+  @@index([templateId, sortOrder])
+}
+
+model QuestionnaireInvite {
+  id             String                     @id @default(cuid())
+  questionnaireId String
+  token          String                     @unique @default(cuid())
+  email          String
+  recipientName  String?
+  roleLabel      String?
+  companyName    String?
+  projectId      String?
+  professionalId String?
+  invitedBy      String?
+  expiresAt      DateTime?
+  firstOpenedAt  DateTime?
+  submittedAt    DateTime?
+  status         QuestionnaireInviteStatus  @default(pending)
+  customMessage  String?
+  metadata       Json?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  questionnaire  Questionnaire              @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+  submission     QuestionnaireSubmission?
+
+  @@index([token])
+  @@index([questionnaireId])
+  @@index([status])
+  @@index([email])
+}
+
+model QuestionnaireSubmission {
+  id              String                        @id @default(cuid())
+  questionnaireId String
+  inviteId        String?                       @unique
+  respondentEmail String?
+  respondentName  String?
+  status          QuestionnaireSubmissionStatus @default(in_progress)
+  startedAt       DateTime                      @default(now())
+  completedAt     DateTime?
+  answers         QuestionnaireAnswer[]
+  invite          QuestionnaireInvite?          @relation(fields: [inviteId], references: [id], onDelete: SetNull)
+  questionnaire   Questionnaire                 @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@index([questionnaireId])
+  @@index([status])
+}
+
+model QuestionnaireAnswer {
+  id          String                 @id @default(cuid())
+  submissionId String
+  questionId  String
+  value       Json?
+  answeredAt  DateTime               @default(now())
+  question    QuestionnaireQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  submission  QuestionnaireSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, questionId])
+  @@index([questionId])
 }
 
 model Message {

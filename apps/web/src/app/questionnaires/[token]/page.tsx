@@ -1,0 +1,533 @@
+"use client";
+
+import { API_BASE_URL } from "@/config/api";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
+
+type PublicQuestionOption = {
+  value: string;
+  label: string;
+  sortOrder: number;
+};
+
+type PublicQuestion = {
+  id: string;
+  code: string;
+  title: string;
+  description?: string | null;
+  type:
+    | "short_text"
+    | "long_text"
+    | "single_select"
+    | "multi_select"
+    | "yes_no"
+    | "number"
+    | "email"
+    | "phone"
+    | "date";
+  placeholder?: string | null;
+  helpText?: string | null;
+  isRequired: boolean;
+  sortOrder: number;
+  options: PublicQuestionOption[];
+};
+
+type PublicPayload = {
+  invite: {
+    recipientName?: string | null;
+    roleLabel?: string | null;
+    companyName?: string | null;
+    status: string;
+    submittedAt?: string | null;
+    expiresAt?: string | null;
+  };
+  questionnaire: {
+    id: string;
+    title: string;
+    description?: string | null;
+    welcomeTitle?: string | null;
+    welcomeMessage?: string | null;
+    thankYouTitle?: string | null;
+    thankYouMessage?: string | null;
+    joinCtaLabel?: string | null;
+    joinCtaUrl?: string | null;
+    questions: PublicQuestion[];
+  };
+  submission: {
+    id: string;
+    status: string;
+    completedAt?: string | null;
+    respondentName?: string | null;
+    answers: Record<string, unknown>;
+  } | null;
+};
+
+function normaliseQuestionAnswer(type: PublicQuestion["type"], value: unknown) {
+  if (type === "multi_select") {
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item));
+    }
+    return [];
+  }
+  if (type === "yes_no") {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+      const normalized = value.toLowerCase();
+      if (normalized === "yes" || normalized === "true") return true;
+      if (normalized === "no" || normalized === "false") return false;
+    }
+    return null;
+  }
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
+function isMissingAnswer(question: PublicQuestion, value: unknown) {
+  if (!question.isRequired) return false;
+
+  if (value === null || value === undefined) return true;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "boolean") return false;
+
+  return String(value).trim().length === 0;
+}
+
+export default function PublicQuestionnairePage() {
+  const params = useParams<{ token: string }>();
+  const [token, setToken] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [payload, setPayload] = useState<PublicPayload | null>(null);
+  const [step, setStep] = useState<"welcome" | "question" | "thanks">("welcome");
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [starting, setStarting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [completing, setCompleting] = useState(false);
+
+  useEffect(() => {
+    if (params?.token) {
+      setToken(params.token);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(`${API_BASE_URL}/questionnaires/public/${token}`, {
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.message || "Failed to load questionnaire");
+        }
+
+        const data = (await res.json()) as PublicPayload;
+        const initialAnswers: Record<string, unknown> = {};
+
+        for (const question of data.questionnaire.questions) {
+          initialAnswers[question.id] = normaliseQuestionAnswer(
+            question.type,
+            data.submission?.answers?.[question.id],
+          );
+        }
+
+        setPayload(data);
+        setAnswers(initialAnswers);
+
+        if (data.invite.status === "submitted" || data.submission?.status === "completed") {
+          setStep("thanks");
+        } else {
+          setStep("welcome");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load questionnaire");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [token]);
+
+  const questions = payload?.questionnaire.questions || [];
+  const currentQuestion = questions[Math.min(questionIndex, Math.max(questions.length - 1, 0))] || null;
+
+  const progress = useMemo(() => {
+    if (!questions.length) return 0;
+    return Math.round(((questionIndex + 1) / questions.length) * 100);
+  }, [questionIndex, questions.length]);
+
+  const startQuestionnaire = async () => {
+    if (!token) return;
+    try {
+      setStarting(true);
+      const res = await fetch(`${API_BASE_URL}/questionnaires/public/${token}/start`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || "Failed to start questionnaire");
+      }
+      setQuestionIndex(0);
+      setStep("question");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start questionnaire");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const saveCurrentAnswer = async () => {
+    if (!token || !currentQuestion) return false;
+
+    const value = answers[currentQuestion.id];
+    if (isMissingAnswer(currentQuestion, value)) {
+      setError("Please answer this question before continuing.");
+      return false;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const res = await fetch(`${API_BASE_URL}/questionnaires/public/${token}/answer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          questionId: currentQuestion.id,
+          value,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || "Failed to save answer");
+      }
+
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save answer");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const goNext = async () => {
+    const ok = await saveCurrentAnswer();
+    if (!ok) return;
+
+    if (questionIndex < questions.length - 1) {
+      setQuestionIndex((prev) => prev + 1);
+      return;
+    }
+
+    try {
+      setCompleting(true);
+      const res = await fetch(`${API_BASE_URL}/questionnaires/public/${token}/complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || "Failed to submit questionnaire");
+      }
+
+      setStep("thanks");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit questionnaire");
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const goBack = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex((prev) => prev - 1);
+    }
+  };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+        <p className="text-slate-700">Loading questionnaire…</p>
+      </main>
+    );
+  }
+
+  if (error && !payload) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+        <div className="max-w-lg rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
+          <h1 className="text-lg font-semibold">Questionnaire unavailable</h1>
+          <p className="mt-2 text-sm">{error}</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!payload) {
+    return null;
+  }
+
+  const joinCtaUrl = payload.questionnaire.joinCtaUrl || "/professionals";
+  const joinCtaLabel = payload.questionnaire.joinCtaLabel || "Join FitOut Hub";
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {step === "welcome" && (
+          <section className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Questionnaire invitation</p>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {payload.questionnaire.welcomeTitle || payload.questionnaire.title}
+            </h1>
+            <p className="text-sm text-slate-700">
+              {payload.questionnaire.welcomeMessage || payload.questionnaire.description || "Please answer the following questions."}
+            </p>
+
+            {(payload.invite.recipientName || payload.invite.roleLabel || payload.invite.companyName) && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                {payload.invite.recipientName && <p>Recipient: {payload.invite.recipientName}</p>}
+                {payload.invite.roleLabel && <p>Role: {payload.invite.roleLabel}</p>}
+                {payload.invite.companyName && <p>Company: {payload.invite.companyName}</p>}
+              </div>
+            )}
+
+            {payload.invite.expiresAt && (
+              <p className="text-xs text-amber-700">
+                This invitation expires on {new Date(payload.invite.expiresAt).toLocaleString()}.
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={startQuestionnaire}
+              disabled={starting}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {starting ? "Starting…" : "Start questionnaire"}
+            </button>
+          </section>
+        )}
+
+        {step === "question" && currentQuestion && (
+          <section className="space-y-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                Question {questionIndex + 1} of {questions.length}
+              </p>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <h1 className="text-xl font-semibold text-slate-900">{currentQuestion.title}</h1>
+              {currentQuestion.description && (
+                <p className="mt-1 text-sm text-slate-600">{currentQuestion.description}</p>
+              )}
+              {currentQuestion.helpText && (
+                <p className="mt-1 text-xs text-slate-500">{currentQuestion.helpText}</p>
+              )}
+            </div>
+
+            <div>
+              {(currentQuestion.type === "short_text" ||
+                currentQuestion.type === "email" ||
+                currentQuestion.type === "phone" ||
+                currentQuestion.type === "number" ||
+                currentQuestion.type === "date") && (
+                <input
+                  type={
+                    currentQuestion.type === "email"
+                      ? "email"
+                      : currentQuestion.type === "number"
+                        ? "number"
+                        : currentQuestion.type === "date"
+                          ? "date"
+                          : "text"
+                  }
+                  value={String(answers[currentQuestion.id] ?? "")}
+                  onChange={(event) =>
+                    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: event.target.value }))
+                  }
+                  placeholder={currentQuestion.placeholder || "Your answer"}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+              )}
+
+              {currentQuestion.type === "long_text" && (
+                <textarea
+                  rows={5}
+                  value={String(answers[currentQuestion.id] ?? "")}
+                  onChange={(event) =>
+                    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: event.target.value }))
+                  }
+                  placeholder={currentQuestion.placeholder || "Your answer"}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+              )}
+
+              {currentQuestion.type === "yes_no" && (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAnswers((prev) => ({ ...prev, [currentQuestion.id]: true }))
+                    }
+                    className={`rounded-lg border px-4 py-3 text-left text-sm ${
+                      answers[currentQuestion.id] === true
+                        ? "border-emerald-400 bg-emerald-50 text-emerald-800"
+                        : "border-slate-300 bg-white text-slate-700"
+                    }`}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAnswers((prev) => ({ ...prev, [currentQuestion.id]: false }))
+                    }
+                    className={`rounded-lg border px-4 py-3 text-left text-sm ${
+                      answers[currentQuestion.id] === false
+                        ? "border-rose-400 bg-rose-50 text-rose-800"
+                        : "border-slate-300 bg-white text-slate-700"
+                    }`}
+                  >
+                    No
+                  </button>
+                </div>
+              )}
+
+              {currentQuestion.type === "single_select" && (
+                <div className="space-y-2">
+                  {currentQuestion.options.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() =>
+                        setAnswers((prev) => ({ ...prev, [currentQuestion.id]: option.value }))
+                      }
+                      className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                        answers[currentQuestion.id] === option.value
+                          ? "border-blue-400 bg-blue-50 text-blue-800"
+                          : "border-slate-300 bg-white text-slate-700"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {currentQuestion.type === "multi_select" && (
+                <div className="space-y-2">
+                  {currentQuestion.options.map((option) => {
+                    const selected = Array.isArray(answers[currentQuestion.id])
+                      ? (answers[currentQuestion.id] as string[])
+                      : [];
+                    const active = selected.includes(option.value);
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          setAnswers((prev) => {
+                            const current = Array.isArray(prev[currentQuestion.id])
+                              ? (prev[currentQuestion.id] as string[])
+                              : [];
+
+                            const next = current.includes(option.value)
+                              ? current.filter((value) => value !== option.value)
+                              : [...current, option.value];
+
+                            return { ...prev, [currentQuestion.id]: next };
+                          });
+                        }}
+                        className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                          active
+                            ? "border-blue-400 bg-blue-50 text-blue-800"
+                            : "border-slate-300 bg-white text-slate-700"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={questionIndex === 0 || saving || completing}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Back
+              </button>
+
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={saving || completing}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {questionIndex < questions.length - 1
+                  ? saving
+                    ? "Saving…"
+                    : "Next"
+                  : completing
+                    ? "Submitting…"
+                    : "Submit"}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {step === "thanks" && (
+          <section className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Response received</p>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {payload.questionnaire.thankYouTitle || "Thank you"}
+            </h1>
+            <p className="text-sm text-slate-700">
+              {payload.questionnaire.thankYouMessage || "Your answers have been submitted successfully."}
+            </p>
+            <div className="pt-2">
+              <Link
+                href={joinCtaUrl}
+                className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                {joinCtaLabel}
+              </Link>
+            </div>
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
