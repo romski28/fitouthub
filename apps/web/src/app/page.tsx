@@ -138,7 +138,7 @@ export default function Home() {
         style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
       >
         <div className="relative p-8 lg:p-12">
-          <div className="w-full space-y-5 text-slate-800 md:w-1/2 xl:w-1/3" style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}>
+          <div className="w-full space-y-5 text-slate-800 sm:max-w-[50%]" style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}>
             <div>
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-slate-700">
                 {t('hero.tagline')}
