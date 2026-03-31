@@ -134,20 +134,20 @@ export default function Home() {
 
       {/* Hero Section */}
       <section
-        className="relative overflow-hidden rounded-2xl bg-cover bg-center bg-no-repeat"
+        className="relative overflow-hidden rounded-2xl bg-cover bg-top bg-no-repeat"
         style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
       >
         <div className="relative p-8 lg:p-12">
-          <div className="max-w-2xl space-y-6 text-slate-800" style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}>
+          <div className="w-full space-y-5 text-slate-800 lg:w-1/3" style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}>
             <div>
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-slate-700">
                 {t('hero.tagline')}
               </p>
-              <h1 className="text-4xl font-bold leading-tight lg:text-5xl">
+              <h1 className="text-3xl font-bold leading-tight lg:text-4xl">
                 {t('hero.title')}
               </h1>
             </div>
-            <p className="text-lg text-slate-700">
+            <p className="text-base text-slate-700 lg:text-lg">
               {t('hero.description')}
             </p>
           </div>
