@@ -585,6 +585,7 @@ export class QuestionnairesService {
             question.description,
           ),
           type: question.type,
+          settings: question.settings,
           placeholder: this.pickTranslatedField(
             questionTranslation,
             'placeholder',
