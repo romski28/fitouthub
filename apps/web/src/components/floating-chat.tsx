@@ -636,7 +636,7 @@ export default function FloatingChat() {
           title="Chat with Fitout Hub support"
         >
           <Image
-            src="/assets/images/chatbot-avatar-icon.png"
+            src="/assets/images/chatbot-avatar-icon.webp"
             alt="Fitout Hub Chat Avatar"
             width={56}
             height={56}
