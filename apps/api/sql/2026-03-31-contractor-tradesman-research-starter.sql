@@ -1,10 +1,9 @@
 -- FitOut Hub Contractor & Tradesman Research survey starter
--- Run after questionnaire schema SQL is applied.
-
--- Ensure matrix_rating enum value exists (safe: no-op if already present).
--- Must run as a plain statement outside any transaction block so it is
--- committed and visible before the data-insert block below uses it.
-ALTER TYPE "QuestionnaireQuestionType" ADD VALUE IF NOT EXISTS 'matrix_rating';
+-- PRE-REQUISITE: run 2026-03-31-add-matrix-rating-enum.sql FIRST in a
+-- separate execution and allow it to commit before running this file.
+-- Postgres requires ADD VALUE to be committed before the new label can be
+-- used in DML — a single script run wraps everything in one transaction and
+-- will therefore always fail with "unsafe use of new value".
 
 DO $$
 DECLARE
