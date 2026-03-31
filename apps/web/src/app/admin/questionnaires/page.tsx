@@ -980,11 +980,17 @@ export default function AdminQuestionnairesPage() {
                     )}
 
                     {currentPreviewQuestion.type === "matrix_rating" && (
-                      <div className="space-y-4">
+                      <div className="overflow-hidden rounded-lg border border-slate-200">
+                        {/* Scale header */}
+                        <div className="hidden border-b border-slate-200 bg-slate-50 px-3 py-2 sm:flex sm:items-center sm:justify-end sm:gap-1.5">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <span key={n} className="w-10 text-center text-xs font-semibold text-slate-500">{n}</span>
+                          ))}
+                        </div>
                         {(() => {
                           const matrixSettings =
                             currentPreviewQuestion.settings && typeof currentPreviewQuestion.settings === "object"
-                              ? (currentPreviewQuestion.settings as { rows?: Array<{ key?: string; label?: string }> })
+                              ? (currentPreviewQuestion.settings as { rows?: Array<{ key?: string; label?: string; labelZhHk?: string }> })
                               : {};
                           const rows = Array.isArray(matrixSettings.rows) ? matrixSettings.rows : [];
                           const currentAnswers =
@@ -993,6 +999,12 @@ export default function AdminQuestionnairesPage() {
                             !Array.isArray(previewAnswers[currentPreviewQuestion.id])
                               ? (previewAnswers[currentPreviewQuestion.id] as Record<string, number>)
                               : {};
+
+                          const getRowLabel = (row: { key?: string; label?: string; labelZhHk?: string }) => {
+                            const norm = previewLocale.toLowerCase();
+                            if (norm === "zh-hk" && row.labelZhHk?.trim()) return row.labelZhHk;
+                            return row.label || row.key || "";
+                          };
 
                           if (rows.length === 0) {
                             return (
@@ -1006,11 +1018,17 @@ export default function AdminQuestionnairesPage() {
                             const rowKey = row?.key || `row_${rowIndex + 1}`;
                             const selectedRating =
                               typeof currentAnswers[rowKey] === "number" ? currentAnswers[rowKey] : null;
+                            const isLast = rowIndex === rows.length - 1;
 
                             return (
-                              <div key={rowKey} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                                <p className="text-sm font-medium text-slate-900">{row?.label || rowKey}</p>
-                                <div className="mt-2 grid grid-cols-5 gap-2">
+                              <div
+                                key={rowKey}
+                                className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
+                                  !isLast ? "border-b border-slate-200" : ""
+                                }`}
+                              >
+                                <p className="text-sm font-medium text-slate-900 sm:flex-1">{getRowLabel(row)}</p>
+                                <div className="flex items-center gap-1.5 sm:shrink-0">
                                   {[1, 2, 3, 4, 5].map((rating) => (
                                     <button
                                       key={`${rowKey}-${rating}`}
@@ -1023,7 +1041,6 @@ export default function AdminQuestionnairesPage() {
                                             !Array.isArray(prev[currentPreviewQuestion.id])
                                               ? (prev[currentPreviewQuestion.id] as Record<string, number>)
                                               : {};
-
                                           return {
                                             ...prev,
                                             [currentPreviewQuestion.id]: {
@@ -1033,7 +1050,7 @@ export default function AdminQuestionnairesPage() {
                                           };
                                         });
                                       }}
-                                      className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                                      className={`h-9 w-10 rounded-md border text-sm font-semibold transition ${
                                         selectedRating === rating
                                           ? "border-blue-400 bg-blue-50 text-blue-800"
                                           : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"

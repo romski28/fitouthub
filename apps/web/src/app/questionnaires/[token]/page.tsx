@@ -612,9 +612,15 @@ export default function PublicQuestionnairePage() {
               )}
 
               {currentQuestion.type === "matrix_rating" && (
-                <div className="space-y-2">
+                <div className="overflow-hidden rounded-lg border border-slate-200">
+                  {/* Scale header */}
+                  <div className="hidden border-b border-slate-200 bg-slate-50 px-3 py-2 sm:flex sm:items-center sm:justify-end sm:gap-1.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <span key={n} className="w-10 text-center text-xs font-semibold text-slate-500">{n}</span>
+                    ))}
+                  </div>
                   {Array.isArray((currentQuestion.settings as any)?.rows) &&
-                    ((currentQuestion.settings as any).rows as Array<Record<string, unknown>>).map((row) => {
+                    ((currentQuestion.settings as any).rows as Array<Record<string, unknown>>).map((row, rowIndex) => {
                       const rowKey = String(row.key || "").trim();
                       if (!rowKey) return null;
 
@@ -625,12 +631,19 @@ export default function PublicQuestionnairePage() {
                           ? (answers[currentQuestion.id] as Record<string, unknown>)[rowKey]
                           : null;
 
+                      const isLast = rowIndex === ((currentQuestion.settings as any).rows as unknown[]).length - 1;
+
                       return (
-                        <div key={rowKey} className="rounded-lg border border-slate-200 p-3">
-                          <p className="mb-2 text-sm font-medium text-slate-900">
+                        <div
+                          key={rowKey}
+                          className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
+                            !isLast ? "border-b border-slate-200" : ""
+                          }`}
+                        >
+                          <p className="text-sm font-medium text-slate-900 sm:flex-1">
                             {getMatrixRowLabel(row, locale)}
                           </p>
-                          <div className="grid grid-cols-5 gap-2">
+                          <div className="flex items-center gap-1.5 sm:shrink-0">
                             {[1, 2, 3, 4, 5].map((score) => (
                               <button
                                 key={score}
@@ -652,10 +665,10 @@ export default function PublicQuestionnairePage() {
                                     };
                                   });
                                 }}
-                                className={`rounded-md border px-2 py-2 text-sm ${
+                                className={`h-9 w-10 rounded-md border text-sm font-semibold transition ${
                                   Number(selectedValue) === score
                                     ? "border-blue-400 bg-blue-50 text-blue-800"
-                                    : "border-slate-300 bg-white text-slate-700"
+                                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                                 }`}
                               >
                                 {score}
