@@ -612,11 +612,13 @@ export default function PublicQuestionnairePage() {
               )}
 
               {currentQuestion.type === "matrix_rating" && (
-                <div className="overflow-hidden rounded-lg border border-slate-200">
-                  {/* Scale header */}
-                  <div className="hidden border-b border-slate-200 bg-slate-50 px-3 py-2 sm:flex sm:items-center sm:justify-end sm:gap-1.5">
+                <div className="overflow-hidden rounded-lg border border-slate-300">
+                  <div className="hidden border-b border-slate-300 bg-slate-200 px-3 py-2 sm:grid sm:grid-cols-[minmax(0,1fr)_repeat(5,2.5rem)] sm:items-center sm:gap-2">
+                    <span className="text-xs font-semibold text-slate-600">&nbsp;</span>
                     {[1, 2, 3, 4, 5].map((n) => (
-                      <span key={n} className="w-10 text-center text-xs font-semibold text-slate-500">{n}</span>
+                      <span key={n} className="text-center text-sm font-semibold text-slate-800">
+                        {n}
+                      </span>
                     ))}
                   </div>
                   {Array.isArray((currentQuestion.settings as any)?.rows) &&
@@ -636,44 +638,45 @@ export default function PublicQuestionnairePage() {
                       return (
                         <div
                           key={rowKey}
-                          className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
-                            !isLast ? "border-b border-slate-200" : ""
+                          className={`p-3 ${rowIndex % 2 === 0 ? "bg-slate-100" : "bg-slate-200"} ${
+                            !isLast ? "border-b border-slate-300" : ""
                           }`}
                         >
-                          <p className="text-sm font-medium text-slate-900 sm:flex-1">
-                            {getMatrixRowLabel(row, locale)}
-                          </p>
-                          <div className="flex items-center gap-1.5 sm:shrink-0">
-                            {[1, 2, 3, 4, 5].map((score) => (
-                              <button
-                                key={score}
-                                type="button"
-                                onClick={() => {
-                                  setAnswers((prev) => {
-                                    const current =
-                                      typeof prev[currentQuestion.id] === "object" &&
-                                      prev[currentQuestion.id] !== null &&
-                                      !Array.isArray(prev[currentQuestion.id])
-                                        ? (prev[currentQuestion.id] as Record<string, unknown>)
-                                        : {};
-                                    return {
-                                      ...prev,
-                                      [currentQuestion.id]: {
-                                        ...current,
-                                        [rowKey]: score,
-                                      },
-                                    };
-                                  });
-                                }}
-                                className={`h-9 w-10 rounded-md border text-sm font-semibold transition ${
-                                  Number(selectedValue) === score
-                                    ? "border-blue-400 bg-blue-50 text-blue-800"
-                                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                                }`}
-                              >
-                                {score}
-                              </button>
-                            ))}
+                          <div className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_repeat(5,2.5rem)] sm:items-center sm:gap-2">
+                            <p className="text-sm font-medium text-slate-900">{getMatrixRowLabel(row, locale)}</p>
+                            <div className="flex items-center justify-between gap-2 sm:contents">
+                              {[1, 2, 3, 4, 5].map((score) => (
+                                <button
+                                  key={score}
+                                  type="button"
+                                  onClick={() => {
+                                    setAnswers((prev) => {
+                                      const current =
+                                        typeof prev[currentQuestion.id] === "object" &&
+                                        prev[currentQuestion.id] !== null &&
+                                        !Array.isArray(prev[currentQuestion.id])
+                                          ? (prev[currentQuestion.id] as Record<string, unknown>)
+                                          : {};
+                                      return {
+                                        ...prev,
+                                        [currentQuestion.id]: {
+                                          ...current,
+                                          [rowKey]: score,
+                                        },
+                                      };
+                                    });
+                                  }}
+                                  className="mx-auto inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-600 bg-white"
+                                  aria-label={`${getMatrixRowLabel(row, locale)}: ${score}`}
+                                >
+                                  <span
+                                    className={`h-3 w-3 rounded-full ${
+                                      Number(selectedValue) === score ? "bg-slate-700" : "bg-transparent"
+                                    }`}
+                                  />
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       );

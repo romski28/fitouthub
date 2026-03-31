@@ -980,11 +980,13 @@ export default function AdminQuestionnairesPage() {
                     )}
 
                     {currentPreviewQuestion.type === "matrix_rating" && (
-                      <div className="overflow-hidden rounded-lg border border-slate-200">
-                        {/* Scale header */}
-                        <div className="hidden border-b border-slate-200 bg-slate-50 px-3 py-2 sm:flex sm:items-center sm:justify-end sm:gap-1.5">
+                      <div className="overflow-hidden rounded-lg border border-slate-300">
+                        <div className="hidden border-b border-slate-300 bg-slate-200 px-3 py-2 sm:grid sm:grid-cols-[minmax(0,1fr)_repeat(5,2.5rem)] sm:items-center sm:gap-2">
+                          <span className="text-xs font-semibold text-slate-600">&nbsp;</span>
                           {[1, 2, 3, 4, 5].map((n) => (
-                            <span key={n} className="w-10 text-center text-xs font-semibold text-slate-500">{n}</span>
+                            <span key={n} className="text-center text-sm font-semibold text-slate-800">
+                              {n}
+                            </span>
                           ))}
                         </div>
                         {(() => {
@@ -1023,42 +1025,45 @@ export default function AdminQuestionnairesPage() {
                             return (
                               <div
                                 key={rowKey}
-                                className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
-                                  !isLast ? "border-b border-slate-200" : ""
+                                className={`p-3 ${rowIndex % 2 === 0 ? "bg-slate-100" : "bg-slate-200"} ${
+                                  !isLast ? "border-b border-slate-300" : ""
                                 }`}
                               >
-                                <p className="text-sm font-medium text-slate-900 sm:flex-1">{getRowLabel(row)}</p>
-                                <div className="flex items-center gap-1.5 sm:shrink-0">
-                                  {[1, 2, 3, 4, 5].map((rating) => (
-                                    <button
-                                      key={`${rowKey}-${rating}`}
-                                      type="button"
-                                      onClick={() => {
-                                        setPreviewAnswers((prev) => {
-                                          const previousValue =
-                                            prev[currentPreviewQuestion.id] &&
-                                            typeof prev[currentPreviewQuestion.id] === "object" &&
-                                            !Array.isArray(prev[currentPreviewQuestion.id])
-                                              ? (prev[currentPreviewQuestion.id] as Record<string, number>)
-                                              : {};
-                                          return {
-                                            ...prev,
-                                            [currentPreviewQuestion.id]: {
-                                              ...previousValue,
-                                              [rowKey]: rating,
-                                            },
-                                          };
-                                        });
-                                      }}
-                                      className={`h-9 w-10 rounded-md border text-sm font-semibold transition ${
-                                        selectedRating === rating
-                                          ? "border-blue-400 bg-blue-50 text-blue-800"
-                                          : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-                                      }`}
-                                    >
-                                      {rating}
-                                    </button>
-                                  ))}
+                                <div className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_repeat(5,2.5rem)] sm:items-center sm:gap-2">
+                                  <p className="text-sm font-medium text-slate-900">{getRowLabel(row)}</p>
+                                  <div className="flex items-center justify-between gap-2 sm:contents">
+                                    {[1, 2, 3, 4, 5].map((rating) => (
+                                      <button
+                                        key={`${rowKey}-${rating}`}
+                                        type="button"
+                                        onClick={() => {
+                                          setPreviewAnswers((prev) => {
+                                            const previousValue =
+                                              prev[currentPreviewQuestion.id] &&
+                                              typeof prev[currentPreviewQuestion.id] === "object" &&
+                                              !Array.isArray(prev[currentPreviewQuestion.id])
+                                                ? (prev[currentPreviewQuestion.id] as Record<string, number>)
+                                                : {};
+                                            return {
+                                              ...prev,
+                                              [currentPreviewQuestion.id]: {
+                                                ...previousValue,
+                                                [rowKey]: rating,
+                                              },
+                                            };
+                                          });
+                                        }}
+                                        className="mx-auto inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-600 bg-white"
+                                        aria-label={`${getRowLabel(row)}: ${rating}`}
+                                      >
+                                        <span
+                                          className={`h-3 w-3 rounded-full ${
+                                            selectedRating === rating ? "bg-slate-700" : "bg-transparent"
+                                          }`}
+                                        />
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             );
