@@ -151,8 +151,8 @@ export default function Home() {
           </div>
 
           {/* Hero Image */}
-          <div className="h-96 lg:h-full bg-contain bg-no-repeat bg-center hidden lg:flex items-center justify-center p-8" style={{
-            backgroundImage: 'url("/hero-painter.png")'
+          <div className="h-96 lg:h-full bg-cover bg-no-repeat bg-center hidden lg:flex items-center justify-center p-8" style={{
+            backgroundImage: 'url("/assets/images/hero-webpage.webp")'
           }} />
         </div>
       </section>
