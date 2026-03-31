@@ -277,6 +277,15 @@ export default function PublicQuestionnairePage() {
     return "";
   };
 
+  const getMatrixScaleHints = (description?: string | null) => {
+    const text = String(description || "");
+    const match = text.match(/1\s*\(([^)]+)\).*5\s*\(([^)]+)\)/i);
+    if (match) {
+      return { left: match[1].trim(), right: match[2].trim() };
+    }
+    return { left: "Low", right: "High" };
+  };
+
   const startQuestionnaire = async () => {
     if (!token) return;
     try {
@@ -613,13 +622,24 @@ export default function PublicQuestionnairePage() {
 
               {currentQuestion.type === "matrix_rating" && (
                 <div className="overflow-hidden rounded-lg border border-slate-300">
-                  <div className="hidden border-b border-slate-300 bg-slate-200 px-3 py-2 sm:grid sm:grid-cols-[minmax(0,1fr)_repeat(5,2.5rem)] sm:items-center sm:gap-2">
-                    <span className="text-xs font-semibold text-slate-600">&nbsp;</span>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <span key={n} className="text-center text-sm font-semibold text-slate-800">
-                        {n}
-                      </span>
-                    ))}
+                  <div className="border-b border-slate-300 bg-slate-50 px-3 py-2">
+                    {(() => {
+                      const hints = getMatrixScaleHints(currentQuestion.description);
+                      return (
+                        <div className="flex items-center justify-between gap-4 text-xs font-medium text-slate-600">
+                          <span>1 = {hints.left}</span>
+                          <span>5 = {hints.right}</span>
+                        </div>
+                      );
+                    })()}
+                    <div className="mt-2 hidden sm:grid sm:grid-cols-[minmax(0,1fr)_repeat(5,2.5rem)] sm:items-center sm:gap-2">
+                      <span className="text-xs font-semibold text-slate-500">&nbsp;</span>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <span key={n} className="text-center text-xs font-semibold text-slate-700">
+                          {n}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   {Array.isArray((currentQuestion.settings as any)?.rows) &&
                     ((currentQuestion.settings as any).rows as Array<Record<string, unknown>>).map((row, rowIndex) => {
@@ -638,7 +658,7 @@ export default function PublicQuestionnairePage() {
                       return (
                         <div
                           key={rowKey}
-                          className={`p-3 ${rowIndex % 2 === 0 ? "bg-slate-100" : "bg-slate-200"} ${
+                          className={`p-3 ${rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50"} ${
                             !isLast ? "border-b border-slate-300" : ""
                           }`}
                         >
@@ -666,14 +686,14 @@ export default function PublicQuestionnairePage() {
                                       };
                                     });
                                   }}
-                                  className="mx-auto inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-600 bg-white"
+                                  className={`mx-auto inline-flex h-8 w-8 items-center justify-center rounded border text-sm font-semibold transition ${
+                                    Number(selectedValue) === score
+                                      ? "border-blue-500 bg-blue-600 text-white"
+                                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                                  }`}
                                   aria-label={`${getMatrixRowLabel(row, locale)}: ${score}`}
                                 >
-                                  <span
-                                    className={`h-3 w-3 rounded-full ${
-                                      Number(selectedValue) === score ? "bg-slate-700" : "bg-transparent"
-                                    }`}
-                                  />
+                                  {score}
                                 </button>
                               ))}
                             </div>
