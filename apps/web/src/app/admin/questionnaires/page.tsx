@@ -131,6 +131,10 @@ export default function AdminQuestionnairesPage() {
   const [previewLocale, setPreviewLocale] = useState("en");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [preview, setPreview] = useState<QuestionnairePreview | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewStep, setPreviewStep] = useState<"welcome" | "question" | "thanks">("welcome");
+  const [previewQuestionIndex, setPreviewQuestionIndex] = useState(0);
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>({});
   const [inviteForm, setInviteForm] = useState({
     email: "",
     recipientName: "",
@@ -214,7 +218,46 @@ export default function AdminQuestionnairesPage() {
 
   useEffect(() => {
     setPreview(null);
+    setPreviewOpen(false);
+    setPreviewStep("welcome");
+    setPreviewQuestionIndex(0);
+    setPreviewAnswers({});
   }, [selectedId]);
+
+  const loadPreview = useCallback(
+    async (locale: string) => {
+      if (!accessToken || !detail) return null;
+
+      setPreviewLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/questionnaires/${detail.id}/preview?locale=${encodeURIComponent(locale)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(payload?.message || "Failed to load preview");
+        }
+
+        const data = (await res.json()) as QuestionnairePreview;
+        setPreview(data);
+        return data;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load preview");
+        return null;
+      } finally {
+        setPreviewLoading(false);
+      }
+    },
+    [accessToken, detail],
+  );
 
   const handleCreateStarter = async () => {
     if (!accessToken) return;
@@ -305,33 +348,91 @@ export default function AdminQuestionnairesPage() {
   };
 
   const handlePreview = async () => {
-    if (!accessToken || !detail) return;
+    const data = await loadPreview(previewLocale);
+    if (!data) return;
 
-    try {
-      setPreviewLoading(true);
-      setError(null);
+    setPreviewAnswers({});
+    setPreviewQuestionIndex(0);
+    setPreviewStep(data.questions.length > 0 ? "welcome" : "thanks");
+    setPreviewOpen(true);
+  };
 
-      const res = await fetch(
-        `${API_BASE_URL}/questionnaires/${detail.id}/preview?locale=${encodeURIComponent(previewLocale)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setPreviewStep("welcome");
+    setPreviewQuestionIndex(0);
+    setPreviewAnswers({});
+  };
 
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload?.message || "Failed to load preview");
+  const handlePreviewLocaleChange = async (locale: string) => {
+    setPreviewLocale(locale);
+    if (!previewOpen) return;
+
+    const data = await loadPreview(locale);
+    if (!data) return;
+
+    setPreviewQuestionIndex((prev) => Math.min(prev, Math.max(data.questions.length - 1, 0)));
+    setPreviewStep((prev) => {
+      if (prev === "question" && data.questions.length === 0) {
+        return "thanks";
       }
+      return prev;
+    });
+  };
 
-      const data = (await res.json()) as QuestionnairePreview;
-      setPreview(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load preview");
-    } finally {
-      setPreviewLoading(false);
+  const currentPreviewQuestion =
+    preview?.questions[
+      Math.min(previewQuestionIndex, Math.max((preview?.questions.length || 1) - 1, 0))
+    ] || null;
+
+  const previewProgress = preview?.questions.length
+    ? Math.round(((previewQuestionIndex + 1) / preview.questions.length) * 100)
+    : 0;
+
+  const previewLocaleOptions =
+    preview?.availableLocales?.length ? preview.availableLocales : ["en", "zh-hk"];
+
+  const formatLocaleLabel = (locale: string) => {
+    const normalized = locale.toLowerCase();
+    if (normalized === "zh-hk") return "Cantonese (zh-HK)";
+    if (normalized === "en") return "English";
+    return locale;
+  };
+
+  const handlePreviewStart = () => {
+    if (!preview) return;
+    if (preview.questions.length === 0) {
+      setPreviewStep("thanks");
+      return;
     }
+    setPreviewQuestionIndex(0);
+    setPreviewStep("question");
+  };
+
+  const handlePreviewNext = () => {
+    if (!preview) return;
+    if (previewQuestionIndex < preview.questions.length - 1) {
+      setPreviewQuestionIndex((prev) => prev + 1);
+      return;
+    }
+    setPreviewStep("thanks");
+  };
+
+  const handlePreviewBack = () => {
+    if (previewStep === "thanks") {
+      if ((preview?.questions.length || 0) > 0) {
+        setPreviewStep("question");
+        setPreviewQuestionIndex(Math.max((preview?.questions.length || 1) - 1, 0));
+      }
+      return;
+    }
+
+    if (previewQuestionIndex > 0) {
+      setPreviewQuestionIndex((prev) => prev - 1);
+      return;
+    }
+
+    setPreviewStep("welcome");
   };
 
   const responsePreview = useMemo(() => {
@@ -433,12 +534,12 @@ export default function AdminQuestionnairesPage() {
                     <label className="text-sm text-blue-900">Preview language</label>
                     <select
                       value={previewLocale}
-                      onChange={(event) => setPreviewLocale(event.target.value)}
+                      onChange={(event) => handlePreviewLocaleChange(event.target.value)}
                       className="rounded-md border border-blue-300 bg-white px-2 py-1 text-sm"
                     >
-                      {((preview?.availableLocales?.length ? preview.availableLocales : ["en", "zh-hk"]) || ["en", "zh-hk"]).map((locale) => (
+                      {previewLocaleOptions.map((locale) => (
                         <option key={locale} value={locale}>
-                          {locale.toLowerCase() === "zh-hk" ? "Cantonese (zh-HK)" : locale.toLowerCase() === "en" ? "English" : locale}
+                          {formatLocaleLabel(locale)}
                         </option>
                       ))}
                     </select>
@@ -518,47 +619,6 @@ export default function AdminQuestionnairesPage() {
                   </div>
                 </div>
 
-                {preview && (
-                  <div className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-lg font-semibold text-slate-900">Preview</h3>
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">
-                        Locale: {preview.locale}
-                      </span>
-                    </div>
-
-                    <div className="rounded-lg border border-slate-200 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Welcome</p>
-                      <p className="mt-1 text-base font-semibold text-slate-900">{preview.welcomeTitle || preview.title}</p>
-                      <p className="mt-1 text-sm text-slate-700">{preview.welcomeMessage || preview.description || "No welcome copy."}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      {preview.questions.map((question) => (
-                        <div key={question.id} className="rounded-lg border border-slate-200 p-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-900">{question.sortOrder}. {question.title}</p>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{question.type}</span>
-                            {question.isRequired && (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">Required</span>
-                            )}
-                          </div>
-                          {question.description && <p className="mt-1 text-xs text-slate-600">{question.description}</p>}
-                          {question.options.length > 0 && (
-                            <p className="mt-1 text-xs text-slate-600">Options: {question.options.map((option) => option.label).join(", ")}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="rounded-lg border border-slate-200 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Thank you</p>
-                      <p className="mt-1 text-base font-semibold text-slate-900">{preview.thankYouTitle || "Thank you"}</p>
-                      <p className="mt-1 text-sm text-slate-700">{preview.thankYouMessage || "No thank-you copy."}</p>
-                    </div>
-                  </div>
-                )}
-
                 <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h3 className="text-lg font-semibold text-slate-900 mb-3">Questions</h3>
                   <div className="space-y-2">
@@ -618,6 +678,274 @@ export default function AdminQuestionnairesPage() {
           </div>
         </div>
       </div>
+
+      {previewOpen && preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">Admin preview</p>
+                <h2 className="text-lg font-semibold text-slate-900">Saveless questionnaire walkthrough</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-slate-600">Language</label>
+                <select
+                  value={previewLocale}
+                  onChange={(event) => handlePreviewLocaleChange(event.target.value)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+                >
+                  {previewLocaleOptions.map((locale) => (
+                    <option key={locale} value={locale}>
+                      {formatLocaleLabel(locale)}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={closePreview}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              {previewLoading ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
+                  Loading preview…
+                </div>
+              ) : previewStep === "welcome" ? (
+                <section className="space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Questionnaire invitation</p>
+                  <h1 className="text-2xl font-bold text-slate-900">{preview.welcomeTitle || preview.title}</h1>
+                  <p className="text-sm text-slate-700">{preview.welcomeMessage || preview.description || "No welcome copy set."}</p>
+                  <div className="flex items-center justify-between gap-3 pt-3">
+                    <button
+                      type="button"
+                      onClick={closePreview}
+                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Return to admin panel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePreviewStart}
+                      className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                    >
+                      Start preview
+                    </button>
+                  </div>
+                </section>
+              ) : previewStep === "question" && currentPreviewQuestion ? (
+                <section className="space-y-5">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Question {previewQuestionIndex + 1} of {preview.questions.length}
+                    </p>
+                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full bg-emerald-500 transition-all" style={{ width: `${previewProgress}%` }} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h1 className="text-xl font-semibold text-slate-900">{currentPreviewQuestion.title}</h1>
+                    {currentPreviewQuestion.description && (
+                      <p className="mt-1 text-sm text-slate-600">{currentPreviewQuestion.description}</p>
+                    )}
+                    {currentPreviewQuestion.helpText && (
+                      <p className="mt-1 text-xs text-slate-500">{currentPreviewQuestion.helpText}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    {(["short_text", "email", "phone", "number", "date"] as const).includes(
+                      currentPreviewQuestion.type as "short_text" | "email" | "phone" | "number" | "date",
+                    ) && (
+                      <input
+                        type={
+                          currentPreviewQuestion.type === "email"
+                            ? "email"
+                            : currentPreviewQuestion.type === "number"
+                              ? "number"
+                              : currentPreviewQuestion.type === "date"
+                                ? "date"
+                                : "text"
+                        }
+                        value={String(previewAnswers[currentPreviewQuestion.id] ?? "")}
+                        onChange={(event) =>
+                          setPreviewAnswers((prev) => ({
+                            ...prev,
+                            [currentPreviewQuestion.id]: event.target.value,
+                          }))
+                        }
+                        placeholder={currentPreviewQuestion.placeholder || "Preview input"}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    )}
+
+                    {currentPreviewQuestion.type === "long_text" && (
+                      <textarea
+                        rows={5}
+                        value={String(previewAnswers[currentPreviewQuestion.id] ?? "")}
+                        onChange={(event) =>
+                          setPreviewAnswers((prev) => ({
+                            ...prev,
+                            [currentPreviewQuestion.id]: event.target.value,
+                          }))
+                        }
+                        placeholder={currentPreviewQuestion.placeholder || "Preview input"}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    )}
+
+                    {currentPreviewQuestion.type === "yes_no" && (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewAnswers((prev) => ({ ...prev, [currentPreviewQuestion.id]: true }))
+                          }
+                          className={`rounded-lg border px-4 py-3 text-left text-sm ${
+                            previewAnswers[currentPreviewQuestion.id] === true
+                              ? "border-emerald-400 bg-emerald-50 text-emerald-800"
+                              : "border-slate-300 bg-white text-slate-700"
+                          }`}
+                        >
+                          Yes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewAnswers((prev) => ({ ...prev, [currentPreviewQuestion.id]: false }))
+                          }
+                          className={`rounded-lg border px-4 py-3 text-left text-sm ${
+                            previewAnswers[currentPreviewQuestion.id] === false
+                              ? "border-rose-400 bg-rose-50 text-rose-800"
+                              : "border-slate-300 bg-white text-slate-700"
+                          }`}
+                        >
+                          No
+                        </button>
+                      </div>
+                    )}
+
+                    {currentPreviewQuestion.type === "single_select" && (
+                      <div className="space-y-2">
+                        {currentPreviewQuestion.options.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() =>
+                              setPreviewAnswers((prev) => ({
+                                ...prev,
+                                [currentPreviewQuestion.id]: option.value,
+                              }))
+                            }
+                            className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                              previewAnswers[currentPreviewQuestion.id] === option.value
+                                ? "border-blue-400 bg-blue-50 text-blue-800"
+                                : "border-slate-300 bg-white text-slate-700"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {currentPreviewQuestion.type === "multi_select" && (
+                      <div className="space-y-2">
+                        {currentPreviewQuestion.options.map((option) => {
+                          const selected = Array.isArray(previewAnswers[currentPreviewQuestion.id])
+                            ? (previewAnswers[currentPreviewQuestion.id] as string[])
+                            : [];
+                          const active = selected.includes(option.value);
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                setPreviewAnswers((prev) => {
+                                  const current = Array.isArray(prev[currentPreviewQuestion.id])
+                                    ? (prev[currentPreviewQuestion.id] as string[])
+                                    : [];
+                                  const next = current.includes(option.value)
+                                    ? current.filter((value) => value !== option.value)
+                                    : [...current, option.value];
+
+                                  return { ...prev, [currentPreviewQuestion.id]: next };
+                                });
+                              }}
+                              className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                                active
+                                  ? "border-blue-400 bg-blue-50 text-blue-800"
+                                  : "border-slate-300 bg-white text-slate-700"
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={handlePreviewBack}
+                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Back
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={closePreview}
+                        className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Return to admin panel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePreviewNext}
+                        className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                      >
+                        {previewQuestionIndex < preview.questions.length - 1 ? "Next" : "Finish preview"}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              ) : (
+                <section className="space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Preview complete</p>
+                  <h1 className="text-2xl font-bold text-slate-900">{preview.thankYouTitle || "Thank you"}</h1>
+                  <p className="text-sm text-slate-700">{preview.thankYouMessage || "No thank-you copy set."}</p>
+                  <div className="flex items-center justify-between gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handlePreviewBack}
+                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closePreview}
+                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      Return to admin panel
+                    </button>
+                  </div>
+                </section>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
