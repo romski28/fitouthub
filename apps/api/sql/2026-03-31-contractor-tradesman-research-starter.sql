@@ -1,19 +1,10 @@
 -- FitOut Hub Contractor & Tradesman Research survey starter
 -- Run after questionnaire schema SQL is applied.
 
--- Ensure matrix_rating enum value exists (safe: no-op if already present)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_enum e
-    JOIN pg_type t ON t.oid = e.enumtypid
-    WHERE t.typname = 'QuestionnaireQuestionType'
-      AND e.enumlabel = 'matrix_rating'
-  ) THEN
-    ALTER TYPE "QuestionnaireQuestionType" ADD VALUE 'matrix_rating';
-  END IF;
-END $$;
+-- Ensure matrix_rating enum value exists (safe: no-op if already present).
+-- Must run as a plain statement outside any transaction block so it is
+-- committed and visible before the data-insert block below uses it.
+ALTER TYPE "QuestionnaireQuestionType" ADD VALUE IF NOT EXISTS 'matrix_rating';
 
 DO $$
 DECLARE
