@@ -133,27 +133,24 @@ export default function Home() {
       </section>
 
       {/* Hero Section */}
-      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Content */}
-          <div className="p-8 lg:p-12 space-y-6">
+      <section
+        className="relative overflow-hidden rounded-2xl bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
+      >
+        <div className="relative p-8 lg:p-12">
+          <div className="max-w-2xl space-y-6 text-slate-800" style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-400 mb-2">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-slate-700">
                 {t('hero.tagline')}
               </p>
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
+              <h1 className="text-4xl font-bold leading-tight lg:text-5xl">
                 {t('hero.title')}
               </h1>
             </div>
-            <p className="text-lg text-slate-300">
+            <p className="text-lg text-slate-700">
               {t('hero.description')}
             </p>
           </div>
-
-          {/* Hero Image */}
-          <div className="h-96 lg:h-full bg-cover bg-no-repeat bg-center hidden lg:flex items-center justify-center p-8" style={{
-            backgroundImage: 'url("/assets/images/hero-homepage.webp")'
-          }} />
         </div>
       </section>
 
