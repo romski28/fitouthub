@@ -11,7 +11,7 @@ import { CreateQuestionnaireInviteDto } from './dto/create-questionnaire-invite.
 import { SaveQuestionnaireAnswerDto } from './dto/save-questionnaire-answer.dto';
 
 const STARTER_AUDIENCE = 'contractor_tradesman';
-const STARTER_SLUG = 'contractor-tradesman-screening';
+const STARTER_SLUG = 'contractor-tradesman-research';
 const DEFAULT_LOCALE = 'en';
 
 type QuestionnaireQuestionTypeValue =
@@ -19,6 +19,7 @@ type QuestionnaireQuestionTypeValue =
   | 'long_text'
   | 'single_select'
   | 'multi_select'
+  | 'matrix_rating'
   | 'yes_no'
   | 'number'
   | 'email'
@@ -57,166 +58,334 @@ type StarterTemplateDefinition = {
 
 const STARTER_QUESTIONS: QuestionDefinition[] = [
   {
-    code: 'business_name',
-    title: 'What is your business or trading name?',
-    type: 'short_text',
-    placeholder: 'e.g. Harbour Build & Fitout Ltd',
+    code: 'primary_trade',
+    title: 'What is your primary trade?',
+    type: 'single_select',
     isRequired: true,
     sortOrder: 1,
+    options: [
+      { value: 'general_renovation_fitout', label: 'General renovation / fit-out', sortOrder: 1 },
+      { value: 'plumbing', label: 'Plumbing', sortOrder: 2 },
+      { value: 'electrical', label: 'Electrical', sortOrder: 3 },
+      { value: 'painting', label: 'Painting', sortOrder: 4 },
+      { value: 'tiling_flooring', label: 'Tiling / flooring', sortOrder: 5 },
+      { value: 'carpentry_joinery', label: 'Carpentry / joinery', sortOrder: 6 },
+      { value: 'air_conditioning', label: 'Air conditioning', sortOrder: 7 },
+      { value: 'plastering_ceiling', label: 'Plastering / ceiling', sortOrder: 8 },
+      { value: 'multiple_trades_general_contractor', label: 'Multiple trades (general contractor)', sortOrder: 9 },
+      { value: 'other', label: 'Other (please specify)', sortOrder: 10 },
+    ],
   },
   {
-    code: 'primary_trade',
-    title: 'Which trade best describes your main work?',
+    code: 'experience_years_hk',
+    title: 'How long have you been working in your trade in Hong Kong?',
     type: 'single_select',
     isRequired: true,
     sortOrder: 2,
     options: [
-      { value: 'general_contractor', label: 'General contractor', sortOrder: 1 },
-      { value: 'builder', label: 'Builder / fit-out contractor', sortOrder: 2 },
-      { value: 'electrical', label: 'Electrical', sortOrder: 3 },
-      { value: 'plumbing', label: 'Plumbing / drainage', sortOrder: 4 },
-      { value: 'hvac', label: 'HVAC / ventilation', sortOrder: 5 },
-      { value: 'joinery', label: 'Joinery / carpentry', sortOrder: 6 },
-      { value: 'decorating', label: 'Painting / decorating', sortOrder: 7 },
-      { value: 'other', label: 'Other specialist trade', sortOrder: 8 },
+      { value: 'lt_2_years', label: 'Less than 2 years', sortOrder: 1 },
+      { value: '2_5_years', label: '2–5 years', sortOrder: 2 },
+      { value: '6_10_years', label: '6–10 years', sortOrder: 3 },
+      { value: '11_20_years', label: '11–20 years', sortOrder: 4 },
+      { value: 'gt_20_years', label: 'More than 20 years', sortOrder: 5 },
     ],
   },
   {
-    code: 'coverage_areas',
-    title: 'Which areas do you currently cover?',
-    description: 'List districts, islands, or regions where you regularly work.',
-    type: 'long_text',
-    placeholder: 'e.g. Hong Kong Island, Kowloon East, Tseung Kwan O',
+    code: 'team_size',
+    title: 'How many workers (including yourself) are in your team?',
+    type: 'single_select',
     isRequired: true,
     sortOrder: 3,
+    options: [
+      { value: 'sole_trader', label: 'Just me (sole trader)', sortOrder: 1 },
+      { value: '2_3_people', label: '2–3 people', sortOrder: 2 },
+      { value: '4_10_people', label: '4–10 people', sortOrder: 3 },
+      { value: '11_20_people', label: '11–20 people', sortOrder: 4 },
+      { value: 'gt_20_people', label: 'More than 20', sortOrder: 5 },
+    ],
   },
   {
-    code: 'experience_years',
-    title: 'How many years of relevant experience do you have?',
-    type: 'number',
-    placeholder: 'e.g. 12',
+    code: 'jobs_per_month',
+    title: 'Approximately how many jobs do you complete per month?',
+    type: 'single_select',
     isRequired: true,
     sortOrder: 4,
+    options: [
+      { value: '1_3_jobs', label: '1–3 jobs', sortOrder: 1 },
+      { value: '4_8_jobs', label: '4–8 jobs', sortOrder: 2 },
+      { value: '9_15_jobs', label: '9–15 jobs', sortOrder: 3 },
+      { value: 'gt_15_jobs', label: 'More than 15 jobs', sortOrder: 4 },
+    ],
   },
   {
-    code: 'insurance_ready',
-    title: 'Do you currently hold active public liability or equivalent insurance?',
-    type: 'yes_no',
-    helpText: 'This can be refined later with document upload steps.',
+    code: 'avg_job_value',
+    title: 'What is the average value of a single job you complete?',
+    type: 'single_select',
     isRequired: true,
     sortOrder: 5,
+    options: [
+      { value: 'lt_2000', label: 'Under HKD 2,000', sortOrder: 1 },
+      { value: '2000_5000', label: 'HKD 2,000–5,000', sortOrder: 2 },
+      { value: '5001_15000', label: 'HKD 5,001–15,000', sortOrder: 3 },
+      { value: '15001_50000', label: 'HKD 15,001–50,000', sortOrder: 4 },
+      { value: '50001_150000', label: 'HKD 50,001–150,000', sortOrder: 5 },
+      { value: 'gt_150000', label: 'Over HKD 150,000', sortOrder: 6 },
+    ],
   },
   {
-    code: 'certifications',
-    title: 'Which licences, registrations, or certifications should clients know about?',
-    type: 'long_text',
-    placeholder: 'List registrations, card numbers, or accreditations',
-    isRequired: false,
+    code: 'lead_sources',
+    title: 'How do you currently get most of your jobs / leads? (Select all that apply)',
+    type: 'multi_select',
+    isRequired: true,
     sortOrder: 6,
+    options: [
+      { value: 'personal_referrals_word_of_mouth', label: 'Personal referrals / word of mouth', sortOrder: 1 },
+      { value: 'repeat_customers', label: 'Repeat customers', sortOrder: 2 },
+      { value: 'facebook_groups_marketplace', label: 'Facebook groups or Marketplace', sortOrder: 3 },
+      { value: 'building_management_property_agent_referrals', label: 'Building management / property agent referrals', sortOrder: 4 },
+      { value: 'online_platforms', label: 'Online platforms (please specify)', sortOrder: 5 },
+      { value: 'cold_calls_flyers', label: 'Cold calls / flyers', sortOrder: 6 },
+      { value: 'existing_platform_i_list_on', label: 'Existing platform I list on (please specify)', sortOrder: 7 },
+      { value: 'other', label: 'Other', sortOrder: 8 },
+    ],
   },
   {
-    code: 'team_size',
-    title: 'How large is your usual delivery team?',
+    code: 'lead_generation_satisfaction',
+    title: 'How satisfied are you with your current lead generation methods?',
+    description:
+      '1 = Very dissatisfied, 2 = Dissatisfied, 3 = Neutral, 4 = Satisfied, 5 = Very satisfied',
     type: 'single_select',
     isRequired: true,
     sortOrder: 7,
     options: [
-      { value: 'solo', label: 'Just me', sortOrder: 1 },
-      { value: '2_5', label: '2 to 5 people', sortOrder: 2 },
-      { value: '6_15', label: '6 to 15 people', sortOrder: 3 },
-      { value: '16_plus', label: '16+ people', sortOrder: 4 },
+      { value: '1', label: '1 — Very dissatisfied', sortOrder: 1 },
+      { value: '2', label: '2 — Dissatisfied', sortOrder: 2 },
+      { value: '3', label: '3 — Neutral', sortOrder: 3 },
+      { value: '4', label: '4 — Satisfied', sortOrder: 4 },
+      { value: '5', label: '5 — Very satisfied', sortOrder: 5 },
     ],
   },
   {
-    code: 'project_size',
-    title: 'What project size are you most comfortable taking on?',
-    type: 'multi_select',
+    code: 'pain_points',
+    title: 'How significant are the following business pain points for you?',
+    description: 'Rate each 1 (not a problem) to 5 (major problem).',
+    type: 'matrix_rating',
     isRequired: true,
     sortOrder: 8,
+    settings: {
+      rows: [
+        { key: 'unpredictable_lead_flow', label: 'Unpredictable lead flow' },
+        { key: 'customers_who_ghost', label: 'Customers who ghost' },
+        { key: 'late_disputed_payment', label: 'Late / disputed payment' },
+        { key: 'scope_creep', label: 'Scope creep' },
+        { key: 'quoting_waste', label: 'Quoting waste' },
+        { key: 'race_to_bottom_on_price', label: 'Race to bottom on price' },
+        { key: 'building_online_reputation', label: 'Building online reputation' },
+        { key: 'cash_flow_issues', label: 'Cash flow issues' },
+      ],
+    },
+  },
+  {
+    code: 'digital_tools',
+    title: 'What digital tools do you currently use for your business? (Select all that apply)',
+    type: 'multi_select',
+    isRequired: true,
+    sortOrder: 9,
     options: [
-      { value: 'minor_repairs', label: 'Minor repairs / quick jobs', sortOrder: 1 },
-      { value: 'single_room', label: 'Single-room refurbishment', sortOrder: 2 },
-      { value: 'full_home', label: 'Full-home renovation', sortOrder: 3 },
-      { value: 'commercial_fitout', label: 'Commercial fit-out', sortOrder: 4 },
+      { value: 'whatsapp', label: 'WhatsApp (for client communication)', sortOrder: 1 },
+      { value: 'facebook_instagram', label: 'Facebook / Instagram (marketing)', sortOrder: 2 },
+      { value: 'spreadsheet', label: 'Spreadsheet (Excel / Google Sheets)', sortOrder: 3 },
+      { value: 'accounting_software', label: 'Accounting software', sortOrder: 4 },
+      { value: 'project_management_app', label: 'Project management app', sortOrder: 5 },
+      { value: 'no_digital_tools', label: "I don't use digital tools", sortOrder: 6 },
+      { value: 'other', label: 'Other', sortOrder: 7 },
     ],
   },
   {
-    code: 'availability',
-    title: 'When could you usually start a new project?',
-    type: 'short_text',
-    placeholder: 'e.g. Within 2 weeks',
-    isRequired: true,
-    sortOrder: 9,
-  },
-  {
-    code: 'contact_email',
-    title: 'What is the best email for project invitations?',
-    type: 'email',
-    placeholder: 'name@company.com',
+    code: 'acceptable_commission_rate',
+    title:
+      'If a platform provided you with pre-qualified, genuine job leads and held payment securely until the job was done, what commission rate would be acceptable?',
+    type: 'single_select',
     isRequired: true,
     sortOrder: 10,
+    options: [
+      { value: 'none', label: 'I would not pay any commission', sortOrder: 1 },
+      { value: 'up_to_5', label: 'Up to 5% per job', sortOrder: 2 },
+      { value: '6_10', label: '6–10% per job', sortOrder: 3 },
+      { value: '11_15', label: '11–15% per job', sortOrder: 4 },
+      {
+        value: 'depends_on_job_size',
+        label: 'It depends on the job size — willing to negotiate',
+        sortOrder: 5,
+      },
+    ],
   },
   {
-    code: 'contact_phone',
-    title: 'What is the best mobile or WhatsApp number?',
-    type: 'phone',
-    placeholder: '+852 ...',
-    isRequired: false,
+    code: 'subscription_willingness',
+    title:
+      'Would you be willing to pay a monthly subscription fee (e.g. HKD 200–400/month) for guaranteed access to leads and platform tools?',
+    type: 'single_select',
+    isRequired: true,
     sortOrder: 11,
+    options: [
+      { value: 'yes_200_or_less', label: 'Yes, HKD 200 or less', sortOrder: 1 },
+      { value: 'yes_200_400', label: 'Yes, HKD 200–400', sortOrder: 2 },
+      {
+        value: 'yes_gt_400_if_quality_high',
+        label: 'Yes, more than HKD 400 if the leads are high quality',
+        sortOrder: 3,
+      },
+      {
+        value: 'no_commission_only',
+        label: 'No, I prefer commission-only (no subscription)',
+        sortOrder: 4,
+      },
+      { value: 'no_neither_model', label: "No, I wouldn't pay either model", sortOrder: 5 },
+    ],
   },
   {
-    code: 'why_fitouthub',
-    title: 'Anything else you would like FitOut Hub to know before we invite you onto the platform?',
-    type: 'long_text',
-    placeholder: 'Share strengths, preferred work, or anything important',
-    isRequired: false,
+    code: 'feature_importance',
+    title: 'How important are the following platform features to you?',
+    description: 'Rate each 1 (not important) to 5 (essential).',
+    type: 'matrix_rating',
+    isRequired: true,
     sortOrder: 12,
+    settings: {
+      rows: [
+        { key: 'escrow_payment', label: 'Escrow payment' },
+        { key: 'reviews_verified_history', label: 'Reviews + verified history' },
+        { key: 'standardised_quote_template', label: 'Standardised quote template' },
+        { key: 'job_tracking', label: 'Job tracking' },
+        { key: 'materials_discounts', label: 'Materials discounts' },
+        { key: 'dispute_resolution', label: 'Dispute resolution' },
+        { key: 'trade_matched_leads', label: 'Trade-matched leads' },
+      ],
+    },
+  },
+  {
+    code: 'biggest_platform_concerns',
+    title: 'What is your biggest concern about joining a platform like FitOut Hub? (Select all that apply)',
+    type: 'multi_select',
+    isRequired: true,
+    sortOrder: 13,
+    options: [
+      { value: 'commission_cost_too_high', label: 'Commission cost is too high', sortOrder: 1 },
+      {
+        value: 'bad_unfair_customer_reviews',
+        label: 'Worried about bad / unfair customer reviews',
+        sortOrder: 2,
+      },
+      {
+        value: 'privacy_contact_info_shared',
+        label: "Privacy — don't want personal contact info shared",
+        sortOrder: 3,
+      },
+      {
+        value: 'not_enough_homeowners_use_it',
+        label: 'Not enough homeowners will actually use it',
+        sortOrder: 4,
+      },
+      {
+        value: 'existing_platform_already_works',
+        label: 'Another platform I already use works well enough',
+        sortOrder: 5,
+      },
+      {
+        value: 'not_comfortable_with_digital_platforms',
+        label: "I'm not comfortable with digital platforms",
+        sortOrder: 6,
+      },
+      { value: 'other', label: 'Other (please specify)', sortOrder: 7 },
+    ],
+  },
+  {
+    code: 'verified_contractor_interest',
+    title: 'Would you be interested in joining FitOut Hub as a verified contractor when it launches?',
+    type: 'single_select',
+    isRequired: true,
+    sortOrder: 14,
+    options: [
+      { value: 'yes_definitely', label: 'Yes, definitely', sortOrder: 1 },
+      { value: 'probably_yes', label: 'Probably yes', sortOrder: 2 },
+      { value: 'undecided', label: 'Undecided', sortOrder: 3 },
+      { value: 'probably_not', label: 'Probably not', sortOrder: 4 },
+      { value: 'definitely_not', label: 'Definitely not', sortOrder: 5 },
+    ],
+  },
+  {
+    code: 'most_useful_single_thing',
+    title: 'What single thing would make FitOut Hub most useful for your business?',
+    type: 'long_text',
+    isRequired: true,
+    sortOrder: 15,
+  },
+  {
+    code: 'follow_up_contact_optional',
+    title:
+      '[Optional] Leave your name and WhatsApp for a 15-minute follow-up call — early joiners get 3 months free listing.',
+    type: 'long_text',
+    placeholder: 'Name + WhatsApp',
+    isRequired: false,
+    sortOrder: 16,
   },
 ];
 
 const STARTER_TEMPLATES: StarterTemplateDefinition[] = [
   {
-    key: 'business_name',
-    label: 'Business name',
-    prompt: 'What is your business or trading name?',
-    type: 'short_text',
-    placeholder: 'Business name',
-  },
-  {
-    key: 'trade_selector',
+    key: 'primary_trade',
     label: 'Primary trade',
-    prompt: 'Which trade best describes your main work?',
+    prompt: 'What is your primary trade?',
     type: 'single_select',
     options: [
-      { value: 'general_contractor', label: 'General contractor', sortOrder: 1 },
-      { value: 'builder', label: 'Builder / fit-out contractor', sortOrder: 2 },
+      { value: 'general_renovation_fitout', label: 'General renovation / fit-out', sortOrder: 1 },
+      { value: 'plumbing', label: 'Plumbing', sortOrder: 2 },
       { value: 'electrical', label: 'Electrical', sortOrder: 3 },
-      { value: 'plumbing', label: 'Plumbing / drainage', sortOrder: 4 },
-      { value: 'hvac', label: 'HVAC / ventilation', sortOrder: 5 },
-      { value: 'joinery', label: 'Joinery / carpentry', sortOrder: 6 },
-      { value: 'decorating', label: 'Painting / decorating', sortOrder: 7 },
-      { value: 'other', label: 'Other specialist trade', sortOrder: 8 },
+      { value: 'painting', label: 'Painting', sortOrder: 4 },
+      { value: 'tiling_flooring', label: 'Tiling / flooring', sortOrder: 5 },
+      { value: 'carpentry_joinery', label: 'Carpentry / joinery', sortOrder: 6 },
+      { value: 'air_conditioning', label: 'Air conditioning', sortOrder: 7 },
+      { value: 'plastering_ceiling', label: 'Plastering / ceiling', sortOrder: 8 },
+      { value: 'multiple_trades_general_contractor', label: 'Multiple trades (general contractor)', sortOrder: 9 },
+      { value: 'other', label: 'Other (please specify)', sortOrder: 10 },
     ],
   },
   {
-    key: 'service_regions',
-    label: 'Coverage areas',
-    prompt: 'Which areas do you currently cover?',
-    type: 'long_text',
-    placeholder: 'Regions, districts, and service coverage',
+    key: 'experience_years_hk',
+    label: 'Trade experience in HK',
+    prompt: 'How long have you been working in your trade in Hong Kong?',
+    type: 'single_select',
+    options: [
+      { value: 'lt_2_years', label: 'Less than 2 years', sortOrder: 1 },
+      { value: '2_5_years', label: '2–5 years', sortOrder: 2 },
+      { value: '6_10_years', label: '6–10 years', sortOrder: 3 },
+      { value: '11_20_years', label: '11–20 years', sortOrder: 4 },
+      { value: 'gt_20_years', label: 'More than 20 years', sortOrder: 5 },
+    ],
   },
   {
-    key: 'years_experience',
-    label: 'Years of experience',
-    prompt: 'How many years of relevant experience do you have?',
-    type: 'number',
-    placeholder: 'Years of experience',
+    key: 'pain_points',
+    label: 'Business pain points (matrix)',
+    prompt: 'How significant are the following business pain points for you?',
+    type: 'matrix_rating',
   },
   {
-    key: 'insurance_check',
-    label: 'Insurance check',
-    prompt: 'Do you currently hold active public liability or equivalent insurance?',
-    type: 'yes_no',
+    key: 'feature_importance',
+    label: 'Platform feature importance (matrix)',
+    prompt: 'How important are the following platform features to you?',
+    type: 'matrix_rating',
+  },
+  {
+    key: 'verified_contractor_interest',
+    label: 'Verified contractor interest',
+    prompt: 'Would you be interested in joining FitOut Hub as a verified contractor when it launches?',
+    type: 'single_select',
+    options: [
+      { value: 'yes_definitely', label: 'Yes, definitely', sortOrder: 1 },
+      { value: 'probably_yes', label: 'Probably yes', sortOrder: 2 },
+      { value: 'undecided', label: 'Undecided', sortOrder: 3 },
+      { value: 'probably_not', label: 'Probably not', sortOrder: 4 },
+      { value: 'definitely_not', label: 'Definitely not', sortOrder: 5 },
+    ],
   },
 ];
 
@@ -448,17 +617,69 @@ export class QuestionnairesService {
     };
   }
 
-  async listResponses(questionnaireId: string) {
+  async listResponses(questionnaireId: string, locale?: string) {
+    const resolvedLocale = this.normaliseLocale(locale);
+
     const questionnaire = await this.prisma.questionnaire.findUnique({
       where: { id: questionnaireId },
-      select: { id: true },
+      include: {
+        questions: {
+          include: {
+            translations: true,
+            options: {
+              include: {
+                translations: true,
+              },
+              orderBy: [{ sortOrder: 'asc' }],
+            },
+          },
+          orderBy: [{ sortOrder: 'asc' }],
+        },
+      },
     });
 
     if (!questionnaire) {
       throw new NotFoundException('Questionnaire not found');
     }
 
-    return this.prisma.questionnaireSubmission.findMany({
+    const questionLookup = new Map(
+      questionnaire.questions.map((question) => {
+        const translation = this.pickTranslation(
+          question.translations,
+          resolvedLocale,
+        );
+
+        const localizedTitle =
+          this.pickTranslatedField(translation, 'title', question.title) ||
+          question.title;
+
+        const optionLabelByValue = new Map(
+          question.options.map((option) => {
+            const optionTranslation = this.pickTranslation(
+              option.translations,
+              resolvedLocale,
+            );
+            const localizedLabel =
+              this.pickTranslatedField(optionTranslation, 'label', option.label) ||
+              option.label;
+
+            return [option.value, localizedLabel] as const;
+          }),
+        );
+
+        return [
+          question.id,
+          {
+            code: question.code,
+            type: question.type,
+            title: localizedTitle,
+            optionLabelByValue,
+          },
+        ] as const;
+      }),
+    );
+
+    const rows = await this.prisma.questionnaireSubmission.findMany({
       where: { questionnaireId },
       orderBy: [{ startedAt: 'desc' }],
       include: {
@@ -471,6 +692,29 @@ export class QuestionnairesService {
         },
       },
     });
+
+    return rows.map((row) => ({
+      ...row,
+      locale: resolvedLocale,
+      answers: row.answers.map((answer) => {
+        const questionMeta = questionLookup.get(answer.questionId);
+        const displayValue = this.localizeAnswerDisplay(
+          questionMeta?.type,
+          answer.value,
+          questionMeta?.optionLabelByValue,
+        );
+
+        return {
+          ...answer,
+          question: {
+            ...answer.question,
+            code: questionMeta?.code || answer.question.code,
+            title: questionMeta?.title || answer.question.title,
+          },
+          displayValue,
+        };
+      }),
+    }));
   }
 
   async createQuestionnaire(dto: CreateQuestionnaireDto, adminUserId: string) {
@@ -554,16 +798,16 @@ export class QuestionnairesService {
     const created = await this.prisma.questionnaire.create({
       data: {
         slug: STARTER_SLUG,
-        title: 'Contractors and tradesmen onboarding questionnaire',
+        title: 'FitOut Hub — Contractor & Tradesman Research',
         audienceKey: STARTER_AUDIENCE,
         description:
-          'Starter stakeholder questionnaire for contractors and tradesmen. This is the first live example and can later be replaced with your PDF-derived final wording.',
-        welcomeTitle: 'Welcome to the contractor & tradesman questionnaire',
+          'Bilingual contractor and tradesman research survey focused on lead quality, pain points, monetisation preference, and platform fit.',
+        welcomeTitle: 'Welcome to the contractor & tradesman research survey',
         welcomeMessage:
-          'We are collecting a focused baseline profile so we can invite the right contractors and specialist trades into the right renovation projects with minimal back-and-forth.',
-        thankYouTitle: 'Thanks for sharing your details',
+          'This short survey helps us design FitOut Hub around real contractor and tradesman needs in Hong Kong.',
+        thankYouTitle: 'Thank you for your feedback',
         thankYouMessage:
-          'Your answers have been saved. We will use them to shape future invitations, onboarding, and marketplace matching.',
+          'Your responses have been saved and will help shape product priorities and launch design.',
         joinCtaLabel: 'Explore joining FitOut Hub',
         joinCtaUrl: '/professionals',
         status: 'active',
@@ -1203,8 +1447,78 @@ export class QuestionnairesService {
         }
         return selected;
       }
+      case 'matrix_rating': {
+        const rows =
+          Array.isArray(question?.settings?.rows) && question.settings.rows.length > 0
+            ? question.settings.rows
+            : [];
+
+        if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+          throw new BadRequestException('Enter valid matrix ratings');
+        }
+
+        const raw = value as Record<string, unknown>;
+        const normalized: Record<string, number> = {};
+
+        for (const row of rows) {
+          const rowKey = String((row as any)?.key || '').trim();
+          if (!rowKey) continue;
+          const rowValue = raw[rowKey];
+
+          if (rowValue === null || rowValue === undefined || rowValue === '') {
+            if (question.isRequired) {
+              throw new BadRequestException('Please rate all required items');
+            }
+            continue;
+          }
+
+          const parsed = Number(rowValue);
+          if (!Number.isFinite(parsed) || parsed < 1 || parsed > 5) {
+            throw new BadRequestException('Matrix ratings must be between 1 and 5');
+          }
+
+          normalized[rowKey] = parsed;
+        }
+
+        if (question.isRequired) {
+          const rowKeys = rows
+            .map((row: any) => String(row?.key || '').trim())
+            .filter(Boolean);
+          const missing = rowKeys.some((key) => normalized[key] === undefined);
+          if (missing) {
+            throw new BadRequestException('Please rate all required items');
+          }
+        }
+
+        return normalized;
+      }
       default:
         return value;
     }
+  }
+
+  private localizeAnswerDisplay(
+    questionType: string | undefined,
+    value: unknown,
+    optionLabelByValue?: Map<string, string>,
+  ) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (questionType === 'single_select') {
+      const normalized = String(value);
+      return optionLabelByValue?.get(normalized) || normalized;
+    }
+
+    if (questionType === 'multi_select') {
+      const raw = Array.isArray(value) ? value : [value];
+      return raw.map((item) => {
+        const normalized = String(item);
+        return optionLabelByValue?.get(normalized) || normalized;
+      });
+    }
+
+    return value;
   }
 }

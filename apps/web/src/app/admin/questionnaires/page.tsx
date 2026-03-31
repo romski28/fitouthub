@@ -47,6 +47,7 @@ type QuestionnaireQuestion = {
 type QuestionnaireResponse = {
   id: string;
   status: string;
+  locale?: string;
   respondentEmail?: string | null;
   respondentName?: string | null;
   startedAt: string;
@@ -56,10 +57,13 @@ type QuestionnaireResponse = {
   } | null;
   answers: Array<{
     question: {
+      id?: string;
       title: string;
       code: string;
+      type?: string;
     };
     value: unknown;
+    displayValue?: unknown;
   }>;
 };
 
@@ -102,6 +106,7 @@ type QuestionnairePreview = {
     title: string;
     description?: string | null;
     type: string;
+    settings?: Record<string, unknown> | null;
     placeholder?: string | null;
     helpText?: string | null;
     isRequired: boolean;
@@ -135,6 +140,10 @@ export default function AdminQuestionnairesPage() {
   const [previewStep, setPreviewStep] = useState<"welcome" | "question" | "thanks">("welcome");
   const [previewQuestionIndex, setPreviewQuestionIndex] = useState(0);
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>({});
+  const [responsesLocale, setResponsesLocale] = useState("en");
+  const [responsesLoading, setResponsesLoading] = useState(false);
+  const [responsesData, setResponsesData] = useState<QuestionnaireResponse[]>([]);
+  const [activeResponseId, setActiveResponseId] = useState<string | null>(null);
   const [inviteForm, setInviteForm] = useState({
     email: "",
     recipientName: "",
@@ -222,7 +231,41 @@ export default function AdminQuestionnairesPage() {
     setPreviewStep("welcome");
     setPreviewQuestionIndex(0);
     setPreviewAnswers({});
+    setResponsesData([]);
+    setActiveResponseId(null);
   }, [selectedId]);
+
+  const loadResponses = useCallback(async () => {
+    if (!accessToken || !selectedId) return;
+
+    try {
+      setResponsesLoading(true);
+      const res = await fetch(
+        `${API_BASE_URL}/questionnaires/${selectedId}/responses?locale=${encodeURIComponent(responsesLocale)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.message || "Failed to load responses");
+      }
+
+      const data = (await res.json()) as QuestionnaireResponse[];
+      setResponsesData(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load responses");
+    } finally {
+      setResponsesLoading(false);
+    }
+  }, [accessToken, selectedId, responsesLocale]);
+
+  useEffect(() => {
+    loadResponses();
+  }, [loadResponses]);
 
   const loadPreview = useCallback(
     async (locale: string) => {
@@ -436,8 +479,29 @@ export default function AdminQuestionnairesPage() {
   };
 
   const responsePreview = useMemo(() => {
-    return (detail?.submissions || []).slice(0, 8);
-  }, [detail]);
+    return responsesData.slice(0, 8);
+  }, [responsesData]);
+
+  const activeResponse = useMemo(
+    () => responsesData.find((item) => item.id === activeResponseId) || null,
+    [responsesData, activeResponseId],
+  );
+
+  const formatResponseValue = (value: unknown) => {
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item)).join(", ");
+    }
+    if (value === null || value === undefined) {
+      return "—";
+    }
+    if (typeof value === "object") {
+      return JSON.stringify(value);
+    }
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
+    return String(value);
+  };
 
   if (loading) {
     return (
@@ -647,6 +711,21 @@ export default function AdminQuestionnairesPage() {
 
                 <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h3 className="text-lg font-semibold text-slate-900 mb-3">Recent responses</h3>
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <label className="text-sm text-slate-600">Response language</label>
+                    <select
+                      value={responsesLocale}
+                      onChange={(event) => setResponsesLocale(event.target.value)}
+                      className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+                    >
+                      {previewLocaleOptions.map((locale) => (
+                        <option key={locale} value={locale}>
+                          {formatLocaleLabel(locale)}
+                        </option>
+                      ))}
+                    </select>
+                    {responsesLoading && <span className="text-xs text-slate-500">Loading…</span>}
+                  </div>
                   <div className="space-y-3">
                     {responsePreview.length === 0 ? (
                       <p className="text-sm text-slate-600">No responses submitted yet.</p>
@@ -668,6 +747,15 @@ export default function AdminQuestionnairesPage() {
                           <p className="mt-2 text-xs text-slate-600">
                             {response.answers.length} answers captured
                           </p>
+                          <div className="mt-3">
+                            <button
+                              type="button"
+                              onClick={() => setActiveResponseId(response.id)}
+                              className="rounded-lg border border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                            >
+                              Review response
+                            </button>
+                          </div>
                         </div>
                       ))
                     )}
@@ -890,6 +978,77 @@ export default function AdminQuestionnairesPage() {
                         })}
                       </div>
                     )}
+
+                    {currentPreviewQuestion.type === "matrix_rating" && (
+                      <div className="space-y-4">
+                        {(() => {
+                          const matrixSettings =
+                            currentPreviewQuestion.settings && typeof currentPreviewQuestion.settings === "object"
+                              ? (currentPreviewQuestion.settings as { rows?: Array<{ key?: string; label?: string }> })
+                              : {};
+                          const rows = Array.isArray(matrixSettings.rows) ? matrixSettings.rows : [];
+                          const currentAnswers =
+                            previewAnswers[currentPreviewQuestion.id] &&
+                            typeof previewAnswers[currentPreviewQuestion.id] === "object" &&
+                            !Array.isArray(previewAnswers[currentPreviewQuestion.id])
+                              ? (previewAnswers[currentPreviewQuestion.id] as Record<string, number>)
+                              : {};
+
+                          if (rows.length === 0) {
+                            return (
+                              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                                Matrix rows are not configured for this question.
+                              </div>
+                            );
+                          }
+
+                          return rows.map((row, rowIndex) => {
+                            const rowKey = row?.key || `row_${rowIndex + 1}`;
+                            const selectedRating =
+                              typeof currentAnswers[rowKey] === "number" ? currentAnswers[rowKey] : null;
+
+                            return (
+                              <div key={rowKey} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                <p className="text-sm font-medium text-slate-900">{row?.label || rowKey}</p>
+                                <div className="mt-2 grid grid-cols-5 gap-2">
+                                  {[1, 2, 3, 4, 5].map((rating) => (
+                                    <button
+                                      key={`${rowKey}-${rating}`}
+                                      type="button"
+                                      onClick={() => {
+                                        setPreviewAnswers((prev) => {
+                                          const previousValue =
+                                            prev[currentPreviewQuestion.id] &&
+                                            typeof prev[currentPreviewQuestion.id] === "object" &&
+                                            !Array.isArray(prev[currentPreviewQuestion.id])
+                                              ? (prev[currentPreviewQuestion.id] as Record<string, number>)
+                                              : {};
+
+                                          return {
+                                            ...prev,
+                                            [currentPreviewQuestion.id]: {
+                                              ...previousValue,
+                                              [rowKey]: rating,
+                                            },
+                                          };
+                                        });
+                                      }}
+                                      className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                                        selectedRating === rating
+                                          ? "border-blue-400 bg-blue-50 text-blue-800"
+                                          : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                                      }`}
+                                    >
+                                      {rating}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
@@ -942,6 +1101,67 @@ export default function AdminQuestionnairesPage() {
                   </div>
                 </section>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeResponse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">Response review</p>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  {activeResponse.respondentName || activeResponse.respondentEmail || activeResponse.invite?.email || "Unknown respondent"}
+                </h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-slate-600">Language</label>
+                <select
+                  value={responsesLocale}
+                  onChange={(event) => setResponsesLocale(event.target.value)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+                >
+                  {previewLocaleOptions.map((locale) => (
+                    <option key={locale} value={locale}>
+                      {formatLocaleLabel(locale)}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setActiveResponseId(null)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              <p className="mb-4 text-xs text-slate-500">
+                Started: {new Date(activeResponse.startedAt).toLocaleString()}
+                {activeResponse.completedAt
+                  ? ` · Completed: ${new Date(activeResponse.completedAt).toLocaleString()}`
+                  : ""}
+              </p>
+
+              <div className="space-y-3">
+                {activeResponse.answers.length === 0 ? (
+                  <p className="text-sm text-slate-600">No answers captured.</p>
+                ) : (
+                  activeResponse.answers.map((answer, index) => (
+                    <div key={`${answer.question.code}-${index}`} className="rounded-lg border border-slate-200 p-3">
+                      <p className="text-sm font-semibold text-slate-900">{answer.question.title}</p>
+                      <p className="mt-1 text-xs text-slate-500">Code: {answer.question.code}</p>
+                      <p className="mt-2 text-sm text-slate-700">
+                        {formatResponseValue(answer.displayValue ?? answer.value)}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

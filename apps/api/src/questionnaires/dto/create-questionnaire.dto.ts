@@ -7,6 +7,7 @@ export type CreateQuestionnaireQuestionDto = {
     | 'long_text'
     | 'single_select'
     | 'multi_select'
+    | 'matrix_rating'
     | 'yes_no'
     | 'number'
     | 'email'

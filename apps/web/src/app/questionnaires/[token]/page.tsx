@@ -21,6 +21,7 @@ type PublicQuestion = {
     | "long_text"
     | "single_select"
     | "multi_select"
+    | "matrix_rating"
     | "yes_no"
     | "number"
     | "email"
@@ -30,6 +31,7 @@ type PublicQuestion = {
   helpText?: string | null;
   isRequired: boolean;
   sortOrder: number;
+  settings?: Record<string, unknown> | null;
   options: PublicQuestionOption[];
 };
 
@@ -151,6 +153,21 @@ function normaliseQuestionAnswer(type: PublicQuestion["type"], value: unknown) {
 function isMissingAnswer(question: PublicQuestion, value: unknown) {
   if (!question.isRequired) return false;
 
+  if (question.type === "matrix_rating") {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return true;
+    const rows = Array.isArray((question.settings as any)?.rows)
+      ? ((question.settings as any).rows as Array<{ key?: string }>)
+      : [];
+    const keys = rows.map((row) => String(row.key || "").trim()).filter(Boolean);
+    if (keys.length === 0) return true;
+    const current = value as Record<string, unknown>;
+    return keys.some((key) => {
+      const item = current[key];
+      const parsed = Number(item);
+      return !Number.isFinite(parsed) || parsed < 1 || parsed > 5;
+    });
+  }
+
   if (value === null || value === undefined) return true;
   if (Array.isArray(value)) return value.length === 0;
   if (typeof value === "boolean") return false;
@@ -242,6 +259,23 @@ export default function PublicQuestionnairePage() {
     if (!questions.length) return 0;
     return Math.round(((questionIndex + 1) / questions.length) * 100);
   }, [questionIndex, questions.length]);
+
+  const getMatrixRowLabel = (
+    row: Record<string, unknown>,
+    activeLocale: string,
+  ) => {
+    const normalized = activeLocale.toLowerCase();
+    if (normalized === "zh-hk" && typeof row.labelZhHk === "string" && row.labelZhHk.trim()) {
+      return row.labelZhHk;
+    }
+    if (typeof row.label === "string" && row.label.trim()) {
+      return row.label;
+    }
+    if (typeof row.key === "string") {
+      return row.key;
+    }
+    return "";
+  };
 
   const startQuestionnaire = async () => {
     if (!token) return;
@@ -574,6 +608,63 @@ export default function PublicQuestionnairePage() {
                       </button>
                     );
                   })}
+                </div>
+              )}
+
+              {currentQuestion.type === "matrix_rating" && (
+                <div className="space-y-2">
+                  {Array.isArray((currentQuestion.settings as any)?.rows) &&
+                    ((currentQuestion.settings as any).rows as Array<Record<string, unknown>>).map((row) => {
+                      const rowKey = String(row.key || "").trim();
+                      if (!rowKey) return null;
+
+                      const selectedValue =
+                        typeof answers[currentQuestion.id] === "object" &&
+                        answers[currentQuestion.id] !== null &&
+                        !Array.isArray(answers[currentQuestion.id])
+                          ? (answers[currentQuestion.id] as Record<string, unknown>)[rowKey]
+                          : null;
+
+                      return (
+                        <div key={rowKey} className="rounded-lg border border-slate-200 p-3">
+                          <p className="mb-2 text-sm font-medium text-slate-900">
+                            {getMatrixRowLabel(row, locale)}
+                          </p>
+                          <div className="grid grid-cols-5 gap-2">
+                            {[1, 2, 3, 4, 5].map((score) => (
+                              <button
+                                key={score}
+                                type="button"
+                                onClick={() => {
+                                  setAnswers((prev) => {
+                                    const current =
+                                      typeof prev[currentQuestion.id] === "object" &&
+                                      prev[currentQuestion.id] !== null &&
+                                      !Array.isArray(prev[currentQuestion.id])
+                                        ? (prev[currentQuestion.id] as Record<string, unknown>)
+                                        : {};
+                                    return {
+                                      ...prev,
+                                      [currentQuestion.id]: {
+                                        ...current,
+                                        [rowKey]: score,
+                                      },
+                                    };
+                                  });
+                                }}
+                                className={`rounded-md border px-2 py-2 text-sm ${
+                                  Number(selectedValue) === score
+                                    ? "border-blue-400 bg-blue-50 text-blue-800"
+                                    : "border-slate-300 bg-white text-slate-700"
+                                }`}
+                              >
+                                {score}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>

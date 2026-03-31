@@ -16,12 +16,27 @@ BEGIN
       'long_text',
       'single_select',
       'multi_select',
+      'matrix_rating',
       'yes_no',
       'number',
       'email',
       'phone',
       'date'
     );
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'QuestionnaireQuestionType')
+     AND NOT EXISTS (
+       SELECT 1
+       FROM pg_enum e
+       JOIN pg_type t ON t.oid = e.enumtypid
+       WHERE t.typname = 'QuestionnaireQuestionType'
+         AND e.enumlabel = 'matrix_rating'
+     ) THEN
+    ALTER TYPE "QuestionnaireQuestionType" ADD VALUE 'matrix_rating';
   END IF;
 END $$;
 

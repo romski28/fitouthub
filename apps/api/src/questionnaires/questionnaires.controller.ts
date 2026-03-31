@@ -110,9 +110,13 @@ export class QuestionnairesController {
 
   @Get(':id/responses')
   @UseGuards(AuthGuard('jwt'))
-  listResponses(@Req() req: any, @Param('id') id: string) {
+  listResponses(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('locale') locale?: string,
+  ) {
     this.requireAdmin(req);
-    return this.questionnairesService.listResponses(id);
+    return this.questionnairesService.listResponses(id, locale);
   }
 
   private requireAdmin(req: any) {
