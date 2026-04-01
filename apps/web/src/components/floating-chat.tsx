@@ -304,7 +304,11 @@ export default function FloatingChat() {
           console.log('[FloatingChat] Loading logged-in user thread...');
           const storedThreadId = readStoredThreadId(chatContext);
 
-          if (storedThreadId) {
+          if (storedThreadId?.startsWith('stub-')) {
+            storeThreadId(chatContext, null);
+          }
+
+          if (storedThreadId && !storedThreadId.startsWith('stub-')) {
             try {
               const res = await fetch(getThreadUrl(storedThreadId, 0, CHAT_PAGE_SIZE), {
                 method: 'GET',
@@ -326,14 +330,14 @@ export default function FloatingChat() {
                   });
                   storeThreadId(chatContext, null);
                 } else {
-                setThreadId(realThreadId);
-                setMessages(data.messages || []);
-                setUnreadCount(data.unreadCount || 0);
-                applyThreadState(data);
-                storeThreadId(chatContext, realThreadId);
+                  setThreadId(realThreadId);
+                  setMessages(data.messages || []);
+                  setUnreadCount(data.unreadCount || 0);
+                  applyThreadState(data);
+                  storeThreadId(chatContext, realThreadId);
                 }
                 if (actualProjectId === expectedProjectId) {
-                return;
+                  return;
                 }
               }
               if (res.status === 404) {

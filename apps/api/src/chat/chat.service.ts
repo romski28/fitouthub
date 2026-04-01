@@ -243,7 +243,16 @@ export class ChatService {
       } catch (err: any) {
         // Handle stale Prisma client that still thinks unique constraint exists on userId/professionalId
         // Even though the DB constraint was dropped, the generated client may still validate it
-        if (err?.code === 'P2002' && (err?.meta?.target?.includes('userId') || err?.meta?.target?.includes('professionalId'))) {
+        const targetColumns = Array.isArray(err?.meta?.target)
+          ? err.meta.target.map((value: unknown) => String(value))
+          : typeof err?.meta?.target === 'string'
+          ? [err.meta.target]
+          : [];
+        const isLegacyUniqueConflict =
+          err?.code === 'P2002' &&
+          (targetColumns.includes('userId') || targetColumns.includes('professionalId'));
+
+        if (isLegacyUniqueConflict) {
           console.warn('[ChatService] Unique constraint error during create (likely stale Prisma client), attempting recovery...', err.message);
           // Retry findFirst in case another request just created the thread
           thread = userId
@@ -257,6 +266,23 @@ export class ChatService {
                 include,
               })
             : null;
+
+          // Degraded fallback: if project-scoped create is blocked by legacy unique index,
+          // use the existing general thread instead of failing with 500.
+          if (!thread) {
+            thread = userId
+              ? await this.prisma.privateChatThread.findFirst({
+                  where: { userId },
+                  include,
+                })
+              : professionalId
+              ? await this.prisma.privateChatThread.findFirst({
+                  where: { professionalId },
+                  include,
+                })
+              : null;
+          }
+
           if (!thread) {
             // Still no thread, re-throw the original error
             throw err;
