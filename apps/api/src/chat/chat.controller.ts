@@ -82,12 +82,14 @@ export class ChatController {
     @Query('includeArchived') includeArchived?: string,
     @Query('messageLimit') messageLimit?: string,
     @Query('messageOffset') messageOffset?: string,
+    @Query('projectId') projectId?: string,
   ) {
     return this.chatService.getPrivateThread(
       threadId,
       includeArchived === '1',
       messageLimit ? parseInt(messageLimit, 10) : undefined,
       messageOffset ? parseInt(messageOffset, 10) : undefined,
+      projectId || null,
     );
   }
 

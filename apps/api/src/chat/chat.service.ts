@@ -50,6 +50,22 @@ export class ChatService {
     return { safeLimit, safeOffset };
   }
 
+  private filterPrivateMessagesForContext(messages: any[], scopedProjectId: string | null) {
+    if (!Array.isArray(messages)) return [];
+    if (scopedProjectId) {
+      return messages.filter((message) => {
+        const pageType = String((message as any)?.context?.pageType || '');
+        const projectId = (message as any)?.context?.projectId;
+        return pageType === 'project_view' && String(projectId || '') === String(scopedProjectId);
+      });
+    }
+
+    return messages.filter((message) => {
+      const pageType = String((message as any)?.context?.pageType || '');
+      return pageType !== 'project_view';
+    });
+  }
+
   private async getPagedPrivateMessages(threadId: string, limit?: number, offset?: number) {
     const { safeLimit, safeOffset } = this.normalizePage(limit, offset);
     const total = await this.prisma.privateChatMessage.count({ where: { threadId } });
@@ -294,6 +310,11 @@ export class ChatService {
     }
 
     const page = await this.getPagedPrivateMessages(thread.id, messageLimit, messageOffset);
+    const responseProjectId = scopedProjectId ?? thread.projectId ?? null;
+    const scopedMessages =
+      responseProjectId === thread.projectId
+        ? page.messages
+        : this.filterPrivateMessagesForContext(page.messages, responseProjectId);
     const unreadCount = await this.prisma.privateChatMessage.count({
       where: {
         threadId: thread.id,
@@ -301,7 +322,19 @@ export class ChatService {
         readByFohAt: null,
       },
     });
-    return this.mapPrivateThreadDto({ ...thread, ...page, messages: page.messages, unreadCount });
+    const scopedUnreadCount = scopedMessages.filter(
+      (message: any) => message?.senderType === 'foh' && !message?.readByFohAt,
+    ).length;
+    return this.mapPrivateThreadDto({
+      ...thread,
+      ...page,
+      projectId: responseProjectId,
+      messages: scopedMessages,
+      total: scopedMessages.length,
+      unreadCount: responseProjectId === thread.projectId ? unreadCount : scopedUnreadCount,
+      hasMoreMessages: responseProjectId === thread.projectId ? page.hasMoreMessages : false,
+      messagePageOffset: responseProjectId === thread.projectId ? page.messagePageOffset : 0,
+    });
   }
 
   /**
@@ -312,6 +345,7 @@ export class ChatService {
     includeArchived = false,
     messageLimit?: number,
     messageOffset?: number,
+    projectId?: string | null,
   ): Promise<PrivateChatThreadDto> {
     await this.finalizeExpiredPrivateClosures();
     const thread = await this.prisma.privateChatThread.findUnique({
@@ -327,6 +361,12 @@ export class ChatService {
     }
 
     const page = await this.getPagedPrivateMessages(thread.id, messageLimit, messageOffset);
+    const scopedProjectId = projectId ?? null;
+    const responseProjectId = scopedProjectId ?? thread.projectId ?? null;
+    const scopedMessages =
+      responseProjectId === thread.projectId
+        ? page.messages
+        : this.filterPrivateMessagesForContext(page.messages, responseProjectId);
     const unreadCount = await this.prisma.privateChatMessage.count({
       where: {
         threadId: thread.id,
@@ -334,7 +374,19 @@ export class ChatService {
         readByFohAt: null,
       },
     });
-    return this.mapPrivateThreadDto({ ...thread, ...page, messages: page.messages, unreadCount });
+    const scopedUnreadCount = scopedMessages.filter(
+      (message: any) => message?.senderType === 'foh' && !message?.readByFohAt,
+    ).length;
+    return this.mapPrivateThreadDto({
+      ...thread,
+      ...page,
+      projectId: responseProjectId,
+      messages: scopedMessages,
+      total: scopedMessages.length,
+      unreadCount: responseProjectId === thread.projectId ? unreadCount : scopedUnreadCount,
+      hasMoreMessages: responseProjectId === thread.projectId ? page.hasMoreMessages : false,
+      messagePageOffset: responseProjectId === thread.projectId ? page.messagePageOffset : 0,
+    });
   }
 
   /**

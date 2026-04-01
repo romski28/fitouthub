@@ -289,7 +289,7 @@ export default function FloatingChat() {
     const getThreadUrl = (currentThreadId: string, offset = 0, limit = CHAT_PAGE_SIZE) => {
       if (isLoggedIn && accessToken) {
         if (currentThreadId) {
-          return `${API_BASE_URL}/chat/private/${currentThreadId}?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}`;
+          return `${API_BASE_URL}/chat/private/${currentThreadId}?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}${projectIdParam}`;
         }
         return `${API_BASE_URL}/chat/private?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}${projectIdParam}`;
       }
@@ -460,8 +460,9 @@ export default function FloatingChat() {
     setLoadingOlderMessages(true);
     try {
       const offset = messages.length;
+      const projectIdParam = chatContext.projectId ? `&projectId=${encodeURIComponent(chatContext.projectId)}` : '';
       const url = isLoggedIn && accessToken
-        ? `${API_BASE_URL}/chat/private/${threadId}?includeArchived=1&messageLimit=${CHAT_PAGE_SIZE}&messageOffset=${offset}`
+        ? `${API_BASE_URL}/chat/private/${threadId}?includeArchived=1&messageLimit=${CHAT_PAGE_SIZE}&messageOffset=${offset}${projectIdParam}`
         : `${API_BASE_URL}/chat/anonymous/${threadId}?includeArchived=1&messageLimit=${CHAT_PAGE_SIZE}&messageOffset=${offset}`;
       const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
       const res = await fetch(url, { headers });
@@ -530,7 +531,8 @@ export default function FloatingChat() {
           payload.threadId === threadId
         ) {
           const currentLimit = Math.max(messages.length || CHAT_PAGE_SIZE, CHAT_PAGE_SIZE);
-          fetch(`${API_BASE_URL}/chat/private/${threadId}?includeArchived=1&messageLimit=${currentLimit}&messageOffset=0`, {
+          const projectIdParam = chatContext.projectId ? `&projectId=${encodeURIComponent(chatContext.projectId)}` : '';
+          fetch(`${API_BASE_URL}/chat/private/${threadId}?includeArchived=1&messageLimit=${currentLimit}&messageOffset=0${projectIdParam}`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           })
             .then((res) => (res.ok ? res.json() : null))
@@ -603,8 +605,12 @@ export default function FloatingChat() {
         }
       }
 
-      // For stub threads, just add message locally (for offline UX)
+      // For stub threads, do not show false success for logged-in users.
       if (actualThreadId.startsWith('stub-')) {
+        if (isLoggedIn) {
+          toast.error('Unable to connect support thread right now. Please retry in a few seconds.');
+          return false;
+        }
         console.log('[FloatingChat] Sending to stub thread:', actualThreadId);
         setMessages((prev) => [...prev, {
           id: Date.now().toString(),
