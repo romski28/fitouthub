@@ -360,14 +360,25 @@ export default function FloatingChat() {
             if (createRes.ok) {
               const data = await createRes.json();
               const realThreadId = data.threadId || data.id;
-              if (realThreadId) {
-                setThreadId(realThreadId);
-                storeThreadId(chatContext, realThreadId);
+              const expectedProjectId = chatContext.pageType === 'project_view' ? chatContext.projectId ?? null : null;
+              const actualProjectId = data.projectId ?? null;
+              if (actualProjectId !== expectedProjectId) {
+                console.warn('[FloatingChat] Created thread context mismatch, refusing thread for current context', {
+                  realThreadId,
+                  expectedProjectId,
+                  actualProjectId,
+                });
+                storeThreadId(chatContext, null);
+              } else {
+                if (realThreadId) {
+                  setThreadId(realThreadId);
+                  storeThreadId(chatContext, realThreadId);
+                }
+                setMessages(data.messages || []);
+                setUnreadCount(data.unreadCount || 0);
+                applyThreadState(data);
+                return;
               }
-              setMessages(data.messages || []);
-              setUnreadCount(data.unreadCount || 0);
-              applyThreadState(data);
-              return;
             }
           } catch (e) {
             console.warn('[FloatingChat] Private chat create error:', e);
@@ -569,10 +580,22 @@ export default function FloatingChat() {
           });
           if (createRes.ok) {
             const data = await createRes.json();
-            actualThreadId = data.threadId || data.id;
-            console.log('[FloatingChat] Created real thread, using:', actualThreadId);
-            setThreadId(actualThreadId);
-            storeThreadId(chatContext, actualThreadId);
+            const candidateThreadId = data.threadId || data.id;
+            const expectedProjectId = chatContext.pageType === 'project_view' ? chatContext.projectId ?? null : null;
+            const actualProjectId = data.projectId ?? null;
+            if (actualProjectId !== expectedProjectId) {
+              console.warn('[FloatingChat] Stub upgrade thread mismatch, keeping stub for current context', {
+                candidateThreadId,
+                expectedProjectId,
+                actualProjectId,
+              });
+              storeThreadId(chatContext, null);
+            } else if (candidateThreadId) {
+              actualThreadId = candidateThreadId;
+              console.log('[FloatingChat] Created real thread, using:', actualThreadId);
+              setThreadId(actualThreadId);
+              storeThreadId(chatContext, actualThreadId);
+            }
           }
         } catch (e) {
           console.warn('[FloatingChat] Failed to create real thread:', e);
