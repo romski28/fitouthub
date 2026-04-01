@@ -490,9 +490,9 @@ export function ProjectForm({
         {/* Assistance Explanation */}
         {onAssistRequest && !isReadOnly && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Need Help?</p>
+            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Need help?</p>
             <p className="text-xs text-blue-800">
-              <strong>Ask for advice:</strong> Get personalized guidance from Fitout Hub experts. We&apos;ll help you scope your project, find the right professionals, and manage the entire process.
+              Get free advice or let us manage the whole project — your choice. Tick the box and we will get things started for you.
             </p>
           </div>
         )}
@@ -1074,7 +1074,7 @@ export function ProjectForm({
         }`}>
           <div className="mb-1 flex items-center justify-between gap-3">
             <p className={`text-sm font-semibold ${mode === 'create' ? 'text-white' : 'text-blue-900'}`}>
-              💡 Need Help Executing This Project?
+              💡 Need help?
             </p>
             <label className={`inline-flex items-center gap-2 text-xs font-medium ${
               mode === 'create' ? 'text-white' : 'text-blue-900'
@@ -1090,7 +1090,7 @@ export function ProjectForm({
             </label>
           </div>
           <p className={`text-sm ${mode === 'create' ? 'text-blue-100' : 'text-blue-800'}`}>
-            <strong>Ask for advice:</strong> Get personalized guidance from Fitout Hub experts. We&apos;ll help you scope your project, find the right professionals, negotiate quotes, and manage the entire process from start to finish.
+            Get free advice or let us manage the whole project — your choice. Tick the box and we will get things started for you.
           </p>
         </div>
       )}
