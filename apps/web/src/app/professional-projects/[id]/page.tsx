@@ -1125,7 +1125,11 @@ export default function ProjectDetailPage() {
                 if (project?.project?.id) {
                   window.dispatchEvent(
                     new CustomEvent('foh-open-chat', {
-                      detail: { context: 'project_view', projectId: project.project.id },
+                      detail: {
+                        context: 'project_view',
+                        projectId: project.project.id,
+                        projectName: project.project.projectName,
+                      },
                     })
                   );
                 }

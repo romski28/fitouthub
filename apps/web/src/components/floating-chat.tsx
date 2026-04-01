@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -18,6 +19,7 @@ interface ChatMessage {
     pageType: 'project_creation' | 'project_view' | 'general';
     pathname: string;
     projectId?: string | null;
+    projectName?: string | null;
   };
   createdAt: string;
 }
@@ -43,13 +45,21 @@ const resolveProjectIdFromPath = (path: string | null | undefined) => {
   return match?.[1] ?? null;
 };
 
-const getChatContextFromPath = (path: string | null | undefined) => {
+type ChatContext = {
+  pageType: 'project_creation' | 'project_view' | 'general';
+  pathname: string;
+  projectId?: string | null;
+  projectName?: string | null;
+};
+
+const getChatContextFromPath = (path: string | null | undefined): ChatContext => {
   const pathname = path || '/';
   if (pathname.startsWith('/create-project')) {
     return {
       pageType: 'project_creation' as const,
       pathname,
       projectId: null,
+      projectName: null,
     };
   }
 
@@ -59,6 +69,7 @@ const getChatContextFromPath = (path: string | null | undefined) => {
       pageType: 'project_view' as const,
       pathname,
       projectId,
+      projectName: null,
     };
   }
 
@@ -66,10 +77,9 @@ const getChatContextFromPath = (path: string | null | undefined) => {
     pageType: 'general' as const,
     pathname,
     projectId: null,
+    projectName: null,
   };
 };
-
-type ChatContext = ReturnType<typeof getChatContextFromPath>;
 
 const getContextKey = (context: ChatContext) => {
   if (context.pageType === 'project_view' && context.projectId) {
@@ -82,13 +92,27 @@ const getContextKey = (context: ChatContext) => {
 };
 
 const getContextLabel = (context: ChatContext) => {
-  if (context.pageType === 'project_view' && context.projectId) {
-    return `Project support · #${context.projectId}`;
+  if (context.pageType === 'project_view') {
+    return context.projectName?.trim() ? `Project support · ${context.projectName.trim()}` : 'Project support';
   }
   if (context.pageType === 'project_creation') {
-    return 'Project setup support';
+    return context.projectName?.trim() ? `Project setup · ${context.projectName.trim()}` : 'Project setup support';
   }
   return 'General support';
+};
+
+const filterMessagesForContext = (items: ChatMessage[], context: ChatContext) => {
+  if (context.pageType === 'project_view' && context.projectId) {
+    return items.filter(
+      (msg) =>
+        msg.context?.pageType === 'project_view' &&
+        String(msg.context?.projectId || '') === String(context.projectId),
+    );
+  }
+  if (context.pageType === 'project_creation') {
+    return items.filter((msg) => msg.context?.pageType === 'project_creation');
+  }
+  return items;
 };
 
 export default function FloatingChat() {
@@ -162,7 +186,7 @@ export default function FloatingChat() {
 
   useEffect(() => {
     const handler = (event: Event) => {
-      const customEvent = event as CustomEvent<{ context?: 'project_creation' | 'project_view' | 'general'; projectId?: string; initialMessage?: string; }>;
+      const customEvent = event as CustomEvent<{ context?: 'project_creation' | 'project_view' | 'general'; projectId?: string; projectName?: string; initialMessage?: string; }>;
       const detail = customEvent.detail || {};
 
       const requestedProjectId = detail.projectId || resolveProjectIdFromPath(pathname);
@@ -171,9 +195,10 @@ export default function FloatingChat() {
             pageType: 'project_view',
             pathname: pathname || '/',
             projectId: requestedProjectId,
+            projectName: detail.projectName?.trim() || null,
           }
         : detail.context === 'project_creation'
-          ? { pageType: 'project_creation', pathname: '/create-project', projectId: null }
+          ? { pageType: 'project_creation', pathname: '/create-project', projectId: null, projectName: detail.projectName?.trim() || null }
           : getChatContextFromPath(pathname);
 
       setContextOverride(nextContext);
@@ -236,8 +261,9 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = (await res.json()) as PrivateThreadResponse;
                 const realThreadId = data.threadId || data.id || storedThreadId;
+                const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
                 setThreadId(realThreadId);
-                setMessages(data.messages || []);
+                setMessages(scopedMessages);
                 setUnreadCount(data.unreadCount || 0);
                 applyThreadState(data);
                 storeThreadId(chatContext, realThreadId);
@@ -262,11 +288,14 @@ export default function FloatingChat() {
             if (createRes.ok) {
               const data = await createRes.json();
               const realThreadId = data.threadId || data.id;
+              const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
               if (realThreadId) {
                 setThreadId(realThreadId);
-                storeThreadId(chatContext, realThreadId);
+                if (chatContext.pageType !== 'project_view' || scopedMessages.length > 0) {
+                  storeThreadId(chatContext, realThreadId);
+                }
               }
-              setMessages(data.messages || []);
+              setMessages(scopedMessages);
               setUnreadCount(data.unreadCount || 0);
               applyThreadState(data);
               return;
@@ -290,8 +319,9 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = await res.json();
                 const realThreadId = data.threadId || data.id || anonId;
+                const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
                 setThreadId(realThreadId);
-                setMessages(data.messages || []);
+                setMessages(scopedMessages);
                 applyThreadState(data);
                 storeThreadId(chatContext, realThreadId);
                 return;
@@ -314,9 +344,10 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = await res.json();
                 anonId = data.threadId || data.id;
+                const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
                 if (anonId) {
                   setThreadId(anonId);
-                  setMessages(data.messages || []);
+                  setMessages(scopedMessages);
                   applyThreadState(data);
                   storeThreadId(chatContext, anonId);
                   return;
@@ -359,7 +390,7 @@ export default function FloatingChat() {
       if (!res.ok) throw new Error('Failed to load older messages');
       const data = (await res.json()) as PrivateThreadResponse;
       setMessages((prev) => {
-        const incoming = data.messages || [];
+        const incoming = filterMessagesForContext(data.messages || [], chatContext);
         const deduped = incoming.filter((msg) => !prev.some((existing) => existing.id === msg.id));
         return [...deduped, ...prev];
       });
@@ -451,8 +482,8 @@ export default function FloatingChat() {
     };
   }, [isOpen, threadId, isLoggedIn, accessToken, messages.length]);
 
-  const doSend = async (text: string, attachmentsToSend: { url: string; filename: string }[]) => {
-    if ((!text.trim() && attachmentsToSend.length === 0) || !threadId || sending) return;
+  const doSend = async (text: string, attachmentsToSend: { url: string; filename: string }[]): Promise<boolean> => {
+    if ((!text.trim() && attachmentsToSend.length === 0) || !threadId || sending) return false;
 
     setSending(true);
     try {
@@ -492,7 +523,11 @@ export default function FloatingChat() {
           context: chatContext,
           createdAt: new Date().toISOString(),
         }]);
-        return;
+        toast.success('Admin notified, they will reply shortly');
+        if (chatContext.pageType === 'project_view') {
+          storeThreadId(chatContext, actualThreadId);
+        }
+        return true;
       }
 
       const endpoint = isLoggedIn && accessToken
@@ -528,12 +563,19 @@ export default function FloatingChat() {
         setThreadStatus('in_progress');
         setThreadClosureDueAt(null);
         setThreadResolvedAt(null);
+        toast.success('Admin notified, they will reply shortly');
+        if (chatContext.pageType === 'project_view') {
+          storeThreadId(chatContext, actualThreadId);
+        }
+        return true;
       } else {
         const errorText = await res.text();
         console.error('[FloatingChat] Failed to send message:', res.status, errorText);
+        return false;
       }
     } catch (error) {
       console.error('[FloatingChat] Error sending message:', error);
+      return false;
     } finally {
       setSending(false);
     }
@@ -542,9 +584,11 @@ export default function FloatingChat() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && pendingAttachments.length === 0) || !threadId || sending) return;
-    await doSend(message.trim(), pendingAttachments);
-    setMessage('');
-    setPendingAttachments([]);
+    const sent = await doSend(message.trim(), pendingAttachments);
+    if (sent) {
+      setMessage('');
+      setPendingAttachments([]);
+    }
   };
 
   // Don't show on admin pages.

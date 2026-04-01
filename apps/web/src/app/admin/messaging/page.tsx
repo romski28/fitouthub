@@ -47,6 +47,12 @@ type ChatThread = {
   updatedAt: string;
   unreadCount: number;
   lastMessage?: string;
+  lastMessageContext?: {
+    pageType?: 'project_creation' | 'project_view' | 'general';
+    pathname?: string;
+    projectId?: string | null;
+    projectName?: string | null;
+  };
   status?: 'open' | 'in_progress' | 'closed' | string;
 };
 
@@ -545,6 +551,9 @@ export default function AdminMessagingPage() {
 
   const getThreadLabel = (thread: ChatThread) => {
     if (thread.type === 'private') {
+      if (thread.lastMessageContext?.pageType === 'project_view') {
+        return thread.lastMessageContext.projectName?.trim() || 'Project Support';
+      }
       // Distinguish between support requests and professional chats
       if (thread.userId) {
         return thread.userName || 'Support Request';
@@ -561,6 +570,9 @@ export default function AdminMessagingPage() {
 
   const getThreadSubtext = (thread: ChatThread) => {
     if (thread.type === 'private') {
+      if (thread.lastMessageContext?.pageType === 'project_view') {
+        return 'Project Support';
+      }
       if (thread.userId) {
         return 'User Support';
       } else {
@@ -576,6 +588,9 @@ export default function AdminMessagingPage() {
 
   const getChatMessageType = (thread: ChatThread): string => {
     if (thread.type === 'private') {
+      if (thread.lastMessageContext?.pageType === 'project_view') {
+        return 'project';
+      }
       return thread.userId ? 'support' : 'supplier-client';
     }
     return thread.type;

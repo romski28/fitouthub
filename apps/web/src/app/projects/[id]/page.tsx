@@ -1424,6 +1424,7 @@ export default function ClientProjectDetailPage() {
         detail: {
           context: 'project_view',
           projectId,
+          projectName: project?.projectName,
         },
       })
     );

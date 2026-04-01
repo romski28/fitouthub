@@ -5,5 +5,6 @@ export class CreatePrivateMessageDto {
     pageType?: 'project_creation' | 'project_view' | 'general';
     pathname?: string;
     projectId?: string | null;
+    projectName?: string | null;
   };
 }

@@ -302,6 +302,7 @@ export class ChatService {
       pageType?: 'project_creation' | 'project_view' | 'general';
       pathname?: string;
       projectId?: string | null;
+      projectName?: string | null;
     },
   ): Promise<PrivateChatMessageDto> {
     const thread = await (this.prisma as any).privateChatThread.findUnique({
@@ -542,6 +543,7 @@ export class ChatService {
       pageType?: 'project_creation' | 'project_view' | 'general';
       pathname?: string;
       projectId?: string | null;
+      projectName?: string | null;
     },
   ): Promise<AnonymousChatMessageDto> {
     const thread = await (this.prisma as any).anonymousChatThread.findUnique({
