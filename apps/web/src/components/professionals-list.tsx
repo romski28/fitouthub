@@ -32,6 +32,7 @@ Pill.displayName = 'Pill';
 
 const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdmin, disableSelection }: { pro: Professional; onToggle: (pro: Professional) => void; onViewDetails: (pro: Professional) => void; isSelected: boolean; isAdmin: boolean; disableSelection: boolean }) => {
   const t = useTranslations('professionalsPage.list');
+  const roleIcon = pro.professionType === 'company' ? '🏢' : pro.professionType === 'reseller' ? '📦' : '👷';
   const serviceAreas = useMemo(() => 
     (pro.serviceArea ?? '')
       .split(',')
@@ -46,10 +47,10 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="line-clamp-1 text-base font-bold text-white">
+              <span className="mr-1.5" aria-hidden="true">{roleIcon}</span>
               {pro.fullName || pro.businessName || t('fallbackProfessional')}
             </h3>
-            <p className="text-xs font-semibold text-emerald-400 mt-1 uppercase tracking-wide">{pro.professionType}</p>
           </div>
           <div className="flex items-center gap-2">
             <Pill label={`${pro.rating.toFixed(1)}★`} />
@@ -58,7 +59,7 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
       </div>
 
       {/* Card Body */}
-      <div className="p-4 space-y-3">
+      <div className="p-3.5 space-y-2">
         <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
           {isAdmin ? (
             <>
@@ -73,12 +74,7 @@ const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdm
                 <span className="text-slate-600">{pro.phone}</span>
               </div>
             </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-              <span className="text-slate-600">{t('contactAfterMatch')}</span>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Trades/Supplies */}
@@ -715,10 +711,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   return (
     <div className="space-y-3">
       {/* Filters */}
-      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+      <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-2 shadow-sm">
         <div className="grid gap-2 md:grid-cols-3">
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">{t('filters.professionalOrTrade')}</label>
+            <label className="text-xs font-medium text-white">{t('filters.professionalOrTrade')}</label>
             <div className="relative">
               <input
                 type="text"
@@ -727,7 +723,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onFocus={() => setShowSuggestions(suggestions.length > 0)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-                className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm pr-8"
+                className="w-full rounded-md border border-slate-300 bg-white/95 px-2.5 py-1.5 pr-8 text-sm"
               />
               {searchTerm && (
                 <button
@@ -760,7 +756,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           </div>
 
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">{t('filters.location')}</label>
+            <label className="text-xs font-medium text-white">{t('filters.location')}</label>
             <div className="relative">
               <input
                 type="text"
@@ -776,7 +772,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   if (locationSearch) setShowLocationSuggestions(locationSuggestions.length > 0);
                 }}
                 onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 100)}
-                className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm pr-8"
+                className="w-full rounded-md border border-slate-300 bg-white/95 px-2.5 py-1.5 pr-8 text-sm"
               />
               {(locationSearch || locationDisplay || loc.primary || loc.secondary || loc.tertiary) && (
                 <button
@@ -813,11 +809,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           </div>
 
           <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-slate-600">{t('filters.rating')}</label>
+            <label className="text-xs font-medium text-white">{t('filters.rating')}</label>
             <select
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
-              className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white"
+              className="w-full rounded-md border border-slate-300 bg-white/95 px-2.5 py-1.5 text-sm"
             >
               <option value={0}>{t('filters.anyRating')}</option>
               <option value={4.5}>{t('filters.rating45')}</option>
