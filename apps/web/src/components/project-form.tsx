@@ -317,6 +317,26 @@ export function ProjectForm({
   };
 
   const handleAssistClick = async () => {
+    if (assistOptIn && typeof window !== 'undefined') {
+      const initialMessage = [
+        formData.projectName?.trim() ? `Project: ${formData.projectName.trim()}` : '',
+        formData.notes?.trim() ? `Summary: ${formData.notes.trim()}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      window.dispatchEvent(
+        new CustomEvent('foh-open-chat', {
+          detail: {
+            context: 'project_creation',
+            projectName: formData.projectName,
+            initialMessage,
+          },
+        }),
+      );
+      return;
+    }
+
     if (!onAssistRequest) return;
     await onAssistRequest({ ...formData, existingPhotos }, pendingFiles, removedPhotos);
   };
@@ -1115,14 +1135,14 @@ export function ProjectForm({
           <button
             type="button"
             onClick={handleAssistClick}
-            disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
+            disabled={isSubmitting || !(formData.projectName && formData.projectName.trim()) || !assistOptIn}
             className={`flex-1 rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
               mode === 'create'
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
             }`}
           >
-            Ask for advice
+            {assistOptIn ? 'Open support chat' : 'Tick "Need advice" to continue'}
           </button>
         )}
         {!isReadOnly && (

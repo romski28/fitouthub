@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/context/auth-context';
@@ -69,6 +69,28 @@ const getChatContextFromPath = (path: string | null | undefined) => {
   };
 };
 
+type ChatContext = ReturnType<typeof getChatContextFromPath>;
+
+const getContextKey = (context: ChatContext) => {
+  if (context.pageType === 'project_view' && context.projectId) {
+    return `project:${context.projectId}`;
+  }
+  if (context.pageType === 'project_creation') {
+    return 'create-project';
+  }
+  return 'general';
+};
+
+const getContextLabel = (context: ChatContext) => {
+  if (context.pageType === 'project_view' && context.projectId) {
+    return `Project support · #${context.projectId}`;
+  }
+  if (context.pageType === 'project_creation') {
+    return 'Project setup support';
+  }
+  return 'General support';
+};
+
 export default function FloatingChat() {
   const pathname = usePathname();
   const { isLoggedIn: clientLoggedIn, accessToken: clientToken } = useAuth();
@@ -88,12 +110,32 @@ export default function FloatingChat() {
   const [threadResolutionReason, setThreadResolutionReason] = useState<string | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
+  const [contextOverride, setContextOverride] = useState<ChatContext | null>(null);
 
   const isAdminPage = pathname?.startsWith('/admin');
   const isLoggedIn = clientLoggedIn || proLoggedIn;
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
-  const chatContext = getChatContextFromPath(pathname);
+  const pathContext = useMemo(() => getChatContextFromPath(pathname), [pathname]);
+  const chatContext = contextOverride ?? pathContext;
+  const contextLabel = getContextLabel(chatContext);
+
+  const getStoredThreadKey = (context: ChatContext) => `foh_thread_${userRole}_${getContextKey(context)}`;
+
+  const readStoredThreadId = (context: ChatContext) => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(getStoredThreadKey(context));
+  };
+
+  const storeThreadId = (context: ChatContext, id: string | null | undefined) => {
+    if (typeof window === 'undefined') return;
+    const key = getStoredThreadKey(context);
+    if (!id) {
+      localStorage.removeItem(key);
+      return;
+    }
+    localStorage.setItem(key, id);
+  };
 
   // Close chat and clear state on logout
   useEffect(() => {
@@ -109,23 +151,50 @@ export default function FloatingChat() {
       setThreadResolvedAt(null);
       setThreadResolutionReason(null);
       setHasOlderMessages(false);
+      setContextOverride(null);
       console.log('[FloatingChat] User logged out, clearing chat state');
     }
   }, [isLoggedIn]);
 
-  // Clear thread when user/role changes (switching between accounts)
   useEffect(() => {
-    if (isLoggedIn && threadId) {
-      // If logged in but thread exists, check if we need to reset it
-      const expectedPrefix = userRole === 'professional' ? 'stub-professional' : userRole === 'client' ? 'stub-client' : 'stub-anon';
-      if (threadId.startsWith('stub-') && !threadId.startsWith(expectedPrefix)) {
-        console.log('[FloatingChat] User switched, resetting thread from', threadId, 'to', expectedPrefix);
-        setThreadId(null);
-        setMessages([]);
-        setMessage('');
+    setContextOverride(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const customEvent = event as CustomEvent<{ context?: 'project_creation' | 'project_view' | 'general'; projectId?: string; initialMessage?: string; }>;
+      const detail = customEvent.detail || {};
+
+      const requestedProjectId = detail.projectId || resolveProjectIdFromPath(pathname);
+      const nextContext: ChatContext = detail.context === 'project_view' && requestedProjectId
+        ? {
+            pageType: 'project_view',
+            pathname: pathname || '/',
+            projectId: requestedProjectId,
+          }
+        : detail.context === 'project_creation'
+          ? { pageType: 'project_creation', pathname: '/create-project', projectId: null }
+          : getChatContextFromPath(pathname);
+
+      setContextOverride(nextContext);
+      if (detail.initialMessage?.trim()) {
+        setMessage(detail.initialMessage.trim());
       }
-    }
-  }, [userRole, isLoggedIn, threadId]);
+      setIsOpen(true);
+    };
+
+    window.addEventListener('foh-open-chat', handler as EventListener);
+    return () => window.removeEventListener('foh-open-chat', handler as EventListener);
+  }, [pathname]);
+
+  // Reset active thread when context/user changes so each context loads its own thread
+  useEffect(() => {
+    if (!isOpen) return;
+    setThreadId(null);
+    setMessages([]);
+    setUnreadCount(0);
+    setHasOlderMessages(false);
+  }, [isOpen, userRole, chatContext.pageType, chatContext.projectId]);
 
   // Load or create thread
   useEffect(() => {
@@ -153,64 +222,90 @@ export default function FloatingChat() {
       try {
         if (isLoggedIn && accessToken) {
           console.log('[FloatingChat] Loading logged-in user thread...');
-          // Try to fetch or create user's private FOH thread
-          try {
-            const res = await fetch(getThreadUrl('', 0, CHAT_PAGE_SIZE), {
-              method: 'GET',
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-              },
-            });
-            
-            if (res.ok) {
-              const data = (await res.json()) as PrivateThreadResponse;
-              console.log('[FloatingChat] Fetched thread:', data);
-              const realThreadId = data.threadId || data.id;
-              if (realThreadId) {
-                setThreadId(realThreadId);
-              }
-              setMessages(data.messages || []);
-              setUnreadCount(data.unreadCount || 0);
-              applyThreadState(data);
-              return;
-            } else if (res.status === 404) {
-              console.log('[FloatingChat] Thread not found, creating new one...');
-              // Try to create new thread
-              const createRes = await fetch(`${API_BASE_URL}/chat/private`, {
-                method: 'POST',
+          const storedThreadId = readStoredThreadId(chatContext);
+
+          if (storedThreadId) {
+            try {
+              const res = await fetch(getThreadUrl(storedThreadId, 0, CHAT_PAGE_SIZE), {
+                method: 'GET',
                 headers: {
                   Authorization: `Bearer ${accessToken}`,
                   'Content-Type': 'application/json',
                 },
               });
-              if (createRes.ok) {
-                const data = await createRes.json();
-                const realThreadId = data.threadId || data.id;
-                console.log('[FloatingChat] Created new thread:', realThreadId);
-                if (realThreadId) {
-                  setThreadId(realThreadId);
-                }
-                setMessages([]);
+              if (res.ok) {
+                const data = (await res.json()) as PrivateThreadResponse;
+                const realThreadId = data.threadId || data.id || storedThreadId;
+                setThreadId(realThreadId);
+                setMessages(data.messages || []);
+                setUnreadCount(data.unreadCount || 0);
                 applyThreadState(data);
+                storeThreadId(chatContext, realThreadId);
                 return;
               }
+              if (res.status === 404) {
+                storeThreadId(chatContext, null);
+              }
+            } catch (e) {
+              console.warn('[FloatingChat] Stored private thread fetch failed:', e);
+            }
+          }
+
+          try {
+            const createRes = await fetch(`${API_BASE_URL}/chat/private`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            if (createRes.ok) {
+              const data = await createRes.json();
+              const realThreadId = data.threadId || data.id;
+              if (realThreadId) {
+                setThreadId(realThreadId);
+                storeThreadId(chatContext, realThreadId);
+              }
+              setMessages(data.messages || []);
+              setUnreadCount(data.unreadCount || 0);
+              applyThreadState(data);
+              return;
             }
           } catch (e) {
-            console.warn('[FloatingChat] Private chat endpoint error:', e);
+            console.warn('[FloatingChat] Private chat create error:', e);
           }
-          // Fallback: use a stub thread ID based on user
+
           const stubId = `stub-${userRole}-${Date.now()}`;
-          console.log('[FloatingChat] Using fallback stub threadId:', stubId);
           setThreadId(stubId);
           setMessages([]);
           applyThreadState(null);
+          storeThreadId(chatContext, stubId);
         } else {
           console.log('[FloatingChat] Loading anonymous user thread...');
-          // Anonymous user - use local storage
-          let anonId = localStorage.getItem('foh_anon_thread');
+          let anonId = readStoredThreadId(chatContext);
+
+          if (anonId) {
+            try {
+              const res = await fetch(getThreadUrl(anonId, 0, CHAT_PAGE_SIZE));
+              if (res.ok) {
+                const data = await res.json();
+                const realThreadId = data.threadId || data.id || anonId;
+                setThreadId(realThreadId);
+                setMessages(data.messages || []);
+                applyThreadState(data);
+                storeThreadId(chatContext, realThreadId);
+                return;
+              }
+              if (res.status === 404) {
+                storeThreadId(chatContext, null);
+                anonId = null;
+              }
+            } catch (e) {
+              console.warn('[FloatingChat] Could not fetch anon messages:', e);
+            }
+          }
+
           if (!anonId) {
-            // Try to create anonymous thread
             try {
               const res = await fetch(`${API_BASE_URL}/chat/anonymous`, {
                 method: 'POST',
@@ -220,32 +315,23 @@ export default function FloatingChat() {
                 const data = await res.json();
                 anonId = data.threadId || data.id;
                 if (anonId) {
-                  localStorage.setItem('foh_anon_thread', anonId);
-                  console.log('[FloatingChat] Created anonymous thread:', anonId);
+                  setThreadId(anonId);
+                  setMessages(data.messages || []);
+                  applyThreadState(data);
+                  storeThreadId(chatContext, anonId);
+                  return;
                 }
               }
             } catch (e) {
               console.warn('[FloatingChat] Anonymous chat endpoint error:', e);
-              anonId = `stub-anon-${Date.now()}`;
-              localStorage.setItem('foh_anon_thread', anonId);
-              console.log('[FloatingChat] Using fallback stub anonymous threadId:', anonId);
             }
           }
-          if (anonId) {
-            console.log('[FloatingChat] Setting anonymous threadId:', anonId);
-            setThreadId(anonId);
-            // Try to fetch messages
-            try {
-              const res = await fetch(getThreadUrl(anonId, 0, CHAT_PAGE_SIZE));
-              if (res.ok) {
-                const data = await res.json();
-                setMessages(data.messages || []);
-                applyThreadState(data);
-              }
-            } catch (e) {
-              console.warn('[FloatingChat] Could not fetch anon messages:', e);
-            }
-          }
+
+          const stubId = `stub-anon-${Date.now()}`;
+          setThreadId(stubId);
+          setMessages([]);
+          applyThreadState(null);
+          storeThreadId(chatContext, stubId);
         }
       } finally {
         console.log('[FloatingChat] Finished loading thread');
@@ -257,7 +343,7 @@ export default function FloatingChat() {
       console.log('[FloatingChat] Opening chat, loading thread...');
       loadThread();
     }
-  }, [isOpen, isLoggedIn, accessToken, userRole]);
+  }, [isOpen, isLoggedIn, accessToken, userRole, chatContext, threadId]);
 
   const loadOlderMessages = async () => {
     if (!threadId || threadId.startsWith('stub-') || loadingOlderMessages || !hasOlderMessages) return;
@@ -388,6 +474,7 @@ export default function FloatingChat() {
             actualThreadId = data.threadId || data.id;
             console.log('[FloatingChat] Created real thread, using:', actualThreadId);
             setThreadId(actualThreadId);
+            storeThreadId(chatContext, actualThreadId);
           }
         } catch (e) {
           console.warn('[FloatingChat] Failed to create real thread:', e);
@@ -469,7 +556,7 @@ export default function FloatingChat() {
           <div className="flex items-center justify-between bg-blue-600 text-white px-4 py-3 rounded-t-lg">
             <div>
               <h3 className="font-semibold">Chat with Fitout Hub</h3>
-              <p className="text-xs text-blue-100">{isLoggedIn ? 'Private general support chat.' : 'Anonymous chat'}</p>
+              <p className="text-xs text-blue-100">{isLoggedIn ? contextLabel : 'Anonymous support chat'}</p>
             </div>
             <button
               onClick={() => setIsOpen(false)}
