@@ -238,7 +238,33 @@ export class ChatService {
       const data: any = { projectId: scopedProjectId };
       if (userId) data.userId = userId;
       else if (professionalId) data.professionalId = professionalId;
-      thread = await this.prisma.privateChatThread.create({ data, include });
+      try {
+        thread = await this.prisma.privateChatThread.create({ data, include });
+      } catch (err: any) {
+        // Handle stale Prisma client that still thinks unique constraint exists on userId/professionalId
+        // Even though the DB constraint was dropped, the generated client may still validate it
+        if (err?.code === 'P2002' && (err?.meta?.target?.includes('userId') || err?.meta?.target?.includes('professionalId'))) {
+          console.warn('[ChatService] Unique constraint error during create (likely stale Prisma client), attempting recovery...', err.message);
+          // Retry findFirst in case another request just created the thread
+          thread = userId
+            ? await this.prisma.privateChatThread.findFirst({
+                where: { userId, projectId: scopedProjectId },
+                include,
+              })
+            : professionalId
+            ? await this.prisma.privateChatThread.findFirst({
+                where: { professionalId, projectId: scopedProjectId },
+                include,
+              })
+            : null;
+          if (!thread) {
+            // Still no thread, re-throw the original error
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
     }
 
     const page = await this.getPagedPrivateMessages(thread.id, messageLimit, messageOffset);
