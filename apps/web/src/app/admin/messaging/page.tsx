@@ -551,6 +551,9 @@ export default function AdminMessagingPage() {
 
   const getThreadLabel = (thread: ChatThread) => {
     if (thread.type === 'private') {
+      if (thread.projectId) {
+        return thread.lastMessageContext?.projectName?.trim() || 'Project Support';
+      }
       if (thread.lastMessageContext?.pageType === 'project_view') {
         return thread.lastMessageContext.projectName?.trim() || 'Project Support';
       }
@@ -570,6 +573,9 @@ export default function AdminMessagingPage() {
 
   const getThreadSubtext = (thread: ChatThread) => {
     if (thread.type === 'private') {
+      if (thread.projectId) {
+        return 'Project Support';
+      }
       if (thread.lastMessageContext?.pageType === 'project_view') {
         return 'Project Support';
       }
@@ -588,6 +594,9 @@ export default function AdminMessagingPage() {
 
   const getChatMessageType = (thread: ChatThread): string => {
     if (thread.type === 'private') {
+      if (thread.projectId) {
+        return 'project';
+      }
       if (thread.lastMessageContext?.pageType === 'project_view') {
         return 'project';
       }

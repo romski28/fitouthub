@@ -1070,6 +1070,7 @@ export class ChatService {
         type: 'private' as const,
         userId: thread.userId,
         professionalId: thread.professionalId,
+        projectId: thread.projectId ?? undefined,
         userName: thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined,
         professionalName: thread.professional?.businessName,
         status: thread.status || 'open',
