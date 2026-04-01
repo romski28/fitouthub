@@ -451,9 +451,8 @@ export default function FloatingChat() {
     };
   }, [isOpen, threadId, isLoggedIn, accessToken, messages.length]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if ((!message.trim() && pendingAttachments.length === 0) || !threadId || sending) return;
+  const doSend = async (text: string, attachmentsToSend: { url: string; filename: string }[]) => {
+    if ((!text.trim() && attachmentsToSend.length === 0) || !threadId || sending) return;
 
     setSending(true);
     try {
@@ -488,13 +487,11 @@ export default function FloatingChat() {
         setMessages((prev) => [...prev, {
           id: Date.now().toString(),
           senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
-          content: message.trim(),
-          attachments: pendingAttachments,
+          content: text.trim(),
+          attachments: attachmentsToSend,
           context: chatContext,
           createdAt: new Date().toISOString(),
         }]);
-        setMessage('');
-        setPendingAttachments([]);
         return;
       }
 
@@ -510,8 +507,8 @@ export default function FloatingChat() {
         method: 'POST',
         headers,
         body: JSON.stringify({ 
-          content: message.trim(),
-          attachments: pendingAttachments,
+          content: text.trim(),
+          attachments: attachmentsToSend,
           context: chatContext,
         }),
       });
@@ -523,13 +520,11 @@ export default function FloatingChat() {
         setMessages((prev) => [...prev, data.message || {
           id: Date.now().toString(),
           senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
-          content: message.trim(),
-          attachments: pendingAttachments,
+          content: text.trim(),
+          attachments: attachmentsToSend,
           context: chatContext,
           createdAt: new Date().toISOString(),
         }]);
-        setMessage('');
-        setPendingAttachments([]);
         setThreadStatus('in_progress');
         setThreadClosureDueAt(null);
         setThreadResolvedAt(null);
@@ -542,6 +537,14 @@ export default function FloatingChat() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if ((!message.trim() && pendingAttachments.length === 0) || !threadId || sending) return;
+    await doSend(message.trim(), pendingAttachments);
+    setMessage('');
+    setPendingAttachments([]);
   };
 
   // Don't show on admin pages.
@@ -693,6 +696,28 @@ export default function FloatingChat() {
               </div>
             )}
             
+            {/* Quick-action shortcuts */}
+            {isLoggedIn && (
+              <div className="flex gap-2 mb-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => doSend('📱 Please contact me via WhatsApp.', [])}
+                  disabled={sending || loading || !threadId}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  📱 WhatsApp me
+                </button>
+                <button
+                  type="button"
+                  onClick={() => doSend('📞 Please give me a call to discuss this.', [])}
+                  disabled={sending || loading || !threadId}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  📞 Call me
+                </button>
+              </div>
+            )}
+
             <div className="flex gap-2">
               <input
                 type="text"

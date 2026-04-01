@@ -1417,27 +1417,16 @@ export default function ClientProjectDetailPage() {
     }
   };
 
-  const handleOpenAssistFromBlocker = async () => {
+  const handleOpenAssistFromBlocker = () => {
     if (!projectId) return;
-    if (assistRequestId) {
-      const preferredThread =
-        assistThreads.find((thread) => (thread.status || '').toLowerCase() !== 'closed') ||
-        assistThreads[0];
-      if (preferredThread?.id && preferredThread.id !== assistRequestId) {
-        await applyActiveAssistThread(preferredThread);
-      }
-      setViewingAssistChat(true);
-      setActiveTab('chat');
-      return;
-    }
-
-    if (!accessToken) {
-      toast.error('Please sign in to request assistance.');
-      return;
-    }
-
-    setAssistModalError(null);
-    setAssistOpen(true);
+    window.dispatchEvent(
+      new CustomEvent('foh-open-chat', {
+        detail: {
+          context: 'project_view',
+          projectId,
+        },
+      })
+    );
   };
 
   const handleSubmitAssistFromBlocker = async (assistConfig: AssistRequestModalSubmit) => {

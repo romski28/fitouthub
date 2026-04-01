@@ -1122,8 +1122,13 @@ export default function ProjectDetailPage() {
             <button
               type="button"
               onClick={() => {
-                setAssistModalError(null);
-                setAssistOpen(true);
+                if (project?.project?.id) {
+                  window.dispatchEvent(
+                    new CustomEvent('foh-open-chat', {
+                      detail: { context: 'project_view', projectId: project.project.id },
+                    })
+                  );
+                }
               }}
               className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
             >
