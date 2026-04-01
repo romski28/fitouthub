@@ -35,6 +35,7 @@ export class ChatController {
     @Query('includeArchived') includeArchived?: string,
     @Query('messageLimit') messageLimit?: string,
     @Query('messageOffset') messageOffset?: string,
+    @Query('projectId') projectId?: string,
   ) {
     const userId = req.user.isProfessional ? undefined : req.user.id;
     const professionalId = req.user.isProfessional ? req.user.id : undefined;
@@ -44,6 +45,7 @@ export class ChatController {
       includeArchived === '1',
       messageLimit ? parseInt(messageLimit, 10) : undefined,
       messageOffset ? parseInt(messageOffset, 10) : undefined,
+      projectId || null,
     );
   }
 
@@ -53,11 +55,20 @@ export class ChatController {
    */
   @Post('private')
   @UseGuards(CombinedAuthGuard)
-  async createPrivateThread(@Request() req: any) {
-    // Just return existing or create new one
+  async createPrivateThread(
+    @Request() req: any,
+    @Body() body?: { projectId?: string },
+  ) {
     const userId = req.user.isProfessional ? undefined : req.user.id;
     const professionalId = req.user.isProfessional ? req.user.id : undefined;
-    return this.chatService.getOrCreatePrivateThread(userId, professionalId);
+    return this.chatService.getOrCreatePrivateThread(
+      userId,
+      professionalId,
+      false,
+      undefined,
+      undefined,
+      body?.projectId || null,
+    );
   }
 
   /**

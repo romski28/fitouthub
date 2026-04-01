@@ -1679,9 +1679,9 @@ export class UpdatesService {
         }
       }
 
-      // 4. Private FOH support thread
-      const privateChatThread = await this.prisma.privateChatThread.findUnique({
-        where: { userId: userId },
+      // 4. Private FOH support thread (general — no project)
+      const privateChatThread = await this.prisma.privateChatThread.findFirst({
+        where: { userId: userId, projectId: null },
       });
 
       if (privateChatThread) {
@@ -1866,9 +1866,9 @@ export class UpdatesService {
         }
       }
 
-      // 3. Private FOH support thread
-      const privateChatThread = await this.prisma.privateChatThread.findUnique({
-        where: { professionalId: professional.id },
+      // 3. Private FOH support thread (general — no project)
+      const privateChatThread = await this.prisma.privateChatThread.findFirst({
+        where: { professionalId: professional.id, projectId: null },
       });
 
       if (privateChatThread) {

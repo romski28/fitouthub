@@ -101,19 +101,6 @@ const getContextLabel = (context: ChatContext) => {
   return 'General support';
 };
 
-const filterMessagesForContext = (items: ChatMessage[], context: ChatContext) => {
-  if (context.pageType === 'project_view' && context.projectId) {
-    return items.filter(
-      (msg) =>
-        msg.context?.pageType === 'project_view' &&
-        String(msg.context?.projectId || '') === String(context.projectId),
-    );
-  }
-  if (context.pageType === 'project_creation') {
-    return items.filter((msg) => msg.context?.pageType === 'project_creation');
-  }
-  return items;
-};
 
 export default function FloatingChat() {
   const pathname = usePathname();
@@ -231,12 +218,14 @@ export default function FloatingChat() {
       setHasOlderMessages(Boolean(data?.hasMoreMessages));
     };
 
+    const projectIdParam = chatContext.projectId ? `&projectId=${encodeURIComponent(chatContext.projectId)}` : '';
+
     const getThreadUrl = (currentThreadId: string, offset = 0, limit = CHAT_PAGE_SIZE) => {
       if (isLoggedIn && accessToken) {
         if (currentThreadId) {
           return `${API_BASE_URL}/chat/private/${currentThreadId}?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}`;
         }
-        return `${API_BASE_URL}/chat/private?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}`;
+        return `${API_BASE_URL}/chat/private?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}${projectIdParam}`;
       }
 
       return `${API_BASE_URL}/chat/anonymous/${currentThreadId}?includeArchived=1&messageLimit=${limit}&messageOffset=${offset}`;
@@ -261,9 +250,8 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = (await res.json()) as PrivateThreadResponse;
                 const realThreadId = data.threadId || data.id || storedThreadId;
-                const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
                 setThreadId(realThreadId);
-                setMessages(scopedMessages);
+                setMessages(data.messages || []);
                 setUnreadCount(data.unreadCount || 0);
                 applyThreadState(data);
                 storeThreadId(chatContext, realThreadId);
@@ -284,18 +272,16 @@ export default function FloatingChat() {
                 Authorization: `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
               },
+              body: JSON.stringify({ projectId: chatContext.projectId ?? null }),
             });
             if (createRes.ok) {
               const data = await createRes.json();
               const realThreadId = data.threadId || data.id;
-              const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
               if (realThreadId) {
                 setThreadId(realThreadId);
-                if (chatContext.pageType !== 'project_view' || scopedMessages.length > 0) {
-                  storeThreadId(chatContext, realThreadId);
-                }
+                storeThreadId(chatContext, realThreadId);
               }
-              setMessages(scopedMessages);
+              setMessages(data.messages || []);
               setUnreadCount(data.unreadCount || 0);
               applyThreadState(data);
               return;
@@ -319,9 +305,8 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = await res.json();
                 const realThreadId = data.threadId || data.id || anonId;
-                const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
                 setThreadId(realThreadId);
-                setMessages(scopedMessages);
+                setMessages(data.messages || []);
                 applyThreadState(data);
                 storeThreadId(chatContext, realThreadId);
                 return;
@@ -344,10 +329,9 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = await res.json();
                 anonId = data.threadId || data.id;
-                const scopedMessages = filterMessagesForContext(data.messages || [], chatContext);
                 if (anonId) {
                   setThreadId(anonId);
-                  setMessages(scopedMessages);
+                  setMessages(data.messages || []);
                   applyThreadState(data);
                   storeThreadId(chatContext, anonId);
                   return;
@@ -390,7 +374,7 @@ export default function FloatingChat() {
       if (!res.ok) throw new Error('Failed to load older messages');
       const data = (await res.json()) as PrivateThreadResponse;
       setMessages((prev) => {
-        const incoming = filterMessagesForContext(data.messages || [], chatContext);
+        const incoming = data.messages || [];
         const deduped = incoming.filter((msg) => !prev.some((existing) => existing.id === msg.id));
         return [...deduped, ...prev];
       });
@@ -498,6 +482,7 @@ export default function FloatingChat() {
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ projectId: chatContext.projectId ?? null }),
           });
           if (createRes.ok) {
             const data = await createRes.json();

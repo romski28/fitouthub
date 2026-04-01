@@ -126,7 +126,7 @@ model User {
   professional                    Professional?
   projects                        Project[]
   assistRequests                  ProjectAssistRequest[]   @relation("UserAssistRequests")
-  privateChatThread               PrivateChatThread?
+  privateChatThreads              PrivateChatThread[]
   privateChatMessagesSent         PrivateChatMessage[]     @relation("UserSender")
   activityLogs                    ActivityLog[]
   siteAccessDataSubmitted         SiteAccessData[]
@@ -246,7 +246,7 @@ model Professional {
   projectProfessionals    ProjectProfessional[]
   reports                 ProfessionalReport[]
   referenceProjects       ProfessionalReferenceProject[]
-  privateChatThread       PrivateChatThread?
+  privateChatThreads      PrivateChatThread[]
   privateChatMessagesSent PrivateChatMessage[]           @relation("ProfessionalSender")
   activityLogs            ActivityLog[]
   siteAccessRequests      SiteAccessRequest[]
@@ -758,8 +758,9 @@ model AssistMessage {
 // FOH Private Support Threads (logged-in users & professionals)
 model PrivateChatThread {
   id             String               @id @default(cuid())
-  userId         String?              @unique // null for professionals
-  professionalId String?              @unique // null for clients
+  userId         String?              // null for professionals
+  professionalId String?              // null for clients
+  projectId      String?              // null = general support; projectId = project-scoped thread
   status         String               @default("open") // 'open' | 'in_progress' | 'closed'
   closureRequestedAt DateTime?
   closureDueAt DateTime?
@@ -778,7 +779,10 @@ model PrivateChatThread {
 
   @@index([userId])
   @@index([professionalId])
+  @@index([projectId])
   @@index([updatedAt])
+  @@index([userId, projectId])
+  @@index([professionalId, projectId])
 }
 
 model PrivateChatMessage {

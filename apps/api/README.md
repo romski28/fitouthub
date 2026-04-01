@@ -77,6 +77,34 @@ Reference migration file:
 
 - `apps/api/prisma/migrations/20260315_add_financial_summary_indexes/migration.sql`
 
+### Manual SQL required (2026-04-01)
+
+Run the following SQL manually before deploying the project-scoped FOH private chat update. This removes the one-thread-per-user uniqueness, adds `projectId` to `PrivateChatThread`, and adds the new lookup indexes used by the API:
+
+```sql
+ALTER TABLE "PrivateChatThread"
+  ADD COLUMN IF NOT EXISTS "projectId" TEXT;
+
+ALTER TABLE "PrivateChatThread"
+  DROP CONSTRAINT IF EXISTS "PrivateChatThread_userId_key";
+
+ALTER TABLE "PrivateChatThread"
+  DROP CONSTRAINT IF EXISTS "PrivateChatThread_professionalId_key";
+
+CREATE INDEX IF NOT EXISTS "PrivateChatThread_projectId_idx"
+ON "PrivateChatThread"("projectId");
+
+CREATE INDEX IF NOT EXISTS "PrivateChatThread_userId_projectId_idx"
+ON "PrivateChatThread"("userId", "projectId");
+
+CREATE INDEX IF NOT EXISTS "PrivateChatThread_professionalId_projectId_idx"
+ON "PrivateChatThread"("professionalId", "projectId");
+```
+
+Reference migration file:
+
+- `apps/api/prisma/migrations/20260401_add_private_chat_project_scope/migration.sql`
+
 ### DeepSeek sandbox (optional)
 
 For safe requirement-intake experimentation, you can enable a non-critical sandbox endpoint:

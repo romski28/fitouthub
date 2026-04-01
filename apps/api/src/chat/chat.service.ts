@@ -213,35 +213,32 @@ export class ChatService {
     includeArchived = false,
     messageLimit?: number,
     messageOffset?: number,
+    projectId?: string | null,
   ): Promise<PrivateChatThreadDto> {
     await this.finalizeExpiredPrivateClosures();
-    // Find thread by either userId or professionalId (whichever is provided)
+    const scopedProjectId = projectId ?? null;
+    const include = {
+      user: { select: { firstName: true, surname: true, email: true } },
+      professional: { select: { businessName: true, email: true } },
+    };
+    // Find existing thread scoped to this (user|professional, project)
     let thread = userId
-      ? await this.prisma.privateChatThread.findUnique({
-          where: { userId },
-          include: {
-            user: { select: { firstName: true, surname: true, email: true } },
-            professional: { select: { businessName: true, email: true } },
-          },
+      ? await this.prisma.privateChatThread.findFirst({
+          where: { userId, projectId: scopedProjectId },
+          include,
         })
       : professionalId
-      ? await this.prisma.privateChatThread.findUnique({
-          where: { professionalId },
-          include: {
-            user: { select: { firstName: true, surname: true, email: true } },
-            professional: { select: { businessName: true, email: true } },
-          },
+      ? await this.prisma.privateChatThread.findFirst({
+          where: { professionalId, projectId: scopedProjectId },
+          include,
         })
       : null;
 
     if (!thread) {
-      thread = await this.prisma.privateChatThread.create({
-        data: userId ? { userId } : { professionalId },
-        include: {
-          user: { select: { firstName: true, surname: true, email: true } },
-          professional: { select: { businessName: true, email: true } },
-        },
-      });
+      const data: any = { projectId: scopedProjectId };
+      if (userId) data.userId = userId;
+      else if (professionalId) data.professionalId = professionalId;
+      thread = await this.prisma.privateChatThread.create({ data, include });
     }
 
     const page = await this.getPagedPrivateMessages(thread.id, messageLimit, messageOffset);
@@ -801,6 +798,7 @@ export class ChatService {
       threadId: thread.id, // Alias for frontend compatibility
       userId: thread.userId,
       professionalId: thread.professionalId,
+      projectId: thread.projectId ?? null,
       status: thread.status,
       closureRequestedAt: thread.closureRequestedAt?.toISOString(),
       closureDueAt: thread.closureDueAt?.toISOString(),
