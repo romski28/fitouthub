@@ -196,6 +196,7 @@ export function ProjectForm({
 
   const [availableTrades, setAvailableTrades] = useState<AvailableTrade[]>([]);
   const [showTradeDropdown, setShowTradeDropdown] = useState(false);
+  const [assistOptIn, setAssistOptIn] = useState(false);
   const [tradeSearchTerm, setTradeSearchTerm] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []));
@@ -439,12 +440,13 @@ export function ProjectForm({
 
         {/* File Upload */}
         <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-800">Photos (optional)</label>
+          <label className="text-sm font-medium text-slate-800">Photos (optional but recommended)</label>
           <FileUploader
             maxFiles={MAX_FILES}
             maxFileSize={MAX_FILE_SIZE}
             onFilesChange={handleFilesChange}
             showUploadAction={false}
+            darkMode={mode === 'create'}
           />
           {pendingFiles.length > 0 && (
             <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
@@ -908,7 +910,7 @@ export function ProjectForm({
               disabled={isReadOnly || isSubmitting}
               className={`rounded-md border px-3 py-2 text-sm ${
                 mode === 'create'
-                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400'
+                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert'
                   : 'border-slate-300'
               }`}
             />
@@ -979,7 +981,7 @@ export function ProjectForm({
               disabled={isReadOnly || isSubmitting}
               className={`rounded-md border px-3 py-2 text-sm ${
                 mode === 'create'
-                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400'
+                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert'
                   : 'border-slate-300'
               }`}
             />
@@ -1006,6 +1008,7 @@ export function ProjectForm({
             maxFileSize={MAX_FILE_SIZE}
             onFilesChange={handleFilesChange}
             showUploadAction={false}
+            darkMode={mode === 'create'}
           />
           {pendingFiles.length > 0 && (
             <div className={`rounded-md border px-3 py-2 text-xs mt-2 ${
@@ -1069,9 +1072,23 @@ export function ProjectForm({
             ? 'border-blue-500/40 bg-blue-500/10 text-blue-100'
             : 'border-blue-200 bg-blue-50'
         }`}>
-          <p className={`mb-1 text-sm font-semibold ${mode === 'create' ? 'text-white' : 'text-blue-900'}`}>
-            💡 Need Help Executing This Project?
-          </p>
+          <div className="mb-1 flex items-center justify-between gap-3">
+            <p className={`text-sm font-semibold ${mode === 'create' ? 'text-white' : 'text-blue-900'}`}>
+              💡 Need Help Executing This Project?
+            </p>
+            <label className={`inline-flex items-center gap-2 text-xs font-medium ${
+              mode === 'create' ? 'text-white' : 'text-blue-900'
+            }`}>
+              <span>Need advice</span>
+              <input
+                type="checkbox"
+                checked={assistOptIn}
+                onChange={(e) => setAssistOptIn(e.target.checked)}
+                disabled={isSubmitting}
+                className={`h-4 w-4 rounded ${mode === 'create' ? 'border-slate-300 accent-blue-400' : 'border-slate-300 accent-blue-600'}`}
+              />
+            </label>
+          </div>
           <p className={`text-sm ${mode === 'create' ? 'text-blue-100' : 'text-blue-800'}`}>
             <strong>Ask for advice:</strong> Get personalized guidance from Fitout Hub experts. We&apos;ll help you scope your project, find the right professionals, negotiate quotes, and manage the entire process from start to finish.
           </p>
