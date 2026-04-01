@@ -27,6 +27,7 @@ interface ChatMessage {
 interface PrivateThreadResponse {
   threadId?: string;
   id?: string;
+  projectId?: string | null;
   status?: 'open' | 'in_progress' | 'closure_pending' | 'closed' | string;
   closureDueAt?: string;
   resolvedAt?: string;
@@ -38,11 +39,31 @@ interface PrivateThreadResponse {
 }
 
 const CHAT_PAGE_SIZE = 30;
+const PROJECT_NAME_CACHE_PREFIX = 'foh_project_name_';
 
 const resolveProjectIdFromPath = (path: string | null | undefined) => {
   if (!path) return null;
   const match = path.match(/^\/(?:projects|professional-projects)\/([^/?#]+)/i);
   return match?.[1] ?? null;
+};
+
+const getProjectNameCacheKey = (projectId: string) => `${PROJECT_NAME_CACHE_PREFIX}${projectId}`;
+
+const readCachedProjectName = (projectId?: string | null) => {
+  if (!projectId || typeof window === 'undefined') return null;
+  const value = localStorage.getItem(getProjectNameCacheKey(projectId));
+  return value?.trim() ? value.trim() : null;
+};
+
+const storeCachedProjectName = (projectId?: string | null, projectName?: string | null) => {
+  if (!projectId || typeof window === 'undefined') return;
+  const key = getProjectNameCacheKey(projectId);
+  const normalized = projectName?.trim() || null;
+  if (!normalized) {
+    localStorage.removeItem(key);
+    return;
+  }
+  localStorage.setItem(key, normalized);
 };
 
 type ChatContext = {
@@ -122,13 +143,38 @@ export default function FloatingChat() {
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [contextOverride, setContextOverride] = useState<ChatContext | null>(null);
+  const [projectNameHint, setProjectNameHint] = useState<string | null>(null);
 
   const isAdminPage = pathname?.startsWith('/admin');
   const isLoggedIn = clientLoggedIn || proLoggedIn;
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
-  const pathContext = useMemo(() => getChatContextFromPath(pathname), [pathname]);
-  const chatContext = contextOverride ?? pathContext;
+  const pathContext = useMemo(() => {
+    const base = getChatContextFromPath(pathname);
+    if (base.pageType === 'project_view') {
+      return {
+        ...base,
+        projectName: projectNameHint ?? base.projectName ?? null,
+      };
+    }
+    return base;
+  }, [pathname, projectNameHint]);
+  const chatContext = useMemo(() => {
+    const activeContext = contextOverride ?? pathContext;
+    if (
+      activeContext.pageType === 'project_view' &&
+      !activeContext.projectName &&
+      pathContext.pageType === 'project_view' &&
+      activeContext.projectId === pathContext.projectId &&
+      pathContext.projectName
+    ) {
+      return {
+        ...activeContext,
+        projectName: pathContext.projectName,
+      };
+    }
+    return activeContext;
+  }, [contextOverride, pathContext]);
   const contextLabel = getContextLabel(chatContext);
 
   const getStoredThreadKey = (context: ChatContext) => `foh_thread_${userRole}_${getContextKey(context)}`;
@@ -169,6 +215,26 @@ export default function FloatingChat() {
 
   useEffect(() => {
     setContextOverride(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    setProjectNameHint(readCachedProjectName(resolveProjectIdFromPath(pathname)));
+  }, [pathname]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const customEvent = event as CustomEvent<{ projectId?: string; projectName?: string }>;
+      const projectId = customEvent.detail?.projectId;
+      const projectName = customEvent.detail?.projectName?.trim() || null;
+      if (!projectId) return;
+      storeCachedProjectName(projectId, projectName);
+      if (projectId === resolveProjectIdFromPath(pathname)) {
+        setProjectNameHint(projectName);
+      }
+    };
+
+    window.addEventListener('foh-project-meta', handler as EventListener);
+    return () => window.removeEventListener('foh-project-meta', handler as EventListener);
   }, [pathname]);
 
   useEffect(() => {
@@ -250,12 +316,25 @@ export default function FloatingChat() {
               if (res.ok) {
                 const data = (await res.json()) as PrivateThreadResponse;
                 const realThreadId = data.threadId || data.id || storedThreadId;
+                const expectedProjectId = chatContext.pageType === 'project_view' ? chatContext.projectId ?? null : null;
+                const actualProjectId = data.projectId ?? null;
+                if (actualProjectId !== expectedProjectId) {
+                  console.warn('[FloatingChat] Stored thread context mismatch, resetting cached thread', {
+                    storedThreadId,
+                    expectedProjectId,
+                    actualProjectId,
+                  });
+                  storeThreadId(chatContext, null);
+                } else {
                 setThreadId(realThreadId);
                 setMessages(data.messages || []);
                 setUnreadCount(data.unreadCount || 0);
                 applyThreadState(data);
                 storeThreadId(chatContext, realThreadId);
+                }
+                if (actualProjectId === expectedProjectId) {
                 return;
+                }
               }
               if (res.status === 404) {
                 storeThreadId(chatContext, null);

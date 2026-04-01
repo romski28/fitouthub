@@ -1430,6 +1430,20 @@ export default function ClientProjectDetailPage() {
     );
   };
 
+  useEffect(() => {
+    const projectName = project?.projectName?.trim();
+    if (!projectId || !projectName || typeof window === 'undefined') return;
+    localStorage.setItem(`foh_project_name_${projectId}`, projectName);
+    window.dispatchEvent(
+      new CustomEvent('foh-project-meta', {
+        detail: {
+          projectId,
+          projectName,
+        },
+      })
+    );
+  }, [projectId, project?.projectName]);
+
   const handleSubmitAssistFromBlocker = async (assistConfig: AssistRequestModalSubmit) => {
     if (!accessToken || !projectId) return;
 
