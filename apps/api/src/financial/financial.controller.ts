@@ -1,12 +1,52 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, UseGuards, Request, BadRequestException, Headers, Req, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { CreateFinancialTransactionDto, UpdateFinancialTransactionDto } from './financial.service';
 import { FinancialService } from './financial.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
+import { StripePaymentsService } from './stripe-payments.service';
+import type { Request as ExpressRequest } from 'express';
+import type { RawBodyRequest } from '@nestjs/common';
 
 @Controller('financial')
 export class FinancialController {
-  constructor(private readonly financialService: FinancialService) {}
+  constructor(
+    private readonly financialService: FinancialService,
+    private readonly stripePaymentsService: StripePaymentsService,
+  ) {}
+
+  @Post(':transactionId/checkout-session')
+  @UseGuards(CombinedAuthGuard)
+  async createEscrowCheckoutSession(@Param('transactionId') transactionId: string, @Request() req: any) {
+    if (req.user?.isProfessional) {
+      throw new BadRequestException('Professionals cannot pay escrow deposits');
+    }
+
+    const role = req.user?.role === 'admin' ? 'admin' : 'client';
+    return this.financialService.createEscrowCheckoutSession(transactionId, req.user.id, role);
+  }
+
+  @Post('stripe/webhook')
+  async handleStripeWebhook(
+    @Req() req: RawBodyRequest<ExpressRequest>,
+    @Headers('stripe-signature') stripeSignature?: string,
+  ) {
+    if (!this.stripePaymentsService.isConfigured()) {
+      throw new HttpException('Stripe not configured', HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    if (!stripeSignature) {
+      throw new BadRequestException('Missing Stripe signature');
+    }
+
+    const rawPayload = req.rawBody;
+    if (!rawPayload || !(rawPayload instanceof Buffer)) {
+      throw new BadRequestException('Missing raw request payload for Stripe webhook');
+    }
+
+    const event = this.stripePaymentsService.constructWebhookEvent(rawPayload, stripeSignature);
+    const result = await this.financialService.handleStripeWebhookEvent(event as any);
+    return { received: true, ...result };
+  }
 
   /**
    * GET /financial/project/:projectId - Get all financial transactions for a project

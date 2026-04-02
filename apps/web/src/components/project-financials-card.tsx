@@ -314,25 +314,26 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const handleConfirmDepositPaid = async (transactionId: string) => {
+  const handlePayEscrow = async (transactionId: string) => {
     try {
       setProcessingId(transactionId);
-      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/transactions/${transactionId}/confirm-deposit`, {
+      const res = await fetch(`${API_BASE_URL}/financial/${transactionId}/checkout-session`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      if (!res.ok) throw new Error('Failed to confirm deposit');
-      toast.success('Deposit confirmed! Waiting for FOH verification.');
-      // Refresh transactions by fetching them again
-      const txRes = await fetch(`${API_BASE_URL}/financial/project/${projectId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (txRes.ok) {
-        const txData: Transaction[] = await txRes.json();
-        setTransactions(txData);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Failed to start escrow checkout');
       }
+
+      const data = await res.json() as { checkoutUrl?: string };
+      if (!data.checkoutUrl) {
+        throw new Error('Checkout URL missing from API response');
+      }
+
+      window.location.assign(data.checkoutUrl);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to confirm deposit');
+      toast.error(err instanceof Error ? err.message : 'Failed to start escrow checkout');
     } finally {
       setProcessingId(null);
     }
@@ -469,7 +470,7 @@ export default function ProjectFinancialsCard({
                     resolvedRole === 'admin' && type === 'release_payment' && statusKey === 'pending';
                   const canReject =
                     resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
-                  const canMarkPaid =
+                  const canPayEscrow =
                     resolvedRole === 'client' && type === 'escrow_deposit_request' && statusKey === 'pending';
                   const actionRole = (tx.actionByRole || '').toLowerCase();
                   const actionOn = tx.actionByRole || tx.requestedByRole || '—';
@@ -486,14 +487,14 @@ export default function ProjectFinancialsCard({
                     if (isInfo) {
                       return <span className="text-slate-400 text-xs">—</span>;
                     }
-                    if (canMarkPaid) {
+                    if (canPayEscrow) {
                       return (
                         <button
-                          onClick={() => handleConfirmDepositPaid(tx.id)}
+                          onClick={() => handlePayEscrow(tx.id)}
                           disabled={processingId === tx.id}
                           className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
                         >
-                          {processingId === tx.id ? 'Processing...' : 'Paid'}
+                          {processingId === tx.id ? 'Processing...' : 'Pay Escrow'}
                         </button>
                       );
                     }

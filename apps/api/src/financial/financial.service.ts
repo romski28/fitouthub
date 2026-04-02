@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ProjectStage } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 import { NotificationService } from '../notifications/notification.service';
+import { StripePaymentsService } from './stripe-payments.service';
 
 export interface CreateFinancialTransactionDto {
   projectId: string;
@@ -35,7 +37,221 @@ export class FinancialService {
     private emailService: EmailService,
     private chatService: ChatService,
     private notificationService: NotificationService,
+    private stripePaymentsService: StripePaymentsService,
   ) {}
+
+  private appendNote(existing: string | null | undefined, extra: string) {
+    return existing ? `${existing} | ${extra}` : extra;
+  }
+
+  async createEscrowCheckoutSession(
+    transactionId: string,
+    actorId: string,
+    role: 'client' | 'admin' | 'professional',
+  ) {
+    if (!this.stripePaymentsService.isConfigured()) {
+      throw new Error('Stripe is not configured on the API server');
+    }
+
+    const transaction = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        project: {
+          select: {
+            id: true,
+            projectName: true,
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (!transaction) {
+      throw new Error('Transaction not found');
+    }
+
+    if (transaction.type !== 'escrow_deposit_request') {
+      throw new Error('Only escrow deposit requests can be paid via checkout');
+    }
+
+    const status = (transaction.status || '').toLowerCase();
+    if (status !== 'pending') {
+      throw new Error('This escrow request is no longer payable');
+    }
+
+    if (role === 'professional') {
+      throw new Error('Professionals cannot pay escrow deposits');
+    }
+
+    if (role === 'client' && transaction.project?.userId !== actorId) {
+      throw new Error('You do not have permission to pay this escrow request');
+    }
+
+    const amountNumber = Number(transaction.amount);
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      throw new Error('Invalid escrow amount');
+    }
+
+    const amountInCents = Math.round(amountNumber * 100);
+    const projectName = transaction.project?.projectName || 'Project';
+    const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
+    const projectId = transaction.projectId;
+
+    const session = await this.stripePaymentsService.createCheckoutSession({
+      mode: 'payment',
+      success_url: `${webBaseUrl}/projects/${projectId}?tab=overview&section=progress-financials&payment=success`,
+      cancel_url: `${webBaseUrl}/projects/${projectId}?tab=overview&section=progress-financials&payment=cancelled`,
+      client_reference_id: projectId,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'hkd',
+            product_data: {
+              name: `Escrow deposit - ${projectName}`,
+              description: `Project ${projectId}`,
+            },
+            unit_amount: amountInCents,
+          },
+        },
+      ],
+      metadata: {
+        transactionId,
+        projectId,
+      },
+    });
+
+    await this.prisma.financialTransaction.update({
+      where: { id: transactionId },
+      data: {
+        notes: this.appendNote(transaction.notes, `stripe_checkout_session:${session.id}`),
+      },
+    });
+
+    if (!session.url) {
+      throw new Error('Stripe checkout session did not return a redirect URL');
+    }
+
+    return {
+      checkoutUrl: session.url,
+      sessionId: session.id,
+    };
+  }
+
+  async handleStripeWebhookEvent(event: { type: string; data: { object: any } }) {
+    const eventType = event.type;
+    if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(eventType)) {
+      return { processed: false, reason: 'event_ignored' };
+    }
+
+    const session = event.data?.object;
+    const transactionId = session?.metadata?.transactionId as string | undefined;
+    const stripeSessionId = session?.id as string | undefined;
+    const paymentIntentId =
+      typeof session?.payment_intent === 'string'
+        ? session.payment_intent
+        : session?.payment_intent?.id;
+
+    if (!transactionId || !stripeSessionId) {
+      return { processed: false, reason: 'missing_metadata' };
+    }
+
+    const requestTx = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        project: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!requestTx) {
+      return { processed: false, reason: 'transaction_not_found' };
+    }
+
+    if (requestTx.type !== 'escrow_deposit_request') {
+      return { processed: false, reason: 'not_escrow_request' };
+    }
+
+    const existingConfirmed = await this.prisma.financialTransaction.findFirst({
+      where: {
+        projectId: requestTx.projectId,
+        projectProfessionalId: requestTx.projectProfessionalId,
+        type: 'escrow_deposit_confirmation',
+        status: 'confirmed',
+        notes: {
+          contains: `request ${requestTx.id}`,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingConfirmed) {
+      return { processed: true, alreadyProcessed: true };
+    }
+
+    if ((requestTx.status || '').toLowerCase() === 'pending') {
+      await this.prisma.financialTransaction.update({
+        where: { id: requestTx.id },
+        data: {
+          status: 'paid',
+          actionBy: 'stripe',
+          actionByRole: 'platform',
+          actionAt: new Date(),
+          actionComplete: true,
+          notes: this.appendNote(
+            requestTx.notes,
+            `Stripe payment completed (session:${stripeSessionId}${paymentIntentId ? `,intent:${paymentIntentId}` : ''})`,
+          ),
+        },
+      });
+    }
+
+    let confirmationTx = await this.prisma.financialTransaction.findFirst({
+      where: {
+        projectId: requestTx.projectId,
+        projectProfessionalId: requestTx.projectProfessionalId,
+        type: 'escrow_deposit_confirmation',
+        notes: {
+          contains: `request ${requestTx.id}`,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!confirmationTx) {
+      confirmationTx = await this.prisma.financialTransaction.create({
+        data: {
+          projectId: requestTx.projectId,
+          projectProfessionalId: requestTx.projectProfessionalId,
+          type: 'escrow_deposit_confirmation',
+          description: 'Escrow payment completed via Stripe Checkout',
+          amount: requestTx.amount,
+          status: 'pending',
+          requestedBy: requestTx.requestedBy,
+          requestedByRole: 'client',
+          actionBy: 'platform',
+          actionByRole: 'platform',
+          actionComplete: false,
+          notes: `Confirmation for escrow deposit request ${requestTx.id} | stripe_session:${stripeSessionId}${paymentIntentId ? ` | stripe_intent:${paymentIntentId}` : ''}`,
+        },
+      });
+    }
+
+    if ((confirmationTx.status || '').toLowerCase() !== 'confirmed') {
+      await this.confirmEscrowDeposit(confirmationTx.id, 'stripe-webhook');
+    }
+
+    await this.prisma.project.update({
+      where: { id: requestTx.projectId },
+      data: {
+        currentStage: ProjectStage.PRE_WORK,
+        stageStartedAt: new Date(),
+      },
+    });
+
+    return { processed: true };
+  }
 
   /**
    * Retry helper with exponential backoff for transient errors

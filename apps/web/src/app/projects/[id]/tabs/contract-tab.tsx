@@ -80,15 +80,15 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch contract');
+        throw new Error(errorData.message || 'Failed to fetch agreement');
       }
 
       const data = await response.json();
       setContract(data);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to load contract';
-      console.error('Error fetching contract:', err);
+        err instanceof Error ? err.message : 'Failed to load agreement';
+      console.error('Error fetching agreement:', err);
       setError(message);
       toast.error(message);
     } finally {
@@ -117,12 +117,12 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to sign contract');
+        throw new Error(errorData.message || 'Failed to sign agreement');
       }
 
       const result = await response.json();
       await showWorkflowSuccessToast({
-        successMessage: 'Contract signed successfully!',
+        successMessage: 'Agreement signed successfully!',
         projectId,
         token: accessToken,
         preferFallbackGuidance: true,
@@ -137,7 +137,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
                   nextStepLabel: 'Wait for professional signature',
                   canActNow: false,
                   waitReason:
-                    'No action needed now; the professional needs to sign the contract.',
+                    'No action needed now; the professional needs to sign the agreement.',
                 }
             : result.isFullySigned
               ? {
@@ -150,7 +150,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
                   nextStepLabel: 'Wait for client signature',
                   canActNow: false,
                   waitReason:
-                    'No action needed now; the client needs to sign the contract.',
+                    'No action needed now; the client needs to sign the agreement.',
                 },
       });
 
@@ -158,8 +158,8 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       await fetchContract();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to sign contract';
-      console.error('Error signing contract:', err);
+        err instanceof Error ? err.message : 'Failed to sign agreement';
+      console.error('Error signing agreement:', err);
       toast.error(message);
     } finally {
       setSigning(false);
@@ -199,7 +199,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Contract Header */}
+      {/* Agreement Header */}
       <div className="rounded-lg bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-6">
         <div className="flex items-start justify-between">
           <div>
@@ -298,7 +298,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         </div>
       </div>
 
-      {/* Contract Content */}
+      {/* Agreement Content */}
       <div className="rounded-lg border border-slate-700 bg-slate-900/60">
         <div className="border-b border-slate-700 p-4">
           <h3 className="text-sm font-medium text-white">Agreement</h3>

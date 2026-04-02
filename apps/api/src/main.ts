@@ -25,7 +25,7 @@ async function bootstrap() {
     logger.warn('Received SIGINT - shutting down process');
   });
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Set global API prefix
   app.setGlobalPrefix('api');

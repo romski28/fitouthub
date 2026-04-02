@@ -712,6 +712,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </AccordionItem>
 
         {/* Progress & Financials */}
+        <div id="progress-financials-section">
         <AccordionItem
           id="progress-financials"
           title="Progress & Financials"
@@ -755,6 +756,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
           </div>
         </AccordionItem>
+        </div>
       </AccordionGroup>
     </div>
   );

@@ -394,6 +394,24 @@ export default function ClientProjectDetailPage() {
     setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
   }, [searchParams, isAwarded, assistRequestId, hasAnyProfessional]);
 
+  useEffect(() => {
+    const requestedSection = searchParams.get('section');
+    if (requestedSection !== 'progress-financials') return;
+
+    setActiveTab('overview');
+    setExpandedAccordions((prev) => ({
+      ...prev,
+      'progress-financials': true,
+    }));
+
+    const scrollTimer = setTimeout(() => {
+      const target = document.getElementById('progress-financials-section');
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+
+    return () => clearTimeout(scrollTimer);
+  }, [searchParams]);
+
   const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
     const text = await response.text();
     if (!text) return null;
@@ -1126,7 +1144,7 @@ export default function ClientProjectDetailPage() {
           projectId,
           token: accessToken,
           fallbackGuidance: {
-            nextStepLabel: 'Review and sign contract',
+            nextStepLabel: 'Review and sign agreement',
             canActNow: true,
           },
         });

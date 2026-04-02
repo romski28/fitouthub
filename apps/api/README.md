@@ -125,6 +125,21 @@ Notes:
 - The endpoint is intended for sandbox usage only (prompt preview/prototyping).
 - API logs include request duration and token usage for cost/latency monitoring.
 
+### Stripe Checkout (MVP escrow)
+
+No new migration is required for this integration (manual SQL unchanged).
+
+Required environment variables:
+
+- `STRIPE_SECRET_KEY` (required)
+- `STRIPE_WEBHOOK_SECRET` (required)
+- `WEB_BASE_URL` (recommended, e.g. `http://localhost:3000`)
+
+Endpoints:
+
+- `POST /api/financial/:transactionId/checkout-session` (authenticated client/admin)
+- `POST /api/financial/stripe/webhook` (Stripe webhook target)
+
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash

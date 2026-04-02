@@ -56,8 +56,16 @@ const clientActionTabMap: Record<string, string> = {
   REPORT_DEFECT: 'schedule',
 };
 
+const clientActionSectionMap: Record<string, string> = {
+  DEPOSIT_ESCROW_FUNDS: 'progress-financials',
+};
+
 function getClientShowMeHref(projectId: string, actionKey: string) {
   const tab = clientActionTabMap[actionKey] || 'overview';
+  const section = clientActionSectionMap[actionKey];
+  if (section) {
+    return `/projects/${projectId}?tab=${encodeURIComponent(tab)}&section=${encodeURIComponent(section)}`;
+  }
   return `/projects/${projectId}?tab=${encodeURIComponent(tab)}`;
 }
 

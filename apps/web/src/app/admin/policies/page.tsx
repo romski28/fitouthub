@@ -137,7 +137,7 @@ export default function AdminPoliciesPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Policy Management</h1>
-            <p className="text-slate-600 mt-2">Manage Terms & Conditions, Security Statement, and Contract Templates</p>
+            <p className="text-slate-600 mt-2">Manage Terms & Conditions, Security Statement, and Agreement Templates</p>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
@@ -208,7 +208,7 @@ export default function AdminPoliciesPage() {
                 : 'bg-white text-slate-700 hover:bg-slate-100'
             }`}
           >
-            Contract Template
+            Agreement Template
           </button>
         </div>
 
@@ -409,7 +409,7 @@ export default function AdminPoliciesPage() {
                 </div>
               </div>
               <p className="text-sm text-slate-600 mb-3">
-                Template variables for contracts that auto-populate with project details, client info, and milestones.
+                Template variables for agreements that auto-populate with project details, client info, and milestones.
               </p>
               <ul className="text-xs text-slate-500 space-y-1">
                 <li>• Variable placeholders</li>
@@ -531,7 +531,7 @@ function CreatePolicyForm({
         >
           <option value="TERMS_AND_CONDITIONS">Terms and Conditions</option>
           <option value="SECURITY_STATEMENT">Security Statement</option>
-          <option value="CONTRACT_TEMPLATE">Contract Template</option>
+          <option value="CONTRACT_TEMPLATE">Agreement Template</option>
         </select>
       </div>
 

@@ -105,7 +105,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
     try {
       setSigning(true);
 
-      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/contract/sign`, {
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/contract/sign`, { // API path unchanged
         method: 'POST',
         cache: 'no-store',
         headers: {
