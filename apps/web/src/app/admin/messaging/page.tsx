@@ -190,7 +190,7 @@ export default function AdminMessagingPage() {
     requestAnimationFrame(() => {
       node.scrollTop = node.scrollHeight;
     });
-  }, [messages.length, activeId, activeType, msgLoading]);
+  }, [dedupedMessages.length, activeId, activeType, msgLoading]);
 
   // Fetch assist requests
   const fetchAssistRequests = async () => {
@@ -454,7 +454,17 @@ export default function AdminMessagingPage() {
         (msg: Message, index: number, arr: Message[]) =>
           arr.findIndex((candidate) => candidate.id === msg.id) === index,
       );
-      setMessages(deduped);
+      const scopedMessages =
+        thread.type === 'private' && scopedProjectId
+          ? deduped.filter((msg: any) => {
+              const context = msg?.context || {};
+              return (
+                context?.pageType === 'project_view' &&
+                String(context?.projectId || '') === String(scopedProjectId)
+              );
+            })
+          : deduped;
+      setMessages(scopedMessages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load messages");
     } finally {

@@ -1040,7 +1040,7 @@ export class ChatService {
       include: {
         messages: {
           orderBy: { createdAt: 'desc' },
-          take: 1,
+          take: 30,
         },
         user: {
           select: { id: true, firstName: true, surname: true, email: true },
@@ -1102,14 +1102,32 @@ export class ChatService {
           thread.messages[0]?.context && typeof thread.messages[0].context === 'object'
             ? (thread.messages[0].context as Record<string, unknown>)
             : null;
+        const scopedContext =
+          thread.messages
+            .map((msg) =>
+              msg?.context && typeof msg.context === 'object'
+                ? (msg.context as Record<string, unknown>)
+                : null,
+            )
+            .find(
+              (ctx) =>
+                !!ctx &&
+                ctx.pageType === 'project_view' &&
+                typeof ctx.projectId === 'string' &&
+                String(ctx.projectId).trim().length > 0,
+            ) || null;
         const inferredProjectId =
           thread.projectId ??
-          (typeof lastContext?.projectId === 'string' && lastContext.projectId.trim()
-            ? lastContext.projectId
+          (typeof scopedContext?.projectId === 'string' && scopedContext.projectId.trim()
+            ? scopedContext.projectId
+            : typeof lastContext?.projectId === 'string' && lastContext.projectId.trim()
+              ? lastContext.projectId
             : undefined);
         const inferredProjectName =
-          typeof lastContext?.projectName === 'string' && lastContext.projectName.trim()
-            ? lastContext.projectName
+          typeof scopedContext?.projectName === 'string' && scopedContext.projectName.trim()
+            ? scopedContext.projectName
+            : typeof lastContext?.projectName === 'string' && lastContext.projectName.trim()
+              ? lastContext.projectName
             : undefined;
 
         return {
