@@ -414,6 +414,15 @@ export class ChatService {
       throw new NotFoundException('Chat thread not found');
     }
 
+    const resolvedContext = thread.projectId
+      ? {
+          ...(context || {}),
+          pageType: 'project_view' as const,
+          projectId: thread.projectId,
+          projectName: context?.projectName || undefined,
+        }
+      : context;
+
     const message = await this.prisma.privateChatMessage.create({
       data: {
         threadId,
@@ -422,7 +431,7 @@ export class ChatService {
         senderProId,
         content,
         attachments: attachments || [],
-        context: context || undefined,
+        context: resolvedContext || undefined,
       },
     });
 

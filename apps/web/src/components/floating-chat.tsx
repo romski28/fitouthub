@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
@@ -144,6 +144,8 @@ export default function FloatingChat() {
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [contextOverride, setContextOverride] = useState<ChatContext | null>(null);
   const [projectNameHint, setProjectNameHint] = useState<string | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const suppressNextAutoScrollRef = useRef(false);
 
   const isAdminPage = pathname?.startsWith('/admin');
   const isLoggedIn = clientLoggedIn || proLoggedIn;
@@ -468,6 +470,7 @@ export default function FloatingChat() {
       const res = await fetch(url, { headers });
       if (!res.ok) throw new Error('Failed to load older messages');
       const data = (await res.json()) as PrivateThreadResponse;
+      suppressNextAutoScrollRef.current = true;
       setMessages((prev) => {
         const incoming = data.messages || [];
         const deduped = incoming.filter((msg) => !prev.some((existing) => existing.id === msg.id));
@@ -484,6 +487,19 @@ export default function FloatingChat() {
       setLoadingOlderMessages(false);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!messagesContainerRef.current) return;
+    if (suppressNextAutoScrollRef.current) {
+      suppressNextAutoScrollRef.current = false;
+      return;
+    }
+    const node = messagesContainerRef.current;
+    requestAnimationFrame(() => {
+      node.scrollTop = node.scrollHeight;
+    });
+  }, [isOpen, messages.length]);
 
   // Mark as read when opened (skip stub threads)
   useEffect(() => {
@@ -714,7 +730,7 @@ export default function FloatingChat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
             {(threadStatus === 'closure_pending' || threadStatus === 'closed') && (
               <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
                 {threadStatus === 'closure_pending'
