@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
@@ -169,6 +169,16 @@ export default function AdminMessagingPage() {
   const [msgText, setMsgText] = useState<string>("");
   const [msgSubmitting, setMsgSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const adminMessagesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (msgLoading) return;
+    if (!adminMessagesContainerRef.current) return;
+    const node = adminMessagesContainerRef.current;
+    requestAnimationFrame(() => {
+      node.scrollTop = node.scrollHeight;
+    });
+  }, [messages.length, activeId, activeType, msgLoading]);
 
   // Fetch assist requests
   const fetchAssistRequests = async () => {
@@ -874,7 +884,7 @@ export default function AdminMessagingPage() {
                 <div className="p-4 border-b border-slate-200">
                   <h3 className="text-sm font-semibold text-slate-900">Case Messages</h3>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div ref={adminMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                   {msgLoading ? (
                     <div className="text-center text-slate-500 text-sm">Loading messages...</div>
                   ) : messages.length === 0 ? (
@@ -1232,7 +1242,7 @@ export default function AdminMessagingPage() {
                 <div className="p-4 border-b border-slate-200">
                   <h3 className="text-sm font-semibold text-slate-900">Messages</h3>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div ref={adminMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                   {msgLoading ? (
                     <div className="text-center text-slate-500 text-sm">Loading messages...</div>
                   ) : messages.length === 0 ? (
@@ -1402,7 +1412,7 @@ export default function AdminMessagingPage() {
               <div className="p-4 border-b border-slate-200">
                 <h3 className="text-sm font-semibold text-slate-900">Messages</h3>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div ref={adminMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                 {msgLoading ? (
                   <div className="text-center text-slate-500 text-sm">Loading messages...</div>
                 ) : messages.length === 0 ? (

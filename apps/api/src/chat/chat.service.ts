@@ -414,7 +414,7 @@ export class ChatService {
       throw new NotFoundException('Chat thread not found');
     }
 
-    const resolvedContext = thread.projectId
+    let resolvedContext = thread.projectId
       ? {
           ...(context || {}),
           pageType: 'project_view' as const,
@@ -422,6 +422,29 @@ export class ChatService {
           projectName: context?.projectName || undefined,
         }
       : context;
+
+    if (!resolvedContext && senderType === 'foh') {
+      const latestMessage = await this.prisma.privateChatMessage.findFirst({
+        where: { threadId },
+        orderBy: { createdAt: 'desc' },
+        select: { context: true },
+      });
+
+      const latestContext =
+        latestMessage?.context && typeof latestMessage.context === 'object'
+          ? (latestMessage.context as Record<string, unknown>)
+          : null;
+
+      if (latestContext?.pageType === 'project_view' && latestContext?.projectId) {
+        resolvedContext = {
+          pageType: 'project_view',
+          pathname: typeof latestContext.pathname === 'string' ? latestContext.pathname : undefined,
+          projectId: String(latestContext.projectId),
+          projectName:
+            typeof latestContext.projectName === 'string' ? latestContext.projectName : undefined,
+        };
+      }
+    }
 
     const message = await this.prisma.privateChatMessage.create({
       data: {
