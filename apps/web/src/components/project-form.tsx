@@ -196,7 +196,6 @@ export function ProjectForm({
 
   const [availableTrades, setAvailableTrades] = useState<AvailableTrade[]>([]);
   const [showTradeDropdown, setShowTradeDropdown] = useState(false);
-  const [assistOptIn, setAssistOptIn] = useState(false);
   const [tradeSearchTerm, setTradeSearchTerm] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []));
@@ -317,7 +316,7 @@ export function ProjectForm({
   };
 
   const handleAssistClick = async () => {
-    if (assistOptIn && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       const initialMessage = [
         formData.projectName?.trim() ? `Project: ${formData.projectName.trim()}` : '',
         formData.notes?.trim() ? `Summary: ${formData.notes.trim()}` : '',
@@ -512,7 +511,7 @@ export function ProjectForm({
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
             <p className="text-xs font-semibold text-blue-900 mb-1">💡 Need help?</p>
             <p className="text-xs text-blue-800">
-              Get free advice or let us manage the whole project — your choice. Tick the box and we will get things started for you.
+              Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
             </p>
           </div>
         )}
@@ -1096,21 +1095,9 @@ export function ProjectForm({
             <p className={`text-sm font-semibold ${mode === 'create' ? 'text-white' : 'text-blue-900'}`}>
               💡 Need help?
             </p>
-            <label className={`inline-flex items-center gap-2 text-xs font-medium ${
-              mode === 'create' ? 'text-white' : 'text-blue-900'
-            }`}>
-              <span>Need advice</span>
-              <input
-                type="checkbox"
-                checked={assistOptIn}
-                onChange={(e) => setAssistOptIn(e.target.checked)}
-                disabled={isSubmitting}
-                className={`h-4 w-4 rounded ${mode === 'create' ? 'border-slate-300 accent-blue-400' : 'border-slate-300 accent-blue-600'}`}
-              />
-            </label>
           </div>
           <p className={`text-sm ${mode === 'create' ? 'text-blue-100' : 'text-blue-800'}`}>
-            Get free advice or let us manage the whole project — your choice. Tick the box and we will get things started for you.
+            Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
           </p>
         </div>
       )}
@@ -1135,14 +1122,14 @@ export function ProjectForm({
           <button
             type="button"
             onClick={handleAssistClick}
-            disabled={isSubmitting || !(formData.projectName && formData.projectName.trim()) || !assistOptIn}
+            disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
             className={`flex-1 rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
               mode === 'create'
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
             }`}
           >
-            {assistOptIn ? 'Open support chat' : 'Tick "Need advice" to continue'}
+            Ask for advice
           </button>
         )}
         {!isReadOnly && (
@@ -1160,24 +1147,6 @@ export function ProjectForm({
         )}
       </div>
 
-      {/* Info Box */}
-      {mode === 'create' && (
-        <div className="mt-8 pt-8 border-t border-slate-200">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-900">
-              {hasSelectedProfessionals ? (
-                <>
-                  <strong>Next Step:</strong> After creating your project, invite your selected professionals to quote or ask FoH for advice before opening bidding.
-                </>
-              ) : (
-                <>
-                  <strong>Next Step:</strong> After creating your project, you&apos;ll be able to search and invite professionals to submit quotes. We&apos;ll help you compare quotes, negotiate, and award the project.
-                </>
-              )}
-            </p>
-          </div>
-        </div>
-      )}
     </form>
   );
 }

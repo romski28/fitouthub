@@ -992,6 +992,21 @@ export default function ProjectDetailPage() {
     }
   };
 
+  useEffect(() => {
+    const projectId = project?.project?.id;
+    const projectName = project?.project?.projectName?.trim();
+    if (!projectId || !projectName || typeof window === 'undefined') return;
+    localStorage.setItem(`foh_project_name_${projectId}`, projectName);
+    window.dispatchEvent(
+      new CustomEvent('foh-project-meta', {
+        detail: {
+          projectId,
+          projectName,
+        },
+      })
+    );
+  }, [project?.project?.id, project?.project?.projectName]);
+
   if (isLoggedIn === undefined || loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -1109,21 +1124,6 @@ export default function ProjectDetailPage() {
       }
     : null;
   const assistInitialNotes = buildProfessionalAssistInitialNotes(project.status);
-
-  useEffect(() => {
-    const projectId = project?.project?.id;
-    const projectName = project?.project?.projectName?.trim();
-    if (!projectId || !projectName || typeof window === 'undefined') return;
-    localStorage.setItem(`foh_project_name_${projectId}`, projectName);
-    window.dispatchEvent(
-      new CustomEvent('foh-project-meta', {
-        detail: {
-          projectId,
-          projectName,
-        },
-      })
-    );
-  }, [project?.project?.id, project?.project?.projectName]);
 
   return (
     <>
