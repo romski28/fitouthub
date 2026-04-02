@@ -432,7 +432,7 @@ export default function ProjectFinancialsCard({
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-400 border-b border-slate-700">
+                <tr className="text-left text-white border-b border-slate-600">
                   <th className="py-2 pr-4">Date</th>
                   <th className="py-2 pr-4">Action On</th>
                   <th className="py-2 pr-4">Type</th>
@@ -444,7 +444,7 @@ export default function ProjectFinancialsCard({
               <tbody>
                 {filteredTransactions.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-4 text-center text-slate-500">No financial transactions yet</td>
+                    <td colSpan={6} className="py-4 text-center text-slate-300">No financial transactions yet</td>
                   </tr>
                 )}
                 {filteredTransactions.map((tx) => {
@@ -555,9 +555,9 @@ export default function ProjectFinancialsCard({
                   };
 
                   return (
-                    <tr key={tx.id} className="border-b border-slate-100">
-                      <td className="py-2 pr-4 text-slate-700">{createdDate}</td>
-                      <td className="py-2 pr-4 text-slate-700">
+                    <tr key={tx.id} className="border-b border-slate-700">
+                      <td className="py-2 pr-4 text-white">{createdDate}</td>
+                      <td className="py-2 pr-4 text-white">
                         <div className="flex items-center gap-2">
                           <span className="capitalize">{actionOn.replace('_', ' ')}</span>
                           {highlightActor && (
@@ -569,10 +569,10 @@ export default function ProjectFinancialsCard({
                       </td>
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-slate-900">{getTypeLabel(tx.type)}</span>
+                          <span className="font-medium text-white">{getTypeLabel(tx.type)}</span>
                         </div>
                       </td>
-                      <td className="py-2 pr-4 text-slate-900 font-semibold">{formatHKD(tx.amount)}</td>
+                      <td className="py-2 pr-4 text-white font-semibold">{formatHKD(tx.amount)}</td>
                       <td className="py-2 pr-4">
                         <StatusPill status={tx.status} label={statusKey.replace('_', ' ')} tone={statusToneFromStatus(tx.status)} />
                       </td>
@@ -582,7 +582,7 @@ export default function ProjectFinancialsCard({
                           {!isInfo && (
                             <button
                               onClick={() => setSelectedTx(tx)}
-                              className="text-xs text-blue-600 hover:underline"
+                              className="text-xs text-blue-400 hover:underline"
                             >
                               Details
                             </button>
