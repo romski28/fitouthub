@@ -1097,20 +1097,37 @@ export class ChatService {
 
     // Map to unified format
     const threads = [
-      ...privateThreads.map((thread) => ({
-        id: thread.id,
-        type: 'private' as const,
-        userId: thread.userId,
-        professionalId: thread.professionalId,
-        projectId: thread.projectId ?? undefined,
-        userName: thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined,
-        professionalName: thread.professional?.businessName,
-        status: thread.status || 'open',
-        updatedAt: thread.updatedAt.toISOString(),
-        unreadCount: unreadMap[thread.id] || 0,
-        lastMessage: thread.messages[0]?.content,
-        lastMessageContext: thread.messages[0]?.context || undefined,
-      })),
+      ...privateThreads.map((thread) => {
+        const lastContext =
+          thread.messages[0]?.context && typeof thread.messages[0].context === 'object'
+            ? (thread.messages[0].context as Record<string, unknown>)
+            : null;
+        const inferredProjectId =
+          thread.projectId ??
+          (typeof lastContext?.projectId === 'string' && lastContext.projectId.trim()
+            ? lastContext.projectId
+            : undefined);
+        const inferredProjectName =
+          typeof lastContext?.projectName === 'string' && lastContext.projectName.trim()
+            ? lastContext.projectName
+            : undefined;
+
+        return {
+          id: thread.id,
+          type: 'private' as const,
+          userId: thread.userId,
+          professionalId: thread.professionalId,
+          projectId: inferredProjectId,
+          projectName: inferredProjectName,
+          userName: thread.user ? `${thread.user.firstName} ${thread.user.surname}` : undefined,
+          professionalName: thread.professional?.businessName,
+          status: thread.status || 'open',
+          updatedAt: thread.updatedAt.toISOString(),
+          unreadCount: unreadMap[thread.id] || 0,
+          lastMessage: thread.messages[0]?.content,
+          lastMessageContext: thread.messages[0]?.context || undefined,
+        };
+      }),
       ...anonymousThreads.map((thread) => ({
         id: thread.id,
         type: 'anonymous' as const,

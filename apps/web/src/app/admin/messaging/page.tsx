@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
@@ -171,6 +171,17 @@ export default function AdminMessagingPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeProjectScope, setActiveProjectScope] = useState<{ projectId?: string; projectName?: string } | null>(null);
   const adminMessagesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const dedupedMessages = useMemo(() => {
+    const seen = new Set<string>();
+    const result: Message[] = [];
+    for (const message of messages) {
+      if (seen.has(message.id)) continue;
+      seen.add(message.id);
+      result.push(message);
+    }
+    return result;
+  }, [messages]);
 
   useEffect(() => {
     if (msgLoading) return;
@@ -410,11 +421,13 @@ export default function AdminMessagingPage() {
     if (!accessToken) return;
     setActiveId(thread.id);
     setActiveType(thread.type);
+    const scopedProjectId = thread.projectId || thread.lastMessageContext?.projectId || undefined;
+    const scopedProjectName = thread.projectName || thread.lastMessageContext?.projectName || undefined;
     setActiveProjectScope(
-      thread.type === 'private' && thread.projectId
+      thread.type === 'private' && scopedProjectId
         ? {
-            projectId: thread.projectId,
-            projectName: thread.projectName || thread.lastMessageContext?.projectName || undefined,
+            projectId: scopedProjectId,
+            projectName: scopedProjectName,
           }
         : null,
     );
@@ -424,7 +437,7 @@ export default function AdminMessagingPage() {
     try {
       let url = '';
       if (thread.type === 'private') {
-        const projectIdParam = thread.projectId ? `?projectId=${encodeURIComponent(thread.projectId)}` : '';
+        const projectIdParam = scopedProjectId ? `?projectId=${encodeURIComponent(scopedProjectId)}` : '';
         url = `${API_BASE_URL.replace(/\/$/, "")}/chat/private/${encodeURIComponent(thread.id)}${projectIdParam}`;
       } else if (thread.type === 'anonymous') {
         url = `${API_BASE_URL.replace(/\/$/, "")}/chat/anonymous/${encodeURIComponent(thread.id)}`;
@@ -910,10 +923,10 @@ export default function AdminMessagingPage() {
                 <div ref={adminMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                   {msgLoading ? (
                     <div className="text-center text-slate-500 text-sm">Loading messages...</div>
-                  ) : messages.length === 0 ? (
+                  ) : dedupedMessages.length === 0 ? (
                     <div className="text-center text-slate-500 text-sm">No messages yet.</div>
                   ) : (
-                    messages.map((msg) => {
+                    dedupedMessages.map((msg) => {
                       const isFoh = msg.senderType === 'foh';
                       return (
                         <div key={msg.id} className={`flex ${isFoh ? 'justify-end' : 'justify-start'}`}>
@@ -1268,10 +1281,10 @@ export default function AdminMessagingPage() {
                 <div ref={adminMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                   {msgLoading ? (
                     <div className="text-center text-slate-500 text-sm">Loading messages...</div>
-                  ) : messages.length === 0 ? (
+                  ) : dedupedMessages.length === 0 ? (
                     <div className="text-center text-slate-500 text-sm">No messages yet.</div>
                   ) : (
-                    messages.map((msg) => {
+                    dedupedMessages.map((msg) => {
                       const isFoh = msg.senderType === 'foh';
                       return (
                         <div
@@ -1438,10 +1451,10 @@ export default function AdminMessagingPage() {
               <div ref={adminMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                 {msgLoading ? (
                   <div className="text-center text-slate-500 text-sm">Loading messages...</div>
-                ) : messages.length === 0 ? (
+                ) : dedupedMessages.length === 0 ? (
                   <div className="text-center text-slate-500 text-sm">No messages yet.</div>
                 ) : (
-                  messages.map((msg) => {
+                  dedupedMessages.map((msg) => {
                     const isFoh = msg.senderType === 'foh';
                     return (
                       <div

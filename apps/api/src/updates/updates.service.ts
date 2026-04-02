@@ -561,7 +561,6 @@ export class UpdatesService {
       }),
       this.prisma.privateChatThread.findMany({
         where: {
-          userId: { not: null },
           ...(params.clientId ? { userId: params.clientId } : {}),
         },
         take: safeLimit,
@@ -583,6 +582,14 @@ export class UpdatesService {
               id: true,
               firstName: true,
               surname: true,
+              email: true,
+            },
+          },
+          professional: {
+            select: {
+              id: true,
+              fullName: true,
+              businessName: true,
               email: true,
             },
           },
@@ -707,7 +714,9 @@ export class UpdatesService {
           : undefined;
       const displayName = thread.user
         ? `${thread.user.firstName || ''} ${thread.user.surname || ''}`.trim() || thread.user.email || 'Client'
-        : 'Client';
+        : thread.professional
+          ? thread.professional.fullName || thread.professional.businessName || thread.professional.email || 'Professional'
+          : 'Client';
 
       items.push({
         id: `private:${thread.id}`,
