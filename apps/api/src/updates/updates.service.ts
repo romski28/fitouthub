@@ -575,6 +575,7 @@ export class UpdatesService {
               senderType: true,
               createdAt: true,
               attachments: true,
+              context: true,
             },
           },
           user: {
@@ -696,6 +697,14 @@ export class UpdatesService {
 
     privateThreads.forEach((thread) => {
       const firstMessage = thread.messages[0];
+      const firstMessageContext =
+        firstMessage && typeof firstMessage.context === 'object' && firstMessage.context
+          ? (firstMessage.context as Record<string, unknown>)
+          : null;
+      const inferredProjectName =
+        typeof firstMessageContext?.projectName === 'string'
+          ? firstMessageContext.projectName
+          : undefined;
       const displayName = thread.user
         ? `${thread.user.firstName || ''} ${thread.user.surname || ''}`.trim() || thread.user.email || 'Client'
         : 'Client';
@@ -721,6 +730,8 @@ export class UpdatesService {
         latestAt: thread.updatedAt.toISOString(),
         initialMessage: this.trimPreview(firstMessage?.content || ''),
         mediaCount: this.countAttachmentItems(firstMessage?.attachments),
+        projectId: thread.projectId || undefined,
+        projectName: inferredProjectName,
         openThreadType: 'private',
         openThreadId: thread.id,
       });
@@ -1119,6 +1130,23 @@ export class UpdatesService {
             ? `${message.thread.user.firstName || ''} ${message.thread.user.surname || ''}`.trim() || message.thread.user.email || 'Client'
             : 'Client';
 
+      const privateContext =
+        message.context && typeof message.context === 'object'
+          ? (message.context as Record<string, unknown>)
+          : null;
+      const contextProjectName =
+        typeof privateContext?.projectName === 'string'
+          ? privateContext.projectName
+          : undefined;
+      const isProjectContext =
+        (privateContext?.pageType === 'project_view' && Boolean(privateContext?.projectId)) ||
+        Boolean(message.thread?.projectId);
+      const contextLabel = isProjectContext
+        ? `Project · ${contextProjectName || 'Project Support'}`
+        : message.senderType === 'professional'
+          ? 'FOH Professional Thread'
+          : 'FOH Client Thread';
+
       feedItems.push({
         id: `private:${message.id}`,
         sourceType: 'private',
@@ -1129,7 +1157,7 @@ export class UpdatesService {
         actionRequired: !['closed', 'closure_pending'].includes(message.thread.status),
         type: message.senderType === 'professional' ? 'Professional Inbox' : 'Client Inbox',
         transport: 'In-app Chat',
-        context: message.senderType === 'professional' ? 'FOH Professional Thread' : 'FOH Client Thread',
+        context: contextLabel,
         user: userLabel,
         status: message.thread.status,
         assignmentStatus: 'unassigned',
