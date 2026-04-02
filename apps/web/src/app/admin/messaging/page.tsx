@@ -169,6 +169,7 @@ export default function AdminMessagingPage() {
   const [msgText, setMsgText] = useState<string>("");
   const [msgSubmitting, setMsgSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeProjectScope, setActiveProjectScope] = useState<{ projectId?: string; projectName?: string } | null>(null);
   const adminMessagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -385,6 +386,7 @@ export default function AdminMessagingPage() {
     if (!accessToken) return;
     setActiveId(id);
     setActiveType('assist');
+    setActiveProjectScope(null);
     setMsgText("");
     setMessages([]);
     setMsgLoading(true);
@@ -408,13 +410,22 @@ export default function AdminMessagingPage() {
     if (!accessToken) return;
     setActiveId(thread.id);
     setActiveType(thread.type);
+    setActiveProjectScope(
+      thread.type === 'private' && thread.projectId
+        ? {
+            projectId: thread.projectId,
+            projectName: thread.projectName || thread.lastMessageContext?.projectName || undefined,
+          }
+        : null,
+    );
     setMsgText("");
     setMessages([]);
     setMsgLoading(true);
     try {
       let url = '';
       if (thread.type === 'private') {
-        url = `${API_BASE_URL.replace(/\/$/, "")}/chat/private/${encodeURIComponent(thread.id)}`;
+        const projectIdParam = thread.projectId ? `?projectId=${encodeURIComponent(thread.projectId)}` : '';
+        url = `${API_BASE_URL.replace(/\/$/, "")}/chat/private/${encodeURIComponent(thread.id)}${projectIdParam}`;
       } else if (thread.type === 'anonymous') {
         url = `${API_BASE_URL.replace(/\/$/, "")}/chat/anonymous/${encodeURIComponent(thread.id)}`;
       } else if (thread.type === 'project') {
@@ -426,7 +437,11 @@ export default function AdminMessagingPage() {
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setMessages(data.messages || []);
+      const deduped = (data.messages || []).filter(
+        (msg: Message, index: number, arr: Message[]) =>
+          arr.findIndex((candidate) => candidate.id === msg.id) === index,
+      );
+      setMessages(deduped);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load messages");
     } finally {
@@ -470,7 +485,15 @@ export default function AdminMessagingPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ content: msgText.trim() }),
+        body: JSON.stringify({
+          content: msgText.trim(),
+          ...(activeType === 'private' && activeProjectScope?.projectId
+            ? {
+                projectId: activeProjectScope.projectId,
+                projectName: activeProjectScope.projectName,
+              }
+            : {}),
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       setMsgText("");

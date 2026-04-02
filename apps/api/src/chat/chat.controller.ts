@@ -275,7 +275,12 @@ export class ChatController {
   @UseGuards(CombinedAuthGuard)
   async adminReplyToThread(
     @Param('threadId') threadId: string,
-    @Body() body: { content: string },
+    @Body()
+    body: {
+      content: string;
+      projectId?: string | null;
+      projectName?: string | null;
+    },
   ) {
     if (!body.content || !body.content.trim()) {
       throw new BadRequestException('Message content cannot be empty');
@@ -284,7 +289,13 @@ export class ChatController {
     // Determine thread type and send appropriate reply
     // Try private thread first
     try {
-      const thread = await this.chatService.getPrivateThread(threadId);
+      const thread = await this.chatService.getPrivateThread(
+        threadId,
+        true,
+        undefined,
+        undefined,
+        body.projectId || null,
+      );
       const message = await this.chatService.addPrivateMessage(
         threadId,
         'foh',
@@ -292,6 +303,13 @@ export class ChatController {
         null,
         body.content,
         undefined,
+        body.projectId
+          ? {
+              pageType: 'project_view',
+              projectId: body.projectId,
+              projectName: body.projectName || null,
+            }
+          : undefined,
       );
       return { success: true, message };
     } catch (e) {
