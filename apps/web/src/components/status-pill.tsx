@@ -10,12 +10,12 @@ type StatusPillProps = {
 };
 
 const toneStyles: Record<StatusTone, string> = {
-  info: "bg-info-bg text-info",
-  success: "bg-success-bg text-success-strong",
-  warning: "bg-warning-bg text-warning",
-  danger: "bg-danger-bg text-danger",
-  neutral: "bg-surface-muted text-muted",
-  primary: "bg-primary text-white",
+  info:    "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/30",
+  success: "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
+  warning: "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30",
+  danger:  "bg-red-500/20 text-red-400 ring-1 ring-red-500/30",
+  neutral: "bg-slate-500/20 text-slate-400 ring-1 ring-slate-500/30",
+  primary: "bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40",
 };
 
 const normalizeStatus = (status?: string | null) => (status || "").toLowerCase().replace(/\s+/g, "_");
@@ -23,17 +23,25 @@ const normalizeStatus = (status?: string | null) => (status || "").toLowerCase()
 export const statusToneFromStatus = (status?: string | null): StatusTone => {
   const key = normalizeStatus(status);
   switch (key) {
-    case "pending":
-    case "awaiting_confirmation":
-      return "warning";
+    // Green — positive / resolved
     case "paid":
     case "confirmed":
     case "completed":
+    case "approved":
+    case "released":
       return "success";
+    // Red — action required / problem
+    case "pending":
+    case "action_required":
     case "rejected":
     case "withdrawn":
+    case "declined":
       return "danger";
+    // Blue — informational / passive wait
+    case "awaiting_confirmation":
+    case "awaiting":
     case "info":
+    case "processing":
       return "info";
     default:
       return "neutral";
