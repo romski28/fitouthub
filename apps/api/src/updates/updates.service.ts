@@ -568,7 +568,7 @@ export class UpdatesService {
         include: {
           messages: {
             orderBy: { createdAt: 'asc' },
-            take: 1,
+            take: 30,
             select: {
               content: true,
               senderType: true,
@@ -704,14 +704,29 @@ export class UpdatesService {
 
     privateThreads.forEach((thread) => {
       const firstMessage = thread.messages[0];
-      const firstMessageContext =
-        firstMessage && typeof firstMessage.context === 'object' && firstMessage.context
-          ? (firstMessage.context as Record<string, unknown>)
-          : null;
+      
+      // Scan through messages to find project context (not just the first message)
+      const scopedContext = thread.messages
+        .map((msg) => 
+          msg?.context && typeof msg.context === 'object' 
+            ? (msg.context as Record<string, unknown>) 
+            : null
+        )
+        .find((ctx) => 
+          ctx?.pageType === 'project_view' && 
+          String(ctx?.projectId || '').trim().length > 0
+        ) || null;
+
+      const inferredProjectId =
+        thread.projectId ||
+        (typeof scopedContext?.projectId === 'string' 
+          ? scopedContext.projectId 
+          : undefined);
       const inferredProjectName =
-        typeof firstMessageContext?.projectName === 'string'
-          ? firstMessageContext.projectName
+        typeof scopedContext?.projectName === 'string'
+          ? scopedContext.projectName
           : undefined;
+      
       const displayName = thread.user
         ? `${thread.user.firstName || ''} ${thread.user.surname || ''}`.trim() || thread.user.email || 'Client'
         : thread.professional
@@ -739,7 +754,7 @@ export class UpdatesService {
         latestAt: thread.updatedAt.toISOString(),
         initialMessage: this.trimPreview(firstMessage?.content || ''),
         mediaCount: this.countAttachmentItems(firstMessage?.attachments),
-        projectId: thread.projectId || undefined,
+        projectId: inferredProjectId,
         projectName: inferredProjectName,
         openThreadType: 'private',
         openThreadId: thread.id,
