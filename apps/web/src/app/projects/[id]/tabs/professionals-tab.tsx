@@ -12,6 +12,8 @@ interface ProjectProfessional {
   status: string;
   quoteAmount?: string | number;
   quoteNotes?: string;
+  quoteEstimatedStartAt?: string;
+  quoteEstimatedDurationMinutes?: number;
   quotedAt?: string;
   createdAt?: string;
   quoteReminderSentAt?: string;
@@ -63,6 +65,22 @@ const formatHKD = (value?: number | string) => {
   const num = typeof value === 'number' ? value : Number(value);
   if (Number.isNaN(num)) return `HK$ ${value}`;
   return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
+
+const formatDuration = (minutes?: number) => {
+  if (!minutes || !Number.isFinite(minutes)) return '—';
+  if (minutes >= 1440 && minutes % 1440 === 0) {
+    const days = minutes / 1440;
+    return `${days} day${days === 1 ? '' : 's'}`;
+  }
+  if (minutes >= 60 && minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} hour${hours === 1 ? '' : 's'}`;
+  }
+  if (minutes >= 60) {
+    return `${(minutes / 60).toFixed(1).replace(/\.0$/, '')} hours`;
+  }
+  return `${minutes} min`;
 };
 
 export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
@@ -211,6 +229,19 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                       </div>
                     )}
 
+                    {(pp.quoteEstimatedStartAt || pp.quoteEstimatedDurationMinutes) && (
+                      <div className="mb-3 grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
+                          <p className="text-xs text-white font-semibold mb-1">Estimated Start</p>
+                          <p className="text-sm text-slate-200">{formatDate(pp.quoteEstimatedStartAt)}</p>
+                        </div>
+                        <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
+                          <p className="text-xs text-white font-semibold mb-1">Estimated Duration</p>
+                          <p className="text-sm text-slate-200">{formatDuration(pp.quoteEstimatedDurationMinutes)}</p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="text-xs text-slate-400 mb-3">
                       Quoted: {formatDate(pp.quotedAt)}
                     </div>
@@ -303,6 +334,19 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                   <div className="rounded-md bg-slate-900/60 p-3 border border-slate-700 mb-3">
                     <p className="text-xs text-white font-semibold mb-1">Quote Notes</p>
                     <p className="text-sm text-slate-200">{awardedProfessional.quoteNotes}</p>
+                  </div>
+                )}
+
+                {(awardedProfessional.quoteEstimatedStartAt || awardedProfessional.quoteEstimatedDurationMinutes) && (
+                  <div className="grid gap-3 mb-3 sm:grid-cols-2">
+                    <div className="rounded-md bg-slate-900/60 p-3 border border-slate-700">
+                      <p className="text-xs text-white font-semibold uppercase">Estimated Start</p>
+                      <p className="text-sm text-slate-200 mt-1">{formatDate(awardedProfessional.quoteEstimatedStartAt)}</p>
+                    </div>
+                    <div className="rounded-md bg-slate-900/60 p-3 border border-slate-700">
+                      <p className="text-xs text-white font-semibold uppercase">Estimated Duration</p>
+                      <p className="text-sm text-slate-200 mt-1">{formatDuration(awardedProfessional.quoteEstimatedDurationMinutes)}</p>
+                    </div>
                   </div>
                 )}
 

@@ -26,6 +26,63 @@ export class ProfessionalController {
     private email: EmailService,
   ) {}
 
+  private normalizeQuoteSchedule(input: {
+    quoteEstimatedStartAt?: string | Date | null;
+    quoteEstimatedDurationMinutes?: number | string | null;
+  }) {
+    const rawStart = input.quoteEstimatedStartAt;
+    const rawDuration = input.quoteEstimatedDurationMinutes;
+    const hasStart =
+      rawStart !== undefined && rawStart !== null && String(rawStart).trim().length > 0;
+    const hasDuration =
+      rawDuration !== undefined && rawDuration !== null && String(rawDuration).trim().length > 0;
+
+    if (!hasStart || !hasDuration) {
+      throw new BadRequestException(
+        'Estimated start date and duration are required when submitting a quote',
+      );
+    }
+
+    const quoteEstimatedStartAt =
+      rawStart instanceof Date ? rawStart : new Date(String(rawStart));
+    if (Number.isNaN(quoteEstimatedStartAt.getTime())) {
+      throw new BadRequestException('Invalid estimated start date');
+    }
+
+    const durationMinutes = Number(rawDuration);
+    if (!Number.isFinite(durationMinutes) || durationMinutes < 30) {
+      throw new BadRequestException(
+        'Estimated duration must be at least 30 minutes',
+      );
+    }
+
+    if (durationMinutes > 60 * 24 * 365) {
+      throw new BadRequestException('Estimated duration is too large');
+    }
+
+    return {
+      quoteEstimatedStartAt,
+      quoteEstimatedDurationMinutes: Math.round(durationMinutes),
+    };
+  }
+
+  private formatDurationMinutes(durationMinutes: number) {
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return 'unspecified duration';
+    }
+
+    if (durationMinutes < 60) {
+      return `${durationMinutes} min`;
+    }
+
+    const hours = durationMinutes / 60;
+    if (Number.isInteger(hours)) {
+      return `${hours} hour${hours === 1 ? '' : 's'}`;
+    }
+
+    return `${hours.toFixed(1).replace(/\.0$/, '')} hours`;
+  }
+
   @Get('me')
   @UseGuards(AuthGuard('jwt-professional'))
   async getProfile(@Request() req: any) {
@@ -369,7 +426,13 @@ export class ProfessionalController {
   async submitQuote(
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
-    @Body() body: { quoteAmount: number | string; quoteNotes?: string },
+    @Body()
+    body: {
+      quoteAmount: number | string;
+      quoteNotes?: string;
+      quoteEstimatedStartAt?: string;
+      quoteEstimatedDurationMinutes?: number | string;
+    },
   ) {
     try {
       const professionalId = req.user.id || req.user.sub;
@@ -399,6 +462,10 @@ export class ProfessionalController {
       if (isNaN(quoteAmount) || quoteAmount < 0) {
         throw new BadRequestException('Invalid quote amount');
       }
+      const quoteSchedule = this.normalizeQuoteSchedule({
+        quoteEstimatedStartAt: body.quoteEstimatedStartAt,
+        quoteEstimatedDurationMinutes: body.quoteEstimatedDurationMinutes,
+      });
 
       if (projectProfessional.quotedAt) {
         throw new BadRequestException('You have already submitted a quote for this project');
@@ -430,6 +497,9 @@ export class ProfessionalController {
         data: {
           quoteAmount: quoteAmount,
           quoteNotes: body.quoteNotes || '',
+          quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
+          quoteEstimatedDurationMinutes:
+            quoteSchedule.quoteEstimatedDurationMinutes,
           quotedAt: new Date(),
           status: 'quoted',
           respondedAt: projectProfessional.respondedAt || new Date(),
@@ -454,7 +524,7 @@ export class ProfessionalController {
           projectProfessionalId,
           senderType: 'professional',
           senderProfessionalId: professionalId,
-          content: `We have submitted a quotation${isNaN(quoteAmount) ? '' : ` for HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`}.`,
+          content: `We have submitted a quotation${isNaN(quoteAmount) ? '' : ` for HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`} starting ${quoteSchedule.quoteEstimatedStartAt.toLocaleString()} for ${this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes)}.`,
         },
       });
 

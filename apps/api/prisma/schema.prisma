@@ -25,6 +25,13 @@ enum SiteAccessVisitStatus {
   completed
 }
 
+enum ProjectStartProposalStatus {
+  proposed
+  accepted
+  declined
+  superseded
+}
+
 enum LocationDetailsStatus {
   pending
   submitted
@@ -251,6 +258,7 @@ model Professional {
   activityLogs            ActivityLog[]
   siteAccessRequests      SiteAccessRequest[]
   siteAccessVisits        SiteAccessVisit[]
+  startProposals          ProjectStartProposal[]
   notificationLogs        NotificationLog[]
   notificationPreferences NotificationPreference?
   agreedToTermsAt                DateTime?
@@ -312,6 +320,7 @@ model Project {
   aiIntake                     AiIntake?
   siteAccessRequests           SiteAccessRequest[]
   siteAccessVisits             SiteAccessVisit[]
+  startProposals               ProjectStartProposal[]
   siteAccessData               SiteAccessData?
   locationDetails              ProjectLocationDetails?
   milestones                   ProjectMilestone[]
@@ -353,6 +362,8 @@ model ProjectProfessional {
   respondedAt             DateTime?
   quoteAmount             Decimal?               @db.Decimal(12, 2)
   quoteNotes              String?
+  quoteEstimatedStartAt   DateTime?
+  quoteEstimatedDurationMinutes Int?
   quotedAt                DateTime?
   directContactShared     Boolean                @default(false)
   directContactSharedAt   DateTime?
@@ -372,11 +383,38 @@ model ProjectProfessional {
   awardedInProject        Project?               @relation("AwardedProjectProfessional")
   siteAccessRequests      SiteAccessRequest[]
   siteAccessVisits         SiteAccessVisit[]
+  startProposals          ProjectStartProposal[]
   milestones              ProjectMilestone[]
 
   @@unique([projectId, professionalId])
   @@index([projectId])
   @@index([professionalId])
+}
+
+model ProjectStartProposal {
+  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId             String
+  projectProfessionalId String
+  professionalId        String
+  status                ProjectStartProposalStatus @default(proposed)
+  proposedStartAt       DateTime
+  durationMinutes       Int
+  notes                 String?
+  responseNotes         String?
+  respondedAt           DateTime?
+  respondedBy           String?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+
+  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectProfessional ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
+  professional        Professional        @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([projectProfessionalId])
+  @@index([professionalId])
+  @@index([status])
+  @@index([projectId, status])
 }
 
 model EscrowLedger {

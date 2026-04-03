@@ -26,6 +26,8 @@ interface OverviewTabProps {
     status: string;
     quoteAmount?: string;
     quoteNotes?: string;
+    quoteEstimatedStartAt?: string;
+    quoteEstimatedDurationMinutes?: number;
     quotedAt?: string;
     createdAt?: string;
     quoteReminderSentAt?: string;
@@ -35,8 +37,17 @@ interface OverviewTabProps {
   quoteForm: {
     amount: string;
     notes: string;
+    estimatedStartAt: string;
+    estimatedDurationHours: string;
   };
-  onUpdateQuoteForm: (patch: Partial<{ amount: string; notes: string }>) => void;
+  onUpdateQuoteForm: (
+    patch: Partial<{
+      amount: string;
+      notes: string;
+      estimatedStartAt: string;
+      estimatedDurationHours: string;
+    }>,
+  ) => void;
   onSubmitQuote: (e: React.FormEvent) => Promise<void>;
   onAccept: () => Promise<void>;
   onReject: () => Promise<void>;
@@ -44,6 +55,37 @@ interface OverviewTabProps {
   submittingQuote: boolean;
   accessToken: string | null;
 }
+
+const formatDateTime = (value?: string) => {
+  if (!value) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value));
+  } catch {
+    return '—';
+  }
+};
+
+const formatDuration = (minutes?: number) => {
+  if (!minutes || !Number.isFinite(minutes)) return '—';
+  if (minutes >= 1440 && minutes % 1440 === 0) {
+    const days = minutes / 1440;
+    return `${days} day${days === 1 ? '' : 's'}`;
+  }
+  if (minutes >= 60 && minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} hour${hours === 1 ? '' : 's'}`;
+  }
+  if (minutes >= 60) {
+    return `${(minutes / 60).toFixed(1).replace(/\.0$/, '')} hours`;
+  }
+  return `${minutes} min`;
+};
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   project,
@@ -192,6 +234,41 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   placeholder="Add any additional notes about your quote..."
                 />
               </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="estimatedStartAt" className="block text-sm font-semibold text-white mb-1">
+                    Estimated Start *
+                  </label>
+                  <input
+                    id="estimatedStartAt"
+                    type="datetime-local"
+                    required
+                    disabled={submittingQuote || isInitialQuoteLocked}
+                    value={quoteForm.estimatedStartAt}
+                    onChange={(e) => onUpdateQuoteForm({ estimatedStartAt: e.target.value })}
+                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="estimatedDurationHours" className="block text-sm font-semibold text-white mb-1">
+                    Estimated Duration (hours) *
+                  </label>
+                  <input
+                    id="estimatedDurationHours"
+                    type="number"
+                    step="0.5"
+                    min="0.5"
+                    required
+                    disabled={submittingQuote || isInitialQuoteLocked}
+                    value={quoteForm.estimatedDurationHours}
+                    onChange={(e) => onUpdateQuoteForm({ estimatedDurationHours: e.target.value })}
+                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                    placeholder="e.g. 8"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -256,6 +333,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Notes</p>
               <p className="text-sm text-slate-300 line-clamp-2">{project.quoteNotes || '—'}</p>
+            </div>
+
+            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Estimated Start</p>
+              <p className="text-sm font-semibold text-white">{formatDateTime(project.quoteEstimatedStartAt)}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Estimated Duration</p>
+              <p className="text-sm font-semibold text-white">{formatDuration(project.quoteEstimatedDurationMinutes)}</p>
             </div>
             
             <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">

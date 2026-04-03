@@ -68,6 +68,37 @@ const formatHKD = (value?: number | string) => {
   return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
 
+const formatDateTime = (date?: string) => {
+  if (!date) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  } catch {
+    return '—';
+  }
+};
+
+const formatDuration = (minutes?: number) => {
+  if (!minutes || !Number.isFinite(minutes)) return '—';
+  if (minutes >= 1440 && minutes % 1440 === 0) {
+    const days = minutes / 1440;
+    return `${days} day${days === 1 ? '' : 's'}`;
+  }
+  if (minutes >= 60 && minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} hour${hours === 1 ? '' : 's'}`;
+  }
+  if (minutes >= 60) {
+    return `${(minutes / 60).toFixed(1).replace(/\.0$/, '')} hours`;
+  }
+  return `${minutes} min`;
+};
+
 const projectStatusBadge: Record<string, string> = {
   pending: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
   approved: 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40',
@@ -282,6 +313,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const projectStatus = project.status ?? 'pending';
   const awardedPro = project.professionals?.find((pp) => pp.status === 'awarded');
   const projectCostValue = Number(awardedPro?.quoteAmount || project.approvedBudget || project.budget || 0);
+  const hasConfirmedSimpleSchedule = Boolean(project.startDate || project.endDate);
+  const hasAwardedQuoteTiming = Boolean(
+    awardedPro?.quoteEstimatedStartAt || awardedPro?.quoteEstimatedDurationMinutes,
+  );
   const hasAiInsights = Boolean(
     project.aiIntake &&
       (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
@@ -565,6 +600,70 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           onToggle={onToggleAccordion}
         >
           <div className="space-y-4">
+            {(hasConfirmedSimpleSchedule || hasAwardedQuoteTiming) && (
+              <div className={`rounded-md p-4 border ${
+                hasConfirmedSimpleSchedule
+                  ? 'bg-emerald-500/10 border-emerald-500/30'
+                  : 'bg-sky-500/10 border-sky-500/30'
+              }`}>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h4 className="font-semibold text-white">
+                      {hasConfirmedSimpleSchedule ? 'Agreed Simple Schedule' : 'Quoted Availability'}
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-1">
+                      {hasConfirmedSimpleSchedule
+                        ? 'This reflects the latest confirmed simple schedule for the project.'
+                        : 'This timing came from the awarded quotation and can be confirmed in the schedule workflow.'}
+                    </p>
+                  </div>
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    hasConfirmedSimpleSchedule
+                      ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40'
+                      : 'bg-sky-500/20 text-sky-200 border border-sky-500/40'
+                  }`}>
+                    {hasConfirmedSimpleSchedule ? 'Confirmed' : 'Estimate'}
+                  </span>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3 text-sm">
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Start</p>
+                    <p className="font-medium text-white">
+                      {hasConfirmedSimpleSchedule
+                        ? formatDateTime(project.startDate)
+                        : formatDateTime(awardedPro?.quoteEstimatedStartAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">End</p>
+                    <p className="font-medium text-white">
+                      {hasConfirmedSimpleSchedule ? formatDateTime(project.endDate) : 'Pending confirmation'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Duration</p>
+                    <p className="font-medium text-white">
+                      {hasConfirmedSimpleSchedule
+                        ? project.startDate && project.endDate
+                          ? formatDuration(
+                              Math.max(
+                                0,
+                                Math.round(
+                                  (new Date(project.endDate).getTime() -
+                                    new Date(project.startDate).getTime()) /
+                                    60000,
+                                ),
+                              ),
+                            )
+                          : '—'
+                        : formatDuration(awardedPro?.quoteEstimatedDurationMinutes)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Schedule Section */}
             <div className="rounded-md bg-slate-800/50 p-4 border border-slate-700">
               <div className="flex items-center justify-between mb-3">

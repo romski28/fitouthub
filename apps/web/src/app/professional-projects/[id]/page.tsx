@@ -35,6 +35,8 @@ interface ProjectDetail {
   status: string;
   quoteAmount?: string;
   quoteNotes?: string;
+  quoteEstimatedStartAt?: string;
+  quoteEstimatedDurationMinutes?: number;
   quotedAt?: string;
   respondedAt?: string;
   createdAt?: string;
@@ -80,6 +82,20 @@ interface SiteAccessStatus {
   siteAccessData: SiteAccessData | null;
 }
 
+const toDateTimeLocalValue = (value?: string | null) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const durationMinutesToHoursInput = (value?: number | null) => {
+  if (value == null || !Number.isFinite(value)) return '';
+  const hours = value / 60;
+  return Number.isInteger(hours) ? String(hours) : hours.toFixed(2).replace(/\.00$/, '').replace(/0$/, '');
+};
+
 interface SiteAccessVisit {
   id: string;
   status: 'proposed' | 'accepted' | 'declined' | 'cancelled' | 'completed' | string;
@@ -119,6 +135,8 @@ export default function ProjectDetailPage() {
   const [quoteForm, setQuoteForm] = useState({
     amount: '',
     notes: '',
+    estimatedStartAt: '',
+    estimatedDurationHours: '',
   });
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -233,6 +251,8 @@ export default function ProjectDetailPage() {
           setQuoteForm({
             amount: data.quoteAmount,
             notes: data.quoteNotes || '',
+            estimatedStartAt: toDateTimeLocalValue(data.quoteEstimatedStartAt),
+            estimatedDurationHours: durationMinutesToHoursInput(data.quoteEstimatedDurationMinutes),
           });
         }
       } catch (err) {
@@ -576,6 +596,24 @@ export default function ProjectDetailPage() {
       return;
     }
 
+    if (!quoteForm.estimatedStartAt) {
+      setError('Please enter an estimated start date and time');
+      return;
+    }
+
+    if (!quoteForm.estimatedDurationHours) {
+      setError('Please enter an estimated duration');
+      return;
+    }
+
+    const durationHours = parseFloat(quoteForm.estimatedDurationHours);
+    if (isNaN(durationHours) || durationHours <= 0) {
+      setError('Please enter a valid estimated duration');
+      return;
+    }
+
+    const quoteEstimatedDurationMinutes = Math.round(durationHours * 60);
+
     setSubmittingQuote(true);
     setError(null);
 
@@ -598,6 +636,8 @@ export default function ProjectDetailPage() {
               professionalId: project.professionalId || project.projectId /* fallback to projectProfessionalId is incorrect but kept to avoid undefined */,
               quoteAmount: amount,
               quoteNotes: quoteForm.notes,
+              quoteEstimatedStartAt: quoteForm.estimatedStartAt,
+              quoteEstimatedDurationMinutes,
             }),
           },
         );
@@ -614,6 +654,8 @@ export default function ProjectDetailPage() {
             body: JSON.stringify({
               quoteAmount: amount,
               quoteNotes: quoteForm.notes,
+              quoteEstimatedStartAt: quoteForm.estimatedStartAt,
+              quoteEstimatedDurationMinutes,
             }),
           },
         );
@@ -632,7 +674,17 @@ export default function ProjectDetailPage() {
         setProject(result.projectProfessional);
       }
       setError(null);
-      setQuoteForm({ amount: '', notes: '' }); // Clear form
+      const nextProject = isUpdate && result.projectProfessional
+        ? { ...(project || {}), ...result.projectProfessional }
+        : result.projectProfessional;
+      setQuoteForm({
+        amount: nextProject?.quoteAmount ? String(nextProject.quoteAmount) : quoteForm.amount,
+        notes: nextProject?.quoteNotes || '',
+        estimatedStartAt: toDateTimeLocalValue(nextProject?.quoteEstimatedStartAt) || quoteForm.estimatedStartAt,
+        estimatedDurationHours:
+          durationMinutesToHoursInput(nextProject?.quoteEstimatedDurationMinutes) ||
+          quoteForm.estimatedDurationHours,
+      });
       await showWorkflowSuccessToast({
         successMessage: isUpdate
           ? 'Quote updated successfully!'
@@ -1254,6 +1306,8 @@ export default function ProjectDetailPage() {
               projectId={project.project.id}
               projectProfessionalId={projectProfessionalId}
               projectStatus={project.status}
+              quoteEstimatedStartAt={project.quoteEstimatedStartAt}
+              quoteEstimatedDurationMinutes={project.quoteEstimatedDurationMinutes}
               tradeId=""
               accessToken={accessToken || null}
               onMilestonesUpdate={() => {

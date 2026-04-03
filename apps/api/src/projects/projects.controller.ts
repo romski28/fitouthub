@@ -24,6 +24,8 @@ import { RespondSiteAccessRequestDto } from './dto/respond-site-access-request.d
 import { SiteAccessDataDto } from './dto/site-access-data.dto';
 import { RequestSiteVisitDto } from './dto/request-site-visit.dto';
 import { RespondSiteVisitDto } from './dto/respond-site-visit.dto';
+import { RequestProjectStartProposalDto } from './dto/request-project-start-proposal.dto';
+import { RespondProjectStartProposalDto } from './dto/respond-project-start-proposal.dto';
 import { ConfirmSiteVisitDto } from './dto/confirm-site-visit.dto';
 import { ProjectLocationDetailsDto } from './dto/project-location-details.dto';
 import { ChatService } from '../chat/chat.service';
@@ -282,6 +284,8 @@ export class ProjectsController {
       professionalId: string;
       quoteAmount: number;
       quoteNotes?: string;
+      quoteEstimatedStartAt?: string;
+      quoteEstimatedDurationMinutes?: number;
     },
   ) {
     return this.projectsService.submitQuote(
@@ -289,6 +293,8 @@ export class ProjectsController {
       quoteDto.professionalId,
       quoteDto.quoteAmount,
       quoteDto.quoteNotes,
+      quoteDto.quoteEstimatedStartAt,
+      quoteDto.quoteEstimatedDurationMinutes,
     );
   }
 
@@ -395,6 +401,41 @@ export class ProjectsController {
     return this.projectsService.requestSiteVisit(projectId, professionalId, body);
   }
 
+  @Post(':id/start-proposals')
+  @UseGuards(CombinedAuthGuard)
+  async requestProjectStartProposal(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: RequestProjectStartProposalDto,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can propose project start details', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.requestProjectStartProposal(projectId, professionalId, body);
+  }
+
+  @Put('start-proposals/:proposalId/respond')
+  @UseGuards(CombinedAuthGuard)
+  async respondToProjectStartProposal(
+    @Param('proposalId') proposalId: string,
+    @Request() req: any,
+    @Body() body: RespondProjectStartProposalDto,
+  ) {
+    const isProfessional = !!req.user?.isProfessional;
+    const actorId = req.user?.id || req.user?.sub;
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.respondToProjectStartProposal(proposalId, actorId, isProfessional, body);
+  }
+
   @Put('site-visits/:visitId/respond')
   @UseGuards(CombinedAuthGuard)
   async respondToSiteVisit(
@@ -460,6 +501,20 @@ export class ProjectsController {
     }
 
     return this.projectsService.getSiteVisits(projectId, actorId, !!req.user?.isProfessional);
+  }
+
+  @Get(':id/start-proposals')
+  @UseGuards(CombinedAuthGuard)
+  async getProjectStartProposals(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    const actorId = req.user?.id || req.user?.sub;
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.getProjectStartProposals(projectId, actorId, !!req.user?.isProfessional);
   }
 
   @Get(':id/site-access/requests')
@@ -534,13 +589,21 @@ export class ProjectsController {
   async updateQuote(
     @Param('id') projectId: string,
     @Body()
-    body: { professionalId: string; quoteAmount: number; quoteNotes?: string },
+    body: {
+      professionalId: string;
+      quoteAmount: number;
+      quoteNotes?: string;
+      quoteEstimatedStartAt?: string;
+      quoteEstimatedDurationMinutes?: number;
+    },
   ) {
     return this.projectsService.updateQuote(
       projectId,
       body.professionalId,
       body.quoteAmount,
       body.quoteNotes,
+      body.quoteEstimatedStartAt,
+      body.quoteEstimatedDurationMinutes,
     );
   }
 

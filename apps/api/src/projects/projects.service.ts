@@ -193,6 +193,15 @@ export class ProjectsService {
         if (!merged.quoteNotes && e?.quoteNotes) {
           merged.quoteNotes = e.quoteNotes;
         }
+        if (!merged.quoteEstimatedStartAt && e?.quoteEstimatedStartAt) {
+          merged.quoteEstimatedStartAt = e.quoteEstimatedStartAt;
+        }
+        if (
+          merged.quoteEstimatedDurationMinutes == null &&
+          e?.quoteEstimatedDurationMinutes != null
+        ) {
+          merged.quoteEstimatedDurationMinutes = e.quoteEstimatedDurationMinutes;
+        }
         if (!merged.quotedAt && e?.quotedAt) {
           merged.quotedAt = e.quotedAt;
         }
@@ -236,6 +245,66 @@ export class ProjectsService {
       senderProId,
       content,
     );
+  }
+
+  private normalizeQuoteSchedule(
+    input: {
+      quoteEstimatedStartAt?: string | Date | null;
+      quoteEstimatedDurationMinutes?: number | string | null;
+    },
+    options?: { required?: boolean },
+  ) {
+    const rawStart = input.quoteEstimatedStartAt;
+    const rawDuration = input.quoteEstimatedDurationMinutes;
+    const hasStart =
+      rawStart !== undefined &&
+      rawStart !== null &&
+      String(rawStart).trim().length > 0;
+    const hasDuration =
+      rawDuration !== undefined &&
+      rawDuration !== null &&
+      String(rawDuration).trim().length > 0;
+
+    if (!hasStart && !hasDuration) {
+      if (options?.required) {
+        throw new BadRequestException(
+          'Estimated start date and duration are required when submitting a quote',
+        );
+      }
+
+      return {
+        quoteEstimatedStartAt: null,
+        quoteEstimatedDurationMinutes: null,
+      };
+    }
+
+    if (!hasStart || !hasDuration) {
+      throw new BadRequestException(
+        'Estimated start date and duration must be provided together',
+      );
+    }
+
+    const quoteEstimatedStartAt =
+      rawStart instanceof Date ? rawStart : new Date(String(rawStart));
+    if (Number.isNaN(quoteEstimatedStartAt.getTime())) {
+      throw new BadRequestException('Invalid estimated start date');
+    }
+
+    const durationMinutes = Number(rawDuration);
+    if (!Number.isFinite(durationMinutes) || durationMinutes < 30) {
+      throw new BadRequestException(
+        'Estimated duration must be at least 30 minutes',
+      );
+    }
+
+    if (durationMinutes > 60 * 24 * 365) {
+      throw new BadRequestException('Estimated duration is too large');
+    }
+
+    return {
+      quoteEstimatedStartAt,
+      quoteEstimatedDurationMinutes: Math.round(durationMinutes),
+    };
   }
 
   private normalizePhotos(
@@ -1514,6 +1583,8 @@ Please review the project details and respond with your quote or decline the inv
     professionalId: string,
     quoteAmount: number,
     quoteNotes?: string,
+    quoteEstimatedStartAt?: string,
+    quoteEstimatedDurationMinutes?: number,
   ) {
     // Verify professional has accepted this project
     const projectProfessional =
@@ -1594,6 +1665,13 @@ Please review the project details and respond with your quote or decline the inv
       !!latestAccessRequest?.visitedAt || latestAccessRequest?.status === 'visited';
     const isRemoteQuote = !hasApprovedAccess || (isVisitScheduled && !hasVisited);
     const visitApprovedButNotDone = isVisitScheduled && !hasVisited;
+    const quoteSchedule = this.normalizeQuoteSchedule(
+      {
+        quoteEstimatedStartAt,
+        quoteEstimatedDurationMinutes,
+      },
+      { required: true },
+    );
 
     // Update ProjectProfessional with quote
     await this.prisma.projectProfessional.update({
@@ -1607,6 +1685,9 @@ Please review the project details and respond with your quote or decline the inv
         status: 'quoted',
         quoteAmount,
         quoteNotes,
+        quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
+        quoteEstimatedDurationMinutes:
+          quoteSchedule.quoteEstimatedDurationMinutes,
         quotedAt: new Date(),
         visitApprovedButNotDone,
       },
@@ -1801,6 +1882,275 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     return project;
+  }
+
+  private formatDurationMinutes(durationMinutes: number) {
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return 'unspecified duration';
+    }
+
+    if (durationMinutes < 60) {
+      return `${durationMinutes} min`;
+    }
+
+    const hours = durationMinutes / 60;
+    if (Number.isInteger(hours)) {
+      return `${hours} hour${hours === 1 ? '' : 's'}`;
+    }
+
+    return `${hours.toFixed(1).replace(/\.0$/, '')} hours`;
+  }
+
+  private calculateProposalEndDate(startAt: Date, durationMinutes: number) {
+    return new Date(startAt.getTime() + durationMinutes * 60 * 1000);
+  }
+
+  async requestProjectStartProposal(
+    projectId: string,
+    professionalId: string,
+    body: { scheduledAt: string; durationMinutes: number; notes?: string },
+  ) {
+    const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null;
+    if (!scheduledAt || Number.isNaN(scheduledAt.getTime())) {
+      throw new BadRequestException('scheduledAt is required');
+    }
+
+    const durationMinutes = Number(body.durationMinutes);
+    if (!Number.isFinite(durationMinutes) || durationMinutes < 30) {
+      throw new BadRequestException('durationMinutes must be at least 30');
+    }
+    if (durationMinutes > 60 * 24 * 30) {
+      throw new BadRequestException('durationMinutes is too large');
+    }
+
+    const projectProfessional = await this.prisma.projectProfessional.findUnique({
+      where: {
+        projectId_professionalId: {
+          projectId,
+          professionalId,
+        },
+      },
+      include: {
+        professional: true,
+        project: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!projectProfessional) {
+      throw new BadRequestException('Professional is not linked to this project');
+    }
+
+    if (projectProfessional.status !== 'awarded') {
+      throw new BadRequestException('Start details can only be proposed for awarded projects');
+    }
+
+    await this.prisma.projectStartProposal.updateMany({
+      where: {
+        projectId,
+        projectProfessionalId: projectProfessional.id,
+        status: 'proposed',
+      },
+      data: {
+        status: 'superseded',
+        respondedAt: new Date(),
+      },
+    });
+
+    const proposal = await this.prisma.projectStartProposal.create({
+      data: {
+        projectId,
+        projectProfessionalId: projectProfessional.id,
+        professionalId,
+        proposedStartAt: scheduledAt,
+        durationMinutes,
+        notes: body.notes?.trim() || undefined,
+        status: 'proposed',
+      },
+      include: {
+        project: true,
+        professional: true,
+        projectProfessional: true,
+      },
+    });
+
+    const professionalName =
+      projectProfessional.professional?.businessName ||
+      projectProfessional.professional?.fullName ||
+      'Professional';
+    const durationLabel = this.formatDurationMinutes(durationMinutes);
+    await this.addProjectChatMessage(
+      projectId,
+      'professional',
+      null,
+      professionalId,
+      `${professionalName} proposed starting on ${this.formatDateTime(scheduledAt)} for an estimated ${durationLabel}.${body.notes ? ` Notes: ${body.notes}` : ''}`,
+    );
+
+    try {
+      const client = projectProfessional.project?.user;
+      if (client?.id && client?.mobile) {
+        await this.notificationService.send({
+          userId: client.id,
+          phoneNumber: client.mobile,
+          eventType: 'project_start_proposed',
+          message: `${professionalName} proposed a project start on ${this.formatDateTime(scheduledAt)} for "${projectProfessional.project.projectName}" (${durationLabel}).`,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send start proposal notification:', error);
+    }
+
+    return {
+      success: true,
+      proposal: {
+        ...proposal,
+        projectedEndAt: this.calculateProposalEndDate(scheduledAt, durationMinutes),
+      },
+    };
+  }
+
+  async respondToProjectStartProposal(
+    proposalId: string,
+    actorId: string,
+    isProfessional: boolean,
+    body: { status: 'accepted' | 'declined'; responseNotes?: string },
+  ) {
+    if (isProfessional) {
+      throw new BadRequestException('Only clients can respond to start proposals');
+    }
+
+    const proposal = await this.prisma.projectStartProposal.findUnique({
+      where: { id: proposalId },
+      include: {
+        project: {
+          include: { user: true },
+        },
+        professional: true,
+        projectProfessional: true,
+      },
+    });
+
+    if (!proposal) {
+      throw new BadRequestException('Start proposal not found');
+    }
+
+    if (proposal.status !== 'proposed') {
+      throw new BadRequestException('This start proposal has already been responded to');
+    }
+
+    await this.assertClientProjectAccess(proposal.projectId, actorId);
+
+    const responseNotes = body.responseNotes?.trim() || undefined;
+    const projectedEndAt = this.calculateProposalEndDate(proposal.proposedStartAt, proposal.durationMinutes);
+
+    const updated = await this.prisma.$transaction(async (prisma) => {
+      const updatedProposal = await prisma.projectStartProposal.update({
+        where: { id: proposalId },
+        data: {
+          status: body.status,
+          respondedAt: new Date(),
+          respondedBy: actorId,
+          responseNotes,
+        },
+      });
+
+      if (body.status === 'accepted') {
+        await prisma.projectStartProposal.updateMany({
+          where: {
+            projectId: proposal.projectId,
+            projectProfessionalId: proposal.projectProfessionalId,
+            status: 'accepted',
+            id: { not: proposalId },
+          },
+          data: {
+            status: 'superseded',
+            respondedAt: new Date(),
+          },
+        });
+
+        await prisma.project.update({
+          where: { id: proposal.projectId },
+          data: {
+            startDate: proposal.proposedStartAt,
+            endDate: projectedEndAt,
+          },
+        });
+      }
+
+      return updatedProposal;
+    });
+
+    const professionalName =
+      proposal.professional?.businessName || proposal.professional?.fullName || 'Professional';
+    const durationLabel = this.formatDurationMinutes(proposal.durationMinutes);
+
+    await this.addProjectChatMessage(
+      proposal.projectId,
+      'client',
+      actorId,
+      null,
+      body.status === 'accepted'
+        ? `Client accepted the proposed start of ${this.formatDateTime(proposal.proposedStartAt)} (${durationLabel}).`
+        : `Client declined the proposed start of ${this.formatDateTime(proposal.proposedStartAt)}${responseNotes ? `: ${responseNotes}` : '.'}`,
+    );
+
+    try {
+      if (proposal.professional?.id && proposal.professional?.phone) {
+        await this.notificationService.send({
+          professionalId: proposal.professional.id,
+          phoneNumber: proposal.professional.phone,
+          eventType: body.status === 'accepted' ? 'project_start_accepted' : 'project_start_declined',
+          message: body.status === 'accepted'
+            ? `Your proposed start for "${proposal.project.projectName}" was accepted. Agreed start: ${this.formatDateTime(proposal.proposedStartAt)}.`
+            : `Your proposed start for "${proposal.project.projectName}" was declined${responseNotes ? `: ${responseNotes}` : '.'}`,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send start proposal response notification:', error);
+    }
+
+    return {
+      success: true,
+      proposal: {
+        ...updated,
+        projectedEndAt,
+      },
+    };
+  }
+
+  async getProjectStartProposals(projectId: string, actorId: string, isProfessional: boolean) {
+    if (isProfessional) {
+      await this.prisma.projectProfessional.findFirst({
+        where: {
+          projectId,
+          professionalId: actorId,
+        },
+      }).then((projectProfessional) => {
+        if (!projectProfessional) {
+          throw new BadRequestException('You do not have access to this project');
+        }
+      });
+    } else {
+      await this.assertClientProjectAccess(projectId, actorId);
+    }
+
+    const proposals = await this.prisma.projectStartProposal.findMany({
+      where: { projectId },
+      include: {
+        professional: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    return proposals.map((proposal) => ({
+      ...proposal,
+      projectedEndAt: this.calculateProposalEndDate(proposal.proposedStartAt, proposal.durationMinutes),
+    }));
   }
 
   async requestSiteAccess(projectId: string, professionalId: string) {
@@ -3449,6 +3799,8 @@ Please review the project details and respond with your quote or decline the inv
     professionalId: string,
     quoteAmount: number,
     quoteNotes?: string,
+    quoteEstimatedStartAt?: string,
+    quoteEstimatedDurationMinutes?: number,
   ) {
     // Verify ProjectProfessional exists
     const projectProfessional =
@@ -3469,6 +3821,14 @@ Please review the project details and respond with your quote or decline the inv
       throw new Error('Professional not invited to this project');
     }
 
+    const quoteSchedule = this.normalizeQuoteSchedule(
+      {
+        quoteEstimatedStartAt,
+        quoteEstimatedDurationMinutes,
+      },
+      { required: true },
+    );
+
     // Update quote
     const updated = await this.prisma.projectProfessional.update({
       where: {
@@ -3480,6 +3840,9 @@ Please review the project details and respond with your quote or decline the inv
       data: {
         quoteAmount,
         quoteNotes,
+        quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
+        quoteEstimatedDurationMinutes:
+          quoteSchedule.quoteEstimatedDurationMinutes,
         quotedAt: new Date(),
         status: 'quoted', // Reset to quoted for client review
       },
@@ -3494,7 +3857,7 @@ Please review the project details and respond with your quote or decline the inv
         projectProfessionalId: projectProfessional.id,
         senderType: 'professional',
         senderProfessionalId: professionalId,
-        content: `Updated quote: $${quoteAmount}${quoteNotes ? ` - ${quoteNotes}` : ''}`,
+        content: `Updated quote: $${quoteAmount} · Estimated start ${this.formatDateTime(quoteSchedule.quoteEstimatedStartAt)} · Duration ${this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes || 0)}${quoteNotes ? ` - ${quoteNotes}` : ''}`,
       },
     });
 

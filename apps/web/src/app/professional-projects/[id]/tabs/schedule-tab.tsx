@@ -31,11 +31,25 @@ interface Milestone {
   updatedAt: string;
 }
 
+interface StartProposal {
+  id: string;
+  status: 'proposed' | 'accepted' | 'declined' | 'superseded' | string;
+  proposedStartAt: string;
+  durationMinutes: number;
+  notes?: string | null;
+  responseNotes?: string | null;
+  respondedAt?: string | null;
+  projectedEndAt?: string;
+  createdAt: string;
+}
+
 interface ScheduleTabProps {
   tab?: string;
   projectId: string;
   projectProfessionalId: string;
   projectStatus: string;
+  quoteEstimatedStartAt?: string;
+  quoteEstimatedDurationMinutes?: number;
   tradeId?: string;
   accessToken: string | null;
   onMilestonesUpdate?: () => void;
@@ -45,16 +59,27 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   projectId,
   projectProfessionalId,
   projectStatus,
+  quoteEstimatedStartAt,
+  quoteEstimatedDurationMinutes,
   tradeId,
   accessToken,
   onMilestonesUpdate,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [startProposals, setStartProposals] = useState<StartProposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
+  const [proposalSubmitting, setProposalSubmitting] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+  const [proposalDate, setProposalDate] = useState('');
+  const [proposalTime, setProposalTime] = useState('09:00');
+  const [proposalDurationHours, setProposalDurationHours] = useState('4');
+  const [proposalNotes, setProposalNotes] = useState('');
+  const [proposalFormInitialized, setProposalFormInitialized] = useState(false);
+  const [prefilledFromQuote, setPrefilledFromQuote] = useState(false);
 
   const isAwarded = projectStatus === 'awarded';
 
@@ -82,6 +107,24 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const isSameDate = (date1?: string | null, date2?: string | null) => {
     if (!date1 || !date2) return true;
     return date1.split("T")[0] === date2.split("T")[0];
+  };
+
+  const formatDateTime = (dateStr?: string) => {
+    if (!dateStr) return 'Not set';
+    return new Date(dateStr).toLocaleString('en-HK', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDuration = (durationMinutes?: number) => {
+    if (!durationMinutes) return 'Not set';
+    if (durationMinutes < 60) return `${durationMinutes} min`;
+    const hours = durationMinutes / 60;
+    return `${hours % 1 === 0 ? hours.toFixed(0) : hours.toFixed(1)} hour${hours === 1 ? '' : 's'}`;
   };
 
   const getStatusPercent = (status: string, percentComplete: number) => {
@@ -131,6 +174,162 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
     fetchMilestones();
   }, [projectProfessionalId, accessToken]);
+
+  useEffect(() => {
+    if (!projectId || !accessToken || !isAwarded) return;
+
+    const fetchStartProposals = async () => {
+      try {
+        setProposalLoading(true);
+        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/start-proposals`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok && response.status !== 404) {
+          throw new Error('Failed to load start proposal');
+        }
+
+        if (!response.ok) {
+          setStartProposals([]);
+          return;
+        }
+
+        const data = await response.json();
+        setStartProposals(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching start proposals:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load start proposal');
+      } finally {
+        setProposalLoading(false);
+      }
+    };
+
+    fetchStartProposals();
+  }, [projectId, accessToken, isAwarded]);
+
+  const handleSubmitStartProposal = async () => {
+    if (!accessToken) {
+      setError('Authentication required');
+      return;
+    }
+
+    if (!proposalDate || !proposalTime) {
+      setError('Please choose a proposed start date and time');
+      return;
+    }
+
+    const durationHours = Number(proposalDurationHours);
+    if (!Number.isFinite(durationHours) || durationHours <= 0) {
+      setError('Please enter a valid duration');
+      return;
+    }
+
+    const scheduledAt = new Date(`${proposalDate}T${proposalTime}`);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      setError('Please enter a valid start date and time');
+      return;
+    }
+
+    try {
+      setProposalSubmitting(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/start-proposals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          scheduledAt: scheduledAt.toISOString(),
+          durationMinutes: Math.round(durationHours * 60),
+          notes: proposalNotes || undefined,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send start proposal');
+      }
+
+      if (data?.proposal) {
+        setStartProposals((prev) => [data.proposal, ...prev.filter((p) => p.id !== data.proposal.id)]);
+      }
+      setProposalNotes('');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: { message: 'Start proposal sent to client', type: 'success' }
+        }));
+      }
+    } catch (err) {
+      console.error('Error submitting start proposal:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send start proposal');
+    } finally {
+      setProposalSubmitting(false);
+    }
+  };
+
+  const latestStartProposal = startProposals[0];
+
+  useEffect(() => {
+    if (!isAwarded || proposalFormInitialized) return;
+
+    if (latestStartProposal?.proposedStartAt) {
+      const start = new Date(latestStartProposal.proposedStartAt);
+      if (!Number.isNaN(start.getTime())) {
+        const pad = (value: number) => String(value).padStart(2, '0');
+        setProposalDate(
+          `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+        );
+        setProposalTime(`${pad(start.getHours())}:${pad(start.getMinutes())}`);
+      }
+
+      if (latestStartProposal.durationMinutes) {
+        const hours = latestStartProposal.durationMinutes / 60;
+        setProposalDurationHours(
+          Number.isInteger(hours)
+            ? String(hours)
+            : hours.toFixed(1).replace(/\.0$/, ''),
+        );
+      }
+
+      setProposalNotes(latestStartProposal.notes || '');
+      setPrefilledFromQuote(false);
+      setProposalFormInitialized(true);
+      return;
+    }
+
+    if (quoteEstimatedStartAt) {
+      const quotedStart = new Date(quoteEstimatedStartAt);
+      if (!Number.isNaN(quotedStart.getTime())) {
+        const pad = (value: number) => String(value).padStart(2, '0');
+        setProposalDate(
+          `${quotedStart.getFullYear()}-${pad(quotedStart.getMonth() + 1)}-${pad(quotedStart.getDate())}`,
+        );
+        setProposalTime(`${pad(quotedStart.getHours())}:${pad(quotedStart.getMinutes())}`);
+      }
+
+      if (quoteEstimatedDurationMinutes) {
+        const quotedHours = quoteEstimatedDurationMinutes / 60;
+        setProposalDurationHours(
+          Number.isInteger(quotedHours)
+            ? String(quotedHours)
+            : quotedHours.toFixed(1).replace(/\.0$/, ''),
+        );
+      }
+
+      setPrefilledFromQuote(true);
+      setProposalFormInitialized(true);
+    }
+  }, [
+    isAwarded,
+    latestStartProposal,
+    proposalFormInitialized,
+    quoteEstimatedStartAt,
+    quoteEstimatedDurationMinutes,
+  ]);
 
   const handleSaveMilestone = async (milestone: {
     title: string;
@@ -358,6 +557,126 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
               <p className="text-sm font-medium text-rose-200">{error}</p>
             </div>
           )}
+
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">Simple lane</p>
+                <h3 className="mt-1 text-lg font-semibold text-white">Propose start date, time and duration</h3>
+                <p className="mt-2 text-sm text-slate-200">
+                  Best for simple jobs. For more involved work, keep using the detailed task schedule below as the progress and payment lane.
+                </p>
+                {latestStartProposal && (
+                  <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-200">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-white">Latest proposal:</span>
+                      <span className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${
+                        latestStartProposal.status === 'accepted'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                          : latestStartProposal.status === 'proposed'
+                            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                            : latestStartProposal.status === 'declined'
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                              : 'bg-slate-500/20 text-slate-300 border border-slate-500/40'
+                      }`}>
+                        {latestStartProposal.status}
+                      </span>
+                    </div>
+                    <p className="mt-2">Start: <span className="font-medium text-white">{formatDateTime(latestStartProposal.proposedStartAt)}</span></p>
+                    <p>Estimated duration: <span className="font-medium text-white">{formatDuration(latestStartProposal.durationMinutes)}</span></p>
+                    {latestStartProposal.projectedEndAt && (
+                      <p>Estimated finish: <span className="font-medium text-white">{formatDateTime(latestStartProposal.projectedEndAt)}</span></p>
+                    )}
+                    {latestStartProposal.notes && <p className="mt-2 text-slate-300">Notes: {latestStartProposal.notes}</p>}
+                    {latestStartProposal.responseNotes && <p className="mt-2 text-slate-300">Client response: {latestStartProposal.responseNotes}</p>}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full max-w-xl rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+                {prefilledFromQuote && !latestStartProposal && (
+                  <div className="mb-3 rounded-md border border-sky-500/40 bg-sky-500/15 px-3 py-2 text-xs text-sky-200">
+                    Prefilled from your awarded quote timing. Confirm and send this to the client for approval.
+                  </div>
+                )}
+                <div className="grid gap-3 md:grid-cols-3">
+                  <label className="text-sm text-slate-200">
+                    <span className="mb-1 block">Start date</span>
+                    <input
+                      type="date"
+                      value={proposalDate}
+                      onChange={(e) => {
+                        setProposalDate(e.target.value);
+                        setPrefilledFromQuote(false);
+                        setProposalFormInitialized(true);
+                      }}
+                      className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-white"
+                    />
+                  </label>
+                  <label className="text-sm text-slate-200">
+                    <span className="mb-1 block">Start time</span>
+                    <input
+                      type="time"
+                      value={proposalTime}
+                      onChange={(e) => {
+                        setProposalTime(e.target.value);
+                        setPrefilledFromQuote(false);
+                        setProposalFormInitialized(true);
+                      }}
+                      className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-white"
+                    />
+                  </label>
+                  <label className="text-sm text-slate-200">
+                    <span className="mb-1 block">Duration (hrs)</span>
+                    <input
+                      type="number"
+                      min="0.5"
+                      step="0.5"
+                      value={proposalDurationHours}
+                      onChange={(e) => {
+                        setProposalDurationHours(e.target.value);
+                        setPrefilledFromQuote(false);
+                        setProposalFormInitialized(true);
+                      }}
+                      className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-white"
+                    />
+                  </label>
+                </div>
+                <label className="mt-3 block text-sm text-slate-200">
+                  <span className="mb-1 block">Notes for client</span>
+                  <textarea
+                    rows={3}
+                    value={proposalNotes}
+                    onChange={(e) => {
+                      setProposalNotes(e.target.value);
+                      setPrefilledFromQuote(false);
+                      setProposalFormInitialized(true);
+                    }}
+                    placeholder="Optional notes about access, materials, or timing"
+                    className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-white"
+                  />
+                </label>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-slate-400">
+                    {proposalLoading ? 'Loading previous proposals…' : 'You can revise by sending an updated proposal.'}
+                  </p>
+                  <button
+                    onClick={handleSubmitStartProposal}
+                    disabled={proposalSubmitting}
+                    className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {proposalSubmitting
+                      ? 'Sending…'
+                      : latestStartProposal?.status === 'proposed'
+                        ? 'Update Proposal'
+                        : prefilledFromQuote
+                          ? 'Confirm & Send to Client'
+                          : 'Send Proposal'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {loading ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">

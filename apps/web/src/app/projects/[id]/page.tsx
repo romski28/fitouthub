@@ -36,6 +36,8 @@ interface ProjectProfessional {
   quoteExtendedUntil?: string;
   quoteAmount?: string | number;
   quoteNotes?: string;
+  quoteEstimatedStartAt?: string;
+  quoteEstimatedDurationMinutes?: number;
   quotedAt?: string;
   professional: {
     id: string;
@@ -114,6 +116,8 @@ interface SiteAccessRequest {
     id: string;
     status: string;
     quoteAmount?: string | number | null;
+    quoteEstimatedStartAt?: string | null;
+    quoteEstimatedDurationMinutes?: number | null;
     quotedAt?: string | null;
   };
 }

@@ -26,6 +26,22 @@ interface Milestone {
   updatedAt: string;
 }
 
+interface StartProposal {
+  id: string;
+  status: 'proposed' | 'accepted' | 'declined' | 'superseded' | string;
+  proposedStartAt: string;
+  durationMinutes: number;
+  notes?: string | null;
+  responseNotes?: string | null;
+  respondedAt?: string | null;
+  projectedEndAt?: string;
+  createdAt: string;
+  professional?: {
+    businessName?: string | null;
+    fullName?: string | null;
+  };
+}
+
 interface ClientScheduleTabProps {
   tab?: string;
   projectId: string;
@@ -41,8 +57,12 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   awardedProfessionalId,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [startProposals, setStartProposals] = useState<StartProposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
+  const [proposalBusyId, setProposalBusyId] = useState<string | null>(null);
+  const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
   const [declineReasonByMilestone, setDeclineReasonByMilestone] = useState<Record<string, string>>({});
   const [decliningMilestoneId, setDecliningMilestoneId] = useState<string | null>(null);
 
@@ -67,6 +87,91 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
       return `${formatDate(start)} → ${formatDate(end)}`;
     }
     return formatDate(start || end);
+  };
+
+  const formatDateTime = (dateStr?: string) => {
+    if (!dateStr) return 'Not set';
+    return new Date(dateStr).toLocaleString('en-HK', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDuration = (durationMinutes?: number) => {
+    if (!durationMinutes) return 'Not set';
+    if (durationMinutes < 60) return `${durationMinutes} min`;
+    const hours = durationMinutes / 60;
+    return `${hours % 1 === 0 ? hours.toFixed(0) : hours.toFixed(1)} hour${hours === 1 ? '' : 's'}`;
+  };
+
+  const fetchStartProposals = async () => {
+    if (!projectId || !accessToken || !isAwarded) return;
+
+    try {
+      setProposalLoading(true);
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/start-proposals`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Failed to fetch start proposal');
+      }
+
+      if (!response.ok) {
+        setStartProposals([]);
+        return;
+      }
+
+      const data = await response.json();
+      setStartProposals(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching start proposals:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load proposed start details');
+    } finally {
+      setProposalLoading(false);
+    }
+  };
+
+  const handleRespondStartProposal = async (proposalId: string, status: 'accepted' | 'declined') => {
+    if (!accessToken) {
+      setError('Authentication required');
+      return;
+    }
+
+    try {
+      setError(null);
+      setProposalBusyId(proposalId);
+      const response = await fetch(`${API_BASE_URL}/projects/start-proposals/${proposalId}/respond`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          status,
+          responseNotes: proposalResponseNotes[proposalId] || undefined,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to respond to start proposal');
+      }
+
+      if (data?.proposal) {
+        setStartProposals((prev) => prev.map((proposal) => proposal.id === proposalId ? { ...proposal, ...data.proposal } : proposal));
+      }
+    } catch (err) {
+      console.error('Failed to respond to start proposal:', err);
+      setError(err instanceof Error ? err.message : 'Failed to respond to start proposal');
+    } finally {
+      setProposalBusyId(null);
+    }
   };
 
   const handleDeclineAccess = async (milestoneId: string) => {
@@ -153,6 +258,16 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
     fetchMilestones();
   }, [projectId, isAwarded, accessToken]);
 
+  useEffect(() => {
+    fetchStartProposals();
+  }, [projectId, isAwarded, accessToken]);
+
+  const latestStartProposal = startProposals[0];
+  const proposerName = latestStartProposal?.professional?.businessName || latestStartProposal?.professional?.fullName || 'Professional';
+  const hasEarlierDeclinedProposal = startProposals.slice(1).some((proposal) => proposal.status === 'declined');
+  const isResharedForApproval =
+    latestStartProposal?.status === 'proposed' && hasEarlierDeclinedProposal;
+
   return (
     <div className="space-y-6">
       {!isAwarded ? (
@@ -169,6 +284,90 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
             </div>
           )}
 
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">Simple lane</p>
+            <h3 className="mt-1 text-lg font-semibold text-white">Agree simple start details</h3>
+            <p className="mt-2 text-sm text-slate-200">
+              For simple jobs, just agree a start date, time and expected duration. For larger projects, use the detailed schedule further down.
+            </p>
+
+            {proposalLoading ? (
+              <p className="mt-4 text-sm text-slate-300">Loading proposed start details…</p>
+            ) : !latestStartProposal ? (
+              <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
+                No start proposal yet. The awarded professional can send one from their Schedule tab.
+              </div>
+            ) : (
+              <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/60 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold text-white">{proposerName}</span>
+                  <span className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${
+                    latestStartProposal.status === 'accepted'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : latestStartProposal.status === 'proposed'
+                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                        : latestStartProposal.status === 'declined'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                          : 'bg-slate-500/20 text-slate-300 border border-slate-500/40'
+                  }`}>
+                    {latestStartProposal.status}
+                  </span>
+                  {isResharedForApproval && (
+                    <span className="rounded-full px-2 py-1 text-[11px] font-semibold uppercase bg-amber-500/20 text-amber-200 border border-amber-500/40">
+                      Reshared for approval
+                    </span>
+                  )}
+                </div>
+                {isResharedForApproval && (
+                  <p className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                    The professional updated the timing after earlier feedback and has resent it for your approval.
+                  </p>
+                )}
+                <div className="mt-3 space-y-1 text-sm text-slate-200">
+                  <p>Proposed start: <span className="font-medium text-white">{formatDateTime(latestStartProposal.proposedStartAt)}</span></p>
+                  <p>Estimated duration: <span className="font-medium text-white">{formatDuration(latestStartProposal.durationMinutes)}</span></p>
+                  {latestStartProposal.projectedEndAt && (
+                    <p>Estimated finish: <span className="font-medium text-white">{formatDateTime(latestStartProposal.projectedEndAt)}</span></p>
+                  )}
+                </div>
+                {latestStartProposal.notes && (
+                  <p className="mt-3 text-sm text-slate-300">Notes: {latestStartProposal.notes}</p>
+                )}
+                {latestStartProposal.responseNotes && latestStartProposal.status !== 'proposed' && (
+                  <p className="mt-2 text-sm text-slate-300">Response: {latestStartProposal.responseNotes}</p>
+                )}
+
+                {latestStartProposal.status === 'proposed' && (
+                  <div className="mt-4 space-y-3">
+                    <textarea
+                      value={proposalResponseNotes[latestStartProposal.id] || ''}
+                      onChange={(e) => setProposalResponseNotes((prev) => ({ ...prev, [latestStartProposal.id]: e.target.value }))}
+                      placeholder="Optional note if you need a change or want to add context"
+                      className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"
+                      rows={3}
+                    />
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => handleRespondStartProposal(latestStartProposal.id, 'accepted')}
+                        disabled={proposalBusyId === latestStartProposal.id}
+                        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                      >
+                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Accept Start Details'}
+                      </button>
+                      <button
+                        onClick={() => handleRespondStartProposal(latestStartProposal.id, 'declined')}
+                        disabled={proposalBusyId === latestStartProposal.id}
+                        className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+                      >
+                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Decline / Request Change'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {loading ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
               <p className="text-sm text-slate-300">Loading schedule...</p>
@@ -176,7 +375,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
           ) : milestones.length === 0 ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
               <p className="text-sm text-slate-300">
-                📋 Contractor hasn't set up a project schedule yet. Check back soon for progress milestones and timeline.
+                📋 No detailed task schedule yet. For simple jobs, the agreed start details above may be enough; for more complex work, milestones will appear here.
               </p>
             </div>
           ) : (
