@@ -50,6 +50,21 @@ export class ProjectsController {
     private readonly contractService: ContractService,
   ) {}
 
+  private requireAdmin(req: any): string {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can perform this action');
+    }
+
+    return userId;
+  }
+
   @Get()
   @UseGuards(CombinedAuthGuard)
   async findAll(@Request() req: any) {
@@ -304,6 +319,21 @@ export class ProjectsController {
     @Param('professionalId') professionalId: string,
   ) {
     return this.projectsService.awardQuote(projectId, professionalId);
+  }
+
+  @Post('admin/:id/reverse-award')
+  @UseGuards(AuthGuard('jwt'))
+  async reverseAward(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body()
+    body: {
+      reason: string;
+      reopenPriorQuotes?: boolean;
+    },
+  ) {
+    const adminUserId = this.requireAdmin(req);
+    return this.projectsService.reverseAward(projectId, adminUserId, body);
   }
 
   @Post(':id/site-access/request')

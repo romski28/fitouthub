@@ -1435,6 +1435,7 @@ export default function ClientProjectDetailPage() {
                 p.id === pp.id
                   ? {
                       ...p,
+                      status: data.status || p.status,
                       quoteReminderSentAt: data.quoteReminderSentAt,
                       quoteExtendedUntil: data.quoteExtendedUntil,
                     }

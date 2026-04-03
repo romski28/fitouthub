@@ -94,7 +94,9 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   onActionBusy,
   actionBusy,
 }) => {
-  const biddingProfessionals = professionals.filter((p) => ['pending', 'accepted', 'quoted'].includes(p.status));
+  const biddingProfessionals = professionals.filter(
+    (p) => !['awarded', 'declined', 'rejected', 'withdrawn', 'award_reversed'].includes((p.status || '').toLowerCase()),
+  );
   const awardedProfessional = professionals.find((p) => p.status === 'awarded');
   const declinedProfessionals = professionals.filter((p) => p.status === 'declined');
 
@@ -184,7 +186,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
           onToggle={onToggleAccordion}
         >
           {biddingProfessionals.length === 0 ? (
-            <p className="text-sm text-slate-300">No professionals have submitted quotes yet.</p>
+            <p className="text-sm text-slate-300">No invited professionals are currently active in bidding.</p>
           ) : (
             <div className="space-y-3">
               {biddingProfessionals.map((pp) => {

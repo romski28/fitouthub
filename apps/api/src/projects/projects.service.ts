@@ -205,6 +205,12 @@ export class ProjectsService {
         if (!merged.quotedAt && e?.quotedAt) {
           merged.quotedAt = e.quotedAt;
         }
+        if (!merged.quoteReminderSentAt && e?.quoteReminderSentAt) {
+          merged.quoteReminderSentAt = e.quoteReminderSentAt;
+        }
+        if (!merged.quoteExtendedUntil && e?.quoteExtendedUntil) {
+          merged.quoteExtendedUntil = e.quoteExtendedUntil;
+        }
         if (!merged.respondedAt && e?.respondedAt) {
           merged.respondedAt = e.respondedAt;
         }
@@ -894,17 +900,10 @@ Please review the project details and respond with your quote or decline the inv
         });
         results.push(created);
       } else {
-        // Preserve existing status if they have already been invited/responded
-        // Otherwise mark as selected for visibility in the UI
-        if (!existing.respondedAt && existing.status === 'pending') {
-          const updated = await this.prisma.projectProfessional.update({
-            where: { id: existing.id },
-            data: { status: 'selected' },
-          });
-          results.push(updated);
-        } else {
-          results.push(existing);
-        }
+        // Preserve existing lifecycle status for already-linked professionals.
+        // Do not downgrade active invitations back to `selected`, otherwise they
+        // disappear from the bidding board even though bidding is still live.
+        results.push(existing);
       }
     }
 
@@ -1785,9 +1784,9 @@ Please review the project details and respond with your quote or decline the inv
       (!project.userId && !project.clientId);
     if (!isOwner) throw new BadRequestException('You do not have access to this project');
 
-    const TERMINAL_STATUSES = ['declined', 'rejected', 'withdrawn', 'quoted', 'awarded', 'counter_requested'];
-    if (TERMINAL_STATUSES.includes(pp.status)) {
-      throw new BadRequestException('Cannot send reminder: professional is in a terminal state');
+    const remindableStatuses = ['selected', 'pending', 'accepted'];
+    if (!remindableStatuses.includes(pp.status)) {
+      throw new BadRequestException('Cannot send reminder: professional is not in an active bidding state');
     }
 
     if (pp.quotedAt) throw new BadRequestException('Professional has already submitted a quote');
@@ -1797,10 +1796,12 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     const quoteExtendedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const nextStatus = pp.status === 'selected' ? 'pending' : pp.status;
 
     const updated = await this.prisma.projectProfessional.update({
       where: { id: ppId },
       data: {
+        status: nextStatus,
         quoteReminderSentAt: new Date(),
         quoteExtendedUntil,
       } as any,
@@ -1858,6 +1859,7 @@ Please review the project details and respond with your quote or decline the inv
 
     return {
       success: true,
+      status: (updated as any).status,
       quoteReminderSentAt: (updated as any).quoteReminderSentAt,
       quoteExtendedUntil: (updated as any).quoteExtendedUntil,
     };
@@ -3650,6 +3652,220 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     return awarded;
+  }
+
+  async reverseAward(
+    projectId: string,
+    adminUserId: string,
+    body: { reason: string; reopenPriorQuotes?: boolean },
+  ) {
+    const reason = body.reason?.trim();
+    if (!reason || reason.length < 5) {
+      throw new BadRequestException('A clear admin reason is required to reverse an award');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            mobile: true,
+            email: true,
+          },
+        },
+        professionals: {
+          include: {
+            professional: true,
+            paymentRequests: {
+              select: { id: true },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const awardedProjectProfessional =
+      project.professionals.find((pp: any) => pp.id === project.awardedProjectProfessionalId) ||
+      project.professionals.find((pp: any) => pp.status === 'awarded');
+
+    if (!awardedProjectProfessional) {
+      throw new BadRequestException('No awarded professional is currently attached to this project');
+    }
+
+    const [nonAwardFinancialCount, projectPaymentRequestCount] = await Promise.all([
+      this.prisma.financialTransaction.count({
+        where: {
+          projectId,
+          type: { not: 'quotation_accepted' },
+        },
+      }),
+      this.prisma.paymentRequest.count({
+        where: {
+          projectProfessional: {
+            projectId,
+          },
+        },
+      }),
+    ]);
+
+    const blockers: string[] = [];
+    if (project.clientSignedAt) {
+      blockers.push('client has already signed the contract');
+    }
+    if (project.professionalSignedAt) {
+      blockers.push('professional has already signed the contract');
+    }
+    if (project.escrowHeld && new Decimal(project.escrowHeld.toString()).greaterThan(0)) {
+      blockers.push('escrow funds are already held');
+    }
+    if (nonAwardFinancialCount > 0) {
+      blockers.push('financial activity exists beyond quotation acceptance');
+    }
+    if (projectPaymentRequestCount > 0 || awardedProjectProfessional.paymentRequests?.length > 0) {
+      blockers.push('payment requests already exist for this project');
+    }
+
+    if (blockers.length > 0) {
+      throw new BadRequestException(
+        `Award cannot be reversed automatically because ${blockers.join('; ')}. Please use a managed dispute or cancellation process instead.`,
+      );
+    }
+
+    const reopenPriorQuotes = body.reopenPriorQuotes !== false;
+    const reversedProfessionalName =
+      awardedProjectProfessional.professional?.fullName ||
+      awardedProjectProfessional.professional?.businessName ||
+      awardedProjectProfessional.professional?.email ||
+      'Professional';
+
+    const priorQuotedProfessionals = project.professionals.filter(
+      (pp: any) =>
+        pp.id !== awardedProjectProfessional.id &&
+        !!pp.quotedAt &&
+        ['declined', 'quoted', 'counter_requested'].includes(pp.status),
+    );
+
+    const reopenedIds = reopenPriorQuotes
+      ? priorQuotedProfessionals
+          .filter((pp: any) => pp.status === 'declined' || pp.status === 'counter_requested')
+          .map((pp: any) => pp.id)
+      : [];
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.projectProfessional.update({
+        where: { id: awardedProjectProfessional.id },
+        data: {
+          status: 'award_reversed',
+        },
+      });
+
+      if (reopenPriorQuotes && reopenedIds.length > 0) {
+        await tx.projectProfessional.updateMany({
+          where: { id: { in: reopenedIds } },
+          data: {
+            status: 'quoted',
+          },
+        });
+      }
+
+      await tx.projectStartProposal.updateMany({
+        where: {
+          projectId,
+          projectProfessionalId: awardedProjectProfessional.id,
+          status: 'proposed',
+        },
+        data: {
+          status: 'superseded',
+          respondedAt: new Date(),
+          responseNotes: reason,
+        },
+      });
+
+      await tx.project.update({
+        where: { id: projectId },
+        data: {
+          status: 'quoted',
+          currentStage: ProjectStage.QUOTE_RECEIVED,
+          awardedProjectProfessionalId: null,
+          approvedBudget: null,
+          approvedBudgetTxId: null,
+          escrowRequired: null,
+          startDate: null,
+          endDate: null,
+          contractorName: null,
+          contractorContactName: null,
+          contractorContactPhone: null,
+          contractorContactEmail: null,
+        },
+      });
+
+      await (tx as any).activityLog.create({
+        data: {
+          userId: adminUserId,
+          actorName: 'Admin',
+          actorType: 'admin',
+          action: 'project_award_reversed',
+          resource: 'Project',
+          resourceId: projectId,
+          details: `Award reversed for ${reversedProfessionalName}`,
+          metadata: {
+            projectId,
+            awardedProjectProfessionalId: awardedProjectProfessional.id,
+            reversedProfessionalId: awardedProjectProfessional.professionalId,
+            reopenPriorQuotes,
+            reopenedProjectProfessionalIds: reopenedIds,
+            reason,
+          },
+          status: 'warning',
+        },
+      });
+    });
+
+    try {
+      if (awardedProjectProfessional.professional?.phone) {
+        await this.notificationService.send({
+          professionalId: awardedProjectProfessional.professional.id,
+          phoneNumber: awardedProjectProfessional.professional.phone,
+          eventType: 'award_reversed',
+          message: `Admin update for "${project.projectName}": the award has been reversed and the project has been reopened for review. Reason: ${reason}`,
+        });
+      }
+    } catch (error) {
+      console.error('[ProjectsService.reverseAward] Failed to notify reversed professional:', error);
+    }
+
+    if (reopenPriorQuotes) {
+      for (const projectProfessional of priorQuotedProfessionals) {
+        if (!reopenedIds.includes(projectProfessional.id)) continue;
+        try {
+          if (projectProfessional.professional?.phone) {
+            await this.notificationService.send({
+              professionalId: projectProfessional.professional.id,
+              phoneNumber: projectProfessional.professional.phone,
+              eventType: 'quote_reopened',
+              message: `Admin update for "${project.projectName}": the project has been reopened for quote review and your quotation is active again.`,
+            });
+          }
+        } catch (error) {
+          console.error('[ProjectsService.reverseAward] Failed to notify reopened professional:', error);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      message: reopenPriorQuotes
+        ? 'Award reversed and prior quoted professionals were reopened for review'
+        : 'Award reversed successfully',
+      reversedProfessionalId: awardedProjectProfessional.professionalId,
+      reopenedProjectProfessionalIds: reopenedIds,
+    };
   }
 
   async shareContact(

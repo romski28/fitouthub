@@ -81,6 +81,10 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [acknowledgingSafety, setAcknowledgingSafety] = useState(false);
+  const [reverseReason, setReverseReason] = useState("");
+  const [reopenPriorQuotes, setReopenPriorQuotes] = useState(true);
+  const [reversingAward, setReversingAward] = useState(false);
+  const [adminActionMessage, setAdminActionMessage] = useState<string | null>(null);
 
   // Enforce admin-only access
   useRoleGuard(['admin'], { fallback: '/admin' });
@@ -88,14 +92,14 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   // Check if funds are secured via financial summary
   const fundsSecured = useFundsSecured(projectId, accessToken || undefined);
 
-  useEffect(() => {
+  const loadProject = async () => {
     if (!isLoggedIn || !accessToken) return;
     if (!projectId) {
       setError("Project id is missing in route");
       setLoading(false);
       return;
     }
-    const load = async () => {
+
       setLoading(true);
       try {
         const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
@@ -132,8 +136,10 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       } finally {
         setLoading(false);
       }
-    };
-    load();
+  };
+
+  useEffect(() => {
+    loadProject();
   }, [projectId, isLoggedIn, accessToken]);
 
   useEffect(() => {
@@ -199,6 +205,44 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       setError(e?.message || 'Failed to acknowledge safety flag');
     } finally {
       setAcknowledgingSafety(false);
+    }
+  };
+
+  const handleReverseAward = async () => {
+    if (!accessToken || !projectId) return;
+    if (!reverseReason.trim() || reverseReason.trim().length < 5) {
+      setAdminActionMessage('Please enter a clear reason before reversing the award.');
+      return;
+    }
+
+    setReversingAward(true);
+    setAdminActionMessage(null);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/admin/${projectId}/reverse-award`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reason: reverseReason.trim(),
+          reopenPriorQuotes,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to reverse award');
+      }
+
+      setAdminActionMessage(data.message || 'Award reversed successfully.');
+      setReverseReason('');
+      await loadProject();
+    } catch (e: any) {
+      setAdminActionMessage(e?.message || 'Failed to reverse award');
+    } finally {
+      setReversingAward(false);
     }
   };
 
@@ -272,6 +316,72 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         </div>
         <ViewClientUpdatesButton ownerId={project.userId || project.clientId || ''} />
       </div>
+
+      {isAwarded && awardedPro && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 shadow-sm p-5 space-y-4">
+          <div>
+            <h2 className="text-lg font-bold text-amber-950">Award Reversal</h2>
+            <p className="text-sm text-amber-900/80 mt-1">
+              Admin-only safety action. This is intended for pre-funding or pre-contract issues such as scheduling failures or award mistakes.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-white p-4 text-sm text-slate-700">
+            <p>
+              Current awarded professional:{' '}
+              <span className="font-semibold text-slate-900">
+                {awardedPro.professional.fullName || awardedPro.professional.businessName || awardedPro.professional.email}
+              </span>
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              This action will fail automatically if escrow, contract signing, or payment activity has already started.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Admin reason</label>
+            <textarea
+              rows={3}
+              value={reverseReason}
+              onChange={(e) => setReverseReason(e.target.value)}
+              placeholder="Explain why the award is being reversed"
+              className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm text-slate-900"
+            />
+          </div>
+
+          <label className="flex items-start gap-3 text-sm text-slate-800">
+            <input
+              type="checkbox"
+              checked={reopenPriorQuotes}
+              onChange={(e) => setReopenPriorQuotes(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            />
+            <span>
+              Reopen prior quoted professionals for review.
+              <span className="block text-xs text-slate-500 mt-1">
+                Recommended. The reversed professional will move to a historical `award_reversed` state.
+              </span>
+            </span>
+          </label>
+
+          {adminActionMessage && (
+            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+              {adminActionMessage}
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleReverseAward}
+              disabled={reversingAward}
+              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+            >
+              {reversingAward ? 'Reversing…' : 'Reverse Award'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {project.professionals && project.professionals.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
