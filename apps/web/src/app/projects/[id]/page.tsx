@@ -412,6 +412,22 @@ export default function ClientProjectDetailPage() {
     return () => clearTimeout(scrollTimer);
   }, [searchParams]);
 
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (!paymentStatus) return;
+
+    if (paymentStatus === 'success') {
+      toast.success('Escrow payment received. Confirmation is now being processed.');
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('Payment was cancelled. You can retry when ready.');
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('payment');
+    const query = url.searchParams.toString();
+    window.history.replaceState({}, '', `${url.pathname}${query ? `?${query}` : ''}${url.hash}`);
+  }, [searchParams]);
+
   const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
     const text = await response.text();
     if (!text) return null;

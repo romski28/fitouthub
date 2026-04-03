@@ -394,7 +394,7 @@ export class FinancialService {
     const projectProf = await this.prisma.projectProfessional.findUnique({
       where: { id: projectProfessionalId },
       include: {
-        project: { select: { clientId: true, userId: true } },
+        project: { select: { id: true, projectName: true, clientId: true, userId: true } },
       },
     });
 
@@ -408,7 +408,7 @@ export class FinancialService {
       throw new Error('Could not determine clientId from project');
     }
 
-    return this.createTransaction({
+    const created = await this.createTransaction({
       projectId: projectProf.projectId,
       projectProfessionalId,
       type: 'payment_request',
@@ -420,6 +420,31 @@ export class FinancialService {
       actionByRole: 'client',
       actionComplete: false,
     });
+
+    try {
+      const client = await this.prisma.user.findUnique({
+        where: { id: clientId },
+        select: { id: true, mobile: true },
+      });
+
+      if (client?.mobile) {
+        const formatter = new Intl.NumberFormat('en-HK', {
+          style: 'currency',
+          currency: 'HKD',
+          minimumFractionDigits: 0,
+        });
+        await this.notificationService.send({
+          userId: client.id,
+          phoneNumber: client.mobile,
+          eventType: 'payment_request_created',
+          message: `A new payment request for ${formatter.format(Number(amount))} is waiting for your approval on "${projectProf.project.projectName || 'Project'}".`,
+        });
+      }
+    } catch (notificationError) {
+      console.warn('[FinancialService] Failed to notify client about payment request:', notificationError);
+    }
+
+    return created;
   }
 
   /**
@@ -440,7 +465,7 @@ export class FinancialService {
 
     if (!tx) throw new Error('Transaction not found');
 
-    return this.prisma.$transaction(async (prisma) => {
+    const result = await this.prisma.$transaction(async (prisma) => {
       // Update original payment_request to approved
       const updated = await prisma.financialTransaction.update({
         where: { id: transactionId },
@@ -484,6 +509,45 @@ export class FinancialService {
 
       return { updated, releasePaymentTx };
     });
+
+    try {
+      const formatter = new Intl.NumberFormat('en-HK', {
+        style: 'currency',
+        currency: 'HKD',
+        minimumFractionDigits: 0,
+      });
+      const formattedAmount = formatter.format(Number(tx.amount));
+      const projectName = tx.projectProfessional?.project?.projectName || 'Project';
+
+      const professional = tx.projectProfessional?.professional;
+      if (professional?.id && professional?.phone) {
+        await this.notificationService.send({
+          professionalId: professional.id,
+          phoneNumber: professional.phone,
+          eventType: 'payment_request_approved',
+          message: `Your payment request for ${formattedAmount} on "${projectName}" was approved and sent for admin release.`,
+        });
+      }
+
+      const admins = await this.prisma.user.findMany({
+        where: { role: 'admin', mobile: { not: null } },
+        select: { id: true, mobile: true },
+      });
+
+      for (const admin of admins) {
+        if (!admin.mobile) continue;
+        await this.notificationService.send({
+          userId: admin.id,
+          phoneNumber: admin.mobile,
+          eventType: 'payment_release_required',
+          message: `Admin action required: release ${formattedAmount} for "${projectName}".`,
+        });
+      }
+    } catch (notificationError) {
+      console.warn('[FinancialService] Failed to send approval/release notifications:', notificationError);
+    }
+
+    return result;
   }
 
   /**
@@ -614,6 +678,16 @@ export class FinancialService {
           message: `Payment is now secured in escrow for "${projectName}". You can proceed with project execution.`,
         });
       }
+
+      const client = tx.projectProfessional?.project?.user;
+      if (client?.id && client?.mobile) {
+        await this.notificationService.send({
+          userId: client.id,
+          phoneNumber: client.mobile,
+          eventType: 'escrow_confirmed',
+          message: `Escrow is now confirmed for "${projectName}". Work can proceed safely.`,
+        });
+      }
     } catch (notificationError) {
       console.warn(
         '[FinancialService] Failed to send payment_received notification:',
@@ -631,12 +705,13 @@ export class FinancialService {
     const tx = await this.prisma.financialTransaction.findUnique({
       where: { id: transactionId },
       include: {
-        project: { select: { projectName: true } },
+        project: { select: { id: true, projectName: true, userId: true, user: { select: { id: true, mobile: true } } } },
+        projectProfessional: { include: { professional: { select: { id: true, phone: true } } } },
       },
     });
     if (!tx) throw new Error('Transaction not found');
 
-    return this.prisma.$transaction(async (prisma) => {
+    const updated = await this.prisma.$transaction(async (prisma) => {
       const updated = await prisma.financialTransaction.update({
         where: { id: transactionId },
         data: {
@@ -727,6 +802,40 @@ export class FinancialService {
       }
       return updated;
     });
+
+    try {
+      const formatter = new Intl.NumberFormat('en-HK', {
+        style: 'currency',
+        currency: 'HKD',
+        minimumFractionDigits: 0,
+      });
+      const formattedAmount = formatter.format(Number(tx.amount));
+      const projectName = tx.project?.projectName || 'Project';
+
+      const professional = tx.projectProfessional?.professional;
+      if (professional?.id && professional?.phone) {
+        await this.notificationService.send({
+          professionalId: professional.id,
+          phoneNumber: professional.phone,
+          eventType: 'payment_released',
+          message: `Payment released: ${formattedAmount} for "${projectName}" has been processed by admin.`,
+        });
+      }
+
+      const client = tx.project?.user;
+      if (client?.id && client?.mobile) {
+        await this.notificationService.send({
+          userId: client.id,
+          phoneNumber: client.mobile,
+          eventType: 'payment_released',
+          message: `Payment of ${formattedAmount} was released to your professional for "${projectName}".`,
+        });
+      }
+    } catch (notificationError) {
+      console.warn('[FinancialService] Failed to send release notifications:', notificationError);
+    }
+
+    return updated;
   }
 
   /**
