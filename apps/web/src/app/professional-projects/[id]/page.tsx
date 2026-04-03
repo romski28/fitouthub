@@ -90,6 +90,16 @@ const toDateTimeLocalValue = (value?: string | null) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
+const toDateInputValue = (value?: string | null) => {
+  const dateTime = toDateTimeLocalValue(value);
+  return dateTime ? dateTime.slice(0, 10) : '';
+};
+
+const toTimeInputValue = (value?: string | null) => {
+  const dateTime = toDateTimeLocalValue(value);
+  return dateTime ? dateTime.slice(11, 16) : '';
+};
+
 const durationMinutesToHoursInput = (value?: number | null) => {
   if (value == null || !Number.isFinite(value)) return '';
   const hours = value / 60;
@@ -135,7 +145,8 @@ export default function ProjectDetailPage() {
   const [quoteForm, setQuoteForm] = useState({
     amount: '',
     notes: '',
-    estimatedStartAt: '',
+    estimatedStartDate: '',
+    estimatedStartTime: '',
     estimatedDurationHours: '',
   });
   const [messages, setMessages] = useState<Message[]>([]);
@@ -251,7 +262,8 @@ export default function ProjectDetailPage() {
           setQuoteForm({
             amount: data.quoteAmount,
             notes: data.quoteNotes || '',
-            estimatedStartAt: toDateTimeLocalValue(data.quoteEstimatedStartAt),
+            estimatedStartDate: toDateInputValue(data.quoteEstimatedStartAt),
+            estimatedStartTime: toTimeInputValue(data.quoteEstimatedStartAt),
             estimatedDurationHours: durationMinutesToHoursInput(data.quoteEstimatedDurationMinutes),
           });
         }
@@ -596,10 +608,12 @@ export default function ProjectDetailPage() {
       return;
     }
 
-    if (!quoteForm.estimatedStartAt) {
+    if (!quoteForm.estimatedStartDate || !quoteForm.estimatedStartTime) {
       setError('Please enter an estimated start date and time');
       return;
     }
+
+    const quoteEstimatedStartAt = `${quoteForm.estimatedStartDate}T${quoteForm.estimatedStartTime}`;
 
     if (!quoteForm.estimatedDurationHours) {
       setError('Please enter an estimated duration');
@@ -636,7 +650,7 @@ export default function ProjectDetailPage() {
               professionalId: project.professionalId || project.projectId /* fallback to projectProfessionalId is incorrect but kept to avoid undefined */,
               quoteAmount: amount,
               quoteNotes: quoteForm.notes,
-              quoteEstimatedStartAt: quoteForm.estimatedStartAt,
+              quoteEstimatedStartAt,
               quoteEstimatedDurationMinutes,
             }),
           },
@@ -654,7 +668,7 @@ export default function ProjectDetailPage() {
             body: JSON.stringify({
               quoteAmount: amount,
               quoteNotes: quoteForm.notes,
-              quoteEstimatedStartAt: quoteForm.estimatedStartAt,
+              quoteEstimatedStartAt,
               quoteEstimatedDurationMinutes,
             }),
           },
@@ -680,7 +694,10 @@ export default function ProjectDetailPage() {
       setQuoteForm({
         amount: nextProject?.quoteAmount ? String(nextProject.quoteAmount) : quoteForm.amount,
         notes: nextProject?.quoteNotes || '',
-        estimatedStartAt: toDateTimeLocalValue(nextProject?.quoteEstimatedStartAt) || quoteForm.estimatedStartAt,
+        estimatedStartDate:
+          toDateInputValue(nextProject?.quoteEstimatedStartAt) || quoteForm.estimatedStartDate,
+        estimatedStartTime:
+          toTimeInputValue(nextProject?.quoteEstimatedStartAt) || quoteForm.estimatedStartTime,
         estimatedDurationHours:
           durationMinutesToHoursInput(nextProject?.quoteEstimatedDurationMinutes) ||
           quoteForm.estimatedDurationHours,

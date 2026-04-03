@@ -37,14 +37,16 @@ interface OverviewTabProps {
   quoteForm: {
     amount: string;
     notes: string;
-    estimatedStartAt: string;
+    estimatedStartDate: string;
+    estimatedStartTime: string;
     estimatedDurationHours: string;
   };
   onUpdateQuoteForm: (
     patch: Partial<{
       amount: string;
       notes: string;
-      estimatedStartAt: string;
+      estimatedStartDate: string;
+      estimatedStartTime: string;
       estimatedDurationHours: string;
     }>,
   ) => void;
@@ -128,6 +130,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isRebidFlow = project.status === 'counter_requested' || project.status === 'quoted';
   const shouldEnforceInitialDeadline = !hasInitialQuote && !isRebidFlow;
   const isInitialQuoteLocked = shouldEnforceInitialDeadline && isOverdue;
+  const showQuoteForm = ['pending', 'accepted', 'counter_requested'].includes(project.status);
 
   const countdownBadge = quoteDeadline && shouldEnforceInitialDeadline ? (
     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -149,7 +152,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       {/* (Project Info follows below) */}
 
       {/* Quote Form/Status */}
-      {['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && 
+      {showQuoteForm && 
        !(project.status === 'declined' || project.status === 'rejected') ? (
         <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
@@ -229,18 +232,34 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label htmlFor="estimatedStartAt" className="block text-sm font-semibold text-white mb-1">
-                    Estimated Start *
+                  <label htmlFor="estimatedStartDate" className="block text-sm font-semibold text-white mb-1">
+                    Start Date *
                   </label>
                   <input
-                    id="estimatedStartAt"
-                    type="datetime-local"
+                    id="estimatedStartDate"
+                    type="date"
                     required
                     disabled={submittingQuote}
-                    value={quoteForm.estimatedStartAt}
-                    onChange={(e) => onUpdateQuoteForm({ estimatedStartAt: e.target.value })}
+                    value={quoteForm.estimatedStartDate}
+                    onChange={(e) => onUpdateQuoteForm({ estimatedStartDate: e.target.value })}
+                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="estimatedStartTime" className="block text-sm font-semibold text-white mb-1">
+                    Start Time *
+                  </label>
+                  <input
+                    id="estimatedStartTime"
+                    type="time"
+                    step={900}
+                    required
+                    disabled={submittingQuote}
+                    value={quoteForm.estimatedStartTime}
+                    onChange={(e) => onUpdateQuoteForm({ estimatedStartTime: e.target.value })}
                     className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                   />
                 </div>
