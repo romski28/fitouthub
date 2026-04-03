@@ -185,12 +185,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
           <form
             onSubmit={async (e) => {
-              if (isInitialQuoteLocked) {
-                e.preventDefault();
-                toast.error('Quote submission window has expired for the initial invitation.');
-                return;
-              }
-
               await onSubmitQuote(e);
             }}
             className="space-y-4"
@@ -212,7 +206,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   step="0.01"
                   min="0"
                   required
-                  disabled={submittingQuote || isInitialQuoteLocked}
+                  disabled={submittingQuote}
                   value={quoteForm.amount}
                   onChange={(e) => onUpdateQuoteForm({ amount: e.target.value })}
                   className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
@@ -227,7 +221,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <textarea
                   id="notes"
                   rows={4}
-                  disabled={submittingQuote || isInitialQuoteLocked}
+                  disabled={submittingQuote}
                   value={quoteForm.notes}
                   onChange={(e) => onUpdateQuoteForm({ notes: e.target.value })}
                   className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
@@ -244,7 +238,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     id="estimatedStartAt"
                     type="datetime-local"
                     required
-                    disabled={submittingQuote || isInitialQuoteLocked}
+                    disabled={submittingQuote}
                     value={quoteForm.estimatedStartAt}
                     onChange={(e) => onUpdateQuoteForm({ estimatedStartAt: e.target.value })}
                     className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
@@ -261,7 +255,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     step="0.5"
                     min="0.5"
                     required
-                    disabled={submittingQuote || isInitialQuoteLocked}
+                    disabled={submittingQuote}
                     value={quoteForm.estimatedDurationHours}
                     onChange={(e) => onUpdateQuoteForm({ estimatedDurationHours: e.target.value })}
                     className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
@@ -274,7 +268,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={submittingQuote || isInitialQuoteLocked}
+                disabled={submittingQuote}
                 className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
               >
                 {submittingQuote ? 'Submitting...' : project.quotedAt ? 'Update Quote' : 'Submit Quote'}
