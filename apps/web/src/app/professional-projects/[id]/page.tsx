@@ -54,6 +54,33 @@ interface ProjectDetail {
   }[];
 }
 
+interface PaymentPlanMilestone {
+  id: string;
+  sequence: number;
+  title: string;
+  type: 'deposit' | 'progress' | 'final' | string;
+  status: string;
+  percentOfTotal?: number | null;
+  amount: string | number;
+  plannedDueAt?: string | null;
+  escrowRequestedAt?: string | null;
+  escrowFundedAt?: string | null;
+  releaseRequestedAt?: string | null;
+  releasedAt?: string | null;
+  clientComment?: string | null;
+  adminComment?: string | null;
+}
+
+interface PaymentPlan {
+  id: string;
+  projectScale: string;
+  escrowFundingPolicy: 'FULL_UPFRONT' | 'ROLLING_TWO_MILESTONES' | string;
+  status: string;
+  currency: string;
+  totalAmount: string | number;
+  milestones: PaymentPlanMilestone[];
+}
+
 interface Message {
   id: string;
   projectProfessionalId: string;
@@ -160,6 +187,9 @@ export default function ProjectDetailPage() {
     percentage: '',
     notes: '',
   });
+  const [paymentPlan, setPaymentPlan] = useState<PaymentPlan | null>(null);
+  const [paymentPlanLoading, setPaymentPlanLoading] = useState(false);
+  const [selectedPaymentMilestoneId, setSelectedPaymentMilestoneId] = useState('');
   const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
   const [siteAccessStatus, setSiteAccessStatus] = useState<SiteAccessStatus | null>(null);
   const [siteAccessLoading, setSiteAccessLoading] = useState(false);
@@ -316,6 +346,62 @@ export default function ProjectDetailPage() {
       fetchMessages();
     }
   }, [isLoggedIn, accessToken, projectProfessionalId, router]);
+
+  useEffect(() => {
+    const fetchPaymentPlan = async () => {
+      if (!accessToken || !project?.project?.id) {
+        return;
+      }
+
+      setPaymentPlanLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/projects/${project.project.id}/payment-plan`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          setPaymentPlan(null);
+          return;
+        }
+
+        const data = await response.json();
+        setPaymentPlan(data || null);
+      } catch {
+        setPaymentPlan(null);
+      } finally {
+        setPaymentPlanLoading(false);
+      }
+    };
+
+    fetchPaymentPlan();
+  }, [accessToken, project?.project?.id]);
+
+  useEffect(() => {
+    if (!paymentPlan?.milestones?.length) {
+      setSelectedPaymentMilestoneId('');
+      return;
+    }
+
+    const eligibleMilestones = paymentPlan.milestones.filter((milestone) => {
+      if (paymentPlan.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES') {
+        return milestone.status === 'escrow_funded';
+      }
+
+      return ['scheduled', 'escrow_funded'].includes(milestone.status);
+    });
+
+    if (!eligibleMilestones.length) {
+      setSelectedPaymentMilestoneId('');
+      return;
+    }
+
+    const selectedStillValid = eligibleMilestones.some((milestone) => milestone.id === selectedPaymentMilestoneId);
+    if (!selectedStillValid) {
+      setSelectedPaymentMilestoneId(eligibleMilestones[0].id);
+    }
+  }, [paymentPlan, selectedPaymentMilestoneId]);
 
   useEffect(() => {
     const fetchSiteAccessStatus = async () => {
@@ -937,14 +1023,29 @@ export default function ProjectDetailPage() {
 
     const form = { ...advanceRequestForm, ...override };
 
+    const usingPaymentPlan = !!paymentPlan;
+
+    if (usingPaymentPlan) {
+      if (!selectedPaymentMilestoneId) {
+        toast.error('Please select an eligible milestone');
+        return;
+      }
+
+      const selectedMilestone = paymentPlan?.milestones.find((milestone) => milestone.id === selectedPaymentMilestoneId);
+      if (!selectedMilestone) {
+        toast.error('Selected milestone was not found');
+        return;
+      }
+    }
+
     // Validate form
-    if (form.requestType === 'fixed') {
+    if (!usingPaymentPlan && form.requestType === 'fixed') {
       const amount = parseFloat(form.amount);
       if (isNaN(amount) || amount <= 0) {
         toast.error('Please enter a valid amount');
         return;
       }
-    } else {
+    } else if (!usingPaymentPlan) {
       const percentage = parseFloat(form.percentage);
       if (isNaN(percentage) || percentage <= 0 || percentage > 100) {
         toast.error('Please enter a valid percentage (1-100)');
@@ -963,11 +1064,12 @@ export default function ProjectDetailPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            requestType: form.requestType,
-            amount: form.requestType === 'fixed' 
+            paymentMilestoneId: usingPaymentPlan ? selectedPaymentMilestoneId : undefined,
+            requestType: usingPaymentPlan ? undefined : form.requestType,
+            amount: !usingPaymentPlan && form.requestType === 'fixed' 
               ? parseFloat(form.amount) 
               : undefined,
-            percentage: form.requestType === 'percentage' 
+            percentage: !usingPaymentPlan && form.requestType === 'percentage' 
               ? parseFloat(form.percentage) 
               : undefined,
             notes: form.notes,
@@ -989,7 +1091,9 @@ export default function ProjectDetailPage() {
       }
 
       await showWorkflowSuccessToast({
-        successMessage: 'Payment request submitted! Client will be notified.',
+        successMessage: usingPaymentPlan
+          ? 'Milestone payment request submitted! Client will be notified.'
+          : 'Payment request submitted! Client will be notified.',
         projectId: project?.project?.id,
         token: accessToken,
         fallbackGuidance: {
@@ -1337,6 +1441,10 @@ export default function ProjectDetailPage() {
               projectStatus={project.status}
               projectBudget={projectBudgetValue}
               awardedAmount={awardedAmountValue}
+              paymentPlan={paymentPlan}
+              paymentPlanLoading={paymentPlanLoading}
+              selectedPaymentMilestoneId={selectedPaymentMilestoneId}
+              onSelectPaymentMilestone={setSelectedPaymentMilestoneId}
               paymentRequests={mappedPaymentRequests}
               projectFinancials={projectFinancials}
               paymentRequestLoading={false}

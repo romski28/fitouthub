@@ -41,7 +41,35 @@ export class FinancialService {
   ) {}
 
   private appendNote(existing: string | null | undefined, extra: string) {
-    return existing ? `${existing} | ${extra}` : extra;
+    const trimmedExtra = String(extra || '').trim();
+    if (!trimmedExtra) {
+      return existing || '';
+    }
+    return existing ? `${existing} | ${trimmedExtra}` : trimmedExtra;
+  }
+
+  private parseMilestoneMetadata(notes?: string | null): {
+    paymentMilestoneId?: string;
+    paymentPlanId?: string;
+    milestoneSequence?: number;
+    milestoneTitle?: string;
+    timingStatus?: 'early' | 'on_time' | 'late';
+    plannedDueAt?: string;
+  } | null {
+    if (!notes) return null;
+
+    const marker = '__FOH_MILESTONE__';
+    const markerIndex = notes.indexOf(marker);
+    if (markerIndex === -1) return null;
+
+    const jsonPayload = notes.slice(markerIndex + marker.length).trim();
+    if (!jsonPayload) return null;
+
+    try {
+      return JSON.parse(jsonPayload);
+    } catch {
+      return null;
+    }
   }
 
   async createEscrowCheckoutSession(
@@ -492,9 +520,28 @@ export class FinancialService {
           actionBy: null,  // No specific admin assigned; visible to all admins as platform task
           actionByRole: 'platform',  // Platform task visible to all admins
           actionComplete: false,
-          notes: `Client approval for ${tx.description}`,
+          notes: this.appendNote(`Client approval for ${tx.description}`, tx.notes || ''),
         },
       });
+
+      const pendingPaymentRequest = await (prisma as any).paymentRequest.findFirst({
+        where: {
+          projectProfessionalId: tx.projectProfessionalId || undefined,
+          requestAmount: tx.amount,
+          status: 'pending',
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (pendingPaymentRequest) {
+        await (prisma as any).paymentRequest.update({
+          where: { id: pendingPaymentRequest.id },
+          data: {
+            status: 'approved',
+            approvedAmount: tx.amount,
+          },
+        });
+      }
 
       // Send message to professional
       if (tx.projectProfessionalId) {
@@ -554,14 +601,59 @@ export class FinancialService {
    * Reject advance payment request
    */
   async rejectAdvancePayment(transactionId: string, approvedBy: string, reason: string, approverRole: 'client' | 'admin' = 'client') {
-    return this.updateTransaction(transactionId, {
-      status: 'rejected',
-      actionBy: approvedBy,
-      actionByRole: approverRole,
-      actionAt: new Date(),
-      actionComplete: true,
+    const tx = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+    });
 
-      notes: reason,
+    if (!tx) {
+      throw new Error('Transaction not found');
+    }
+
+    return this.prisma.$transaction(async (prisma) => {
+      const updated = await prisma.financialTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: 'rejected',
+          actionBy: approvedBy,
+          actionByRole: approverRole,
+          actionAt: new Date(),
+          actionComplete: true,
+          notes: this.appendNote(tx.notes, reason),
+        },
+      });
+
+      const pendingPaymentRequest = await (prisma as any).paymentRequest.findFirst({
+        where: {
+          projectProfessionalId: tx.projectProfessionalId || undefined,
+          requestAmount: tx.amount,
+          status: 'pending',
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (pendingPaymentRequest) {
+        await (prisma as any).paymentRequest.update({
+          where: { id: pendingPaymentRequest.id },
+          data: {
+            status: 'rejected',
+            rejectionReason: reason,
+          },
+        });
+      }
+
+      const milestoneMeta = this.parseMilestoneMetadata(tx.notes);
+      if (milestoneMeta?.paymentMilestoneId) {
+        await (prisma as any).paymentMilestone.update({
+          where: { id: milestoneMeta.paymentMilestoneId },
+          data: {
+            status: 'scheduled',
+            clientComment: reason,
+            releaseRequestedAt: null,
+          },
+        });
+      }
+
+      return updated;
     });
   }
 
@@ -747,6 +839,37 @@ export class FinancialService {
             },
           });
         }
+      }
+
+      const approvedPaymentRequest = await (prisma as any).paymentRequest.findFirst({
+        where: {
+          projectProfessionalId: tx.projectProfessionalId || undefined,
+          requestAmount: tx.amount,
+          status: 'approved',
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (approvedPaymentRequest) {
+        await (prisma as any).paymentRequest.update({
+          where: { id: approvedPaymentRequest.id },
+          data: {
+            notes: approvedPaymentRequest.notes
+              ? `${approvedPaymentRequest.notes} [RELEASED]`
+              : '[RELEASED]',
+          },
+        });
+      }
+
+      const milestoneMeta = this.parseMilestoneMetadata(tx.notes);
+      if (milestoneMeta?.paymentMilestoneId) {
+        await (prisma as any).paymentMilestone.update({
+          where: { id: milestoneMeta.paymentMilestoneId },
+          data: {
+            status: 'released',
+            releasedAt: new Date(),
+          },
+        });
       }
 
       // Write ledger entry (debit)

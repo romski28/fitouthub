@@ -880,7 +880,8 @@ export class ProfessionalController {
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
     @Body() body: { 
-      requestType: 'fixed' | 'percentage'; 
+      requestType?: 'fixed' | 'percentage'; 
+      paymentMilestoneId?: string;
       amount?: number; 
       percentage?: number;
       notes?: string;
@@ -914,12 +915,99 @@ export class ProfessionalController {
         );
       }
 
+      const paymentPlan = await (this.prisma as any).projectPaymentPlan.findUnique({
+        where: { projectId: projectProfessional.projectId },
+        include: {
+          milestones: {
+            orderBy: { sequence: 'asc' },
+          },
+        },
+      });
+
       // Allow multiple payment requests; no invoice dependency
 
       // Validate request
       const quoteAmount = Number(projectProfessional.quoteAmount || 0);
-      
-      if (body.requestType === 'fixed') {
+      const now = new Date();
+      const trimmedNotes = String(body.notes || '').trim();
+
+      let requestType: string | undefined = body.requestType;
+      let requestAmount = 0;
+      let requestPercentage: number | null = null;
+      let requestNotes = trimmedNotes || null;
+      let requestDescription = 'Payment request';
+      let emailRequestType: string = body.requestType || 'fixed';
+      let milestoneUpdateData: Record<string, any> | null = null;
+
+      if (body.paymentMilestoneId) {
+        if (!paymentPlan) {
+          throw new BadRequestException('No payment plan exists for this project');
+        }
+
+        if (!['locked', 'active'].includes(paymentPlan.status)) {
+          throw new BadRequestException('Payment plan must be locked or active before requesting milestone payments');
+        }
+
+        const milestone = paymentPlan.milestones.find((item: any) => item.id === body.paymentMilestoneId);
+        if (!milestone) {
+          throw new BadRequestException('Selected milestone was not found on this payment plan');
+        }
+
+        if (paymentPlan.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES' && milestone.status !== 'escrow_funded') {
+          throw new BadRequestException('This milestone is not yet funded in escrow for release');
+        }
+
+        if (!['scheduled', 'escrow_funded'].includes(milestone.status)) {
+          throw new BadRequestException('This milestone is not currently eligible for a payment request');
+        }
+
+        const plannedDueAt = milestone.plannedDueAt ? new Date(milestone.plannedDueAt) : null;
+        const requestDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const dueDay = plannedDueAt
+          ? new Date(plannedDueAt.getFullYear(), plannedDueAt.getMonth(), plannedDueAt.getDate()).getTime()
+          : null;
+        const timingStatus =
+          dueDay == null
+            ? 'on_time'
+            : requestDay < dueDay
+              ? 'early'
+              : requestDay > dueDay
+                ? 'late'
+                : 'on_time';
+
+        const milestoneMeta = {
+          paymentMilestoneId: milestone.id,
+          paymentPlanId: paymentPlan.id,
+          milestoneSequence: milestone.sequence,
+          milestoneTitle: milestone.title,
+          timingStatus,
+          plannedDueAt: plannedDueAt ? plannedDueAt.toISOString() : null,
+        };
+
+        requestType = 'milestone';
+        emailRequestType = 'milestone';
+        requestAmount = Number(milestone.amount || 0);
+        requestPercentage = typeof milestone.percentOfTotal === 'number' ? milestone.percentOfTotal : null;
+        requestDescription = `Milestone payment request: ${milestone.title}${requestPercentage ? ` (${requestPercentage}%)` : ''}`;
+        requestNotes = [
+          trimmedNotes || null,
+          `Milestone: ${milestone.title}`,
+          plannedDueAt ? `Planned due: ${plannedDueAt.toISOString()}` : null,
+          `Timing: ${timingStatus}`,
+          `__FOH_MILESTONE__${JSON.stringify(milestoneMeta)}`,
+        ]
+          .filter(Boolean)
+          .join(' | ');
+
+        milestoneUpdateData = {
+          status: 'release_requested',
+          releaseRequestedAt: now,
+          adminComment:
+            timingStatus === 'late'
+              ? 'Late milestone request submitted; schedule extension review may be required.'
+              : null,
+        };
+      } else if (body.requestType === 'fixed') {
         if (!body.amount || body.amount <= 0) {
           throw new BadRequestException('Invalid amount');
         }
@@ -928,18 +1016,17 @@ export class ProfessionalController {
             'Amount cannot exceed quote total',
           );
         }
+        requestAmount = body.amount;
       } else if (body.requestType === 'percentage') {
         if (!body.percentage || body.percentage <= 0 || body.percentage > 100) {
           throw new BadRequestException('Percentage must be between 1 and 100');
         }
+        requestAmount = (quoteAmount * body.percentage) / 100;
+        requestPercentage = body.percentage;
+        requestDescription = `Payment request (${body.percentage}%)`;
       } else {
         throw new BadRequestException('Invalid request type');
       }
-
-      // Calculate request amount
-      const requestAmount = body.requestType === 'fixed'
-        ? body.amount!
-        : (quoteAmount * body.percentage!) / 100;
 
       // Create payment request in PaymentRequest table
       const paymentRequest = await (
@@ -947,11 +1034,11 @@ export class ProfessionalController {
       ).paymentRequest.create({
         data: {
           projectProfessionalId,
-          requestType: body.requestType,
+          requestType: requestType || 'fixed',
           requestAmount,
-          requestPercentage: body.requestType === 'percentage' ? body.percentage : null,
+          requestPercentage: requestPercentage ?? undefined,
           status: 'pending',
-          notes: body.notes || null,
+          notes: requestNotes,
         },
       });
 
@@ -963,7 +1050,7 @@ export class ProfessionalController {
           projectId: projectProfessional.projectId,
           projectProfessionalId,
           type: 'payment_request',
-          description: `Payment request${body.requestType === 'percentage' ? ` (${body.percentage}%)` : ''}`,
+          description: requestDescription,
           amount: decimalAmount,
           status: 'pending',
           requestedBy: professionalId,
@@ -971,9 +1058,16 @@ export class ProfessionalController {
           actionBy: clientId,
           actionByRole: 'client',
           actionComplete: false,  // Pending client approval
-          notes: body.notes || `Payment request for upfront costs`,
+          notes: requestNotes || `Payment request for project milestone`,
         },
       });
+
+      if (milestoneUpdateData && body.paymentMilestoneId) {
+        await (this.prisma as any).paymentMilestone.update({
+          where: { id: body.paymentMilestoneId },
+          data: milestoneUpdateData,
+        });
+      }
 
       // Send notification to client
       const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
@@ -988,9 +1082,9 @@ export class ProfessionalController {
           clientName: projectProfessional.project.clientName,
           professionalName,
           projectName: projectProfessional.project.projectName,
-          requestType: body.requestType,
+          requestType: emailRequestType,
           requestAmount: `$${requestAmount.toFixed(2)}`,
-          requestPercentage: body.percentage,
+          requestPercentage: requestPercentage ?? undefined,
           invoiceAmount: `$${quoteAmount.toFixed(2)}`,
           projectUrl: `${webBaseUrl}/projects/${projectProfessional.project.id}`,
         });
@@ -1002,7 +1096,9 @@ export class ProfessionalController {
           projectProfessionalId,
           senderType: 'professional',
           senderProfessionalId: professionalId,
-          content: `💰 Payment requested: ${body.requestType === 'percentage' ? `${body.percentage}% (` : ''}$${requestAmount.toFixed(2)}${body.requestType === 'percentage' ? ')' : ''} for upfront costs. Fitout Hub will review and contact the client.`,
+          content: body.paymentMilestoneId
+            ? `💰 Milestone payment requested: $${requestAmount.toFixed(2)} for ${requestDescription}.${requestNotes?.includes('Timing: late') ? ' ⚠️ Submitted after the planned milestone date; schedule review may be required.' : ''}`
+            : `💰 Payment requested: ${body.requestType === 'percentage' ? `${body.percentage}% (` : ''}$${requestAmount.toFixed(2)}${body.requestType === 'percentage' ? ')' : ''} for upfront costs. Fitout Hub will review and contact the client.`,
         },
       });
 
