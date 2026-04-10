@@ -21,12 +21,14 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
 
   // Notification preferences
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
   const [preferredLanguage, setPreferredLanguage] = useState('en');
+  const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('WHATSAPP');
   const [preferencesLoading, setPreferencesLoading] = useState(true);
 
   // Load user data into form
@@ -94,10 +96,12 @@ export default function ProfilePage() {
         }
         
         const data = await res.json();
+        setMobile(data.mobile || '');
         if (data.notificationPreference) {
           setAllowPartnerOffers(data.notificationPreference.allowPartnerOffers ?? false);
           setAllowPlatformUpdates(data.notificationPreference.allowPlatformUpdates ?? true);
           setPreferredLanguage(data.notificationPreference.preferredLanguage ?? 'en');
+          setPreferredContactMethod(data.notificationPreference.primaryChannel ?? 'WHATSAPP');
         }
       } catch (err) {
         console.error('Error loading preferences:', err);
@@ -129,7 +133,7 @@ export default function ProfilePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, firstName, surname }),
+        body: JSON.stringify({ email, firstName, surname, mobile: mobile || undefined }),
       });
 
       if (res.status === 404) {
@@ -173,6 +177,7 @@ export default function ProfilePage() {
           allowPartnerOffers,
           allowPlatformUpdates,
           preferredLanguage,
+          preferredContactMethod,
         }),
       });
 
@@ -241,6 +246,17 @@ export default function ProfilePage() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-slate-700">Mobile number</label>
+            <input
+              type="text"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              placeholder="e.g. +852 9123 4567"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-slate-700">{t('newPassword')}</label>
             <input
               type="password"
@@ -297,6 +313,28 @@ export default function ProfilePage() {
               >
                 <option value="en">English</option>
                 <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="preferredContactMethod" className="block text-sm text-slate-700">
+                Preferred contact method
+              </label>
+              <select
+                id="preferredContactMethod"
+                value={preferredContactMethod}
+                onChange={(e) =>
+                  setPreferredContactMethod(
+                    e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+                  )
+                }
+                disabled={preferencesLoading}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="EMAIL">Email</option>
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="SMS">SMS</option>
+                <option value="WECHAT">WeChat</option>
               </select>
             </div>
           </div>

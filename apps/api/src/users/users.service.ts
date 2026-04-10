@@ -14,6 +14,7 @@ export class UsersService {
           email: true,
           firstName: true,
           surname: true,
+          mobile: true,
           role: true,
           createdAt: true,
           updatedAt: true,
@@ -41,12 +42,14 @@ export class UsersService {
         email: true,
         firstName: true,
         surname: true,
+        mobile: true,
         role: true,
         createdAt: true,
         updatedAt: true,
         notificationPreference: {
           select: {
             id: true,
+            primaryChannel: true,
             allowPartnerOffers: true,
             allowPlatformUpdates: true,
             preferredLanguage: true,
@@ -74,6 +77,7 @@ export class UsersService {
         email: true,
         firstName: true,
         surname: true,
+        mobile: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -109,8 +113,23 @@ export class UsersService {
       allowPartnerOffers?: boolean;
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
+      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
     },
   ) {
+    const preferredContactMethod = preferences.preferredContactMethod?.toUpperCase() as
+      | 'EMAIL'
+      | 'WHATSAPP'
+      | 'SMS'
+      | 'WECHAT'
+      | undefined;
+
+    if (
+      preferredContactMethod &&
+      !['EMAIL', 'WHATSAPP', 'SMS', 'WECHAT'].includes(preferredContactMethod)
+    ) {
+      throw new Error('Invalid preferred contact method');
+    }
+
     // First, ensure the notification preference record exists
     let notificationPreference = await this.prisma.notificationPreference.findUnique({
       where: { userId: id },
@@ -120,6 +139,7 @@ export class UsersService {
       notificationPreference = await this.prisma.notificationPreference.create({
         data: {
           userId: id,
+          primaryChannel: preferredContactMethod ?? 'WHATSAPP',
           allowPartnerOffers: preferences.allowPartnerOffers ?? false,
           allowPlatformUpdates: preferences.allowPlatformUpdates ?? true,
           preferredLanguage: preferences.preferredLanguage ?? 'en',
@@ -138,12 +158,16 @@ export class UsersService {
           ...(preferences.preferredLanguage !== undefined && {
             preferredLanguage: preferences.preferredLanguage,
           }),
+          ...(preferredContactMethod !== undefined && {
+            primaryChannel: preferredContactMethod,
+          }),
         },
       });
     }
 
     return {
       id: notificationPreference.id,
+      preferredContactMethod: notificationPreference.primaryChannel,
       allowPartnerOffers: notificationPreference.allowPartnerOffers,
       allowPlatformUpdates: notificationPreference.allowPlatformUpdates,
       preferredLanguage: notificationPreference.preferredLanguage,

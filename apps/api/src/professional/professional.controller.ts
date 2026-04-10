@@ -107,9 +107,23 @@ export class ProfessionalController {
       allowPartnerOffers?: boolean;
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
+      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
     },
   ) {
     const professionalId = req.user.id || req.user.sub;
+    const preferredContactMethod = body.preferredContactMethod?.toUpperCase() as
+      | 'EMAIL'
+      | 'WHATSAPP'
+      | 'SMS'
+      | 'WECHAT'
+      | undefined;
+
+    if (
+      preferredContactMethod &&
+      !['EMAIL', 'WHATSAPP', 'SMS', 'WECHAT'].includes(preferredContactMethod)
+    ) {
+      throw new BadRequestException('Invalid preferred contact method');
+    }
 
     const existing = await (this.prisma as any).notificationPreference.findUnique({
       where: { professionalId },
@@ -119,7 +133,7 @@ export class ProfessionalController {
       return (this.prisma as any).notificationPreference.create({
         data: {
           professionalId,
-          primaryChannel: 'EMAIL',
+          primaryChannel: preferredContactMethod ?? 'EMAIL',
           fallbackChannel: 'WHATSAPP',
           enableEmail: true,
           enableWhatsApp: true,
@@ -138,6 +152,9 @@ export class ProfessionalController {
         allowPartnerOffers: body.allowPartnerOffers,
         allowPlatformUpdates: body.allowPlatformUpdates,
         preferredLanguage: body.preferredLanguage,
+        ...(preferredContactMethod !== undefined
+          ? { primaryChannel: preferredContactMethod }
+          : {}),
       },
     });
   }

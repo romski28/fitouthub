@@ -33,6 +33,7 @@ interface ProfessionalProfile {
   referenceProjects?: ReferenceProject[];
   profileImages?: string[];
   notificationPreferences?: {
+    primaryChannel?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     preferredLanguage?: string;
@@ -76,6 +77,7 @@ export default function ProfessionalProfilePage() {
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
   const [preferredLanguage, setPreferredLanguage] = useState('en');
+  const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
 
   const uploadFiles = async (files: File[]) => {
@@ -138,6 +140,7 @@ export default function ProfessionalProfilePage() {
         setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
         setAllowPlatformUpdates(data.notificationPreferences?.allowPlatformUpdates ?? true);
         setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
+        setPreferredContactMethod(data.notificationPreferences?.primaryChannel ?? 'EMAIL');
         setEmergencyCalloutAvailable(data.emergencyCalloutAvailable ?? false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -203,6 +206,7 @@ export default function ProfessionalProfilePage() {
           allowPartnerOffers,
           allowPlatformUpdates,
           preferredLanguage,
+          preferredContactMethod,
         }),
       });
       if (!prefRes.ok) throw new Error(await prefRes.text());
@@ -520,6 +524,27 @@ export default function ProfessionalProfilePage() {
               >
                 <option value="en">English</option>
                 <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="professionalPreferredContactMethod" className="block text-sm text-slate-700">
+                Preferred contact method
+              </label>
+              <select
+                id="professionalPreferredContactMethod"
+                value={preferredContactMethod}
+                onChange={(e) =>
+                  setPreferredContactMethod(
+                    e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+                  )
+                }
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="EMAIL">Email</option>
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="SMS">SMS</option>
+                <option value="WECHAT">WeChat</option>
               </select>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { ModalOverlay } from '@/components/modal-overlay';
 import { Professional } from '@/lib/types';
 import { useState } from 'react';
 import { SYSTEM_EMAILS } from '@/config/system-emails';
+import { API_BASE_URL } from '@/config/api';
 
 import ImageLightbox from '@/components/image-lightbox';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
@@ -18,6 +19,22 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
 
   if (!professional) return null;
+
+  const toAbsolute = (url: string): string => {
+    if (!url) return url;
+    const trimmed = url.trim();
+    const base = API_BASE_URL.replace(/\/$/, '');
+    if (trimmed.startsWith('http://localhost:3001')) {
+      return trimmed.replace('http://localhost:3001', base);
+    }
+    if (trimmed.startsWith('https://localhost:3001')) {
+      return trimmed.replace('https://localhost:3001', base);
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${base}${normalized}`;
+  };
+  const normalizedProfileImages = (professional.profileImages || []).map(toAbsolute);
 
   const name = professional.fullName || professional.businessName || professional.email || 'Professional';
 
@@ -78,16 +95,16 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           </div>
         ) : null}
 
-        {(professional.profileImages && professional.profileImages.length > 0) && (
+        {(normalizedProfileImages && normalizedProfileImages.length > 0) && (
           <div className="space-y-2">
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Photos</p>
             <div className="grid gap-2 sm:grid-cols-3">
-                {professional.profileImages.map((url, idx) => (
+                {normalizedProfileImages.map((url, idx) => (
                 <button
                   key={url}
                   type="button"
                   className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
-                  onClick={() => setLightbox({ images: professional.profileImages || [], index: idx })}
+                  onClick={() => setLightbox({ images: normalizedProfileImages, index: idx })}
                 >
                   <img src={url} alt={name} className="h-28 w-full object-cover" />
                 </button>

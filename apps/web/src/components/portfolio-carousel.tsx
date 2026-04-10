@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import ImageLightbox from '@/components/image-lightbox';
+import { API_BASE_URL } from '@/config/api';
 
 interface PortfolioCarouselProps {
   images: string[];
@@ -18,8 +19,23 @@ export function PortfolioCarousel({
 }: PortfolioCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const toAbsolute = (url: string): string => {
+    if (!url) return url;
+    const trimmed = url.trim();
+    const base = API_BASE_URL.replace(/\/$/, '');
+    if (trimmed.startsWith('http://localhost:3001')) {
+      return trimmed.replace('http://localhost:3001', base);
+    }
+    if (trimmed.startsWith('https://localhost:3001')) {
+      return trimmed.replace('https://localhost:3001', base);
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${base}${normalized}`;
+  };
+  const normalizedImages = images.map(toAbsolute);
 
-  if (!images || images.length === 0) {
+  if (!normalizedImages || normalizedImages.length === 0) {
     return (
       <div className={`rounded-lg border border-dashed border-amber-200 bg-amber-50 p-6 text-center ${className}`}>
         <div className="flex items-center justify-center gap-2 text-amber-700">
@@ -33,11 +49,11 @@ export function PortfolioCarousel({
   }
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? normalizedImages.length - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === normalizedImages.length - 1 ? 0 : prev + 1));
   };
 
   const goToSlide = (index: number) => {
@@ -59,7 +75,7 @@ export function PortfolioCarousel({
             aria-label="Open lightbox"
           >
             <img
-              src={images[currentIndex]}
+              src={normalizedImages[currentIndex]}
               alt={`Portfolio image ${currentIndex + 1}`}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
@@ -67,12 +83,12 @@ export function PortfolioCarousel({
 
           {/* Image Counter */}
           <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-medium px-2.5 py-1 rounded-full">
-            {currentIndex + 1} / {images.length}
+            {currentIndex + 1} / {normalizedImages.length}
           </div>
         </div>
 
         {/* Navigation Arrows - Only show if more than 1 image */}
-        {images.length > 1 && (
+        {normalizedImages.length > 1 && (
           <>
             <button
               onClick={goToPrevious}
@@ -97,9 +113,9 @@ export function PortfolioCarousel({
         )}
 
         {/* Indicators - Only show if more than 1 image */}
-        {images.length > 1 && (
+        {normalizedImages.length > 1 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {images.map((_, index) => (
+            {normalizedImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
@@ -116,9 +132,9 @@ export function PortfolioCarousel({
       </div>
 
       {/* Thumbnail Strip - Show on larger screens if more than 1 image */}
-      {images.length > 1 && (
+      {normalizedImages.length > 1 && (
         <div className="mt-3 hidden sm:flex gap-2 overflow-x-auto pb-2">
-          {images.map((img, index) => (
+          {normalizedImages.map((img, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
@@ -141,7 +157,7 @@ export function PortfolioCarousel({
       {/* Lightbox Modal */}
       {lightboxOpen && (
         <ImageLightbox
-          images={images}
+          images={normalizedImages}
           startIndex={currentIndex}
           onClose={() => setLightboxOpen(false)}
         />
