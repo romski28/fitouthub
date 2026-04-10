@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
+    "geist": "^1.7.0",
     "lucide-react": "^0.575.0",
     "next": "16.0.8",
     "next-intl": "^4.8.3",
