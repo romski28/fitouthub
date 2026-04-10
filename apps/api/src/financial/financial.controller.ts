@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards, Request, BadRequestException, Headers, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, UseGuards, Request, BadRequestException, Headers, Req, HttpException, HttpStatus, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { CreateFinancialTransactionDto, UpdateFinancialTransactionDto } from './financial.service';
 import { FinancialService } from './financial.service';
@@ -135,6 +135,10 @@ export class FinancialController {
   @Post(':transactionId/confirm-deposit')
   @UseGuards(AuthGuard('jwt'))
   async confirmEscrowDeposit(@Param('transactionId') transactionId: string, @Request() req: any) {
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only admins can confirm escrow deposits');
+    }
+
     const transaction = await this.financialService.getTransaction(transactionId);
     
     if (!transaction) {
@@ -214,6 +218,10 @@ export class FinancialController {
   @Post(':transactionId/release')
   @UseGuards(AuthGuard('jwt'))
   async releasePayment(@Param('transactionId') transactionId: string, @Request() req: any) {
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only admins can release payments');
+    }
+
     return this.financialService.releasePayment(transactionId, req.user.id);
   }
 

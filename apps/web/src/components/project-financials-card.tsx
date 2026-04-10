@@ -54,6 +54,28 @@ interface Statement {
   approvedBudget: number | string;
 }
 
+interface PaymentPlanMilestone {
+  id: string;
+  sequence: number;
+  title: string;
+  type: string;
+  status: string;
+  percentOfTotal?: number | null;
+  amount: number | string;
+  plannedDueAt?: string | null;
+}
+
+interface PaymentPlan {
+  id: string;
+  projectScale: string;
+  escrowFundingPolicy: string;
+  status: string;
+  currency: string;
+  totalAmount: number | string;
+  depositCapPercent?: number | null;
+  milestones: PaymentPlanMilestone[];
+}
+
 interface ProjectFinancialsCardProps {
   projectId: string;
   projectProfessionalId?: string;
@@ -122,6 +144,8 @@ export default function ProjectFinancialsCard({
   const [showStatement, setShowStatement] = useState(false);
   const [statement, setStatement] = useState<Statement | null>(null);
   const [projectEscrowHeld, setProjectEscrowHeld] = useState<number | string>(0);
+  const [paymentPlan, setPaymentPlan] = useState<PaymentPlan | null>(null);
+  const [paymentPlanLoading, setPaymentPlanLoading] = useState(false);
 
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
@@ -193,7 +217,7 @@ export default function ProjectFinancialsCard({
         setError(null);
 
         const combinedPromise = (async () => {
-          const [summaryRes, txRes, projectRes] = await Promise.all([
+          const [summaryRes, txRes, projectRes, paymentPlanRes] = await Promise.all([
             fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
@@ -201,6 +225,9 @@ export default function ProjectFinancialsCard({
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
             fetch(`${API_BASE_URL}/projects/${projectId}`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            fetch(`${API_BASE_URL}/projects/${projectId}/payment-plan`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
           ]);
@@ -212,14 +239,18 @@ export default function ProjectFinancialsCard({
           const summaryData: Summary = await summaryRes.json();
           const txData: Transaction[] = await txRes.json();
           const projectData = projectRes.ok ? await projectRes.json() : null;
+          const paymentPlanData = paymentPlanRes.ok ? await paymentPlanRes.json() : null;
           
           if (projectData?.escrowHeld !== undefined) {
             setProjectEscrowHeld(projectData.escrowHeld);
           }
+
+          setPaymentPlan(paymentPlanData);
           
           return [summaryData, txData] as const;
         })();
 
+        setPaymentPlanLoading(true);
         requestInFlightRef.current = combinedPromise;
         const [, txData] = await combinedPromise;
         console.log('[ProjectFinancials] Loaded transactions:', txData);
@@ -227,6 +258,7 @@ export default function ProjectFinancialsCard({
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load financials');
       } finally {
+        setPaymentPlanLoading(false);
         requestInFlightRef.current = null;
         setLoading(false);
       }
@@ -427,6 +459,70 @@ export default function ProjectFinancialsCard({
               <p className="text-xl font-bold text-blue-200">{formatHKD(paymentsReleasedTotal)}</p>
             </div>
           </div>
+
+          {/* Payment Plan (Phase A visibility) */}
+          {!paymentPlanLoading && paymentPlan && (
+            <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-white">Payment Plan</h3>
+                <StatusPill
+                  status={paymentPlan.status}
+                  label={paymentPlan.status.replace(/_/g, ' ')}
+                  tone={statusToneFromStatus(paymentPlan.status)}
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Scale</p>
+                  <p className="text-sm font-semibold text-white mt-1">{paymentPlan.projectScale.replace('_', ' ')}</p>
+                </div>
+                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Escrow Policy</p>
+                  <p className="text-sm font-semibold text-white mt-1">{paymentPlan.escrowFundingPolicy.replace(/_/g, ' ')}</p>
+                </div>
+                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Plan Total</p>
+                  <p className="text-sm font-semibold text-white mt-1">{formatHKD(paymentPlan.totalAmount)}</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-left">
+                      <th className="px-3 py-2 text-white font-semibold">#</th>
+                      <th className="px-3 py-2 text-white font-semibold">Milestone</th>
+                      <th className="px-3 py-2 text-white font-semibold">Split</th>
+                      <th className="px-3 py-2 text-white font-semibold">Amount</th>
+                      <th className="px-3 py-2 text-white font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentPlan.milestones.map((milestone) => (
+                      <tr key={milestone.id} className="border-b border-slate-800">
+                        <td className="px-3 py-2 text-slate-200">{milestone.sequence}</td>
+                        <td className="px-3 py-2 text-slate-200">{milestone.title}</td>
+                        <td className="px-3 py-2 text-slate-300">
+                          {typeof milestone.percentOfTotal === 'number'
+                            ? `${milestone.percentOfTotal}%`
+                            : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-white font-semibold">{formatHKD(milestone.amount)}</td>
+                        <td className="px-3 py-2">
+                          <StatusPill
+                            status={milestone.status}
+                            label={milestone.status.replace(/_/g, ' ')}
+                            tone={statusToneFromStatus(milestone.status)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Transactions table */}
           <div className="overflow-x-auto">

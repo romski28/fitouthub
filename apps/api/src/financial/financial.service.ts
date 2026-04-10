@@ -376,10 +376,10 @@ export class FinancialService {
     const amountValue = amount instanceof Decimal ? amount.toNumber() : amount;
     return this.createTransaction({
       projectId,
-      type: 'escrow_deposit',
-      description: 'Escrow deposit for project initiation',
+      type: 'escrow_deposit_request',
+      description: 'Request to deposit project fees to escrow',
       amount: amountValue,
-      requestedByRole: 'admin',
+      requestedByRole: 'platform',
     });
   }
 
