@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { NotificationChannel, ProjectStage } from '@prisma/client';
@@ -100,29 +106,29 @@ export class FinancialService {
     });
 
     if (!transaction) {
-      throw new Error('Transaction not found');
+      throw new NotFoundException('Transaction not found');
     }
 
     if (transaction.type !== 'escrow_deposit_request') {
-      throw new Error('Only escrow deposit requests can be paid via checkout');
+      throw new BadRequestException('Only escrow deposit requests can be paid via checkout');
     }
 
     const status = (transaction.status || '').toLowerCase();
     if (status !== 'pending') {
-      throw new Error('This escrow request is no longer payable');
+      throw new BadRequestException('This escrow request is no longer payable');
     }
 
     if (role === 'professional') {
-      throw new Error('Professionals cannot pay escrow deposits');
+      throw new ForbiddenException('Professionals cannot pay escrow deposits');
     }
 
     if (role === 'client' && transaction.project?.userId !== actorId) {
-      throw new Error('You do not have permission to pay this escrow request');
+      throw new ForbiddenException('You do not have permission to pay this escrow request');
     }
 
     const amountNumber = Number(transaction.amount);
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      throw new Error('Invalid escrow amount');
+      throw new BadRequestException('Invalid escrow amount');
     }
 
     return { transaction, amountNumber };
@@ -141,7 +147,7 @@ export class FinancialService {
     });
 
     if (!user?.email) {
-      throw new Error('Account email is required to send OTP');
+      throw new BadRequestException('Account email is required to send OTP');
     }
 
     const preferredChannel =
@@ -211,7 +217,7 @@ export class FinancialService {
     code: string,
   ) {
     if (!code || !/^\d{6}$/.test(code.trim())) {
-      throw new Error('OTP code must be a 6-digit number');
+      throw new BadRequestException('OTP code must be a 6-digit number');
     }
 
     await this.assertEscrowCheckoutPermission(transactionId, actorId, role);
@@ -228,7 +234,7 @@ export class FinancialService {
     });
 
     if (!challenge) {
-      throw new Error('No OTP challenge found. Please request a new code.');
+      throw new BadRequestException('No OTP challenge found. Please request a new code.');
     }
 
     if (challenge.verifiedAt) {
@@ -239,11 +245,11 @@ export class FinancialService {
     }
 
     if (new Date(challenge.expiresAt).getTime() < Date.now()) {
-      throw new Error('OTP code has expired. Please request a new code.');
+      throw new BadRequestException('OTP code has expired. Please request a new code.');
     }
 
     if ((challenge.attempts || 0) >= (challenge.maxAttempts || 5)) {
-      throw new Error('Maximum OTP attempts reached. Please request a new code.');
+      throw new BadRequestException('Maximum OTP attempts reached. Please request a new code.');
     }
 
     const providedHash = this.hashOtpCode(code.trim());
@@ -252,7 +258,7 @@ export class FinancialService {
         where: { id: challenge.id },
         data: { attempts: (challenge.attempts || 0) + 1 },
       });
-      throw new Error('Invalid OTP code');
+      throw new BadRequestException('Invalid OTP code');
     }
 
     await (this.prisma as any).escrowCheckoutOtpChallenge.update({
@@ -282,7 +288,7 @@ export class FinancialService {
     });
 
     if (!challenge) {
-      throw new Error('OTP verification is required before checkout');
+      throw new BadRequestException('OTP verification is required before checkout');
     }
 
     return challenge;
@@ -294,7 +300,7 @@ export class FinancialService {
     role: 'client' | 'admin' | 'professional',
   ) {
     if (!this.stripePaymentsService.isConfigured()) {
-      throw new Error('Stripe is not configured on the API server');
+      throw new InternalServerErrorException('Stripe is not configured on the API server');
     }
 
     const { transaction, amountNumber } = await this.assertEscrowCheckoutPermission(
