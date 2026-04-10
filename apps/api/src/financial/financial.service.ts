@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
-import { ProjectStage } from '@prisma/client';
+import { NotificationChannel, ProjectStage } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 import { NotificationService } from '../notifications/notification.service';
 import { StripePaymentsService } from './stripe-payments.service';
+import { createHash, randomInt } from 'crypto';
 
 export interface CreateFinancialTransactionDto {
   projectId: string;
@@ -72,15 +73,19 @@ export class FinancialService {
     }
   }
 
-  async createEscrowCheckoutSession(
+  private hashOtpCode(code: string) {
+    return createHash('sha256').update(code).digest('hex');
+  }
+
+  private generateOtpCode() {
+    return randomInt(100000, 1000000).toString();
+  }
+
+  private async assertEscrowCheckoutPermission(
     transactionId: string,
     actorId: string,
     role: 'client' | 'admin' | 'professional',
   ) {
-    if (!this.stripePaymentsService.isConfigured()) {
-      throw new Error('Stripe is not configured on the API server');
-    }
-
     const transaction = await this.prisma.financialTransaction.findUnique({
       where: { id: transactionId },
       include: {
@@ -120,6 +125,185 @@ export class FinancialService {
       throw new Error('Invalid escrow amount');
     }
 
+    return { transaction, amountNumber };
+  }
+
+  async requestEscrowCheckoutOtp(
+    transactionId: string,
+    actorId: string,
+    role: 'client' | 'admin' | 'professional',
+  ) {
+    await this.assertEscrowCheckoutPermission(transactionId, actorId, role);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: actorId },
+      include: { notificationPreference: true },
+    });
+
+    if (!user?.email) {
+      throw new Error('Account email is required to send OTP');
+    }
+
+    const preferredChannel =
+      user.notificationPreference?.primaryChannel || NotificationChannel.EMAIL;
+    const code = this.generateOtpCode();
+    const codeHash = this.hashOtpCode(code);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await (this.prisma as any).escrowCheckoutOtpChallenge.updateMany({
+      where: {
+        transactionId,
+        actorUserId: actorId,
+        consumedAt: null,
+      },
+      data: {
+        consumedAt: new Date(),
+      },
+    });
+
+    await (this.prisma as any).escrowCheckoutOtpChallenge.create({
+      data: {
+        transactionId,
+        actorUserId: actorId,
+        codeHash,
+        preferredChannel,
+        expiresAt,
+        attempts: 0,
+        maxAttempts: 5,
+      },
+    });
+
+    const channelsSent = ['EMAIL'];
+    await this.emailService.sendOtpCode({
+      to: user.email,
+      code,
+      firstName: user.firstName || undefined,
+      minutesValid: 10,
+    });
+
+    if (
+      preferredChannel !== NotificationChannel.EMAIL &&
+      user.mobile &&
+      (preferredChannel === NotificationChannel.SMS ||
+        preferredChannel === NotificationChannel.WHATSAPP)
+    ) {
+      await this.notificationService.send({
+        userId: user.id,
+        phoneNumber: user.mobile,
+        channel: preferredChannel,
+        eventType: 'escrow_checkout_otp',
+        message: `Your Fitout Hub escrow payment OTP is ${code}. It expires in 10 minutes.`,
+      });
+      channelsSent.push(preferredChannel);
+    }
+
+    return {
+      success: true,
+      expiresAt,
+      channelsSent,
+    };
+  }
+
+  async verifyEscrowCheckoutOtp(
+    transactionId: string,
+    actorId: string,
+    role: 'client' | 'admin' | 'professional',
+    code: string,
+  ) {
+    if (!code || !/^\d{6}$/.test(code.trim())) {
+      throw new Error('OTP code must be a 6-digit number');
+    }
+
+    await this.assertEscrowCheckoutPermission(transactionId, actorId, role);
+
+    const challenge = await (this.prisma as any).escrowCheckoutOtpChallenge.findFirst({
+      where: {
+        transactionId,
+        actorUserId: actorId,
+        consumedAt: null,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!challenge) {
+      throw new Error('No OTP challenge found. Please request a new code.');
+    }
+
+    if (challenge.verifiedAt) {
+      return {
+        success: true,
+        verified: true,
+      };
+    }
+
+    if (new Date(challenge.expiresAt).getTime() < Date.now()) {
+      throw new Error('OTP code has expired. Please request a new code.');
+    }
+
+    if ((challenge.attempts || 0) >= (challenge.maxAttempts || 5)) {
+      throw new Error('Maximum OTP attempts reached. Please request a new code.');
+    }
+
+    const providedHash = this.hashOtpCode(code.trim());
+    if (providedHash !== challenge.codeHash) {
+      await (this.prisma as any).escrowCheckoutOtpChallenge.update({
+        where: { id: challenge.id },
+        data: { attempts: (challenge.attempts || 0) + 1 },
+      });
+      throw new Error('Invalid OTP code');
+    }
+
+    await (this.prisma as any).escrowCheckoutOtpChallenge.update({
+      where: { id: challenge.id },
+      data: {
+        verifiedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      verified: true,
+    };
+  }
+
+  private async assertEscrowOtpVerified(transactionId: string, actorId: string) {
+    const now = new Date();
+    const challenge = await (this.prisma as any).escrowCheckoutOtpChallenge.findFirst({
+      where: {
+        transactionId,
+        actorUserId: actorId,
+        verifiedAt: { not: null },
+        consumedAt: null,
+        expiresAt: { gt: now },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!challenge) {
+      throw new Error('OTP verification is required before checkout');
+    }
+
+    return challenge;
+  }
+
+  async createEscrowCheckoutSession(
+    transactionId: string,
+    actorId: string,
+    role: 'client' | 'admin' | 'professional',
+  ) {
+    if (!this.stripePaymentsService.isConfigured()) {
+      throw new Error('Stripe is not configured on the API server');
+    }
+
+    const { transaction, amountNumber } = await this.assertEscrowCheckoutPermission(
+      transactionId,
+      actorId,
+      role,
+    );
+    const verifiedChallenge = await this.assertEscrowOtpVerified(transactionId, actorId);
+
     const amountInCents = Math.round(amountNumber * 100);
     const projectName = transaction.project?.projectName || 'Project';
     const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
@@ -152,7 +336,14 @@ export class FinancialService {
     await this.prisma.financialTransaction.update({
       where: { id: transactionId },
       data: {
-        notes: this.appendNote(transaction.notes, `stripe_checkout_session:${session.id}`),
+        notes: this.appendNote(transaction.notes, `stripe_checkout_session:${session.id} | otp_verified_challenge:${verifiedChallenge.id}`),
+      },
+    });
+
+    await (this.prisma as any).escrowCheckoutOtpChallenge.update({
+      where: { id: verifiedChallenge.id },
+      data: {
+        consumedAt: new Date(),
       },
     });
 

@@ -25,6 +25,45 @@ export class FinancialController {
     return this.financialService.createEscrowCheckoutSession(transactionId, req.user.id, role);
   }
 
+  @Post(':transactionId/checkout-otp/request')
+  @UseGuards(CombinedAuthGuard)
+  async requestEscrowCheckoutOtp(
+    @Param('transactionId') transactionId: string,
+    @Request() req: any,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new BadRequestException('Professionals cannot pay escrow deposits');
+    }
+
+    const role = req.user?.role === 'admin' ? 'admin' : 'client';
+    return this.financialService.requestEscrowCheckoutOtp(transactionId, req.user.id, role);
+  }
+
+  @Post(':transactionId/checkout-otp/verify')
+  @UseGuards(CombinedAuthGuard)
+  async verifyEscrowCheckoutOtp(
+    @Param('transactionId') transactionId: string,
+    @Body() body: { code?: string },
+    @Request() req: any,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new BadRequestException('Professionals cannot pay escrow deposits');
+    }
+
+    const code = String(body?.code || '').trim();
+    if (!code) {
+      throw new BadRequestException('OTP code is required');
+    }
+
+    const role = req.user?.role === 'admin' ? 'admin' : 'client';
+    return this.financialService.verifyEscrowCheckoutOtp(
+      transactionId,
+      req.user.id,
+      role,
+      code,
+    );
+  }
+
   @Post('stripe/webhook')
   async handleStripeWebhook(
     @Req() req: RawBodyRequest<ExpressRequest>,

@@ -198,6 +198,7 @@ model User {
   aiIntakes                       AiIntake[]
   claimedAdminMessages            AdminMessageAssignment[] @relation("AdminMessageClaimedBy")
   assignedAdminMessages           AdminMessageAssignment[] @relation("AdminMessageAssignedTo")
+  escrowCheckoutOtpChallenges     EscrowCheckoutOtpChallenge[]
 }
 
 model Tradesman {
@@ -1076,6 +1077,7 @@ model FinancialTransaction {
   projectProfessional   ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
   approvedBudgetProject Project?             @relation("ApprovedBudgetTx")
   escrowLedgers         EscrowLedger[]
+  escrowOtpChallenges   EscrowCheckoutOtpChallenge[]
 
   @@index([projectId])
   @@index([projectId, createdAt(sort: Desc)])
@@ -1084,6 +1086,27 @@ model FinancialTransaction {
   @@index([status])
   @@index([actionComplete])
   @@index([type])
+}
+
+model EscrowCheckoutOtpChallenge {
+  id               String               @id @default(cuid())
+  transactionId    String
+  actorUserId      String
+  codeHash         String
+  preferredChannel NotificationChannel?
+  attempts         Int                  @default(0)
+  maxAttempts      Int                  @default(5)
+  expiresAt        DateTime
+  verifiedAt       DateTime?
+  consumedAt       DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  transaction      FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  actorUser        User                 @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId, actorUserId])
+  @@index([expiresAt])
 }
 
 model ActivityLog {

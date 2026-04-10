@@ -179,6 +179,12 @@ export default function ProjectFinancialsCard({
   const [retentionPercent, setRetentionPercent] = useState('5');
   const [retentionReleaseAt, setRetentionReleaseAt] = useState('');
   const [retentionSaving, setRetentionSaving] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpTransactionId, setOtpTransactionId] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpResendCooldown, setOtpResendCooldown] = useState(0);
 
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
@@ -316,6 +322,16 @@ export default function ProjectFinancialsCard({
         : '',
     );
   }, [paymentPlan]);
+
+  useEffect(() => {
+    if (!showOtpModal || otpResendCooldown <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setOtpResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [showOtpModal, otpResendCooldown]);
 
   const reloadPaymentPlan = async () => {
     try {
@@ -461,16 +477,83 @@ export default function ProjectFinancialsCard({
     }
   };
 
+  const closeOtpModal = () => {
+    setShowOtpModal(false);
+    setOtpTransactionId(null);
+    setOtpCode('');
+    setOtpSending(false);
+    setOtpVerifying(false);
+    setOtpResendCooldown(0);
+    setProcessingId(null);
+  };
+
+  const requestEscrowOtp = async (transactionId: string) => {
+    setOtpSending(true);
+    try {
+      const otpRequestRes = await fetch(`${API_BASE_URL}/financial/${transactionId}/checkout-otp/request`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!otpRequestRes.ok) {
+        const data = await otpRequestRes.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to send OTP');
+      }
+
+      setOtpResendCooldown(30);
+      toast.success('OTP sent to your email and preferred contact channel');
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
   const handlePayEscrow = async (transactionId: string) => {
     try {
       setProcessingId(transactionId);
-      const res = await fetch(`${API_BASE_URL}/financial/${transactionId}/checkout-session`, {
+      await requestEscrowOtp(transactionId);
+      setOtpTransactionId(transactionId);
+      setOtpCode('');
+      setShowOtpModal(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start escrow checkout');
+      setProcessingId(null);
+    }
+  };
+
+  const handleVerifyOtpAndCheckout = async () => {
+    if (!otpTransactionId) {
+      return;
+    }
+
+    const trimmedCode = otpCode.trim();
+    if (!/^\d{6}$/.test(trimmedCode)) {
+      toast.error('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    try {
+      setOtpVerifying(true);
+      const otpVerifyRes = await fetch(`${API_BASE_URL}/financial/${otpTransactionId}/checkout-otp/verify`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: trimmedCode }),
+      });
+
+      if (!otpVerifyRes.ok) {
+        const data = await otpVerifyRes.json().catch(() => ({}));
+        throw new Error(data.message || 'Invalid OTP code');
+      }
+
+      const res = await fetch(`${API_BASE_URL}/financial/${otpTransactionId}/checkout-session`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || 'Failed to start escrow checkout');
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to start escrow checkout');
       }
 
       const data = await res.json() as { checkoutUrl?: string };
@@ -478,11 +561,12 @@ export default function ProjectFinancialsCard({
         throw new Error('Checkout URL missing from API response');
       }
 
+      closeOtpModal();
       window.location.assign(data.checkoutUrl);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to start escrow checkout');
     } finally {
-      setProcessingId(null);
+      setOtpVerifying(false);
     }
   };
 
@@ -918,6 +1002,69 @@ export default function ProjectFinancialsCard({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {showOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={closeOtpModal}>
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900">Verify escrow payment</h3>
+              <button
+                onClick={closeOtpModal}
+                disabled={otpVerifying}
+                className="text-slate-400 hover:text-slate-600 disabled:opacity-50"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-600 mb-4">
+              Enter the 6-digit OTP sent to your email and preferred contact channel.
+            </p>
+
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="Enter 6-digit OTP"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none"
+              disabled={otpVerifying}
+            />
+
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => otpTransactionId && requestEscrowOtp(otpTransactionId)}
+                disabled={otpSending || otpVerifying || otpResendCooldown > 0}
+                className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 disabled:text-slate-400"
+              >
+                {otpResendCooldown > 0 ? `Resend OTP in ${otpResendCooldown}s` : otpSending ? 'Sending OTP...' : 'Resend OTP'}
+              </button>
+              <span className="text-xs text-slate-500">Code expires in 10 minutes</span>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeOtpModal}
+                disabled={otpVerifying}
+                className="px-4 py-2 bg-slate-200 text-slate-800 rounded text-sm font-medium hover:bg-slate-300 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleVerifyOtpAndCheckout}
+                disabled={otpVerifying || otpSending || otpCode.trim().length !== 6}
+                className="px-4 py-2 bg-emerald-600 text-white rounded text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-400"
+              >
+                {otpVerifying ? 'Verifying...' : 'Verify & Continue'}
+              </button>
+            </div>
           </div>
         </div>
       )}
