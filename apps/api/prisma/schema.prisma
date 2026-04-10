@@ -447,6 +447,10 @@ model ProjectPaymentPlan {
   clientComment            String?
   adminComment             String?
   adminOverrideApplied     Boolean             @default(false)
+  retentionEnabled         Boolean             @default(false)
+  retentionPercent         Decimal?            @db.Decimal(5, 2)
+  retentionAmount          Decimal?            @db.Decimal(12, 2)
+  retentionReleaseAt       DateTime?
   lockedAt                 DateTime?
   createdAt                DateTime            @default(now())
   updatedAt                DateTime            @updatedAt
@@ -465,6 +469,7 @@ model PaymentMilestone {
   sequence          Int
   title             String
   type              PaymentMilestoneType
+  projectMilestoneId String?
   status            PaymentMilestoneStatus @default(scheduled)
   percentOfTotal    Float?
   amount            Decimal               @db.Decimal(12, 2)
@@ -479,8 +484,10 @@ model PaymentMilestone {
   updatedAt         DateTime              @updatedAt
 
   paymentPlan       ProjectPaymentPlan    @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+  projectMilestone  ProjectMilestone?     @relation(fields: [projectMilestoneId], references: [id], onDelete: SetNull)
 
   @@unique([paymentPlanId, sequence])
+  @@index([projectMilestoneId])
   @@index([paymentPlanId])
   @@index([status])
 }
@@ -554,6 +561,7 @@ model ProjectMilestone {
   templateId            String?
   title                 String
   sequence              Int
+  isFinancial           Boolean  @default(false)
   status                String   @default("not_started") // not_started | in_progress | completed
   percentComplete       Int      @default(0)
   plannedStartDate      DateTime?
@@ -577,13 +585,14 @@ model ProjectMilestone {
   project                 Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectProfessional     ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: SetNull)
   milestoneTemplate       MilestoneTemplate?   @relation("TemplateToMilestone", fields: [templateId], references: [id], onDelete: SetNull)
+  paymentMilestones       PaymentMilestone[]
 
   @@index([projectId])
   @@index([projectProfessionalId])
   @@index([templateId])
   @@index([status])
   @@index([plannedStartDate])
-  @@unique([projectId, sequence])
+  @@unique([projectId, isFinancial, sequence])
 }
 
 model ProfessionalReport {

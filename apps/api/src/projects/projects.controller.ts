@@ -383,6 +383,46 @@ export class ProjectsController {
     return this.projectsService.reviewProjectPaymentPlan(projectId, actorId, role, body || {});
   }
 
+  @Post(':id/payment-plan/milestones')
+  @UseGuards(CombinedAuthGuard)
+  async updateScaleFinancialMilestones(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body()
+    body: {
+      scale2Milestone2?: {
+        title?: string;
+        plannedDueAt?: string | null;
+        projectMilestoneId?: string | null;
+      };
+      scale3IntermediateMilestones?: Array<{
+        title: string;
+        amount: number;
+        plannedDueAt?: string | null;
+        projectMilestoneId: string;
+      }>;
+    },
+  ) {
+    const { actorId, role } = this.resolveActorContext(req);
+    return this.projectsService.updateScaleFinancialMilestones(projectId, actorId, role, body || {});
+  }
+
+  @Post(':id/payment-plan/retention')
+  @UseGuards(CombinedAuthGuard)
+  async configurePaymentPlanRetention(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body()
+    body: {
+      retentionEnabled: boolean;
+      retentionPercent?: number;
+      retentionReleaseAt?: string | null;
+    },
+  ) {
+    const { actorId, role } = this.resolveActorContext(req);
+    return this.projectsService.configurePaymentPlanRetention(projectId, actorId, role, body || { retentionEnabled: false });
+  }
+
   @Post(':id/site-access/request')
   @UseGuards(CombinedAuthGuard)
   async requestSiteAccess(

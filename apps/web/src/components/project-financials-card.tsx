@@ -63,6 +63,16 @@ interface PaymentPlanMilestone {
   percentOfTotal?: number | null;
   amount: number | string;
   plannedDueAt?: string | null;
+  projectMilestoneId?: string | null;
+  projectMilestone?: {
+    id: string;
+    title: string;
+    sequence: number;
+    plannedStartDate?: string | null;
+    plannedEndDate?: string | null;
+    status: string;
+    isFinancial: boolean;
+  } | null;
 }
 
 interface PaymentPlan {
@@ -73,6 +83,10 @@ interface PaymentPlan {
   currency: string;
   totalAmount: number | string;
   depositCapPercent?: number | null;
+  retentionEnabled?: boolean;
+  retentionPercent?: number | string | null;
+  retentionAmount?: number | string | null;
+  retentionReleaseAt?: string | null;
   milestones: PaymentPlanMilestone[];
 }
 
@@ -107,6 +121,21 @@ const getTypeLabel = (type: string) => {
     release_payment: 'Payment Released',
   };
   return map[type] || type;
+};
+
+const parseMilestoneMetadataFromNotes = (notes?: string | null): { paymentMilestoneId?: string } | null => {
+  if (!notes || typeof notes !== 'string') return null;
+  const marker = '__FOH_MILESTONE__';
+  const index = notes.indexOf(marker);
+  if (index < 0) return null;
+  const payload = notes.slice(index + marker.length).trim();
+  if (!payload) return null;
+  try {
+    const parsed = JSON.parse(payload);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
 };
 
 const deriveRoleFromToken = (token?: string | null): ProjectFinancialRole | null => {
@@ -146,6 +175,10 @@ export default function ProjectFinancialsCard({
   const [projectEscrowHeld, setProjectEscrowHeld] = useState<number | string>(0);
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlan | null>(null);
   const [paymentPlanLoading, setPaymentPlanLoading] = useState(false);
+  const [retentionEnabled, setRetentionEnabled] = useState(false);
+  const [retentionPercent, setRetentionPercent] = useState('5');
+  const [retentionReleaseAt, setRetentionReleaseAt] = useState('');
+  const [retentionSaving, setRetentionSaving] = useState(false);
 
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
@@ -268,6 +301,88 @@ export default function ProjectFinancialsCard({
       load();
     }
   }, [projectId, accessToken, projectProfessionalId, resolvedRole]);
+
+  useEffect(() => {
+    if (!paymentPlan) return;
+    setRetentionEnabled(!!paymentPlan.retentionEnabled);
+    setRetentionPercent(
+      paymentPlan.retentionPercent !== undefined && paymentPlan.retentionPercent !== null
+        ? String(paymentPlan.retentionPercent)
+        : '5',
+    );
+    setRetentionReleaseAt(
+      paymentPlan.retentionReleaseAt
+        ? new Date(paymentPlan.retentionReleaseAt).toISOString().slice(0, 10)
+        : '',
+    );
+  }, [paymentPlan]);
+
+  const reloadPaymentPlan = async () => {
+    try {
+      const paymentPlanRes = await fetch(`${API_BASE_URL}/projects/${projectId}/payment-plan`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const paymentPlanData = paymentPlanRes.ok ? await paymentPlanRes.json() : null;
+      setPaymentPlan(paymentPlanData);
+    } catch {
+      // keep previous state
+    }
+  };
+
+  const handleSaveRetention = async () => {
+    if (resolvedRole !== 'admin') return;
+    if (!paymentPlan || paymentPlan.projectScale !== 'SCALE_3') {
+      toast.error('Retention is only available for Scale 3 plans');
+      return;
+    }
+
+    setRetentionSaving(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/payment-plan/retention`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          retentionEnabled,
+          retentionPercent: Number(retentionPercent || 0),
+          retentionReleaseAt: retentionReleaseAt ? `${retentionReleaseAt}T00:00:00.000Z` : null,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to save retention settings');
+      }
+
+      toast.success('Retention settings updated');
+      await reloadPaymentPlan();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save retention settings');
+    } finally {
+      setRetentionSaving(false);
+    }
+  };
+
+  const txByMilestone = useMemo(() => {
+    const map = new Map<string, { escrowTx?: Transaction; releaseTx?: Transaction }>();
+    for (const tx of transactions) {
+      const meta = parseMilestoneMetadataFromNotes(tx.notes);
+      const milestoneId = meta?.paymentMilestoneId;
+      if (!milestoneId) continue;
+      const bucket = map.get(milestoneId) || {};
+      const status = (tx.status || '').toLowerCase();
+      if (tx.type === 'escrow_deposit_request' && status === 'pending') {
+        bucket.escrowTx = tx;
+      }
+      if (tx.type === 'payment_request' && status === 'pending') {
+        bucket.releaseTx = tx;
+      }
+      map.set(milestoneId, bucket);
+    }
+    return map;
+  }, [transactions]);
 
   const handleConfirmDeposit = async (transactionId: string) => {
     try {
@@ -487,37 +602,150 @@ export default function ProjectFinancialsCard({
                 </div>
               </div>
 
+              {paymentPlan.projectScale === 'SCALE_3' && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">Retention</p>
+                      <p className="text-xs text-amber-100 mt-1">
+                        Optional holdback released one month after completion (admin editable).
+                      </p>
+                    </div>
+                    {(resolvedRole !== 'admin') && (
+                      <p className="text-xs text-amber-100">
+                        {paymentPlan.retentionEnabled
+                          ? `${paymentPlan.retentionPercent}% (${formatHKD(paymentPlan.retentionAmount || 0)})`
+                          : 'Not enabled'}
+                      </p>
+                    )}
+                  </div>
+
+                  {resolvedRole === 'admin' && (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <label className="flex items-center gap-2 text-sm text-amber-100">
+                          <input
+                            type="checkbox"
+                            checked={retentionEnabled}
+                            onChange={(e) => setRetentionEnabled(e.target.checked)}
+                          />
+                          Enable retention
+                        </label>
+                        <label className="text-sm text-amber-100">
+                          <span className="block text-xs mb-1">Retention %</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value={retentionPercent}
+                            onChange={(e) => setRetentionPercent(e.target.value)}
+                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-white"
+                          />
+                        </label>
+                        <label className="text-sm text-amber-100">
+                          <span className="block text-xs mb-1">Retention release date</span>
+                          <input
+                            type="date"
+                            value={retentionReleaseAt}
+                            onChange={(e) => setRetentionReleaseAt(e.target.value)}
+                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-white"
+                          />
+                        </label>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleSaveRetention}
+                          disabled={retentionSaving}
+                          className="rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                        >
+                          {retentionSaving ? 'Saving...' : 'Save retention settings'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-700 text-left">
                       <th className="px-3 py-2 text-white font-semibold">#</th>
                       <th className="px-3 py-2 text-white font-semibold">Milestone</th>
+                      <th className="px-3 py-2 text-white font-semibold">Due</th>
                       <th className="px-3 py-2 text-white font-semibold">Split</th>
                       <th className="px-3 py-2 text-white font-semibold">Amount</th>
                       <th className="px-3 py-2 text-white font-semibold">Status</th>
+                      {(resolvedRole === 'client') && <th className="px-3 py-2 text-white font-semibold text-right">Action</th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {paymentPlan.milestones.map((milestone) => (
-                      <tr key={milestone.id} className="border-b border-slate-800">
-                        <td className="px-3 py-2 text-slate-200">{milestone.sequence}</td>
-                        <td className="px-3 py-2 text-slate-200">{milestone.title}</td>
-                        <td className="px-3 py-2 text-slate-300">
-                          {typeof milestone.percentOfTotal === 'number'
-                            ? `${milestone.percentOfTotal}%`
-                            : '—'}
-                        </td>
-                        <td className="px-3 py-2 text-white font-semibold">{formatHKD(milestone.amount)}</td>
-                        <td className="px-3 py-2">
-                          <StatusPill
-                            status={milestone.status}
-                            label={milestone.status.replace(/_/g, ' ')}
-                            tone={statusToneFromStatus(milestone.status)}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {paymentPlan.milestones.map((milestone) => {
+                      const linkedTx = txByMilestone.get(milestone.id);
+                      const canPayMilestoneEscrow =
+                        resolvedRole === 'client' &&
+                        milestone.status === 'escrow_requested' &&
+                        !!linkedTx?.escrowTx;
+                      const canApproveMilestoneRelease =
+                        resolvedRole === 'client' &&
+                        milestone.status === 'release_requested' &&
+                        !!linkedTx?.releaseTx;
+
+                      return (
+                        <tr key={milestone.id} className="border-b border-slate-800">
+                          <td className="px-3 py-2 text-slate-200">{milestone.sequence}</td>
+                          <td className="px-3 py-2 text-slate-200">
+                            <div>{milestone.title}</div>
+                            {milestone.projectMilestone && (
+                              <div className="text-[11px] text-slate-400 mt-1">
+                                Linked schedule: {milestone.projectMilestone.sequence}. {milestone.projectMilestone.title}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-slate-300">
+                            {milestone.plannedDueAt ? new Date(milestone.plannedDueAt).toLocaleDateString('en-HK') : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-slate-300">
+                            {typeof milestone.percentOfTotal === 'number'
+                              ? `${milestone.percentOfTotal}%`
+                              : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-white font-semibold">{formatHKD(milestone.amount)}</td>
+                          <td className="px-3 py-2">
+                            <StatusPill
+                              status={milestone.status}
+                              label={milestone.status.replace(/_/g, ' ')}
+                              tone={statusToneFromStatus(milestone.status)}
+                            />
+                          </td>
+                          {resolvedRole === 'client' && (
+                            <td className="px-3 py-2 text-right">
+                              {canPayMilestoneEscrow ? (
+                                <button
+                                  onClick={() => handlePayEscrow(linkedTx!.escrowTx!.id)}
+                                  disabled={processingId === linkedTx!.escrowTx!.id}
+                                  className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
+                                >
+                                  {processingId === linkedTx!.escrowTx!.id ? 'Processing...' : 'Fund Escrow'}
+                                </button>
+                              ) : canApproveMilestoneRelease ? (
+                                <button
+                                  onClick={() => handleApprovePayment(linkedTx!.releaseTx!.id)}
+                                  disabled={processingId === linkedTx!.releaseTx!.id}
+                                  className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
+                                >
+                                  {processingId === linkedTx!.releaseTx!.id ? 'Approving...' : 'Approve Release'}
+                                </button>
+                              ) : (
+                                <span className="text-xs text-slate-500">—</span>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -590,7 +818,7 @@ export default function ProjectFinancialsCard({
                           disabled={processingId === tx.id}
                           className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
                         >
-                          {processingId === tx.id ? 'Processing...' : 'Pay Escrow'}
+                          {processingId === tx.id ? 'Processing...' : 'Fund Escrow'}
                         </button>
                       );
                     }

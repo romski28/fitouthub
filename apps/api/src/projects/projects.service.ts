@@ -430,6 +430,106 @@ export class ProjectsService {
     return baseRows;
   }
 
+  private addMonths(source: Date, months: number): Date {
+    const date = new Date(source);
+    date.setMonth(date.getMonth() + months);
+    return date;
+  }
+
+  private toValidDate(input?: Date | string | null): Date | null {
+    if (!input) return null;
+    const value = input instanceof Date ? input : new Date(input);
+    if (Number.isNaN(value.getTime())) return null;
+    return value;
+  }
+
+  private async ensureFinancialProjectMilestoneLinks(tx: any, input: {
+    projectId: string;
+    projectProfessionalId?: string | null;
+    paymentMilestones: Array<{
+      id: string;
+      sequence: number;
+      title: string;
+      plannedDueAt?: Date | null;
+      projectMilestoneId?: string | null;
+    }>;
+  }) {
+    const existingFinancialRows = await tx.projectMilestone.findMany({
+      where: {
+        projectId: input.projectId,
+        projectProfessionalId: input.projectProfessionalId || null,
+        isFinancial: true,
+      },
+      orderBy: { sequence: 'asc' },
+    });
+    const financialBySequence = new Map<number, any>(
+      existingFinancialRows.map((row: any) => [row.sequence, row]),
+    );
+
+    for (const paymentMilestone of input.paymentMilestones) {
+      let linkedProjectMilestone: any = null;
+
+      if (paymentMilestone.projectMilestoneId) {
+        linkedProjectMilestone = await tx.projectMilestone.findFirst({
+          where: {
+            id: paymentMilestone.projectMilestoneId,
+            projectId: input.projectId,
+          },
+        });
+      }
+
+      if (!linkedProjectMilestone) {
+        const existingBySequence = financialBySequence.get(paymentMilestone.sequence);
+        if (existingBySequence) {
+          linkedProjectMilestone = await tx.projectMilestone.update({
+            where: { id: existingBySequence.id },
+            data: {
+              title: paymentMilestone.title,
+              plannedEndDate: paymentMilestone.plannedDueAt || existingBySequence.plannedEndDate || null,
+              isFinancial: true,
+            },
+          });
+        } else {
+          linkedProjectMilestone = await tx.projectMilestone.create({
+            data: {
+              projectId: input.projectId,
+              projectProfessionalId: input.projectProfessionalId || null,
+              title: paymentMilestone.title,
+              sequence: paymentMilestone.sequence,
+              status: 'not_started',
+              percentComplete: 0,
+              plannedEndDate: paymentMilestone.plannedDueAt || null,
+              isFinancial: true,
+            },
+          });
+        }
+      } else if (!linkedProjectMilestone.isFinancial) {
+        linkedProjectMilestone = await tx.projectMilestone.update({
+          where: { id: linkedProjectMilestone.id },
+          data: {
+            isFinancial: true,
+            plannedEndDate: paymentMilestone.plannedDueAt || linkedProjectMilestone.plannedEndDate || null,
+          },
+        });
+      }
+
+      if (!linkedProjectMilestone) {
+        throw new BadRequestException('Unable to link payment milestone to project milestone');
+      }
+
+      await tx.paymentMilestone.update({
+        where: { id: paymentMilestone.id },
+        data: {
+          projectMilestoneId: linkedProjectMilestone.id,
+          plannedDueAt:
+            paymentMilestone.plannedDueAt ||
+            linkedProjectMilestone.plannedEndDate ||
+            null,
+        },
+      });
+    }
+  }
+
   private async ensureProjectPaymentPlan(tx: any, input: {
     projectId: string;
     projectProfessionalId?: string | null;
@@ -454,6 +554,12 @@ export class ProjectsService {
         : input.quoteEstimatedStartAt
           ? new Date(input.quoteEstimatedStartAt)
           : null;
+    const safeDurationMinutes = Math.max(0, Number(input.quoteEstimatedDurationMinutes) || 0);
+    const completionAt =
+      quoteStart && safeDurationMinutes > 0
+        ? new Date(quoteStart.getTime() + safeDurationMinutes * 60 * 1000)
+        : null;
+    const defaultRetentionReleaseAt = completionAt ? this.addMonths(completionAt, 1) : null;
 
     const milestoneRows = this.buildScaleMilestones({
       scale,
@@ -478,6 +584,19 @@ export class ProjectsService {
       totalAmount: new Decimal(totalAmount),
       depositCapPercent: scale === 'SCALE_1' ? 30 : null,
       fundingBufferMilestones: scale === 'SCALE_3' ? 2 : null,
+      retentionEnabled: existing?.retentionEnabled ?? false,
+      retentionPercent:
+        scale === 'SCALE_3'
+          ? new Decimal(existing?.retentionPercent ?? 5)
+          : null,
+      retentionAmount:
+        scale === 'SCALE_3' && existing?.retentionEnabled
+          ? new Decimal(this.roundMoney((totalAmount * Number(existing?.retentionPercent ?? 5)) / 100))
+          : null,
+      retentionReleaseAt:
+        scale === 'SCALE_3'
+          ? existing?.retentionReleaseAt || defaultRetentionReleaseAt
+          : null,
       status: 'draft',
     };
 
@@ -494,9 +613,11 @@ export class ProjectsService {
         });
 
     await tx.paymentMilestone.deleteMany({ where: { paymentPlanId: plan.id } });
+    const createdMilestones: any[] = [];
     if (milestoneRows.length > 0) {
-      await tx.paymentMilestone.createMany({
-        data: milestoneRows.map((row) => ({
+      for (const row of milestoneRows) {
+        const created = await tx.paymentMilestone.create({
+          data: {
           paymentPlanId: plan.id,
           sequence: row.sequence,
           title: row.title,
@@ -504,7 +625,14 @@ export class ProjectsService {
           amount: new Decimal(row.amount),
           percentOfTotal: row.percentOfTotal,
           plannedDueAt: row.plannedDueAt,
-        })),
+          },
+        });
+        createdMilestones.push(created);
+      }
+      await this.ensureFinancialProjectMilestoneLinks(tx, {
+        projectId: input.projectId,
+        projectProfessionalId: input.projectProfessionalId || null,
+        paymentMilestones: createdMilestones,
       });
     }
 
@@ -568,6 +696,19 @@ export class ProjectsService {
       include: {
         milestones: {
           orderBy: { sequence: 'asc' },
+          include: {
+            projectMilestone: {
+              select: {
+                id: true,
+                title: true,
+                sequence: true,
+                plannedStartDate: true,
+                plannedEndDate: true,
+                status: true,
+                isFinancial: true,
+              },
+            },
+          },
         },
       },
     });
@@ -590,6 +731,327 @@ export class ProjectsService {
       ...plan,
       timelineRisk: { overdueCount, risk },
     };
+  }
+
+  async updateScaleFinancialMilestones(
+    projectId: string,
+    actorId: string,
+    role: 'client' | 'professional' | 'admin',
+    body: {
+      scale2Milestone2?: {
+        title?: string;
+        plannedDueAt?: string | null;
+        projectMilestoneId?: string | null;
+      };
+      scale3IntermediateMilestones?: Array<{
+        title: string;
+        amount: number;
+        plannedDueAt?: string | null;
+        projectMilestoneId: string;
+      }>;
+    },
+  ) {
+    if (!['professional', 'admin'].includes(role)) {
+      throw new BadRequestException('Only professionals or admins can edit financial milestones');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        userId: true,
+        clientId: true,
+        professionals: { select: { professionalId: true } },
+      },
+    });
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    if (role === 'professional') {
+      const hasAccess = project.professionals.some((pp: any) => pp.professionalId === actorId);
+      if (!hasAccess) {
+        throw new BadRequestException('You do not have access to this project');
+      }
+    }
+
+    const plan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+      include: { milestones: { orderBy: { sequence: 'asc' } } },
+    });
+    if (!plan) {
+      throw new BadRequestException('Payment plan not found for this project');
+    }
+    if (role === 'professional' && plan.lockedAt) {
+      throw new BadRequestException('Locked plans cannot be edited by professionals');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      if (plan.projectScale === 'SCALE_2' && body.scale2Milestone2) {
+        const milestone2 = plan.milestones.find((item: any) => item.sequence === 2);
+        if (!milestone2) {
+          throw new BadRequestException('Scale 2 payment milestone 2 was not found');
+        }
+
+        let linkedProjectMilestoneId =
+          body.scale2Milestone2.projectMilestoneId !== undefined
+            ? body.scale2Milestone2.projectMilestoneId
+            : milestone2.projectMilestoneId;
+
+        if (linkedProjectMilestoneId) {
+          const linked = await tx.projectMilestone.findFirst({
+            where: {
+              id: linkedProjectMilestoneId,
+              projectId,
+            },
+          });
+          if (!linked) {
+            throw new BadRequestException('Linked project milestone not found on this project');
+          }
+          await tx.projectMilestone.update({
+            where: { id: linked.id },
+            data: {
+              isFinancial: true,
+              plannedEndDate:
+                this.toValidDate(body.scale2Milestone2.plannedDueAt) || linked.plannedEndDate || null,
+            },
+          });
+        }
+
+        await tx.paymentMilestone.update({
+          where: { id: milestone2.id },
+          data: {
+            title: body.scale2Milestone2.title?.trim() || milestone2.title,
+            plannedDueAt:
+              this.toValidDate(body.scale2Milestone2.plannedDueAt) ||
+              milestone2.plannedDueAt ||
+              null,
+            projectMilestoneId: linkedProjectMilestoneId || null,
+          },
+        });
+      }
+
+      if (plan.projectScale === 'SCALE_3' && Array.isArray(body.scale3IntermediateMilestones)) {
+        const statuses = (plan.milestones || []).map((row: any) => row.status);
+        if (statuses.some((value: string) => value !== 'scheduled')) {
+          throw new BadRequestException(
+            'Scale 3 milestone structure can only be edited before funding/release starts',
+          );
+        }
+
+        const first = plan.milestones.find((row: any) => row.sequence === 1);
+        const last = plan.milestones[plan.milestones.length - 1];
+        if (!first || !last) {
+          throw new BadRequestException('Scale 3 plan is missing required first/last milestones');
+        }
+
+        const intermediateRows = body.scale3IntermediateMilestones.map((entry, index) => {
+          const title = String(entry.title || '').trim();
+          const amount = this.roundMoney(Number(entry.amount) || 0);
+          if (!title) {
+            throw new BadRequestException(`Intermediate milestone ${index + 1} requires a title`);
+          }
+          if (amount <= 0) {
+            throw new BadRequestException(`Intermediate milestone ${index + 1} requires amount > 0`);
+          }
+          if (!entry.projectMilestoneId) {
+            throw new BadRequestException(`Intermediate milestone ${index + 1} requires projectMilestoneId`);
+          }
+          return {
+            ...entry,
+            title,
+            amount,
+            plannedDueAt: this.toValidDate(entry.plannedDueAt) || null,
+          };
+        });
+
+        const linkedIds = new Set<string>();
+        for (const row of intermediateRows) {
+          if (linkedIds.has(row.projectMilestoneId)) {
+            throw new BadRequestException('Each intermediate payment milestone must link to a unique project milestone');
+          }
+          linkedIds.add(row.projectMilestoneId);
+
+          const linked = await tx.projectMilestone.findFirst({
+            where: {
+              id: row.projectMilestoneId,
+              projectId,
+            },
+          });
+          if (!linked) {
+            throw new BadRequestException(`Project milestone ${row.projectMilestoneId} not found on this project`);
+          }
+          await tx.projectMilestone.update({
+            where: { id: linked.id },
+            data: {
+              isFinancial: true,
+              plannedEndDate: row.plannedDueAt || linked.plannedEndDate || null,
+            },
+          });
+        }
+
+        const totalAmount = Number(plan.totalAmount || 0);
+        const depositAmount = Number(first.amount || 0);
+        const intermediateTotal = this.roundMoney(
+          intermediateRows.reduce((sum, item) => sum + item.amount, 0),
+        );
+        const finalAmount = this.roundMoney(totalAmount - depositAmount - intermediateTotal);
+        if (finalAmount < 0) {
+          throw new BadRequestException('Intermediate milestone totals exceed available plan amount');
+        }
+
+        const rebuiltRows: Array<any> = [
+          {
+            sequence: 1,
+            title: first.title,
+            type: 'deposit',
+            amount: this.roundMoney(depositAmount),
+            percentOfTotal: totalAmount > 0 ? this.roundMoney((depositAmount / totalAmount) * 100) : null,
+            plannedDueAt: first.plannedDueAt,
+            projectMilestoneId: first.projectMilestoneId || null,
+          },
+          ...intermediateRows.map((row, index) => ({
+            sequence: index + 2,
+            title: row.title,
+            type: 'progress',
+            amount: row.amount,
+            percentOfTotal: totalAmount > 0 ? this.roundMoney((row.amount / totalAmount) * 100) : null,
+            plannedDueAt: row.plannedDueAt,
+            projectMilestoneId: row.projectMilestoneId,
+          })),
+          {
+            sequence: intermediateRows.length + 2,
+            title: last.title,
+            type: 'final',
+            amount: finalAmount,
+            percentOfTotal: totalAmount > 0 ? this.roundMoney((finalAmount / totalAmount) * 100) : null,
+            plannedDueAt: last.plannedDueAt,
+            projectMilestoneId: last.projectMilestoneId || null,
+          },
+        ];
+
+        await tx.paymentMilestone.deleteMany({
+          where: { paymentPlanId: plan.id },
+        });
+
+        for (const row of rebuiltRows) {
+          await tx.paymentMilestone.create({
+            data: {
+              paymentPlanId: plan.id,
+              sequence: row.sequence,
+              title: row.title,
+              type: row.type,
+              amount: new Decimal(row.amount),
+              percentOfTotal: row.percentOfTotal,
+              plannedDueAt: row.plannedDueAt,
+              projectMilestoneId: row.projectMilestoneId,
+            },
+          });
+        }
+      }
+
+      return (tx as any).projectPaymentPlan.findUnique({
+        where: { id: plan.id },
+        include: {
+          milestones: {
+            orderBy: { sequence: 'asc' },
+            include: {
+              projectMilestone: {
+                select: {
+                  id: true,
+                  title: true,
+                  sequence: true,
+                  plannedStartDate: true,
+                  plannedEndDate: true,
+                  status: true,
+                  isFinancial: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+  }
+
+  async configurePaymentPlanRetention(
+    projectId: string,
+    actorId: string,
+    role: 'client' | 'professional' | 'admin',
+    body: {
+      retentionEnabled: boolean;
+      retentionPercent?: number;
+      retentionReleaseAt?: string | null;
+    },
+  ) {
+    if (role !== 'admin') {
+      throw new BadRequestException('Only admins can configure retention settings');
+    }
+
+    const plan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+      include: {
+        project: {
+          select: {
+            quoteEstimatedStartAt: true,
+            quoteEstimatedDurationMinutes: true,
+          },
+        },
+      },
+    });
+    if (!plan) {
+      throw new BadRequestException('Payment plan not found for this project');
+    }
+    if (plan.projectScale !== 'SCALE_3') {
+      throw new BadRequestException('Retention settings are only supported for Scale 3 plans');
+    }
+
+    const percent = this.roundMoney(
+      Math.max(0, Math.min(100, Number(body.retentionPercent ?? plan.retentionPercent ?? 5))),
+    );
+    const totalAmount = Number(plan.totalAmount || 0);
+
+    const startAt = this.toValidDate(plan.project?.quoteEstimatedStartAt || null);
+    const durationMinutes = Math.max(0, Number(plan.project?.quoteEstimatedDurationMinutes || 0));
+    const completionAt =
+      startAt && durationMinutes > 0
+        ? new Date(startAt.getTime() + durationMinutes * 60 * 1000)
+        : null;
+    const defaultReleaseAt = completionAt ? this.addMonths(completionAt, 1) : null;
+    const releaseAt =
+      this.toValidDate(body.retentionReleaseAt) ||
+      this.toValidDate(plan.retentionReleaseAt) ||
+      defaultReleaseAt;
+
+    return (this.prisma as any).projectPaymentPlan.update({
+      where: { id: plan.id },
+      data: {
+        retentionEnabled: !!body.retentionEnabled,
+        retentionPercent: new Decimal(percent),
+        retentionAmount: body.retentionEnabled
+          ? new Decimal(this.roundMoney((totalAmount * percent) / 100))
+          : null,
+        retentionReleaseAt: body.retentionEnabled ? releaseAt : null,
+      },
+      include: {
+        milestones: {
+          orderBy: { sequence: 'asc' },
+          include: {
+            projectMilestone: {
+              select: {
+                id: true,
+                title: true,
+                sequence: true,
+                plannedStartDate: true,
+                plannedEndDate: true,
+                status: true,
+                isFinancial: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   async reviewProjectPaymentPlan(

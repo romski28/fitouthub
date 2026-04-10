@@ -4,6 +4,7 @@ export class CreateMilestoneDto {
   templateId?: string;
   title: string;
   sequence: number;
+  isFinancial?: boolean;
   status?: 'not_started' | 'in_progress' | 'completed';
   percentComplete?: number;
   plannedStartDate?: Date;
@@ -18,6 +19,8 @@ export class CreateMilestoneDto {
 
 export class UpdateMilestoneDto {
   title?: string;
+  sequence?: number;
+  isFinancial?: boolean;
   status?: 'not_started' | 'in_progress' | 'completed';
   percentComplete?: number;
   plannedStartDate?: Date;
@@ -37,6 +40,7 @@ export class MilestoneResponseDto {
   id: string;
   title: string;
   sequence: number;
+  isFinancial?: boolean;
   status: 'not_started' | 'in_progress' | 'completed';
   percentComplete: number;
   plannedStartDate?: Date;

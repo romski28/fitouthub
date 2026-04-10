@@ -52,6 +52,7 @@ export class MilestonesService {
           templateId: data.templateId,
           title: data.title,
           sequence: data.sequence,
+          isFinancial: data.isFinancial ?? false,
           status: data.status || 'not_started',
           percentComplete: data.percentComplete || 0,
           plannedStartDate: data.plannedStartDate,
@@ -83,7 +84,10 @@ export class MilestonesService {
       : { projectId: data.projectId };
     
     const deleteResult = await this.prisma.projectMilestone.deleteMany({
-      where: whereClause,
+      where: {
+        ...whereClause,
+        isFinancial: false,
+      },
     });
     console.log(`[MilestonesService] Deleted ${deleteResult.count} existing milestones`);
 
@@ -97,6 +101,7 @@ export class MilestonesService {
             templateId: m.templateId,
             title: m.title,
             sequence: m.sequence,
+            isFinancial: m.isFinancial ?? false,
             status: m.status || 'not_started',
             percentComplete: m.percentComplete || 0,
             plannedStartDate: m.plannedStartDate,
@@ -161,6 +166,15 @@ export class MilestonesService {
           updatedAt: new Date(),
         },
       });
+
+      if (data.plannedEndDate !== undefined) {
+        await this.prisma.paymentMilestone.updateMany({
+          where: { projectMilestoneId: id },
+          data: {
+            plannedDueAt: data.plannedEndDate || null,
+          },
+        });
+      }
 
       const becameCompleted =
         existingMilestone.status !== 'completed' && result.status === 'completed';

@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { MilestoneEditor } from '@/components/milestone-editor';
 import { API_BASE_URL } from '@/config/api';
-import { Pencil, Trash2, Calendar, Clock } from 'lucide-react';
+import { Pencil, Trash2, GripVertical } from 'lucide-react';
 
 interface Milestone {
   id: string;
   projectId: string;
   projectProfessionalId?: string;
   title: string;
+  isFinancial?: boolean;
   description?: string;
   sequence: number;
   status: 'not_started' | 'in_progress' | 'completed';
@@ -74,6 +75,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+  const [draggedMilestoneId, setDraggedMilestoneId] = useState<string | null>(null);
+  const [reorderSaving, setReorderSaving] = useState(false);
   const [proposalDate, setProposalDate] = useState('');
   const [proposalTime, setProposalTime] = useState('09:00');
   const [proposalDurationHours, setProposalDurationHours] = useState('4');
@@ -355,7 +358,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
       // Normalize milestone data
       // Calculate next sequence if not provided
-      const nextSequence = milestone.sequence || Math.max(...milestones.map(m => m.sequence || 0), 0) + 1;
+      const existingWorkMilestones = milestones.filter((item) => !item.isFinancial);
+      const nextSequence = milestone.sequence || Math.max(...existingWorkMilestones.map(m => m.sequence || 0), 0) + 1;
 
       const data: any = {
         projectId,
@@ -537,9 +541,94 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
   const confirmDelete = () => {
     if (deleteConfirmIndex !== null) {
-      const milestone = milestones[deleteConfirmIndex];
+      const workMilestones = milestones
+        .filter((milestone) => !milestone.isFinancial)
+        .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+      const milestone = workMilestones[deleteConfirmIndex];
+      if (!milestone) {
+        setDeleteConfirmIndex(null);
+        return;
+      }
       handleDeleteMilestone(milestone.id);
     }
+  };
+
+  const financialMilestones = milestones
+    .filter((milestone) => !!milestone.isFinancial)
+    .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+
+  const workMilestones = milestones
+    .filter((milestone) => !milestone.isFinancial)
+    .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+
+  const persistWorkMilestoneOrder = async (orderedWorkMilestones: Milestone[]) => {
+    if (!accessToken) return;
+
+    const originalById = new Map(
+      milestones.map((milestone) => [milestone.id, milestone.sequence]),
+    );
+
+    const changed = orderedWorkMilestones.filter((milestone, index) => {
+      const nextSequence = index + 1;
+      return originalById.get(milestone.id) !== nextSequence;
+    });
+
+    if (!changed.length) return;
+
+    setReorderSaving(true);
+    try {
+      await Promise.all(
+        changed.map((milestone, index) =>
+          fetch(`${API_BASE_URL}/milestones/${milestone.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ sequence: orderedWorkMilestones.indexOf(milestone) + 1 }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              const data = await response.json().catch(() => ({}));
+              throw new Error(data.message || `Failed to reorder task ${index + 1}`);
+            }
+          }),
+        ),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save new task order';
+      setError(message);
+    } finally {
+      setReorderSaving(false);
+    }
+  };
+
+  const handleDropMilestone = async (targetMilestoneId: string) => {
+    if (!draggedMilestoneId || draggedMilestoneId === targetMilestoneId) {
+      setDraggedMilestoneId(null);
+      return;
+    }
+
+    const current = [...workMilestones];
+    const fromIndex = current.findIndex((milestone) => milestone.id === draggedMilestoneId);
+    const toIndex = current.findIndex((milestone) => milestone.id === targetMilestoneId);
+
+    if (fromIndex < 0 || toIndex < 0) {
+      setDraggedMilestoneId(null);
+      return;
+    }
+
+    const [moved] = current.splice(fromIndex, 1);
+    current.splice(toIndex, 0, moved);
+    const reSequenced = current.map((milestone, index) => ({
+      ...milestone,
+      sequence: index + 1,
+    }));
+
+    const financial = milestones.filter((milestone) => !!milestone.isFinancial);
+    setMilestones([...financial, ...reSequenced]);
+    setDraggedMilestoneId(null);
+    await persistWorkMilestoneOrder(reSequenced);
+    onMilestonesUpdate?.();
   };
 
   return (
@@ -698,18 +787,18 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   editingIndex !== null
                     ? [
                         {
-                          title: milestones[editingIndex].title,
-                          sequence: milestones[editingIndex].sequence,
-                          status: milestones[editingIndex].status,
-                          percentComplete: milestones[editingIndex].percentComplete,
-                          plannedStartDate: milestones[editingIndex].plannedStartDate,
-                          plannedEndDate: milestones[editingIndex].plannedEndDate,
-                          description: milestones[editingIndex].description,
-                          startTimeSlot: milestones[editingIndex].startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                          endTimeSlot: milestones[editingIndex].endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                          estimatedHours: milestones[editingIndex].estimatedHours,
-                          siteAccessRequired: milestones[editingIndex].siteAccessRequired,
-                          siteAccessNotes: milestones[editingIndex].siteAccessNotes,
+                          title: workMilestones[editingIndex].title,
+                          sequence: workMilestones[editingIndex].sequence,
+                          status: workMilestones[editingIndex].status,
+                          percentComplete: workMilestones[editingIndex].percentComplete,
+                          plannedStartDate: workMilestones[editingIndex].plannedStartDate,
+                          plannedEndDate: workMilestones[editingIndex].plannedEndDate,
+                          description: workMilestones[editingIndex].description,
+                          startTimeSlot: workMilestones[editingIndex].startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                          endTimeSlot: workMilestones[editingIndex].endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                          estimatedHours: workMilestones[editingIndex].estimatedHours,
+                          siteAccessRequired: workMilestones[editingIndex].siteAccessRequired,
+                          siteAccessNotes: workMilestones[editingIndex].siteAccessNotes,
                         },
                       ]
                     : []
@@ -717,7 +806,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 onMilestonesChange={(updated) => {
                   if (editingIndex !== null) {
                     // Editing existing task - update the milestone with its ID
-                    handleUpdateMilestone(milestones[editingIndex].id, updated[0]);
+                    handleUpdateMilestone(workMilestones[editingIndex].id, updated[0]);
                   } else {
                     // Adding new task - save it
                     handleSaveMilestone(updated[0]);
@@ -737,7 +826,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 </button>
               </div>
             </div>
-          ) : milestones.length === 0 ? (
+          ) : workMilestones.length === 0 ? (
             // EMPTY STATE
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
               <p className="text-sm text-slate-300 mb-4">📋 No tasks set up yet.</p>
@@ -752,16 +841,28 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             // LIST VIEW: Showing tasks
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Tasks</h3>
-                <button
-                  onClick={() => setIsAddingNew(true)}
-                  className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-                >
-                  + Add Task
-                </button>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Tasks</h3>
+                  <p className="text-xs text-slate-400 mt-1">Drag and drop to reorder project schedule milestones.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {reorderSaving && <span className="text-xs text-slate-300">Saving order...</span>}
+                  <button
+                    onClick={() => setIsAddingNew(true)}
+                    className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                  >
+                    + Add Task
+                  </button>
+                </div>
               </div>
 
-              {milestones.map((milestone, index) => {
+              {financialMilestones.length > 0 && (
+                <div className="rounded-md border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-blue-200">
+                  {financialMilestones.length} financial milestone template{financialMilestones.length > 1 ? 's are' : ' is'} linked and managed from the Financials tab. Add/edit non-financial work milestones below.
+                </div>
+              )}
+
+              {workMilestones.map((milestone, index) => {
                 const statusPercent = getStatusPercent(milestone.status, milestone.percentComplete);
                 const statusLabel =
                   statusPercent === 100 ? "Complete" :
@@ -774,6 +875,11 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   <div
                     key={milestone.id || index}
                     className="bg-slate-900/60 rounded-lg border border-slate-700 hover:bg-slate-800/60 transition overflow-hidden"
+                    draggable
+                    onDragStart={() => setDraggedMilestoneId(milestone.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDropMilestone(milestone.id)}
+                    onDragEnd={() => setDraggedMilestoneId(null)}
                   >
                     <div className="flex items-stretch">
                       {/* Date Box */}
@@ -851,6 +957,13 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                         {/* Action Buttons */}
                         <div className="flex gap-2 flex-shrink-0">
                           <button
+                            type="button"
+                            className="p-2 text-slate-300 hover:bg-slate-700 rounded transition cursor-grab"
+                            title="Drag to reorder"
+                          >
+                            <GripVertical className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => setEditingIndex(index)}
                             className="p-2 text-slate-300 hover:bg-slate-700 rounded transition"
                             title="Edit task"
@@ -881,7 +994,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 max-w-sm shadow-lg">
             <h3 className="text-lg font-semibold text-white mb-2">Delete Task?</h3>
             <p className="text-sm text-slate-300 mb-6">
-              Are you sure you want to delete <strong>{milestones[deleteConfirmIndex]?.title}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{workMilestones[deleteConfirmIndex]?.title}</strong>? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

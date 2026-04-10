@@ -2,6 +2,7 @@
 
 import React from 'react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '@/config/api';
 
 interface PaymentRequest {
   id: string;
@@ -27,6 +28,7 @@ interface ProjectFinancials {
 
 interface PaymentPlanMilestone {
   id: string;
+  projectMilestoneId?: string | null;
   sequence: number;
   title: string;
   type: 'deposit' | 'progress' | 'final' | string;
@@ -40,6 +42,15 @@ interface PaymentPlanMilestone {
   releasedAt?: string | null;
   clientComment?: string | null;
   adminComment?: string | null;
+  projectMilestone?: {
+    id: string;
+    title: string;
+    sequence: number;
+    plannedStartDate?: string | null;
+    plannedEndDate?: string | null;
+    status: string;
+    isFinancial: boolean;
+  } | null;
 }
 
 interface TimelineRisk {
@@ -56,6 +67,18 @@ interface PaymentPlan {
   totalAmount: number | string;
   milestones: PaymentPlanMilestone[];
   timelineRisk?: TimelineRisk | null;
+  retentionEnabled?: boolean;
+  retentionPercent?: number | string | null;
+  retentionAmount?: number | string | null;
+  retentionReleaseAt?: string | null;
+}
+
+interface ProjectMilestoneOption {
+  id: string;
+  title: string;
+  sequence: number;
+  plannedEndDate?: string | null;
+  isFinancial?: boolean;
 }
 
 interface FinancialsTabProps {
@@ -73,6 +96,10 @@ interface FinancialsTabProps {
   paymentRequestError: string | null;
   onSubmitPaymentRequest: (amount: number, type: string, notes: string) => Promise<void>;
   paymentRequestActionLoading: boolean;
+  accessToken?: string | null;
+  projectId?: string;
+  projectProfessionalId?: string;
+  onRefreshPaymentPlan?: () => Promise<void> | void;
   onRequestMilestoneFunding?: (milestoneId: string) => Promise<void>;
   fundingRequestLoading?: boolean;
   paymentRequestAmount: string;
@@ -97,6 +124,10 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   paymentRequestError,
   onSubmitPaymentRequest,
   paymentRequestActionLoading,
+  accessToken,
+  projectId,
+  projectProfessionalId,
+  onRefreshPaymentPlan,
   onRequestMilestoneFunding,
   fundingRequestLoading,
   paymentRequestAmount,
@@ -107,6 +138,16 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   onUpdatePaymentRequestNotes,
 }) => {
   const [fundingMilestoneId, setFundingMilestoneId] = React.useState<string>('');
+  const [projectMilestones, setProjectMilestones] = React.useState<ProjectMilestoneOption[]>([]);
+  const [scaleEditLoading, setScaleEditLoading] = React.useState(false);
+  const [scale2MilestoneId, setScale2MilestoneId] = React.useState('');
+  const [scale2PlannedDueAt, setScale2PlannedDueAt] = React.useState('');
+  const [scale3Rows, setScale3Rows] = React.useState<Array<{
+    title: string;
+    amount: string;
+    plannedDueAt: string;
+    projectMilestoneId: string;
+  }>>([]);
   const isAwarded = projectStatus === 'awarded';
   const totalPending = paymentRequests
     .filter((p) => p.status === 'pending')
@@ -165,6 +206,112 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     || null;
 
   const selectedMilestoneTiming = selectedMilestone ? getTiming(selectedMilestone.plannedDueAt) : null;
+
+  React.useEffect(() => {
+    if (!accessToken || !projectProfessionalId) return;
+
+    const fetchMilestones = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/milestones/project-professional/${projectProfessionalId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        const rows = (Array.isArray(data) ? data : data?.milestones || []) as ProjectMilestoneOption[];
+        setProjectMilestones(rows);
+      } catch {
+        setProjectMilestones([]);
+      }
+    };
+
+    fetchMilestones();
+  }, [accessToken, projectProfessionalId]);
+
+  React.useEffect(() => {
+    if (!paymentPlan) return;
+
+    if (paymentPlan.projectScale === 'SCALE_2') {
+      const second = paymentPlan.milestones.find((row) => row.sequence === 2);
+      setScale2MilestoneId(second?.projectMilestone?.id || second?.projectMilestoneId || '');
+      setScale2PlannedDueAt(
+        second?.plannedDueAt ? new Date(second.plannedDueAt).toISOString().slice(0, 10) : '',
+      );
+    }
+
+    if (paymentPlan.projectScale === 'SCALE_3') {
+      const rows = paymentPlan.milestones
+        .filter((row) => row.type === 'progress')
+        .map((row) => ({
+          title: row.title,
+          amount: String(row.amount ?? ''),
+          plannedDueAt: row.plannedDueAt ? new Date(row.plannedDueAt).toISOString().slice(0, 10) : '',
+          projectMilestoneId: row.projectMilestone?.id || row.projectMilestoneId || '',
+        }));
+      setScale3Rows(rows);
+    }
+  }, [paymentPlan]);
+
+  const saveScaleMilestoneSettings = async () => {
+    if (!accessToken || !projectId || !paymentPlan) {
+      toast.error('Project context missing for milestone update');
+      return;
+    }
+
+    setScaleEditLoading(true);
+    try {
+      let body: any = {};
+
+      if (paymentPlan.projectScale === 'SCALE_2') {
+        body = {
+          scale2Milestone2: {
+            plannedDueAt: scale2PlannedDueAt ? `${scale2PlannedDueAt}T00:00:00.000Z` : null,
+            projectMilestoneId: scale2MilestoneId || null,
+          },
+        };
+      } else if (paymentPlan.projectScale === 'SCALE_3') {
+        body = {
+          scale3IntermediateMilestones: scale3Rows.map((row) => ({
+            title: row.title,
+            amount: Number(row.amount),
+            plannedDueAt: row.plannedDueAt ? `${row.plannedDueAt}T00:00:00.000Z` : null,
+            projectMilestoneId: row.projectMilestoneId,
+          })),
+        };
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/payment-plan/milestones`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to update scale financial milestones');
+      }
+
+      toast.success('Financial milestone settings updated');
+      await onRefreshPaymentPlan?.();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update scale financial milestones';
+      toast.error(message);
+    } finally {
+      setScaleEditLoading(false);
+    }
+  };
+
+  const nonFinancialProjectMilestones = projectMilestones.filter((row) => !row.isFinancial);
 
   if (!isAwarded) {
     return (
@@ -242,6 +389,144 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               <p className="text-lg font-bold text-white">{formatHKD(paymentPlan.totalAmount)}</p>
             </div>
           </div>
+
+          {(paymentPlan.projectScale === 'SCALE_2' || paymentPlan.projectScale === 'SCALE_3') && (
+            <div className="rounded-md border border-indigo-500/30 bg-indigo-500/10 p-4 space-y-3">
+              <div>
+                <h4 className="font-semibold text-white">Link Financial Milestones to Project Schedule</h4>
+                <p className="text-xs text-slate-300 mt-1">
+                  Keep payment due dates aligned with the project schedule. You can still add non-financial schedule tasks in the Schedule tab.
+                </p>
+              </div>
+
+              {paymentPlan.projectScale === 'SCALE_2' && (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-white mb-1">Linked project milestone (payment #2)</label>
+                    <select
+                      value={scale2MilestoneId}
+                      onChange={(e) => setScale2MilestoneId(e.target.value)}
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                    >
+                      <option value="">Unlinked</option>
+                      {nonFinancialProjectMilestones.map((milestone) => (
+                        <option key={milestone.id} value={milestone.id}>
+                          {`${milestone.sequence}. ${milestone.title}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-white mb-1">Payment #2 due date</label>
+                    <input
+                      type="date"
+                      value={scale2PlannedDueAt}
+                      onChange={(e) => setScale2PlannedDueAt(e.target.value)}
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {paymentPlan.projectScale === 'SCALE_3' && (
+                <div className="space-y-3">
+                  {scale3Rows.map((row, index) => (
+                    <div key={`${index}-${row.title}`} className="grid gap-2 rounded-md border border-slate-700 bg-slate-900/60 p-3 md:grid-cols-4">
+                      <input
+                        value={row.title}
+                        onChange={(e) => {
+                          const next = [...scale3Rows];
+                          next[index] = { ...next[index], title: e.target.value };
+                          setScale3Rows(next);
+                        }}
+                        className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                        placeholder="Milestone title"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.amount}
+                        onChange={(e) => {
+                          const next = [...scale3Rows];
+                          next[index] = { ...next[index], amount: e.target.value };
+                          setScale3Rows(next);
+                        }}
+                        className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                        placeholder="Amount"
+                      />
+                      <input
+                        type="date"
+                        value={row.plannedDueAt}
+                        onChange={(e) => {
+                          const next = [...scale3Rows];
+                          next[index] = { ...next[index], plannedDueAt: e.target.value };
+                          setScale3Rows(next);
+                        }}
+                        className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                      />
+                      <div className="flex gap-2">
+                        <select
+                          value={row.projectMilestoneId}
+                          onChange={(e) => {
+                            const next = [...scale3Rows];
+                            next[index] = { ...next[index], projectMilestoneId: e.target.value };
+                            setScale3Rows(next);
+                          }}
+                          className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                        >
+                          <option value="">Link schedule milestone</option>
+                          {nonFinancialProjectMilestones.map((milestone) => (
+                            <option key={milestone.id} value={milestone.id}>
+                              {`${milestone.sequence}. ${milestone.title}`}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setScale3Rows(scale3Rows.filter((_, i) => i !== index))}
+                          className="rounded-md border border-rose-500/40 bg-rose-500/10 px-2 text-xs text-rose-200"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setScale3Rows([
+                        ...scale3Rows,
+                        { title: '', amount: '', plannedDueAt: '', projectMilestoneId: '' },
+                      ])
+                    }
+                    className="rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    + Add intermediate financial milestone
+                  </button>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={saveScaleMilestoneSettings}
+                  disabled={scaleEditLoading}
+                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {scaleEditLoading ? 'Saving...' : 'Save milestone linkage'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {paymentPlan.projectScale === 'SCALE_3' && paymentPlan.retentionEnabled && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+              Retention configured: {paymentPlan.retentionPercent}% ({formatHKD(paymentPlan.retentionAmount || 0)})
+              {paymentPlan.retentionReleaseAt ? ` · Release date: ${new Date(paymentPlan.retentionReleaseAt).toLocaleDateString('en-HK')}` : ''}.
+              {' '}Retention settings are admin-controlled.
+            </div>
+          )}
 
           <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
             <table className="w-full text-sm">

@@ -56,6 +56,7 @@ interface ProjectDetail {
 
 interface PaymentPlanMilestone {
   id: string;
+  projectMilestoneId?: string | null;
   sequence: number;
   title: string;
   type: 'deposit' | 'progress' | 'final' | string;
@@ -69,6 +70,15 @@ interface PaymentPlanMilestone {
   releasedAt?: string | null;
   clientComment?: string | null;
   adminComment?: string | null;
+  projectMilestone?: {
+    id: string;
+    title: string;
+    sequence: number;
+    plannedStartDate?: string | null;
+    plannedEndDate?: string | null;
+    status: string;
+    isFinancial: boolean;
+  } | null;
 }
 
 interface PaymentPlan {
@@ -79,6 +89,10 @@ interface PaymentPlan {
   currency: string;
   totalAmount: string | number;
   milestones: PaymentPlanMilestone[];
+  retentionEnabled?: boolean;
+  retentionPercent?: number | string | null;
+  retentionAmount?: number | string | null;
+  retentionReleaseAt?: string | null;
 }
 
 interface Message {
@@ -348,35 +362,35 @@ export default function ProjectDetailPage() {
     }
   }, [isLoggedIn, accessToken, projectProfessionalId, router]);
 
-  useEffect(() => {
-    const fetchPaymentPlan = async () => {
-      if (!accessToken || !project?.project?.id) {
+  const reloadPaymentPlan = async () => {
+    if (!accessToken || !project?.project?.id) {
+      return;
+    }
+
+    setPaymentPlanLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/${project.project.id}/payment-plan`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        setPaymentPlan(null);
         return;
       }
 
-      setPaymentPlanLoading(true);
-      try {
-        const response = await fetch(`${API_BASE_URL}/projects/${project.project.id}/payment-plan`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+      const data = await response.json();
+      setPaymentPlan(data || null);
+    } catch {
+      setPaymentPlan(null);
+    } finally {
+      setPaymentPlanLoading(false);
+    }
+  };
 
-        if (!response.ok) {
-          setPaymentPlan(null);
-          return;
-        }
-
-        const data = await response.json();
-        setPaymentPlan(data || null);
-      } catch {
-        setPaymentPlan(null);
-      } finally {
-        setPaymentPlanLoading(false);
-      }
-    };
-
-    fetchPaymentPlan();
+  useEffect(() => {
+    reloadPaymentPlan();
   }, [accessToken, project?.project?.id]);
 
   useEffect(() => {
@@ -1480,6 +1494,10 @@ export default function ProjectDetailPage() {
               projectStatus={project.status}
               projectBudget={projectBudgetValue}
               awardedAmount={awardedAmountValue}
+              accessToken={accessToken || null}
+              projectId={project.project.id}
+              projectProfessionalId={projectProfessionalId}
+              onRefreshPaymentPlan={reloadPaymentPlan}
               paymentPlan={paymentPlan}
               paymentPlanLoading={paymentPlanLoading}
               selectedPaymentMilestoneId={selectedPaymentMilestoneId}
