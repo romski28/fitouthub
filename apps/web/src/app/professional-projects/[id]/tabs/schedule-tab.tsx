@@ -696,7 +696,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 space-y-6">
       {!isAwarded ? (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/15 p-4">
           <p className="text-sm text-amber-200">
@@ -710,6 +710,30 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
               <p className="text-sm font-medium text-rose-200">{error}</p>
             </div>
           )}
+
+          <div className="flex items-center justify-between rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3">
+            <div>
+              <h3 className="text-sm font-semibold text-white">Schedule Actions</h3>
+              <p className="text-xs text-slate-400">Manage non-financial project milestones and recover from mistakes quickly.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {reorderSaving && <span className="text-xs text-slate-300">Saving order...</span>}
+              <button
+                onClick={handleResetMilestonesToDefault}
+                disabled={resettingDefaults}
+                className="inline-flex items-center justify-center rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-50"
+              >
+                {resettingDefaults ? 'Resetting...' : 'Reset to Defaults'}
+              </button>
+              <button
+                onClick={() => setIsAddingNew(true)}
+                disabled={isAddingNew || editingIndex !== null}
+                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+              >
+                + Add Task
+              </button>
+            </div>
+          </div>
 
           <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -832,12 +856,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           </div>
 
           {loading ? (
-            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
+            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-center">
               <p className="text-sm text-slate-300">Loading schedule...</p>
             </div>
           ) : isAddingNew || editingIndex !== null ? (
             // FORM VIEW: Add/Edit mode
-            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-6">
+            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-white">
                   {isAddingNew ? 'Add New Task' : 'Edit Task'}
@@ -892,7 +916,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             </div>
           ) : workMilestones.length === 0 ? (
             // EMPTY STATE
-            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
+            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-center">
               <p className="text-sm text-slate-300 mb-4">📋 No tasks set up yet.</p>
               <button
                 onClick={() => setIsAddingNew(true)}
@@ -909,22 +933,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   <h3 className="text-lg font-semibold text-white">Tasks</h3>
                   <p className="text-xs text-slate-400 mt-1">Drag and drop to reorder project schedule milestones.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  {reorderSaving && <span className="text-xs text-slate-300">Saving order...</span>}
-                  <button
-                    onClick={handleResetMilestonesToDefault}
-                    disabled={resettingDefaults}
-                    className="inline-flex items-center justify-center rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-50"
-                  >
-                    {resettingDefaults ? 'Resetting...' : 'Reset to Defaults'}
-                  </button>
-                  <button
-                    onClick={() => setIsAddingNew(true)}
-                    className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-                  >
-                    + Add Task
-                  </button>
-                </div>
+                <span className="text-xs text-slate-400">Non-financial milestones only</span>
               </div>
 
               {financialMilestones.length > 0 && (
@@ -945,7 +954,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 return (
                   <div
                     key={milestone.id || index}
-                    className="bg-slate-900/60 rounded-lg border border-slate-700 hover:bg-slate-800/60 transition overflow-hidden"
+                    className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg border border-slate-700 hover:from-slate-800 hover:to-slate-700 transition overflow-hidden"
                     draggable
                     onDragStart={() => setDraggedMilestoneId(milestone.id)}
                     onDragOver={(e) => e.preventDefault()}
