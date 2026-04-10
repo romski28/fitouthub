@@ -62,6 +62,43 @@ enum ProjectStage {
   DISPUTED
 }
 
+enum ProjectScale {
+  SCALE_1
+  SCALE_2
+  SCALE_3
+}
+
+enum EscrowFundingPolicy {
+  FULL_UPFRONT
+  ROLLING_TWO_MILESTONES
+}
+
+enum PaymentPlanStatus {
+  draft
+  client_review
+  admin_review
+  locked
+  active
+  completed
+  cancelled
+}
+
+enum PaymentMilestoneType {
+  deposit
+  progress
+  final
+}
+
+enum PaymentMilestoneStatus {
+  scheduled
+  escrow_requested
+  escrow_funded
+  release_requested
+  released
+  disputed
+  cancelled
+}
+
 enum AdminActionType {
   VERIFY_ESCROW_RECEIPT
   APPROVE_PAYMENT_RELEASE
@@ -286,6 +323,9 @@ model Project {
   escrowRequired               Decimal?                @db.Decimal(12, 2)
   escrowHeld                   Decimal                 @default(0) @db.Decimal(12, 2)
   escrowHeldUpdatedAt          DateTime?
+  projectScale                 ProjectScale?
+  escrowFundingPolicy          EscrowFundingPolicy?
+  paymentPlanLockedAt          DateTime?
   clientName                   String
   contractorName               String?
   notes                        String?
@@ -340,6 +380,7 @@ model Project {
   professionalSignedById       String?
   professionalSignedBy         User?                    @relation("ProfessionalContractSignature", fields: [professionalSignedById], references: [id])
   supportRequests              SupportRequest[]
+  paymentPlan                  ProjectPaymentPlan?
 }
 
 model ProjectPhoto {
@@ -385,10 +426,63 @@ model ProjectProfessional {
   siteAccessVisits         SiteAccessVisit[]
   startProposals          ProjectStartProposal[]
   milestones              ProjectMilestone[]
+  paymentPlans            ProjectPaymentPlan[]
 
   @@unique([projectId, professionalId])
   @@index([projectId])
   @@index([professionalId])
+}
+
+model ProjectPaymentPlan {
+  id                       String              @id @default(cuid())
+  projectId                String              @unique
+  projectProfessionalId    String?
+  projectScale             ProjectScale
+  escrowFundingPolicy      EscrowFundingPolicy
+  status                   PaymentPlanStatus   @default(draft)
+  currency                 String              @default("HKD")
+  totalAmount              Decimal             @db.Decimal(12, 2)
+  depositCapPercent        Int?
+  fundingBufferMilestones  Int?
+  clientComment            String?
+  adminComment             String?
+  adminOverrideApplied     Boolean             @default(false)
+  lockedAt                 DateTime?
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+
+  project                  Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectProfessional      ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: SetNull)
+  milestones               PaymentMilestone[]
+
+  @@index([projectProfessionalId])
+  @@index([status])
+}
+
+model PaymentMilestone {
+  id                String                @id @default(cuid())
+  paymentPlanId     String
+  sequence          Int
+  title             String
+  type              PaymentMilestoneType
+  status            PaymentMilestoneStatus @default(scheduled)
+  percentOfTotal    Float?
+  amount            Decimal               @db.Decimal(12, 2)
+  plannedDueAt      DateTime?
+  escrowRequestedAt DateTime?
+  escrowFundedAt    DateTime?
+  releaseRequestedAt DateTime?
+  releasedAt        DateTime?
+  clientComment     String?
+  adminComment      String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  paymentPlan       ProjectPaymentPlan    @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentPlanId, sequence])
+  @@index([paymentPlanId])
+  @@index([status])
 }
 
 model ProjectStartProposal {

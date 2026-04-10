@@ -65,6 +65,26 @@ export class ProjectsController {
     return userId;
   }
 
+  private resolveActorContext(req: any): {
+    actorId: string;
+    role: 'client' | 'professional' | 'admin';
+  } {
+    const actorId = req.user?.id || req.user?.sub;
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    const isProfessional = !!req.user?.isProfessional;
+    if (tokenRole === 'admin') {
+      return { actorId, role: 'admin' };
+    }
+    if (tokenRole === 'professional' || isProfessional) {
+      return { actorId, role: 'professional' };
+    }
+    return { actorId, role: 'client' };
+  }
+
   @Get()
   @UseGuards(CombinedAuthGuard)
   async findAll(@Request() req: any) {
@@ -334,6 +354,33 @@ export class ProjectsController {
   ) {
     const adminUserId = this.requireAdmin(req);
     return this.projectsService.reverseAward(projectId, adminUserId, body);
+  }
+
+  @Get(':id/payment-plan')
+  @UseGuards(CombinedAuthGuard)
+  async getPaymentPlan(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    const { actorId, role } = this.resolveActorContext(req);
+    return this.projectsService.getProjectPaymentPlan(projectId, actorId, role);
+  }
+
+  @Post(':id/payment-plan/review')
+  @UseGuards(CombinedAuthGuard)
+  async reviewPaymentPlan(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body()
+    body: {
+      clientComment?: string;
+      adminComment?: string;
+      adminOverrideApplied?: boolean;
+      lockPlan?: boolean;
+    },
+  ) {
+    const { actorId, role } = this.resolveActorContext(req);
+    return this.projectsService.reviewProjectPaymentPlan(projectId, actorId, role, body || {});
   }
 
   @Post(':id/site-access/request')

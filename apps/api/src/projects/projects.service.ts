@@ -313,6 +313,365 @@ export class ProjectsService {
     };
   }
 
+  private normalizeProjectScale(value?: string | null): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null {
+    if (!value) return null;
+    const normalized = String(value).trim().toUpperCase();
+    if (normalized === 'SCALE_1' || normalized === 'SCALE_2' || normalized === 'SCALE_3') {
+      return normalized;
+    }
+    return null;
+  }
+
+  private inferProjectScaleFromContext(input: {
+    explicitScale?: string | null;
+    quoteEstimatedDurationMinutes?: number | null;
+    tradesRequired?: string[] | null;
+    isEmergency?: boolean | null;
+  }): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' {
+    const explicit = this.normalizeProjectScale(input.explicitScale);
+    if (explicit) return explicit;
+
+    const duration = Number(input.quoteEstimatedDurationMinutes || 0);
+    const trades = Array.isArray(input.tradesRequired)
+      ? input.tradesRequired.filter(Boolean).length
+      : 0;
+
+    if (duration > 0) {
+      if (duration <= 24 * 60 && trades <= 1) return 'SCALE_1';
+      if (duration <= 14 * 24 * 60 && trades <= 3) return 'SCALE_2';
+      return 'SCALE_3';
+    }
+
+    if (input.isEmergency && trades <= 1) return 'SCALE_1';
+    if (trades <= 1) return 'SCALE_1';
+    if (trades <= 3) return 'SCALE_2';
+    return 'SCALE_3';
+  }
+
+  private escrowPolicyForScale(scale: 'SCALE_1' | 'SCALE_2' | 'SCALE_3'): 'FULL_UPFRONT' | 'ROLLING_TWO_MILESTONES' {
+    return scale === 'SCALE_3' ? 'ROLLING_TWO_MILESTONES' : 'FULL_UPFRONT';
+  }
+
+  private roundMoney(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
+  private buildScaleMilestones(input: {
+    scale: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
+    totalAmount: number;
+    startAt?: Date | null;
+    durationMinutes?: number | null;
+  }) {
+    const { scale, totalAmount } = input;
+    const safeTotal = this.roundMoney(Math.max(0, Number(totalAmount) || 0));
+
+    const percentages =
+      scale === 'SCALE_1'
+        ? [30, 70]
+        : scale === 'SCALE_2'
+          ? [30, 40, 30]
+          : [20, 20, 20, 20, 20];
+
+    const titles =
+      scale === 'SCALE_1'
+        ? ['Upfront Deposit', 'Final Completion Payment']
+        : scale === 'SCALE_2'
+          ? ['Upfront Deposit', 'Progress Payment', 'Final Completion Payment']
+          : [
+              'Mobilization Drawdown',
+              'Phase 1 Progress Drawdown',
+              'Phase 2 Progress Drawdown',
+              'Phase 3 Progress Drawdown',
+              'Final Completion Drawdown',
+            ];
+
+    const types =
+      scale === 'SCALE_1'
+        ? ['deposit', 'final']
+        : scale === 'SCALE_2'
+          ? ['deposit', 'progress', 'final']
+          : ['deposit', 'progress', 'progress', 'progress', 'final'];
+
+    const count = percentages.length;
+    const startAt = input.startAt && !Number.isNaN(input.startAt.getTime()) ? input.startAt : null;
+    const safeDurationMinutes = Math.max(0, Number(input.durationMinutes) || 0);
+
+    const baseRows = percentages.map((percent, index) => {
+      const amount = this.roundMoney((safeTotal * percent) / 100);
+      let plannedDueAt: Date | null = null;
+
+      if (startAt) {
+        if (index === 0) {
+          plannedDueAt = new Date(startAt);
+        } else if (safeDurationMinutes > 0 && count > 1) {
+          const offset = Math.round((safeDurationMinutes * index) / (count - 1));
+          plannedDueAt = new Date(startAt.getTime() + offset * 60 * 1000);
+        }
+      }
+
+      return {
+        sequence: index + 1,
+        title: titles[index],
+        type: types[index] as 'deposit' | 'progress' | 'final',
+        percentOfTotal: percent,
+        amount,
+        plannedDueAt,
+      };
+    });
+
+    const sumBeforeLast = this.roundMoney(
+      baseRows.slice(0, -1).reduce((acc, row) => acc + row.amount, 0),
+    );
+    const lastAmount = this.roundMoney(Math.max(0, safeTotal - sumBeforeLast));
+    if (baseRows.length > 0) {
+      baseRows[baseRows.length - 1].amount = lastAmount;
+    }
+
+    return baseRows;
+  }
+
+  private async ensureProjectPaymentPlan(tx: any, input: {
+    projectId: string;
+    projectProfessionalId?: string | null;
+    totalAmount: number;
+    explicitScale?: string | null;
+    quoteEstimatedDurationMinutes?: number | null;
+    quoteEstimatedStartAt?: Date | string | null;
+    tradesRequired?: string[] | null;
+    isEmergency?: boolean | null;
+  }) {
+    const scale = this.inferProjectScaleFromContext({
+      explicitScale: input.explicitScale,
+      quoteEstimatedDurationMinutes: input.quoteEstimatedDurationMinutes,
+      tradesRequired: input.tradesRequired,
+      isEmergency: input.isEmergency,
+    });
+    const escrowPolicy = this.escrowPolicyForScale(scale);
+    const totalAmount = this.roundMoney(input.totalAmount);
+    const quoteStart =
+      input.quoteEstimatedStartAt instanceof Date
+        ? input.quoteEstimatedStartAt
+        : input.quoteEstimatedStartAt
+          ? new Date(input.quoteEstimatedStartAt)
+          : null;
+
+    const milestoneRows = this.buildScaleMilestones({
+      scale,
+      totalAmount,
+      startAt: quoteStart,
+      durationMinutes: input.quoteEstimatedDurationMinutes || null,
+    });
+
+    const existing = await tx.projectPaymentPlan.findUnique({
+      where: { projectId: input.projectId },
+      include: { milestones: true },
+    });
+
+    if (existing?.lockedAt) {
+      return existing;
+    }
+
+    const baseData = {
+      projectProfessionalId: input.projectProfessionalId || null,
+      projectScale: scale,
+      escrowFundingPolicy: escrowPolicy,
+      totalAmount: new Decimal(totalAmount),
+      depositCapPercent: scale === 'SCALE_1' ? 30 : null,
+      fundingBufferMilestones: scale === 'SCALE_3' ? 2 : null,
+      status: 'draft',
+    };
+
+    const plan = existing
+      ? await tx.projectPaymentPlan.update({
+          where: { id: existing.id },
+          data: baseData,
+        })
+      : await tx.projectPaymentPlan.create({
+          data: {
+            projectId: input.projectId,
+            ...baseData,
+          },
+        });
+
+    await tx.paymentMilestone.deleteMany({ where: { paymentPlanId: plan.id } });
+    if (milestoneRows.length > 0) {
+      await tx.paymentMilestone.createMany({
+        data: milestoneRows.map((row) => ({
+          paymentPlanId: plan.id,
+          sequence: row.sequence,
+          title: row.title,
+          type: row.type,
+          amount: new Decimal(row.amount),
+          percentOfTotal: row.percentOfTotal,
+          plannedDueAt: row.plannedDueAt,
+        })),
+      });
+    }
+
+    await tx.project.update({
+      where: { id: input.projectId },
+      data: {
+        projectScale: scale,
+        escrowFundingPolicy: escrowPolicy,
+      } as any,
+    });
+
+    return tx.projectPaymentPlan.findUnique({
+      where: { id: plan.id },
+      include: {
+        milestones: {
+          orderBy: { sequence: 'asc' },
+        },
+      },
+    });
+  }
+
+  async getProjectPaymentPlan(
+    projectId: string,
+    actorId: string,
+    role: 'client' | 'professional' | 'admin',
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        userId: true,
+        clientId: true,
+        professionals: {
+          select: {
+            professionalId: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    if (role === 'client') {
+      const isOwner = project.userId === actorId || project.clientId === actorId;
+      if (!isOwner) {
+        throw new BadRequestException('You do not have access to this project');
+      }
+    }
+
+    if (role === 'professional') {
+      const hasAccess = project.professionals.some((pp: any) => pp.professionalId === actorId);
+      if (!hasAccess) {
+        throw new BadRequestException('You do not have access to this project');
+      }
+    }
+
+    const plan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+      include: {
+        milestones: {
+          orderBy: { sequence: 'asc' },
+        },
+      },
+    });
+
+    return plan || null;
+  }
+
+  async reviewProjectPaymentPlan(
+    projectId: string,
+    actorId: string,
+    role: 'client' | 'professional' | 'admin',
+    body: {
+      clientComment?: string;
+      adminComment?: string;
+      adminOverrideApplied?: boolean;
+      lockPlan?: boolean;
+    },
+  ) {
+    if (role === 'professional') {
+      throw new BadRequestException('Professionals cannot edit the payment plan review state');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, userId: true, clientId: true },
+    });
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    if (role === 'client') {
+      const isOwner = project.userId === actorId || project.clientId === actorId;
+      if (!isOwner) {
+        throw new BadRequestException('You do not have access to this project');
+      }
+    }
+
+    const plan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+    });
+    if (!plan) {
+      throw new BadRequestException('Payment plan not found for this project');
+    }
+
+    const isLocked = !!plan.lockedAt;
+    const updateData: any = {};
+
+    if (role === 'client' && body.clientComment !== undefined) {
+      updateData.clientComment = String(body.clientComment || '').trim() || null;
+      if (!isLocked) {
+        updateData.status = 'client_review';
+      }
+    }
+
+    if (role === 'admin') {
+      if (body.adminComment !== undefined) {
+        updateData.adminComment = String(body.adminComment || '').trim() || null;
+      }
+      if (typeof body.adminOverrideApplied === 'boolean') {
+        updateData.adminOverrideApplied = body.adminOverrideApplied;
+      }
+      if (!isLocked && body.lockPlan) {
+        updateData.lockedAt = new Date();
+        updateData.status = 'locked';
+      } else if (!isLocked && Object.keys(updateData).length > 0 && !updateData.status) {
+        updateData.status = 'admin_review';
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return (this.prisma as any).projectPaymentPlan.findUnique({
+        where: { projectId },
+        include: {
+          milestones: { orderBy: { sequence: 'asc' } },
+        },
+      });
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const nextPlan = await (tx as any).projectPaymentPlan.update({
+        where: { projectId },
+        data: updateData,
+      });
+
+      if (updateData.lockedAt) {
+        await (tx as any).project.update({
+          where: { id: projectId },
+          data: {
+            paymentPlanLockedAt: updateData.lockedAt,
+          },
+        });
+      }
+
+      return (tx as any).projectPaymentPlan.findUnique({
+        where: { id: nextPlan.id },
+        include: {
+          milestones: { orderBy: { sequence: 'asc' } },
+        },
+      });
+    });
+
+    return updated;
+  }
+
   private normalizePhotos(
     photos?: Array<{ url?: string; note?: string }> | null,
     legacyUrls?: string[] | null,
@@ -954,6 +1313,12 @@ Please review the project details and respond with your quote or decline the inv
     }
     if (typeof normalized.endDate === 'string' && normalized.endDate) {
       normalized.endDate = new Date(normalized.endDate);
+    }
+
+    const requestedScale = this.normalizeProjectScale((createProjectDto as any).projectScale);
+    if (requestedScale) {
+      normalized.projectScale = requestedScale;
+      normalized.escrowFundingPolicy = this.escrowPolicyForScale(requestedScale);
     }
 
     const createData: any = {
@@ -3317,6 +3682,19 @@ Please review the project details and respond with your quote or decline the inv
             awardedProjectProfessionalId: awardedPP.id,
             escrowRequired: quoteAmount,
           },
+        });
+
+        await this.ensureProjectPaymentPlan(tx as any, {
+          projectId,
+          projectProfessionalId: awardedPP.id,
+          totalAmount: quoteAmount.toNumber(),
+          explicitScale: (projectProfessional.project as any)?.projectScale || null,
+          quoteEstimatedDurationMinutes:
+            (projectProfessional as any)?.quoteEstimatedDurationMinutes || null,
+          quoteEstimatedStartAt:
+            (projectProfessional as any)?.quoteEstimatedStartAt || null,
+          tradesRequired: (projectProfessional.project as any)?.tradesRequired || [],
+          isEmergency: (projectProfessional.project as any)?.isEmergency || false,
         });
 
         // Escrow deposit request is intentionally created later,
