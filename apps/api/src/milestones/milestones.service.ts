@@ -441,5 +441,103 @@ export class MilestonesService {
 
     return milestones;
   }
+
+  async resetProjectMilestonesToDefault(projectProfessionalId: string, professionalId: string) {
+    const assignment = await this.prisma.projectProfessional.findUnique({
+      where: { id: projectProfessionalId },
+      include: {
+        project: {
+          include: {
+            paymentPlan: {
+              include: {
+                milestones: {
+                  orderBy: { sequence: 'asc' },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Project assignment not found');
+    }
+
+    if (assignment.professionalId !== professionalId) {
+      throw new BadRequestException('You do not have access to reset milestones for this project');
+    }
+
+    if (assignment.status !== 'awarded') {
+      throw new BadRequestException('Milestone reset is only available for awarded projects');
+    }
+
+    const scale =
+      assignment.project?.paymentPlan?.projectScale ||
+      assignment.project?.projectScale ||
+      'SCALE_1';
+
+    const defaultTitles =
+      scale === 'SCALE_1'
+        ? ['Site Preparation', 'Final Handover']
+        : scale === 'SCALE_2'
+          ? ['Site Preparation', 'Main Works', 'Final Handover']
+          : ['Mobilization', 'Phase 1 Works', 'Phase 2 Works', 'Phase 3 Works', 'Final Handover'];
+
+    const startAt = assignment.quoteEstimatedStartAt
+      ? new Date(assignment.quoteEstimatedStartAt)
+      : null;
+    const durationMinutes = Math.max(0, Number(assignment.quoteEstimatedDurationMinutes) || 0);
+    const segmentMinutes = durationMinutes > 0 ? Math.floor(durationMinutes / defaultTitles.length) : 0;
+
+    return this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.projectMilestone.deleteMany({
+        where: {
+          projectProfessionalId,
+          isFinancial: false,
+        },
+      });
+
+      const created = await Promise.all(
+        defaultTitles.map((title, index) => {
+          let plannedStartDate: Date | null = null;
+          let plannedEndDate: Date | null = null;
+
+          if (startAt && durationMinutes > 0) {
+            const startOffset = segmentMinutes * index;
+            const endOffset =
+              index === defaultTitles.length - 1
+                ? durationMinutes
+                : segmentMinutes * (index + 1);
+            plannedStartDate = new Date(startAt.getTime() + startOffset * 60 * 1000);
+            plannedEndDate = new Date(startAt.getTime() + endOffset * 60 * 1000);
+          }
+
+          return tx.projectMilestone.create({
+            data: {
+              projectId: assignment.projectId,
+              projectProfessionalId,
+              title,
+              sequence: index + 1,
+              isFinancial: false,
+              status: 'not_started',
+              percentComplete: 0,
+              plannedStartDate,
+              plannedEndDate,
+              siteAccessRequired: true,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        scale,
+        deletedCount: deleted.count,
+        createdCount: created.length,
+        milestones: created,
+      };
+    });
+  }
 }
 

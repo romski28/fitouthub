@@ -77,6 +77,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
   const [draggedMilestoneId, setDraggedMilestoneId] = useState<string | null>(null);
   const [reorderSaving, setReorderSaving] = useState(false);
+  const [resettingDefaults, setResettingDefaults] = useState(false);
   const [proposalDate, setProposalDate] = useState('');
   const [proposalTime, setProposalTime] = useState('09:00');
   const [proposalDurationHours, setProposalDurationHours] = useState('4');
@@ -631,6 +632,69 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     onMilestonesUpdate?.();
   };
 
+  const handleResetMilestonesToDefault = async () => {
+    if (!accessToken || !projectProfessionalId) {
+      setError('Authentication required');
+      return;
+    }
+
+    const confirmed =
+      typeof window !== 'undefined'
+        ? window.confirm(
+            'Reset project schedule milestones to default for this project scale? This will remove your current non-financial milestones.',
+          )
+        : false;
+
+    if (!confirmed) return;
+
+    try {
+      setResettingDefaults(true);
+      setError(null);
+
+      const response = await fetch(
+        `${API_BASE_URL}/milestones/project-professional/${projectProfessionalId}/reset-default`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to reset milestones to default');
+      }
+
+      const refreshed = await fetch(
+        `${API_BASE_URL}/milestones/project-professional/${projectProfessionalId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      if (refreshed.ok) {
+        const refreshedData = await refreshed.json();
+        const milestonesData = Array.isArray(refreshedData) ? refreshedData : refreshedData?.milestones || [];
+        setMilestones(milestonesData);
+      }
+
+      onMilestonesUpdate?.();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('toast', {
+            detail: { message: 'Milestones reset to default successfully', type: 'success' },
+          }),
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reset milestones to default');
+    } finally {
+      setResettingDefaults(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {!isAwarded ? (
@@ -847,6 +911,13 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 </div>
                 <div className="flex items-center gap-3">
                   {reorderSaving && <span className="text-xs text-slate-300">Saving order...</span>}
+                  <button
+                    onClick={handleResetMilestonesToDefault}
+                    disabled={resettingDefaults}
+                    className="inline-flex items-center justify-center rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-50"
+                  >
+                    {resettingDefaults ? 'Resetting...' : 'Reset to Defaults'}
+                  </button>
                   <button
                     onClick={() => setIsAddingNew(true)}
                     className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"

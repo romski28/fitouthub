@@ -42,6 +42,23 @@ export class MilestonesController {
     );
   }
 
+  @Post('project-professional/:projectProfessionalId/reset-default')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async resetProjectMilestonesToDefault(
+    @Param('projectProfessionalId') projectProfessionalId: string,
+    @Req() req: any,
+  ) {
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new BadRequestException('Professional authentication required');
+    }
+
+    return this.milestonesService.resetProjectMilestonesToDefault(
+      projectProfessionalId,
+      professionalId,
+    );
+  }
+
   @Get('calendar/:professionalId')
   @UseGuards(AuthGuard('jwt-professional'))
   async getProfessionalCalendar(
