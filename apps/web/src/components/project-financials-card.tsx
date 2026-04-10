@@ -816,14 +816,16 @@ export default function ProjectFinancialsCard({
                             <td className="px-3 py-2 text-right">
                               {canPayMilestoneEscrow ? (
                                 <button
+                                  type="button"
                                   onClick={() => handlePayEscrow(linkedTx!.escrowTx!.id)}
                                   disabled={processingId === linkedTx!.escrowTx!.id}
-                                  className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
+                                  className="w-[120px] px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
                                 >
                                   {processingId === linkedTx!.escrowTx!.id ? 'Processing...' : 'Fund Escrow'}
                                 </button>
                               ) : canApproveMilestoneRelease ? (
                                 <button
+                                  type="button"
                                   onClick={() => handleApprovePayment(linkedTx!.releaseTx!.id)}
                                   disabled={processingId === linkedTx!.releaseTx!.id}
                                   className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
@@ -906,9 +908,10 @@ export default function ProjectFinancialsCard({
                     if (canPayEscrow) {
                       return (
                         <button
+                          type="button"
                           onClick={() => handlePayEscrow(tx.id)}
                           disabled={processingId === tx.id}
-                          className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
+                          className="w-[120px] px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
                         >
                           {processingId === tx.id ? 'Processing...' : 'Fund Escrow'}
                         </button>
@@ -917,6 +920,7 @@ export default function ProjectFinancialsCard({
                     if (canConfirmDeposit) {
                       return (
                         <button
+                          type="button"
                           onClick={() => handleConfirmDeposit(tx.id)}
                           disabled={processingId === tx.id}
                           className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
@@ -928,6 +932,7 @@ export default function ProjectFinancialsCard({
                     if (canRelease) {
                       return (
                         <button
+                          type="button"
                           onClick={() => handleReleasePayment(tx.id)}
                           disabled={processingId === tx.id}
                           className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
@@ -940,6 +945,7 @@ export default function ProjectFinancialsCard({
                       return (
                         <div className="flex gap-2 justify-end">
                           <button
+                            type="button"
                             onClick={() => handleApprovePayment(tx.id)}
                             disabled={processingId === tx.id}
                             className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
@@ -947,6 +953,7 @@ export default function ProjectFinancialsCard({
                             {processingId === tx.id ? 'Approving...' : 'Approve'}
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleClarifyPayment(tx.id)}
                             disabled={processingId === tx.id}
                             className="px-3 py-1 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 disabled:bg-slate-400 transition"
@@ -959,6 +966,7 @@ export default function ProjectFinancialsCard({
                     if (canReject) {
                       return (
                         <button
+                          type="button"
                           onClick={() => handleClarifyPayment(tx.id)}
                           disabled={processingId === tx.id}
                           className="px-3 py-1 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 disabled:bg-slate-400 transition"
@@ -997,6 +1005,7 @@ export default function ProjectFinancialsCard({
                           {actionButton()}
                           {!isInfo && (
                             <button
+                              type="button"
                               onClick={() => setSelectedTx(tx)}
                               className="text-xs text-blue-400 hover:underline"
                             >
