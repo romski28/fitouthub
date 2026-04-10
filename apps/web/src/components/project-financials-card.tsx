@@ -189,6 +189,11 @@ export default function ProjectFinancialsCard({
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
 
+  // Tracks whether financials have been loaded at least once.
+  // Prevents the loading spinner from re-appearing on background token-refresh re-fetches,
+  // which would hide card content momentarily (and in the page.tsx case, unmount the modal).
+  const hasLoadedRef = useRef(false);
+
   const resolvedRole = useMemo<ProjectFinancialRole>(() => {
     if (authRole === 'admin' || authRole === 'client' || authRole === 'professional') {
       return authRole as ProjectFinancialRole;
@@ -252,7 +257,9 @@ export default function ProjectFinancialsCard({
           return;
         }
 
-        setLoading(true);
+        if (!hasLoadedRef.current) {
+          setLoading(true);
+        }
         setError(null);
 
         const combinedPromise = (async () => {
@@ -293,6 +300,7 @@ export default function ProjectFinancialsCard({
         requestInFlightRef.current = combinedPromise;
         const [, txData] = await combinedPromise;
         console.log('[ProjectFinancials] Loaded transactions:', txData);
+        hasLoadedRef.current = true;
         setTransactions(txData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load financials');
@@ -500,7 +508,7 @@ export default function ProjectFinancialsCard({
         throw new Error(data.message || 'Failed to send OTP');
       }
 
-      setOtpResendCooldown(30);
+      setOtpResendCooldown(60);
       toast.success('OTP sent to your email and preferred contact channel');
     } finally {
       setOtpSending(false);

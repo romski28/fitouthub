@@ -258,6 +258,11 @@ export default function ClientProjectDetailPage() {
   const [withdrawing, setWithdrawing] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
 
+  // Tracks whether the project has been successfully loaded at least once.
+  // Prevents the full-page loading spinner from firing on background token-refresh
+  // re-fetches, which would unmount ProjectFinancialsCard and wipe OTP modal state.
+  const hasLoadedRef = useRef(false);
+
   // Schedule & contractor contact editing state
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ startDate: '', endDate: '' });
@@ -524,7 +529,9 @@ export default function ClientProjectDetailPage() {
   const fetchProject = async () => {
     if (!accessToken || !projectId) return;
     try {
-      setLoading(true);
+      if (!hasLoadedRef.current) {
+        setLoading(true);
+      }
       const response = await fetchWithRetry(`${API_BASE_URL}/projects/${projectId}`, {
         method: 'GET',
         headers: {
@@ -546,6 +553,7 @@ export default function ClientProjectDetailPage() {
         throw new Error('Empty response from server');
       }
       setProject(data);
+      hasLoadedRef.current = true;
 
       // Auto-select first professional if available
       if (data.professionals && data.professionals.length > 0) {
