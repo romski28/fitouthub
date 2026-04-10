@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards, Request, BadRequestException, Headers, Req, HttpException, HttpStatus, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, Query, UseGuards, Request, BadRequestException, Headers, Req, HttpException, HttpStatus, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { CreateFinancialTransactionDto, UpdateFinancialTransactionDto } from './financial.service';
 import { FinancialService } from './financial.service';
@@ -223,6 +223,23 @@ export class FinancialController {
     }
 
     return this.financialService.releasePayment(transactionId, req.user.id);
+  }
+
+  /**
+   * GET /financial/pending-release-sla - Admin: milestones awaiting release beyond SLA threshold
+   * Admin only
+   */
+  @Get('pending-release-sla')
+  @UseGuards(AuthGuard('jwt'))
+  async getPendingReleaseSla(
+    @Request() req: any,
+    @Query('days') days?: string,
+  ) {
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only admins can view pending release SLA data');
+    }
+    const daysThreshold = days ? Math.max(1, parseInt(days, 10) || 3) : 3;
+    return this.financialService.getPendingReleaseSla(daysThreshold);
   }
 
   /**

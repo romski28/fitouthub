@@ -1108,4 +1108,145 @@ export class ProfessionalController {
       throw err;
     }
   }
+
+  // ─── B.2: Rolling policy milestone funding request ───────────────────────
+
+  /**
+   * POST /professional/projects/:projectProfessionalId/payment-plan/milestones/:milestoneId/request-funding
+   *
+   * For ROLLING_TWO_MILESTONES projects only.
+   * Professional (or platform on their behalf) requests that the client fund the
+   * next milestone window into escrow.
+   *
+   * Transitions: milestone scheduled → escrow_requested
+   * Creates:     FinancialTransaction type=escrow_deposit_request with milestone metadata
+   */
+  @Post('projects/:projectProfessionalId/payment-plan/milestones/:milestoneId/request-funding')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async requestMilestoneFunding(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body() body: { notes?: string },
+  ) {
+    try {
+      const professionalId = req.user.id || req.user.sub;
+
+      const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+        where: {
+          id: projectProfessionalId,
+          professionalId,
+          status: 'awarded',
+        },
+        include: {
+          project: { include: { user: true } },
+          professional: true,
+        },
+      });
+
+      if (!projectProfessional) {
+        throw new BadRequestException('Project not found or not awarded to you');
+      }
+
+      const paymentPlan = await (this.prisma as any).projectPaymentPlan.findUnique({
+        where: { projectId: projectProfessional.projectId },
+        include: {
+          milestones: { orderBy: { sequence: 'asc' } },
+        },
+      });
+
+      if (!paymentPlan) {
+        throw new BadRequestException('No payment plan exists for this project');
+      }
+
+      if (paymentPlan.escrowFundingPolicy !== 'ROLLING_TWO_MILESTONES') {
+        throw new BadRequestException(
+          'Funding requests only apply to ROLLING_TWO_MILESTONES projects; all escrow is held upfront for this project',
+        );
+      }
+
+      if (!['locked', 'active'].includes(paymentPlan.status)) {
+        throw new BadRequestException('Payment plan must be locked or active to request milestone funding');
+      }
+
+      const milestone = paymentPlan.milestones.find((m: any) => m.id === milestoneId);
+      if (!milestone) {
+        throw new BadRequestException('Milestone not found on this payment plan');
+      }
+
+      if (milestone.status !== 'scheduled') {
+        throw new BadRequestException(
+          `Milestone is already in status '${milestone.status}' and cannot be funding-requested again`,
+        );
+      }
+
+      const now = new Date();
+      const milestoneMeta = {
+        paymentMilestoneId: milestone.id,
+        paymentPlanId: paymentPlan.id,
+        milestoneSequence: milestone.sequence,
+        milestoneTitle: milestone.title,
+        context: 'funding_request',
+        plannedDueAt: milestone.plannedDueAt ? new Date(milestone.plannedDueAt).toISOString() : null,
+      };
+
+      const trimmedNotes = String(body.notes || '').trim();
+      const transactionNotes = [
+        trimmedNotes || null,
+        `Milestone: ${milestone.title}`,
+        milestone.plannedDueAt ? `Planned due: ${new Date(milestone.plannedDueAt).toISOString()}` : null,
+        `__FOH_MILESTONE__${JSON.stringify(milestoneMeta)}`,
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
+      // Create the escrow deposit request transaction (client will pay from the project page)
+      const clientId = projectProfessional.project?.clientId || projectProfessional.project?.userId;
+      const transaction = await (this.prisma as any).financialTransaction.create({
+        data: {
+          projectId: projectProfessional.projectId,
+          projectProfessionalId,
+          type: 'escrow_deposit_request',
+          description: `Escrow funding request for milestone: ${milestone.title} (${typeof milestone.percentOfTotal === 'number' ? `${milestone.percentOfTotal}%` : 'progress payment'})`,
+          amount: milestone.amount,
+          status: 'pending',
+          requestedBy: professionalId,
+          requestedByRole: 'professional',
+          actionBy: clientId || null,
+          actionByRole: 'client',
+          actionComplete: false,
+          notes: transactionNotes,
+        },
+      });
+
+      // Transition milestone to escrow_requested
+      await (this.prisma as any).paymentMilestone.update({
+        where: { id: milestoneId },
+        data: {
+          status: 'escrow_requested',
+          escrowRequestedAt: now,
+        },
+      });
+
+      // Chat message
+      await (this.prisma as any).message.create({
+        data: {
+          projectProfessionalId,
+          senderType: 'professional',
+          senderProfessionalId: professionalId,
+          content: `📋 Escrow funding requested for milestone ${milestone.sequence}: "${milestone.title}" — HK$${Number(milestone.amount).toLocaleString()}. The client will be asked to fund this milestone window before work proceeds.`,
+        },
+      }).catch(() => void 0);
+
+      return {
+        success: true,
+        transactionId: transaction.id,
+        milestoneId: milestone.id,
+        milestoneStatus: 'escrow_requested',
+      };
+    } catch (err) {
+      console.error('[ProfessionalController.requestMilestoneFunding] Error:', err);
+      throw err;
+    }
+  }
 }

@@ -572,7 +572,24 @@ export class ProjectsService {
       },
     });
 
-    return plan || null;
+    if (!plan) return null;
+
+    // B.2: Compute timeline risk — count milestones past their planned due date
+    // that have not yet been released or cancelled.
+    const now = new Date();
+    const overdueCount: number = ((plan.milestones || []) as any[]).filter((m: any) => {
+      if (!m.plannedDueAt) return false;
+      if (['released', 'cancelled'].includes(m.status)) return false;
+      return new Date(m.plannedDueAt) < now;
+    }).length;
+
+    const risk: 'none' | 'moderate' | 'high' =
+      overdueCount === 0 ? 'none' : overdueCount <= 2 ? 'moderate' : 'high';
+
+    return {
+      ...plan,
+      timelineRisk: { overdueCount, risk },
+    };
   }
 
   async reviewProjectPaymentPlan(

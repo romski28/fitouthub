@@ -191,6 +191,7 @@ export default function ProjectDetailPage() {
   const [paymentPlanLoading, setPaymentPlanLoading] = useState(false);
   const [selectedPaymentMilestoneId, setSelectedPaymentMilestoneId] = useState('');
   const [submittingAdvanceRequest, setSubmittingAdvanceRequest] = useState(false);
+  const [fundingRequestLoading, setFundingRequestLoading] = useState(false);
   const [siteAccessStatus, setSiteAccessStatus] = useState<SiteAccessStatus | null>(null);
   const [siteAccessLoading, setSiteAccessLoading] = useState(false);
   const [siteAccessError, setSiteAccessError] = useState<string | null>(null);
@@ -1127,6 +1128,44 @@ export default function ProjectDetailPage() {
     });
   };
 
+  const handleRequestMilestoneFunding = async (milestoneId: string) => {
+    if (!accessToken || !projectProfessionalId) return;
+    setFundingRequestLoading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/professional/projects/${projectProfessionalId}/payment-plan/milestones/${milestoneId}/request-funding`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ notes: '' }),
+        },
+      );
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data as { message?: string }).message || 'Failed to request milestone funding');
+      }
+      await showWorkflowSuccessToast({
+        successMessage: 'Funding request sent! The client will be asked to fund this milestone window.',
+        projectId: project?.project?.id,
+        token: accessToken,
+        fallbackGuidance: {
+          nextStepLabel: 'Wait for client to fund escrow',
+          canActNow: false,
+          waitReason: 'The client must deposit funds into escrow before work on this milestone can proceed.',
+        },
+      });
+      window.location.reload();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to request milestone funding';
+      toast.error(message);
+    } finally {
+      setFundingRequestLoading(false);
+    }
+  };
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!newMessage.trim()) return;
@@ -1451,6 +1490,8 @@ export default function ProjectDetailPage() {
               paymentRequestError={null}
               onSubmitPaymentRequest={handleSubmitPaymentRequest}
               paymentRequestActionLoading={submittingAdvanceRequest}
+              onRequestMilestoneFunding={handleRequestMilestoneFunding}
+              fundingRequestLoading={fundingRequestLoading}
               paymentRequestAmount={paymentRequestAmount}
               onUpdatePaymentRequestAmount={(value) => {
                 setAdvanceRequestForm((prev) =>

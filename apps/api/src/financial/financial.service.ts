@@ -720,6 +720,25 @@ export class FinancialService {
         },
       });
 
+      // B.2: If this deposit request was linked to a rolling-policy milestone,
+      // transition the milestone from escrow_requested → escrow_funded.
+      const milestoneMeta = this.parseMilestoneMetadata(tx.notes);
+      if (milestoneMeta?.paymentMilestoneId) {
+        const currentMilestone = await (prisma as any).paymentMilestone.findUnique({
+          where: { id: milestoneMeta.paymentMilestoneId },
+          select: { status: true },
+        });
+        if (currentMilestone?.status === 'escrow_requested') {
+          await (prisma as any).paymentMilestone.update({
+            where: { id: milestoneMeta.paymentMilestoneId },
+            data: {
+              status: 'escrow_funded',
+              escrowFundedAt: new Date(),
+            },
+          });
+        }
+      }
+
       return updatedTx;
     });
 
@@ -959,6 +978,54 @@ export class FinancialService {
     }
 
     return updated;
+  }
+
+  /**
+   * B.2: Return milestones in release_requested status that have exceeded the SLA threshold.
+   * Used by admin dashboard to surface overdue payment releases.
+   *
+   * @param daysThreshold - number of calendar days after which a pending release is considered overdue (default 3)
+   */
+  async getPendingReleaseSla(daysThreshold = 3) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - daysThreshold);
+
+    const overdueMilestones = await (this.prisma as any).paymentMilestone.findMany({
+      where: {
+        status: 'release_requested',
+        releaseRequestedAt: {
+          lt: cutoff,
+        },
+      },
+      include: {
+        paymentPlan: {
+          include: {
+            project: {
+              select: {
+                id: true,
+                projectName: true,
+                currentStage: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { releaseRequestedAt: 'asc' },
+    });
+
+    return overdueMilestones.map((m: any) => ({
+      milestoneId: m.id,
+      milestoneTitle: m.title,
+      milestoneSequence: m.sequence,
+      amount: m.amount,
+      releaseRequestedAt: m.releaseRequestedAt,
+      daysOverdue: Math.floor(
+        (Date.now() - new Date(m.releaseRequestedAt).getTime()) / (1000 * 60 * 60 * 24),
+      ),
+      projectId: m.paymentPlan?.project?.id,
+      projectName: m.paymentPlan?.project?.projectName,
+      paymentPlanId: m.paymentPlanId,
+    }));
   }
 
   /**

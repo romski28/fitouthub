@@ -42,6 +42,11 @@ interface PaymentPlanMilestone {
   adminComment?: string | null;
 }
 
+interface TimelineRisk {
+  overdueCount: number;
+  risk: 'none' | 'moderate' | 'high';
+}
+
 interface PaymentPlan {
   id: string;
   projectScale: string;
@@ -50,6 +55,7 @@ interface PaymentPlan {
   currency: string;
   totalAmount: number | string;
   milestones: PaymentPlanMilestone[];
+  timelineRisk?: TimelineRisk | null;
 }
 
 interface FinancialsTabProps {
@@ -67,6 +73,8 @@ interface FinancialsTabProps {
   paymentRequestError: string | null;
   onSubmitPaymentRequest: (amount: number, type: string, notes: string) => Promise<void>;
   paymentRequestActionLoading: boolean;
+  onRequestMilestoneFunding?: (milestoneId: string) => Promise<void>;
+  fundingRequestLoading?: boolean;
   paymentRequestAmount: string;
   onUpdatePaymentRequestAmount: (amount: string) => void;
   paymentRequestType: string;
@@ -89,6 +97,8 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   paymentRequestError,
   onSubmitPaymentRequest,
   paymentRequestActionLoading,
+  onRequestMilestoneFunding,
+  fundingRequestLoading,
   paymentRequestAmount,
   onUpdatePaymentRequestAmount,
   paymentRequestType,
@@ -96,6 +106,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   paymentRequestNotes,
   onUpdatePaymentRequestNotes,
 }) => {
+  const [fundingMilestoneId, setFundingMilestoneId] = React.useState<string>('');
   const isAwarded = projectStatus === 'awarded';
   const totalPending = paymentRequests
     .filter((p) => p.status === 'pending')
@@ -140,6 +151,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
     return ['scheduled', 'escrow_funded'].includes(milestone.status);
   }) || [];
+
+  // B.2: Milestones that can be funding-requested (rolling policy only, status=scheduled)
+  const fundingEligibleMilestones = paymentPlan?.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES'
+    ? (paymentPlan?.milestones?.filter((m) => m.status === 'scheduled') || [])
+    : [];
+
+  // Default-select first funding-eligible milestone
+  const activeFundingMilestoneId = fundingMilestoneId || fundingEligibleMilestones[0]?.id || '';
 
   const selectedMilestone = eligibleMilestones.find((milestone) => milestone.id === selectedPaymentMilestoneId)
     || eligibleMilestones[0]
@@ -190,6 +209,22 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       {paymentPlanLoading && (
         <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
           Loading payment plan...
+        </div>
+      )}
+
+      {/* B.2: Timeline risk banner */}
+      {hasPaymentPlan && paymentPlan?.timelineRisk && paymentPlan.timelineRisk.risk !== 'none' && (
+        <div className={`rounded-md border px-4 py-3 text-sm ${
+          paymentPlan.timelineRisk.risk === 'high'
+            ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
+            : 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+        }`}>
+          <span className="font-semibold">
+            {paymentPlan.timelineRisk.risk === 'high' ? '🔴 High timeline risk' : '🟡 Moderate timeline risk'}
+          </span>
+          {' — '}
+          {paymentPlan.timelineRisk.overdueCount} milestone{paymentPlan.timelineRisk.overdueCount > 1 ? 's are' : ' is'} past the planned due date.
+          Please review the schedule and contact your project coordinator if a timeline extension is needed.
         </div>
       )}
 
@@ -263,6 +298,67 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               </tbody>
             </table>
           </div>
+
+          {/* B.2: Rolling policy — request escrow funding for next milestone window */}
+          {paymentPlan.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES' && (
+            <div className="rounded-md border border-blue-500/30 bg-blue-500/10 p-4 space-y-3">
+              <div>
+                <h4 className="font-semibold text-white">Request Milestone Escrow Funding</h4>
+                <p className="text-xs text-slate-300 mt-1">
+                  This project uses rolling escrow. Before you can request payment release on a milestone, the client must first fund it into escrow. Use this panel to trigger a funding request.
+                </p>
+              </div>
+
+              {fundingEligibleMilestones.length === 0 ? (
+                <div className="rounded-md border border-slate-600 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
+                  All scheduled milestones have already been funded or are awaiting confirmation. No funding requests needed right now.
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),auto]">
+                  <div>
+                    <label className="block text-xs font-semibold text-white mb-1">Milestone to fund</label>
+                    <select
+                      value={activeFundingMilestoneId}
+                      onChange={(e) => setFundingMilestoneId(e.target.value)}
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                    >
+                      {fundingEligibleMilestones.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {`${m.sequence}. ${m.title} — ${formatHKD(m.amount)}`}
+                        </option>
+                      ))}
+                    </select>
+                    {activeFundingMilestoneId && (() => {
+                      const m = fundingEligibleMilestones.find((x) => x.id === activeFundingMilestoneId);
+                      return m ? (
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          Planned due: {m.plannedDueAt ? new Date(m.plannedDueAt).toLocaleDateString('en-HK') : 'Not set'}
+                          {' · '}Status: {m.status.replace(/_/g, ' ')}
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!activeFundingMilestoneId) {
+                          toast.error('Please select a milestone to fund');
+                          return;
+                        }
+                        await onRequestMilestoneFunding?.(activeFundingMilestoneId);
+                      }}
+                      disabled={fundingRequestLoading || !activeFundingMilestoneId}
+                      className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition"
+                    >
+                      {fundingRequestLoading ? 'Requesting...' : 'Request funding'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-4 space-y-3">
             <div>
