@@ -222,7 +222,7 @@ export class FinancialService {
 
     await this.assertEscrowCheckoutPermission(transactionId, actorId, role);
 
-    const challenge = await (this.prisma as any).escrowCheckoutOtpChallenge.findFirst({
+    const challenges = await (this.prisma as any).escrowCheckoutOtpChallenge.findMany({
       where: {
         transactionId,
         actorUserId: actorId,
@@ -233,36 +233,49 @@ export class FinancialService {
       },
     });
 
-    if (!challenge) {
+    if (!challenges || challenges.length === 0) {
       throw new BadRequestException('No OTP challenge found. Please request a new code.');
     }
 
-    if (challenge.verifiedAt) {
+    const latestChallenge = challenges[0];
+
+    if (challenges.some((challenge: any) => challenge.verifiedAt)) {
       return {
         success: true,
         verified: true,
       };
     }
 
-    if (new Date(challenge.expiresAt).getTime() < Date.now()) {
-      throw new BadRequestException('OTP code has expired. Please request a new code.');
-    }
+    const nowMs = Date.now();
+    const verifiableChallenges = challenges.filter((challenge: any) => {
+      const notExpired = new Date(challenge.expiresAt).getTime() >= nowMs;
+      const attemptsOk = (challenge.attempts || 0) < (challenge.maxAttempts || 5);
+      return notExpired && attemptsOk;
+    });
 
-    if ((challenge.attempts || 0) >= (challenge.maxAttempts || 5)) {
+    if (verifiableChallenges.length === 0) {
+      const latestExpired = new Date(latestChallenge.expiresAt).getTime() < nowMs;
+      if (latestExpired) {
+        throw new BadRequestException('OTP code has expired. Please request a new code.');
+      }
       throw new BadRequestException('Maximum OTP attempts reached. Please request a new code.');
     }
 
     const providedHash = this.hashOtpCode(code.trim());
-    if (providedHash !== challenge.codeHash) {
+    const matchedChallenge = verifiableChallenges.find(
+      (challenge: any) => challenge.codeHash === providedHash,
+    );
+
+    if (!matchedChallenge) {
       await (this.prisma as any).escrowCheckoutOtpChallenge.update({
-        where: { id: challenge.id },
-        data: { attempts: (challenge.attempts || 0) + 1 },
+        where: { id: latestChallenge.id },
+        data: { attempts: (latestChallenge.attempts || 0) + 1 },
       });
       throw new BadRequestException('Invalid OTP code');
     }
 
     await (this.prisma as any).escrowCheckoutOtpChallenge.update({
-      where: { id: challenge.id },
+      where: { id: matchedChallenge.id },
       data: {
         verifiedAt: new Date(),
       },
