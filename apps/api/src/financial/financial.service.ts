@@ -136,6 +136,62 @@ export class FinancialService {
     }
   }
 
+  private async attachAuditSummary<T extends { id: string }>(transactions: T[]): Promise<Array<T & {
+    auditSummary: {
+      totalEvents: number;
+      latestEventAt: Date | null;
+      latestAction: string | null;
+      latestStatus: string | null;
+      latestActorName: string | null;
+      latestActorType: string | null;
+    };
+  }>> {
+    if (!Array.isArray(transactions) || transactions.length === 0) {
+      return [];
+    }
+
+    const transactionIds = transactions.map((t) => t.id);
+    const logs = await (this.prisma as any).activityLog.findMany({
+      where: {
+        resource: 'FinancialTransaction',
+        resourceId: { in: transactionIds },
+      },
+      select: {
+        resourceId: true,
+        action: true,
+        status: true,
+        actorName: true,
+        actorType: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const grouped = new Map<string, Array<any>>();
+    for (const entry of logs) {
+      const key = String(entry.resourceId || '');
+      if (!key) continue;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(entry);
+    }
+
+    return transactions.map((tx) => {
+      const txLogs = grouped.get(tx.id) || [];
+      const latest = txLogs[0];
+      return {
+        ...tx,
+        auditSummary: {
+          totalEvents: txLogs.length,
+          latestEventAt: latest?.createdAt || null,
+          latestAction: latest?.action || null,
+          latestStatus: latest?.status || null,
+          latestActorName: latest?.actorName || null,
+          latestActorType: latest?.actorType || null,
+        },
+      };
+    });
+  }
+
   private parseMilestoneMetadata(notes?: string | null): {
     paymentMilestoneId?: string;
     paymentPlanId?: string;
@@ -632,7 +688,7 @@ export class FinancialService {
    * Get all transactions for a project - optimized with minimal includes
    */
   async getProjectTransactions(projectId: string) {
-    return this.retryWithBackoff(() =>
+    const transactions = await this.retryWithBackoff(() =>
       this.prisma.financialTransaction.findMany({
         where: { projectId },
         select: {
@@ -655,17 +711,23 @@ export class FinancialService {
         take: 1000, // Limit results to prevent memory issues
       }),
     );
+
+    return this.attachAuditSummary(transactions as any[]);
   }
 
   /**
    * Get a single transaction
    */
   async getTransaction(transactionId: string) {
-    return this.retryWithBackoff(() =>
+    const transaction = await this.retryWithBackoff(() =>
       this.prisma.financialTransaction.findUnique({
         where: { id: transactionId },
       }),
     );
+
+    if (!transaction) return transaction;
+    const [withSummary] = await this.attachAuditSummary([transaction as any]);
+    return withSummary;
   }
 
   async getTransactionAuditTrail(transactionId: string) {
@@ -1640,13 +1702,15 @@ export class FinancialService {
       ]),
     );
 
+    const transactionsWithAudit = await this.attachAuditSummary(transactions as any[]);
+
     const summary = {
       totalEscrow: new Decimal(0),
       escrowConfirmed: new Decimal(0),
       advancePaymentRequested: new Decimal(0),
       advancePaymentApproved: new Decimal(0),
       paymentsReleased: new Decimal(0),
-      transactions,
+      transactions: transactionsWithAudit,
     };
 
     // Build summary from aggregated data
