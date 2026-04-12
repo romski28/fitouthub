@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -79,6 +79,7 @@ export default function ProfessionalProfilePage() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
+  const hasLoadedRef = useRef(false);
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -125,7 +126,9 @@ export default function ProfessionalProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        setLoading(true);
+        if (!hasLoadedRef.current) {
+          setLoading(true);
+        }
         const res = await fetchWithRetry(`${API_BASE_URL}/professional/me`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -142,6 +145,7 @@ export default function ProfessionalProfilePage() {
         setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
         setPreferredContactMethod(data.notificationPreferences?.primaryChannel ?? 'EMAIL');
         setEmergencyCalloutAvailable(data.emergencyCalloutAvailable ?? false);
+        hasLoadedRef.current = true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load profile');
       } finally {
@@ -224,10 +228,6 @@ export default function ProfessionalProfilePage() {
     if (!accessToken) return;
     if (!refDraft.title.trim()) {
       setRefError('Title is required');
-      return;
-    }
-    if (!refDraft.description.trim()) {
-      setRefError('Description is required');
       return;
     }
     setRefSaving(true);
@@ -679,7 +679,7 @@ export default function ProfessionalProfilePage() {
               )}
               <button
                 type="submit"
-                disabled={refSaving || !refDraft.title.trim() || !refDraft.description.trim()}
+                disabled={refSaving || !refDraft.title.trim()}
                 className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
               >
                 {refSaving ? 'Saving...' : refDraft.id ? 'Update project' : 'Add project'}
