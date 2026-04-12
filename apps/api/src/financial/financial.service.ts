@@ -701,12 +701,48 @@ export class FinancialService {
       },
     });
 
-    if (!tx) throw new Error('Transaction not found');
+    if (!tx) throw new NotFoundException('Transaction not found');
+    if (tx.type !== 'payment_request') {
+      throw new BadRequestException('Only payment requests can be approved');
+    }
+
+    const status = String(tx.status || '').toLowerCase();
+    if (status === 'rejected') {
+      throw new BadRequestException('This payment request was already rejected');
+    }
+    if (status === 'confirmed' || tx.actionComplete) {
+      return {
+        updated: tx,
+        releasePaymentTx: await this.prisma.financialTransaction.findFirst({
+          where: {
+            projectId: tx.projectId,
+            projectProfessionalId: tx.projectProfessionalId,
+            type: 'release_payment',
+            notes: {
+              contains: `source_payment_request:${tx.id}`,
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      };
+    }
+
+    if (
+      approverRole === 'client' &&
+      tx.actionBy &&
+      tx.actionBy !== approvedBy
+    ) {
+      throw new ForbiddenException('You are not authorized to approve this payment request');
+    }
 
     const result = await this.prisma.$transaction(async (prisma) => {
-      // Update original payment_request to approved
-      const updated = await prisma.financialTransaction.update({
-        where: { id: transactionId },
+      const transition = await prisma.financialTransaction.updateMany({
+        where: {
+          id: transactionId,
+          type: 'payment_request',
+          status: 'pending',
+          actionComplete: false,
+        },
         data: {
           status: 'confirmed',
           actionBy: approvedBy,
@@ -716,23 +752,65 @@ export class FinancialService {
         },
       });
 
-      // Create new release_payment transaction for admin to action
-      const releasePaymentTx = await prisma.financialTransaction.create({
-        data: {
+      if (transition.count === 0) {
+        const latest = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+        if (latest && (String(latest.status || '').toLowerCase() === 'confirmed' || latest.actionComplete)) {
+          const existingRelease = await prisma.financialTransaction.findFirst({
+            where: {
+              projectId: tx.projectId,
+              projectProfessionalId: tx.projectProfessionalId,
+              type: 'release_payment',
+              notes: {
+                contains: `source_payment_request:${tx.id}`,
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+          return { updated: latest, releasePaymentTx: existingRelease };
+        }
+        throw new BadRequestException('Payment request is no longer pending');
+      }
+
+      const updated = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+      if (!updated) {
+        throw new NotFoundException('Transaction not found after approval');
+      }
+
+      const sourceMarker = `source_payment_request:${tx.id}`;
+
+      let releasePaymentTx = await prisma.financialTransaction.findFirst({
+        where: {
           projectId: tx.projectId,
           projectProfessionalId: tx.projectProfessionalId,
           type: 'release_payment',
-          description: `Client approved payment request: ${tx.description}`,
-          amount: tx.amount,
-          status: 'pending',
-          requestedBy: approvedBy,
-          requestedByRole: approverRole,
-          actionBy: null,  // No specific admin assigned; visible to all admins as platform task
-          actionByRole: 'platform',  // Platform task visible to all admins
-          actionComplete: false,
-          notes: this.appendNote(`Client approval for ${tx.description}`, tx.notes || ''),
+          notes: {
+            contains: sourceMarker,
+          },
         },
+        orderBy: { createdAt: 'desc' },
       });
+
+      if (!releasePaymentTx) {
+        releasePaymentTx = await prisma.financialTransaction.create({
+          data: {
+            projectId: tx.projectId,
+            projectProfessionalId: tx.projectProfessionalId,
+            type: 'release_payment',
+            description: `Client approved payment request: ${tx.description}`,
+            amount: tx.amount,
+            status: 'pending',
+            requestedBy: approvedBy,
+            requestedByRole: approverRole,
+            actionBy: null,
+            actionByRole: 'platform',
+            actionComplete: false,
+            notes: this.appendNote(
+              this.appendNote(`Client approval for ${tx.description}`, tx.notes || ''),
+              sourceMarker,
+            ),
+          },
+        });
+      }
 
       const pendingPaymentRequest = await (prisma as any).paymentRequest.findFirst({
         where: {
@@ -816,12 +894,34 @@ export class FinancialService {
     });
 
     if (!tx) {
-      throw new Error('Transaction not found');
+      throw new NotFoundException('Transaction not found');
+    }
+    if (tx.type !== 'payment_request') {
+      throw new BadRequestException('Only payment requests can be rejected');
+    }
+    const status = String(tx.status || '').toLowerCase();
+    if (status === 'confirmed' || tx.actionComplete) {
+      throw new BadRequestException('This payment request has already been approved');
+    }
+    if (status === 'rejected') {
+      return tx;
+    }
+    if (
+      approverRole === 'client' &&
+      tx.actionBy &&
+      tx.actionBy !== approvedBy
+    ) {
+      throw new ForbiddenException('You are not authorized to reject this payment request');
     }
 
     return this.prisma.$transaction(async (prisma) => {
-      const updated = await prisma.financialTransaction.update({
-        where: { id: transactionId },
+      const transition = await prisma.financialTransaction.updateMany({
+        where: {
+          id: transactionId,
+          type: 'payment_request',
+          status: 'pending',
+          actionComplete: false,
+        },
         data: {
           status: 'rejected',
           actionBy: approvedBy,
@@ -831,6 +931,19 @@ export class FinancialService {
           notes: this.appendNote(tx.notes, reason),
         },
       });
+
+      if (transition.count === 0) {
+        const latest = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+        if (latest && String(latest.status || '').toLowerCase() === 'rejected') {
+          return latest;
+        }
+        throw new BadRequestException('Payment request is no longer pending');
+      }
+
+      const updated = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+      if (!updated) {
+        throw new NotFoundException('Transaction not found after rejection');
+      }
 
       const pendingPaymentRequest = await (prisma as any).paymentRequest.findFirst({
         where: {
@@ -885,16 +998,29 @@ export class FinancialService {
     });
 
     if (!tx) {
-      throw new Error('Transaction not found');
+      throw new NotFoundException('Transaction not found');
     }
 
     if (!['escrow_deposit', 'escrow_deposit_confirmation'].includes(tx.type)) {
-      throw new Error('This transaction is not an escrow deposit');
+      throw new BadRequestException('This transaction is not an escrow deposit');
+    }
+
+    const initialStatus = String(tx.status || '').toLowerCase();
+    if (initialStatus === 'confirmed' || tx.actionComplete) {
+      return tx;
+    }
+    if (!['pending', 'paid'].includes(initialStatus)) {
+      throw new BadRequestException('Escrow deposit cannot be confirmed from current status');
     }
 
     const updated = await this.prisma.$transaction(async (prisma) => {
-      const updatedTx = await prisma.financialTransaction.update({
-        where: { id: transactionId },
+      const transition = await prisma.financialTransaction.updateMany({
+        where: {
+          id: transactionId,
+          type: { in: ['escrow_deposit', 'escrow_deposit_confirmation'] },
+          actionComplete: false,
+          status: { in: ['pending', 'paid'] },
+        },
         data: {
           status: 'confirmed',
           actionBy: approvedBy,
@@ -903,6 +1029,19 @@ export class FinancialService {
           actionComplete: true,
         },
       });
+
+      if (transition.count === 0) {
+        const latest = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+        if (latest && (String(latest.status || '').toLowerCase() === 'confirmed' || latest.actionComplete)) {
+          return latest;
+        }
+        throw new BadRequestException('Escrow deposit is no longer confirmable');
+      }
+
+      const updatedTx = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+      if (!updatedTx) {
+        throw new NotFoundException('Transaction not found after confirmation');
+      }
 
       // Write ledger entry (credit)
       await prisma.escrowLedger.create({
@@ -1030,11 +1169,27 @@ export class FinancialService {
         projectProfessional: { include: { professional: { select: { id: true, phone: true } } } },
       },
     });
-    if (!tx) throw new Error('Transaction not found');
+    if (!tx) throw new NotFoundException('Transaction not found');
+    if (tx.type !== 'release_payment') {
+      throw new BadRequestException('Only release_payment transactions can be released');
+    }
+
+    const initialStatus = String(tx.status || '').toLowerCase();
+    if (initialStatus === 'confirmed' || tx.actionComplete) {
+      return tx;
+    }
+    if (initialStatus !== 'pending') {
+      throw new BadRequestException('Payment release is no longer pending');
+    }
 
     const updated = await this.prisma.$transaction(async (prisma) => {
-      const updated = await prisma.financialTransaction.update({
-        where: { id: transactionId },
+      const transition = await prisma.financialTransaction.updateMany({
+        where: {
+          id: transactionId,
+          type: 'release_payment',
+          status: 'pending',
+          actionComplete: false,
+        },
         data: {
           status: 'confirmed',
           actionBy: releasedBy,
@@ -1043,6 +1198,19 @@ export class FinancialService {
           actionComplete: true,
         },
       });
+
+      if (transition.count === 0) {
+        const latest = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+        if (latest && (String(latest.status || '').toLowerCase() === 'confirmed' || latest.actionComplete)) {
+          return latest;
+        }
+        throw new BadRequestException('Payment release is no longer pending');
+      }
+
+      const updated = await prisma.financialTransaction.findUnique({ where: { id: transactionId } });
+      if (!updated) {
+        throw new NotFoundException('Transaction not found after release');
+      }
 
       // If this is a release_payment transaction, also update the original payment_request to 'info' status
       // to indicate it has been fully processed and paid
@@ -1118,6 +1286,9 @@ export class FinancialService {
       // Update escrowHeld on project
       const project = await prisma.project.findUnique({ where: { id: tx.projectId }, select: { escrowHeld: true } });
       const currentHeld = project?.escrowHeld ? Number(project.escrowHeld) : 0;
+      if (currentHeld < Number(tx.amount)) {
+        throw new BadRequestException('Insufficient escrow balance for release');
+      }
       const newHeld = Math.max(0, currentHeld - Number(tx.amount));
       await prisma.project.update({
         where: { id: tx.projectId },
