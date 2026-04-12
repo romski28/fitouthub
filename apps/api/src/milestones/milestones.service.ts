@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, MilestoneResponseDto } from './dtos';
 import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
-import { extractObjectKeyFromValue } from '../storage/media-assets.util';
+import { extractObjectKeyFromValue, buildPublicAssetUrl } from '../storage/media-assets.util';
 
 @Injectable()
 export class MilestonesService {
@@ -13,24 +13,35 @@ export class MilestonesService {
     private notificationService: NotificationService,
   ) {}
 
+  private resolveMilestonePhotoUrls<T extends { photoUrls?: string[] | null }>(milestone: T): T {
+    if (!milestone) return milestone;
+    return {
+      ...milestone,
+      photoUrls: (milestone.photoUrls || []).map((value) => buildPublicAssetUrl(value)),
+    };
+  }
+
   async getMilestonesByProject(projectId: string) {
-    return this.prisma.projectMilestone.findMany({
+    const milestones = await this.prisma.projectMilestone.findMany({
       where: { projectId },
       orderBy: { sequence: 'asc' },
     });
+    return milestones.map((m) => this.resolveMilestonePhotoUrls(m));
   }
 
   async getMilestonesByProjectProfessional(projectProfessionalId: string) {
-    return this.prisma.projectMilestone.findMany({
+    const milestones = await this.prisma.projectMilestone.findMany({
       where: { projectProfessionalId },
       orderBy: { sequence: 'asc' },
     });
+    return milestones.map((m) => this.resolveMilestonePhotoUrls(m));
   }
 
   async getMilestoneById(id: string) {
-    return this.prisma.projectMilestone.findUnique({
+    const milestone = await this.prisma.projectMilestone.findUnique({
       where: { id },
     });
+    return milestone ? this.resolveMilestonePhotoUrls(milestone) : milestone;
   }
 
   async createMilestone(data: CreateMilestoneDto) {
@@ -347,15 +358,17 @@ export class MilestonesService {
     }
 
     const normalizedPhotoUrls = (photoUrls || [])
-      .map((value) => extractObjectKeyFromValue(value))
+      .map((value) => String(value || '').trim())
       .filter((value) => value.length > 0);
 
-    return this.prisma.projectMilestone.update({
+    const updated = await this.prisma.projectMilestone.update({
       where: { id },
       data: {
         photoUrls: [...(milestone.photoUrls || []), ...normalizedPhotoUrls],
       },
     });
+
+    return this.resolveMilestonePhotoUrls(updated);
   }
 
   async removePhotoFromMilestone(id: string, photoUrl: string) {

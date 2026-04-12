@@ -18,6 +18,7 @@ import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
+import { buildPublicAssetUrl } from '../storage/media-assets.util';
 import { extractObjectKeyFromValue } from '../storage/media-assets.util';
 
 @Controller('professional')
@@ -26,6 +27,18 @@ export class ProfessionalController {
     private prisma: PrismaService,
     private email: EmailService,
   ) {}
+
+  private resolveProfileMediaUrls(professional: any) {
+    if (!professional) return professional;
+    return {
+      ...professional,
+      profileImages: (professional.profileImages || []).map((v: string) => buildPublicAssetUrl(v)),
+      referenceProjects: (professional.referenceProjects || []).map((rp: any) => ({
+        ...rp,
+        imageUrls: (rp.imageUrls || []).map((v: string) => buildPublicAssetUrl(v)),
+      })),
+    };
+  }
 
   private normalizeQuoteSchedule(input: {
     quoteEstimatedStartAt?: string | Date | null;
@@ -96,7 +109,7 @@ export class ProfessionalController {
       },
     });
     if (!professional) throw new BadRequestException('Professional not found');
-    return professional;
+    return this.resolveProfileMediaUrls(professional);
   }
 
   @Patch('me/notification-preferences')

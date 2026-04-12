@@ -54,21 +54,34 @@ type UploadResponse = {
   files?: Array<{ key?: unknown; url?: unknown }>;
 };
 
+/**
+ * Extracts full public URLs from an upload API response.
+ * Preference order: files[].url → urls[] → falls back to building from files[].key
+ * Storing full URLs lets the API normalize to keys on write while display works
+ * without needing NEXT_PUBLIC_ASSETS_BASE_URL on the frontend.
+ */
 export const getUploadResponseKeys = (payload: UploadResponse | null | undefined): string[] => {
   if (!payload) return [];
 
-  if (Array.isArray(payload.keys) && payload.keys.length > 0) {
-    return payload.keys.map((value: unknown) => extractObjectKeyFromValue(String(value || ''))).filter(Boolean);
-  }
-
+  // Prefer full URLs when available (API builds them with PUBLIC_ASSETS_BASE_URL)
   if (Array.isArray(payload.files) && payload.files.length > 0) {
-    return payload.files
-      .map((file) => extractObjectKeyFromValue(String(file?.key || file?.url || '')))
+    const urls = payload.files
+      .map((file) => {
+        const u = String(file?.url || '');
+        return isHttpUrl(u) ? u : String(file?.key || '');
+      })
       .filter(Boolean);
+    if (urls.length > 0) return urls;
   }
 
   if (Array.isArray(payload.urls) && payload.urls.length > 0) {
-    return payload.urls.map((value: unknown) => extractObjectKeyFromValue(String(value || ''))).filter(Boolean);
+    const urls = payload.urls.map((v: unknown) => String(v || '')).filter(Boolean);
+    if (urls.length > 0) return urls;
+  }
+
+  // Final fallback: bare keys (requires NEXT_PUBLIC_ASSETS_BASE_URL to display)
+  if (Array.isArray(payload.keys) && payload.keys.length > 0) {
+    return payload.keys.map((value: unknown) => String(value || '')).filter(Boolean);
   }
 
   return [];

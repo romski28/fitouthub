@@ -22,7 +22,14 @@ export const buildPublicAssetUrl = (
   objectKey: string,
   fallbackBaseUrl = 'https://uploads.example.com',
 ): string => {
-  const key = extractObjectKeyFromValue(objectKey);
+  const raw = String(objectKey || '').trim();
+  if (!raw) return '';
+
+  // If the value is already a full HTTP URL, return it as-is.
+  // This handles assets that were stored as fully-resolved R2 URLs.
+  if (isHttpUrl(raw)) return raw;
+
+  const key = raw.replace(/^\/+/, '');
   if (!key) return '';
 
   const configuredBase = String(process.env.PUBLIC_ASSETS_BASE_URL || '').trim();

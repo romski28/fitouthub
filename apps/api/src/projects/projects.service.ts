@@ -12,7 +12,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client';
 import { ProjectStage } from '@prisma/client';
 import { NotificationChannel } from '@prisma/client';
-import { extractObjectKeyFromValue } from '../storage/media-assets.util';
+import { extractObjectKeyFromValue, buildPublicAssetUrl } from '../storage/media-assets.util';
 
 type NotificationDeliveryStatus = 'sent' | 'failed' | 'skipped';
 type NotificationActorType = 'professional' | 'client' | 'reseller' | 'platform' | 'unknown';
@@ -1160,14 +1160,14 @@ export class ProjectsService {
     if (Array.isArray(photos)) {
       for (const p of photos) {
         if (!p) continue;
-        const url = extractObjectKeyFromValue(typeof p.url === 'string' ? p.url : '');
+        const url = typeof p.url === 'string' ? p.url.trim() : '';
         if (!url) continue;
         result.push({ url, note: typeof p.note === 'string' ? p.note : undefined });
       }
     }
     if (Array.isArray(legacyUrls)) {
       for (const u of legacyUrls) {
-        const url = extractObjectKeyFromValue(typeof u === 'string' ? u : '');
+        const url = typeof u === 'string' ? u.trim() : '';
         if (!url) continue;
         // Avoid duplicates
         if (!result.some((p) => p.url === url)) {
@@ -1176,6 +1176,11 @@ export class ProjectsService {
       }
     }
     return result;
+  }
+
+  private resolveProjectPhotos(photos: any[]): any[] {
+    if (!Array.isArray(photos)) return photos;
+    return photos.map((p) => ({ ...p, url: buildPublicAssetUrl(p.url) }));
   }
 
   async findCanonical(userId?: string) {
@@ -1221,6 +1226,7 @@ export class ProjectsService {
             canonicalKey: key,
             sourceIds: [String(proj.id)],
             professionals: this.dedupeProfessionals(proj.professionals),
+            photos: this.resolveProjectPhotos(proj.photos),
           });
         } else {
           const existing_proj = existing as any;
@@ -1273,6 +1279,7 @@ export class ProjectsService {
       return projects.map((p: any) => ({
         ...p,
         professionals: this.dedupeProfessionals(p.professionals),
+        photos: this.resolveProjectPhotos(p.photos),
       }));
     } catch (error) {
       console.error('[ProjectsService.findAll] Database error:', {
@@ -1343,18 +1350,23 @@ export class ProjectsService {
             return {
               ...p,
               professionals: this.dedupeProfessionals(p.professionals),
+              photos: this.resolveProjectPhotos(p.photos),
             };
           } catch (mapError) {
             return {
               ...p,
               professionals: [],
+              photos: this.resolveProjectPhotos(p.photos),
             };
           }
         });
         return mapped;
       } catch (mapError) {
         console.error('[ProjectsService.findAllForClient] Error in map operation:', mapError?.message);
-        return projects as any[];
+        return (projects as any[]).map((p: any) => ({
+          ...p,
+          photos: this.resolveProjectPhotos(p?.photos),
+        }));
       }
     } catch (error) {
       console.error('[ProjectsService.findAllForClient] Database error:', error?.message);
@@ -1381,6 +1393,7 @@ export class ProjectsService {
       return {
         ...project,
         professionals: this.dedupeProfessionals((project as any).professionals),
+        photos: this.resolveProjectPhotos((project as any).photos),
       } as any;
     } catch (error) {
       console.error('[ProjectsService.findOne] Error:', error?.message, error?.stack);
@@ -1420,6 +1433,7 @@ export class ProjectsService {
       return {
         ...project,
         professionals: this.dedupeProfessionals((project as any).professionals),
+        photos: this.resolveProjectPhotos((project as any).photos),
       } as any;
     } catch (error) {
       console.error('[ProjectsService.findOneForClient] Error:', error?.message, error?.stack);
@@ -2064,7 +2078,10 @@ Please review the project details and respond with your quote or decline the inv
       }
     }
 
-    return project;
+    return {
+      ...project,
+      photos: this.resolveProjectPhotos((project as any).photos),
+    } as any;
   }
 
   async update(id: string, updateProjectDto: UpdateProjectDto) {
@@ -2109,6 +2126,7 @@ Please review the project details and respond with your quote or decline the inv
       return {
         ...project,
         professionals: this.dedupeProfessionals((project as any).professionals),
+        photos: this.resolveProjectPhotos((project as any).photos),
       } as any;
     });
   }
