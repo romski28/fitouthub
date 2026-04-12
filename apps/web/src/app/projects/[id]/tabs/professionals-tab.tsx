@@ -41,6 +41,7 @@ interface ProfessionalsTabProps {
   accessToken: string;
   onOpenChat?: (professional: ProjectProfessional | null) => void;
   onAwarded?: (professional: ProjectProfessional) => void;
+  onProfessionalsChanged?: () => void | Promise<void>;
   onActionBusy?: (kind: string | null) => void;
   actionBusy?: string | null;
 }
@@ -83,6 +84,17 @@ const formatDuration = (minutes?: number) => {
   return `${minutes} min`;
 };
 
+const getNumericQuote = (value?: number | string) => {
+  if (value === undefined || value === null || value === '') return Number.NaN;
+  return typeof value === 'number' ? value : Number(value);
+};
+
+const getComparableQuotedProfessionals = (professionals: ProjectProfessional[]) => {
+  return [...professionals]
+    .filter((pp) => Number.isFinite(getNumericQuote(pp.quoteAmount)))
+    .sort((a, b) => getNumericQuote(a.quoteAmount) - getNumericQuote(b.quoteAmount));
+};
+
 export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   project,
   professionals,
@@ -91,12 +103,29 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   accessToken,
   onOpenChat,
   onAwarded,
+  onProfessionalsChanged,
   onActionBusy,
   actionBusy,
 }) => {
-  const biddingProfessionals = professionals.filter(
+  const comparableQuotedProfessionals = getComparableQuotedProfessionals(professionals);
+  const lowestQuoteProfessional = comparableQuotedProfessionals[0];
+  const earliestStartProfessional = [...comparableQuotedProfessionals]
+    .filter((pp) => !!pp.quoteEstimatedStartAt)
+    .sort((a, b) => new Date(a.quoteEstimatedStartAt || 0).getTime() - new Date(b.quoteEstimatedStartAt || 0).getTime())[0];
+  const shortestDurationProfessional = [...comparableQuotedProfessionals]
+    .filter((pp) => !!pp.quoteEstimatedDurationMinutes)
+    .sort((a, b) => (a.quoteEstimatedDurationMinutes || Number.MAX_SAFE_INTEGER) - (b.quoteEstimatedDurationMinutes || Number.MAX_SAFE_INTEGER))[0];
+  const biddingProfessionals = [...professionals].filter(
     (p) => !['awarded', 'declined', 'rejected', 'withdrawn', 'award_reversed'].includes((p.status || '').toLowerCase()),
-  );
+  ).sort((a, b) => {
+    const aHasQuote = Number.isFinite(getNumericQuote(a.quoteAmount)) ? 1 : 0;
+    const bHasQuote = Number.isFinite(getNumericQuote(b.quoteAmount)) ? 1 : 0;
+    if (aHasQuote !== bHasQuote) return bHasQuote - aHasQuote;
+    const aQuote = getNumericQuote(a.quoteAmount);
+    const bQuote = getNumericQuote(b.quoteAmount);
+    if (Number.isFinite(aQuote) && Number.isFinite(bQuote)) return aQuote - bQuote;
+    return (a.professional.fullName || a.professional.businessName || '').localeCompare(b.professional.fullName || b.professional.businessName || '');
+  });
   const awardedProfessional = professionals.find((p) => p.status === 'awarded');
   const declinedProfessionals = professionals.filter((p) => p.status === 'declined');
 
@@ -121,6 +150,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
       }
 
       toast.success('Quote awarded successfully!');
+      await onProfessionalsChanged?.();
       onAwarded?.(professional);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to award quote';
@@ -150,6 +180,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
       }
 
       toast.success('Quote declined.');
+      await onProfessionalsChanged?.();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to decline quote';
       toast.error(msg);
@@ -158,8 +189,110 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
     }
   };
 
+  const handleRequestBetter = async (professional: ProjectProfessional) => {
+    if (!accessToken) return;
+    try {
+      onActionBusy?.(`request-better-${professional.id}`);
+      const res = await fetch(
+        `${API_BASE_URL}/projects/${project.id}/counter-request/${professional.professionalId}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to request a better quote');
+      }
+
+      toast.success('Requested a revised quote.');
+      await onProfessionalsChanged?.();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to request a better quote';
+      toast.error(msg);
+    } finally {
+      onActionBusy?.(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {comparableQuotedProfessionals.length > 0 && (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-300">Decision snapshot</p>
+              <h3 className="text-lg font-bold text-white">Review the best signals before you award</h3>
+              <p className="text-sm text-slate-300">
+                Quotes are sorted so you can compare price, start speed, duration, and negotiation options without leaving this tab.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <InsightCard
+                label="Lowest quote"
+                primary={lowestQuoteProfessional ? formatHKD(lowestQuoteProfessional.quoteAmount) : '—'}
+                secondary={lowestQuoteProfessional ? (lowestQuoteProfessional.professional.fullName || lowestQuoteProfessional.professional.businessName || 'Professional') : undefined}
+              />
+              <InsightCard
+                label="Earliest start"
+                primary={earliestStartProfessional?.quoteEstimatedStartAt ? formatDate(earliestStartProfessional.quoteEstimatedStartAt) : '—'}
+                secondary={earliestStartProfessional ? (earliestStartProfessional.professional.fullName || earliestStartProfessional.professional.businessName || 'Professional') : undefined}
+              />
+              <InsightCard
+                label="Shortest duration"
+                primary={shortestDurationProfessional?.quoteEstimatedDurationMinutes ? formatDuration(shortestDurationProfessional.quoteEstimatedDurationMinutes) : '—'}
+                secondary={shortestDurationProfessional ? (shortestDurationProfessional.professional.fullName || shortestDurationProfessional.professional.businessName || 'Professional') : undefined}
+              />
+            </div>
+          </div>
+
+          {comparableQuotedProfessionals.length > 1 && (
+            <div className="mt-4 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900/60">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700 text-left text-slate-300">
+                    <th className="px-3 py-2 font-semibold">Professional</th>
+                    <th className="px-3 py-2 font-semibold">Quote</th>
+                    <th className="px-3 py-2 font-semibold">Start</th>
+                    <th className="px-3 py-2 font-semibold">Duration</th>
+                    <th className="px-3 py-2 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparableQuotedProfessionals.map((pp) => {
+                    const isLowest = lowestQuoteProfessional?.id === pp.id;
+                    const isFastest = earliestStartProfessional?.id === pp.id;
+                    const isShortest = shortestDurationProfessional?.id === pp.id;
+                    return (
+                      <tr key={`compare-${pp.id}`} className="border-b border-slate-800 last:border-b-0">
+                        <td className="px-3 py-2 text-white">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-semibold">{pp.professional.fullName || pp.professional.businessName || 'Professional'}</span>
+                            <div className="flex flex-wrap gap-1">
+                              {isLowest && <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">Lowest quote</span>}
+                              {isFastest && <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">Earliest start</span>}
+                              {isShortest && <span className="rounded-full bg-violet-600/20 px-2 py-0.5 text-[11px] font-semibold text-violet-200">Shortest duration</span>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-white font-semibold">{formatHKD(pp.quoteAmount)}</td>
+                        <td className="px-3 py-2 text-slate-300">{formatDate(pp.quoteEstimatedStartAt)}</td>
+                        <td className="px-3 py-2 text-slate-300">{formatDuration(pp.quoteEstimatedDurationMinutes)}</td>
+                        <td className="px-3 py-2 text-slate-300 capitalize">{pp.status.replace(/_/g, ' ')}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Required Trades - always visible */}
       <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-white mb-1.5">Required Trades</p>
@@ -191,6 +324,9 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
             <div className="space-y-3">
               {biddingProfessionals.map((pp) => {
                 const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
+                const isLowestQuote = lowestQuoteProfessional?.id === pp.id;
+                const isEarliestStart = earliestStartProfessional?.id === pp.id;
+                const isShortestDuration = shortestDurationProfessional?.id === pp.id;
                 return (
                   <div
                     key={pp.id}
@@ -199,6 +335,13 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <p className="font-semibold text-white">{displayName}</p>
+                        {(isLowestQuote || isEarliestStart || isShortestDuration) && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {isLowestQuote && <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">Lowest quote</span>}
+                            {isEarliestStart && <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">Earliest start</span>}
+                            {isShortestDuration && <span className="rounded-full bg-violet-600/20 px-2 py-0.5 text-[11px] font-semibold text-violet-200">Shortest duration</span>}
+                          </div>
+                        )}
                       </div>
                       <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-slate-900 text-slate-200 border border-slate-600">
                         {pp.status}
@@ -249,13 +392,21 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     </div>
 
                     {pp.quoteAmount && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => onOpenChat?.(pp)}
                           className="rounded-md bg-sky-900 border border-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 transition"
                         >
                           💬 Chat
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRequestBetter(pp)}
+                          disabled={actionBusy === `request-better-${pp.id}`}
+                          className="rounded-md border border-amber-500 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/10 disabled:opacity-50 transition"
+                        >
+                          {actionBusy === `request-better-${pp.id}` ? '…' : 'Request Better Quote'}
                         </button>
                         <button
                           type="button"
@@ -398,3 +549,21 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
     </div>
   );
 };
+
+function InsightCard({
+  label,
+  primary,
+  secondary,
+}: {
+  label: string;
+  primary: string;
+  secondary?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-white">{primary}</p>
+      {secondary && <p className="mt-1 text-xs text-slate-400">{secondary}</p>}
+    </div>
+  );
+}

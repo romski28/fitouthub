@@ -14,6 +14,36 @@ type ProfessionalDetailsModalProps = {
   professional: Professional | null;
 };
 
+const formatRegistrationDate = (value?: string) => {
+  if (!value) return undefined;
+  try {
+    return new Intl.DateTimeFormat('en-HK', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+};
+
+const buildPersuasiveHighlights = (professional: Professional) => {
+  const bullets: string[] = [];
+  const referenceCount = professional.referenceProjects?.length || 0;
+  const photoCount = professional.profileImages?.length || 0;
+  const tradeCount = professional.tradesOffered?.length || 0;
+  const supplyCount = professional.suppliesOffered?.length || 0;
+
+  if (professional.primaryTrade) bullets.push(`Focused on ${professional.primaryTrade} work.`);
+  if (professional.serviceArea) bullets.push(`Actively covers ${professional.serviceArea}.`);
+  if (referenceCount > 0) bullets.push(`Shows ${referenceCount} completed reference project${referenceCount === 1 ? '' : 's'}.`);
+  if (photoCount > 0) bullets.push(`Includes ${photoCount} portfolio photo${photoCount === 1 ? '' : 's'} as visual proof.`);
+  if (professional.emergencyCalloutAvailable) bullets.push('Offers emergency callout availability for urgent jobs.');
+  if (tradeCount + supplyCount > 1) bullets.push(`Provides a broader scope across ${tradeCount + supplyCount} listed capabilities.`);
+
+  return bullets.slice(0, 4);
+};
+
 export function ProfessionalDetailsModal({ isOpen, onClose, professional }: ProfessionalDetailsModalProps) {
   const [reportOpen, setReportOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
@@ -23,16 +53,50 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
   const normalizedProfileImages = resolveMediaAssetUrls(professional.profileImages || []);
 
   const name = professional.fullName || professional.businessName || professional.email || 'Professional';
+  const referenceProjectCount = professional.referenceProjects?.length || 0;
+  const serviceAreas = (professional.serviceArea || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const persuasiveHighlights = buildPersuasiveHighlights(professional);
 
   return (
     <ModalOverlay isOpen={isOpen} onClose={onClose} maxWidth="max-w-3xl">
       <div className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
             <p className="text-xs uppercase font-semibold tracking-[0.12em] text-emerald-600">Professional Details</p>
-            <h2 className="text-2xl font-bold text-slate-900">{name}</h2>
-            <p className="text-sm text-slate-600">{professional.professionType}</p>
+              <h2 className="text-2xl font-bold text-slate-900">{name}</h2>
+              <p className="text-sm text-slate-600">{professional.professionType}</p>
+            </div>
+            {typeof professional.rating === 'number' && professional.rating > 0 && (
+              <div className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100">
+                {professional.rating.toFixed(1)}★ rating
+              </div>
+            )}
           </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-4">
+            <StatCard label="Primary Trade" value={professional.primaryTrade || 'Not set'} />
+            <StatCard label="Reference Projects" value={referenceProjectCount} />
+            <StatCard label="Portfolio Photos" value={normalizedProfileImages.length} />
+            <StatCard label="Emergency" value={professional.emergencyCalloutAvailable ? '24/7 available' : 'Standard response'} />
+          </div>
+
+          {persuasiveHighlights.length > 0 && (
+            <div className="mt-4 rounded-lg border border-emerald-100 bg-white/90 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Why clients shortlist this professional</p>
+              <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                {persuasiveHighlights.map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                    <span className="mt-0.5 text-emerald-600">✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -40,7 +104,7 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           <Detail label="Phone" value={professional.phone} />
           <Detail label="Status" value={professional.status} />
           <Detail label="Rating" value={typeof professional.rating === 'number' ? `${professional.rating.toFixed(1)}★` : undefined} />
-          <Detail label="Registration Date" value={professional.registrationDate} />
+          <Detail label="Registration Date" value={formatRegistrationDate(professional.registrationDate)} />
           <Detail label="Full Name" value={professional.fullName || undefined} />
           <Detail label="Business Name" value={professional.businessName || undefined} />
           <Detail label="Service Area" value={professional.serviceArea || undefined} />
@@ -49,6 +113,19 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           <Detail label="Location Tertiary" value={professional.locationTertiary || undefined} />
           <Detail label="Primary Trade" value={professional.primaryTrade || undefined} />
         </div>
+
+        {serviceAreas.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Coverage</p>
+            <div className="flex flex-wrap gap-2">
+              {serviceAreas.map((area) => (
+                <span key={area} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                  {area}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {(professional.tradesOffered && professional.tradesOffered.length > 0) && (
           <div className="space-y-2">
@@ -171,6 +248,15 @@ function Detail({ label, value }: { label: string; value?: string | number | nul
     <div className="grid gap-1">
       <p className="text-xs font-medium text-slate-600">{label}</p>
       <p className="text-sm text-slate-800 break-all">{String(value)}</p>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border border-emerald-100 bg-white p-3 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
     </div>
   );
 }

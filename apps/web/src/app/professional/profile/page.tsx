@@ -42,6 +42,12 @@ interface ProfessionalProfile {
   emergencyCalloutAvailable?: boolean;
 }
 
+type ProfileChecklistItem = {
+  label: string;
+  done: boolean;
+  weight: number;
+};
+
 const emptyProfile: ProfessionalProfile = {
   id: '',
   email: '',
@@ -58,6 +64,44 @@ const emptyProfile: ProfessionalProfile = {
   primaryTrade: '',
   referenceProjects: [],
   profileImages: [],
+};
+
+const buildProfileChecklist = (
+  profile: ProfessionalProfile,
+  refProjects: ReferenceProject[],
+  emergencyCalloutAvailable: boolean,
+): ProfileChecklistItem[] => {
+  const serviceAreas = (profile.serviceArea || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return [
+    { label: 'Business or full name added', done: Boolean(profile.businessName || profile.fullName), weight: 10 },
+    { label: 'Phone number added', done: Boolean(profile.phone), weight: 10 },
+    { label: 'Profession type selected', done: Boolean(profile.professionType), weight: 10 },
+    { label: 'Primary trade defined', done: Boolean(profile.primaryTrade), weight: 15 },
+    { label: 'Trades or supplies listed', done: Boolean((profile.tradesOffered?.length || 0) + (profile.suppliesOffered?.length || 0)), weight: 10 },
+    { label: 'Service area described', done: serviceAreas.length > 0, weight: 10 },
+    { label: 'Primary location added', done: Boolean(profile.locationPrimary), weight: 10 },
+    { label: 'At least 3 profile images uploaded', done: (profile.profileImages?.length || 0) >= 3, weight: 10 },
+    { label: 'At least 2 reference projects added', done: refProjects.length >= 2, weight: 10 },
+    { label: 'Emergency availability set', done: emergencyCalloutAvailable || profile.professionType === 'reseller', weight: 5 },
+  ];
+};
+
+const buildClientFacingHighlights = (
+  profile: ProfessionalProfile,
+  refProjects: ReferenceProject[],
+  emergencyCalloutAvailable: boolean,
+) => {
+  const highlights: string[] = [];
+  if (profile.primaryTrade) highlights.push(`Primary trade: ${profile.primaryTrade}`);
+  if (profile.serviceArea) highlights.push(`Covers ${profile.serviceArea}`);
+  if (refProjects.length > 0) highlights.push(`${refProjects.length} reference project${refProjects.length === 1 ? '' : 's'} added`);
+  if ((profile.profileImages?.length || 0) > 0) highlights.push(`${profile.profileImages?.length} portfolio photo${profile.profileImages?.length === 1 ? '' : 's'} uploaded`);
+  if (emergencyCalloutAvailable) highlights.push('24/7 emergency callout available');
+  return highlights.slice(0, 4);
 };
 
 export default function ProfessionalProfilePage() {
@@ -82,6 +126,13 @@ export default function ProfessionalProfilePage() {
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
   const hasLoadedRef = useRef(false);
+
+  const profileChecklist = buildProfileChecklist(profile, refProjects, emergencyCalloutAvailable);
+  const completionScore = Math.round(
+    profileChecklist.reduce((sum, item) => sum + (item.done ? item.weight : 0), 0),
+  );
+  const incompleteItems = profileChecklist.filter((item) => !item.done).slice(0, 4);
+  const clientFacingHighlights = buildClientFacingHighlights(profile, refProjects, emergencyCalloutAvailable);
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -353,6 +404,59 @@ export default function ProfessionalProfilePage() {
           </div>
         )}
 
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex-1 space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Client-facing strength</p>
+                <h2 className="text-lg font-bold text-slate-900">Make your profile easier to shortlist</h2>
+                <p className="text-sm text-slate-600">
+                  Clients are more likely to engage when they can quickly see your trade focus, coverage, proof of work, and response readiness.
+                </p>
+              </div>
+
+              <div>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-semibold text-slate-800">Profile completeness</span>
+                  <span className="font-bold text-emerald-700">{completionScore}%</span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-emerald-100">
+                  <div
+                    className="h-full rounded-full bg-emerald-600 transition-all"
+                    style={{ width: `${Math.max(8, completionScore)}%` }}
+                  />
+                </div>
+              </div>
+
+              {clientFacingHighlights.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {clientFacingHighlights.map((item) => (
+                    <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-200">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="w-full rounded-lg border border-white/80 bg-white p-4 shadow-sm lg:max-w-sm">
+              <p className="text-sm font-semibold text-slate-900">Next improvements</p>
+              {incompleteItems.length === 0 ? (
+                <p className="mt-2 text-sm text-emerald-700">Strong profile. You’ve covered the core trust signals clients look for.</p>
+              ) : (
+                <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                  {incompleteItems.map((item) => (
+                    <li key={item.label} className="flex items-start gap-2">
+                      <span className="mt-0.5 text-amber-500">•</span>
+                      <span>{item.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+
         <form onSubmit={handleProfileSave} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -391,6 +495,7 @@ export default function ProfessionalProfilePage() {
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 placeholder="e.g. Renovation, HVAC, Electrical"
               />
+              <p className="mt-1 text-xs text-slate-500">Use the trade wording clients would search for first.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700">Primary Trade</label>
@@ -401,6 +506,7 @@ export default function ProfessionalProfilePage() {
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 placeholder="e.g. Carpentry"
               />
+              <p className="mt-1 text-xs text-slate-500">Lead with your most hireable specialty.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700">Service Area</label>
@@ -411,6 +517,7 @@ export default function ProfessionalProfilePage() {
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 placeholder="e.g. Hong Kong Island"
               />
+              <p className="mt-1 text-xs text-slate-500">Add clear coverage areas so clients know you can actually serve their site.</p>
             </div>
           </div>
 
@@ -453,6 +560,7 @@ export default function ProfessionalProfilePage() {
                 onChange={(e) => setProfile((p) => ({ ...p, suppliesOffered: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) }))}
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               />
+              <p className="mt-1 text-xs text-slate-500">List materials, systems, or brands clients often ask about.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700">Trades Offered (comma separated)</label>
@@ -462,6 +570,7 @@ export default function ProfessionalProfilePage() {
                 onChange={(e) => setProfile((p) => ({ ...p, tradesOffered: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) }))}
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               />
+              <p className="mt-1 text-xs text-slate-500">Add adjacent services to widen matching without diluting your main trade.</p>
             </div>
           </div>
 
@@ -565,7 +674,7 @@ export default function ProfessionalProfilePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-700">Profile images</p>
-                <p className="text-xs text-slate-500">Upload photos that best represent your work (max 5, 10MB each).</p>
+                <p className="text-xs text-slate-500">Upload your strongest before/after or finished-work photos first. Clients usually decide fast.</p>
               </div>
               <span className="text-xs text-slate-500">Cloudflare storage</span>
             </div>
@@ -670,7 +779,7 @@ export default function ProfessionalProfilePage() {
               onChange={(e) => setRefDraft((d) => ({ ...d, description: e.target.value }))}
               rows={3}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              placeholder="What was delivered, scope, highlights, materials, etc."
+              placeholder="What was delivered, client challenge, scope, standout finish, timeline, and materials used."
             />
           </div>
           <div className="flex items-center justify-between gap-2">

@@ -1963,6 +1963,9 @@ export default function ClientProjectDetailPage() {
                 onAwarded={async () => {
                   await fetchProject();
                 }}
+                onProfessionalsChanged={async () => {
+                  await fetchProject();
+                }}
                 onActionBusy={setActionBusy}
                 actionBusy={actionBusy}
               />
