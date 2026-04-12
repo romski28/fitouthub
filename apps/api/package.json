@@ -26,6 +26,8 @@
     "update:trades": "ts-node src/scripts/update-professional-trades.ts",
     "migrate:uploads": "ts-node src/scripts/migrate-uploads.ts",
     "migrate:uploads:r2": "ts-node src/scripts/migrate-uploads-r2.ts",
+    "backfill:media:storage": "ts-node src/scripts/backfill-media-storage.ts",
+    "backfill:media:storage:apply": "ts-node src/scripts/backfill-media-storage.ts --apply",
     "set:default-passwords": "ts-node src/scripts/set-default-passwords.ts"
   },
   "dependencies": {
