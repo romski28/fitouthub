@@ -26,6 +26,14 @@ interface Transaction {
   approvedAt?: string | null;
   notes?: string | null;
   createdAt: string;
+  auditSummary?: {
+    totalEvents: number;
+    latestEventAt: string | null;
+    latestAction: string | null;
+    latestStatus: string | null;
+    latestActorName: string | null;
+    latestActorType: string | null;
+  };
 }
 
 interface Summary {
@@ -121,6 +129,14 @@ const getTypeLabel = (type: string) => {
     release_payment: 'Payment Released',
   };
   return map[type] || type;
+};
+
+const formatAuditActionLabel = (value?: string | null) => {
+  if (!value) return '—';
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 const parseMilestoneMetadataFromNotes = (notes?: string | null): { paymentMilestoneId?: string } | null => {
@@ -992,8 +1008,15 @@ export default function ProjectFinancialsCard({
                         </div>
                       </td>
                       <td className="py-2 pr-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-white">{getTypeLabel(tx.type)}</span>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-white">{getTypeLabel(tx.type)}</span>
+                          </div>
+                          {tx.auditSummary?.latestAction && (
+                            <span className="inline-flex w-fit items-center rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-200">
+                              Last audited: {formatAuditActionLabel(tx.auditSummary.latestAction)}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-2 pr-4 text-white font-semibold">{formatHKD(tx.amount)}</td>
@@ -1139,6 +1162,22 @@ export default function ProjectFinancialsCard({
                 <div>
                   <p className="text-xs font-semibold text-slate-600 uppercase">Notes</p>
                   <p className="text-slate-700">{selectedTx.notes}</p>
+                </div>
+              )}
+              {selectedTx.auditSummary?.latestAction && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Audit Snapshot</p>
+                  <p className="text-slate-800 text-sm">
+                    {formatAuditActionLabel(selectedTx.auditSummary.latestAction)}
+                    {selectedTx.auditSummary.latestActorName
+                      ? ` by ${selectedTx.auditSummary.latestActorName}`
+                      : ''}
+                  </p>
+                  {selectedTx.auditSummary.latestEventAt && (
+                    <p className="text-xs text-slate-600 mt-1">
+                      {new Date(selectedTx.auditSummary.latestEventAt).toLocaleString('en-HK')}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

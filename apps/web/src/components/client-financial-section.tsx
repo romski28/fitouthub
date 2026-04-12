@@ -29,6 +29,11 @@ const formatHKD = (value: number | string) => {
   }).format(num);
 };
 
+const formatAuditActionLabel = (value?: string | null) => {
+  if (!value) return '';
+  return value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+};
+
 export default function ClientFinancialSection({
   projectId,
   accessToken,
@@ -175,6 +180,11 @@ export default function ClientFinancialSection({
               <p className="text-sm text-amber-700 mb-3">
                 Please deposit the agreed project amount into escrow to initiate the project.
               </p>
+              {escrowTx.auditSummary?.latestAction && (
+                <p className="text-[11px] text-amber-800 mb-2">
+                  Last audited: {formatAuditActionLabel(escrowTx.auditSummary.latestAction)}
+                </p>
+              )}
             </div>
           </div>
           <div className="bg-white rounded border border-amber-100 p-3 mb-3">
@@ -195,6 +205,11 @@ export default function ClientFinancialSection({
         <div className="rounded-lg border border-green-200 bg-green-50 p-4">
           <p className="text-sm font-semibold text-green-900 mb-1">✓ Escrow Deposit Confirmed</p>
           <p className="text-xs text-green-700">Amount: {formatHKD(escrowTx.amount)}</p>
+          {escrowTx.auditSummary?.latestAction && (
+            <p className="text-[11px] text-green-800 mt-1">
+              Last audited: {formatAuditActionLabel(escrowTx.auditSummary.latestAction)}
+            </p>
+          )}
         </div>
       )}
 
@@ -205,6 +220,11 @@ export default function ClientFinancialSection({
           <p className="text-sm text-blue-700 mb-3">
             The professional has requested an advance payment to start the project.
           </p>
+          {pendingApproval.auditSummary?.latestAction && (
+            <p className="text-[11px] text-blue-800 mb-2">
+              Last audited: {formatAuditActionLabel(pendingApproval.auditSummary.latestAction)}
+            </p>
+          )}
           <div className="bg-white rounded border border-blue-100 p-3 mb-3">
             <p className="text-xs font-medium text-gray-600 mb-1">Requested Amount</p>
             <p className="text-2xl font-bold text-blue-900">{formatHKD(pendingApproval.amount)}</p>

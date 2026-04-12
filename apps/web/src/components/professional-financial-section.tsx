@@ -19,7 +19,16 @@ interface Transaction {
   status: string;
   description: string;
   createdAt: string;
+  auditSummary?: {
+    latestAction: string | null;
+    latestEventAt: string | null;
+  };
 }
+
+const formatAuditActionLabel = (value?: string | null) => {
+  if (!value) return '';
+  return value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+};
 
 const formatHKD = (value: number | string) => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -150,6 +159,11 @@ export default function ProfessionalFinancialSection({
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
           <p className="text-sm font-semibold text-amber-900 mb-1">⏳ Payment Request Pending</p>
           <p className="text-xs text-amber-700 mb-2">Waiting for client approval</p>
+          {pendingRequest.auditSummary?.latestAction && (
+            <p className="text-[11px] text-amber-800 mb-2">
+              Last audited: {formatAuditActionLabel(pendingRequest.auditSummary.latestAction)}
+            </p>
+          )}
           <p className="text-lg font-bold text-amber-900">{formatHKD(pendingRequest.amount)}</p>
         </div>
       )}
@@ -161,6 +175,11 @@ export default function ProfessionalFinancialSection({
           {approvedPayments.map(tx => (
             <div key={tx.id} className="text-xs text-blue-700">
               {formatHKD(tx.amount)} - {new Date(tx.createdAt).toLocaleDateString('en-HK')}
+              {tx.auditSummary?.latestAction && (
+                <span className="ml-2 text-[11px] text-blue-800">
+                  (Last audited: {formatAuditActionLabel(tx.auditSummary.latestAction)})
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -173,6 +192,11 @@ export default function ProfessionalFinancialSection({
           {paidPayments.map(tx => (
             <div key={tx.id} className="text-xs text-green-700">
               {formatHKD(tx.amount)} - {new Date(tx.createdAt).toLocaleDateString('en-HK')}
+              {tx.auditSummary?.latestAction && (
+                <span className="ml-2 text-[11px] text-green-800">
+                  (Last audited: {formatAuditActionLabel(tx.auditSummary.latestAction)})
+                </span>
+              )}
             </div>
           ))}
         </div>

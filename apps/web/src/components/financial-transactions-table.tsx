@@ -12,6 +12,10 @@ interface FinancialTransaction {
   requestedByRole?: string;
   approvedAt?: string;
   createdAt: string;
+  auditSummary?: {
+    latestAction: string | null;
+    latestEventAt: string | null;
+  };
   projectProfessional?: {
     professional?: {
       fullName?: string;
@@ -55,6 +59,11 @@ const getStatusColor = (status: string) => {
     rejected: 'bg-red-100 text-red-800',
   };
   return colors[status] || 'bg-gray-100 text-gray-800';
+};
+
+const formatAuditActionLabel = (value?: string | null) => {
+  if (!value) return '';
+  return value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
 export default function FinancialTransactionsTable({ projectId, accessToken, onTransactionUpdate }: FinancialTableProps) {
@@ -161,7 +170,16 @@ export default function FinancialTransactionsTable({ projectId, accessToken, onT
                   <td className="px-4 py-3">
                     <span className="font-medium text-gray-900">{getTypeLabel(tx.type)}</span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{tx.description}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    <div className="flex flex-col gap-1">
+                      <span>{tx.description}</span>
+                      {tx.auditSummary?.latestAction && (
+                        <span className="inline-flex w-fit items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700">
+                          Last audited: {formatAuditActionLabel(tx.auditSummary.latestAction)}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-right font-semibold text-gray-900">
                     {formatHKD(tx.amount)}
                   </td>
