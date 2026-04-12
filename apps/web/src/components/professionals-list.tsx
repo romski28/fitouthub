@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, memo } from 'react';
+import { useEffect, useMemo, useState, memo, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
@@ -21,135 +21,136 @@ import {
   setProjectDescriptionHandoff,
 } from '@/lib/create-project-handoff';
 
-const Pill = memo(({ label }: { label: string }) => {
-  return (
-    <span className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
-      {label}
-    </span>
-  );
-});
-Pill.displayName = 'Pill';
-
-const ProfessionalCard = memo(({ pro, onToggle, onViewDetails, isSelected, isAdmin, disableSelection }: { pro: Professional; onToggle: (pro: Professional) => void; onViewDetails: (pro: Professional) => void; isSelected: boolean; isAdmin: boolean; disableSelection: boolean }) => {
+const ProfessionalCard = memo(({
+  pro,
+  onToggle,
+  onViewDetails,
+  onCompare,
+  isSelected,
+  isCompared,
+  isAdmin,
+  disableSelection,
+}: {
+  pro: Professional;
+  onToggle: (pro: Professional) => void;
+  onViewDetails: (pro: Professional) => void;
+  onCompare: (pro: Professional) => void;
+  isSelected: boolean;
+  isCompared: boolean;
+  isAdmin: boolean;
+  disableSelection: boolean;
+}) => {
   const t = useTranslations('professionalsPage.list');
   const roleIcon = pro.professionType === 'company' ? '🏢' : pro.professionType === 'reseller' ? '📦' : '👷';
-  const serviceAreas = useMemo(() => 
+  const serviceAreas = useMemo(() =>
     (pro.serviceArea ?? '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),
     [pro.serviceArea]
   );
+  const refCount = pro.referenceProjects?.length || 0;
+  const photoCount = pro.profileImages?.length || 0;
+
+  const accentColor = isSelected
+    ? 'border-emerald-400 ring-2 ring-emerald-200'
+    : isCompared
+      ? 'border-indigo-300 ring-2 ring-indigo-100'
+      : 'border-slate-200';
 
   return (
-    <div className={`group rounded-xl border ${isSelected ? 'border-emerald-400 ring-2 ring-emerald-200' : 'border-slate-200'} bg-white shadow-sm overflow-hidden transition hover:-translate-y-1 hover:shadow-md`}>
-      {/* Card Header */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="line-clamp-1 text-base font-bold text-white">
-              <span className="mr-1.5" aria-hidden="true">{roleIcon}</span>
-              {pro.fullName || pro.businessName || t('fallbackProfessional')}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <Pill label={`${pro.rating.toFixed(1)}★`} />
-          </div>
-        </div>
-      </div>
+    <div className={`group rounded-xl border ${accentColor} bg-white shadow-sm overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md`}>
+      {/* Colour strip */}
+      <div className={`h-1 transition-colors ${isSelected ? 'bg-emerald-500' : isCompared ? 'bg-indigo-400' : 'bg-slate-200'}`} />
 
-      {/* Card Body */}
-      <div className="p-3.5 space-y-2">
-        <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
-          {isAdmin ? (
-            <>
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                <span className="font-semibold">{t('labels.email')}</span>
-                <span className="text-slate-600 break-all">{pro.email}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                <span className="font-semibold">{t('labels.phone')}</span>
-                <span className="text-slate-600">{pro.phone}</span>
-              </div>
-            </>
-          ) : null}
+      <div className="p-3 space-y-2.5">
+        {/* Name + rating */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="shrink-0 text-base" aria-hidden="true">{roleIcon}</span>
+              <h3 className="truncate text-sm font-bold text-slate-900">
+                {pro.fullName || pro.businessName || t('fallbackProfessional')}
+              </h3>
+            </div>
+            {pro.businessName && pro.fullName && pro.businessName !== pro.fullName && (
+              <p className="ml-6 truncate text-[11px] text-slate-500">{pro.businessName}</p>
+            )}
+          </div>
+          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+            {pro.rating.toFixed(1)}★
+          </span>
         </div>
 
-        {/* Trades/Supplies */}
-        {(pro.primaryTrade || (pro.tradesOffered && pro.tradesOffered.length > 0) || (pro.suppliesOffered && pro.suppliesOffered.length > 0)) && (
-          <div>
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-              {pro.professionType === 'contractor' && t('tradeLabels.trade')}
-              {pro.professionType === 'company' && t('tradeLabels.tradesOffered')}
-              {pro.professionType === 'reseller' && t('tradeLabels.supplies')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {pro.primaryTrade && (
-                <span className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
-                  {pro.primaryTrade}
-                </span>
-              )}
-              {pro.tradesOffered?.slice(0, 2).map((trade, index) => (
-                <span key={`trade-${index}`} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
-                  {trade}
-                </span>
-              ))}
-              {pro.suppliesOffered?.slice(0, 2).map((supply, index) => (
-                <span key={`supply-${index}`} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
-                  {supply}
-                </span>
-              ))}
-              {(pro.tradesOffered && pro.tradesOffered.length > 2 || pro.suppliesOffered && pro.suppliesOffered.length > 2) && (
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                  {t('moreCount', { count: (pro.tradesOffered?.length ?? 0) + (pro.suppliesOffered?.length ?? 0) - 2 })}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Trade + first service area */}
+        <div className="flex flex-wrap gap-1.5">
+          {pro.primaryTrade && (
+            <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+              {pro.primaryTrade}
+            </span>
+          )}
+          {serviceAreas.slice(0, 1).map((area) => (
+            <span key={area} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+              {area}
+            </span>
+          ))}
+          {serviceAreas.length > 1 && (
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">
+              +{serviceAreas.length - 1}
+            </span>
+          )}
+        </div>
 
-        {/* Service Areas */}
-        {serviceAreas.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">{t('areasServed')}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {serviceAreas.slice(0, 4).map((area, index) => (
-                <span key={`area-${index}`} className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                  {area}
-                </span>
-              ))}
-              {serviceAreas.length > 4 && (
-                <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                  {t('moreCount', { count: serviceAreas.length - 4 })}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Stats */}
+        <div className="flex items-center gap-3 text-[11px] text-slate-500">
+          {refCount > 0 && <span>📁 {refCount} refs</span>}
+          {photoCount > 0 && <span>🖼 {photoCount} photos</span>}
+          {pro.emergencyCalloutAvailable && (
+            <span className="font-semibold text-rose-500">⚡ Emergency</span>
+          )}
+          {isAdmin && (
+            <span className="ml-auto truncate text-slate-400">{pro.email}</span>
+          )}
+        </div>
 
-        <div className="mt-4 flex justify-end gap-2">
+        {/* Actions */}
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+            className="flex-1 rounded-lg border border-slate-200 px-2 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
           >
-            {t('viewDetails')}
+            View details
+          </button>
+          <button
+            type="button"
+            onClick={() => onCompare(pro)}
+            title={isCompared ? 'Remove from comparison' : 'Add to comparison'}
+            className={`rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition ${
+              isCompared
+                ? 'border-indigo-400 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            {isCompared ? '✓ Comparing' : '⊕ Compare'}
           </button>
           <button
             type="button"
             onClick={() => onToggle(pro)}
             disabled={disableSelection}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${isSelected ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'}`}
+            className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              isSelected
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+            }`}
           >
-            {isSelected ? t('selected') : t('askForHelp')}
+            {isSelected ? '✓ Selected' : t('askForHelp')}
           </button>
         </div>
       </div>
     </div>
-    );
-  });
+  );
+});
 ProfessionalCard.displayName = 'ProfessionalCard';
 
 interface Props {
@@ -466,6 +467,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const maxSelect = Math.min(3, filtered.length);
   // Always start with empty selection - no persistence
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Separate compare set — up to 3 professionals for side-by-side comparison
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
+  const [showCompare, setShowCompare] = useState(false);
 
   // Preselect first N (recommendation) - only if coming from home page with intent
   useMemo(() => {
@@ -496,6 +500,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       }
       if (next.size >= maxSelect) {
         // replace: allow selecting another by removing the earliest selected
+        const first = next.values().next().value as string | undefined;
+        if (first) next.delete(first);
+      }
+      next.add(pro.id);
+      return next;
+    });
+  };
+
+  const toggleCompare = (pro: Professional) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pro.id)) {
+        next.delete(pro.id);
+        return next;
+      }
+      if (next.size >= 3) {
+        // Evict the oldest comparison to make room
         const first = next.values().next().value as string | undefined;
         if (first) next.delete(first);
       }
@@ -838,14 +859,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           {t('states.empty')}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2" suppressHydrationWarning>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" suppressHydrationWarning>
           {filtered.map((pro) => (
             <ProfessionalCard
               key={pro.id}
               isSelected={selectedIds.has(pro.id)}
+              isCompared={compareIds.has(pro.id)}
               pro={pro}
               onToggle={toggleSelection}
               onViewDetails={openDetails}
+              onCompare={toggleCompare}
               isAdmin={isAdmin}
               disableSelection={blockInviteForMissingLocation}
             />
@@ -892,10 +915,187 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         isOpen={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         professional={detailsPro}
+        onSelect={(pro) => toggleSelection(pro)}
+        isSelected={detailsPro ? selectedIds.has(detailsPro.id) : false}
       />
+
+      {/* Comparison tray — sticky bottom bar when ≥1 professional is being compared */}
+      {compareIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-indigo-200 bg-indigo-600 px-4 py-3 shadow-2xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-semibold text-white shrink-0">Comparing:</span>
+              <div className="flex flex-wrap gap-1.5 min-w-0">
+                {Array.from(compareIds).map((id) => {
+                  const pro = filtered.find((p) => p.id === id);
+                  if (!pro) return null;
+                  return (
+                    <span key={id} className="flex items-center gap-1 rounded-full bg-indigo-500 pl-2.5 pr-1 py-0.5 text-[11px] font-semibold text-white">
+                      {pro.fullName || pro.businessName || 'Professional'}
+                      <button
+                        type="button"
+                        onClick={() => toggleCompare(pro)}
+                        className="rounded-full p-0.5 hover:bg-indigo-400"
+                        aria-label={`Remove ${pro.fullName || pro.businessName} from comparison`}
+                      >
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCompareIds(new Set())}
+                className="rounded-lg border border-indigo-400 px-3 py-1.5 text-xs font-semibold text-indigo-100 transition hover:bg-indigo-500"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCompare(true)}
+                disabled={compareIds.size < 2}
+                className="rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Compare {compareIds.size >= 2 ? `${compareIds.size}` : '(need ≥2)'} professionals →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Comparison overlay */}
+      {showCompare && (
+        <ComparisonOverlay
+          professionals={filtered.filter((p) => compareIds.has(p.id))}
+          selectedIds={selectedIds}
+          onToggle={toggleSelection}
+          onClose={() => setShowCompare(false)}
+        />
+      )}
       
       {/* Back to top button - behind the share project button */}
       <BackToTop zIndex={30} />
+    </div>
+  );
+}
+
+function ComparisonOverlay({
+  professionals,
+  selectedIds,
+  onToggle,
+  onClose,
+}: {
+  professionals: Professional[];
+  selectedIds: Set<string>;
+  onToggle: (pro: Professional) => void;
+  onClose: () => void;
+}) {
+  const rows: Array<{ label: string; value: (pro: Professional) => string }> = [
+    {
+      label: 'Rating',
+      value: (pro) =>
+        typeof pro.rating === 'number' && Number.isFinite(pro.rating)
+          ? `${pro.rating.toFixed(1)}★`
+          : '—',
+    },
+    { label: 'Type', value: (pro) => pro.professionType || '—' },
+    { label: 'Primary Trade', value: (pro) => pro.primaryTrade || '—' },
+    {
+      label: 'Coverage',
+      value: (pro) =>
+        (pro.serviceArea || '')
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean)
+          .slice(0, 2)
+          .join(', ') || '—',
+    },
+    {
+      label: 'References',
+      value: (pro) => String(pro.referenceProjects?.length || 0),
+    },
+    {
+      label: 'Portfolio Photos',
+      value: (pro) => String(pro.profileImages?.length || 0),
+    },
+    {
+      label: 'Emergency',
+      value: (pro) => (pro.emergencyCalloutAvailable ? 'Available' : 'Standard'),
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="relative mx-4 w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-600">Comparison</p>
+            <h3 className="text-lg font-bold text-slate-900">Compare professionals side by side</h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-auto p-4">
+          <div className="grid gap-3" style={{ gridTemplateColumns: `220px repeat(${professionals.length}, minmax(220px, 1fr))` }}>
+            <div className="sticky left-0 z-10 rounded-lg bg-white p-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Criteria
+            </div>
+            {professionals.map((pro) => (
+              <div key={pro.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-bold text-slate-900 line-clamp-2">
+                    {pro.fullName || pro.businessName || 'Professional'}
+                  </p>
+                  {selectedIds.has(pro.id) ? (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                      Selected
+                    </span>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onToggle(pro)}
+                  className={`mt-3 w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    selectedIds.has(pro.id)
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+                  }`}
+                >
+                  {selectedIds.has(pro.id) ? '✓ Selected for Invite' : 'Select for Invite'}
+                </button>
+              </div>
+            ))}
+
+            {rows.map((row) => (
+              <Fragment key={row.label}>
+                <div className="sticky left-0 z-10 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+                  {row.label}
+                </div>
+                {professionals.map((pro) => (
+                  <div key={`${pro.id}-${row.label}`} className="rounded-lg border border-slate-100 bg-white p-3 text-sm text-slate-700">
+                    {row.value(pro)}
+                  </div>
+                ))}
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

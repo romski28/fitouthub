@@ -2,16 +2,20 @@
 
 import { ModalOverlay } from '@/components/modal-overlay';
 import { Professional } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SYSTEM_EMAILS } from '@/config/system-emails';
 import { resolveMediaAssetUrls } from '@/lib/media-assets';
-
 import ImageLightbox from '@/components/image-lightbox';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
+
 type ProfessionalDetailsModalProps = {
   isOpen: boolean;
   onClose: () => void;
   professional: Professional | null;
+  /** Called when the user clicks "Select for Invite" inside the drawer */
+  onSelect?: (pro: Professional) => void;
+  /** Reflects whether this professional is already in the invite selection */
+  isSelected?: boolean;
 };
 
 const formatRegistrationDate = (value?: string) => {
@@ -44,14 +48,23 @@ const buildPersuasiveHighlights = (professional: Professional) => {
   return bullets.slice(0, 4);
 };
 
-export function ProfessionalDetailsModal({ isOpen, onClose, professional }: ProfessionalDetailsModalProps) {
+export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSelect, isSelected }: ProfessionalDetailsModalProps) {
   const [reportOpen, setReportOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+
+  // Lock body scroll while drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
 
   if (!professional) return null;
 
   const normalizedProfileImages = resolveMediaAssetUrls(professional.profileImages || []);
-
   const name = professional.fullName || professional.businessName || professional.email || 'Professional';
   const referenceProjectCount = professional.referenceProjects?.length || 0;
   const serviceAreas = (professional.serviceArea || '')
@@ -59,29 +72,62 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
     .map((value) => value.trim())
     .filter(Boolean);
   const persuasiveHighlights = buildPersuasiveHighlights(professional);
+  const roleIcon = professional.professionType === 'company' ? '🏢' : professional.professionType === 'reseller' ? '📦' : '👷';
 
   return (
-    <ModalOverlay isOpen={isOpen} onClose={onClose} maxWidth="max-w-3xl">
-      <div className="space-y-4">
-        <div className="rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-            <p className="text-xs uppercase font-semibold tracking-[0.12em] text-emerald-600">Professional Details</p>
-              <h2 className="text-2xl font-bold text-slate-900">{name}</h2>
-              <p className="text-sm text-slate-600">{professional.professionType}</p>
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Drawer panel */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={`fixed top-0 right-0 z-50 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Sticky header */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 bg-white px-5 py-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="text-xl" aria-hidden="true">{roleIcon}</span>
+            <div className="min-w-0">
+              <p className="text-xs uppercase font-semibold tracking-[0.12em] text-emerald-600">Professional Details</p>
+              <h2 className="truncate text-lg font-bold leading-tight text-slate-900">{name}</h2>
             </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             {typeof professional.rating === 'number' && professional.rating > 0 && (
-              <div className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100">
-                {professional.rating.toFixed(1)}★ rating
+              <div className="rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                {professional.rating.toFixed(1)}★
               </div>
             )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Close"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
+        </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        {/* Scrollable body */}
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+          <div className="grid gap-3 sm:grid-cols-4">
             <StatCard label="Primary Trade" value={professional.primaryTrade || 'Not set'} />
-            <StatCard label="Reference Projects" value={referenceProjectCount} />
-            <StatCard label="Portfolio Photos" value={normalizedProfileImages.length} />
-            <StatCard label="Emergency" value={professional.emergencyCalloutAvailable ? '24/7 available' : 'Standard response'} />
+            <StatCard label="References" value={referenceProjectCount} />
+            <StatCard label="Photos" value={normalizedProfileImages.length} />
+            <StatCard label="Emergency" value={professional.emergencyCalloutAvailable ? '24/7 available' : 'Standard'} />
           </div>
 
           {persuasiveHighlights.length > 0 && (
@@ -97,115 +143,138 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
               </ul>
             </div>
           )}
-        </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Detail label="Email" value={professional.email} />
-          <Detail label="Phone" value={professional.phone} />
-          <Detail label="Status" value={professional.status} />
-          <Detail label="Rating" value={typeof professional.rating === 'number' ? `${professional.rating.toFixed(1)}★` : undefined} />
-          <Detail label="Registration Date" value={formatRegistrationDate(professional.registrationDate)} />
-          <Detail label="Full Name" value={professional.fullName || undefined} />
-          <Detail label="Business Name" value={professional.businessName || undefined} />
-          <Detail label="Service Area" value={professional.serviceArea || undefined} />
-          <Detail label="Location Primary" value={professional.locationPrimary || undefined} />
-          <Detail label="Location Secondary" value={professional.locationSecondary || undefined} />
-          <Detail label="Location Tertiary" value={professional.locationTertiary || undefined} />
-          <Detail label="Primary Trade" value={professional.primaryTrade || undefined} />
-        </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Detail label="Email" value={professional.email} />
+            <Detail label="Phone" value={professional.phone} />
+            <Detail label="Status" value={professional.status} />
+            <Detail label="Rating" value={typeof professional.rating === 'number' ? `${professional.rating.toFixed(1)}★` : undefined} />
+            <Detail label="Registration Date" value={formatRegistrationDate(professional.registrationDate)} />
+            <Detail label="Full Name" value={professional.fullName || undefined} />
+            <Detail label="Business Name" value={professional.businessName || undefined} />
+            <Detail label="Primary Trade" value={professional.primaryTrade || undefined} />
+          </div>
 
-        {serviceAreas.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Coverage</p>
-            <div className="flex flex-wrap gap-2">
-              {serviceAreas.map((area) => (
-                <span key={area} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                  {area}
-                </span>
-              ))}
+          {serviceAreas.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Coverage</p>
+              <div className="flex flex-wrap gap-2">
+                {serviceAreas.map((area) => (
+                  <span key={area} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                    {area}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {(professional.tradesOffered && professional.tradesOffered.length > 0) && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Trades Offered</p>
-            <div className="flex flex-wrap gap-2">
-              {professional.tradesOffered.map((t, idx) => (
-                <span key={`${t}-${idx}`} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">{t}</span>
-              ))}
+          {(professional.tradesOffered && professional.tradesOffered.length > 0) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Trades Offered</p>
+              <div className="flex flex-wrap gap-2">
+                {professional.tradesOffered.map((t, idx) => (
+                  <span key={`${t}-${idx}`} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">{t}</span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {(professional.suppliesOffered && professional.suppliesOffered.length > 0) && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Supplies Offered</p>
-            <div className="flex flex-wrap gap-2">
-              {professional.suppliesOffered.map((s, idx) => (
-                <span key={`${s}-${idx}`} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">{s}</span>
-              ))}
+          {(professional.suppliesOffered && professional.suppliesOffered.length > 0) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Supplies Offered</p>
+              <div className="flex flex-wrap gap-2">
+                {professional.suppliesOffered.map((s, idx) => (
+                  <span key={`${s}-${idx}`} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">{s}</span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {professional.additionalData ? (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Additional Data</p>
-            <pre className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 overflow-x-auto">
-              {JSON.stringify(professional.additionalData, null, 2)}
-            </pre>
-          </div>
-        ) : null}
-
-        {(normalizedProfileImages && normalizedProfileImages.length > 0) && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Photos</p>
-            <div className="grid gap-2 sm:grid-cols-3">
+          {(normalizedProfileImages && normalizedProfileImages.length > 0) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Portfolio Photos</p>
+              <div className="grid gap-2 grid-cols-3">
                 {normalizedProfileImages.map((url, idx) => (
-                <button
-                  key={url}
-                  type="button"
-                  className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
-                  onClick={() => setLightbox({ images: normalizedProfileImages, index: idx })}
-                >
-                  <img src={url} alt={name} className="h-28 w-full object-cover" />
-                </button>
-              ))}
+                  <button
+                    key={url}
+                    type="button"
+                    className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                    onClick={() => setLightbox({ images: normalizedProfileImages, index: idx })}
+                  >
+                    <img src={url} alt={name} className="h-24 w-full object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {professional.referenceProjects && professional.referenceProjects.length > 0 ? (
-          <div className="space-y-3">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Reference Projects</p>
-            <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
-              {professional.referenceProjects.map((proj) => (
-                <div key={proj.id} className="flex-shrink-0 w-full sm:w-96 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{proj.title}</p>
-                      {proj.description ? (
-                        <p className="mt-1 text-xs text-slate-700 whitespace-pre-line">{proj.description}</p>
-                      ) : null}
+          {professional.referenceProjects && professional.referenceProjects.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Reference Projects</p>
+              <div className="space-y-3">
+                {professional.referenceProjects.map((proj) => (
+                  <div key={proj.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{proj.title}</p>
+                        {proj.description ? (
+                          <p className="mt-1 text-xs text-slate-700 whitespace-pre-line">{proj.description}</p>
+                        ) : null}
+                      </div>
+                      <span className="shrink-0 text-[11px] text-slate-500">{proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : ''}</span>
                     </div>
-                    <span className="text-[11px] text-slate-500">{proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : ''}</span>
+                    <div className="mt-2">
+                      <PortfolioCarousel
+                        images={proj.imageUrls || []}
+                        emptyMessage="No photos in this project"
+                      />
+                    </div>
                   </div>
-                  <div className="mt-2">
-                    <PortfolioCarousel 
-                      images={proj.imageUrls || []}
-                      emptyMessage="No photos in this project"
-                    />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+              No reference projects added yet. Check back once this professional completes their profile.
+            </div>
+          )}
+
+          {/* Bottom padding for the fixed footer */}
+          <div className="h-4" />
+        </div>   {/* end scrollable body */}
+
+        {/* Sticky footer */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-3">
+          <button
+            type="button"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            onClick={() => setReportOpen(true)}
+          >
+            Report issue
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              onClick={onClose}
+            >
+              Close
+            </button>
+            {onSelect && (
+              <button
+                type="button"
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                  isSelected
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                }`}
+                onClick={() => { onSelect(professional); onClose(); }}
+              >
+                {isSelected ? '✓ Selected for Invite' : 'Select for Invite'}
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-            No project entered, please add more for better client experience.
-          </div>
-        )}
+        </div>
 
         {lightbox ? (
           <ImageLightbox
@@ -215,30 +284,13 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
           />
         ) : null}
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-            onClick={onClose}
-          >
-            Close
-          </button>
-          <button
-            type="button"
-            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
-            onClick={() => setReportOpen(true)}
-          >
-            Report an issue
-          </button>
-        </div>
-
         <ReportProfessionalModal
           isOpen={reportOpen}
           onClose={() => setReportOpen(false)}
           professional={professional}
         />
       </div>
-    </ModalOverlay>
+    </>
   );
 }
 
