@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { resolveMediaAssetUrl } from '@/lib/media-assets';
 
 interface ChatImageAttachmentProps {
   url: string;
@@ -15,6 +16,7 @@ export default function ChatImageAttachment({
 }: ChatImageAttachmentProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const resolvedUrl = resolveMediaAssetUrl(url);
 
   if (imageError) {
     return (
@@ -36,7 +38,7 @@ export default function ChatImageAttachment({
         onClick={() => setIsLightboxOpen(true)}
       >
         <img
-          src={url}
+          src={resolvedUrl}
           alt={filename}
           onError={() => setImageError(true)}
           className="w-16 h-16 min-w-[64px] rounded border border-slate-200 hover:opacity-90 transition object-cover"
@@ -54,7 +56,7 @@ export default function ChatImageAttachment({
         >
           <div className="relative max-w-5xl max-h-full" onClick={(e) => e.stopPropagation()}>
             <img 
-              src={url} 
+              src={resolvedUrl} 
               alt={filename} 
               className="max-w-full max-h-[90vh] rounded-lg shadow-2xl" 
             />
@@ -68,7 +70,7 @@ export default function ChatImageAttachment({
               {filename}
             </div>
             <a
-              href={url}
+              href={resolvedUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="absolute bottom-2 right-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 shadow-lg transition"

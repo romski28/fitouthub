@@ -19,6 +19,7 @@ import {
   getCreateProjectDraftHandoff,
   getProjectDescriptionHandoff,
 } from '@/lib/create-project-handoff';
+import { getUploadResponseKeys } from '@/lib/media-assets';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -203,8 +204,8 @@ export default function CreateProjectPage() {
         const message = await uploadRes.text();
         throw new Error(message || "Failed to upload files");
       }
-      const uploadData = (await uploadRes.json()) as { urls: string[] };
-      photoUrls = uploadData.urls;
+      const uploadData = await uploadRes.json();
+      photoUrls = getUploadResponseKeys(uploadData);
     }
     return photoUrls;
   };

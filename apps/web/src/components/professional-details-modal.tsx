@@ -4,7 +4,7 @@ import { ModalOverlay } from '@/components/modal-overlay';
 import { Professional } from '@/lib/types';
 import { useState } from 'react';
 import { SYSTEM_EMAILS } from '@/config/system-emails';
-import { API_BASE_URL } from '@/config/api';
+import { resolveMediaAssetUrls } from '@/lib/media-assets';
 
 import ImageLightbox from '@/components/image-lightbox';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
@@ -20,21 +20,7 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional }: Prof
 
   if (!professional) return null;
 
-  const toAbsolute = (url: string): string => {
-    if (!url) return url;
-    const trimmed = url.trim();
-    const base = API_BASE_URL.replace(/\/$/, '');
-    if (trimmed.startsWith('http://localhost:3001')) {
-      return trimmed.replace('http://localhost:3001', base);
-    }
-    if (trimmed.startsWith('https://localhost:3001')) {
-      return trimmed.replace('https://localhost:3001', base);
-    }
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-    return `${base}${normalized}`;
-  };
-  const normalizedProfileImages = (professional.profileImages || []).map(toAbsolute);
+  const normalizedProfileImages = resolveMediaAssetUrls(professional.profileImages || []);
 
   const name = professional.fullName || professional.businessName || professional.email || 'Professional';
 

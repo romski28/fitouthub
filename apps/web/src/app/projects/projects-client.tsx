@@ -21,6 +21,7 @@ import {
 } from "@/lib/next-steps";
 import type { UpdatesSummary } from "@/lib/updates-cache";
 import { fetchAssistPresenceByProject } from "@/lib/assist-requests";
+import { extractObjectKeyFromValue, getUploadResponseKeys } from "@/lib/media-assets";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -190,25 +191,6 @@ function extractPhotoUrls(notes?: string): string[] {
              lower.endsWith(".gif");
     })
     .map((url) => url.trim());
-}
-
-function toAbsolute(url: string): string {
-  if (!url) return url;
-  const trimmed = url.trim();
-  const base = API_BASE_URL.replace(/\/$/, "");
-  
-  if (trimmed.startsWith("http://localhost:3001")) {
-    return trimmed.replace("http://localhost:3001", base);
-  }
-  
-  if (trimmed.startsWith("https://localhost:3001")) {
-    return trimmed.replace("https://localhost:3001", base);
-  }
-  
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
-  
-  const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  return `${base}${normalized}`;
 }
 
 function stripPhotoSection(notes?: string): string {
@@ -401,15 +383,15 @@ function EditProjectModal({
           const message = await uploadRes.text();
           throw new Error(message || "Failed to upload files");
         }
-        const uploadData = (await uploadRes.json()) as { urls: string[] };
-        uploadedUrls = uploadData.urls || [];
+        const uploadData = await uploadRes.json();
+        uploadedUrls = getUploadResponseKeys(uploadData);
       }
 
       const existing = (formData.existingPhotos || []).filter(
         (p) => !removedPhotos.includes(p.id || p.url),
       );
       const mergedPhotos = [...existing.map((p) => p.url), ...uploadedUrls];
-      const uniquePhotos = Array.from(new Set(mergedPhotos)).map((url) => ({ url: toAbsolute(url) }));
+      const uniquePhotos = Array.from(new Set(mergedPhotos)).map((url) => ({ url: extractObjectKeyFromValue(url) }));
 
       const payload = {
         projectName: formData.projectName,

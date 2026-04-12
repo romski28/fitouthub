@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChevronRight, AlertCircle } from "lucide-react";
 import ImageLightbox from "./image-lightbox";
+import { resolveMediaAssetUrl, resolveMediaAssetUrls } from "@/lib/media-assets";
 
 interface Milestone {
   id: string;
@@ -83,7 +84,7 @@ export function MilestoneTimeline({
   );
 
   const handlePhotoClick = (milestone: Milestone, index: number) => {
-    setLightboxImages(milestone.photoUrls);
+    setLightboxImages(resolveMediaAssetUrls(milestone.photoUrls));
     setLightboxStartIndex(index);
     setLightboxOpen(true);
   };
@@ -236,7 +237,7 @@ export function MilestoneTimeline({
                             className="relative aspect-square rounded overflow-hidden border border-slate-200 hover:border-slate-400 transition-colors"
                           >
                             <img
-                              src={url}
+                              src={resolveMediaAssetUrl(url)}
                               alt={`${milestone.title} - Photo ${idx + 1}`}
                               className="w-full h-full object-cover hover:scale-105 transition-transform"
                             />

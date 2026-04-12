@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@/config/api";
 import { Professional } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { ProjectForm, type ProjectFormData } from "./project-form";
+import { getUploadResponseKeys } from "@/lib/media-assets";
 
 interface ProjectShareModalProps {
   isOpen: boolean;
@@ -23,15 +24,6 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
   const [submitting, setSubmitting] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>(initialData?.photoUrls || []);
 
-  const toAbsolute = (url: string) => {
-    if (!url) return url;
-    const trimmed = url.trim();
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
-    const base = API_BASE_URL.replace(/\/$/, "");
-    const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-    return `${base}${normalized}`;
-  };
-
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
     files.forEach((f) => formData.append("files", f));
@@ -40,15 +32,15 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
       body: formData,
     });
     if (!res.ok) throw new Error(await res.text());
-    const data = (await res.json()) as { urls: string[] };
-    return data.urls;
+    const data = await res.json();
+    return getUploadResponseKeys(data);
   };
 
   const uploadPendingFiles = async (formData: ProjectFormData) => {
     return uploadedUrls;
   };
 
-  const buildPayload = (data: ProjectFormData, normalizedPhotos: string[], invitePros: boolean) => {
+  const buildPayload = (data: ProjectFormData, photoKeys: string[], invitePros: boolean) => {
     const locationLabel = [data.location?.primary, data.location?.secondary, data.location?.tertiary]
       .filter(Boolean)
       .join(", ");
@@ -71,7 +63,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
         contractorName: "",
         region: locationLabel || "Hong Kong",
         notes: data.notes?.trim() || "",
-        photos: normalizedPhotos.length > 0 ? normalizedPhotos.map((url) => ({ url })) : undefined,
+        photos: photoKeys.length > 0 ? photoKeys.map((url) => ({ url })) : undefined,
         status: "pending" as const,
         userId: user?.id,
         professionalIds: invitePros ? professionals.map((p) => p.id) : [],
@@ -93,8 +85,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
     } else {
       photoUrls = await uploadPendingFiles(formData);
     }
-    const normalizedPhotos = photoUrls.map(toAbsolute);
-    const { payload, defaultTitle } = buildPayload(formData, normalizedPhotos, invitePros);
+    const { payload, defaultTitle } = buildPayload(formData, photoUrls, invitePros);
 
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (accessToken) {

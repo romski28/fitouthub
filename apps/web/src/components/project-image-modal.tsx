@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { resolveMediaAssetUrl } from '@/lib/media-assets';
 
 interface ProjectPhoto {
   id: string;
@@ -86,7 +87,7 @@ export function ProjectImageModal({
             <p className="text-sm font-medium text-slate-600">Image</p>
             <div className="relative w-full bg-slate-100 rounded-lg overflow-hidden">
               <img
-                src={photo.url}
+                src={resolveMediaAssetUrl(photo.url)}
                 alt="Project image"
                 className="w-full h-auto object-contain max-h-96"
               />

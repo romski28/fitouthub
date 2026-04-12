@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { resolveMediaAssetUrls } from "@/lib/media-assets";
 
 export type ImageLightboxProps = {
   images: string[];
@@ -9,7 +10,7 @@ export type ImageLightboxProps = {
 };
 
 export default function ImageLightbox({ images, startIndex = 0, onClose }: ImageLightboxProps) {
-  const safeImages = images.filter(Boolean);
+  const safeImages = resolveMediaAssetUrls(images);
   const [index, setIndex] = useState(Math.min(Math.max(startIndex, 0), Math.max(safeImages.length - 1, 0)));
   const touchStart = useRef<number | null>(null);
   const touchDelta = useRef<number>(0);

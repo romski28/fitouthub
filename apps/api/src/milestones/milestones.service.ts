@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, MilestoneResponseDto } from './dtos';
 import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
+import { extractObjectKeyFromValue } from '../storage/media-assets.util';
 
 @Injectable()
 export class MilestonesService {
@@ -345,10 +346,14 @@ export class MilestonesService {
       throw new Error('Milestone not found');
     }
 
+    const normalizedPhotoUrls = (photoUrls || [])
+      .map((value) => extractObjectKeyFromValue(value))
+      .filter((value) => value.length > 0);
+
     return this.prisma.projectMilestone.update({
       where: { id },
       data: {
-        photoUrls: [...(milestone.photoUrls || []), ...photoUrls],
+        photoUrls: [...(milestone.photoUrls || []), ...normalizedPhotoUrls],
       },
     });
   }
@@ -362,10 +367,12 @@ export class MilestonesService {
       throw new NotFoundException(`Milestone with ID ${id} not found`);
     }
 
+    const normalizedPhotoUrl = extractObjectKeyFromValue(photoUrl);
+
     return this.prisma.projectMilestone.update({
       where: { id },
       data: {
-        photoUrls: (milestone.photoUrls || []).filter((url) => url !== photoUrl),
+        photoUrls: (milestone.photoUrls || []).filter((url) => url !== normalizedPhotoUrl),
       },
     });
   }

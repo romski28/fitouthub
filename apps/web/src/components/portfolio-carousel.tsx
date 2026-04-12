@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import ImageLightbox from '@/components/image-lightbox';
-import { API_BASE_URL } from '@/config/api';
+import { resolveMediaAssetUrls } from '@/lib/media-assets';
 
 interface PortfolioCarouselProps {
   images: string[];
@@ -19,21 +19,7 @@ export function PortfolioCarousel({
 }: PortfolioCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const toAbsolute = (url: string): string => {
-    if (!url) return url;
-    const trimmed = url.trim();
-    const base = API_BASE_URL.replace(/\/$/, '');
-    if (trimmed.startsWith('http://localhost:3001')) {
-      return trimmed.replace('http://localhost:3001', base);
-    }
-    if (trimmed.startsWith('https://localhost:3001')) {
-      return trimmed.replace('https://localhost:3001', base);
-    }
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-    return `${base}${normalized}`;
-  };
-  const normalizedImages = images.map(toAbsolute);
+  const normalizedImages = resolveMediaAssetUrls(images);
 
   if (!normalizedImages || normalizedImages.length === 0) {
     return (

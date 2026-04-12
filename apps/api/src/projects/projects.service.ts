@@ -12,6 +12,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client';
 import { ProjectStage } from '@prisma/client';
 import { NotificationChannel } from '@prisma/client';
+import { extractObjectKeyFromValue } from '../storage/media-assets.util';
 
 type NotificationDeliveryStatus = 'sent' | 'failed' | 'skipped';
 type NotificationActorType = 'professional' | 'client' | 'reseller' | 'platform' | 'unknown';
@@ -1159,14 +1160,14 @@ export class ProjectsService {
     if (Array.isArray(photos)) {
       for (const p of photos) {
         if (!p) continue;
-        const url = typeof p.url === 'string' ? p.url.trim() : '';
+        const url = extractObjectKeyFromValue(typeof p.url === 'string' ? p.url : '');
         if (!url) continue;
         result.push({ url, note: typeof p.note === 'string' ? p.note : undefined });
       }
     }
     if (Array.isArray(legacyUrls)) {
       for (const u of legacyUrls) {
-        const url = typeof u === 'string' ? u.trim() : '';
+        const url = extractObjectKeyFromValue(typeof u === 'string' ? u : '');
         if (!url) continue;
         // Avoid duplicates
         if (!result.some((p) => p.url === url)) {

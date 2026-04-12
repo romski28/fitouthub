@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ProjectImageModal } from './project-image-modal';
+import { resolveMediaAssetUrl } from '@/lib/media-assets';
 
 interface ProjectPhoto {
   id: string;
@@ -58,7 +59,7 @@ export function ProjectImagesCard({
               className="group relative aspect-video overflow-hidden rounded-lg border border-slate-700 bg-slate-800 hover:border-emerald-400 transition disabled:opacity-50"
             >
               <img
-                src={photo.url}
+                src={resolveMediaAssetUrl(photo.url)}
                 alt="Project image"
                 className="h-full w-full object-cover group-hover:scale-105 transition"
               />

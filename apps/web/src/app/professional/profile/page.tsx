@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
+import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
 
 import FileUploader from '@/components/file-uploader';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
@@ -89,8 +90,8 @@ export default function ProfessionalProfilePage() {
       body: formData,
     });
     if (!res.ok) throw new Error(await res.text());
-    const data = (await res.json()) as { urls: string[] };
-    return data.urls;
+    const data = await res.json();
+    return getUploadResponseKeys(data);
   };
 
   const uploadProfileImages = async (files: File[]) => {
@@ -569,7 +570,7 @@ export default function ProfessionalProfilePage() {
               <div className="grid gap-2 sm:grid-cols-3">
                 {profile.profileImages.map((url) => (
                   <div key={url} className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                    <img src={url} alt="Profile" className="h-28 w-full object-cover" />
+                    <img src={resolveMediaAssetUrl(url)} alt="Profile" className="h-28 w-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeProfileImage(url)}
@@ -636,7 +637,7 @@ export default function ProfessionalProfilePage() {
                 <div className="mt-2 flex flex-wrap gap-2">
                   {refDraft.imageUrls.map((url) => (
                     <div key={url} className="group relative overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-                      <img src={url} alt={refDraft.title || 'Reference image'} className="h-20 w-32 object-cover" />
+                      <img src={resolveMediaAssetUrl(url)} alt={refDraft.title || 'Reference image'} className="h-20 w-32 object-cover" />
                       <button
                         type="button"
                         onClick={() => removeRefImage(url)}

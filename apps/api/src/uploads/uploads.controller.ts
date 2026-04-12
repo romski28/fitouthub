@@ -12,6 +12,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
 import { extname } from 'path';
 import type { Request } from 'express';
+import { buildPublicAssetUrl, extractObjectKeyFromValue } from '../storage/media-assets.util';
 
 /**
  * Initialize S3 client for Cloudflare R2 (S3-compatible)
@@ -85,27 +86,32 @@ export class UploadsController {
       throw new BadRequestException('STORAGE_BUCKET not configured');
     }
 
-    const baseUrl =
-      process.env.PUBLIC_ASSETS_BASE_URL || 'https://uploads.example.com';
+    const keys: string[] = [];
     const urls: string[] = [];
 
     try {
       for (const file of files) {
         const filename = `${Date.now()}_${randomBytes(8).toString('hex')}${extname(file.originalname).toLowerCase()}`;
+        const objectKey = extractObjectKeyFromValue(filename);
 
         await s3.send(
           new PutObjectCommand({
             Bucket: bucket,
-            Key: filename,
+            Key: objectKey,
             Body: file.buffer,
             ContentType: file.mimetype,
           }),
         );
 
-        urls.push(`${baseUrl}/${filename}`);
+        keys.push(objectKey);
+        urls.push(buildPublicAssetUrl(objectKey));
       }
 
-      return { urls };
+      return {
+        keys,
+        urls,
+        files: keys.map((key, index) => ({ key, url: urls[index] })),
+      };
     } catch (error) {
       console.error('Failed to upload to R2:', error);
       throw new BadRequestException('Failed to upload files to storage');
@@ -129,15 +135,17 @@ export class UploadsController {
     }
 
     try {
+      const objectKey = extractObjectKeyFromValue(filename);
+
       // Delete from R2
       const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
       await s3.send(
         new DeleteObjectCommand({
           Bucket: bucket,
-          Key: filename,
+          Key: objectKey,
         }),
       );
-      return { success: true, filename };
+      return { success: true, filename: objectKey };
     } catch (error) {
       console.error('Failed to delete from R2:', error);
       throw new BadRequestException('Failed to delete file from storage');

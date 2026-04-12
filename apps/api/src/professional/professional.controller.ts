@@ -18,6 +18,7 @@ import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
+import { extractObjectKeyFromValue } from '../storage/media-assets.util';
 
 @Controller('professional')
 export class ProfessionalController {
@@ -181,6 +182,11 @@ export class ProfessionalController {
     },
   ) {
     const professionalId = req.user.id || req.user.sub;
+    const normalizedProfileImages = Array.isArray(body.profileImages)
+      ? body.profileImages
+          .map((value) => extractObjectKeyFromValue(value))
+          .filter((value) => value.length > 0)
+      : undefined;
     const data: any = {
       fullName: body.fullName,
       businessName: body.businessName,
@@ -193,7 +199,7 @@ export class ProfessionalController {
       suppliesOffered: body.suppliesOffered,
       tradesOffered: body.tradesOffered,
       primaryTrade: body.primaryTrade,
-      profileImages: body.profileImages,
+      profileImages: normalizedProfileImages,
       emergencyCalloutAvailable: body.emergencyCalloutAvailable,
     };
     // Remove undefined to avoid overwriting
@@ -293,6 +299,9 @@ export class ProfessionalController {
   ) {
     try {
       const professionalId = req.user.id || req.user.sub;
+      const normalizedImageUrls = (body.imageUrls || [])
+        .map((value) => extractObjectKeyFromValue(value))
+        .filter((value) => value.length > 0);
       console.log('[createReferenceProject] req.user:', req.user);
       console.log('[createReferenceProject] professionalId:', professionalId);
       if (!professionalId) {
@@ -306,7 +315,7 @@ export class ProfessionalController {
           professionalId,
           title: body.title.trim(),
           description: body.description?.trim() || null,
-          imageUrls: body.imageUrls?.length ? body.imageUrls : [],
+          imageUrls: normalizedImageUrls,
         },
       });
     } catch (error) {
@@ -325,6 +334,11 @@ export class ProfessionalController {
   ) {
     try {
       const professionalId = req.user.id || req.user.sub;
+      const normalizedImageUrls = body.imageUrls
+        ? body.imageUrls
+            .map((value) => extractObjectKeyFromValue(value))
+            .filter((value) => value.length > 0)
+        : undefined;
       if (!professionalId) {
         throw new BadRequestException('Professional ID not found in auth token');
       }
@@ -340,7 +354,7 @@ export class ProfessionalController {
             body.description === undefined
               ? existing.description
               : body.description?.trim() || null,
-          imageUrls: body.imageUrls ?? existing.imageUrls,
+          imageUrls: normalizedImageUrls ?? existing.imageUrls,
         },
       });
     } catch (error) {

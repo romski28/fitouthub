@@ -7,6 +7,7 @@ import FileUploader from './file-uploader';
 import { ProjectAiPanel } from './project-ai-panel';
 import { Professional } from '@/lib/types';
 import { API_BASE_URL } from '@/config/api';
+import { resolveMediaAssetUrl } from '@/lib/media-assets';
 
 export interface ProjectFormData {
   projectName: string;
@@ -481,7 +482,7 @@ export function ProjectForm({
                     key={photo.id || photo.url}
                     className="relative h-16 w-20 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
                   >
-                    <img src={photo.url} alt="Project photo" className="h-full w-full object-cover" />
+                    <img src={resolveMediaAssetUrl(photo.url)} alt="Project photo" className="h-full w-full object-cover" />
                     {!isReadOnly && (
                       <button
                         type="button"
@@ -1053,7 +1054,7 @@ export function ProjectForm({
                       key={photo.id || photo.url}
                       className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
                     >
-                      <img src={photo.url} alt="Project photo" className="h-full w-full object-cover" />
+                      <img src={resolveMediaAssetUrl(photo.url)} alt="Project photo" className="h-full w-full object-cover" />
                       {!isReadOnly && (
                         <button
                           type="button"
