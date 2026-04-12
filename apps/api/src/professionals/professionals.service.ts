@@ -4,10 +4,23 @@ import {
   CreateProfessionalDto,
   UpdateProfessionalDto,
 } from './dto/create-professional.dto';
+import { buildPublicAssetUrl } from '../storage/media-assets.util';
 
 @Injectable()
 export class ProfessionalsService {
   constructor(private prisma: PrismaService) {}
+
+  private resolveProfessionalMedia(professional: any) {
+    if (!professional) return professional;
+    return {
+      ...professional,
+      profileImages: (professional.profileImages || []).map((v: string) => buildPublicAssetUrl(v)),
+      referenceProjects: (professional.referenceProjects || []).map((rp: any) => ({
+        ...rp,
+        imageUrls: (rp.imageUrls || []).map((v: string) => buildPublicAssetUrl(v)),
+      })),
+    };
+  }
 
   private async getMasterTradeMap() {
     const masterTrades = await (this.prisma as any).tradesman.findMany({
@@ -99,7 +112,7 @@ export class ProfessionalsService {
         include: { referenceProjects: { orderBy: { createdAt: 'desc' } } },
       });
       console.log(`findAll: Success, found ${result.length} professionals`);
-      return result;
+      return result.map((p: any) => this.resolveProfessionalMedia(p));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error('findAll: Error fetching professionals:', errorMsg);
@@ -108,7 +121,7 @@ export class ProfessionalsService {
   }
 
   async findOne(id: string) {
-    return (this.prisma as any).professional.findUnique({
+    const professional = await (this.prisma as any).professional.findUnique({
       where: { id },
       include: {
         referenceProjects: { orderBy: { createdAt: 'desc' } },
@@ -122,6 +135,7 @@ export class ProfessionalsService {
         },
       },
     });
+    return this.resolveProfessionalMedia(professional);
   }
 
   async update(id: string, updateProfessionalDto: UpdateProfessionalDto) {

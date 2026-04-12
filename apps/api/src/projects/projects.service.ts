@@ -2179,9 +2179,8 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     try {
-      // Extract filename from URL
-      const url = photo.url;
-      const filename = url.split('/').pop();
+      // Extract object key from stored URL/key
+      const filename = extractObjectKeyFromValue(photo.url);
       
       if (filename) {
         // Delete from Cloudflare R2

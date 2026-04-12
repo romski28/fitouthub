@@ -40,6 +40,14 @@ export class ProfessionalController {
     };
   }
 
+  private resolveReferenceProjectMediaUrls(referenceProject: any) {
+    if (!referenceProject) return referenceProject;
+    return {
+      ...referenceProject,
+      imageUrls: (referenceProject.imageUrls || []).map((v: string) => buildPublicAssetUrl(v)),
+    };
+  }
+
   private normalizeQuoteSchedule(input: {
     quoteEstimatedStartAt?: string | Date | null;
     quoteEstimatedDurationMinutes?: number | string | null;
@@ -298,10 +306,11 @@ export class ProfessionalController {
   @UseGuards(AuthGuard('jwt-professional'))
   async listReferenceProjects(@Request() req: any) {
     const professionalId = req.user.id || req.user.sub;
-    return (this.prisma as any).professionalReferenceProject.findMany({
+    const projects = await (this.prisma as any).professionalReferenceProject.findMany({
       where: { professionalId },
       orderBy: { createdAt: 'desc' },
     });
+    return projects.map((project: any) => this.resolveReferenceProjectMediaUrls(project));
   }
 
   @Post('reference-projects')
@@ -323,7 +332,7 @@ export class ProfessionalController {
       if (!body.title || !body.title.trim()) {
         throw new BadRequestException('Title is required');
       }
-      return (this.prisma as any).professionalReferenceProject.create({
+      const created = await (this.prisma as any).professionalReferenceProject.create({
         data: {
           professionalId,
           title: body.title.trim(),
@@ -331,6 +340,7 @@ export class ProfessionalController {
           imageUrls: normalizedImageUrls,
         },
       });
+      return this.resolveReferenceProjectMediaUrls(created);
     } catch (error) {
       console.error('[createReferenceProject] Error:', error instanceof Error ? error.message : error);
       if (error instanceof BadRequestException) throw error;
@@ -359,7 +369,7 @@ export class ProfessionalController {
         where: { id, professionalId },
       });
       if (!existing) throw new BadRequestException('Reference project not found');
-      return (this.prisma as any).professionalReferenceProject.update({
+      const updated = await (this.prisma as any).professionalReferenceProject.update({
         where: { id },
         data: {
           title: body.title?.trim() || existing.title,
@@ -370,6 +380,7 @@ export class ProfessionalController {
           imageUrls: normalizedImageUrls ?? existing.imageUrls,
         },
       });
+      return this.resolveReferenceProjectMediaUrls(updated);
     } catch (error) {
       console.error('[updateReferenceProject] Error:', error instanceof Error ? error.message : error);
       if (error instanceof BadRequestException) throw error;

@@ -380,14 +380,23 @@ export class MilestonesService {
       throw new NotFoundException(`Milestone with ID ${id} not found`);
     }
 
-    const normalizedPhotoUrl = extractObjectKeyFromValue(photoUrl);
+    const normalizedInput = String(photoUrl || '').trim();
+    const normalizedInputKey = extractObjectKeyFromValue(normalizedInput);
 
-    return this.prisma.projectMilestone.update({
+    const updated = await this.prisma.projectMilestone.update({
       where: { id },
       data: {
-        photoUrls: (milestone.photoUrls || []).filter((url) => url !== normalizedPhotoUrl),
+        photoUrls: (milestone.photoUrls || []).filter((storedValue) => {
+          const stored = String(storedValue || '').trim();
+          if (!stored) return false;
+          if (stored === normalizedInput) return false;
+          if (extractObjectKeyFromValue(stored) === normalizedInputKey) return false;
+          return true;
+        }),
       },
     });
+
+    return this.resolveMilestonePhotoUrls(updated);
   }
 
   async getTemplatesByTrade(tradeId: string) {
