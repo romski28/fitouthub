@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 export type FileUploaderProps = {
   maxFiles?: number;
@@ -29,6 +29,7 @@ export default function FileUploader({
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const totalSize = useMemo(() => files.reduce((acc, f) => acc + f.size, 0), [files]);
 
@@ -82,12 +83,28 @@ export default function FileUploader({
             <span className="font-semibold text-strong">Add photos</span>
             <span className="ml-2">(max {maxFiles}, {Math.round(maxFileSize / (1024 * 1024))}MB each)</span>
           </div>
-          <label className={`rounded-md bg-action px-3 py-1.5 text-xs font-semibold hover:bg-action-hover cursor-pointer transition ${
-            darkMode ? 'text-white' : 'text-gray-900'
-          }`}>
-            Choose files
-            <input type="file" accept={accept} multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
-          </label>
+          <>
+            <input
+              ref={inputRef}
+              type="file"
+              accept={accept}
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                addFiles(e.target.files);
+                e.currentTarget.value = '';
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className={`rounded-md bg-action px-3 py-1.5 text-xs font-semibold hover:bg-action-hover cursor-pointer transition ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}
+            >
+              Choose files
+            </button>
+          </>
         </div>
 
         {files.length > 0 && (
