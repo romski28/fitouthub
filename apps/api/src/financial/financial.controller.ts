@@ -118,6 +118,16 @@ export class FinancialController {
   }
 
   /**
+   * GET /financial/:transactionId/audit-trail - Get immutable audit trail for a transaction
+   * Requires authentication
+   */
+  @Get(':transactionId/audit-trail')
+  @UseGuards(CombinedAuthGuard)
+  async getTransactionAuditTrail(@Param('transactionId') transactionId: string) {
+    return this.financialService.getTransactionAuditTrail(transactionId);
+  }
+
+  /**
    * GET /financial/:transactionId - Get a single transaction
    * Requires authentication
    */

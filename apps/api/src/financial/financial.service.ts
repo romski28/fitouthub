@@ -55,6 +55,87 @@ export class FinancialService {
     return existing ? `${existing} | ${trimmedExtra}` : trimmedExtra;
   }
 
+  private mapRoleToActorType(role?: string | null): 'user' | 'professional' | 'admin' | 'system' {
+    const normalized = String(role || '').toLowerCase();
+    if (normalized === 'admin') return 'admin';
+    if (normalized === 'professional') return 'professional';
+    if (normalized === 'client' || normalized === 'user' || normalized === 'platform') return 'user';
+    return 'system';
+  }
+
+  private async createFinancialAuditLog(input: {
+    transactionId: string;
+    action: string;
+    actorId?: string | null;
+    actorRole?: string | null;
+    details: string;
+    status?: 'success' | 'info' | 'warning' | 'danger';
+    metadata?: Record<string, unknown>;
+  }) {
+    const actorRole = String(input.actorRole || 'system').toLowerCase();
+    const actorType = this.mapRoleToActorType(actorRole);
+
+    let actorName = actorRole || 'system';
+    let userId: string | null = null;
+    let professionalId: string | null = null;
+
+    try {
+      if (actorType === 'admin' || actorType === 'user') {
+        const user = input.actorId
+          ? await this.prisma.user.findUnique({
+              where: { id: input.actorId },
+              select: { id: true, firstName: true, surname: true, email: true },
+            })
+          : null;
+        if (user) {
+          userId = user.id;
+          actorName =
+            [user.firstName, user.surname].filter(Boolean).join(' ').trim() ||
+            user.email ||
+            actorName;
+        } else if (input.actorId) {
+          actorName = `${actorRole}:${input.actorId}`;
+        }
+      } else if (actorType === 'professional') {
+        const professional = input.actorId
+          ? await this.prisma.professional.findUnique({
+              where: { id: input.actorId },
+              select: { id: true, fullName: true, businessName: true, email: true },
+            })
+          : null;
+        if (professional) {
+          professionalId = professional.id;
+          actorName =
+            professional.fullName ||
+            professional.businessName ||
+            professional.email ||
+            actorName;
+        } else if (input.actorId) {
+          actorName = `${actorRole}:${input.actorId}`;
+        }
+      } else {
+        actorName = input.actorId ? `system:${input.actorId}` : 'system';
+      }
+
+      await (this.prisma as any).activityLog.create({
+        data: {
+          userId,
+          professionalId,
+          actorName,
+          actorType,
+          action: input.action,
+          resource: 'FinancialTransaction',
+          resourceId: input.transactionId,
+          details: input.details,
+          metadata: input.metadata || {},
+          status: input.status || 'success',
+        },
+      });
+    } catch (error) {
+      console.warn('[FinancialService] Failed to write financial audit log:', error);
+    }
+  }
+
   private parseMilestoneMetadata(notes?: string | null): {
     paymentMilestoneId?: string;
     paymentPlanId?: string;
@@ -587,6 +668,35 @@ export class FinancialService {
     );
   }
 
+  async getTransactionAuditTrail(transactionId: string) {
+    const transaction = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+      select: { id: true },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transaction not found');
+    }
+
+    return (this.prisma as any).activityLog.findMany({
+      where: {
+        resource: 'FinancialTransaction',
+        resourceId: transactionId,
+      },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        actorName: true,
+        actorType: true,
+        action: true,
+        details: true,
+        metadata: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+  }
+
   /**
    * Update a transaction (typically for status changes)
    */
@@ -882,6 +992,21 @@ export class FinancialService {
       console.warn('[FinancialService] Failed to send approval/release notifications:', notificationError);
     }
 
+    await this.createFinancialAuditLog({
+      transactionId,
+      action: 'payment_request_approved',
+      actorId: approvedBy,
+      actorRole: approverRole,
+      details: 'Payment request approved; release transaction queued',
+      metadata: {
+        originalTransactionStatus: tx.status,
+        amount: tx.amount?.toString?.() || String(tx.amount),
+        projectId: tx.projectId,
+        projectProfessionalId: tx.projectProfessionalId,
+        releaseTransactionId: result.releasePaymentTx?.id || null,
+      },
+    });
+
     return result;
   }
 
@@ -914,7 +1039,7 @@ export class FinancialService {
       throw new ForbiddenException('You are not authorized to reject this payment request');
     }
 
-    return this.prisma.$transaction(async (prisma) => {
+    const result = await this.prisma.$transaction(async (prisma) => {
       const transition = await prisma.financialTransaction.updateMany({
         where: {
           id: transactionId,
@@ -978,6 +1103,22 @@ export class FinancialService {
 
       return updated;
     });
+
+    await this.createFinancialAuditLog({
+      transactionId,
+      action: 'payment_request_rejected',
+      actorId: approvedBy,
+      actorRole: approverRole,
+      details: 'Payment request rejected',
+      metadata: {
+        reason,
+        amount: tx.amount?.toString?.() || String(tx.amount),
+        projectId: tx.projectId,
+        projectProfessionalId: tx.projectProfessionalId,
+      },
+    });
+
+    return result;
   }
 
   /**
@@ -1154,6 +1295,20 @@ export class FinancialService {
         notificationError,
       );
     }
+
+    await this.createFinancialAuditLog({
+      transactionId,
+      action: 'escrow_deposit_confirmed',
+      actorId: approvedBy,
+      actorRole: approvedBy === 'stripe-webhook' ? 'system' : 'admin',
+      details: 'Escrow deposit confirmed and ledger credited',
+      metadata: {
+        amount: tx.amount?.toString?.() || String(tx.amount),
+        projectId: tx.projectId,
+        projectProfessionalId: tx.projectProfessionalId,
+        source: approvedBy === 'stripe-webhook' ? 'stripe_webhook' : 'admin_action',
+      },
+    });
 
     return updated;
   }
@@ -1357,6 +1512,19 @@ export class FinancialService {
     } catch (notificationError) {
       console.warn('[FinancialService] Failed to send release notifications:', notificationError);
     }
+
+    await this.createFinancialAuditLog({
+      transactionId,
+      action: 'payment_released',
+      actorId: releasedBy,
+      actorRole: 'admin',
+      details: 'Payment released and escrow ledger debited',
+      metadata: {
+        amount: tx.amount?.toString?.() || String(tx.amount),
+        projectId: tx.projectId,
+        projectProfessionalId: tx.projectProfessionalId,
+      },
+    });
 
     return updated;
   }
