@@ -74,6 +74,7 @@ export default function ProfessionalProfilePage() {
   const [refSaving, setRefSaving] = useState(false);
   const [refError, setRefError] = useState<string | null>(null);
   const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
+  const [pendingProfileFiles, setPendingProfileFiles] = useState<File[]>([]);
   const [password, setPassword] = useState('');
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
@@ -95,9 +96,10 @@ export default function ProfessionalProfilePage() {
   };
 
   const uploadProfileImages = async (files: File[]) => {
-    const urls = await uploadFiles(files);
-    setProfile((p) => ({ ...p, profileImages: [...(p.profileImages || []), ...urls] }));
-    return urls;
+    const keys = await uploadFiles(files);
+    setProfile((p) => ({ ...p, profileImages: [...(p.profileImages || []), ...keys] }));
+    setPendingProfileFiles([]);
+    return keys;
   };
 
   const uploadRefImages = async (files: File[]) => {
@@ -163,6 +165,15 @@ export default function ProfessionalProfilePage() {
     setSaving(true);
     setError(null);
     try {
+      // Upload any files the user staged but didn't explicitly click Upload for
+      let finalProfileImages = [...(profile.profileImages || [])];
+      if (pendingProfileFiles.length > 0) {
+        const uploadedKeys = await uploadFiles(pendingProfileFiles);
+        finalProfileImages = [...finalProfileImages, ...uploadedKeys];
+        setProfile((p) => ({ ...p, profileImages: finalProfileImages }));
+        setPendingProfileFiles([]);
+      }
+
       const res = await fetch(`${API_BASE_URL}/professional/me`, {
         method: 'PUT',
         headers: {
@@ -181,7 +192,7 @@ export default function ProfessionalProfilePage() {
           suppliesOffered: profile.suppliesOffered || [],
           tradesOffered: profile.tradesOffered || [],
           primaryTrade: profile.primaryTrade || undefined,
-          profileImages: profile.profileImages || [],
+          profileImages: finalProfileImages,
           emergencyCalloutAvailable: emergencyCalloutAvailable,
         }),
       });
@@ -563,6 +574,7 @@ export default function ProfessionalProfilePage() {
               maxFiles={5}
               maxFileSize={10 * 1024 * 1024}
               onUpload={uploadProfileImages}
+              onFilesChange={(files) => setPendingProfileFiles(files)}
               showUploadAction
             />
 
