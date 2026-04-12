@@ -135,8 +135,10 @@ const formatAuditActionLabel = (value?: string | null) => {
   if (!value) return '—';
   return value
     .replace(/_/g, ' ')
+    .toLowerCase()
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 const parseMilestoneMetadataFromNotes = (notes?: string | null): { paymentMilestoneId?: string } | null => {

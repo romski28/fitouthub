@@ -63,7 +63,12 @@ const getStatusColor = (status: string) => {
 
 const formatAuditActionLabel = (value?: string | null) => {
   if (!value) return '';
-  return value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 export default function FinancialTransactionsTable({ projectId, accessToken, onTransactionUpdate }: FinancialTableProps) {
