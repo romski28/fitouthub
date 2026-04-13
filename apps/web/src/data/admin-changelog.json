@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-13-47c6e2d",
+    "date": "2026-04-13T15:46:05+08:00",
+    "title": "Add dual-read location filters for normalized coverage",
+    "summary": "Add dual-read location filters for normalized coverage",
+    "areas": [
+      "api"
+    ],
+    "commit": "47c6e2d",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/professionals/professionals.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-13-d519a1f",
     "date": "2026-04-13T15:33:55+08:00",
     "title": "Add region backfill admin widget with dry-run/apply and audit logging",

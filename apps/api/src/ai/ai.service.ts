@@ -1004,9 +1004,20 @@ OUTPUT SCHEMA
             }))
           : null;
 
-      // Build location filters
+      // Build location filters (dual-read: normalized coverage first, legacy fields fallback)
       const locationFilters = hasLocation
         ? [
+            {
+              regionCoverage: {
+                some: {
+                  OR: [
+                    { area: { name: { contains: location, mode: 'insensitive' } } },
+                    { zone: { label: { contains: location, mode: 'insensitive' } } },
+                    { zone: { code: { contains: location, mode: 'insensitive' } } },
+                  ],
+                },
+              },
+            },
             { locationPrimary: { contains: location, mode: 'insensitive' } },
             { locationSecondary: { contains: location, mode: 'insensitive' } },
             { locationTertiary: { contains: location, mode: 'insensitive' } },

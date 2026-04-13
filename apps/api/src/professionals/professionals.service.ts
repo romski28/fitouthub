@@ -480,6 +480,29 @@ export class ProfessionalsService {
     return [header.join(','), ...rows].join('\n');
   }
 
+  private buildDualReadLocationFilters(location?: string | null) {
+    if (!location?.trim()) return null;
+    const keyword = location.trim();
+
+    return [
+      {
+        regionCoverage: {
+          some: {
+            OR: [
+              { area: { name: { contains: keyword, mode: 'insensitive' } } },
+              { zone: { label: { contains: keyword, mode: 'insensitive' } } },
+              { zone: { code: { contains: keyword, mode: 'insensitive' } } },
+            ],
+          },
+        },
+      },
+      { locationPrimary: { contains: keyword, mode: 'insensitive' } },
+      { locationSecondary: { contains: keyword, mode: 'insensitive' } },
+      { locationTertiary: { contains: keyword, mode: 'insensitive' } },
+      { serviceArea: { contains: keyword, mode: 'insensitive' } },
+    ];
+  }
+
   async countPublic(trade?: string, location?: string): Promise<{ count: number }> {
     try {
       const where: any = { status: 'approved' };
@@ -491,14 +514,7 @@ export class ProfessionalsService {
           ]
         : null;
 
-      const locationFilters = location
-        ? [
-            { locationPrimary: { contains: location, mode: 'insensitive' } },
-            { locationSecondary: { contains: location, mode: 'insensitive' } },
-            { locationTertiary: { contains: location, mode: 'insensitive' } },
-            { serviceArea: { contains: location, mode: 'insensitive' } },
-          ]
-        : null;
+      const locationFilters = this.buildDualReadLocationFilters(location);
 
       if (tradeFilters && locationFilters) {
         where.AND = [{ OR: tradeFilters }, { OR: locationFilters }];
