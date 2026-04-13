@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-71bcb4d",
+    "date": "2026-04-13T12:55:43+08:00",
+    "title": "fix(api): normalize and dedupe professional service areas/trades",
+    "summary": "fix(api): normalize and dedupe professional service areas/trades",
+    "areas": [
+      "api"
+    ],
+    "commit": "71bcb4d",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts"
+    ]
+  },
+  {
     "id": "2026-04-13-dbf7262",
     "date": "2026-04-13T12:30:57+08:00",
     "title": "feat(admin): add automation health badge to changelog page",

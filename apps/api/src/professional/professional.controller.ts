@@ -105,6 +105,33 @@ export class ProfessionalController {
     return `${hours.toFixed(1).replace(/\.0$/, '')} hours`;
   }
 
+  private normalizeUniqueStrings(values: Array<string | null | undefined>) {
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+
+    for (const value of values) {
+      const cleaned = (value || '').trim();
+      if (!cleaned) continue;
+      const key = cleaned.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      normalized.push(cleaned);
+    }
+
+    return normalized;
+  }
+
+  private normalizeCsvInput(value?: string) {
+    if (value === undefined) return undefined;
+    const values = value.split(',').map((part) => part.trim());
+    return this.normalizeUniqueStrings(values).join(', ');
+  }
+
+  private normalizeTextInput(value?: string) {
+    if (value === undefined) return undefined;
+    return value.trim();
+  }
+
   @Get('me')
   @UseGuards(AuthGuard('jwt-professional'))
   async getProfile(@Request() req: any) {
@@ -208,18 +235,27 @@ export class ProfessionalController {
           .map((value) => extractObjectKeyFromValue(value))
           .filter((value) => value.length > 0)
       : undefined;
+
+    const normalizedServiceArea = this.normalizeCsvInput(body.serviceArea);
+    const normalizedTradesOffered = Array.isArray(body.tradesOffered)
+      ? this.normalizeUniqueStrings(body.tradesOffered)
+      : undefined;
+    const normalizedSuppliesOffered = Array.isArray(body.suppliesOffered)
+      ? this.normalizeUniqueStrings(body.suppliesOffered)
+      : undefined;
+
     const data: any = {
-      fullName: body.fullName,
-      businessName: body.businessName,
-      phone: body.phone,
-      professionType: body.professionType,
-      serviceArea: body.serviceArea,
-      locationPrimary: body.locationPrimary,
-      locationSecondary: body.locationSecondary,
-      locationTertiary: body.locationTertiary,
-      suppliesOffered: body.suppliesOffered,
-      tradesOffered: body.tradesOffered,
-      primaryTrade: body.primaryTrade,
+      fullName: this.normalizeTextInput(body.fullName),
+      businessName: this.normalizeTextInput(body.businessName),
+      phone: this.normalizeTextInput(body.phone),
+      professionType: this.normalizeTextInput(body.professionType),
+      serviceArea: normalizedServiceArea,
+      locationPrimary: this.normalizeTextInput(body.locationPrimary),
+      locationSecondary: this.normalizeTextInput(body.locationSecondary),
+      locationTertiary: this.normalizeTextInput(body.locationTertiary),
+      suppliesOffered: normalizedSuppliesOffered,
+      tradesOffered: normalizedTradesOffered,
+      primaryTrade: this.normalizeTextInput(body.primaryTrade),
       profileImages: normalizedProfileImages,
       emergencyCalloutAvailable: body.emergencyCalloutAvailable,
     };
