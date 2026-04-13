@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-deff26d",
+    "date": "2026-04-13T22:26:54+08:00",
+    "title": "feat(web): replace HK zone map with detailed SVG geometry",
+    "summary": "feat(web): replace HK zone map with detailed SVG geometry",
+    "areas": [
+      "web"
+    ],
+    "commit": "deff26d",
+    "files": [
+      "apps/web/src/components/hk-zone-map.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-487a6dc",
     "date": "2026-04-13T21:28:37+08:00",
     "title": "feat(web): add HK zone coverage map MVP on professional cards",
