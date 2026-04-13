@@ -301,11 +301,11 @@ export default function TradesmenPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="mt-auto flex flex-wrap items-center gap-3 pt-2">
+                        <div className="mt-auto flex items-stretch gap-1.5 pt-2">
                           <button
                             type="button"
                             onClick={() => setSelectedTrade(trade)}
-                            className="browse-card-button browse-card-button-secondary"
+                            className="browse-card-button-sm browse-card-button-secondary whitespace-nowrap"
                           >
                             {t('card.viewDetails')}
                           </button>
@@ -319,7 +319,7 @@ export default function TradesmenPage() {
                                   ...(preferredRegion && { location: preferredRegion }),
                                 },
                               }}
-                              className="browse-card-button browse-card-button-primary"
+                              className="browse-card-button-sm browse-card-button-primary whitespace-nowrap"
                             >
                               {t('card.seeInArea', { trade: trade.title.toLowerCase() })}
                             </Link>
@@ -327,7 +327,7 @@ export default function TradesmenPage() {
                             <button
                               type="button"
                               onClick={openJoinModal}
-                              className="browse-card-button browse-card-button-primary"
+                              className="browse-card-button-sm browse-card-button-primary whitespace-nowrap"
                             >
                               {t('card.joinCta')}
                             </button>

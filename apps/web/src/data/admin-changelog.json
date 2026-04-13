@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-92cca64",
+    "date": "2026-04-13T14:14:36+08:00",
+    "title": "fix(web): apply browse-card-button-sm to tradesmen card buttons",
+    "summary": "fix(web): apply browse-card-button-sm to tradesmen card buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "92cca64",
+    "files": [
+      "apps/web/src/app/tradesmen/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-d7a4231",
     "date": "2026-04-13T14:11:44+08:00",
     "title": "fix(web): uniform button height on professional cards using browse-card-button-sm",
