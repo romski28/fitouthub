@@ -8,10 +8,18 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 import { Tradesman } from '../../lib/types';
 import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
 import { API_BASE_URL } from '@/config/api';
+import { ModalOverlay } from '@/components/modal-overlay';
 import {
   SERVICE_TO_PROFESSION,
   matchServiceToProfession,
 } from '@/lib/service-matcher';
+
+type TradeApiRecord = Tradesman & {
+  professionType?: string;
+  aliases?: string[];
+  enabled?: boolean;
+  usageCount?: number;
+};
 
 function Badge({ label }: { label: string }) {
   return (
@@ -32,6 +40,7 @@ export default function TradesmenPage() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAllTrades, setShowAllTrades] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<TradeApiRecord | null>(null);
 
   useEffect(() => {
     const fetchTradesmen = async () => {
@@ -58,21 +67,29 @@ export default function TradesmenPage() {
             ? (payload as { data: Tradesman[] }).data
             : [];
 
-        const data: Tradesman[] = (rawData as Array<{
+        const data: TradeApiRecord[] = (rawData as Array<{
           id: string;
           name?: string;
           title?: string;
           category?: string;
+          professionType?: string;
+          aliases?: string[];
           description?: string;
           featured?: boolean;
+          enabled?: boolean;
+          usageCount?: number;
           jobs?: string[];
           image?: string;
         }>).map((trade) => ({
           id: trade.id,
           title: trade.name || trade.title || 'Unknown Trade',
           category: trade.category || 'general',
+          professionType: trade.professionType,
+          aliases: Array.isArray(trade.aliases) ? trade.aliases : [],
           description: trade.description,
           featured: Boolean(trade.featured),
+          enabled: trade.enabled,
+          usageCount: trade.usageCount,
           jobs: Array.isArray(trade.jobs) ? trade.jobs : [],
           image: trade.image,
         }));
@@ -154,6 +171,8 @@ export default function TradesmenPage() {
     setShowSuggestions(false);
     setShowAllTrades(false);
   };
+
+  const preferredRegion = userLocation?.tertiary || userLocation?.secondary || userLocation?.primary || undefined;
 
   return (
     <>
@@ -279,15 +298,26 @@ export default function TradesmenPage() {
                           </div>
                         </div>
 
-                        {/* Link to professionals filtered by this trade (logged-in) or join CTA (anonymous) */}
-                        <div className="pt-2">
+                        {/* Actions */}
+                        <div className="flex flex-wrap items-center gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedTrade(trade)}
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-slate-900 transition"
+                          >
+                            View details
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+
                           {isLoggedIn ? (
                             <Link
                               href={{
                                 pathname: '/professionals',
                                 query: {
                                   trade: trade.title,
-                                  ...(userLocation?.primary && { location: userLocation.primary }),
+                                  ...(preferredRegion && { location: preferredRegion }),
                                 },
                               }}
                               className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
@@ -331,6 +361,116 @@ export default function TradesmenPage() {
           </div>
         )}
       </div>
+
+      <TradeDetailsDrawer
+        trade={selectedTrade}
+        onClose={() => setSelectedTrade(null)}
+        regionLabel={preferredRegion}
+      />
     </>
+  );
+}
+
+function TradeDetailsDrawer({
+  trade,
+  onClose,
+  regionLabel,
+}: {
+  trade: TradeApiRecord | null;
+  onClose: () => void;
+  regionLabel?: string;
+}) {
+  if (!trade) return null;
+
+  const genericImage = '/assets/images/chatbot-avatar-icon.webp';
+
+  return (
+    <ModalOverlay isOpen={Boolean(trade)} onClose={onClose} maxWidth="max-w-3xl">
+      <div className="space-y-5">
+        <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 p-5 text-white sm:flex-row sm:items-center">
+          <img
+            src={genericImage}
+            alt={`${trade.title} avatar`}
+            className="h-20 w-20 rounded-xl border border-white/10 bg-white/10 object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-300">Trade Details</p>
+            <h2 className="mt-1 text-2xl font-bold">{trade.title}</h2>
+            <p className="mt-1 text-sm text-slate-200">
+              {[trade.category, trade.professionType].filter(Boolean).join(' • ') || 'Trade overview'}
+            </p>
+          </div>
+          {typeof trade.usageCount === 'number' ? (
+            <div className="rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-emerald-200">
+              {trade.usageCount} uses
+            </div>
+          ) : null}
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <TradeStat label="Category" value={trade.category || 'General'} />
+          <TradeStat label="Profession Type" value={trade.professionType || 'Mixed'} />
+          <TradeStat label="Specialties" value={trade.jobs?.length || 0} />
+        </div>
+
+        {trade.description ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">About this trade</p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">{trade.description}</p>
+          </div>
+        ) : null}
+
+        {trade.jobs && trade.jobs.length > 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Specialties</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {trade.jobs.map((job) => (
+                <span key={`${trade.id}-${job}`} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
+                  {job}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {trade.aliases && trade.aliases.length > 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Also known as</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {trade.aliases.map((alias) => (
+                <span key={`${trade.id}-alias-${alias}`} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  {alias}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          {regionLabel
+            ? `When you continue to professionals, we will pre-fill your saved area (${regionLabel}) alongside this trade.`
+            : 'When you continue to professionals, we will carry this trade into the professional shortlist.'}
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+function TradeStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+    </div>
   );
 }

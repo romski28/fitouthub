@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-378c369",
+    "date": "2026-04-13T13:10:12+08:00",
+    "title": "feat(web): improve tradesmen page location handoff and trade drawer",
+    "summary": "feat(web): improve tradesmen page location handoff and trade drawer",
+    "areas": [
+      "web"
+    ],
+    "commit": "378c369",
+    "files": [
+      "apps/web/src/app/tradesmen/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-67eb0c4",
     "date": "2026-04-13T12:56:02+08:00",
     "title": "feat(web): improve professional card trades and region badge expansion",
