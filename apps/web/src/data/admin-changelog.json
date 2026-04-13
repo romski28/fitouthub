@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-13623e6",
+    "date": "2026-04-13T14:07:43+08:00",
+    "title": "feat(web): add region expansion nudge when local professional results are thin",
+    "summary": "feat(web): add region expansion nudge when local professional results are thin",
+    "areas": [
+      "web"
+    ],
+    "commit": "13623e6",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-ef4ddc7",
     "date": "2026-04-13T13:58:45+08:00",
     "title": "fix(web): respect location filter when explicit rating is set in professionals list",

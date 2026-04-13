@@ -498,11 +498,41 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     return sorted;
   }, [professionals, searchTerm, professionHint, loc, minRating]);
 
+  const [regionExpanded, setRegionExpanded] = useState(false);
+  // Reset expansion whenever the location filter itself changes
+  useEffect(() => { setRegionExpanded(false); }, [loc.primary, loc.secondary, loc.tertiary]);
+
   const filtered = useMemo(() => {
-    // Only widen when: no location is set, OR fewer than 3 results AND no explicit rating is applied.
-    // Never drop location when the user has chosen a specific rating — that would silently ignore one of their filters.
     const hasLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
     const hasExplicitRating = minRating > 0;
+
+    // If the user explicitly expanded to all regions, return trade+rating without location
+    if (regionExpanded && hasLocation) {
+      const needle = searchTerm.trim().toLowerCase();
+      const mappedProfession = needle ? matchServiceToProfession(needle) : null;
+      const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
+      return professionals
+        .filter((pro) => {
+          const haystacks = [
+            pro.professionType, pro.fullName, pro.businessName, pro.primaryTrade,
+            ...(pro.tradesOffered ?? []), ...(pro.suppliesOffered ?? []),
+          ].filter(Boolean).map((s) => s!.toString().toLowerCase());
+          const textMatch = needle ? haystacks.some((s) => s.includes(needle)) : false;
+          const professionMatch = effectiveProfession ? haystacks.some((s) => s.includes(effectiveProfession)) : false;
+          const bySearch = needle || effectiveProfession ? textMatch || professionMatch || (!needle && professionMatch) : true;
+          if (!bySearch) return false;
+          return minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
+        })
+        .sort((a, b) => {
+          const ra = typeof a.rating === 'number' ? a.rating : 0;
+          const rb = typeof b.rating === 'number' ? b.rating : 0;
+          if (rb !== ra) return rb - ra;
+          return (a.fullName || a.businessName || '').toLowerCase().localeCompare((b.fullName || b.businessName || '').toLowerCase());
+        });
+    }
+
+    // Only widen when: no location is set, OR fewer than 3 results AND no explicit rating is applied.
+    // Never drop location when the user has chosen a specific rating — that would silently ignore one of their filters.
     if (filteredBase.length >= 3 || !hasLocation || hasExplicitRating) return filteredBase;
 
     // Widen scope: relax location when fewer than 3 results and no explicit rating, preserving trade/search intent.
@@ -542,7 +572,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         return na.localeCompare(nb);
       });
     return widened;
-  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating]);
+  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating, regionExpanded]);
+
+  // Narrowly-scoped count: how many matched with location+trade+rating (before any widening)
+  const filteredBaseCount = filteredBase.length;
+  const locationIsActive = Boolean(loc.primary || loc.secondary || loc.tertiary);
+  // Show expand nudge when a region is active, not yet expanded, and local results are thin (≤2)
+  const canShowExpand = locationIsActive && !regionExpanded && filteredBaseCount <= 2;
 
   const maxSelect = Math.min(3, filtered.length);
   // Always start with empty selection - no persistence
@@ -961,6 +997,44 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               showSelectionAction={canInviteProfessionals}
             />
           ))}
+        </div>
+      )}
+
+      {/* Region expansion nudge — shown when local results are thin (≤2) */}
+      {canShowExpand && (
+        <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 text-center shadow-sm">
+          <p className="text-sm font-semibold text-slate-800">
+            {filteredBaseCount === 0
+              ? 'No professionals found in your selected area.'
+              : `Only ${filteredBaseCount} professional${filteredBaseCount === 1 ? '' : 's'} found in your selected area.`}
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            Expanding the search can surface professionals from other regions who may be available to travel.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRegionExpanded(true)}
+            className="browse-card-button browse-card-button-primary mt-4"
+          >
+            Show professionals from all areas
+          </button>
+          <p className="mt-2 text-[11px] text-slate-400 italic">✦ Smart region expansion coming soon — results will automatically include nearby areas</p>
+        </div>
+      )}
+
+      {/* Banner shown while region is expanded */}
+      {regionExpanded && locationIsActive && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+          <p className="text-amber-800">
+            <span className="font-semibold">Showing all areas.</span> Results are no longer filtered by your selected region.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRegionExpanded(false)}
+            className="shrink-0 rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
+          >
+            Back to local results
+          </button>
         </div>
       )}
 
