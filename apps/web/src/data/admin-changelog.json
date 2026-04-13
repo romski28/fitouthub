@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-13-487a6dc",
+    "date": "2026-04-13T21:28:37+08:00",
+    "title": "feat(web): add HK zone coverage map MVP on professional cards",
+    "summary": "feat(web): add HK zone coverage map MVP on professional cards",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "487a6dc",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/components/hk-zone-map.tsx",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/lib/types.ts"
+    ]
+  },
+  {
     "id": "2026-04-13-47c6e2d",
     "date": "2026-04-13T15:46:05+08:00",
     "title": "Add dual-read location filters for normalized coverage",

@@ -190,7 +190,29 @@ export class ProfessionalsService {
       console.log('findAll: Attempting to fetch professionals');
 
       const result = await (this.prisma as any).professional.findMany({
-        include: { referenceProjects: { orderBy: { createdAt: 'desc' } } },
+        include: {
+          referenceProjects: { orderBy: { createdAt: 'desc' } },
+          regionCoverage: {
+            include: {
+              zone: {
+                select: {
+                  id: true,
+                  code: true,
+                  label: true,
+                  labelZh: true,
+                  mapSvgId: true,
+                },
+              },
+              area: {
+                select: {
+                  id: true,
+                  code: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
       });
       console.log(`findAll: Success, found ${result.length} professionals`);
       return result.map((p: any) => this.resolveProfessionalMedia(p));
@@ -206,6 +228,26 @@ export class ProfessionalsService {
       where: { id },
       include: {
         referenceProjects: { orderBy: { createdAt: 'desc' } },
+        regionCoverage: {
+          include: {
+            zone: {
+              select: {
+                id: true,
+                code: true,
+                label: true,
+                labelZh: true,
+                mapSvgId: true,
+              },
+            },
+            area: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+              },
+            },
+          },
+        },
         notificationPreferences: {
           select: {
             id: true,

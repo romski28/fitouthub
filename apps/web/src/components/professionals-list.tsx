@@ -9,6 +9,7 @@ import { searchLocations } from '@/lib/location-search';
 import { SERVICE_TO_PROFESSION, matchServiceToProfession } from '@/lib/service-matcher';
 import { matchLocation } from '@/lib/location-matcher';
 import { Professional } from '@/lib/types';
+import { HkZoneMap } from '@/components/hk-zone-map';
 import { ProjectShareModal } from '@/components/project-share-modal';
 import { useAuth } from '@/context/auth-context';
 import { BackToTop } from '@/components/back-to-top';
@@ -37,6 +38,56 @@ const normalizeUniqueList = (values: Array<string | null | undefined>) => {
 
 const splitCsvUnique = (value?: string | null) =>
   normalizeUniqueList((value || '').split(',').map((part) => part.trim()));
+
+const DISTRICT_TO_ZONE: Record<string, string> = {
+  'central and western': 'HKI',
+  'wan chai': 'HKI',
+  'eastern': 'HKI',
+  'southern': 'HKI',
+  'yau tsim mong': 'KLN',
+  'sham shui po': 'KLN',
+  'kowloon city': 'KLN',
+  'wong tai sin': 'KLN',
+  'kwun tong': 'KLN',
+  'sai kung': 'NTE',
+  'sha tin': 'NTE',
+  'tai po': 'NTE',
+  'north': 'NTE',
+  'tuen mun': 'NTW',
+  'yuen long': 'NTW',
+  'tsuen wan': 'NTW',
+  'kwai tsing': 'NTW',
+  'islands district': 'ISL',
+  'islands': 'ISL',
+};
+
+const deriveHighlightedZones = (pro: Professional): string[] => {
+  const normalizedCodes = new Set<string>();
+
+  for (const item of pro.regionCoverage || []) {
+    const code = item?.zone?.code?.toUpperCase();
+    if (code) normalizedCodes.add(code);
+  }
+
+  if (normalizedCodes.size > 0) {
+    return Array.from(normalizedCodes);
+  }
+
+  const primary = (pro.locationPrimary || '').trim().toLowerCase();
+  if (primary === 'hong kong island' || primary === 'hki') normalizedCodes.add('HKI');
+  if (primary === 'kowloon' || primary === 'kln') normalizedCodes.add('KLN');
+  if (primary === 'islands district' || primary === 'islands' || primary === 'isl') normalizedCodes.add('ISL');
+  if (primary === 'new territories' || primary === 'nt') {
+    normalizedCodes.add('NTE');
+    normalizedCodes.add('NTW');
+  }
+
+  const secondary = (pro.locationSecondary || '').trim().toLowerCase();
+  const mappedSecondary = DISTRICT_TO_ZONE[secondary];
+  if (mappedSecondary) normalizedCodes.add(mappedSecondary);
+
+  return Array.from(normalizedCodes);
+};
 
 const ProfessionalCard = memo(({
   pro,
@@ -77,6 +128,7 @@ const ProfessionalCard = memo(({
   const hiddenTradesCount = Math.max(0, tradeBadges.length - visibleTrades.length);
   const refCount = pro.referenceProjects?.length || 0;
   const photoCount = pro.profileImages?.length || 0;
+  const highlightedZones = useMemo(() => deriveHighlightedZones(pro), [pro]);
 
   const accentColor = isSelected
     ? 'border-emerald-400 ring-2 ring-emerald-200'
@@ -167,6 +219,13 @@ const ProfessionalCard = memo(({
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {highlightedZones.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Coverage map</p>
+              <HkZoneMap highlightedCodes={highlightedZones} compact />
             </div>
           )}
 

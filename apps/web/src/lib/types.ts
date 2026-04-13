@@ -32,6 +32,20 @@ export type Professional = {
   profileImages?: string[];
   referenceProjects?: ReferenceProject[];
   emergencyCalloutAvailable?: boolean;
+  regionCoverage?: Array<{
+    zone?: {
+      id: string;
+      code: string;
+      label: string;
+      labelZh?: string | null;
+      mapSvgId?: string | null;
+    } | null;
+    area?: {
+      id: string;
+      code: string;
+      name: string;
+    } | null;
+  }>;
 };
 
 export type ReferenceProject = {
