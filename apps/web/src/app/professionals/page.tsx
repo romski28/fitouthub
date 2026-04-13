@@ -223,7 +223,9 @@ function ProfessionalsPageInner() {
         onLoginClick={openLoginModal}
       />
 
-      <div className="space-y-8">
+      <div className="browse-page-shell">
+        <div className="browse-page-inner">
+          <div className="browse-page-stack">
         {/* Compact Hero Section */}
         <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white py-6 px-6">
           <div className="space-y-2">
@@ -276,6 +278,8 @@ function ProfessionalsPageInner() {
             requireLocation={shouldShowRegionNotice}
           />
         )}
+          </div>
+        </div>
       </div>
     </>
   );

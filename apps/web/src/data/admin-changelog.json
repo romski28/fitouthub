@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-13-13faa8b",
+    "date": "2026-04-13T13:21:25+08:00",
+    "title": "refactor(web): standardize browse page shell styling",
+    "summary": "refactor(web): standardize browse page shell styling",
+    "areas": [
+      "web"
+    ],
+    "commit": "13faa8b",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/app/tradesmen/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-944f189",
     "date": "2026-04-13T13:10:40+08:00",
     "title": "feat(web): label wizard shortlist as matched professionals",
