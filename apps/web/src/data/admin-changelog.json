@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-89eb39a",
+    "date": "2026-04-13T14:24:00+08:00",
+    "title": "style(web): align compare modal with browse card header and striped columns",
+    "summary": "style(web): align compare modal with browse card header and striped columns",
+    "areas": [
+      "web"
+    ],
+    "commit": "89eb39a",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-92cca64",
     "date": "2026-04-13T14:14:36+08:00",
     "title": "fix(web): apply browse-card-button-sm to tradesmen card buttons",

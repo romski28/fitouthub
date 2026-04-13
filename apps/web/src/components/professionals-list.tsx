@@ -1201,15 +1201,15 @@ function ComparisonOverlay({
         className="relative mx-4 w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4 text-white">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-600">Comparison</p>
-            <h3 className="text-lg font-bold text-slate-900">Compare professionals side by side</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">Comparison</p>
+            <h3 className="text-lg font-bold text-white">Compare professionals side by side</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="rounded-lg border border-slate-500 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/20"
           >
             Close
           </button>
@@ -1217,11 +1217,11 @@ function ComparisonOverlay({
 
         <div className="max-h-[70vh] overflow-auto p-4">
           <div className="grid gap-3" style={{ gridTemplateColumns: `220px repeat(${professionals.length}, minmax(220px, 1fr))` }}>
-            <div className="sticky left-0 z-10 rounded-lg bg-white p-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Criteria
+            <div className="sticky left-0 z-10 rounded-lg bg-slate-100 p-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              Name
             </div>
-            {professionals.map((pro) => (
-              <div key={pro.id} className="rounded-lg border border-slate-200 bg-white p-3">
+            {professionals.map((pro, columnIndex) => (
+              <div key={pro.id} className={`rounded-lg border border-slate-200 p-3 ${columnIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-bold text-slate-900 line-clamp-2">
                     {pro.fullName || pro.businessName || 'Professional'}
@@ -1253,8 +1253,11 @@ function ComparisonOverlay({
                 <div className="sticky left-0 z-10 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-700">
                   {row.label}
                 </div>
-                {professionals.map((pro) => (
-                  <div key={`${pro.id}-${row.label}`} className="rounded-lg border border-slate-100 bg-white p-3 text-sm text-slate-700">
+                {professionals.map((pro, columnIndex) => (
+                  <div
+                    key={`${pro.id}-${row.label}`}
+                    className={`rounded-lg border border-slate-100 p-3 text-sm text-slate-700 ${columnIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}
+                  >
                     {row.value(pro)}
                   </div>
                 ))}
