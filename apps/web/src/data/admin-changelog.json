@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-0041953",
+    "date": "2026-04-13T23:10:00+08:00",
+    "title": "feat(web): add zone map row to comparison overlay (Phase 3 MVP)",
+    "summary": "feat(web): add zone map row to comparison overlay (Phase 3 MVP)",
+    "areas": [
+      "web"
+    ],
+    "commit": "0041953",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-44a473e",
     "date": "2026-04-13T22:35:35+08:00",
     "title": "fix(web): swap HKI and NTW map tags",

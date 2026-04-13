@@ -1231,13 +1231,24 @@ function ComparisonOverlay({
     { label: 'Trade Focus', value: (pro) => pro.primaryTrade || '—' },
     {
       label: 'Coverage',
-      value: (pro) =>
-        (pro.serviceArea || '')
-          .split(',')
-          .map((v) => v.trim())
-          .filter(Boolean)
-          .slice(0, 2)
-          .join(', ') || '—',
+      value: (pro) => {
+        const zoneCodes = [
+          ...new Set(
+            (pro.regionCoverage || [])
+              .map((c) => c?.zone?.label)
+              .filter(Boolean) as string[]
+          ),
+        ];
+        if (zoneCodes.length > 0) return zoneCodes.join(', ');
+        return (
+          (pro.serviceArea || '')
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean)
+            .slice(0, 2)
+            .join(', ') || '—'
+        );
+      },
     },
     {
       label: 'References',
@@ -1322,6 +1333,21 @@ function ComparisonOverlay({
                 ))}
               </Fragment>
             ))}
+
+            {/* Zone map row */}
+            <Fragment key="zone-map">
+              <div className="sticky left-0 z-10 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+                Zone Map
+              </div>
+              {professionals.map((pro, columnIndex) => (
+                <div
+                  key={`${pro.id}-zone-map`}
+                  className={`rounded-lg border border-slate-100 p-3 ${columnIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}
+                >
+                  <HkZoneMap highlightedCodes={deriveHighlightedZones(pro)} compact />
+                </div>
+              ))}
+            </Fragment>
           </div>
         </div>
       </div>
