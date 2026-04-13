@@ -182,12 +182,12 @@ const ProfessionalCard = memo(({
             )}
           </div>
 
-        {/* Actions */}
-        <div className="mt-auto flex items-center gap-1.5">
+        {/* Actions — all buttons share the same height via browse-card-button-sm */}
+        <div className="mt-auto flex items-stretch gap-1.5">
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
-            className="browse-card-button browse-card-button-secondary flex-1 basis-0 text-xs"
+            className="browse-card-button-sm browse-card-button-secondary flex-1 whitespace-nowrap"
           >
             {t('viewDetails')}
           </button>
@@ -195,10 +195,10 @@ const ProfessionalCard = memo(({
             type="button"
             onClick={() => onCompare(pro)}
             title={isCompared ? 'Remove from comparison' : 'Add to comparison'}
-            className={`rounded-xl border px-3 py-2 text-[11px] font-semibold transition ${
+            className={`browse-card-button-sm shrink-0 ${
               isCompared
-                ? 'border-indigo-400 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'border border-indigo-400 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
             }`}
           >
             {isCompared ? '✓ Comparing' : '⊕ Compare'}
@@ -208,7 +208,7 @@ const ProfessionalCard = memo(({
               type="button"
               onClick={() => onToggle(pro)}
               disabled={disableSelection}
-              className={`browse-card-button shrink-0 text-xs ${
+              className={`browse-card-button-sm shrink-0 ${
                 isSelected
                   ? 'browse-card-button-success'
                   : 'browse-card-button-success-outline'

@@ -153,11 +153,29 @@ body {
   transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
 
-.browse-card-button:hover {
+/* Compact variant — use on card action rows so all siblings stay the same height */
+.browse-card-button-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 0.625rem;
+  border: 1px solid transparent;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.browse-card-button:hover,
+.browse-card-button-sm:hover {
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
-.browse-card-button:disabled {
+.browse-card-button:disabled,
+.browse-card-button-sm:disabled {
   cursor: not-allowed;
   opacity: 0.6;
   box-shadow: none;
