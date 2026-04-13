@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-44a473e",
+    "date": "2026-04-13T22:35:35+08:00",
+    "title": "fix(web): swap HKI and NTW map tags",
+    "summary": "fix(web): swap HKI and NTW map tags",
+    "areas": [
+      "web"
+    ],
+    "commit": "44a473e",
+    "files": [
+      "apps/web/src/components/hk-zone-map.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-deff26d",
     "date": "2026-04-13T22:26:54+08:00",
     "title": "feat(web): replace HK zone map with detailed SVG geometry",
