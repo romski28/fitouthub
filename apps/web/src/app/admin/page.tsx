@@ -777,6 +777,12 @@ export default function AdminDashboardPage() {
       href: "/admin/activity-log",
       stat: "Audit trail",
     },
+    {
+      title: "Changelog",
+      description: "Internal release notes with dated platform changes.",
+      href: "/admin/changelog",
+      stat: "Release visibility",
+    },
   ];
 
   const analyticsCards = [

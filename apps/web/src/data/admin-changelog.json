@@ -1,0 +1,66 @@
+[
+  {
+    "id": "2026-04-13-1d96497",
+    "date": "2026-04-13T12:19:56+08:00",
+    "title": "feat(admin): add changelog page and auto-append git hook",
+    "summary": "feat(admin): add changelog page and auto-append git hook",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "1d96497",
+    "files": [
+      "apps/web/src/app/admin/changelog/page.tsx",
+      "apps/web/src/app/admin/layout.tsx",
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/data/admin-changelog.json",
+      "package.json",
+      "scripts/install-changelog-hook.js",
+      "scripts/update-changelog-from-last-commit.js"
+    ]
+  },
+  {
+    "id": "2026-04-13-aeb3363",
+    "date": "2026-04-13T00:00:00.000Z",
+    "title": "Aligned trade focus copy in selection and drawer",
+    "summary": "Updated professional selection wording to use Trade Focus consistently and improved profile context copy in the drawer.",
+    "areas": [
+      "web"
+    ],
+    "commit": "aeb3363",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/components/professional-details-modal.tsx"
+    ]
+  },
+  {
+    "id": "2026-04-12-341e285",
+    "date": "2026-04-12T00:00:00.000Z",
+    "title": "Improved professional selection with compare and details drawer",
+    "summary": "Introduced compact cards, compare workflow, and a right-side details drawer to make client shortlisting faster and clearer.",
+    "areas": [
+      "web"
+    ],
+    "commit": "341e285",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/components/professional-details-modal.tsx"
+    ]
+  },
+  {
+    "id": "2026-04-12-5479d36",
+    "date": "2026-04-12T00:00:00.000Z",
+    "title": "Improved profile persuasion and quote decision UX",
+    "summary": "Added profile strength and trust signals, plus quote comparison and actionability improvements in project decision flow.",
+    "areas": [
+      "web"
+    ],
+    "commit": "5479d36",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/professional-details-modal.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  }
+]
