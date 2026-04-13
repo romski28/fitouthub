@@ -21,6 +21,23 @@ import {
   setProjectDescriptionHandoff,
 } from '@/lib/create-project-handoff';
 
+const normalizeUniqueList = (values: Array<string | null | undefined>) => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const cleaned = (value || '').trim();
+    if (!cleaned) continue;
+    const key = cleaned.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(cleaned);
+  }
+  return result;
+};
+
+const splitCsvUnique = (value?: string | null) =>
+  normalizeUniqueList((value || '').split(',').map((part) => part.trim()));
+
 const ProfessionalCard = memo(({
   pro,
   onToggle,
@@ -42,13 +59,20 @@ const ProfessionalCard = memo(({
 }) => {
   const t = useTranslations('professionalsPage.list');
   const roleIcon = pro.professionType === 'company' ? '🏢' : pro.professionType === 'reseller' ? '📦' : '👷';
-  const serviceAreas = useMemo(() =>
-    (pro.serviceArea ?? '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean),
-    [pro.serviceArea]
-  );
+  const [showAllTrades, setShowAllTrades] = useState(false);
+  const [showAllAreas, setShowAllAreas] = useState(false);
+  const serviceAreas = useMemo(() => splitCsvUnique(pro.serviceArea), [pro.serviceArea]);
+  const tradeBadges = useMemo(() => {
+    if (pro.professionType === 'reseller') {
+      return normalizeUniqueList([pro.primaryTrade, ...(pro.suppliesOffered || [])]);
+    }
+    return normalizeUniqueList([pro.primaryTrade, ...(pro.tradesOffered || [])]);
+  }, [pro.primaryTrade, pro.tradesOffered, pro.suppliesOffered, pro.professionType]);
+
+  const visibleAreas = showAllAreas ? serviceAreas : serviceAreas.slice(0, 3);
+  const hiddenAreasCount = Math.max(0, serviceAreas.length - visibleAreas.length);
+  const visibleTrades = showAllTrades ? tradeBadges : tradeBadges.slice(0, 3);
+  const hiddenTradesCount = Math.max(0, tradeBadges.length - visibleTrades.length);
   const refCount = pro.referenceProjects?.length || 0;
   const photoCount = pro.profileImages?.length || 0;
 
@@ -82,24 +106,69 @@ const ProfessionalCard = memo(({
           </span>
         </div>
 
-        {/* Trade + first service area */}
-        <div className="flex flex-wrap gap-1.5">
-          {pro.primaryTrade && (
-            <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-[11px] font-semibold text-white">
-              {pro.primaryTrade}
-            </span>
-          )}
-          {serviceAreas.slice(0, 1).map((area) => (
-            <span key={area} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
-              {area}
-            </span>
-          ))}
-          {serviceAreas.length > 1 && (
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">
-              +{serviceAreas.length - 1}
-            </span>
-          )}
-        </div>
+        {/* Trades (aggregated) */}
+        {tradeBadges.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Trades</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {visibleTrades.map((trade) => (
+                <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  {trade}
+                </span>
+              ))}
+              {hiddenTradesCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTrades(true)}
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                >
+                  +{hiddenTradesCount} more
+                </button>
+              )}
+              {showAllTrades && tradeBadges.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTrades(false)}
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                >
+                  Show less
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Areas covered (deduplicated) */}
+        {serviceAreas.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Areas covered</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {visibleAreas.map((area) => (
+                <span key={`${pro.id}-area-${area}`} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                  {area}
+                </span>
+              ))}
+              {hiddenAreasCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllAreas(true)}
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                >
+                  +{hiddenAreasCount} more
+                </button>
+              )}
+              {showAllAreas && serviceAreas.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllAreas(false)}
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                >
+                  Show less
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="flex items-center gap-3 text-[11px] text-slate-500">

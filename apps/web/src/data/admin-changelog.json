@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-67eb0c4",
+    "date": "2026-04-13T12:56:02+08:00",
+    "title": "feat(web): improve professional card trades and region badge expansion",
+    "summary": "feat(web): improve professional card trades and region badge expansion",
+    "areas": [
+      "web"
+    ],
+    "commit": "67eb0c4",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-71bcb4d",
     "date": "2026-04-13T12:55:43+08:00",
     "title": "fix(api): normalize and dedupe professional service areas/trades",
