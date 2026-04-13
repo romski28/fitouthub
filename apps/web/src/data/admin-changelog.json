@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-944f189",
+    "date": "2026-04-13T13:10:40+08:00",
+    "title": "feat(web): label wizard shortlist as matched professionals",
+    "summary": "feat(web): label wizard shortlist as matched professionals",
+    "areas": [
+      "web"
+    ],
+    "commit": "944f189",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-378c369",
     "date": "2026-04-13T13:10:12+08:00",
     "title": "feat(web): improve tradesmen page location handoff and trade drawer",

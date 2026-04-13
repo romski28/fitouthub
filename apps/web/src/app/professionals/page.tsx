@@ -204,6 +204,15 @@ function ProfessionalsPageInner() {
     [aiPrefill, projectPrefill],
   );
 
+  const isMatchedContext = Boolean(
+    projectId ||
+      tradeParam ||
+      locationParam ||
+      aiTitleParam ||
+      aiScopeParam ||
+      aiEmergencyParam,
+  );
+
   console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, locationParam, projectName, defaultLocation });
 
   return (
@@ -222,10 +231,12 @@ function ProfessionalsPageInner() {
               {t('hero.tagline')}
             </p>
             <h1 className="text-2xl font-bold">
-              {t('hero.title')}
+              {isMatchedContext ? 'Matched professionals' : t('hero.title')}
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl">
-              {t('hero.description')}
+              {isMatchedContext
+                ? 'A curated shortlist from the wider professional network based on your project context.'
+                : t('hero.description')}
             </p>
           </div>
         </section>
