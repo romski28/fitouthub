@@ -124,9 +124,19 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
         {/* Scrollable body */}
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
           <div className="grid gap-3 sm:grid-cols-4">
-            <StatCard label="Primary Trade" value={professional.primaryTrade || 'Not set'} />
-            <StatCard label="References" value={referenceProjectCount} />
-            <StatCard label="Photos" value={normalizedProfileImages.length} />
+            <StatCard
+              label="Trade Focus"
+              value={professional.primaryTrade || 'Not set'}
+              helperText={
+                professional.professionType === 'company'
+                  ? 'Multiple trades may be available'
+                  : professional.professionType === 'contractor'
+                    ? 'Single trade specialist'
+                    : undefined
+              }
+            />
+            <StatCard label="Projects Completed" value={referenceProjectCount} />
+            <StatCard label="Coverage Areas" value={serviceAreas.length || '—'} />
             <StatCard label="Emergency" value={professional.emergencyCalloutAvailable ? '24/7 available' : 'Standard'} />
           </div>
 
@@ -145,14 +155,8 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Detail label="Email" value={professional.email} />
-            <Detail label="Phone" value={professional.phone} />
             <Detail label="Status" value={professional.status} />
-            <Detail label="Rating" value={typeof professional.rating === 'number' ? `${professional.rating.toFixed(1)}★` : undefined} />
             <Detail label="Registration Date" value={formatRegistrationDate(professional.registrationDate)} />
-            <Detail label="Full Name" value={professional.fullName || undefined} />
-            <Detail label="Business Name" value={professional.businessName || undefined} />
-            <Detail label="Primary Trade" value={professional.primaryTrade || undefined} />
           </div>
 
           {serviceAreas.length > 0 && (
@@ -304,11 +308,12 @@ function Detail({ label, value }: { label: string; value?: string | number | nul
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({ label, value, helperText }: { label: string; value: string | number; helperText?: string }) {
   return (
     <div className="rounded-lg border border-emerald-100 bg-white p-3 shadow-sm">
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
       <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+      {helperText ? <p className="mt-1 text-[11px] text-slate-500">{helperText}</p> : null}
     </div>
   );
 }

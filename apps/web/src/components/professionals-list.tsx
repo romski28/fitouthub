@@ -1004,7 +1004,7 @@ function ComparisonOverlay({
           : '—',
     },
     { label: 'Type', value: (pro) => pro.professionType || '—' },
-    { label: 'Primary Trade', value: (pro) => pro.primaryTrade || '—' },
+    { label: 'Trade Focus', value: (pro) => pro.primaryTrade || '—' },
     {
       label: 'Coverage',
       value: (pro) =>
