@@ -6,9 +6,90 @@ import {
 } from './dto/create-professional.dto';
 import { buildPublicAssetUrl } from '../storage/media-assets.util';
 
+type RegionBackfillActor = {
+  userId?: string;
+  actorName?: string;
+};
+
 @Injectable()
 export class ProfessionalsService {
   constructor(private prisma: PrismaService) {}
+
+  private async writeRegionBackfillActivityLog(params: {
+    action: 'region_backfill_dry_run' | 'region_backfill_apply';
+    actor?: RegionBackfillActor;
+    details: string;
+    metadata: Record<string, unknown>;
+  }) {
+    try {
+      const created = await (this.prisma as any).activityLog.create({
+        data: {
+          userId: params.actor?.userId || null,
+          actorName: params.actor?.actorName || 'Admin',
+          actorType: 'admin',
+          action: params.action,
+          resource: 'ProfessionalRegionCoverage',
+          details: params.details,
+          metadata: params.metadata,
+          status: 'success',
+        },
+      });
+
+      return {
+        action: created.action,
+        actorName: created.actorName,
+        createdAt: created.createdAt,
+        details: created.details,
+      };
+    } catch (error) {
+      console.error('[ProfessionalsService] Failed to write region backfill activity log:', (error as any)?.message);
+      return null;
+    }
+  }
+
+  async getRegionBackfillLastRun() {
+    const last = await (this.prisma as any).activityLog.findFirst({
+      where: {
+        action: {
+          in: ['region_backfill_dry_run', 'region_backfill_apply'],
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        action: true,
+        actorName: true,
+        createdAt: true,
+        details: true,
+      },
+    });
+
+    if (!last) return null;
+
+    return {
+      action: last.action,
+      actorName: last.actorName,
+      createdAt: last.createdAt,
+      details: last.details,
+    };
+  }
+
+  private normalizeLocationText(input: string): string {
+    return input
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[’']/g, "'")
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private splitServiceAreaTokens(serviceArea: string | null | undefined): string[] {
+    if (!serviceArea) return [];
+    return serviceArea
+      .split(/[,;/\n|]+/g)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
 
   private resolveProfessionalMedia(professional: any) {
     if (!professional) return professional;
@@ -433,6 +514,357 @@ export class ProfessionalsService {
       console.error('Error counting professionals:', error);
       return { count: 0 };
     }
+  }
+
+  private async buildRegionBackfillPlan(sampleSize = 25) {
+    const cappedSampleSize = Math.max(5, Math.min(100, Number(sampleSize) || 25));
+
+    const [zones, areas, aliases, professionals] = await Promise.all([
+      (this.prisma as any).regionZone.findMany({
+        select: { id: true, code: true, label: true },
+      }),
+      (this.prisma as any).regionArea.findMany({
+        select: { id: true, zoneId: true, code: true, name: true },
+      }),
+      (this.prisma as any).regionAreaAlias.findMany({
+        select: { areaId: true, aliasNormalized: true, alias: true },
+      }),
+      (this.prisma as any).professional.findMany({
+        select: {
+          id: true,
+          fullName: true,
+          businessName: true,
+          locationPrimary: true,
+          locationSecondary: true,
+          locationTertiary: true,
+          serviceArea: true,
+        },
+      }),
+    ]);
+
+    const areaById = new Map<string, { id: string; zoneId: string; code: string; name: string }>();
+    for (const area of areas as Array<{ id: string; zoneId: string; code: string; name: string }>) {
+      areaById.set(area.id, area);
+    }
+
+    const zoneById = new Map<string, { id: string; code: string; label: string }>();
+    for (const zone of zones as Array<{ id: string; code: string; label: string }>) {
+      zoneById.set(zone.id, zone);
+    }
+
+    const areaTokenMap = new Map<string, Set<string>>();
+    const pushAreaToken = (token: string, areaId: string) => {
+      const normalized = this.normalizeLocationText(token);
+      if (!normalized) return;
+      if (!areaTokenMap.has(normalized)) {
+        areaTokenMap.set(normalized, new Set<string>());
+      }
+      areaTokenMap.get(normalized)!.add(areaId);
+    };
+
+    for (const area of areas as Array<{ id: string; name: string }>) {
+      pushAreaToken(area.name, area.id);
+    }
+    for (const alias of aliases as Array<{ areaId: string; aliasNormalized: string; alias: string }>) {
+      pushAreaToken(alias.aliasNormalized, alias.areaId);
+      pushAreaToken(alias.alias, alias.areaId);
+    }
+
+    const zoneTokenMap = new Map<string, string[]>();
+    const pushZoneToken = (token: string, zoneIds: string[]) => {
+      const normalized = this.normalizeLocationText(token);
+      if (!normalized) return;
+      zoneTokenMap.set(normalized, zoneIds);
+    };
+
+    for (const zone of zones as Array<{ id: string; label: string }>) {
+      pushZoneToken(zone.label, [zone.id]);
+    }
+
+    const zoneByCode = new Map<string, string>();
+    for (const zone of zones as Array<{ id: string; code: string }>) {
+      zoneByCode.set(zone.code, zone.id);
+    }
+
+    if (zoneByCode.get('HKI')) pushZoneToken('hong kong island', [zoneByCode.get('HKI')!]);
+    if (zoneByCode.get('KLN')) pushZoneToken('kowloon', [zoneByCode.get('KLN')!]);
+    if (zoneByCode.get('ISL')) {
+      pushZoneToken('islands', [zoneByCode.get('ISL')!]);
+      pushZoneToken('islands district', [zoneByCode.get('ISL')!]);
+    }
+    if (zoneByCode.get('NTE') && zoneByCode.get('NTW')) {
+      pushZoneToken('new territories', [zoneByCode.get('NTE')!, zoneByCode.get('NTW')!]);
+      pushZoneToken('nt', [zoneByCode.get('NTE')!, zoneByCode.get('NTW')!]);
+    }
+
+    const sample = {
+      matched: [] as any[],
+      zoneOnly: [] as any[],
+      ambiguous: [] as any[],
+      unmatched: [] as any[],
+    };
+
+    const coverageRows: Array<{ professionalId: string; zoneId: string; areaId: string | null }> = [];
+    const coverageByProfessional = new Map<string, Array<{ zoneId: string; areaId: string | null }>>();
+
+    let matchedCount = 0;
+    let zoneOnlyCount = 0;
+    let ambiguousCount = 0;
+    let unmatchedCount = 0;
+
+    let proposedCoverageRows = 0;
+
+    for (const professional of professionals as Array<any>) {
+      const areaCandidates = new Set<string>();
+      const zoneCandidates = new Set<string>();
+      const ambiguousTokens = new Array<{ token: string; areaIds?: string[]; zoneIds?: string[] }>();
+
+      const tokens = [
+        professional.locationSecondary,
+        professional.locationTertiary,
+        ...this.splitServiceAreaTokens(professional.serviceArea),
+      ]
+        .filter(Boolean)
+        .map((value) => String(value));
+
+      for (const token of tokens) {
+        const normalized = this.normalizeLocationText(token);
+        if (!normalized) continue;
+        const matchedAreaIds = areaTokenMap.get(normalized);
+        if (!matchedAreaIds || matchedAreaIds.size === 0) continue;
+
+        if (matchedAreaIds.size > 1) {
+          ambiguousTokens.push({ token, areaIds: Array.from(matchedAreaIds) });
+          continue;
+        }
+
+        const [areaId] = Array.from(matchedAreaIds);
+        areaCandidates.add(areaId);
+      }
+
+      const primaryToken = professional.locationPrimary
+        ? this.normalizeLocationText(String(professional.locationPrimary))
+        : '';
+
+      if (primaryToken) {
+        const mappedZones = zoneTokenMap.get(primaryToken) || [];
+        if (mappedZones.length > 1) {
+          ambiguousTokens.push({ token: String(professional.locationPrimary), zoneIds: mappedZones });
+        } else if (mappedZones.length === 1) {
+          zoneCandidates.add(mappedZones[0]);
+        }
+      }
+
+      for (const areaId of areaCandidates) {
+        const area = areaById.get(areaId);
+        if (area) {
+          zoneCandidates.add(area.zoneId);
+        }
+      }
+
+      const baseSample = {
+        professionalId: professional.id,
+        fullName: professional.fullName,
+        businessName: professional.businessName,
+        locationPrimary: professional.locationPrimary,
+        locationSecondary: professional.locationSecondary,
+        locationTertiary: professional.locationTertiary,
+        serviceArea: professional.serviceArea,
+      };
+
+      if (areaCandidates.size > 0) {
+        matchedCount += 1;
+        proposedCoverageRows += areaCandidates.size;
+
+        const rowsForProfessional = new Array<{ zoneId: string; areaId: string | null }>();
+        for (const areaId of areaCandidates) {
+          const area = areaById.get(areaId);
+          if (!area) continue;
+          const row = { zoneId: area.zoneId, areaId };
+          rowsForProfessional.push(row);
+          coverageRows.push({ professionalId: professional.id, ...row });
+        }
+        coverageByProfessional.set(professional.id, rowsForProfessional);
+
+        if (sample.matched.length < cappedSampleSize) {
+          sample.matched.push({
+            ...baseSample,
+            matchedAreas: Array.from(areaCandidates)
+              .map((areaId) => areaById.get(areaId))
+              .filter(Boolean)
+              .map((area) => ({
+                areaId: area!.id,
+                areaCode: area!.code,
+                areaName: area!.name,
+                zoneId: area!.zoneId,
+                zoneCode: zoneById.get(area!.zoneId)?.code,
+              })),
+            ambiguousTokens,
+          });
+        }
+        continue;
+      }
+
+      if (zoneCandidates.size > 0 && ambiguousTokens.length === 0) {
+        zoneOnlyCount += 1;
+        proposedCoverageRows += zoneCandidates.size;
+
+        const rowsForProfessional = Array.from(zoneCandidates).map((zoneId) => ({
+          zoneId,
+          areaId: null as string | null,
+        }));
+        coverageByProfessional.set(professional.id, rowsForProfessional);
+        for (const row of rowsForProfessional) {
+          coverageRows.push({ professionalId: professional.id, ...row });
+        }
+
+        if (sample.zoneOnly.length < cappedSampleSize) {
+          sample.zoneOnly.push({
+            ...baseSample,
+            matchedZones: Array.from(zoneCandidates).map((zoneId) => ({
+              zoneId,
+              zoneCode: zoneById.get(zoneId)?.code,
+              zoneLabel: zoneById.get(zoneId)?.label,
+            })),
+          });
+        }
+        continue;
+      }
+
+      if (ambiguousTokens.length > 0) {
+        ambiguousCount += 1;
+        if (sample.ambiguous.length < cappedSampleSize) {
+          sample.ambiguous.push({
+            ...baseSample,
+            ambiguousTokens,
+          });
+        }
+        continue;
+      }
+
+      unmatchedCount += 1;
+      if (sample.unmatched.length < cappedSampleSize) {
+        sample.unmatched.push(baseSample);
+      }
+    }
+
+    return {
+      generatedAt: new Date().toISOString(),
+      totals: {
+        professionalsScanned: professionals.length,
+        matchedAreas: matchedCount,
+        matchedZonesOnly: zoneOnlyCount,
+        ambiguous: ambiguousCount,
+        unmatched: unmatchedCount,
+        proposedCoverageRows,
+      },
+      sampleSize: cappedSampleSize,
+      samples: sample,
+      notes: [
+        'No database writes were performed in dry-run mode.',
+        'Ambiguous records should be reviewed before apply mode is enabled.',
+      ],
+      coverageRows,
+      coverageByProfessional,
+    };
+  }
+
+  async dryRunRegionBackfill(sampleSize = 25, actor?: RegionBackfillActor) {
+    const plan = await this.buildRegionBackfillPlan(sampleSize);
+    const lastRun = await this.writeRegionBackfillActivityLog({
+      action: 'region_backfill_dry_run',
+      actor,
+      details: `Dry run scanned ${plan.totals.professionalsScanned} professionals; proposed ${plan.totals.proposedCoverageRows} coverage rows`,
+      metadata: {
+        mode: 'dry-run',
+        sampleSize: plan.sampleSize,
+        totals: plan.totals,
+      },
+    });
+
+    return {
+      success: true,
+      mode: 'dry-run',
+      generatedAt: plan.generatedAt,
+      totals: plan.totals,
+      sampleSize: plan.sampleSize,
+      samples: plan.samples,
+      notes: plan.notes,
+      lastRun,
+    };
+  }
+
+  async applyRegionBackfill(options: { sampleSize?: number; confirm?: boolean; actor?: RegionBackfillActor }) {
+    if (!options?.confirm) {
+      throw new BadRequestException('confirm=true is required for apply mode');
+    }
+
+    const plan = await this.buildRegionBackfillPlan(options.sampleSize ?? 25);
+    const professionalIds = Array.from(plan.coverageByProfessional.keys());
+
+    if (professionalIds.length === 0 || plan.coverageRows.length === 0) {
+      return {
+        success: true,
+        mode: 'apply',
+        generatedAt: plan.generatedAt,
+        totals: plan.totals,
+        applied: {
+          professionalsReset: 0,
+          coverageRowsInserted: 0,
+        },
+        notes: ['No matched records to apply.'],
+      };
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const deleted = await (tx as any).professionalRegionCoverage.deleteMany({
+        where: { professionalId: { in: professionalIds } },
+      });
+
+      const inserted = await (tx as any).professionalRegionCoverage.createMany({
+        data: plan.coverageRows,
+      });
+
+      return {
+        deletedCount: deleted?.count ?? 0,
+        insertedCount: inserted?.count ?? 0,
+      };
+    });
+
+    const lastRun = await this.writeRegionBackfillActivityLog({
+      action: 'region_backfill_apply',
+      actor: options.actor,
+      details: `Apply reset ${professionalIds.length} professionals; inserted ${result.insertedCount} coverage rows`,
+      metadata: {
+        mode: 'apply',
+        sampleSize: plan.sampleSize,
+        totals: plan.totals,
+        applied: {
+          professionalsReset: professionalIds.length,
+          coverageRowsInserted: result.insertedCount,
+          previousCoverageRowsRemoved: result.deletedCount,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      mode: 'apply',
+      generatedAt: new Date().toISOString(),
+      totals: plan.totals,
+      applied: {
+        professionalsReset: professionalIds.length,
+        coverageRowsInserted: result.insertedCount,
+        previousCoverageRowsRemoved: result.deletedCount,
+      },
+      sampleSize: plan.sampleSize,
+      samples: plan.samples,
+      notes: [
+        'Coverage rows were written to ProfessionalRegionCoverage.',
+        'Only professionals with deterministic area/zone matches were updated.',
+      ],
+      lastRun,
+    };
   }
 
   async updateNotificationPreferences(

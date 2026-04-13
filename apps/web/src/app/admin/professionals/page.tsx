@@ -5,6 +5,7 @@ import { API_BASE_URL } from "@/config/api";
 import { Professional } from "@/lib/types";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { TagInput } from "@/components/tag-input";
+import { useAuth } from "@/context/auth-context";
 
 function formatDate(date?: string): string {
   if (!date) return "—";
@@ -19,7 +20,23 @@ function formatDate(date?: string): string {
   }
 }
 
+function formatDateTime(date?: string): string {
+  if (!date) return "—";
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  } catch {
+    return "—";
+  }
+}
+
 export default function AdminProfessionalsPage() {
+  const { accessToken } = useAuth();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPro, setEditingPro] = useState<Professional | null>(null);
@@ -32,6 +49,12 @@ export default function AdminProfessionalsPage() {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
   const [itemsToShow, setItemsToShow] = useState(10);
   const [tradeOptions, setTradeOptions] = useState<string[]>([]);
+  const [backfillBusy, setBackfillBusy] = useState<"dry-run" | "apply" | null>(null);
+  const [backfillError, setBackfillError] = useState<string | null>(null);
+  const [backfillResult, setBackfillResult] = useState<any | null>(null);
+  const [backfillLastRun, setBackfillLastRun] = useState<any | null>(null);
+  const [commitConfirmText, setCommitConfirmText] = useState("");
+  const [sampleSizeInput, setSampleSizeInput] = useState("25");
   const [formData, setFormData] = useState<Record<string, string | number | string[]>>({
     professionType: "",
     email: "",
@@ -84,6 +107,25 @@ export default function AdminProfessionalsPage() {
       fetchTrades();
     }
   }, []);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const loadLastRun = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/professionals/admin/region-backfill/last-run`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        setBackfillLastRun(payload?.lastRun || null);
+      } catch {
+        // Silent fail for non-critical widget metadata
+      }
+    };
+    loadLastRun();
+  }, [accessToken]);
 
   const fetchTrades = async () => {
     if (tradesLoadedRef.current) return;
@@ -305,6 +347,71 @@ export default function AdminProfessionalsPage() {
     }
   };
 
+  const runRegionDryRun = async () => {
+    if (!accessToken) {
+      alert("Admin session missing. Please sign in again.");
+      return;
+    }
+    try {
+      setBackfillBusy("dry-run");
+      setBackfillError(null);
+      const res = await fetch(`${API_BASE_URL}/professionals/admin/region-backfill/dry-run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ sampleSize: Number(sampleSizeInput) || 25 }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(payload?.message || "Dry run failed");
+      }
+      setBackfillResult(payload);
+      setBackfillLastRun(payload?.lastRun || null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Dry run failed";
+      setBackfillError(message);
+    } finally {
+      setBackfillBusy(null);
+    }
+  };
+
+  const applyRegionBackfill = async () => {
+    if (!accessToken) {
+      alert("Admin session missing. Please sign in again.");
+      return;
+    }
+    if (commitConfirmText.trim() !== "CONFIRM") {
+      alert('Type CONFIRM before committing.');
+      return;
+    }
+    try {
+      setBackfillBusy("apply");
+      setBackfillError(null);
+      const res = await fetch(`${API_BASE_URL}/professionals/admin/region-backfill/apply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ sampleSize: Number(sampleSizeInput) || 25, confirm: true }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(payload?.message || "Apply failed");
+      }
+      setBackfillResult(payload);
+      setBackfillLastRun(payload?.lastRun || null);
+      setCommitConfirmText("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Apply failed";
+      setBackfillError(message);
+    } finally {
+      setBackfillBusy(null);
+    }
+  };
+
   const totals = useMemo(() => {
     return {
       total: professionals.length,
@@ -410,6 +517,80 @@ export default function AdminProfessionalsPage() {
             Select all ({filtered.length})
           </label>
         </div>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Region Backfill Control</p>
+            <p className="text-xs text-slate-600">Run test first, then commit deterministic matches to normalized coverage tables.</p>
+            {backfillLastRun && (
+              <p className="mt-1 text-xs text-slate-500">
+                Last run: {backfillLastRun.action === 'region_backfill_apply' ? 'Commit' : 'Test'} by {backfillLastRun.actorName || 'Admin'} at {formatDateTime(backfillLastRun.createdAt)}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-600">Sample size</label>
+            <input
+              type="number"
+              min={5}
+              max={100}
+              value={sampleSizeInput}
+              onChange={(e) => setSampleSizeInput(e.target.value)}
+              className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={runRegionDryRun}
+            disabled={backfillBusy !== null}
+            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {backfillBusy === "dry-run" ? "Running test…" : "Run Test (Dry Run)"}
+          </button>
+
+          <input
+            type="text"
+            placeholder="Type CONFIRM to enable commit"
+            value={commitConfirmText}
+            onChange={(e) => setCommitConfirmText(e.target.value)}
+            className="w-56 rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+          />
+
+          <button
+            onClick={applyRegionBackfill}
+            disabled={backfillBusy !== null || commitConfirmText.trim() !== "CONFIRM"}
+            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {backfillBusy === "apply" ? "Committing…" : "Commit Backfill"}
+          </button>
+        </div>
+
+        {backfillError && (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {backfillError}
+          </div>
+        )}
+
+        {backfillResult?.totals && (
+          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs"><span className="font-semibold">Scanned:</span> {backfillResult.totals.professionalsScanned ?? 0}</div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs"><span className="font-semibold">Area match:</span> {backfillResult.totals.matchedAreas ?? 0}</div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs"><span className="font-semibold">Zone only:</span> {backfillResult.totals.matchedZonesOnly ?? 0}</div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs"><span className="font-semibold">Ambiguous:</span> {backfillResult.totals.ambiguous ?? 0}</div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs"><span className="font-semibold">Unmatched:</span> {backfillResult.totals.unmatched ?? 0}</div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs"><span className="font-semibold">Rows:</span> {backfillResult.totals.proposedCoverageRows ?? 0}</div>
+          </div>
+        )}
+
+        {backfillResult?.applied && (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+            Applied: reset {backfillResult.applied.professionalsReset ?? 0} professionals, inserted {backfillResult.applied.coverageRowsInserted ?? 0} rows.
+          </div>
+        )}
       </div>
 
       {/* Filters */}

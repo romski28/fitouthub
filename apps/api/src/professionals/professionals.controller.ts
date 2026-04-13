@@ -11,7 +11,11 @@ import {
   HttpStatus,
   Header,
   Query,
+  Req,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ProfessionalsService } from './professionals.service';
 import {
   CreateProfessionalDto,
@@ -90,6 +94,52 @@ export class ProfessionalsController {
     return this.professionalsService.bulkApprove(bulkApproveDto.ids);
   }
 
+  @Post('admin/region-backfill/dry-run')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async dryRunRegionBackfill(
+    @Req() req: any,
+    @Body() body?: { sampleSize?: number },
+  ) {
+    this.requireAdmin(req);
+    return this.professionalsService.dryRunRegionBackfill(body?.sampleSize, {
+      userId: req.user?.id,
+      actorName:
+        `${req.user?.firstName || ''} ${req.user?.surname || ''}`.trim() ||
+        req.user?.email ||
+        'Admin',
+    });
+  }
+
+  @Post('admin/region-backfill/apply')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async applyRegionBackfill(
+    @Req() req: any,
+    @Body() body?: { sampleSize?: number; confirm?: boolean },
+  ) {
+    this.requireAdmin(req);
+    return this.professionalsService.applyRegionBackfill({
+      sampleSize: body?.sampleSize,
+      confirm: body?.confirm,
+      actor: {
+        userId: req.user?.id,
+        actorName:
+          `${req.user?.firstName || ''} ${req.user?.surname || ''}`.trim() ||
+          req.user?.email ||
+          'Admin',
+      },
+    });
+  }
+
+  @Get('admin/region-backfill/last-run')
+  @UseGuards(AuthGuard('jwt'))
+  async getRegionBackfillLastRun(@Req() req: any) {
+    this.requireAdmin(req);
+    const lastRun = await this.professionalsService.getRegionBackfillLastRun();
+    return { success: true, lastRun };
+  }
+
   @Get('public/count')
   async countPublic(
     @Query('trade') trade?: string,
@@ -135,5 +185,11 @@ export class ProfessionalsController {
     },
   ) {
     return this.professionalsService.updateNotificationPreferences(id, body);
+  }
+
+  private requireAdmin(req: any) {
+    if (req.user?.role !== 'admin') {
+      throw new UnauthorizedException('Admin access required');
+    }
   }
 }

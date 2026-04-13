@@ -307,6 +307,68 @@ model Professional {
   otpExpiresAt            DateTime?
   otpVerifiedAt           DateTime?
   sessionToken            String?
+  regionCoverage          ProfessionalRegionCoverage[]
+}
+
+model RegionZone {
+  id         String                       @id @default(cuid())
+  code       String                       @unique
+  label      String
+  labelZh    String?
+  sortOrder  Int                          @default(0)
+  mapSvgId   String?                      @unique
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+  areas      RegionArea[]
+  coverage   ProfessionalRegionCoverage[]
+
+  @@index([sortOrder])
+}
+
+model RegionArea {
+  id         String                       @id @default(cuid())
+  zoneId     String
+  code       String                       @unique
+  name       String
+  nameZh     String?
+  sortOrder  Int                          @default(0)
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+  zone       RegionZone                   @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+  aliases    RegionAreaAlias[]
+  coverage   ProfessionalRegionCoverage[]
+
+  @@unique([zoneId, name])
+  @@index([zoneId, sortOrder])
+}
+
+model RegionAreaAlias {
+  id              String     @id @default(cuid())
+  areaId          String
+  alias           String
+  aliasNormalized String
+  createdAt       DateTime   @default(now())
+  area            RegionArea @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@unique([areaId, aliasNormalized])
+  @@index([aliasNormalized])
+}
+
+model ProfessionalRegionCoverage {
+  id             String       @id @default(cuid())
+  professionalId String
+  zoneId         String
+  areaId         String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  zone           RegionZone   @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+  area           RegionArea?  @relation(fields: [areaId], references: [id], onDelete: SetNull)
+
+  @@index([professionalId])
+  @@index([zoneId])
+  @@index([areaId])
+  @@unique([professionalId, zoneId, areaId])
 }
 
 model Project {

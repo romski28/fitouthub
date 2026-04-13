@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-13-d519a1f",
+    "date": "2026-04-13T15:33:55+08:00",
+    "title": "Add region backfill admin widget with dry-run/apply and audit logging",
+    "summary": "Add region backfill admin widget with dry-run/apply and audit logging",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "d519a1f",
+    "files": [
+      "apps/api/prisma/migrations/20260413_region_zones_phase1/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professionals/professionals.controller.ts",
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-89eb39a",
     "date": "2026-04-13T14:24:00+08:00",
     "title": "style(web): align compare modal with browse card header and striped columns",
