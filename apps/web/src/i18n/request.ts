@@ -288,6 +288,7 @@ const messages = {
         "featured": "Featured",
         "specialties": "Specialties",
         "more": "+{count} more",
+        "viewDetails": "View details",
         "seeInArea": "See {trade} in your area",
         "joinToView": "Join to see {trade} professionals",
         "joinCta": "Register free →"
@@ -843,6 +844,7 @@ const messages = {
         "featured": "精選",
         "specialties": "專長",
         "more": "+{count}項",
+        "viewDetails": "查看詳情",
         "seeInArea": "查看您附近的{trade}",
         "joinToView": "立即加入，查看{trade}專業人士",
         "joinCta": "免費註冊 →"

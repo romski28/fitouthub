@@ -47,6 +47,7 @@ const ProfessionalCard = memo(({
   isCompared,
   isAdmin,
   disableSelection,
+  showSelectionAction,
 }: {
   pro: Professional;
   onToggle: (pro: Professional) => void;
@@ -56,6 +57,7 @@ const ProfessionalCard = memo(({
   isCompared: boolean;
   isAdmin: boolean;
   disableSelection: boolean;
+  showSelectionAction: boolean;
 }) => {
   const t = useTranslations('professionalsPage.list');
   const roleIcon = pro.professionType === 'company' ? '🏢' : pro.professionType === 'reseller' ? '📦' : '👷';
@@ -83,119 +85,117 @@ const ProfessionalCard = memo(({
       : 'border-slate-200';
 
   return (
-    <div className={`group rounded-xl border ${accentColor} bg-white shadow-sm overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md`}>
-      {/* Colour strip */}
-      <div className={`h-1 transition-colors ${isSelected ? 'bg-emerald-500' : isCompared ? 'bg-indigo-400' : 'bg-slate-200'}`} />
-
-      <div className="p-3 space-y-2.5">
-        {/* Name + rating */}
+    <div className={`browse-card ${accentColor}`}>
+      <div className="browse-card-header">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="shrink-0 text-base" aria-hidden="true">{roleIcon}</span>
-              <h3 className="truncate text-sm font-bold text-slate-900">
+              <h3 className="truncate text-sm font-bold text-white">
                 {pro.fullName || pro.businessName || t('fallbackProfessional')}
               </h3>
             </div>
             {pro.businessName && pro.fullName && pro.businessName !== pro.fullName && (
-              <p className="ml-6 truncate text-[11px] text-slate-500">{pro.businessName}</p>
+              <p className="ml-6 truncate text-[11px] text-slate-300">{pro.businessName}</p>
             )}
           </div>
-          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+          <span className="shrink-0 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-white/40">
             {pro.rating.toFixed(1)}★
           </span>
         </div>
+      </div>
 
+      <div className="browse-card-body">
         {/* Trades (aggregated) */}
         {tradeBadges.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Trades</p>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {visibleTrades.map((trade) => (
-                <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-[11px] font-semibold text-white">
-                  {trade}
-                </span>
-              ))}
-              {hiddenTradesCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllTrades(true)}
-                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
-                >
-                  +{hiddenTradesCount} more
-                </button>
-              )}
-              {showAllTrades && tradeBadges.length > 3 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllTrades(false)}
-                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
-                >
-                  Show less
-                </button>
-              )}
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Trades</p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {visibleTrades.map((trade) => (
+                  <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                    {trade}
+                  </span>
+                ))}
+                {hiddenTradesCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllTrades(true)}
+                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                  >
+                    +{hiddenTradesCount} more
+                  </button>
+                )}
+                {showAllTrades && tradeBadges.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllTrades(false)}
+                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Areas covered (deduplicated) */}
-        {serviceAreas.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Areas covered</p>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {visibleAreas.map((area) => (
-                <span key={`${pro.id}-area-${area}`} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
-                  {area}
-                </span>
-              ))}
-              {hiddenAreasCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllAreas(true)}
-                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
-                >
-                  +{hiddenAreasCount} more
-                </button>
-              )}
-              {showAllAreas && serviceAreas.length > 3 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllAreas(false)}
-                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
-                >
-                  Show less
-                </button>
-              )}
+          {/* Areas covered (deduplicated) */}
+          {serviceAreas.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Areas covered</p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {visibleAreas.map((area) => (
+                  <span key={`${pro.id}-area-${area}`} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                    {area}
+                  </span>
+                ))}
+                {hiddenAreasCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllAreas(true)}
+                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                  >
+                    +{hiddenAreasCount} more
+                  </button>
+                )}
+                {showAllAreas && serviceAreas.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllAreas(false)}
+                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Stats */}
-        <div className="flex items-center gap-3 text-[11px] text-slate-500">
-          {refCount > 0 && <span>📁 {refCount} refs</span>}
-          {photoCount > 0 && <span>🖼 {photoCount} photos</span>}
-          {pro.emergencyCalloutAvailable && (
-            <span className="font-semibold text-rose-500">⚡ Emergency</span>
-          )}
-          {isAdmin && (
-            <span className="ml-auto truncate text-slate-400">{pro.email}</span>
-          )}
-        </div>
+          {/* Stats */}
+          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+            {refCount > 0 && <span>📁 {refCount} refs</span>}
+            {photoCount > 0 && <span>🖼 {photoCount} photos</span>}
+            {pro.emergencyCalloutAvailable && (
+              <span className="font-semibold text-rose-500">⚡ Emergency</span>
+            )}
+            {isAdmin && (
+              <span className="ml-auto truncate text-slate-400">{pro.email}</span>
+            )}
+          </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1.5">
+        <div className="mt-auto flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
-            className="flex-1 rounded-lg border border-slate-200 px-2 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="browse-card-button browse-card-button-secondary flex-1 basis-0 text-xs"
           >
-            View details
+            {t('viewDetails')}
           </button>
           <button
             type="button"
             onClick={() => onCompare(pro)}
             title={isCompared ? 'Remove from comparison' : 'Add to comparison'}
-            className={`rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition ${
+            className={`rounded-xl border px-3 py-2 text-[11px] font-semibold transition ${
               isCompared
                 ? 'border-indigo-400 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
                 : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -203,18 +203,20 @@ const ProfessionalCard = memo(({
           >
             {isCompared ? '✓ Comparing' : '⊕ Compare'}
           </button>
-          <button
-            type="button"
-            onClick={() => onToggle(pro)}
-            disabled={disableSelection}
-            className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-              isSelected
-                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'
-            }`}
-          >
-            {isSelected ? '✓ Selected' : t('askForHelp')}
-          </button>
+          {showSelectionAction && (
+            <button
+              type="button"
+              onClick={() => onToggle(pro)}
+              disabled={disableSelection}
+              className={`browse-card-button shrink-0 text-xs ${
+                isSelected
+                  ? 'browse-card-button-success'
+                  : 'browse-card-button-success-outline'
+              }`}
+            >
+              {isSelected ? '✓ Selected' : t('askForHelp')}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -278,6 +280,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   // The filter will naturally radiate outward from tertiary -> secondary -> primary
   const initialLocationDisplay = baseLoc.tertiary || baseLoc.secondary || baseLoc.primary || '';
   const [locationDisplay, setLocationDisplay] = useState<string>(initialLocationDisplay);
+  const hasProjectDefinition = Boolean(
+    projectId ||
+    initialProjectData?.projectName?.trim() ||
+    initialProjectData?.notes?.trim() ||
+    (initialProjectData?.tradesRequired && initialProjectData.tradesRequired.length > 0)
+  );
+  const canInviteProfessionals = hasProjectDefinition;
 
   // Debug: log pre-population values
     const [minRating, setMinRating] = useState<number>(0);
@@ -539,6 +548,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   // Separate compare set — up to 3 professionals for side-by-side comparison
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   const [showCompare, setShowCompare] = useState(false);
+  const locationSelected = Boolean(loc.primary || loc.secondary || loc.tertiary);
+  const blockInviteForMissingLocation = requireLocation && !locationSelected;
 
   // Preselect first N (recommendation) - only if coming from home page with intent
   useMemo(() => {
@@ -549,7 +560,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     
     // If coming from home page (intentData), auto-preselect first N if none selected
     const hasRequiredLocation = !requireLocation || Boolean(loc.primary || loc.secondary || loc.tertiary);
-    if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession && hasRequiredLocation) {
+    if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession && hasRequiredLocation && canInviteProfessionals) {
       for (let i = 0; i < Math.min(3, filtered.length); i++) {
         next.add(filtered[i].id);
       }
@@ -558,9 +569,17 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     if (Array.from(next).sort().join(',') !== Array.from(selectedIds).sort().join(',')) {
       setSelectedIds(next);
     }
-  }, [filtered, initialFromIntent.profession, requireLocation, loc.primary, loc.secondary, loc.tertiary]);
+  }, [filtered, initialFromIntent.profession, requireLocation, loc.primary, loc.secondary, loc.tertiary, canInviteProfessionals]);
+
+  useEffect(() => {
+    if (!canInviteProfessionals && selectedIds.size > 0) {
+      setSelectedIds(new Set());
+    }
+  }, [canInviteProfessionals, selectedIds]);
 
   const toggleSelection = (pro: Professional) => {
+    if (!canInviteProfessionals || blockInviteForMissingLocation) return;
+
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(pro.id)) {
@@ -795,9 +814,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     setDetailsOpen(true);
   };
 
-  const locationSelected = Boolean(loc.primary || loc.secondary || loc.tertiary);
-  const blockInviteForMissingLocation = requireLocation && !locationSelected;
-
   return (
     <div className="space-y-3">
       {/* Filters */}
@@ -940,12 +956,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               onCompare={toggleCompare}
               isAdmin={isAdmin}
               disableSelection={blockInviteForMissingLocation}
+              showSelectionAction={canInviteProfessionals}
             />
           ))}
         </div>
       )}
 
-      {selectedIds.size > 0 ? (
+      {canInviteProfessionals && selectedIds.size > 0 ? (
         <div className="fixed top-20 right-6 z-40 flex flex-col items-end gap-2">
           <button
             type="button"
@@ -984,7 +1001,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         isOpen={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         professional={detailsPro}
-        onSelect={(pro) => toggleSelection(pro)}
+        onSelect={canInviteProfessionals ? (pro) => toggleSelection(pro) : undefined}
         isSelected={detailsPro ? selectedIds.has(detailsPro.id) : false}
       />
 
@@ -1043,6 +1060,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           professionals={filtered.filter((p) => compareIds.has(p.id))}
           selectedIds={selectedIds}
           onToggle={toggleSelection}
+          canSelectForInvite={canInviteProfessionals}
           onClose={() => setShowCompare(false)}
         />
       )}
@@ -1057,11 +1075,13 @@ function ComparisonOverlay({
   professionals,
   selectedIds,
   onToggle,
+  canSelectForInvite,
   onClose,
 }: {
   professionals: Professional[];
   selectedIds: Set<string>;
   onToggle: (pro: Professional) => void;
+  canSelectForInvite: boolean;
   onClose: () => void;
 }) {
   const rows: Array<{ label: string; value: (pro: Professional) => string }> = [
@@ -1130,23 +1150,25 @@ function ComparisonOverlay({
                   <p className="text-sm font-bold text-slate-900 line-clamp-2">
                     {pro.fullName || pro.businessName || 'Professional'}
                   </p>
-                  {selectedIds.has(pro.id) ? (
+                  {canSelectForInvite && selectedIds.has(pro.id) ? (
                     <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                       Selected
                     </span>
                   ) : null}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onToggle(pro)}
-                  className={`mt-3 w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                    selectedIds.has(pro.id)
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'
-                  }`}
-                >
-                  {selectedIds.has(pro.id) ? '✓ Selected for Invite' : 'Select for Invite'}
-                </button>
+                {canSelectForInvite ? (
+                  <button
+                    type="button"
+                    onClick={() => onToggle(pro)}
+                    className={`mt-3 w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      selectedIds.has(pro.id)
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+                    }`}
+                  >
+                    {selectedIds.has(pro.id) ? '✓ Selected for Invite' : 'Select for Invite'}
+                  </button>
+                ) : null}
               </div>
             ))}
 

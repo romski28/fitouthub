@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-13-ed5bd0c",
+    "date": "2026-04-13T13:47:07+08:00",
+    "title": "refactor(web): standardize browse card design and gate selection CTA post-project",
+    "summary": "refactor(web): standardize browse card design and gate selection CTA post-project",
+    "areas": [
+      "web"
+    ],
+    "commit": "ed5bd0c",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/tradesmen/page.tsx",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-04-13-13faa8b",
     "date": "2026-04-13T13:21:25+08:00",
     "title": "refactor(web): standardize browse page shell styling",

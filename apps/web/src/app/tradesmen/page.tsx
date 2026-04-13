@@ -261,10 +261,10 @@ export default function TradesmenPage() {
                   {displayedTrades.map((trade) => (
                     <div
                       key={trade.id}
-                      className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden transition hover:-translate-y-1 hover:shadow-md"
+                      className="browse-card group"
                     >
                       {/* Card Header with Dark Background */}
-                      <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-4 text-white">
+                      <div className="browse-card-header">
                         <div className="flex items-start justify-between gap-3 mb-2">
                           <div className="flex-1">
                             <h3 className="text-base font-bold text-white">{trade.title}</h3>
@@ -275,7 +275,7 @@ export default function TradesmenPage() {
                       </div>
 
                       {/* Card Body */}
-                      <div className="flex-1 p-4 space-y-3">
+                      <div className="browse-card-body">
                         <p className="text-sm text-slate-700 line-clamp-2">
                           {trade.description}
                         </p>
@@ -301,16 +301,13 @@ export default function TradesmenPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex flex-wrap items-center gap-3 pt-2">
+                        <div className="mt-auto flex flex-wrap items-center gap-3 pt-2">
                           <button
                             type="button"
                             onClick={() => setSelectedTrade(trade)}
-                            className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-slate-900 transition"
+                            className="browse-card-button browse-card-button-secondary"
                           >
-                            View details
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
+                            {t('card.viewDetails')}
                           </button>
 
                           {isLoggedIn ? (
@@ -322,23 +319,17 @@ export default function TradesmenPage() {
                                   ...(preferredRegion && { location: preferredRegion }),
                                 },
                               }}
-                              className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
+                              className="browse-card-button browse-card-button-primary"
                             >
                               {t('card.seeInArea', { trade: trade.title.toLowerCase() })}
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
                             </Link>
                           ) : (
                             <button
                               type="button"
                               onClick={openJoinModal}
-                              className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:text-emerald-800 transition"
+                              className="browse-card-button browse-card-button-primary"
                             >
                               {t('card.joinCta')}
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
                             </button>
                           )}
                         </div>
