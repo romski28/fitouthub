@@ -5,9 +5,13 @@ import { useTranslations } from 'next-intl';
 import LocationSelect, { CanonicalLocation } from './location-select';
 import FileUploader from './file-uploader';
 import { ProjectAiPanel } from './project-ai-panel';
+import { HkDistrictList } from './hk-district-list';
+import { HkDistrictMap } from './hk-district-map';
+import { MapOrList } from './map-or-list';
 import { Professional } from '@/lib/types';
 import { API_BASE_URL } from '@/config/api';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
+import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 
 export interface ProjectFormData {
   projectName: string;
@@ -348,6 +352,15 @@ export function ProjectForm({
   ]
     .filter((item): item is string => Boolean(item && item.trim()))
     .join(', ');
+  const selectedProjectAreaCode = useMemo(
+    () => deriveProjectAreaCodeFromLocation(formData.location),
+    [formData.location?.primary, formData.location?.secondary, formData.location?.tertiary],
+  );
+
+  const handleProjectMapSelection = (codes: string[]) => {
+    const nextCode = codes[0];
+    handleLocationChange((nextCode ? areaCodeToCanonicalLocation(nextCode) : {}) as CanonicalLocation);
+  };
 
   const hasAiContext = Boolean(
     showAiOverview &&
@@ -382,11 +395,37 @@ export function ProjectForm({
         {/* Location */}
         <div className="grid gap-2">
           <label className="text-sm font-medium text-slate-800">Project Location</label>
-          <LocationSelect
-            value={formData.location || {}}
-            onChange={handleLocationChange}
-            disabled={isReadOnly || isSubmitting}
+          <MapOrList
+            storageKey="fh-map-or-list-preference"
+            label="Project location input mode"
+            helperText="Use the district map for a direct visual pick, or switch to the text list/dropdowns."
+            mapLabel="Graphic"
+            listLabel="Text list"
+            map={
+              <HkDistrictMap
+                selectionMode="single"
+                selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                onChange={handleProjectMapSelection}
+                disabled={isReadOnly || isSubmitting}
+              />
+            }
+            list={
+              <div className="space-y-3">
+                <HkDistrictList
+                  selectionMode="single"
+                  selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                  onChange={handleProjectMapSelection}
+                  disabled={isReadOnly || isSubmitting}
+                />
+                <LocationSelect
+                  value={formData.location || {}}
+                  onChange={handleLocationChange}
+                  disabled={isReadOnly || isSubmitting}
+                />
+              </div>
+            }
           />
+          {locationSummary ? <p className="text-xs text-slate-500">Selected: {locationSummary}</p> : null}
         </div>
 
         {/* Description */}
@@ -751,11 +790,41 @@ export function ProjectForm({
         }`}>
           Region/Location {!isReadOnly && '*'}
         </label>
-        <LocationSelect
-          value={formData.location || {}}
-          onChange={handleLocationChange}
-          disabled={isReadOnly || isSubmitting}
+        <MapOrList
+          storageKey="fh-map-or-list-preference"
+          label="Project location input mode"
+          helperText="Switch between the district map and the text list/dropdowns. Your preference is saved locally."
+          mapLabel="Graphic"
+          listLabel="Text list"
+          map={
+            <HkDistrictMap
+              selectionMode="single"
+              selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+              onChange={handleProjectMapSelection}
+              disabled={isReadOnly || isSubmitting}
+            />
+          }
+          list={
+            <div className="space-y-3">
+              <HkDistrictList
+                selectionMode="single"
+                selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                onChange={handleProjectMapSelection}
+                disabled={isReadOnly || isSubmitting}
+              />
+              <LocationSelect
+                value={formData.location || {}}
+                onChange={handleLocationChange}
+                disabled={isReadOnly || isSubmitting}
+              />
+            </div>
+          }
         />
+        {locationSummary ? (
+          <p className={`mt-2 text-xs ${mode === 'create' ? 'text-slate-300' : 'text-slate-500'}`}>
+            Selected: {locationSummary}
+          </p>
+        ) : null}
       </div>
 
       {/* Trades Required */}

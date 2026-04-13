@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-04-13-e7c9255",
+    "date": "2026-04-13T23:27:29+08:00",
+    "title": "feat(map): add Phase 4 district map editing flows",
+    "summary": "feat(map): add Phase 4 district map editing flows",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e7c9255",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/ai-project-brief-modal.tsx",
+      "apps/web/src/components/hk-district-list.tsx",
+      "apps/web/src/components/hk-district-map.tsx",
+      "apps/web/src/components/map-or-list.tsx",
+      "apps/web/src/components/project-form.tsx",
+      "apps/web/src/lib/hk-districts.ts"
+    ]
+  },
+  {
     "id": "2026-04-13-0041953",
     "date": "2026-04-13T23:10:00+08:00",
     "title": "feat(web): add zone map row to comparison overlay (Phase 3 MVP)",

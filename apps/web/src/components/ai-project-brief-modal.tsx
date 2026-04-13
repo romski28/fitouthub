@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import LocationSelect, { CanonicalLocation } from '@/components/location-select';
+import { HkDistrictList } from '@/components/hk-district-list';
+import { HkDistrictMap } from '@/components/hk-district-map';
+import { MapOrList } from '@/components/map-or-list';
+import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 
 type WizardStep =
   | { kind: 'title' }
@@ -108,6 +112,15 @@ export function AiProjectBriefModal({
   const currentMotivation = MOTIVATION[Math.min(stepIndex, MOTIVATION.length - 1)] || MOTIVATION[MOTIVATION.length - 1];
 
   const hasLocation = Boolean(location.primary || location.secondary || location.tertiary);
+  const selectedProjectAreaCode = useMemo(
+    () => deriveProjectAreaCodeFromLocation(location),
+    [location.primary, location.secondary, location.tertiary],
+  );
+
+  const handleProjectMapSelection = (codes: string[]) => {
+    const nextCode = codes[0];
+    setLocation((nextCode ? areaCodeToCanonicalLocation(nextCode) : {}) as CanonicalLocation);
+  };
 
   const canContinue = useMemo(() => {
     if (!currentStep) return true;
@@ -227,10 +240,33 @@ export function AiProjectBriefModal({
             <div className="space-y-3">
               <p className="text-sm font-semibold text-slate-900">📍 Where is this project located?</p>
               <p className="text-xs text-slate-600">We prefilled your saved area when we could — tweak it if needed.</p>
-              <LocationSelect
-                value={location}
-                onChange={setLocation}
-                enableSearch={true}
+              <MapOrList
+                storageKey="fh-map-or-list-preference"
+                label="Project location input mode"
+                helperText="Use the district map for a visual pick, or switch to the text list/dropdowns."
+                mapLabel="Graphic"
+                listLabel="Text list"
+                map={
+                  <HkDistrictMap
+                    selectionMode="single"
+                    selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                    onChange={handleProjectMapSelection}
+                  />
+                }
+                list={
+                  <div className="space-y-3">
+                    <HkDistrictList
+                      selectionMode="single"
+                      selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                      onChange={handleProjectMapSelection}
+                    />
+                    <LocationSelect
+                      value={location}
+                      onChange={setLocation}
+                      enableSearch={true}
+                    />
+                  </div>
+                }
               />
             </div>
           )}

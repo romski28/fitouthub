@@ -141,6 +141,26 @@ export class ProfessionalController {
       include: {
         referenceProjects: { orderBy: { createdAt: 'desc' } },
         notificationPreferences: true,
+        regionCoverage: {
+          include: {
+            zone: {
+              select: {
+                id: true,
+                code: true,
+                label: true,
+                labelZh: true,
+                mapSvgId: true,
+              },
+            },
+            area: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
     if (!professional) throw new BadRequestException('Professional not found');
@@ -222,6 +242,7 @@ export class ProfessionalController {
       locationPrimary?: string;
       locationSecondary?: string;
       locationTertiary?: string;
+      coverageAreaCodes?: string[];
       suppliesOffered?: string[];
       tradesOffered?: string[];
       primaryTrade?: string;
@@ -243,6 +264,15 @@ export class ProfessionalController {
     const normalizedSuppliesOffered = Array.isArray(body.suppliesOffered)
       ? this.normalizeUniqueStrings(body.suppliesOffered)
       : undefined;
+    const normalizedCoverageAreaCodes = Array.isArray(body.coverageAreaCodes)
+      ? Array.from(
+          new Set(
+            body.coverageAreaCodes
+              .map((value) => this.normalizeTextInput(value)?.toUpperCase())
+              .filter((value): value is string => Boolean(value)),
+          ),
+        )
+      : undefined;
 
     const data: any = {
       fullName: this.normalizeTextInput(body.fullName),
@@ -262,10 +292,51 @@ export class ProfessionalController {
     // Remove undefined to avoid overwriting
     Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
 
-    const updated = await (this.prisma as any).professional.update({
-      where: { id: professionalId },
-      data,
-    });
+    let updated: any;
+
+    if (normalizedCoverageAreaCodes !== undefined) {
+      const areas = normalizedCoverageAreaCodes.length
+        ? await (this.prisma as any).regionArea.findMany({
+            where: { code: { in: normalizedCoverageAreaCodes } },
+            select: { id: true, code: true, zoneId: true },
+          })
+        : [];
+
+      const foundCodes = new Set((areas as Array<{ code: string }>).map((area) => area.code));
+      const invalidCodes = normalizedCoverageAreaCodes.filter((code) => !foundCodes.has(code));
+      if (invalidCodes.length > 0) {
+        throw new BadRequestException(`Invalid coverage area codes: ${invalidCodes.join(', ')}`);
+      }
+
+      updated = await this.prisma.$transaction(async (tx) => {
+        const saved = await (tx as any).professional.update({
+          where: { id: professionalId },
+          data,
+        });
+
+        await (tx as any).professionalRegionCoverage.deleteMany({
+          where: { professionalId },
+        });
+
+        if (areas.length > 0) {
+          await (tx as any).professionalRegionCoverage.createMany({
+            data: (areas as Array<{ id: string; zoneId: string }>).map((area) => ({
+              professionalId,
+              zoneId: area.zoneId,
+              areaId: area.id,
+            })),
+          });
+        }
+
+        return saved;
+      });
+    } else {
+      updated = await (this.prisma as any).professional.update({
+        where: { id: professionalId },
+        data,
+      });
+    }
+
     return updated;
   }
 

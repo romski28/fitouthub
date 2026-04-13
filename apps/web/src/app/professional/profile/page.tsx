@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
+import { HkDistrictMap } from '@/components/hk-district-map';
+import { HkDistrictList } from '@/components/hk-district-list';
+import { MapOrList } from '@/components/map-or-list';
+import {
+  HK_DISTRICTS,
+  areaCodesToNames,
+  deriveAreaCodesFromCoveragePayload,
+  deriveCoverageDraftFromAreaCodes,
+} from '@/lib/hk-districts';
 
 import FileUploader from '@/components/file-uploader';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
@@ -40,6 +49,12 @@ interface ProfessionalProfile {
     preferredLanguage?: string;
   } | null;
   emergencyCalloutAvailable?: boolean;
+  regionCoverage?: Array<{
+    area?: {
+      code?: string | null;
+      name?: string | null;
+    } | null;
+  }>;
 }
 
 type ProfileChecklistItem = {
@@ -125,6 +140,7 @@ export default function ProfessionalProfilePage() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
+  const [selectedCoverageAreaCodes, setSelectedCoverageAreaCodes] = useState<string[]>([]);
   const hasLoadedRef = useRef(false);
 
   const profileChecklist = buildProfileChecklist(profile, refProjects, emergencyCalloutAvailable);
@@ -133,6 +149,19 @@ export default function ProfessionalProfilePage() {
   );
   const incompleteItems = profileChecklist.filter((item) => !item.done).slice(0, 4);
   const clientFacingHighlights = buildClientFacingHighlights(profile, refProjects, emergencyCalloutAvailable);
+  const selectedCoverageNames = useMemo(() => areaCodesToNames(selectedCoverageAreaCodes), [selectedCoverageAreaCodes]);
+
+  const handleCoverageAreaCodesChange = (codes: string[]) => {
+    const nextDraft = deriveCoverageDraftFromAreaCodes(codes);
+    setSelectedCoverageAreaCodes(codes);
+    setProfile((prev) => ({
+      ...prev,
+      serviceArea: nextDraft.serviceArea,
+      locationPrimary: nextDraft.locationPrimary,
+      locationSecondary: nextDraft.locationSecondary,
+      locationTertiary: nextDraft.locationTertiary,
+    }));
+  };
 
   const uploadFiles = async (files: File[]) => {
     const formData = new FormData();
@@ -193,6 +222,7 @@ export default function ProfessionalProfilePage() {
         if (!res.ok) throw new Error('Failed to load profile');
         const data = await res.json();
         setProfile({ ...emptyProfile, ...data });
+        setSelectedCoverageAreaCodes(deriveAreaCodesFromCoveragePayload(data));
         setRefProjects(data.referenceProjects || []);
         setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
         setAllowPlatformUpdates(data.notificationPreferences?.allowPlatformUpdates ?? true);
@@ -240,6 +270,7 @@ export default function ProfessionalProfilePage() {
           locationPrimary: profile.locationPrimary || undefined,
           locationSecondary: profile.locationSecondary || undefined,
           locationTertiary: profile.locationTertiary || undefined,
+          coverageAreaCodes: selectedCoverageAreaCodes,
           suppliesOffered: profile.suppliesOffered || [],
           tradesOffered: profile.tradesOffered || [],
           primaryTrade: profile.primaryTrade || undefined,
@@ -509,45 +540,76 @@ export default function ProfessionalProfilePage() {
               <p className="mt-1 text-xs text-slate-500">Lead with your most hireable specialty.</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Service Area</label>
-              <input
-                type="text"
-                value={profile.serviceArea || ''}
-                onChange={(e) => setProfile((p) => ({ ...p, serviceArea: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                placeholder="e.g. Hong Kong Island"
-              />
-              <p className="mt-1 text-xs text-slate-500">Add clear coverage areas so clients know you can actually serve their site.</p>
-            </div>
-          </div>
+              <label className="block text-sm font-medium text-slate-700">Coverage</label>
+              <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Interactive coverage editor</p>
+                    <p className="text-xs text-slate-500">Pick every district you cover. The text summary below stays in sync for legacy compatibility.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCoverageAreaCodesChange(HK_DISTRICTS.map((district) => district.areaCode))}
+                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Whole HK
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCoverageAreaCodesChange([])}
+                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Location (Primary)</label>
-              <input
-                type="text"
-                value={profile.locationPrimary || ''}
-                onChange={(e) => setProfile((p) => ({ ...p, locationPrimary: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Location (Secondary)</label>
-              <input
-                type="text"
-                value={profile.locationSecondary || ''}
-                onChange={(e) => setProfile((p) => ({ ...p, locationSecondary: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Location (Tertiary)</label>
-              <input
-                type="text"
-                value={profile.locationTertiary || ''}
-                onChange={(e) => setProfile((p) => ({ ...p, locationTertiary: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
+                <MapOrList
+                  storageKey="fh-map-or-list-preference"
+                  label="Coverage input mode"
+                  helperText="Switch between the interactive map and a text list. Your preference is saved locally."
+                  mapLabel="Graphic"
+                  listLabel="Text list"
+                  map={
+                    <HkDistrictMap
+                      selectedAreaCodes={selectedCoverageAreaCodes}
+                      onChange={handleCoverageAreaCodesChange}
+                    />
+                  }
+                  list={
+                    <HkDistrictList
+                      selectedAreaCodes={selectedCoverageAreaCodes}
+                      onChange={handleCoverageAreaCodesChange}
+                    />
+                  }
+                />
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Service Area</p>
+                    <p className="mt-1 text-sm text-slate-700">{profile.serviceArea || 'No districts selected yet'}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Primary Region</p>
+                    <p className="mt-1 text-sm text-slate-700">{profile.locationPrimary || '—'}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">District Count</p>
+                    <p className="mt-1 text-sm text-slate-700">{selectedCoverageAreaCodes.length || 0}</p>
+                  </div>
+                </div>
+
+                {selectedCoverageNames.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCoverageNames.map((name) => (
+                      <span key={name} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
