@@ -499,8 +499,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   }, [professionals, searchTerm, professionHint, loc, minRating]);
 
   const filtered = useMemo(() => {
-    if (filteredBase.length >= 3 || (!loc.primary && !loc.secondary && !loc.tertiary)) return filteredBase;
-    // Widen scope: ignore location filter when fewer than 3 results, but preserve trade/search/rating intent
+    // Only widen when: no location is set, OR fewer than 3 results AND no explicit rating is applied.
+    // Never drop location when the user has chosen a specific rating — that would silently ignore one of their filters.
+    const hasLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
+    const hasExplicitRating = minRating > 0;
+    if (filteredBase.length >= 3 || !hasLocation || hasExplicitRating) return filteredBase;
+
+    // Widen scope: relax location when fewer than 3 results and no explicit rating, preserving trade/search intent.
     const needle = searchTerm.trim().toLowerCase();
     const mappedProfession = needle ? matchServiceToProfession(needle) : null;
     const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
@@ -526,19 +531,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         const bySearch = needle || effectiveProfession
           ? textMatch || professionMatch || (!needle && professionMatch)
           : true;
-        if (!bySearch) return false;
-
-        const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
-        return byRating;
+        return bySearch;
       })
       .sort((a, b) => {
-      const ra = typeof a.rating === 'number' ? a.rating : 0;
-      const rb = typeof b.rating === 'number' ? b.rating : 0;
-      if (rb !== ra) return rb - ra;
-      const na = (a.fullName || a.businessName || '').toLowerCase();
-      const nb = (b.fullName || b.businessName || '').toLowerCase();
-      return na.localeCompare(nb);
-    });
+        const ra = typeof a.rating === 'number' ? a.rating : 0;
+        const rb = typeof b.rating === 'number' ? b.rating : 0;
+        if (rb !== ra) return rb - ra;
+        const na = (a.fullName || a.businessName || '').toLowerCase();
+        const nb = (b.fullName || b.businessName || '').toLowerCase();
+        return na.localeCompare(nb);
+      });
     return widened;
   }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating]);
 

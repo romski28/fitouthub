@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-13-ef4ddc7",
+    "date": "2026-04-13T13:58:45+08:00",
+    "title": "fix(web): respect location filter when explicit rating is set in professionals list",
+    "summary": "fix(web): respect location filter when explicit rating is set in professionals list",
+    "areas": [
+      "web"
+    ],
+    "commit": "ef4ddc7",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-13-ed5bd0c",
     "date": "2026-04-13T13:47:07+08:00",
     "title": "refactor(web): standardize browse card design and gate selection CTA post-project",
