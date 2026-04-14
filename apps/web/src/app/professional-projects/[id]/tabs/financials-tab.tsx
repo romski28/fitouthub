@@ -311,7 +311,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     }
   };
 
-  const nonFinancialProjectMilestones = projectMilestones.filter((row) => !row.isFinancial);
+  const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
 
   if (!isAwarded) {
     return (
@@ -395,7 +395,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               <div>
                 <h4 className="font-semibold text-white">Link Financial Milestones to Project Schedule</h4>
                 <p className="text-xs text-slate-300 mt-1">
-                  Keep payment due dates aligned with the project schedule. You can still add non-financial schedule tasks in the Schedule tab.
+                  The class defaults create financial schedule milestones automatically. You can keep those aligned here and still add extra non-financial tasks in the Schedule tab.
                 </p>
               </div>
 
@@ -409,9 +409,9 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                       className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
                     >
                       <option value="">Unlinked</option>
-                      {nonFinancialProjectMilestones.map((milestone) => (
+                      {scheduleMilestoneOptions.map((milestone) => (
                         <option key={milestone.id} value={milestone.id}>
-                          {`${milestone.sequence}. ${milestone.title}`}
+                          {`${milestone.sequence}. ${milestone.title}${milestone.isFinancial ? ' • financial' : ''}`}
                         </option>
                       ))}
                     </select>
@@ -476,9 +476,9 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                           className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
                         >
                           <option value="">Link schedule milestone</option>
-                          {nonFinancialProjectMilestones.map((milestone) => (
+                          {scheduleMilestoneOptions.map((milestone) => (
                             <option key={milestone.id} value={milestone.id}>
-                              {`${milestone.sequence}. ${milestone.title}`}
+                              {`${milestone.sequence}. ${milestone.title}${milestone.isFinancial ? ' • financial' : ''}`}
                             </option>
                           ))}
                         </select>

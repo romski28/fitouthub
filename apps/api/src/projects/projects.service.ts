@@ -370,20 +370,20 @@ export class ProjectsService {
       scale === 'SCALE_1'
         ? [30, 70]
         : scale === 'SCALE_2'
-          ? [30, 40, 30]
-          : [20, 20, 20, 20, 20];
+          ? [20, 50, 30]
+          : [10, 20, 20, 20, 30];
 
     const titles =
       scale === 'SCALE_1'
-        ? ['Upfront Deposit', 'Final Completion Payment']
+        ? ['Site Preparation', 'Final Handover']
         : scale === 'SCALE_2'
-          ? ['Upfront Deposit', 'Progress Payment', 'Final Completion Payment']
+          ? ['Site Preparation', 'Milestone 1', 'Final Handover']
           : [
-              'Mobilization Drawdown',
-              'Phase 1 Progress Drawdown',
-              'Phase 2 Progress Drawdown',
-              'Phase 3 Progress Drawdown',
-              'Final Completion Drawdown',
+              'Site Preparation',
+              'Milestone 1',
+              'Milestone 2',
+              'Milestone 3',
+              'Final Handover',
             ];
 
     const types =
@@ -583,7 +583,7 @@ export class ProjectsService {
       projectScale: scale,
       escrowFundingPolicy: escrowPolicy,
       totalAmount: new Decimal(totalAmount),
-      depositCapPercent: scale === 'SCALE_1' ? 30 : null,
+      depositCapPercent: scale === 'SCALE_1' ? 30 : scale === 'SCALE_2' ? 20 : 10,
       fundingBufferMilestones: scale === 'SCALE_3' ? 2 : null,
       retentionEnabled: existing?.retentionEnabled ?? false,
       retentionPercent:

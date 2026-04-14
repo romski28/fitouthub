@@ -510,8 +510,8 @@ export class MilestonesService {
       scale === 'SCALE_1'
         ? ['Site Preparation', 'Final Handover']
         : scale === 'SCALE_2'
-          ? ['Site Preparation', 'Main Works', 'Final Handover']
-          : ['Mobilization', 'Phase 1 Works', 'Phase 2 Works', 'Phase 3 Works', 'Final Handover'];
+          ? ['Site Preparation', 'Milestone 1', 'Final Handover']
+          : ['Site Preparation', 'Milestone 1', 'Milestone 2', 'Milestone 3', 'Final Handover'];
 
     const startAt = assignment.quoteEstimatedStartAt
       ? new Date(assignment.quoteEstimatedStartAt)
@@ -527,7 +527,32 @@ export class MilestonesService {
         },
       });
 
-      const created = await Promise.all(
+      const existingFinancial = await tx.projectMilestone.findMany({
+        where: {
+          projectId: assignment.projectId,
+          projectProfessionalId,
+          isFinancial: true,
+        },
+        orderBy: { sequence: 'asc' },
+      });
+
+      const existingBySequence = new Map(existingFinancial.map((row: any) => [row.sequence, row]));
+
+      if (existingFinancial.length > defaultTitles.length) {
+        const extraIds = existingFinancial
+          .filter((row: any) => row.sequence > defaultTitles.length)
+          .map((row: any) => row.id);
+
+        if (extraIds.length > 0) {
+          await tx.projectMilestone.deleteMany({
+            where: {
+              id: { in: extraIds },
+            },
+          });
+        }
+      }
+
+      const synced = await Promise.all(
         defaultTitles.map((title, index) => {
           let plannedStartDate: Date | null = null;
           let plannedEndDate: Date | null = null;
@@ -542,18 +567,35 @@ export class MilestonesService {
             plannedEndDate = new Date(startAt.getTime() + endOffset * 60 * 1000);
           }
 
+          const existing = existingBySequence.get(index + 1);
+
+          if (existing) {
+            return tx.projectMilestone.update({
+              where: { id: existing.id },
+              data: {
+                title,
+                sequence: index + 1,
+                isFinancial: true,
+                status: existing.status || 'not_started',
+                plannedStartDate,
+                plannedEndDate,
+                siteAccessRequired: false,
+              },
+            });
+          }
+
           return tx.projectMilestone.create({
             data: {
               projectId: assignment.projectId,
               projectProfessionalId,
               title,
               sequence: index + 1,
-              isFinancial: false,
+              isFinancial: true,
               status: 'not_started',
               percentComplete: 0,
               plannedStartDate,
               plannedEndDate,
-              siteAccessRequired: true,
+              siteAccessRequired: false,
             },
           });
         }),
@@ -563,8 +605,8 @@ export class MilestonesService {
         success: true,
         scale,
         deletedCount: deleted.count,
-        createdCount: created.length,
-        milestones: created,
+        createdCount: synced.length,
+        milestones: synced,
       };
     });
   }

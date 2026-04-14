@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-14-bd089ed",
+    "date": "2026-04-14T21:45:05+08:00",
+    "title": "feat(milestones): align class-based financial milestone spine across schedule and financials",
+    "summary": "feat(milestones): align class-based financial milestone spine across schedule and financials",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "bd089ed",
+    "files": [
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-cb70b3d",
     "date": "2026-04-14T20:48:53+08:00",
     "title": "chore(api): bump financial controller comment to trigger Render redeploy (sla-policy + sla-status routes)",

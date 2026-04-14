@@ -641,7 +641,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     const confirmed =
       typeof window !== 'undefined'
         ? window.confirm(
-            'Reset project schedule milestones to default for this project scale? This will remove your current non-financial milestones.',
+            'Reset this project to the default class-based financial milestone spine? This will remove your current non-financial milestones and restore the default financial schedule milestones.',
           )
         : false;
 
@@ -714,7 +714,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           <div className="flex items-center justify-between rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3">
             <div>
               <h3 className="text-sm font-semibold text-white">Schedule Actions</h3>
-              <p className="text-xs text-slate-400">Manage non-financial project milestones and recover from mistakes quickly.</p>
+              <p className="text-xs text-slate-400">Review the default financial milestone spine, then add and manage any extra non-financial work tasks.</p>
             </div>
             <div className="flex items-center gap-3">
               {reorderSaving && <span className="text-xs text-slate-300">Saving order...</span>}
@@ -914,35 +914,79 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 </button>
               </div>
             </div>
-          ) : workMilestones.length === 0 ? (
-            // EMPTY STATE
-            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-center">
-              <p className="text-sm text-slate-300 mb-4">📋 No tasks set up yet.</p>
-              <button
-                onClick={() => setIsAddingNew(true)}
-                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-              >
-                Add Task
-              </button>
-            </div>
           ) : (
-            // LIST VIEW: Showing tasks
-            <div className="space-y-3">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-white">Tasks</h3>
-                  <p className="text-xs text-slate-400 mt-1">Drag and drop to reorder project schedule milestones.</p>
+            // LIST VIEW: Showing financial milestone spine + additional work tasks
+            <div className="space-y-6">
+              <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Financial Milestones</h3>
+                    <p className="text-xs text-slate-300 mt-1">
+                      These class-based milestones drive the payment plan shown in Financials.
+                    </p>
+                  </div>
+                  <span className="text-xs text-blue-200">
+                    {financialMilestones.length} linked payment milestone{financialMilestones.length === 1 ? '' : 's'}
+                  </span>
                 </div>
-                <span className="text-xs text-slate-400">Non-financial milestones only</span>
+
+                {financialMilestones.length === 0 ? (
+                  <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
+                    No financial milestones have been generated yet. Reset to defaults or review the Financials tab.
+                  </div>
+                ) : (
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    {financialMilestones.map((milestone) => (
+                      <div
+                        key={milestone.id}
+                        className="rounded-md border border-blue-500/30 bg-slate-900/60 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-white">{milestone.title}</h4>
+                              <span className="rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200">
+                                Financial
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-300">
+                              Start: <span className="text-white">{formatDateTime(milestone.plannedStartDate)}</span>
+                            </p>
+                            <p className="text-xs text-slate-300">
+                              Due / finish: <span className="text-white">{formatDateTime(milestone.plannedEndDate || milestone.plannedStartDate)}</span>
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[11px] font-semibold uppercase text-slate-400">Status</p>
+                            <p className="text-xs text-white">{milestone.status.replace(/_/g, ' ')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {financialMilestones.length > 0 && (
-                <div className="rounded-md border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-blue-200">
-                  {financialMilestones.length} financial milestone template{financialMilestones.length > 1 ? 's are' : ' is'} linked and managed from the Financials tab. Add/edit non-financial work milestones below.
+              <div className="space-y-3">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Additional Work Tasks</h3>
+                    <p className="text-xs text-slate-400 mt-1">Drag and drop to reorder extra non-financial schedule tasks.</p>
+                  </div>
+                  <span className="text-xs text-slate-400">Non-financial milestones only</span>
                 </div>
-              )}
 
-              {workMilestones.map((milestone, index) => {
+                {workMilestones.length === 0 ? (
+                  <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-center">
+                    <p className="text-sm text-slate-300 mb-4">📋 No extra work tasks yet.</p>
+                    <button
+                      onClick={() => setIsAddingNew(true)}
+                      className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                    >
+                      Add Task
+                    </button>
+                  </div>
+                ) : workMilestones.map((milestone, index) => {
                 const statusPercent = getStatusPercent(milestone.status, milestone.percentComplete);
                 const statusLabel =
                   statusPercent === 100 ? "Complete" :
@@ -1062,7 +1106,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                     </div>
                   </div>
                 );
-              })}
+                })}
+              </div>
             </div>
           )}
         </>
