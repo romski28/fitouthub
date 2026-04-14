@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-14-bb66bdd",
+    "date": "2026-04-14T23:50:53+08:00",
+    "title": "fix(financials): sync schedule date updates and collapse to single schedule-edit action",
+    "summary": "fix(financials): sync schedule date updates and collapse to single schedule-edit action",
+    "areas": [
+      "web"
+    ],
+    "commit": "bb66bdd",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-ffc9858",
     "date": "2026-04-14T23:29:43+08:00",
     "title": "refactor(financials): derive payment milestone rows from linked schedule milestones",

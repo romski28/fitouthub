@@ -258,6 +258,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
         const response = await fetch(
           `${API_BASE_URL}/milestones/project-professional/${projectProfessionalId}`,
           {
+            cache: 'no-store',
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
@@ -434,6 +435,16 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             </div>
           </div>
 
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => onOpenScheduleTab?.()}
+              className="rounded-md border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+            >
+              Open Schedule for Editing
+            </button>
+          </div>
+
           {orphanPaymentMilestones.length > 0 && (
             <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
               {orphanPaymentMilestones.length} payment milestone{orphanPaymentMilestones.length === 1 ? ' is' : 's are'} not linked to a schedule milestone yet.
@@ -589,7 +600,6 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   <th className="px-3 py-2 text-left font-semibold text-white">Timing</th>
                   <th className="px-3 py-2 text-left font-semibold text-white">Amount</th>
                   <th className="px-3 py-2 text-left font-semibold text-white">Status</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Edit</th>
                 </tr>
               </thead>
               <tbody>
@@ -632,15 +642,6 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(paymentMilestone.status)}`}>
                           {paymentMilestone.status.replace(/_/g, ' ')}
                         </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => onOpenScheduleTab?.()}
-                          className="rounded-md border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs font-semibold text-white hover:bg-slate-700"
-                        >
-                          Edit in Schedule
-                        </button>
                       </td>
                     </tr>
                   );

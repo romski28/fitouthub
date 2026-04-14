@@ -1484,9 +1484,7 @@ export default function ProjectDetailPage() {
               quoteEstimatedDurationMinutes={project.quoteEstimatedDurationMinutes}
               tradeId=""
               accessToken={accessToken || null}
-              onMilestonesUpdate={() => {
-                // Refresh project data if needed
-              }}
+              onMilestonesUpdate={reloadPaymentPlan}
             />
 
             <FinancialsTab
