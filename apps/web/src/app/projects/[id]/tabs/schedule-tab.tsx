@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { MilestoneTimeline } from '@/components/milestone-timeline';
+import { API_BASE_URL } from '@/config/api';
 
 interface Milestone {
   id: string;
@@ -66,7 +67,6 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   const [declineReasonByMilestone, setDeclineReasonByMilestone] = useState<Record<string, string>>({});
   const [decliningMilestoneId, setDecliningMilestoneId] = useState<string | null>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://fitouthub.onrender.com';
   const isAwarded = projectStatus === 'awarded';
 
   const formatDate = (dateStr?: string) => {

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-32117ff",
+    "date": "2026-04-14T20:27:04+08:00",
+    "title": "fix(client-schedule): use correct API_BASE_URL from config (was missing /api prefix)",
+    "summary": "fix(client-schedule): use correct API_BASE_URL from config (was missing /api prefix)",
+    "areas": [
+      "web"
+    ],
+    "commit": "32117ff",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-99fadf7",
     "date": "2026-04-14T19:48:32+08:00",
     "title": "chore(web-financials): tighten SLA relevance to current action owner",
