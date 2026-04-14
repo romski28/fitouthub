@@ -42,6 +42,7 @@ export function HkDistrictList({
             disabled={disabled}
             onClick={() => toggleAreaCode(district.areaCode)}
             aria-pressed={isSelected}
+            title={`${district.zoneLabel} · ${getZoneLabelZh(district.zoneCode)}`}
             className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
               isSelected
                 ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
@@ -49,7 +50,6 @@ export function HkDistrictList({
             } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             <div className="font-semibold">{district.name} · {getDistrictNameZh(district.areaCode)}</div>
-            <div className="text-xs text-slate-500">{district.zoneLabel} · {getZoneLabelZh(district.zoneCode)}</div>
           </button>
         );
       })}

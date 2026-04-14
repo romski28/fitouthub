@@ -587,8 +587,8 @@ export default function ProfessionalProfilePage() {
                   storageKey="fh-map-or-list-preference"
                   label="Coverage input mode"
                   helperText="Switch between the interactive map and a text list. Your preference is saved locally."
-                  mapLabel="Graphic"
-                  listLabel="Text list"
+                  mapLabel="Map"
+                  listLabel="Words"
                   map={
                     <HkZoneMap
                       highlightedCodes={selectedCoverageZoneCodes}

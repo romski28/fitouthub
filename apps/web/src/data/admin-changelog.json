@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-04-14-1ca2d52",
+    "date": "2026-04-14T10:39:33+08:00",
+    "title": "feat: improve wizard map UX and prefer normalized AI location matching",
+    "summary": "feat: improve wizard map UX and prefer normalized AI location matching",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1ca2d52",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/ai-project-brief-modal.tsx",
+      "apps/web/src/components/hk-district-list.tsx",
+      "apps/web/src/components/map-or-list.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-4cbe856",
     "date": "2026-04-14T10:24:04+08:00",
     "title": "feat(web): use 5-zone selector for service coverage",

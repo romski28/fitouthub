@@ -11,6 +11,7 @@ type Props = {
   mapLabel?: string;
   listLabel?: string;
   defaultMode?: ViewMode;
+  panelClassName?: string;
   map: ReactNode;
   list: ReactNode;
 };
@@ -19,9 +20,10 @@ export function MapOrList({
   storageKey,
   label = 'Choose input mode',
   helperText,
-  mapLabel = 'Graphic',
-  listLabel = 'Text list',
+  mapLabel = 'Map',
+  listLabel = 'Words',
   defaultMode = 'map',
+  panelClassName,
   map,
   list,
 }: Props) {
@@ -59,12 +61,12 @@ export function MapOrList({
           <p className="text-sm font-semibold text-slate-900">{label}</p>
           {helperText ? <p className="text-xs text-slate-500">{helperText}</p> : null}
         </div>
-        <div className="inline-flex w-fit rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
           <button
             type="button"
             onClick={() => handleModeChange('map')}
             aria-pressed={activeMode === 'map'}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+            className={`w-full rounded-md px-3 py-1.5 text-xs font-semibold transition ${
               activeMode === 'map' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -74,7 +76,7 @@ export function MapOrList({
             type="button"
             onClick={() => handleModeChange('list')}
             aria-pressed={activeMode === 'list'}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+            className={`w-full rounded-md px-3 py-1.5 text-xs font-semibold transition ${
               activeMode === 'list' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -83,7 +85,7 @@ export function MapOrList({
         </div>
       </div>
 
-      <div>{activeMode === 'map' ? map : list}</div>
+      <div className={panelClassName}>{activeMode === 'map' ? map : list}</div>
     </div>
   );
 }

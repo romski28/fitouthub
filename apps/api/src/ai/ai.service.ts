@@ -55,6 +55,81 @@ export class AiService {
     return trimmed.slice(0, 128);
   }
 
+  private normalizeLocationText(input: string): string {
+    return input
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[’']/g, "'")
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private async resolveAreaCodesForLocationKeyword(location: string): Promise<string[]> {
+    const keyword = location.trim();
+    if (!keyword) return [];
+
+    const normalized = this.normalizeLocationText(keyword);
+    const uppercaseKeyword = keyword.toUpperCase();
+
+    const [areasByNameOrCode, aliasMatches, zoneMatches] = await Promise.all([
+      (this.prisma as any).regionArea.findMany({
+        where: {
+          OR: [
+            { name: { contains: keyword, mode: 'insensitive' } },
+            { code: { contains: uppercaseKeyword, mode: 'insensitive' } },
+          ],
+        },
+        select: { code: true },
+      }),
+      (this.prisma as any).regionAreaAlias.findMany({
+        where: {
+          OR: [
+            { alias: { contains: keyword, mode: 'insensitive' } },
+            normalized ? { aliasNormalized: { contains: normalized } } : undefined,
+          ].filter(Boolean),
+        },
+        select: {
+          area: {
+            select: { code: true },
+          },
+        },
+      }),
+      (this.prisma as any).regionZone.findMany({
+        where: {
+          OR: [
+            { label: { contains: keyword, mode: 'insensitive' } },
+            { labelZh: { contains: keyword, mode: 'insensitive' } },
+            { code: { contains: uppercaseKeyword, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    const matchedZoneIds = (zoneMatches as Array<{ id: string }>).map((zone) => zone.id);
+    const zoneAreaMatches = matchedZoneIds.length
+      ? await (this.prisma as any).regionArea.findMany({
+          where: { zoneId: { in: matchedZoneIds } },
+          select: { code: true },
+        })
+      : [];
+
+    const codes = new Set<string>();
+    for (const area of areasByNameOrCode as Array<{ code: string }>) {
+      if (area?.code) codes.add(area.code);
+    }
+    for (const alias of aliasMatches as Array<{ area?: { code?: string } | null }>) {
+      const code = alias?.area?.code;
+      if (code) codes.add(code);
+    }
+    for (const area of zoneAreaMatches as Array<{ code: string }>) {
+      if (area?.code) codes.add(area.code);
+    }
+
+    return Array.from(codes);
+  }
+
   private readonly fallbackTrades = [
     {
       name: 'Builder',
@@ -1004,25 +1079,45 @@ OUTPUT SCHEMA
             }))
           : null;
 
-      // Build location filters (dual-read: normalized coverage first, legacy fields fallback)
+      const locationKeyword = location?.trim() || '';
+      const normalizedAreaCodes = hasLocation
+        ? await this.resolveAreaCodesForLocationKeyword(locationKeyword)
+        : [];
+
+      // Prefer normalized coverage filter when location resolves to canonical area codes.
+      // Fallback to legacy text fields only when we cannot resolve canonical codes.
       const locationFilters = hasLocation
-        ? [
-            {
-              regionCoverage: {
-                some: {
-                  OR: [
-                    { area: { name: { contains: location, mode: 'insensitive' } } },
-                    { zone: { label: { contains: location, mode: 'insensitive' } } },
-                    { zone: { code: { contains: location, mode: 'insensitive' } } },
-                  ],
+        ? normalizedAreaCodes.length > 0
+          ? [
+              {
+                regionCoverage: {
+                  some: {
+                    area: {
+                      code: {
+                        in: normalizedAreaCodes,
+                      },
+                    },
+                  },
                 },
               },
-            },
-            { locationPrimary: { contains: location, mode: 'insensitive' } },
-            { locationSecondary: { contains: location, mode: 'insensitive' } },
-            { locationTertiary: { contains: location, mode: 'insensitive' } },
-            { serviceArea: { contains: location, mode: 'insensitive' } },
-          ]
+            ]
+          : [
+              {
+                regionCoverage: {
+                  some: {
+                    OR: [
+                      { area: { name: { contains: locationKeyword, mode: 'insensitive' } } },
+                      { zone: { label: { contains: locationKeyword, mode: 'insensitive' } } },
+                      { zone: { code: { contains: locationKeyword, mode: 'insensitive' } } },
+                    ],
+                  },
+                },
+              },
+              { locationPrimary: { contains: locationKeyword, mode: 'insensitive' } },
+              { locationSecondary: { contains: locationKeyword, mode: 'insensitive' } },
+              { locationTertiary: { contains: locationKeyword, mode: 'insensitive' } },
+              { serviceArea: { contains: locationKeyword, mode: 'insensitive' } },
+            ]
         : null;
 
       // Combine filters based on what's available

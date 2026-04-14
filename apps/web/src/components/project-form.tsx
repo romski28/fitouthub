@@ -399,8 +399,9 @@ export function ProjectForm({
             storageKey="fh-map-or-list-preference"
             label="Project location input mode"
             helperText="Use the district map for a direct visual pick, or switch to the text list/dropdowns."
-            mapLabel="Graphic"
-            listLabel="Text list"
+            mapLabel="Map"
+            listLabel="Words"
+            panelClassName="max-h-[45vh] overflow-y-auto pr-1"
             map={
               <HkDistrictMap
                 selectionMode="single"
@@ -794,8 +795,9 @@ export function ProjectForm({
           storageKey="fh-map-or-list-preference"
           label="Project location input mode"
           helperText="Switch between the district map and the text list/dropdowns. Your preference is saved locally."
-          mapLabel="Graphic"
-          listLabel="Text list"
+          mapLabel="Map"
+          listLabel="Words"
+          panelClassName="max-h-[45vh] overflow-y-auto pr-1"
           map={
             <HkDistrictMap
               selectionMode="single"
