@@ -136,6 +136,41 @@ export class ProfessionalsService {
     return Array.from(deduped);
   }
 
+  private buildLegacyLocationMirrorFromAreas(areas: Array<{ name: string; zone?: { label?: string | null } | null }>) {
+    if (!areas.length) {
+      return {
+        serviceArea: null as string | null,
+        locationPrimary: null as string | null,
+        locationSecondary: null as string | null,
+        locationTertiary: null as string | null,
+      };
+    }
+
+    const uniqueAreaNames = Array.from(new Set(areas.map((area) => area.name.trim()).filter(Boolean)));
+    const uniqueZoneLabels = Array.from(
+      new Set(
+        areas
+          .map((area) => (area.zone?.label || '').trim())
+          .filter(Boolean),
+      ),
+    );
+    const normalizedZoneSet = new Set(uniqueZoneLabels.map((zone) => zone.toLowerCase()));
+
+    const locationPrimary =
+      normalizedZoneSet.has('new territories east') && normalizedZoneSet.has('new territories west')
+        ? uniqueZoneLabels.filter((zone) => zone.toLowerCase() !== 'new territories east' && zone.toLowerCase() !== 'new territories west').length === 0
+          ? 'New Territories'
+          : uniqueZoneLabels.join(', ')
+        : uniqueZoneLabels.join(', ');
+
+    return {
+      serviceArea: uniqueAreaNames.join(', '),
+      locationPrimary,
+      locationSecondary: uniqueAreaNames.length === 1 ? uniqueAreaNames[0] : null,
+      locationTertiary: null,
+    };
+  }
+
   private resolveCanonicalTrades(rawTrades: string[], masterTradeMap: Map<string, string>) {
     const unknown: string[] = [];
     const canonical: string[] = [];
@@ -297,6 +332,16 @@ export class ProfessionalsService {
       data.rating = updateProfessionalDto.rating;
     }
 
+    const normalizedCoverageAreaCodes = Array.isArray(updateProfessionalDto.coverage_area_codes)
+      ? Array.from(
+          new Set(
+            updateProfessionalDto.coverage_area_codes
+              .map((value) => String(value || '').trim().toUpperCase())
+              .filter(Boolean),
+          ),
+        )
+      : undefined;
+
     const requiresTradeValidation =
       updateProfessionalDto.primary_trade !== undefined ||
       updateProfessionalDto.trades_offered !== undefined;
@@ -350,6 +395,62 @@ export class ProfessionalsService {
 
     if (updateProfessionalDto.location_tertiary !== undefined) {
       data.locationTertiary = updateProfessionalDto.location_tertiary;
+    }
+
+    if (normalizedCoverageAreaCodes !== undefined) {
+      const areas = normalizedCoverageAreaCodes.length
+        ? await (this.prisma as any).regionArea.findMany({
+            where: { code: { in: normalizedCoverageAreaCodes } },
+            select: {
+              id: true,
+              code: true,
+              zoneId: true,
+              name: true,
+              zone: {
+                select: {
+                  label: true,
+                },
+              },
+            },
+          })
+        : [];
+
+      const foundCodes = new Set((areas as Array<{ code: string }>).map((area) => area.code));
+      const invalidCodes = normalizedCoverageAreaCodes.filter((code) => !foundCodes.has(code));
+      if (invalidCodes.length > 0) {
+        throw new BadRequestException(`Invalid coverage area codes: ${invalidCodes.join(', ')}`);
+      }
+
+      const mirroredLegacy = this.buildLegacyLocationMirrorFromAreas(
+        areas as Array<{ name: string; zone?: { label?: string | null } | null }>,
+      );
+      data.serviceArea = mirroredLegacy.serviceArea;
+      data.locationPrimary = mirroredLegacy.locationPrimary;
+      data.locationSecondary = mirroredLegacy.locationSecondary;
+      data.locationTertiary = mirroredLegacy.locationTertiary;
+
+      return this.prisma.$transaction(async (tx) => {
+        const updated = await (tx as any).professional.update({
+          where: { id },
+          data,
+        });
+
+        await (tx as any).professionalRegionCoverage.deleteMany({
+          where: { professionalId: id },
+        });
+
+        if (areas.length > 0) {
+          await (tx as any).professionalRegionCoverage.createMany({
+            data: (areas as Array<{ id: string; zoneId: string }>).map((area) => ({
+              professionalId: id,
+              zoneId: area.zoneId,
+              areaId: area.id,
+            })),
+          });
+        }
+
+        return updated;
+      });
     }
 
     if (updateProfessionalDto.emergencyCalloutAvailable !== undefined) {

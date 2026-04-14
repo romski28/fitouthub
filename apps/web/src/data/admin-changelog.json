@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-14-a49962f",
+    "date": "2026-04-14T10:03:17+08:00",
+    "title": "feat(admin): migrate professional edit to normalized coverage areas",
+    "summary": "feat(admin): migrate professional edit to normalized coverage areas",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a49962f",
+    "files": [
+      "apps/api/src/professionals/dto/create-professional.dto.ts",
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-9782f22",
     "date": "2026-04-14T09:56:06+08:00",
     "title": "feat(phase5): make coverage authoritative with legacy mirror",

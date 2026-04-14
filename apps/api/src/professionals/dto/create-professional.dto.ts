@@ -37,6 +37,7 @@ export class UpdateProfessionalDto {
   location_primary?: string;
   location_secondary?: string;
   location_tertiary?: string;
+  coverage_area_codes?: string[];
   location_primaries?: string[];
   location_secondaries?: string[];
   additional_data?: Record<string, any>;

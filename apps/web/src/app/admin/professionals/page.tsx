@@ -6,6 +6,15 @@ import { Professional } from "@/lib/types";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { TagInput } from "@/components/tag-input";
 import { useAuth } from "@/context/auth-context";
+import { HkDistrictList } from "@/components/hk-district-list";
+import { HkDistrictMap } from "@/components/hk-district-map";
+import { MapOrList } from "@/components/map-or-list";
+import {
+  areaCodesToNames,
+  deriveAreaCodesFromCoveragePayload,
+  deriveCoverageDraftFromAreaCodes,
+  HK_DISTRICTS,
+} from "@/lib/hk-districts";
 
 function formatDate(date?: string): string {
   if (!date) return "—";
@@ -67,6 +76,7 @@ export default function AdminProfessionalsPage() {
     locationPrimary: "",
     locationSecondary: "",
     locationTertiary: "",
+    coverageAreaCodes: [],
     primaryTrade: "",
     tradesOffered: [],
     suppliesOffered: [],
@@ -196,6 +206,7 @@ export default function AdminProfessionalsPage() {
         locationPrimary: editingPro.locationPrimary || "",
         locationSecondary: editingPro.locationSecondary || "",
         locationTertiary: editingPro.locationTertiary || "",
+        coverageAreaCodes: deriveAreaCodesFromCoveragePayload(editingPro as any),
         primaryTrade: editingPro.primaryTrade || "",
         tradesOffered: Array.isArray(editingPro.tradesOffered)
           ? editingPro.tradesOffered
@@ -236,6 +247,9 @@ export default function AdminProfessionalsPage() {
       location_primary: formData.locationPrimary || null,
       location_secondary: formData.locationSecondary || null,
       location_tertiary: formData.locationTertiary || null,
+      coverage_area_codes: Array.isArray(formData.coverageAreaCodes)
+        ? formData.coverageAreaCodes
+        : [],
       primary_trade: formData.primaryTrade || null,
       trades_offered: Array.isArray(formData.tradesOffered)
         ? formData.tradesOffered
@@ -459,6 +473,23 @@ export default function AdminProfessionalsPage() {
   if (loading) {
     return <div className="text-center text-slate-600">Loading professionals...</div>;
   }
+
+  const selectedCoverageCodes = Array.isArray(formData.coverageAreaCodes)
+    ? (formData.coverageAreaCodes as string[])
+    : [];
+  const selectedCoverageNames = areaCodesToNames(selectedCoverageCodes);
+
+  const handleCoverageAreaCodesChange = (codes: string[]) => {
+    const derived = deriveCoverageDraftFromAreaCodes(codes);
+    setFormData((prev) => ({
+      ...prev,
+      coverageAreaCodes: codes,
+      serviceArea: derived.serviceArea,
+      locationPrimary: derived.locationPrimary,
+      locationSecondary: derived.locationSecondary,
+      locationTertiary: derived.locationTertiary,
+    }));
+  };
 
   return (
     <div className="space-y-5">
@@ -970,42 +1001,72 @@ export default function AdminProfessionalsPage() {
                 )}
 
                 {/* Other location fields */}
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-800">Location Primary</label>
-                    <input
-                      type="text"
-                      value={formData.locationPrimary}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, locationPrimary: e.target.value }))
-                      }
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Coverage (normalized districts)</p>
+                      <p className="text-xs text-slate-500">Use map or list mode. Legacy text fields are auto-derived for compatibility.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCoverageAreaCodesChange(HK_DISTRICTS.map((district) => district.areaCode))}
+                        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Whole HK
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCoverageAreaCodesChange([])}
+                        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Clear
+                      </button>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-800">Location Secondary</label>
-                    <input
-                      type="text"
-                      value={formData.locationSecondary}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, locationSecondary: e.target.value }))
-                      }
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
+                  <MapOrList
+                    storageKey="fh-map-or-list-preference"
+                    label="Coverage input mode"
+                    helperText="Map mode supports quick visual edits."
+                    map={
+                      <HkDistrictMap
+                        selectedAreaCodes={selectedCoverageCodes}
+                        onChange={handleCoverageAreaCodesChange}
+                      />
+                    }
+                    list={
+                      <HkDistrictList
+                        selectedAreaCodes={selectedCoverageCodes}
+                        onChange={handleCoverageAreaCodesChange}
+                      />
+                    }
+                  />
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Service Area</p>
+                      <p className="mt-1 text-sm text-slate-700">{(formData.serviceArea as string) || '—'}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Location Primary</p>
+                      <p className="mt-1 text-sm text-slate-700">{(formData.locationPrimary as string) || '—'}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">District Count</p>
+                      <p className="mt-1 text-sm text-slate-700">{selectedCoverageCodes.length}</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-800">Location Tertiary</label>
-                    <input
-                      type="text"
-                      value={formData.locationTertiary}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, locationTertiary: e.target.value }))
-                      }
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                  </div>
+                  {selectedCoverageNames.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCoverageNames.map((name) => (
+                        <span key={name} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Business info fields */}
@@ -1027,10 +1088,8 @@ export default function AdminProfessionalsPage() {
                     <input
                       type="text"
                       value={formData.serviceArea}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, serviceArea: e.target.value }))
-                      }
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      readOnly
+                      className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
                     />
                   </div>
                 </div>
