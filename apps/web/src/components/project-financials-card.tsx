@@ -916,7 +916,7 @@ export default function ProjectFinancialsCard({
       },
       {
         key: 'available',
-        label: 'Ready for Professional Transfer',
+        label: 'Transfer-Ready (Professional)',
         amount: cashflow.professionalAvailable,
         className: 'bg-emerald-400',
       },

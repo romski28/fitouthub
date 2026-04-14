@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-58f039b",
+    "date": "2026-04-14T19:39:22+08:00",
+    "title": "chore(financials): clarify cashflow transfer label",
+    "summary": "chore(financials): clarify cashflow transfer label",
+    "areas": [
+      "web"
+    ],
+    "commit": "58f039b",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-110e48a",
     "date": "2026-04-14T19:33:12+08:00",
     "title": "feat(web-financials): add SLA policy editor and transaction SLA badges",
