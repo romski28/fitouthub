@@ -246,7 +246,7 @@ export function AiProjectBriefModal({
                 helperText="Use the district map for a visual pick, or switch to the text list/dropdowns."
                 mapLabel="Map"
                 listLabel="Words"
-                panelClassName="max-h-[45vh] overflow-y-auto pr-1"
+                listPanelClassName="max-h-[45vh] overflow-y-auto pr-1"
                 map={
                   <HkDistrictMap
                     selectionMode="single"

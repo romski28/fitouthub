@@ -377,7 +377,7 @@ export default function ProfilePage() {
             helperText="Pick your district on the map or use Words mode for a text list."
             mapLabel="Map"
             listLabel="Words"
-            panelClassName="max-h-[50vh] overflow-y-auto pr-1"
+            listPanelClassName="max-h-[50vh] overflow-y-auto pr-1"
             map={
               <HkDistrictMap
                 selectionMode="single"

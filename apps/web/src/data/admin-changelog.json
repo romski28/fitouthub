@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-14-edf4c5d",
+    "date": "2026-04-14T10:53:35+08:00",
+    "title": "fix(map): scale district map to fit, scroll list only",
+    "summary": "fix(map): scale district map to fit, scroll list only",
+    "areas": [
+      "web"
+    ],
+    "commit": "edf4c5d",
+    "files": [
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/components/ai-project-brief-modal.tsx",
+      "apps/web/src/components/hk-district-map.tsx",
+      "apps/web/src/components/map-or-list.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-8435c0c",
     "date": "2026-04-14T10:45:29+08:00",
     "title": "feat(profile): add district map/list selector to client default location",

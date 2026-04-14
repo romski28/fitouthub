@@ -401,7 +401,7 @@ export function ProjectForm({
             helperText="Use the district map for a direct visual pick, or switch to the text list/dropdowns."
             mapLabel="Map"
             listLabel="Words"
-            panelClassName="max-h-[45vh] overflow-y-auto pr-1"
+            listPanelClassName="max-h-[45vh] overflow-y-auto pr-1"
             map={
               <HkDistrictMap
                 selectionMode="single"
@@ -797,7 +797,7 @@ export function ProjectForm({
           helperText="Switch between the district map and the text list/dropdowns. Your preference is saved locally."
           mapLabel="Map"
           listLabel="Words"
-          panelClassName="max-h-[45vh] overflow-y-auto pr-1"
+          listPanelClassName="max-h-[45vh] overflow-y-auto pr-1"
           map={
             <HkDistrictMap
               selectionMode="single"

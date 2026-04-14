@@ -11,7 +11,10 @@ type Props = {
   mapLabel?: string;
   listLabel?: string;
   defaultMode?: ViewMode;
+  /** @deprecated use mapPanelClassName / listPanelClassName */
   panelClassName?: string;
+  mapPanelClassName?: string;
+  listPanelClassName?: string;
   map: ReactNode;
   list: ReactNode;
 };
@@ -24,6 +27,8 @@ export function MapOrList({
   listLabel = 'Words',
   defaultMode = 'map',
   panelClassName,
+  mapPanelClassName,
+  listPanelClassName,
   map,
   list,
 }: Props) {
@@ -85,7 +90,9 @@ export function MapOrList({
         </div>
       </div>
 
-      <div className={panelClassName}>{activeMode === 'map' ? map : list}</div>
+      <div className={activeMode === 'map' ? (mapPanelClassName ?? panelClassName) : (listPanelClassName ?? panelClassName)}>
+        {activeMode === 'map' ? map : list}
+      </div>
     </div>
   );
 }

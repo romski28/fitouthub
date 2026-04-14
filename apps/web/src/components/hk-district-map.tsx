@@ -38,7 +38,12 @@ export function HkDistrictMap({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-      <svg viewBox={HK_DISTRICT_VIEWBOX} className="w-full" role="img" aria-label="Hong Kong district map selector">
+      <svg
+        viewBox={HK_DISTRICT_VIEWBOX}
+        className="w-full h-auto max-h-[min(45vh,_400px)]"
+        role="img"
+        aria-label="Hong Kong district map selector"
+      >
         <rect x="0" y="0" width="1000" height="733" rx="14" className="fill-white" />
         {HK_DISTRICTS.map((district) => {
           const isSelected = selectedSet.has(district.areaCode);
