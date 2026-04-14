@@ -102,6 +102,7 @@ interface FinancialsTabProps {
   onRefreshPaymentPlan?: () => Promise<void> | void;
   onRequestMilestoneFunding?: (milestoneId: string) => Promise<void>;
   fundingRequestLoading?: boolean;
+  onOpenScheduleTab?: () => void;
   paymentRequestAmount: string;
   onUpdatePaymentRequestAmount: (amount: string) => void;
   paymentRequestType: string;
@@ -130,6 +131,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   onRefreshPaymentPlan,
   onRequestMilestoneFunding,
   fundingRequestLoading,
+  onOpenScheduleTab,
   paymentRequestAmount,
   onUpdatePaymentRequestAmount,
   paymentRequestType,
@@ -184,6 +186,12 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     if (normalized === 'disputed') return 'bg-rose-500/20 text-rose-200 border border-rose-500/40';
     return 'bg-slate-700 text-slate-200 border border-slate-600';
   };
+
+  const getDisplayMilestoneTitle = (milestone: PaymentPlanMilestone) =>
+    milestone.projectMilestone?.title || milestone.title;
+
+  const getDisplayMilestoneDueAt = (milestone: PaymentPlanMilestone) =>
+    milestone.projectMilestone?.plannedEndDate || milestone.projectMilestone?.plannedStartDate || milestone.plannedDueAt;
 
   const eligibleMilestones = paymentPlan?.milestones?.filter((milestone) => {
     if (paymentPlan.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES') {
@@ -383,6 +391,9 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               <p className="text-xs text-slate-300 mt-1">
                 {paymentPlan.projectScale.replace('_', ' ')} · {paymentPlan.escrowFundingPolicy.replace(/_/g, ' ')}
               </p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Source of truth: the Schedule timeline. Use edit to jump there and update milestone timing.
+              </p>
             </div>
             <div className="text-right">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Plan total</p>
@@ -538,25 +549,29 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   <th className="px-3 py-2 text-left font-semibold text-white">Timing</th>
                   <th className="px-3 py-2 text-left font-semibold text-white">Amount</th>
                   <th className="px-3 py-2 text-left font-semibold text-white">Status</th>
+                  <th className="px-3 py-2 text-left font-semibold text-white">Edit</th>
                 </tr>
               </thead>
               <tbody>
                 {paymentPlan.milestones.map((milestone) => {
-                  const timing = getTiming(milestone.plannedDueAt);
+                  const displayTitle = getDisplayMilestoneTitle(milestone);
+                  const displayDueAt = getDisplayMilestoneDueAt(milestone);
+                  const timing = getTiming(displayDueAt);
                   return (
                     <tr key={milestone.id} className="border-b border-slate-800 hover:bg-slate-800/50">
                       <td className="px-3 py-2 text-slate-200">{milestone.sequence}</td>
                       <td className="px-3 py-2 text-slate-200">
-                        <div className="font-medium">{milestone.title}</div>
+                        <div className="font-medium">{displayTitle}</div>
                         <div className="text-xs text-slate-400">
                           {typeof milestone.percentOfTotal === 'number' ? `${milestone.percentOfTotal}% of plan` : milestone.type}
+                          {milestone.projectMilestone?.isFinancial ? ' · schedule-linked' : ''}
                         </div>
                         {milestone.adminComment && (
                           <div className="mt-1 text-[11px] text-amber-300">{milestone.adminComment}</div>
                         )}
                       </td>
                       <td className="px-3 py-2 text-slate-300 text-xs">
-                        {milestone.plannedDueAt ? new Date(milestone.plannedDueAt).toLocaleDateString('en-HK') : '—'}
+                        {displayDueAt ? new Date(displayDueAt).toLocaleDateString('en-HK') : '—'}
                       </td>
                       <td className="px-3 py-2">
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold border ${
@@ -576,6 +591,15 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(milestone.status)}`}>
                           {milestone.status.replace(/_/g, ' ')}
                         </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => onOpenScheduleTab?.()}
+                          className="rounded-md border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs font-semibold text-white hover:bg-slate-700"
+                        >
+                          Edit in Schedule
+                        </button>
                       </td>
                     </tr>
                   );
@@ -609,7 +633,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                     >
                       {fundingEligibleMilestones.map((m) => (
                         <option key={m.id} value={m.id}>
-                          {`${m.sequence}. ${m.title} — ${formatHKD(m.amount)}`}
+                          {`${m.sequence}. ${getDisplayMilestoneTitle(m)} — ${formatHKD(m.amount)}`}
                         </option>
                       ))}
                     </select>
@@ -617,7 +641,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                       const m = fundingEligibleMilestones.find((x) => x.id === activeFundingMilestoneId);
                       return m ? (
                         <p className="mt-1 text-[11px] text-slate-400">
-                          Planned due: {m.plannedDueAt ? new Date(m.plannedDueAt).toLocaleDateString('en-HK') : 'Not set'}
+                          Planned due: {getDisplayMilestoneDueAt(m) ? new Date(getDisplayMilestoneDueAt(m) as string).toLocaleDateString('en-HK') : 'Not set'}
                           {' · '}Status: {m.status.replace(/_/g, ' ')}
                         </p>
                       ) : null;
@@ -670,7 +694,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   >
                     {eligibleMilestones.map((milestone) => (
                       <option key={milestone.id} value={milestone.id}>
-                        {`${milestone.sequence}. ${milestone.title} — ${formatHKD(milestone.amount)}`}
+                        {`${milestone.sequence}. ${getDisplayMilestoneTitle(milestone)} — ${formatHKD(milestone.amount)}`}
                       </option>
                     ))}
                   </select>
@@ -698,7 +722,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             {selectedMilestone && (
               <div className="rounded-md border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-200">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="font-semibold text-white">{selectedMilestone.title}</span>
+                  <span className="font-semibold text-white">{getDisplayMilestoneTitle(selectedMilestone)}</span>
                   <span className="text-slate-400">•</span>
                   <span>{formatHKD(selectedMilestone.amount)}</span>
                   {typeof selectedMilestone.percentOfTotal === 'number' && (
@@ -709,7 +733,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   )}
                 </div>
                 <p className="text-xs text-slate-400">
-                  Planned due date: {selectedMilestone.plannedDueAt ? new Date(selectedMilestone.plannedDueAt).toLocaleDateString('en-HK') : 'Not scheduled'}
+                  Planned due date: {getDisplayMilestoneDueAt(selectedMilestone) ? new Date(getDisplayMilestoneDueAt(selectedMilestone) as string).toLocaleDateString('en-HK') : 'Not scheduled'}
                 </p>
                 {selectedMilestoneTiming?.isLate && (
                   <p className="mt-2 text-xs text-rose-300">

@@ -1510,6 +1510,7 @@ export default function ProjectDetailPage() {
               paymentRequestActionLoading={submittingAdvanceRequest}
               onRequestMilestoneFunding={handleRequestMilestoneFunding}
               fundingRequestLoading={fundingRequestLoading}
+              onOpenScheduleTab={() => setActiveTab('schedule')}
               paymentRequestAmount={paymentRequestAmount}
               onUpdatePaymentRequestAmount={(value) => {
                 setAdvanceRequestForm((prev) =>

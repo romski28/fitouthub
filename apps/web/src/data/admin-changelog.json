@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-14-049221f",
+    "date": "2026-04-14T22:23:00+08:00",
+    "title": "refactor(professional-schedule): unify milestone timeline and route financial edits to schedule",
+    "summary": "refactor(professional-schedule): unify milestone timeline and route financial edits to schedule",
+    "areas": [
+      "web"
+    ],
+    "commit": "049221f",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-bd089ed",
     "date": "2026-04-14T21:45:05+08:00",
     "title": "feat(milestones): align class-based financial milestone spine across schedule and financials",

@@ -540,20 +540,6 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     setDeleteConfirmIndex(index);
   };
 
-  const confirmDelete = () => {
-    if (deleteConfirmIndex !== null) {
-      const workMilestones = milestones
-        .filter((milestone) => !milestone.isFinancial)
-        .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-      const milestone = workMilestones[deleteConfirmIndex];
-      if (!milestone) {
-        setDeleteConfirmIndex(null);
-        return;
-      }
-      handleDeleteMilestone(milestone.id);
-    }
-  };
-
   const financialMilestones = milestones
     .filter((milestone) => !!milestone.isFinancial)
     .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
@@ -561,6 +547,29 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const workMilestones = milestones
     .filter((milestone) => !milestone.isFinancial)
     .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+
+  const combinedMilestones = [...milestones].sort((a, b) => {
+    const aDate = a.plannedStartDate || a.plannedEndDate || '';
+    const bDate = b.plannedStartDate || b.plannedEndDate || '';
+    const aTime = aDate ? new Date(aDate).getTime() : Number.POSITIVE_INFINITY;
+    const bTime = bDate ? new Date(bDate).getTime() : Number.POSITIVE_INFINITY;
+
+    if (aTime !== bTime) return aTime - bTime;
+    if ((a.sequence || 0) !== (b.sequence || 0)) return (a.sequence || 0) - (b.sequence || 0);
+    if (!!a.isFinancial !== !!b.isFinancial) return a.isFinancial ? -1 : 1;
+    return a.title.localeCompare(b.title);
+  });
+
+  const confirmDelete = () => {
+    if (deleteConfirmIndex !== null) {
+      const milestone = combinedMilestones[deleteConfirmIndex];
+      if (!milestone || milestone.isFinancial) {
+        setDeleteConfirmIndex(null);
+        return;
+      }
+      handleDeleteMilestone(milestone.id);
+    }
+  };
 
   const persistWorkMilestoneOrder = async (orderedWorkMilestones: Milestone[]) => {
     if (!accessToken) return;
@@ -864,7 +873,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-white">
-                  {isAddingNew ? 'Add New Task' : 'Edit Task'}
+                  {isAddingNew ? 'Add New Task' : 'Edit Milestone'}
                 </h3>
               </div>
 
@@ -875,28 +884,26 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   editingIndex !== null
                     ? [
                         {
-                          title: workMilestones[editingIndex].title,
-                          sequence: workMilestones[editingIndex].sequence,
-                          status: workMilestones[editingIndex].status,
-                          percentComplete: workMilestones[editingIndex].percentComplete,
-                          plannedStartDate: workMilestones[editingIndex].plannedStartDate,
-                          plannedEndDate: workMilestones[editingIndex].plannedEndDate,
-                          description: workMilestones[editingIndex].description,
-                          startTimeSlot: workMilestones[editingIndex].startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                          endTimeSlot: workMilestones[editingIndex].endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
-                          estimatedHours: workMilestones[editingIndex].estimatedHours,
-                          siteAccessRequired: workMilestones[editingIndex].siteAccessRequired,
-                          siteAccessNotes: workMilestones[editingIndex].siteAccessNotes,
+                          title: combinedMilestones[editingIndex].title,
+                          sequence: combinedMilestones[editingIndex].sequence,
+                          status: combinedMilestones[editingIndex].status,
+                          percentComplete: combinedMilestones[editingIndex].percentComplete,
+                          plannedStartDate: combinedMilestones[editingIndex].plannedStartDate,
+                          plannedEndDate: combinedMilestones[editingIndex].plannedEndDate,
+                          description: combinedMilestones[editingIndex].description,
+                          startTimeSlot: combinedMilestones[editingIndex].startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                          endTimeSlot: combinedMilestones[editingIndex].endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+                          estimatedHours: combinedMilestones[editingIndex].estimatedHours,
+                          siteAccessRequired: combinedMilestones[editingIndex].siteAccessRequired,
+                          siteAccessNotes: combinedMilestones[editingIndex].siteAccessNotes,
                         },
                       ]
                     : []
                 }
                 onMilestonesChange={(updated) => {
                   if (editingIndex !== null) {
-                    // Editing existing task - update the milestone with its ID
-                    handleUpdateMilestone(workMilestones[editingIndex].id, updated[0]);
+                    handleUpdateMilestone(combinedMilestones[editingIndex].id, updated[0]);
                   } else {
-                    // Adding new task - save it
                     handleSaveMilestone(updated[0]);
                   }
                 }}
@@ -914,79 +921,27 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 </button>
               </div>
             </div>
+          ) : combinedMilestones.length === 0 ? (
+            <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-center">
+              <p className="text-sm text-slate-300 mb-4">📋 No milestones set up yet.</p>
+              <button
+                onClick={() => setIsAddingNew(true)}
+                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+              >
+                Add Task
+              </button>
+            </div>
           ) : (
-            // LIST VIEW: Showing financial milestone spine + additional work tasks
-            <div className="space-y-6">
-              <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Financial Milestones</h3>
-                    <p className="text-xs text-slate-300 mt-1">
-                      These class-based milestones drive the payment plan shown in Financials.
-                    </p>
-                  </div>
-                  <span className="text-xs text-blue-200">
-                    {financialMilestones.length} linked payment milestone{financialMilestones.length === 1 ? '' : 's'}
-                  </span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Timeline</h3>
+                  <p className="text-xs text-slate-400 mt-1">💰 marks milestones tied to payment release. Add extra non-financial tasks anywhere around them.</p>
                 </div>
-
-                {financialMilestones.length === 0 ? (
-                  <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
-                    No financial milestones have been generated yet. Reset to defaults or review the Financials tab.
-                  </div>
-                ) : (
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    {financialMilestones.map((milestone) => (
-                      <div
-                        key={milestone.id}
-                        className="rounded-md border border-blue-500/30 bg-slate-900/60 p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-semibold text-white">{milestone.title}</h4>
-                              <span className="rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200">
-                                Financial
-                              </span>
-                            </div>
-                            <p className="mt-2 text-xs text-slate-300">
-                              Start: <span className="text-white">{formatDateTime(milestone.plannedStartDate)}</span>
-                            </p>
-                            <p className="text-xs text-slate-300">
-                              Due / finish: <span className="text-white">{formatDateTime(milestone.plannedEndDate || milestone.plannedStartDate)}</span>
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[11px] font-semibold uppercase text-slate-400">Status</p>
-                            <p className="text-xs text-white">{milestone.status.replace(/_/g, ' ')}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <span className="text-xs text-slate-400">{financialMilestones.length} financial · {workMilestones.length} non-financial</span>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Additional Work Tasks</h3>
-                    <p className="text-xs text-slate-400 mt-1">Drag and drop to reorder extra non-financial schedule tasks.</p>
-                  </div>
-                  <span className="text-xs text-slate-400">Non-financial milestones only</span>
-                </div>
-
-                {workMilestones.length === 0 ? (
-                  <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-center">
-                    <p className="text-sm text-slate-300 mb-4">📋 No extra work tasks yet.</p>
-                    <button
-                      onClick={() => setIsAddingNew(true)}
-                      className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-                    >
-                      Add Task
-                    </button>
-                  </div>
-                ) : workMilestones.map((milestone, index) => {
+              {combinedMilestones.map((milestone, index) => {
                 const statusPercent = getStatusPercent(milestone.status, milestone.percentComplete);
                 const statusLabel =
                   statusPercent === 100 ? "Complete" :
@@ -994,19 +949,25 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   `${statusPercent}% Complete`;
                 const showProgressBar = statusPercent > 0 && statusPercent < 100;
                 const sameDate = isSameDate(milestone.plannedStartDate, milestone.plannedEndDate);
+                const isFinancialMilestone = !!milestone.isFinancial;
 
                 return (
                   <div
                     key={milestone.id || index}
                     className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg border border-slate-700 hover:from-slate-800 hover:to-slate-700 transition overflow-hidden"
-                    draggable
-                    onDragStart={() => setDraggedMilestoneId(milestone.id)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => handleDropMilestone(milestone.id)}
+                    draggable={!isFinancialMilestone}
+                    onDragStart={() => {
+                      if (!isFinancialMilestone) setDraggedMilestoneId(milestone.id);
+                    }}
+                    onDragOver={(e) => {
+                      if (!isFinancialMilestone) e.preventDefault();
+                    }}
+                    onDrop={() => {
+                      if (!isFinancialMilestone) handleDropMilestone(milestone.id);
+                    }}
                     onDragEnd={() => setDraggedMilestoneId(null)}
                   >
                     <div className="flex items-stretch">
-                      {/* Date Box */}
                       <div className="w-24 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-3">
                         {sameDate ? (
                           <>
@@ -1030,13 +991,17 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                         )}
                       </div>
 
-                      {/* Content */}
                       <div className="flex-1 p-3 flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start gap-2 mb-2">
+                          <div className="flex items-start gap-2 mb-2 flex-wrap">
                             <h4 className="text-base font-semibold text-white">
-                              {milestone.title}
+                              {isFinancialMilestone ? '💰 ' : ''}{milestone.title}
                             </h4>
+                            {isFinancialMilestone && (
+                              <span className="rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200">
+                                Financial release
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-1 flex-wrap mb-2">
@@ -1078,36 +1043,38 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                           )}
                         </div>
 
-                        {/* Action Buttons */}
                         <div className="flex gap-2 flex-shrink-0">
-                          <button
-                            type="button"
-                            className="p-2 text-slate-300 hover:bg-slate-700 rounded transition cursor-grab"
-                            title="Drag to reorder"
-                          >
-                            <GripVertical className="w-4 h-4" />
-                          </button>
+                          {!isFinancialMilestone && (
+                            <button
+                              type="button"
+                              className="p-2 text-slate-300 hover:bg-slate-700 rounded transition cursor-grab"
+                              title="Drag to reorder"
+                            >
+                              <GripVertical className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => setEditingIndex(index)}
                             className="p-2 text-slate-300 hover:bg-slate-700 rounded transition"
-                            title="Edit task"
+                            title={isFinancialMilestone ? 'Edit milestone' : 'Edit task'}
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleDeleteTask(index)}
-                            className="p-2 text-slate-300 hover:bg-rose-500/20 hover:text-rose-200 rounded transition"
-                            title="Delete task"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {!isFinancialMilestone && (
+                            <button
+                              onClick={() => handleDeleteTask(index)}
+                              className="p-2 text-slate-300 hover:bg-rose-500/20 hover:text-rose-200 rounded transition"
+                              title="Delete task"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
                 );
-                })}
-              </div>
+              })}
             </div>
           )}
         </>
