@@ -1795,24 +1795,24 @@ export class FinancialService {
         projectId: input.projectId,
         projectProfessionalId: input.projectProfessionalId,
         type: 'professional_wallet_transfer',
-        description: 'Professional wallet transfer to external account',
+        description: 'Professional wallet transfer request',
         amount: new Decimal(amount.toFixed(2)),
-        status: 'confirmed',
+        status: 'pending',
         requestedBy: input.actorId,
         requestedByRole: input.actorRole,
-        actionBy: input.actorId,
-        actionByRole: input.actorRole,
-        actionAt: new Date(),
-        actionComplete: true,
+        actionBy: null,
+        actionByRole: 'admin',
+        actionAt: null,
+        actionComplete: false,
       },
     });
 
     await this.createFinancialAuditLog({
       transactionId: transaction.id,
-      action: 'professional_wallet_transfer_completed',
+      action: 'professional_wallet_transfer_requested',
       actorId: input.actorId,
       actorRole: input.actorRole,
-      details: 'Professional wallet balance transferred to external account',
+      details: 'Professional wallet transfer requested and awaiting admin payout confirmation',
       metadata: {
         amount: amount.toFixed(2),
         projectId: input.projectId,
@@ -1826,6 +1826,53 @@ export class FinancialService {
       transaction,
       walletSummary,
     };
+  }
+
+  async confirmProfessionalWalletTransfer(transactionId: string, adminId: string) {
+    const tx = await this.prisma.financialTransaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!tx) {
+      throw new NotFoundException('Transaction not found');
+    }
+    if (tx.type !== 'professional_wallet_transfer') {
+      throw new BadRequestException('Only professional_wallet_transfer transactions can be confirmed');
+    }
+
+    const status = String(tx.status || '').toLowerCase();
+    if (status === 'confirmed' || tx.actionComplete) {
+      return tx;
+    }
+    if (status !== 'pending') {
+      throw new BadRequestException('Wallet transfer is no longer pending');
+    }
+
+    const updated = await this.prisma.financialTransaction.update({
+      where: { id: transactionId },
+      data: {
+        status: 'confirmed',
+        actionBy: adminId,
+        actionByRole: 'admin',
+        actionAt: new Date(),
+        actionComplete: true,
+      },
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId,
+      action: 'professional_wallet_transfer_confirmed',
+      actorId: adminId,
+      actorRole: 'admin',
+      details: 'Professional wallet transfer confirmed as paid out',
+      metadata: {
+        amount: tx.amount?.toString?.() || String(tx.amount),
+        projectId: tx.projectId,
+        projectProfessionalId: tx.projectProfessionalId,
+      },
+    });
+
+    return updated;
   }
 
   async getProjectWalletSummary(projectId: string, projectProfessionalId?: string | null) {
@@ -1896,6 +1943,7 @@ export class FinancialService {
     let clientFundedTotal = 0;
     let professionalEscrowAllocated = 0;
     let releasedToProfessionalWallet = 0;
+    let professionalInPayoutProcessing = 0;
     let professionalPaidOut = 0;
 
     for (const tx of transactions as Array<{ type: string; status: string; amount: unknown; notes?: string | null }>) {
@@ -1918,8 +1966,13 @@ export class FinancialService {
         }
       }
 
-      if (tx.type === 'professional_wallet_transfer' && status === 'confirmed') {
-        professionalPaidOut += amount;
+      if (tx.type === 'professional_wallet_transfer') {
+        if (status === 'pending') {
+          professionalInPayoutProcessing += amount;
+        }
+        if (status === 'confirmed') {
+          professionalPaidOut += amount;
+        }
       }
 
       if (tx.type === 'release_payment' || tx.type === 'professional_wallet_transfer') {
@@ -1936,7 +1989,10 @@ export class FinancialService {
       }
     }
 
-    const professionalAvailable = Math.max(releasedToProfessionalWallet - professionalPaidOut, 0);
+    const professionalAvailable = Math.max(
+      releasedToProfessionalWallet - professionalInPayoutProcessing - professionalPaidOut,
+      0,
+    );
     const clientEscrowHeld = Math.max(clientFundedTotal - releasedToProfessionalWallet, 0);
     const clientEscrowUnallocated = Math.max(
       clientEscrowHeld - professionalEscrowAllocated,
@@ -1990,6 +2046,7 @@ export class FinancialService {
       clientEscrowHeld,
       clientEscrowUnallocated,
       professionalEscrowAllocated,
+      professionalInPayoutProcessing,
       professionalAvailable,
       professionalPaidOut,
       remainingToFund,

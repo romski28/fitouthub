@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-14-8f7a4c3",
+    "date": "2026-04-14T17:53:18+08:00",
+    "title": "feat(wallet): add payout-processing stage before paid out",
+    "summary": "feat(wallet): add payout-processing stage before paid out",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "8f7a4c3",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-c6c9744",
     "date": "2026-04-14T17:44:15+08:00",
     "title": "feat(wallet): add professional transfer step for available escrow funds",

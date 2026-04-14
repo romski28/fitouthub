@@ -330,6 +330,23 @@ export class FinancialController {
   }
 
   /**
+   * POST /financial/:transactionId/confirm-wallet-transfer - mark pending wallet transfer as paid out
+   * Admin only
+   */
+  @Post(':transactionId/confirm-wallet-transfer')
+  @UseGuards(AuthGuard('jwt'))
+  async confirmProfessionalWalletTransfer(
+    @Param('transactionId') transactionId: string,
+    @Request() req: any,
+  ) {
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only admins can confirm wallet transfers');
+    }
+
+    return this.financialService.confirmProfessionalWalletTransfer(transactionId, req.user.id);
+  }
+
+  /**
    * GET /financial/pending-release-sla - Admin: milestones awaiting release beyond SLA threshold
    * Admin only
    */

@@ -117,6 +117,7 @@ interface WalletSummary {
   clientEscrowHeld: number;
   clientEscrowUnallocated: number;
   professionalEscrowAllocated: number;
+  professionalInPayoutProcessing: number;
   professionalAvailable: number;
   professionalPaidOut: number;
   remainingToFund: number;
@@ -653,6 +654,26 @@ export default function ProjectFinancialsCard({
     }
   };
 
+  const handleConfirmWalletTransfer = async (transactionId: string) => {
+    try {
+      setProcessingId(transactionId);
+      const res = await fetch(`${API_BASE_URL}/financial/${transactionId}/confirm-wallet-transfer`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to confirm wallet transfer');
+      }
+      toast.success('Wallet transfer marked as paid out');
+      setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'confirmed', actionComplete: true } : t)));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to confirm wallet transfer');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleVerifyOtpAndCheckout = async () => {
     if (!otpTransactionId) {
       return;
@@ -731,6 +752,7 @@ export default function ProjectFinancialsCard({
         clientEscrowHeld: Number(walletSummary.clientEscrowHeld || 0),
         clientEscrowUnallocated: Number(walletSummary.clientEscrowUnallocated || 0),
         professionalEscrowAllocated: Number(walletSummary.professionalEscrowAllocated || 0),
+        professionalInPayoutProcessing: Number(walletSummary.professionalInPayoutProcessing || 0),
         professionalAvailable: Number(walletSummary.professionalAvailable || 0),
         professionalPaidOut: Number(walletSummary.professionalPaidOut || 0),
         remainingToFund: Number(walletSummary.remainingToFund || 0),
@@ -742,6 +764,7 @@ export default function ProjectFinancialsCard({
       clientEscrowHeld: fallbackEscrowHeld,
       clientEscrowUnallocated: Math.max(fallbackEscrowHeld, 0),
       professionalEscrowAllocated: 0,
+      professionalInPayoutProcessing: 0,
       professionalAvailable: 0,
       professionalPaidOut: fallbackPaidOut,
       remainingToFund: Math.max(fallbackContractValue - fallbackEscrowHeld - fallbackPaidOut, 0),
@@ -764,6 +787,12 @@ export default function ProjectFinancialsCard({
         label: 'Available To Transfer',
         amount: cashflow.professionalAvailable,
         className: 'bg-emerald-400',
+      },
+      {
+        key: 'processing',
+        label: 'In Payout Processing',
+        amount: cashflow.professionalInPayoutProcessing,
+        className: 'bg-violet-400',
       },
       {
         key: 'allocated',
@@ -839,7 +868,7 @@ export default function ProjectFinancialsCard({
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
               {cashflowSegments.map((segment) => (
                 <div key={`legend-${segment.key}`} className="rounded-md border border-slate-700 bg-slate-900/60 p-2">
                   <div className="flex items-center gap-2">
@@ -1110,6 +1139,8 @@ export default function ProjectFinancialsCard({
                     resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
                   const canRelease =
                     resolvedRole === 'admin' && type === 'release_payment' && statusKey === 'pending';
+                  const canConfirmWalletTransfer =
+                    resolvedRole === 'admin' && type === 'professional_wallet_transfer' && statusKey === 'pending';
                   const canReject =
                     resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
                   const canPayEscrow =
@@ -1162,6 +1193,18 @@ export default function ProjectFinancialsCard({
                           className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
                         >
                           {processingId === tx.id ? 'Releasing...' : 'Release'}
+                        </button>
+                      );
+                    }
+                    if (canConfirmWalletTransfer) {
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmWalletTransfer(tx.id)}
+                          disabled={processingId === tx.id}
+                          className="px-3 py-1 bg-violet-600 text-white rounded text-xs font-medium hover:bg-violet-700 disabled:bg-slate-400 transition"
+                        >
+                          {processingId === tx.id ? 'Confirming...' : 'Mark Paid Out'}
                         </button>
                       );
                     }
