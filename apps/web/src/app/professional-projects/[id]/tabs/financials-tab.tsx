@@ -77,9 +77,16 @@ interface ProjectMilestoneOption {
   id: string;
   title: string;
   sequence: number;
+  plannedStartDate?: string | null;
   plannedEndDate?: string | null;
+  status?: string;
   isFinancial?: boolean;
 }
+
+type LinkedFinancialMilestoneRow = {
+  scheduleMilestone: ProjectMilestoneOption;
+  paymentMilestone: PaymentPlanMilestone;
+};
 
 interface FinancialsTabProps {
   tab?: string;
@@ -187,33 +194,61 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     return 'bg-slate-700 text-slate-200 border border-slate-600';
   };
 
-  const getDisplayMilestoneTitle = (milestone: PaymentPlanMilestone) =>
-    milestone.projectMilestone?.title || milestone.title;
+  const paymentMilestones = paymentPlan?.milestones || [];
+  const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
 
-  const getDisplayMilestoneDueAt = (milestone: PaymentPlanMilestone) =>
-    milestone.projectMilestone?.plannedEndDate || milestone.projectMilestone?.plannedStartDate || milestone.plannedDueAt;
+  const paymentMilestonesByProjectMilestoneId = new Map(
+    paymentMilestones
+      .filter((milestone) => !!milestone.projectMilestoneId)
+      .map((milestone) => [milestone.projectMilestoneId as string, milestone]),
+  );
 
-  const eligibleMilestones = paymentPlan?.milestones?.filter((milestone) => {
-    if (paymentPlan.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES') {
-      return milestone.status === 'escrow_funded';
+  const linkedFinancialMilestoneRows: LinkedFinancialMilestoneRow[] = scheduleMilestoneOptions
+    .filter((milestone) => paymentMilestonesByProjectMilestoneId.has(milestone.id))
+    .map((scheduleMilestone) => ({
+      scheduleMilestone,
+      paymentMilestone: paymentMilestonesByProjectMilestoneId.get(scheduleMilestone.id)!,
+    }))
+    .sort((a, b) => {
+      if ((a.paymentMilestone.sequence || 0) !== (b.paymentMilestone.sequence || 0)) {
+        return (a.paymentMilestone.sequence || 0) - (b.paymentMilestone.sequence || 0);
+      }
+      return (a.scheduleMilestone.sequence || 0) - (b.scheduleMilestone.sequence || 0);
+    });
+
+  const orphanPaymentMilestones = paymentMilestones.filter(
+    (milestone) =>
+      !milestone.projectMilestoneId ||
+      !scheduleMilestoneOptions.some((row) => row.id === milestone.projectMilestoneId),
+  );
+
+  const getDisplayMilestoneTitle = (row: LinkedFinancialMilestoneRow) =>
+    row.scheduleMilestone.title || row.paymentMilestone.title;
+
+  const getDisplayMilestoneDueAt = (row: LinkedFinancialMilestoneRow) =>
+    row.scheduleMilestone.plannedEndDate ||
+    row.scheduleMilestone.plannedStartDate ||
+    row.paymentMilestone.plannedDueAt;
+
+  const eligibleMilestones = linkedFinancialMilestoneRows.filter(({ paymentMilestone }) => {
+    if (paymentPlan?.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES') {
+      return paymentMilestone.status === 'escrow_funded';
     }
 
-    return ['scheduled', 'escrow_funded'].includes(milestone.status);
-  }) || [];
+    return ['scheduled', 'escrow_funded'].includes(paymentMilestone.status);
+  });
 
-  // B.2: Milestones that can be funding-requested (rolling policy only, status=scheduled)
   const fundingEligibleMilestones = paymentPlan?.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES'
-    ? (paymentPlan?.milestones?.filter((m) => m.status === 'scheduled') || [])
+    ? linkedFinancialMilestoneRows.filter(({ paymentMilestone }) => paymentMilestone.status === 'scheduled')
     : [];
 
-  // Default-select first funding-eligible milestone
-  const activeFundingMilestoneId = fundingMilestoneId || fundingEligibleMilestones[0]?.id || '';
+  const activeFundingMilestoneId = fundingMilestoneId || fundingEligibleMilestones[0]?.paymentMilestone.id || '';
 
-  const selectedMilestone = eligibleMilestones.find((milestone) => milestone.id === selectedPaymentMilestoneId)
-    || eligibleMilestones[0]
-    || null;
+  const selectedMilestone = eligibleMilestones.find(
+    ({ paymentMilestone }) => paymentMilestone.id === selectedPaymentMilestoneId,
+  ) || eligibleMilestones[0] || null;
 
-  const selectedMilestoneTiming = selectedMilestone ? getTiming(selectedMilestone.plannedDueAt) : null;
+  const selectedMilestoneTiming = selectedMilestone ? getTiming(getDisplayMilestoneDueAt(selectedMilestone)) : null;
 
   React.useEffect(() => {
     if (!accessToken || !projectProfessionalId) return;
@@ -319,8 +354,6 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     }
   };
 
-  const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-
   if (!isAwarded) {
     return (
       <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-sm text-white">
@@ -400,6 +433,13 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               <p className="text-lg font-bold text-white">{formatHKD(paymentPlan.totalAmount)}</p>
             </div>
           </div>
+
+          {orphanPaymentMilestones.length > 0 && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+              {orphanPaymentMilestones.length} payment milestone{orphanPaymentMilestones.length === 1 ? ' is' : 's are'} not linked to a schedule milestone yet.
+              Use the linkage controls below or reset/review the Schedule tab to bring them back into the single milestone timeline.
+            </div>
+          )}
 
           {(paymentPlan.projectScale === 'SCALE_2' || paymentPlan.projectScale === 'SCALE_3') && (
             <div className="rounded-md border border-indigo-500/30 bg-indigo-500/10 p-4 space-y-3">
@@ -553,21 +593,22 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {paymentPlan.milestones.map((milestone) => {
-                  const displayTitle = getDisplayMilestoneTitle(milestone);
-                  const displayDueAt = getDisplayMilestoneDueAt(milestone);
+                {linkedFinancialMilestoneRows.map((row) => {
+                  const { paymentMilestone, scheduleMilestone } = row;
+                  const displayTitle = getDisplayMilestoneTitle(row);
+                  const displayDueAt = getDisplayMilestoneDueAt(row);
                   const timing = getTiming(displayDueAt);
                   return (
-                    <tr key={milestone.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <td className="px-3 py-2 text-slate-200">{milestone.sequence}</td>
+                    <tr key={paymentMilestone.id} className="border-b border-slate-800 hover:bg-slate-800/50">
+                      <td className="px-3 py-2 text-slate-200">{paymentMilestone.sequence}</td>
                       <td className="px-3 py-2 text-slate-200">
-                        <div className="font-medium">{displayTitle}</div>
+                        <div className="font-medium">💰 {displayTitle}</div>
                         <div className="text-xs text-slate-400">
-                          {typeof milestone.percentOfTotal === 'number' ? `${milestone.percentOfTotal}% of plan` : milestone.type}
-                          {milestone.projectMilestone?.isFinancial ? ' · schedule-linked' : ''}
+                          {typeof paymentMilestone.percentOfTotal === 'number' ? `${paymentMilestone.percentOfTotal}% of plan` : paymentMilestone.type}
+                          {' · '}schedule #{scheduleMilestone.sequence}
                         </div>
-                        {milestone.adminComment && (
-                          <div className="mt-1 text-[11px] text-amber-300">{milestone.adminComment}</div>
+                        {paymentMilestone.adminComment && (
+                          <div className="mt-1 text-[11px] text-amber-300">{paymentMilestone.adminComment}</div>
                         )}
                       </td>
                       <td className="px-3 py-2 text-slate-300 text-xs">
@@ -586,10 +627,10 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                           {timing.label}
                         </span>
                       </td>
-                      <td className="px-3 py-2 font-semibold text-white">{formatHKD(milestone.amount)}</td>
+                      <td className="px-3 py-2 font-semibold text-white">{formatHKD(paymentMilestone.amount)}</td>
                       <td className="px-3 py-2">
-                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(milestone.status)}`}>
-                          {milestone.status.replace(/_/g, ' ')}
+                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(paymentMilestone.status)}`}>
+                          {paymentMilestone.status.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td className="px-3 py-2">
@@ -631,18 +672,18 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                       onChange={(e) => setFundingMilestoneId(e.target.value)}
                       className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
                     >
-                      {fundingEligibleMilestones.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {`${m.sequence}. ${getDisplayMilestoneTitle(m)} — ${formatHKD(m.amount)}`}
+                      {fundingEligibleMilestones.map((row) => (
+                        <option key={row.paymentMilestone.id} value={row.paymentMilestone.id}>
+                          {`${row.paymentMilestone.sequence}. ${getDisplayMilestoneTitle(row)} — ${formatHKD(row.paymentMilestone.amount)}`}
                         </option>
                       ))}
                     </select>
                     {activeFundingMilestoneId && (() => {
-                      const m = fundingEligibleMilestones.find((x) => x.id === activeFundingMilestoneId);
-                      return m ? (
+                      const row = fundingEligibleMilestones.find((x) => x.paymentMilestone.id === activeFundingMilestoneId);
+                      return row ? (
                         <p className="mt-1 text-[11px] text-slate-400">
-                          Planned due: {getDisplayMilestoneDueAt(m) ? new Date(getDisplayMilestoneDueAt(m) as string).toLocaleDateString('en-HK') : 'Not set'}
-                          {' · '}Status: {m.status.replace(/_/g, ' ')}
+                          Planned due: {getDisplayMilestoneDueAt(row) ? new Date(getDisplayMilestoneDueAt(row) as string).toLocaleDateString('en-HK') : 'Not set'}
+                          {' · '}Status: {row.paymentMilestone.status.replace(/_/g, ' ')}
                         </p>
                       ) : null;
                     })()}
@@ -688,13 +729,13 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                 <div>
                   <label className="block text-xs font-semibold text-white mb-1">Eligible milestone</label>
                   <select
-                    value={selectedMilestone?.id || ''}
+                    value={selectedMilestone?.paymentMilestone.id || ''}
                     onChange={(e) => onSelectPaymentMilestone?.(e.target.value)}
                     className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
                   >
-                    {eligibleMilestones.map((milestone) => (
-                      <option key={milestone.id} value={milestone.id}>
-                        {`${milestone.sequence}. ${getDisplayMilestoneTitle(milestone)} — ${formatHKD(milestone.amount)}`}
+                    {eligibleMilestones.map((row) => (
+                      <option key={row.paymentMilestone.id} value={row.paymentMilestone.id}>
+                        {`${row.paymentMilestone.sequence}. ${getDisplayMilestoneTitle(row)} — ${formatHKD(row.paymentMilestone.amount)}`}
                       </option>
                     ))}
                   </select>
@@ -708,7 +749,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         toast.error('Please select an eligible milestone');
                         return;
                       }
-                      onSubmitPaymentRequest(Number(selectedMilestone.amount), 'milestone', paymentRequestNotes);
+                      onSubmitPaymentRequest(Number(selectedMilestone.paymentMilestone.amount), 'milestone', paymentRequestNotes);
                     }}
                     disabled={paymentRequestActionLoading || !selectedMilestone}
                     className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
@@ -724,11 +765,11 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="font-semibold text-white">{getDisplayMilestoneTitle(selectedMilestone)}</span>
                   <span className="text-slate-400">•</span>
-                  <span>{formatHKD(selectedMilestone.amount)}</span>
-                  {typeof selectedMilestone.percentOfTotal === 'number' && (
+                  <span>{formatHKD(selectedMilestone.paymentMilestone.amount)}</span>
+                  {typeof selectedMilestone.paymentMilestone.percentOfTotal === 'number' && (
                     <>
                       <span className="text-slate-400">•</span>
-                      <span>{selectedMilestone.percentOfTotal}%</span>
+                      <span>{selectedMilestone.paymentMilestone.percentOfTotal}%</span>
                     </>
                   )}
                 </div>

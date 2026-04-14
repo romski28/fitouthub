@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-ffc9858",
+    "date": "2026-04-14T23:29:43+08:00",
+    "title": "refactor(financials): derive payment milestone rows from linked schedule milestones",
+    "summary": "refactor(financials): derive payment milestone rows from linked schedule milestones",
+    "areas": [
+      "web"
+    ],
+    "commit": "ffc9858",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-049221f",
     "date": "2026-04-14T22:23:00+08:00",
     "title": "refactor(professional-schedule): unify milestone timeline and route financial edits to schedule",
