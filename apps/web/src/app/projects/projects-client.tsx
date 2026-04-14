@@ -50,6 +50,8 @@ const clientActionTabMap: Record<string, string> = {
   SIGN_CONTRACT: 'contract',
   DEPOSIT_ESCROW_FUNDS: 'overview',
   REVIEW_PAYMENT_REQUEST: 'overview',
+  CONFIRM_START_DATE: 'schedule',
+  CONFIRM_START_DETAILS: 'schedule',
   REVIEW_PROGRESS: 'schedule',
   APPROVE_MILESTONE: 'schedule',
   SCHEDULE_FINAL_INSPECTION: 'schedule',

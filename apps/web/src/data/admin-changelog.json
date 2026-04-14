@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-14-c866623",
+    "date": "2026-04-14T20:41:27+08:00",
+    "title": "fix(client-projects): route CONFIRM_START_DATE to schedule tab; remove redundant schedule-contact accordion from overview",
+    "summary": "fix(client-projects): route CONFIRM_START_DATE to schedule tab; remove redundant schedule-contact accordion from overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "c866623",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-32117ff",
     "date": "2026-04-14T20:27:04+08:00",
     "title": "fix(client-schedule): use correct API_BASE_URL from config (was missing /api prefix)",
