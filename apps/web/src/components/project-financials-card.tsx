@@ -98,6 +98,31 @@ interface PaymentPlan {
   milestones: PaymentPlanMilestone[];
 }
 
+interface WalletMilestoneBreakdown {
+  id: string;
+  sequence: number;
+  title: string;
+  plannedAmount: number;
+  fundedAmount: number;
+  allocatedAmount: number;
+  availableAmount: number;
+  paidOutAmount: number;
+  status: string;
+}
+
+interface WalletSummary {
+  currency: string;
+  contractValue: number;
+  clientFundedTotal: number;
+  clientEscrowHeld: number;
+  clientEscrowUnallocated: number;
+  professionalEscrowAllocated: number;
+  professionalAvailable: number;
+  professionalPaidOut: number;
+  remainingToFund: number;
+  milestoneBreakdown: WalletMilestoneBreakdown[];
+}
+
 interface ProjectFinancialsCardProps {
   projectId: string;
   projectProfessionalId?: string;
@@ -192,6 +217,7 @@ export default function ProjectFinancialsCard({
   const [statement, setStatement] = useState<Statement | null>(null);
   const [projectEscrowHeld, setProjectEscrowHeld] = useState<number | string>(0);
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlan | null>(null);
+  const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null);
   const [paymentPlanLoading, setPaymentPlanLoading] = useState(false);
   const [retentionEnabled, setRetentionEnabled] = useState(false);
   const [retentionPercent, setRetentionPercent] = useState('5');
@@ -205,7 +231,7 @@ export default function ProjectFinancialsCard({
   const [otpResendCooldown, setOtpResendCooldown] = useState(0);
 
   // Prevent duplicate in-flight requests
-  const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[]]> | null>(null);
+  const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[], WalletSummary | null]> | null>(null);
 
   // Tracks whether financials have been loaded at least once.
   // Prevents the loading spinner from re-appearing on background token-refresh re-fetches,
@@ -270,8 +296,9 @@ export default function ProjectFinancialsCard({
     const load = async () => {
       try {
         if (requestInFlightRef.current) {
-          const [, txData] = await requestInFlightRef.current;
+          const [, txData, walletData] = await requestInFlightRef.current;
           setTransactions(txData);
+          setWalletSummary(walletData);
           return;
         }
 
@@ -281,7 +308,12 @@ export default function ProjectFinancialsCard({
         setError(null);
 
         const combinedPromise = (async () => {
-          const [summaryRes, txRes, projectRes, paymentPlanRes] = await Promise.all([
+          const walletUrl = new URL(`${API_BASE_URL}/financial/project/${projectId}/wallet-summary`);
+          if (projectProfessionalId) {
+            walletUrl.searchParams.set('projectProfessionalId', projectProfessionalId);
+          }
+
+          const [summaryRes, txRes, projectRes, paymentPlanRes, walletRes] = await Promise.all([
             fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
@@ -294,6 +326,9 @@ export default function ProjectFinancialsCard({
             fetch(`${API_BASE_URL}/projects/${projectId}/payment-plan`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
+            fetch(walletUrl.toString(), {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
           ]);
 
           if (!summaryRes.ok || !txRes.ok) {
@@ -304,22 +339,25 @@ export default function ProjectFinancialsCard({
           const txData: Transaction[] = await txRes.json();
           const projectData = projectRes.ok ? await projectRes.json() : null;
           const paymentPlanData = paymentPlanRes.ok ? await paymentPlanRes.json() : null;
+          const walletData: WalletSummary | null = walletRes.ok ? await walletRes.json() : null;
           
           if (projectData?.escrowHeld !== undefined) {
             setProjectEscrowHeld(projectData.escrowHeld);
           }
 
           setPaymentPlan(paymentPlanData);
+          setWalletSummary(walletData);
           
-          return [summaryData, txData] as const;
+          return [summaryData, txData, walletData] as const;
         })();
 
         setPaymentPlanLoading(true);
         requestInFlightRef.current = combinedPromise;
-        const [, txData] = await combinedPromise;
+        const [, txData, walletData] = await combinedPromise;
         console.log('[ProjectFinancials] Loaded transactions:', txData);
         hasLoadedRef.current = true;
         setTransactions(txData);
+        setWalletSummary(walletData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load financials');
       } finally {
@@ -425,6 +463,14 @@ export default function ProjectFinancialsCard({
     }
     return map;
   }, [transactions]);
+
+  const walletMilestoneById = useMemo(() => {
+    const map = new Map<string, WalletMilestoneBreakdown>();
+    for (const row of walletSummary?.milestoneBreakdown || []) {
+      map.set(row.id, row);
+    }
+    return map;
+  }, [walletSummary]);
 
   const handleConfirmDeposit = async (transactionId: string) => {
     try {
@@ -611,10 +657,78 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const budgetLabel = resolvedRole === 'professional' ? 'Contract Value' : 'Approved Budget';
-  const paymentsLabel = 'Payments Released';
-  const escrowActive = escrowConfirmed > 0;
-  const budgetTitle = escrowActive ? `${budgetLabel} · In escrow` : budgetLabel;
+  const cashflow = useMemo(() => {
+    const fallbackContractValue =
+      typeof approvedBudget === 'string' ? parseFloat(approvedBudget) : Number(approvedBudget || projectCost || 0);
+    const fallbackEscrowHeld =
+      typeof projectEscrowHeld === 'string' ? parseFloat(projectEscrowHeld) : Number(projectEscrowHeld || escrowConfirmed || 0);
+    const fallbackPaidOut = Number(paymentsReleasedTotal || 0);
+
+    if (walletSummary) {
+      return {
+        contractValue: Number(walletSummary.contractValue || 0),
+        clientEscrowHeld: Number(walletSummary.clientEscrowHeld || 0),
+        clientEscrowUnallocated: Number(walletSummary.clientEscrowUnallocated || 0),
+        professionalEscrowAllocated: Number(walletSummary.professionalEscrowAllocated || 0),
+        professionalAvailable: Number(walletSummary.professionalAvailable || 0),
+        professionalPaidOut: Number(walletSummary.professionalPaidOut || 0),
+        remainingToFund: Number(walletSummary.remainingToFund || 0),
+      };
+    }
+
+    return {
+      contractValue: fallbackContractValue,
+      clientEscrowHeld: fallbackEscrowHeld,
+      clientEscrowUnallocated: Math.max(fallbackEscrowHeld, 0),
+      professionalEscrowAllocated: 0,
+      professionalAvailable: 0,
+      professionalPaidOut: fallbackPaidOut,
+      remainingToFund: Math.max(fallbackContractValue - fallbackEscrowHeld - fallbackPaidOut, 0),
+    };
+  }, [walletSummary, approvedBudget, projectCost, projectEscrowHeld, escrowConfirmed, paymentsReleasedTotal]);
+
+  const cashflowSegments = useMemo(() => {
+    const contract = Math.max(cashflow.contractValue, 0);
+    if (contract <= 0) return [] as Array<{ key: string; label: string; amount: number; className: string; widthPercent: number }>;
+
+    const segments = [
+      {
+        key: 'paid-out',
+        label: 'Paid Out',
+        amount: cashflow.professionalPaidOut,
+        className: 'bg-emerald-600',
+      },
+      {
+        key: 'available',
+        label: 'Available To Transfer',
+        amount: cashflow.professionalAvailable,
+        className: 'bg-emerald-400',
+      },
+      {
+        key: 'allocated',
+        label: 'In Escrow For Professional',
+        amount: cashflow.professionalEscrowAllocated,
+        className: 'bg-amber-400',
+      },
+      {
+        key: 'project-escrow',
+        label: 'In Client/Project Escrow',
+        amount: cashflow.clientEscrowUnallocated,
+        className: 'bg-blue-400',
+      },
+      {
+        key: 'remaining',
+        label: 'Remaining To Fund',
+        amount: cashflow.remainingToFund,
+        className: 'bg-slate-600',
+      },
+    ];
+
+    return segments.map((segment) => ({
+      ...segment,
+      widthPercent: Math.max(0, Math.min(100, (segment.amount / contract) * 100)),
+    }));
+  }, [cashflow]);
 
   return (
     <div className="rounded-xl border border-slate-700 bg-slate-900/50 backdrop-blur-sm">
@@ -643,45 +757,37 @@ export default function ProjectFinancialsCard({
         <div className="p-5 text-sm text-rose-400">{error}</div>
       ) : (
         <div className="p-5 space-y-6">
-          {/* Three Mini Cards */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {/* Project Value Card - Show for all roles */}
-            {resolvedRole === 'professional' && (
-              <div className="rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
-                <p className="text-[11px] font-semibold text-slate-300 uppercase tracking-wide">Project Value</p>
-                <p className="text-xl font-bold text-white">{formatHKD(projectCost)}</p>
-              </div>
-            )}
-            {(resolvedRole === 'client' || resolvedRole === 'admin') && (
-              <div className="rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
-                <p className="text-[11px] font-semibold text-slate-300 uppercase tracking-wide">Approved Quote</p>
-                <p className="text-xl font-bold text-white">{formatHKD(projectCost)}</p>
-              </div>
-            )}
-
-            {/* In Escrow Card */}
-            <div className={`rounded-lg border px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.25)] ${
-              escrowActive
-                ? 'border-emerald-500/40 bg-emerald-500/15'
-                : 'border-slate-700 bg-slate-800/50'
-            }`}>
-              <p className={`text-[11px] font-semibold uppercase tracking-wide ${
-                escrowActive ? 'text-emerald-300' : 'text-slate-300'
-              }`}>
-                In Escrow
+          <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-white">Cashflow Overview</h3>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                Contract Value: {formatHKD(cashflow.contractValue)}
               </p>
-              <p className={`text-xl font-bold ${
-                escrowActive ? 'text-emerald-200' : 'text-white'
-              }`}>
-                {formatHKD(projectEscrowHeld || escrowConfirmed)}
-              </p>
-              {!escrowActive && <p className="text-xs text-slate-500 mt-1">Awaiting confirmation</p>}
             </div>
 
-            {/* Paid Card */}
-            <div className="rounded-lg border border-blue-500/40 bg-blue-500/15 px-4 py-3 shadow-[0_1px_3px_rgba(59,130,246,0.15)]">
-              <p className="text-[11px] font-semibold text-blue-300 uppercase tracking-wide">Paid</p>
-              <p className="text-xl font-bold text-blue-200">{formatHKD(paymentsReleasedTotal)}</p>
+            <div className="h-4 w-full overflow-hidden rounded-full bg-slate-700/80">
+              <div className="flex h-full w-full">
+                {cashflowSegments.map((segment) => (
+                  <div
+                    key={segment.key}
+                    className={segment.className}
+                    style={{ width: `${segment.widthPercent}%` }}
+                    title={`${segment.label}: ${formatHKD(segment.amount)}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              {cashflowSegments.map((segment) => (
+                <div key={`legend-${segment.key}`} className="rounded-md border border-slate-700 bg-slate-900/60 p-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-block h-2 w-2 rounded-full ${segment.className}`} />
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-300">{segment.label}</p>
+                  </div>
+                  <p className="mt-1 text-sm font-semibold text-white">{formatHKD(segment.amount)}</p>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -787,6 +893,9 @@ export default function ProjectFinancialsCard({
                       <th className="px-3 py-2 text-white font-semibold">Due</th>
                       <th className="px-3 py-2 text-white font-semibold">Split</th>
                       <th className="px-3 py-2 text-white font-semibold">Amount</th>
+                      <th className="px-3 py-2 text-white font-semibold">Funded</th>
+                      <th className="px-3 py-2 text-white font-semibold">Allocated</th>
+                      <th className="px-3 py-2 text-white font-semibold">Paid Out</th>
                       <th className="px-3 py-2 text-white font-semibold">Status</th>
                       {(resolvedRole === 'client') && <th className="px-3 py-2 text-white font-semibold text-right">Action</th>}
                     </tr>
@@ -794,6 +903,7 @@ export default function ProjectFinancialsCard({
                   <tbody>
                     {paymentPlan.milestones.map((milestone) => {
                       const linkedTx = txByMilestone.get(milestone.id);
+                      const walletMilestone = walletMilestoneById.get(milestone.id);
                       const canPayMilestoneEscrow =
                         resolvedRole === 'client' &&
                         milestone.status === 'escrow_requested' &&
@@ -823,6 +933,9 @@ export default function ProjectFinancialsCard({
                               : '—'}
                           </td>
                           <td className="px-3 py-2 text-white font-semibold">{formatHKD(milestone.amount)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.fundedAmount || 0)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.allocatedAmount || 0)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.paidOutAmount || 0)}</td>
                           <td className="px-3 py-2">
                             <StatusPill
                               status={milestone.status}

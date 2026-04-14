@@ -1750,4 +1750,163 @@ export class FinancialService {
 
     return summary;
   }
+
+  async getProjectWalletSummary(projectId: string, projectProfessionalId?: string | null) {
+    const [project, paymentPlan, transactions] = await this.retryWithBackoff(() =>
+      this.prisma.$transaction([
+        this.prisma.project.findUnique({
+          where: { id: projectId },
+          select: {
+            id: true,
+            approvedBudget: true,
+            budget: true,
+            escrowHeld: true,
+          },
+        }),
+        (this.prisma as any).projectPaymentPlan.findUnique({
+          where: { projectId },
+          include: {
+            milestones: {
+              orderBy: { sequence: 'asc' },
+            },
+          },
+        }),
+        this.prisma.financialTransaction.findMany({
+          where: {
+            projectId,
+            ...(projectProfessionalId ? { projectProfessionalId } : {}),
+          },
+          select: {
+            id: true,
+            type: true,
+            status: true,
+            amount: true,
+            notes: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      ]),
+    );
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const toAmount = (value: unknown) => {
+      if (value == null) return 0;
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      if (typeof value === 'string') {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      if (value instanceof Decimal) {
+        return Number(value.toString());
+      }
+      if (typeof value === 'object' && value && 'toString' in (value as any)) {
+        const parsed = Number((value as any).toString());
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      return 0;
+    };
+
+    const contractValue = paymentPlan
+      ? toAmount((paymentPlan as any).totalAmount)
+      : toAmount(project.approvedBudget ?? project.budget ?? 0);
+
+    const txByMilestone = new Map<string, Array<{ type: string; status: string; amount: number }>>();
+
+    let clientFundedTotal = 0;
+    let professionalEscrowAllocated = 0;
+    let professionalPaidOut = 0;
+
+    for (const tx of transactions as Array<{ type: string; status: string; amount: unknown; notes?: string | null }>) {
+      const amount = toAmount(tx.amount);
+      const status = String(tx.status || '').toLowerCase();
+
+      if (
+        (tx.type === 'escrow_deposit' || tx.type === 'escrow_deposit_confirmation') &&
+        status === 'confirmed'
+      ) {
+        clientFundedTotal += amount;
+      }
+
+      if (tx.type === 'release_payment') {
+        if (status === 'pending') {
+          professionalEscrowAllocated += amount;
+        }
+        if (status === 'confirmed') {
+          professionalPaidOut += amount;
+        }
+      }
+
+      const milestoneMeta = this.parseMilestoneMetadata(tx.notes);
+      if (milestoneMeta?.paymentMilestoneId) {
+        const bucket = txByMilestone.get(milestoneMeta.paymentMilestoneId) || [];
+        bucket.push({
+          type: tx.type,
+          status,
+          amount,
+        });
+        txByMilestone.set(milestoneMeta.paymentMilestoneId, bucket);
+      }
+    }
+
+    const professionalAvailable = 0;
+    const clientEscrowHeld = Math.max(clientFundedTotal - professionalPaidOut, 0);
+    const clientEscrowUnallocated = Math.max(
+      clientEscrowHeld - professionalEscrowAllocated - professionalAvailable,
+      0,
+    );
+    const remainingToFund = Math.max(contractValue - clientFundedTotal, 0);
+
+    const milestoneBreakdown = ((paymentPlan as any)?.milestones || []).map((milestone: any) => {
+      const entries = txByMilestone.get(milestone.id) || [];
+
+      let fundedAmount = 0;
+      let allocatedAmount = 0;
+      let paidOutAmount = 0;
+      const availableAmount = 0;
+
+      for (const entry of entries) {
+        if (
+          (entry.type === 'escrow_deposit' || entry.type === 'escrow_deposit_confirmation') &&
+          entry.status === 'confirmed'
+        ) {
+          fundedAmount += entry.amount;
+        }
+        if (entry.type === 'release_payment' && entry.status === 'pending') {
+          allocatedAmount += entry.amount;
+        }
+        if (entry.type === 'release_payment' && entry.status === 'confirmed') {
+          paidOutAmount += entry.amount;
+        }
+      }
+
+      return {
+        id: milestone.id,
+        sequence: milestone.sequence,
+        title: milestone.title,
+        plannedAmount: toAmount(milestone.amount),
+        fundedAmount,
+        allocatedAmount,
+        availableAmount,
+        paidOutAmount,
+        status: milestone.status,
+      };
+    });
+
+    return {
+      currency: paymentPlan?.currency || 'HKD',
+      contractValue,
+      clientFundedTotal,
+      clientEscrowHeld,
+      clientEscrowUnallocated,
+      professionalEscrowAllocated,
+      professionalAvailable,
+      professionalPaidOut,
+      remainingToFund,
+      milestoneBreakdown,
+    };
+  }
 }

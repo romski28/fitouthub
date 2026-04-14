@@ -108,6 +108,19 @@ export class FinancialController {
   }
 
   /**
+   * GET /financial/project/:projectId/wallet-summary - Get derived wallet buckets for project cashflow UI
+   * Requires authentication
+   */
+  @Get('project/:projectId/wallet-summary')
+  @UseGuards(CombinedAuthGuard)
+  async getProjectWalletSummary(
+    @Param('projectId') projectId: string,
+    @Query('projectProfessionalId') projectProfessionalId?: string,
+  ) {
+    return this.financialService.getProjectWalletSummary(projectId, projectProfessionalId);
+  }
+
+  /**
    * GET /financial/project/:projectId/statement - Get escrow statement (ledger) for a project
    * Requires authentication
    */
