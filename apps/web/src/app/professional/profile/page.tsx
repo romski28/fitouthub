@@ -6,14 +6,17 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
-import { HkDistrictMap } from '@/components/hk-district-map';
-import { HkDistrictList } from '@/components/hk-district-list';
+import { HkZoneMap } from '@/components/hk-zone-map';
+import { HkZoneList } from '@/components/hk-zone-list';
 import { MapOrList } from '@/components/map-or-list';
 import {
-  HK_DISTRICTS,
+  HK_ZONE_CODES,
   areaCodesToNames,
+  areaCodesToZoneCodes,
   deriveAreaCodesFromCoveragePayload,
   deriveCoverageDraftFromAreaCodes,
+  type HkZoneCode,
+  zoneCodesToAreaCodes,
 } from '@/lib/hk-districts';
 
 import FileUploader from '@/components/file-uploader';
@@ -150,6 +153,10 @@ export default function ProfessionalProfilePage() {
   const incompleteItems = profileChecklist.filter((item) => !item.done).slice(0, 4);
   const clientFacingHighlights = buildClientFacingHighlights(profile, refProjects, emergencyCalloutAvailable);
   const selectedCoverageNames = useMemo(() => areaCodesToNames(selectedCoverageAreaCodes), [selectedCoverageAreaCodes]);
+  const selectedCoverageZoneCodes = useMemo(
+    () => areaCodesToZoneCodes(selectedCoverageAreaCodes),
+    [selectedCoverageAreaCodes],
+  );
 
   const handleCoverageAreaCodesChange = (codes: string[]) => {
     const nextDraft = deriveCoverageDraftFromAreaCodes(codes);
@@ -161,6 +168,17 @@ export default function ProfessionalProfilePage() {
       locationSecondary: nextDraft.locationSecondary,
       locationTertiary: nextDraft.locationTertiary,
     }));
+  };
+
+  const handleCoverageZoneCodesChange = (zoneCodes: HkZoneCode[]) => {
+    handleCoverageAreaCodesChange(zoneCodesToAreaCodes(zoneCodes));
+  };
+
+  const handleCoverageZoneToggle = (zoneCode: HkZoneCode) => {
+    const next = new Set(selectedCoverageZoneCodes);
+    if (next.has(zoneCode)) next.delete(zoneCode);
+    else next.add(zoneCode);
+    handleCoverageZoneCodesChange(HK_ZONE_CODES.filter((code) => next.has(code)));
   };
 
   const uploadFiles = async (files: File[]) => {
@@ -545,12 +563,12 @@ export default function ProfessionalProfilePage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Interactive coverage editor</p>
-                    <p className="text-xs text-slate-500">Pick every district you cover. The text summary below stays in sync for legacy compatibility.</p>
+                    <p className="text-xs text-slate-500">Select service regions (5 zones). District-level coverage is mapped automatically for matching.</p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => handleCoverageAreaCodesChange(HK_DISTRICTS.map((district) => district.areaCode))}
+                      onClick={() => handleCoverageZoneCodesChange(HK_ZONE_CODES)}
                       className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
                       Whole HK
@@ -572,15 +590,15 @@ export default function ProfessionalProfilePage() {
                   mapLabel="Graphic"
                   listLabel="Text list"
                   map={
-                    <HkDistrictMap
-                      selectedAreaCodes={selectedCoverageAreaCodes}
-                      onChange={handleCoverageAreaCodesChange}
+                    <HkZoneMap
+                      highlightedCodes={selectedCoverageZoneCodes}
+                      onToggleCode={handleCoverageZoneToggle}
                     />
                   }
                   list={
-                    <HkDistrictList
-                      selectedAreaCodes={selectedCoverageAreaCodes}
-                      onChange={handleCoverageAreaCodesChange}
+                    <HkZoneList
+                      selectedZoneCodes={selectedCoverageZoneCodes}
+                      onChange={handleCoverageZoneCodesChange}
                     />
                   }
                 />
@@ -595,8 +613,8 @@ export default function ProfessionalProfilePage() {
                     <p className="mt-1 text-sm text-slate-700">{profile.locationPrimary || '—'}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">District Count</p>
-                    <p className="mt-1 text-sm text-slate-700">{selectedCoverageAreaCodes.length || 0}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Region Count</p>
+                    <p className="mt-1 text-sm text-slate-700">{selectedCoverageZoneCodes.length || 0}</p>
                   </div>
                 </div>
 

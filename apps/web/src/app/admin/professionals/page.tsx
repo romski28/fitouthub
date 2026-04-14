@@ -6,14 +6,17 @@ import { Professional } from "@/lib/types";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { TagInput } from "@/components/tag-input";
 import { useAuth } from "@/context/auth-context";
-import { HkDistrictList } from "@/components/hk-district-list";
-import { HkDistrictMap } from "@/components/hk-district-map";
+import { HkZoneList } from "@/components/hk-zone-list";
+import { HkZoneMap } from "@/components/hk-zone-map";
 import { MapOrList } from "@/components/map-or-list";
 import {
+  HK_ZONE_CODES,
   areaCodesToNames,
+  areaCodesToZoneCodes,
   deriveAreaCodesFromCoveragePayload,
   deriveCoverageDraftFromAreaCodes,
-  HK_DISTRICTS,
+  type HkZoneCode,
+  zoneCodesToAreaCodes,
 } from "@/lib/hk-districts";
 
 function formatDate(date?: string): string {
@@ -477,6 +480,7 @@ export default function AdminProfessionalsPage() {
   const selectedCoverageCodes = Array.isArray(formData.coverageAreaCodes)
     ? (formData.coverageAreaCodes as string[])
     : [];
+  const selectedCoverageZoneCodes = areaCodesToZoneCodes(selectedCoverageCodes);
   const selectedCoverageNames = areaCodesToNames(selectedCoverageCodes);
 
   const handleCoverageAreaCodesChange = (codes: string[]) => {
@@ -489,6 +493,17 @@ export default function AdminProfessionalsPage() {
       locationSecondary: derived.locationSecondary,
       locationTertiary: derived.locationTertiary,
     }));
+  };
+
+  const handleCoverageZoneCodesChange = (zoneCodes: HkZoneCode[]) => {
+    handleCoverageAreaCodesChange(zoneCodesToAreaCodes(zoneCodes));
+  };
+
+  const handleCoverageZoneToggle = (zoneCode: HkZoneCode) => {
+    const next = new Set(selectedCoverageZoneCodes);
+    if (next.has(zoneCode)) next.delete(zoneCode);
+    else next.add(zoneCode);
+    handleCoverageZoneCodesChange(HK_ZONE_CODES.filter((code) => next.has(code)));
   };
 
   return (
@@ -1004,13 +1019,13 @@ export default function AdminProfessionalsPage() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">Coverage (normalized districts)</p>
-                      <p className="text-xs text-slate-500">Use map or list mode. Legacy text fields are auto-derived for compatibility.</p>
+                      <p className="text-sm font-semibold text-slate-900">Coverage (5 service regions)</p>
+                      <p className="text-xs text-slate-500">Use map or list mode. District coverage and legacy fields are auto-derived for compatibility.</p>
                     </div>
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => handleCoverageAreaCodesChange(HK_DISTRICTS.map((district) => district.areaCode))}
+                        onClick={() => handleCoverageZoneCodesChange(HK_ZONE_CODES)}
                         className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
                         Whole HK
@@ -1030,15 +1045,15 @@ export default function AdminProfessionalsPage() {
                     label="Coverage input mode"
                     helperText="Map mode supports quick visual edits."
                     map={
-                      <HkDistrictMap
-                        selectedAreaCodes={selectedCoverageCodes}
-                        onChange={handleCoverageAreaCodesChange}
+                      <HkZoneMap
+                        highlightedCodes={selectedCoverageZoneCodes}
+                        onToggleCode={handleCoverageZoneToggle}
                       />
                     }
                     list={
-                      <HkDistrictList
-                        selectedAreaCodes={selectedCoverageCodes}
-                        onChange={handleCoverageAreaCodesChange}
+                      <HkZoneList
+                        selectedZoneCodes={selectedCoverageZoneCodes}
+                        onChange={handleCoverageZoneCodesChange}
                       />
                     }
                   />
@@ -1053,8 +1068,8 @@ export default function AdminProfessionalsPage() {
                       <p className="mt-1 text-sm text-slate-700">{(formData.locationPrimary as string) || '—'}</p>
                     </div>
                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">District Count</p>
-                      <p className="mt-1 text-sm text-slate-700">{selectedCoverageCodes.length}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Region Count</p>
+                      <p className="mt-1 text-sm text-slate-700">{selectedCoverageZoneCodes.length}</p>
                     </div>
                   </div>
 

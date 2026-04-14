@@ -208,9 +208,26 @@ export const ZONE_LABEL_ZH_BY_ZONE_CODE: Record<HkZoneCode, string> = {
   ISL: '離島',
 };
 
+export const ZONE_LABEL_EN_BY_ZONE_CODE: Record<HkZoneCode, string> = {
+  HKI: 'Hong Kong Island',
+  KLN: 'Kowloon',
+  NTE: 'New Territories East',
+  NTW: 'New Territories West',
+  ISL: 'Islands',
+};
+
+export const HK_ZONE_CODES: HkZoneCode[] = ['HKI', 'KLN', 'NTE', 'NTW', 'ISL'];
+
 const AREA_CODE_SET = new Set(HK_DISTRICTS.map((district) => district.areaCode));
 const DISTRICT_BY_CODE = new Map(HK_DISTRICTS.map((district) => [district.areaCode, district]));
 const DISTRICT_BY_NAME = new Map(HK_DISTRICTS.map((district) => [district.name.toLowerCase(), district]));
+const AREA_CODES_BY_ZONE: Record<HkZoneCode, string[]> = {
+  HKI: HK_DISTRICTS.filter((d) => d.zoneCode === 'HKI').map((d) => d.areaCode),
+  KLN: HK_DISTRICTS.filter((d) => d.zoneCode === 'KLN').map((d) => d.areaCode),
+  NTE: HK_DISTRICTS.filter((d) => d.zoneCode === 'NTE').map((d) => d.areaCode),
+  NTW: HK_DISTRICTS.filter((d) => d.zoneCode === 'NTW').map((d) => d.areaCode),
+  ISL: HK_DISTRICTS.filter((d) => d.zoneCode === 'ISL').map((d) => d.areaCode),
+};
 
 const MACRO_TO_AREA_CODES: Record<string, string[]> = {
   'hong kong island': HK_DISTRICTS.filter((d) => d.zoneCode === 'HKI').map((d) => d.areaCode),
@@ -252,6 +269,24 @@ export const getDistrictNameZh = (areaCode?: string | null) => {
 export const getZoneLabelZh = (zoneCode?: HkZoneCode | null) => {
   if (!zoneCode) return '';
   return ZONE_LABEL_ZH_BY_ZONE_CODE[zoneCode] || '';
+};
+
+export const getZoneLabelEn = (zoneCode?: HkZoneCode | null) => {
+  if (!zoneCode) return '';
+  return ZONE_LABEL_EN_BY_ZONE_CODE[zoneCode] || '';
+};
+
+export const areaCodesToZoneCodes = (areaCodes: string[]) => {
+  const selected = new Set(uniqAreaCodes(areaCodes));
+  return HK_ZONE_CODES.filter((zoneCode) => AREA_CODES_BY_ZONE[zoneCode].some((code) => selected.has(code)));
+};
+
+export const zoneCodesToAreaCodes = (zoneCodes: HkZoneCode[]) => {
+  const selectedZones = new Set(zoneCodes);
+  const merged = HK_ZONE_CODES
+    .filter((zoneCode) => selectedZones.has(zoneCode))
+    .flatMap((zoneCode) => AREA_CODES_BY_ZONE[zoneCode]);
+  return uniqAreaCodes(merged);
 };
 
 export const areaCodeToCanonicalLocation = (areaCode?: string | null) => {

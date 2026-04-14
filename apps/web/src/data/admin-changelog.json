@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-14-4cbe856",
+    "date": "2026-04-14T10:24:04+08:00",
+    "title": "feat(web): use 5-zone selector for service coverage",
+    "summary": "feat(web): use 5-zone selector for service coverage",
+    "areas": [
+      "web"
+    ],
+    "commit": "4cbe856",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/hk-zone-list.tsx",
+      "apps/web/src/components/hk-zone-map.tsx",
+      "apps/web/src/lib/hk-districts.ts"
+    ]
+  },
+  {
     "id": "2026-04-14-a49962f",
     "date": "2026-04-14T10:03:17+08:00",
     "title": "feat(admin): migrate professional edit to normalized coverage areas",

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import type { HkZoneCode } from '@/lib/hk-districts';
 
 const ZONES = [
   {
@@ -38,12 +39,14 @@ const ZONES = [
 type Props = {
   highlightedCodes?: string[];
   compact?: boolean;
+  onToggleCode?: (code: HkZoneCode) => void;
 };
 
-export function HkZoneMap({ highlightedCodes = [], compact = false }: Props) {
+export function HkZoneMap({ highlightedCodes = [], compact = false, onToggleCode }: Props) {
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
   const active = useMemo(() => new Set(highlightedCodes.map((code) => code.toUpperCase())), [highlightedCodes]);
   const hoveredZone = ZONES.find((zone) => zone.code === hoveredCode) || null;
+  const isSelectable = typeof onToggleCode === 'function';
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
@@ -55,8 +58,21 @@ export function HkZoneMap({ highlightedCodes = [], compact = false }: Props) {
             <path
               key={zone.code}
               d={zone.path}
-              className={isActive ? 'cursor-default fill-emerald-500 stroke-emerald-700' : 'cursor-default fill-slate-200 stroke-slate-400'}
+              className={isActive
+                ? `${isSelectable ? 'cursor-pointer' : 'cursor-default'} fill-emerald-500 stroke-emerald-700`
+                : `${isSelectable ? 'cursor-pointer' : 'cursor-default'} fill-slate-200 stroke-slate-400`}
               strokeWidth={2}
+              role={isSelectable ? 'button' : undefined}
+              tabIndex={isSelectable ? 0 : undefined}
+              aria-pressed={isSelectable ? isActive : undefined}
+              onClick={() => onToggleCode?.(zone.code as HkZoneCode)}
+              onKeyDown={(event) => {
+                if (!isSelectable) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onToggleCode?.(zone.code as HkZoneCode);
+                }
+              }}
               onMouseEnter={() => setHoveredCode(zone.code)}
               onMouseLeave={() => setHoveredCode((prev) => (prev === zone.code ? null : prev))}
             >
