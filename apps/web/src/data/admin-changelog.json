@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-cb70b3d",
+    "date": "2026-04-14T20:48:53+08:00",
+    "title": "chore(api): bump financial controller comment to trigger Render redeploy (sla-policy + sla-status routes)",
+    "summary": "chore(api): bump financial controller comment to trigger Render redeploy (sla-policy + sla-status routes)",
+    "areas": [
+      "api"
+    ],
+    "commit": "cb70b3d",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts"
+    ]
+  },
+  {
     "id": "2026-04-14-c866623",
     "date": "2026-04-14T20:41:27+08:00",
     "title": "fix(client-projects): route CONFIRM_START_DATE to schedule tab; remove redundant schedule-contact accordion from overview",

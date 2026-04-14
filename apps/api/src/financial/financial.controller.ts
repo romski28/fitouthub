@@ -7,6 +7,7 @@ import { StripePaymentsService } from './stripe-payments.service';
 import type { Request as ExpressRequest } from 'express';
 import type { RawBodyRequest } from '@nestjs/common';
 
+// v2: wallet-summary, professional-wallet/transfer, confirm-wallet-transfer, sla-policy, sla-status
 @Controller('financial')
 export class FinancialController {
   constructor(
