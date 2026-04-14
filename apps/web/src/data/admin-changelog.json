@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-a488f1f",
+    "date": "2026-04-14T19:45:25+08:00",
+    "title": "feat(web-financials): role-based SLA UX tuning",
+    "summary": "feat(web-financials): role-based SLA UX tuning",
+    "areas": [
+      "web"
+    ],
+    "commit": "a488f1f",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-58f039b",
     "date": "2026-04-14T19:39:22+08:00",
     "title": "chore(financials): clarify cashflow transfer label",

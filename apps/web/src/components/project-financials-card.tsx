@@ -265,6 +265,11 @@ const SLA_LABEL_BY_CATEGORY: Record<SlaCategory, string> = {
 const HOURS_OPTIONS = [12, 24, 36, 48, 72, 96];
 const WORKING_DAY_OPTIONS = [1, 2, 3, 4, 5];
 
+const formatSlaRule = (rule?: SlaRule | null) => {
+  if (!rule) return '—';
+  return rule.mode === 'hours' ? `${rule.value}h` : `${rule.value} working day${rule.value > 1 ? 's' : ''}`;
+};
+
 export default function ProjectFinancialsCard({
   projectId,
   projectProfessionalId,
@@ -302,6 +307,19 @@ export default function ProjectFinancialsCard({
   const [slaStatusByTxId, setSlaStatusByTxId] = useState<Record<string, SlaStatusItem>>({});
   const [slaDraft, setSlaDraft] = useState<Partial<SlaCategoryPolicy> | null>(null);
   const [slaSaving, setSlaSaving] = useState(false);
+
+  const isSlaItemRelevantToRole = (item?: SlaStatusItem | null) => {
+    if (!item) return false;
+    if (resolvedRole === 'admin') return true;
+    const actionRole = String(item.actionByRole || '').toLowerCase();
+    if (resolvedRole === 'client') {
+      return actionRole === 'client';
+    }
+    if (resolvedRole === 'professional') {
+      return actionRole === 'professional' || Boolean(item.projectProfessionalId && item.projectProfessionalId === projectProfessionalId);
+    }
+    return false;
+  };
 
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[], WalletSummary | null, SlaPolicyResponse | null, SlaStatusResponse | null]> | null>(null);
@@ -1137,6 +1155,26 @@ export default function ProjectFinancialsCard({
                 </div>
               )}
 
+              {resolvedRole !== 'admin' && slaPolicy?.effectivePolicy && (
+                <div className="rounded-md border border-indigo-500/20 bg-indigo-500/10 p-4 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">SLA Policy</h4>
+                    <p className="text-xs text-indigo-100 mt-1">Read-only SLA response windows for this project.</p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {SLA_CATEGORIES.map((category) => {
+                      const rule = slaPolicy.effectivePolicy[category];
+                      return (
+                        <div key={`sla-readonly-${category}`} className="rounded-md border border-indigo-400/20 bg-slate-900/40 p-2">
+                          <p className="text-[11px] font-medium text-slate-200">{SLA_LABEL_BY_CATEGORY[category]}</p>
+                          <p className="mt-1 text-xs text-indigo-100">{formatSlaRule(rule)}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {paymentPlan.projectScale === 'SCALE_3' && (
                 <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-3">
                   <div className="flex items-center justify-between gap-3">
@@ -1353,6 +1391,7 @@ export default function ProjectFinancialsCard({
                   const highlightActor = !tx.actionComplete && (roleMatches || userMatches);
                   const isInfo = statusKey === 'info';
                   const slaItem = slaStatusByTxId[tx.id];
+                  const showSlaForRole = isSlaItemRelevantToRole(slaItem);
 
                   const actionButton = () => {
                     if (isInfo) {
@@ -1460,15 +1499,15 @@ export default function ProjectFinancialsCard({
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-white">{getTypeLabel(tx.type)}</span>
-                            {slaItem && (
+                            {showSlaForRole && (
                               <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                slaItem.slaStatus === 'breached'
+                                slaItem!.slaStatus === 'breached'
                                   ? 'bg-rose-500/20 text-rose-200'
-                                  : slaItem.slaStatus === 'at_risk'
+                                  : slaItem!.slaStatus === 'at_risk'
                                     ? 'bg-amber-500/20 text-amber-200'
                                     : 'bg-emerald-500/20 text-emerald-200'
                               }`}>
-                                SLA: {slaItem.slaStatus.replace('_', ' ')}
+                                SLA: {slaItem!.slaStatus.replace('_', ' ')}
                               </span>
                             )}
                           </div>
@@ -1477,9 +1516,9 @@ export default function ProjectFinancialsCard({
                               Last audited: {formatAuditActionLabel(tx.auditSummary.latestAction)}
                             </span>
                           )}
-                          {slaItem && (
+                          {showSlaForRole && (
                             <span className="inline-flex w-fit items-center rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-medium text-indigo-100">
-                              Due: {new Date(slaItem.slaDueAt).toLocaleString('en-HK')} ({slaItem.slaRule.value}{slaItem.slaRule.mode === 'hours' ? 'h' : 'd'})
+                              Due: {new Date(slaItem!.slaDueAt).toLocaleString('en-HK')} ({formatSlaRule(slaItem!.slaRule)})
                             </span>
                           )}
                         </div>
