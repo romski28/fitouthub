@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useTranslations } from 'next-intl';
 import LocationSelect, { type CanonicalLocation } from '@/components/location-select';
+import { HkDistrictMap } from '@/components/hk-district-map';
+import { HkDistrictList } from '@/components/hk-district-list';
+import { MapOrList } from '@/components/map-or-list';
+import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 import { toast } from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
@@ -17,6 +21,17 @@ export default function ProfilePage() {
   const [locationDraft, setLocationDraft] = useState<CanonicalLocation>(userLocation || ({} as CanonicalLocation));
   const [locationSaved, setLocationSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const selectedLocationAreaCode = useMemo(
+    () => deriveProjectAreaCodeFromLocation(locationDraft),
+    [locationDraft],
+  );
+
+  const handleMapLocationSelect = (codes: string[]) => {
+    const code = codes[0];
+    const canonical = code ? areaCodeToCanonicalLocation(code) : {};
+    setLocationDraft(canonical as CanonicalLocation);
+  };
 
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -356,7 +371,37 @@ export default function ProfilePage() {
           <p className="text-sm text-slate-600">
             {t('defaultLocationHint')}
           </p>
-          <LocationSelect value={locationDraft} onChange={setLocationDraft} enableSearch={true} />
+          <MapOrList
+            storageKey="fh-map-or-list-preference"
+            label="Your area"
+            helperText="Pick your district on the map or use Words mode for a text list."
+            mapLabel="Map"
+            listLabel="Words"
+            panelClassName="max-h-[50vh] overflow-y-auto pr-1"
+            map={
+              <HkDistrictMap
+                selectionMode="single"
+                selectedAreaCodes={selectedLocationAreaCode ? [selectedLocationAreaCode] : []}
+                onChange={handleMapLocationSelect}
+              />
+            }
+            list={
+              <HkDistrictList
+                selectionMode="single"
+                selectedAreaCodes={selectedLocationAreaCode ? [selectedLocationAreaCode] : []}
+                onChange={handleMapLocationSelect}
+              />
+            }
+          />
+          {selectedLocationAreaCode && (
+            <p className="text-xs text-slate-500">Selected: {locationDraft?.secondary || locationDraft?.primary || ''}</p>
+          )}
+          <details className="text-xs text-slate-500">
+            <summary className="cursor-pointer select-none">Advanced: set by text</summary>
+            <div className="mt-2">
+              <LocationSelect value={locationDraft} onChange={setLocationDraft} enableSearch={true} />
+            </div>
+          </details>
           <button
             type="button"
             className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"

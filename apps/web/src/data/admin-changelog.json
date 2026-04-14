@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-8435c0c",
+    "date": "2026-04-14T10:45:29+08:00",
+    "title": "feat(profile): add district map/list selector to client default location",
+    "summary": "feat(profile): add district map/list selector to client default location",
+    "areas": [
+      "web"
+    ],
+    "commit": "8435c0c",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-1ca2d52",
     "date": "2026-04-14T10:39:33+08:00",
     "title": "feat: improve wizard map UX and prefer normalized AI location matching",
