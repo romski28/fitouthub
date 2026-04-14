@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { HK_DISTRICTS, HK_DISTRICT_VIEWBOX, sortAreaCodes } from '@/lib/hk-districts';
+import { HK_DISTRICTS, HK_DISTRICT_VIEWBOX, getDistrictNameZh, sortAreaCodes } from '@/lib/hk-districts';
 
 type Props = {
   selectedAreaCodes?: string[];
@@ -63,7 +63,7 @@ export function HkDistrictMap({
               className={disabled ? 'fill-slate-200 stroke-slate-400' : isSelected ? 'cursor-pointer fill-emerald-500 stroke-emerald-700' : isHovered ? 'cursor-pointer fill-emerald-100 stroke-emerald-500' : 'cursor-pointer fill-slate-200 stroke-slate-400'}
               strokeWidth={1.5}
             >
-              <title>{district.name}</title>
+              <title>{`${district.name} · ${getDistrictNameZh(district.areaCode)}`}</title>
             </path>
           );
         })}
@@ -73,7 +73,7 @@ export function HkDistrictMap({
         <div className="mt-2 flex min-h-5 items-center justify-between gap-3 text-xs text-slate-600">
           <span>
             {hoveredDistrict
-              ? hoveredDistrict.name
+              ? `${hoveredDistrict.name} · ${getDistrictNameZh(hoveredDistrict.areaCode)}`
               : selectionMode === 'single'
                 ? 'Click a district to set the project location'
                 : 'Click districts to set coverage'}

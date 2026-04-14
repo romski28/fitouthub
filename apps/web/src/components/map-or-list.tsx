@@ -54,12 +54,12 @@ export function MapOrList({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-2">
         <div>
           <p className="text-sm font-semibold text-slate-900">{label}</p>
           {helperText ? <p className="text-xs text-slate-500">{helperText}</p> : null}
         </div>
-        <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="inline-flex w-fit rounded-lg border border-slate-200 bg-slate-50 p-1">
           <button
             type="button"
             onClick={() => handleModeChange('map')}

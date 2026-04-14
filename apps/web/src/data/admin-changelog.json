@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-14-fcf7479",
+    "date": "2026-04-14T09:49:12+08:00",
+    "title": "feat(web): polish map layout, bilingual labels, and join-as flow",
+    "summary": "feat(web): polish map layout, bilingual labels, and join-as flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "fcf7479",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/hk-district-list.tsx",
+      "apps/web/src/components/hk-district-map.tsx",
+      "apps/web/src/components/map-or-list.tsx",
+      "apps/web/src/i18n/request.ts",
+      "apps/web/src/lib/hk-districts.ts"
+    ]
+  },
+  {
     "id": "2026-04-13-e7c9255",
     "date": "2026-04-13T23:27:29+08:00",
     "title": "feat(map): add Phase 4 district map editing flows",

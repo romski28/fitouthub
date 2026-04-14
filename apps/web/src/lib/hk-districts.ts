@@ -179,6 +179,35 @@ export const HK_DISTRICTS: HkDistrictDefinition[] = [
 
 export const HK_DISTRICT_VIEWBOX = '0 0 1000 733';
 
+export const DISTRICT_NAME_ZH_BY_AREA_CODE: Record<string, string> = {
+  CENTRAL_WESTERN: '中西區',
+  WAN_CHAI: '灣仔區',
+  EASTERN: '東區',
+  SOUTHERN: '南區',
+  YAU_TSIM_MONG: '油尖旺區',
+  KOWLOON_CITY: '九龍城區',
+  SHAM_SHUI_PO: '深水埗區',
+  WONG_TAI_SIN: '黃大仙區',
+  KWUN_TONG: '觀塘區',
+  SAI_KUNG: '西貢區',
+  SHA_TIN: '沙田區',
+  KWAI_TSING: '葵青區',
+  TSUEN_WAN: '荃灣區',
+  TUEN_MUN: '屯門區',
+  YUEN_LONG: '元朗區',
+  NORTH: '北區',
+  TAI_PO: '大埔區',
+  ISLANDS: '離島區',
+};
+
+export const ZONE_LABEL_ZH_BY_ZONE_CODE: Record<HkZoneCode, string> = {
+  HKI: '香港島',
+  KLN: '九龍',
+  NTE: '新界東',
+  NTW: '新界西',
+  ISL: '離島',
+};
+
 const AREA_CODE_SET = new Set(HK_DISTRICTS.map((district) => district.areaCode));
 const DISTRICT_BY_CODE = new Map(HK_DISTRICTS.map((district) => [district.areaCode, district]));
 const DISTRICT_BY_NAME = new Map(HK_DISTRICTS.map((district) => [district.name.toLowerCase(), district]));
@@ -214,6 +243,16 @@ export const getDistrictByName = (name?: string | null) => {
 export const areaCodesToNames = (codes: string[]) => uniqAreaCodes(codes)
   .map((code) => DISTRICT_BY_CODE.get(code)?.name)
   .filter(Boolean) as string[];
+
+export const getDistrictNameZh = (areaCode?: string | null) => {
+  if (!areaCode) return '';
+  return DISTRICT_NAME_ZH_BY_AREA_CODE[areaCode] || '';
+};
+
+export const getZoneLabelZh = (zoneCode?: HkZoneCode | null) => {
+  if (!zoneCode) return '';
+  return ZONE_LABEL_ZH_BY_ZONE_CODE[zoneCode] || '';
+};
 
 export const areaCodeToCanonicalLocation = (areaCode?: string | null) => {
   const district = getDistrictByAreaCode(areaCode);

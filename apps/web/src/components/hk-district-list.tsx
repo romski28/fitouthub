@@ -1,6 +1,6 @@
 'use client';
 
-import { HK_DISTRICTS, sortAreaCodes } from '@/lib/hk-districts';
+import { HK_DISTRICTS, getDistrictNameZh, getZoneLabelZh, sortAreaCodes } from '@/lib/hk-districts';
 
 type Props = {
   selectedAreaCodes?: string[];
@@ -48,8 +48,8 @@ export function HkDistrictList({
                 : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
             } disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            <div className="font-semibold">{district.name}</div>
-            <div className="text-xs text-slate-500">{district.zoneLabel}</div>
+            <div className="font-semibold">{district.name} · {getDistrictNameZh(district.areaCode)}</div>
+            <div className="text-xs text-slate-500">{district.zoneLabel} · {getZoneLabelZh(district.zoneCode)}</div>
           </button>
         );
       })}
