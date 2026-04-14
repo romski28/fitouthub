@@ -288,6 +288,48 @@ export class FinancialController {
   }
 
   /**
+   * POST /financial/project/:projectId/professional-wallet/transfer
+   * Professional (or admin) transfers available wallet balance to external payout account
+   */
+  @Post('project/:projectId/professional-wallet/transfer')
+  @UseGuards(CombinedAuthGuard)
+  async transferProfessionalWalletBalance(
+    @Param('projectId') projectId: string,
+    @Body()
+    body: {
+      projectProfessionalId?: string;
+      amount: number;
+    },
+    @Request() req: any,
+  ) {
+    const actorRole: 'professional' | 'admin' | 'client' = req.user?.isProfessional
+      ? 'professional'
+      : req.user?.role === 'admin'
+        ? 'admin'
+        : 'client';
+
+    if (actorRole === 'client') {
+      throw new ForbiddenException('Clients cannot transfer professional wallet funds');
+    }
+
+    if (!body?.projectProfessionalId) {
+      throw new BadRequestException('projectProfessionalId is required');
+    }
+
+    if (!body?.amount || Number(body.amount) <= 0) {
+      throw new BadRequestException('amount must be greater than 0');
+    }
+
+    return this.financialService.transferProfessionalWalletBalance({
+      projectId,
+      projectProfessionalId: body.projectProfessionalId,
+      amount: Number(body.amount),
+      actorId: req.user.id,
+      actorRole,
+    });
+  }
+
+  /**
    * GET /financial/pending-release-sla - Admin: milestones awaiting release beyond SLA threshold
    * Admin only
    */

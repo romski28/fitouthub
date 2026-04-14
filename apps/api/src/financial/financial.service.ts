@@ -1751,6 +1751,83 @@ export class FinancialService {
     return summary;
   }
 
+  async transferProfessionalWalletBalance(input: {
+    projectId: string;
+    projectProfessionalId: string;
+    amount: number;
+    actorId: string;
+    actorRole: 'professional' | 'admin';
+  }) {
+    const amount = Number(input.amount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException('Transfer amount must be greater than 0');
+    }
+
+    const projectProfessional = await this.prisma.projectProfessional.findFirst({
+      where: {
+        id: input.projectProfessionalId,
+        projectId: input.projectId,
+      },
+      select: {
+        id: true,
+        professionalId: true,
+      },
+    });
+
+    if (!projectProfessional) {
+      throw new NotFoundException('Project professional not found for this project');
+    }
+
+    if (
+      input.actorRole === 'professional' &&
+      projectProfessional.professionalId !== input.actorId
+    ) {
+      throw new ForbiddenException('You can only transfer from your own professional wallet');
+    }
+
+    const walletBefore = await this.getProjectWalletSummary(input.projectId, input.projectProfessionalId);
+    if (amount > Number(walletBefore.professionalAvailable || 0)) {
+      throw new BadRequestException('Transfer amount exceeds available wallet balance');
+    }
+
+    const transaction = await this.prisma.financialTransaction.create({
+      data: {
+        projectId: input.projectId,
+        projectProfessionalId: input.projectProfessionalId,
+        type: 'professional_wallet_transfer',
+        description: 'Professional wallet transfer to external account',
+        amount: new Decimal(amount.toFixed(2)),
+        status: 'confirmed',
+        requestedBy: input.actorId,
+        requestedByRole: input.actorRole,
+        actionBy: input.actorId,
+        actionByRole: input.actorRole,
+        actionAt: new Date(),
+        actionComplete: true,
+      },
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId: transaction.id,
+      action: 'professional_wallet_transfer_completed',
+      actorId: input.actorId,
+      actorRole: input.actorRole,
+      details: 'Professional wallet balance transferred to external account',
+      metadata: {
+        amount: amount.toFixed(2),
+        projectId: input.projectId,
+        projectProfessionalId: input.projectProfessionalId,
+      },
+    });
+
+    const walletSummary = await this.getProjectWalletSummary(input.projectId, input.projectProfessionalId);
+
+    return {
+      transaction,
+      walletSummary,
+    };
+  }
+
   async getProjectWalletSummary(projectId: string, projectProfessionalId?: string | null) {
     const [project, paymentPlan, transactions] = await this.retryWithBackoff(() =>
       this.prisma.$transaction([
@@ -1818,6 +1895,7 @@ export class FinancialService {
 
     let clientFundedTotal = 0;
     let professionalEscrowAllocated = 0;
+    let releasedToProfessionalWallet = 0;
     let professionalPaidOut = 0;
 
     for (const tx of transactions as Array<{ type: string; status: string; amount: unknown; notes?: string | null }>) {
@@ -1836,26 +1914,32 @@ export class FinancialService {
           professionalEscrowAllocated += amount;
         }
         if (status === 'confirmed') {
-          professionalPaidOut += amount;
+          releasedToProfessionalWallet += amount;
         }
       }
 
-      const milestoneMeta = this.parseMilestoneMetadata(tx.notes);
-      if (milestoneMeta?.paymentMilestoneId) {
-        const bucket = txByMilestone.get(milestoneMeta.paymentMilestoneId) || [];
-        bucket.push({
-          type: tx.type,
-          status,
-          amount,
-        });
-        txByMilestone.set(milestoneMeta.paymentMilestoneId, bucket);
+      if (tx.type === 'professional_wallet_transfer' && status === 'confirmed') {
+        professionalPaidOut += amount;
+      }
+
+      if (tx.type === 'release_payment' || tx.type === 'professional_wallet_transfer') {
+        const milestoneMeta = this.parseMilestoneMetadata(tx.notes);
+        if (milestoneMeta?.paymentMilestoneId) {
+          const bucket = txByMilestone.get(milestoneMeta.paymentMilestoneId) || [];
+          bucket.push({
+            type: tx.type,
+            status,
+            amount,
+          });
+          txByMilestone.set(milestoneMeta.paymentMilestoneId, bucket);
+        }
       }
     }
 
-    const professionalAvailable = 0;
-    const clientEscrowHeld = Math.max(clientFundedTotal - professionalPaidOut, 0);
+    const professionalAvailable = Math.max(releasedToProfessionalWallet - professionalPaidOut, 0);
+    const clientEscrowHeld = Math.max(clientFundedTotal - releasedToProfessionalWallet, 0);
     const clientEscrowUnallocated = Math.max(
-      clientEscrowHeld - professionalEscrowAllocated - professionalAvailable,
+      clientEscrowHeld - professionalEscrowAllocated,
       0,
     );
     const remainingToFund = Math.max(contractValue - clientFundedTotal, 0);
@@ -1866,7 +1950,7 @@ export class FinancialService {
       let fundedAmount = 0;
       let allocatedAmount = 0;
       let paidOutAmount = 0;
-      const availableAmount = 0;
+      let availableAmount = 0;
 
       for (const entry of entries) {
         if (
@@ -1879,6 +1963,9 @@ export class FinancialService {
           allocatedAmount += entry.amount;
         }
         if (entry.type === 'release_payment' && entry.status === 'confirmed') {
+          availableAmount += entry.amount;
+        }
+        if (entry.type === 'professional_wallet_transfer' && entry.status === 'confirmed') {
           paidOutAmount += entry.amount;
         }
       }

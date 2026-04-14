@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-14-c6c9744",
+    "date": "2026-04-14T17:44:15+08:00",
+    "title": "feat(wallet): add professional transfer step for available escrow funds",
+    "summary": "feat(wallet): add professional transfer step for available escrow funds",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "c6c9744",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-8f43129",
     "date": "2026-04-14T12:09:48+08:00",
     "title": "feat(financials): add phase-1 professional escrow wallet cashflow view",

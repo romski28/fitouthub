@@ -151,7 +151,8 @@ const getTypeLabel = (type: string) => {
     payment_request: 'Payment Request',
     advance_payment_approval: 'Advance Approved',
     advance_payment_rejection: 'Advance Declined',
-    release_payment: 'Payment Released',
+    release_payment: 'Funds Released To Wallet',
+    professional_wallet_transfer: 'Wallet Transfer Completed',
   };
   return map[type] || type;
 };
@@ -229,6 +230,8 @@ export default function ProjectFinancialsCard({
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpResendCooldown, setOtpResendCooldown] = useState(0);
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferLoading, setTransferLoading] = useState(false);
 
   // Prevent duplicate in-flight requests
   const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[], WalletSummary | null]> | null>(null);
@@ -592,6 +595,64 @@ export default function ProjectFinancialsCard({
     }
   };
 
+  const handleTransferAvailableFunds = async () => {
+    if (resolvedRole !== 'professional') {
+      return;
+    }
+    if (!projectProfessionalId) {
+      toast.error('Missing project professional context');
+      return;
+    }
+
+    const amount = Number(transferAmount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Enter a valid transfer amount');
+      return;
+    }
+    if (amount > cashflow.professionalAvailable) {
+      toast.error('Transfer amount exceeds available balance');
+      return;
+    }
+
+    try {
+      setTransferLoading(true);
+      const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/professional-wallet/transfer`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectProfessionalId,
+          amount,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to transfer wallet funds');
+      }
+
+      const data = await res.json() as {
+        transaction?: Transaction;
+        walletSummary?: WalletSummary;
+      };
+
+      if (data.transaction) {
+        setTransactions((prev) => [data.transaction as Transaction, ...prev]);
+      }
+      if (data.walletSummary) {
+        setWalletSummary(data.walletSummary);
+      }
+      setTransferAmount('');
+      toast.success('Transfer completed');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to transfer wallet funds');
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
   const handleVerifyOtpAndCheckout = async () => {
     if (!otpTransactionId) {
       return;
@@ -789,6 +850,38 @@ export default function ProjectFinancialsCard({
                 </div>
               ))}
             </div>
+
+            {resolvedRole === 'professional' && (
+              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-200">Professional Wallet</p>
+                    <p className="mt-1 text-sm text-emerald-100">
+                      Available to transfer: <span className="font-semibold">{formatHKD(cashflow.professionalAvailable)}</span>
+                    </p>
+                  </div>
+                  <div className="flex w-full gap-2 sm:w-auto">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={transferAmount}
+                      onChange={(event) => setTransferAmount(event.target.value)}
+                      placeholder="Amount"
+                      className="w-full rounded-md border border-emerald-300/40 bg-slate-900 px-3 py-1.5 text-sm text-white sm:w-40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTransferAvailableFunds}
+                      disabled={transferLoading || cashflow.professionalAvailable <= 0}
+                      className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {transferLoading ? 'Transferring...' : 'Transfer'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Payment Plan (Phase A visibility) */}
@@ -895,7 +988,7 @@ export default function ProjectFinancialsCard({
                       <th className="px-3 py-2 text-white font-semibold">Amount</th>
                       <th className="px-3 py-2 text-white font-semibold">Funded</th>
                       <th className="px-3 py-2 text-white font-semibold">Allocated</th>
-                      <th className="px-3 py-2 text-white font-semibold">Paid Out</th>
+                      <th className="px-3 py-2 text-white font-semibold">Available</th>
                       <th className="px-3 py-2 text-white font-semibold">Status</th>
                       {(resolvedRole === 'client') && <th className="px-3 py-2 text-white font-semibold text-right">Action</th>}
                     </tr>
@@ -935,7 +1028,7 @@ export default function ProjectFinancialsCard({
                           <td className="px-3 py-2 text-white font-semibold">{formatHKD(milestone.amount)}</td>
                           <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.fundedAmount || 0)}</td>
                           <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.allocatedAmount || 0)}</td>
-                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.paidOutAmount || 0)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.availableAmount || 0)}</td>
                           <td className="px-3 py-2">
                             <StatusPill
                               status={milestone.status}
