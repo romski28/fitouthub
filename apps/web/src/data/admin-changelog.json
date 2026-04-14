@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-14-9782f22",
+    "date": "2026-04-14T09:56:06+08:00",
+    "title": "feat(phase5): make coverage authoritative with legacy mirror",
+    "summary": "feat(phase5): make coverage authoritative with legacy mirror",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9782f22",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-fcf7479",
     "date": "2026-04-14T09:49:12+08:00",
     "title": "feat(web): polish map layout, bilingual labels, and join-as flow",

@@ -89,6 +89,39 @@ const deriveHighlightedZones = (pro: Professional): string[] => {
   return Array.from(normalizedCodes);
 };
 
+const getProfessionalCoverageTokens = (pro: Professional): string[] => {
+  const tokens = new Set<string>();
+
+  for (const coverage of pro.regionCoverage || []) {
+    const areaName = coverage?.area?.name?.trim().toLowerCase();
+    const areaCode = coverage?.area?.code?.trim().toLowerCase();
+    const zoneLabel = coverage?.zone?.label?.trim().toLowerCase();
+    const zoneCode = coverage?.zone?.code?.trim().toLowerCase();
+    if (areaName) tokens.add(areaName);
+    if (areaCode) tokens.add(areaCode);
+    if (zoneLabel) tokens.add(zoneLabel);
+    if (zoneCode) tokens.add(zoneCode);
+  }
+
+  if (tokens.size > 0) {
+    return Array.from(tokens);
+  }
+
+  const serviceAreasRaw = Array.isArray(pro.serviceArea)
+    ? pro.serviceArea
+    : typeof pro.serviceArea === 'string'
+      ? pro.serviceArea.split(',')
+      : [];
+  const serviceAreas = serviceAreasRaw
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  const locationFields = [pro.locationPrimary, pro.locationSecondary, pro.locationTertiary]
+    .filter(Boolean)
+    .map((l) => l!.toLowerCase());
+
+  return [...serviceAreas, ...locationFields];
+};
+
 const ProfessionalCard = memo(({
   pro,
   onToggle,
@@ -468,22 +501,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         return true;
       }
 
-      // Build list of professional's service areas from both serviceArea string and location fields
-      const serviceAreasRaw = Array.isArray(pro.serviceArea)
-        ? pro.serviceArea
-        : typeof pro.serviceArea === 'string'
-          ? pro.serviceArea.split(',')
-          : [];
-      const serviceAreas = serviceAreasRaw
-        .map((s) => s.trim().toLowerCase())
-        .filter(Boolean);
-
-      // Also include structured location fields
-      const locationFields = [pro.locationPrimary, pro.locationSecondary, pro.locationTertiary]
-        .filter(Boolean)
-        .map((l) => l!.toLowerCase());
-
-      const allAreas = [...serviceAreas, ...locationFields];
+      const allAreas = getProfessionalCoverageTokens(pro);
 
       // If professional has no service area, include them (they serve all areas)
       if (allAreas.length === 0) {
@@ -506,17 +524,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       .map((t) => t!.toLowerCase());
 
     const scoreFor = (pro: Professional) => {
-      const serviceAreasRaw = Array.isArray(pro.serviceArea)
-        ? pro.serviceArea
-        : typeof pro.serviceArea === 'string'
-          ? pro.serviceArea.split(',')
-          : [];
-      const areas = [
-        ...serviceAreasRaw.map((s) => s.trim().toLowerCase()),
-        ...(pro.locationPrimary ? [pro.locationPrimary.toLowerCase()] : []),
-        ...(pro.locationSecondary ? [pro.locationSecondary.toLowerCase()] : []),
-        ...(pro.locationTertiary ? [pro.locationTertiary.toLowerCase()] : []),
-      ].filter(Boolean);
+      const areas = getProfessionalCoverageTokens(pro);
 
       if (areas.length === 0) return -1;
 

@@ -132,6 +132,41 @@ export class ProfessionalController {
     return value.trim();
   }
 
+  private buildLegacyLocationMirrorFromAreas(areas: Array<{ name: string; zone?: { label?: string | null } | null }>) {
+    if (!areas.length) {
+      return {
+        serviceArea: '',
+        locationPrimary: '',
+        locationSecondary: '',
+        locationTertiary: '',
+      };
+    }
+
+    const uniqueAreaNames = Array.from(new Set(areas.map((area) => area.name.trim()).filter(Boolean)));
+    const uniqueZoneLabels = Array.from(
+      new Set(
+        areas
+          .map((area) => (area.zone?.label || '').trim())
+          .filter(Boolean),
+      ),
+    );
+
+    const normalizedZoneSet = new Set(uniqueZoneLabels.map((zone) => zone.toLowerCase()));
+    const primary =
+      normalizedZoneSet.has('new territories east') && normalizedZoneSet.has('new territories west')
+        ? uniqueZoneLabels.filter((zone) => zone.toLowerCase() !== 'new territories east' && zone.toLowerCase() !== 'new territories west').length === 0
+          ? 'New Territories'
+          : uniqueZoneLabels.join(', ')
+        : uniqueZoneLabels.join(', ');
+
+    return {
+      serviceArea: uniqueAreaNames.join(', '),
+      locationPrimary: primary,
+      locationSecondary: uniqueAreaNames.length === 1 ? uniqueAreaNames[0] : '',
+      locationTertiary: '',
+    };
+  }
+
   @Get('me')
   @UseGuards(AuthGuard('jwt-professional'))
   async getProfile(@Request() req: any) {
@@ -298,7 +333,7 @@ export class ProfessionalController {
       const areas = normalizedCoverageAreaCodes.length
         ? await (this.prisma as any).regionArea.findMany({
             where: { code: { in: normalizedCoverageAreaCodes } },
-            select: { id: true, code: true, zoneId: true },
+            select: { id: true, code: true, zoneId: true, name: true, zone: { select: { label: true } } },
           })
         : [];
 
@@ -308,10 +343,20 @@ export class ProfessionalController {
         throw new BadRequestException(`Invalid coverage area codes: ${invalidCodes.join(', ')}`);
       }
 
+      const mirroredLegacy = this.buildLegacyLocationMirrorFromAreas(
+        areas as Array<{ name: string; zone?: { label?: string | null } | null }>,
+      );
+
       updated = await this.prisma.$transaction(async (tx) => {
         const saved = await (tx as any).professional.update({
           where: { id: professionalId },
-          data,
+          data: {
+            ...data,
+            serviceArea: mirroredLegacy.serviceArea,
+            locationPrimary: mirroredLegacy.locationPrimary,
+            locationSecondary: mirroredLegacy.locationSecondary,
+            locationTertiary: mirroredLegacy.locationTertiary,
+          },
         });
 
         await (tx as any).professionalRegionCoverage.deleteMany({
