@@ -246,10 +246,6 @@ export default function AdminProfessionalsPage() {
       rating: parseFloat(formData.rating as string) || 0,
       full_name: formData.fullName || null,
       business_name: formData.businessName || null,
-      service_area: formData.serviceArea || null,
-      location_primary: formData.locationPrimary || null,
-      location_secondary: formData.locationSecondary || null,
-      location_tertiary: formData.locationTertiary || null,
       coverage_area_codes: Array.isArray(formData.coverageAreaCodes)
         ? formData.coverageAreaCodes
         : [],

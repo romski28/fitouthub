@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-98f5023",
+    "date": "2026-04-14T11:11:53+08:00",
+    "title": "chore: legacy location audit - delete orphaned component, trim admin save payload",
+    "summary": "chore: legacy location audit - delete orphaned component, trim admin save payload",
+    "areas": [
+      "web"
+    ],
+    "commit": "98f5023",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-edf4c5d",
     "date": "2026-04-14T10:53:35+08:00",
     "title": "fix(map): scale district map to fit, scroll list only",
