@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-14-99fadf7",
+    "date": "2026-04-14T19:48:32+08:00",
+    "title": "chore(web-financials): tighten SLA relevance to current action owner",
+    "summary": "chore(web-financials): tighten SLA relevance to current action owner",
+    "areas": [
+      "web"
+    ],
+    "commit": "99fadf7",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-14-a488f1f",
     "date": "2026-04-14T19:45:25+08:00",
     "title": "feat(web-financials): role-based SLA UX tuning",

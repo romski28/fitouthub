@@ -316,7 +316,7 @@ export default function ProjectFinancialsCard({
       return actionRole === 'client';
     }
     if (resolvedRole === 'professional') {
-      return actionRole === 'professional' || Boolean(item.projectProfessionalId && item.projectProfessionalId === projectProfessionalId);
+      return actionRole === 'professional';
     }
     return false;
   };
