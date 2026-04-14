@@ -124,6 +124,50 @@ interface WalletSummary {
   milestoneBreakdown: WalletMilestoneBreakdown[];
 }
 
+type SlaMode = 'hours' | 'working_days';
+type SlaCategory =
+  | 'escrow_deposit'
+  | 'upfront_payment'
+  | 'milestone_payment'
+  | 'final_payment'
+  | 'cancellation_payment'
+  | 'retention_release';
+
+interface SlaRule {
+  mode: SlaMode;
+  value: number;
+}
+
+type SlaCategoryPolicy = Record<SlaCategory, SlaRule>;
+
+interface SlaPolicyResponse {
+  projectId: string;
+  projectScale: string;
+  effectivePolicy: SlaCategoryPolicy;
+  overrides: Partial<SlaCategoryPolicy>;
+}
+
+interface SlaStatusItem {
+  transactionId: string;
+  projectProfessionalId?: string | null;
+  type: string;
+  amount: number;
+  actionByRole?: string | null;
+  slaCategory: SlaCategory;
+  slaRule: SlaRule;
+  slaStartsAt: string;
+  slaDueAt: string;
+  slaStatus: 'on_track' | 'at_risk' | 'breached';
+  hoursRemaining: number;
+}
+
+interface SlaStatusResponse {
+  projectId: string;
+  projectScale: string;
+  effectivePolicy: SlaCategoryPolicy;
+  items: SlaStatusItem[];
+}
+
 interface ProjectFinancialsCardProps {
   projectId: string;
   projectProfessionalId?: string;
@@ -200,6 +244,27 @@ const deriveRoleFromToken = (token?: string | null): ProjectFinancialRole | null
   return null;
 };
 
+const SLA_CATEGORIES: SlaCategory[] = [
+  'escrow_deposit',
+  'upfront_payment',
+  'milestone_payment',
+  'final_payment',
+  'cancellation_payment',
+  'retention_release',
+];
+
+const SLA_LABEL_BY_CATEGORY: Record<SlaCategory, string> = {
+  escrow_deposit: 'Escrow Deposit',
+  upfront_payment: 'Upfront Payment',
+  milestone_payment: 'Milestone Payment',
+  final_payment: 'Final Payment',
+  cancellation_payment: 'Cancellation Payment',
+  retention_release: 'Retention Release',
+};
+
+const HOURS_OPTIONS = [12, 24, 36, 48, 72, 96];
+const WORKING_DAY_OPTIONS = [1, 2, 3, 4, 5];
+
 export default function ProjectFinancialsCard({
   projectId,
   projectProfessionalId,
@@ -233,9 +298,13 @@ export default function ProjectFinancialsCard({
   const [otpResendCooldown, setOtpResendCooldown] = useState(0);
   const [transferAmount, setTransferAmount] = useState('');
   const [transferLoading, setTransferLoading] = useState(false);
+  const [slaPolicy, setSlaPolicy] = useState<SlaPolicyResponse | null>(null);
+  const [slaStatusByTxId, setSlaStatusByTxId] = useState<Record<string, SlaStatusItem>>({});
+  const [slaDraft, setSlaDraft] = useState<Partial<SlaCategoryPolicy> | null>(null);
+  const [slaSaving, setSlaSaving] = useState(false);
 
   // Prevent duplicate in-flight requests
-  const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[], WalletSummary | null]> | null>(null);
+  const requestInFlightRef = useRef<Promise<readonly [Summary, Transaction[], WalletSummary | null, SlaPolicyResponse | null, SlaStatusResponse | null]> | null>(null);
 
   // Tracks whether financials have been loaded at least once.
   // Prevents the loading spinner from re-appearing on background token-refresh re-fetches,
@@ -300,9 +369,13 @@ export default function ProjectFinancialsCard({
     const load = async () => {
       try {
         if (requestInFlightRef.current) {
-          const [, txData, walletData] = await requestInFlightRef.current;
+          const [, txData, walletData, policyData, statusData] = await requestInFlightRef.current;
           setTransactions(txData);
           setWalletSummary(walletData);
+          setSlaPolicy(policyData);
+          setSlaStatusByTxId(
+            Object.fromEntries((statusData?.items || []).map((item) => [item.transactionId, item]))
+          );
           return;
         }
 
@@ -317,7 +390,12 @@ export default function ProjectFinancialsCard({
             walletUrl.searchParams.set('projectProfessionalId', projectProfessionalId);
           }
 
-          const [summaryRes, txRes, projectRes, paymentPlanRes, walletRes] = await Promise.all([
+          const slaPolicyUrl = `${API_BASE_URL}/financial/project/${projectId}/sla-policy`;
+          const slaStatusUrl = projectProfessionalId
+            ? `${API_BASE_URL}/financial/project/${projectId}/sla-status?projectProfessionalId=${encodeURIComponent(projectProfessionalId)}`
+            : `${API_BASE_URL}/financial/project/${projectId}/sla-status`;
+
+          const [summaryRes, txRes, projectRes, paymentPlanRes, walletRes, slaPolicyRes, slaStatusRes] = await Promise.all([
             fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
@@ -333,6 +411,12 @@ export default function ProjectFinancialsCard({
             fetch(walletUrl.toString(), {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
+            fetch(slaPolicyUrl, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            fetch(slaStatusUrl, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
           ]);
 
           if (!summaryRes.ok || !txRes.ok) {
@@ -344,6 +428,8 @@ export default function ProjectFinancialsCard({
           const projectData = projectRes.ok ? await projectRes.json() : null;
           const paymentPlanData = paymentPlanRes.ok ? await paymentPlanRes.json() : null;
           const walletData: WalletSummary | null = walletRes.ok ? await walletRes.json() : null;
+          const policyData: SlaPolicyResponse | null = slaPolicyRes.ok ? await slaPolicyRes.json() : null;
+          const statusData: SlaStatusResponse | null = slaStatusRes.ok ? await slaStatusRes.json() : null;
           
           if (projectData?.escrowHeld !== undefined) {
             setProjectEscrowHeld(projectData.escrowHeld);
@@ -351,17 +437,25 @@ export default function ProjectFinancialsCard({
 
           setPaymentPlan(paymentPlanData);
           setWalletSummary(walletData);
+          setSlaPolicy(policyData);
+          setSlaStatusByTxId(
+            Object.fromEntries((statusData?.items || []).map((item) => [item.transactionId, item]))
+          );
           
-          return [summaryData, txData, walletData] as const;
+          return [summaryData, txData, walletData, policyData, statusData] as const;
         })();
 
         setPaymentPlanLoading(true);
         requestInFlightRef.current = combinedPromise;
-        const [, txData, walletData] = await combinedPromise;
+        const [, txData, walletData, policyData, statusData] = await combinedPromise;
         console.log('[ProjectFinancials] Loaded transactions:', txData);
         hasLoadedRef.current = true;
         setTransactions(txData);
         setWalletSummary(walletData);
+        setSlaPolicy(policyData);
+        setSlaStatusByTxId(
+          Object.fromEntries((statusData?.items || []).map((item) => [item.transactionId, item]))
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load financials');
       } finally {
@@ -401,6 +495,11 @@ export default function ProjectFinancialsCard({
     return () => window.clearInterval(timer);
   }, [showOtpModal, otpResendCooldown]);
 
+  useEffect(() => {
+    if (!slaPolicy?.effectivePolicy) return;
+    setSlaDraft(slaPolicy.effectivePolicy);
+  }, [slaPolicy?.projectId]);
+
   const reloadPaymentPlan = async () => {
     try {
       const paymentPlanRes = await fetch(`${API_BASE_URL}/projects/${projectId}/payment-plan`, {
@@ -410,6 +509,39 @@ export default function ProjectFinancialsCard({
       setPaymentPlan(paymentPlanData);
     } catch {
       // keep previous state
+    }
+  };
+
+  const handleSaveSlaPolicy = async () => {
+    if (resolvedRole !== 'admin') return;
+    if (!slaDraft) return;
+
+    setSlaSaving(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/financial/project/${projectId}/sla-policy`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          categories: slaDraft,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to save SLA policy');
+      }
+
+      const updated: SlaPolicyResponse = await response.json();
+      setSlaPolicy(updated);
+      setSlaDraft(updated.effectivePolicy);
+      toast.success('SLA policy updated');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save SLA policy');
+    } finally {
+      setSlaSaving(false);
     }
   };
 
@@ -777,38 +909,32 @@ export default function ProjectFinancialsCard({
 
     const segments = [
       {
+        key: 'client-wallet',
+        label: 'Client Wallet',
+        amount: cashflow.clientEscrowUnallocated,
+        className: 'bg-blue-400',
+      },
+      {
+        key: 'available',
+        label: 'Ready for Professional Transfer',
+        amount: cashflow.professionalAvailable,
+        className: 'bg-emerald-400',
+      },
+      {
+        key: 'professional-wallet',
+        label: 'Professional Wallet',
+        amount: cashflow.professionalEscrowAllocated + cashflow.professionalInPayoutProcessing,
+        className: 'bg-amber-400',
+      },
+      {
         key: 'paid-out',
         label: 'Paid Out',
         amount: cashflow.professionalPaidOut,
         className: 'bg-emerald-600',
       },
       {
-        key: 'available',
-        label: 'Available To Transfer',
-        amount: cashflow.professionalAvailable,
-        className: 'bg-emerald-400',
-      },
-      {
-        key: 'processing',
-        label: 'In Payout Processing',
-        amount: cashflow.professionalInPayoutProcessing,
-        className: 'bg-violet-400',
-      },
-      {
-        key: 'allocated',
-        label: 'In Escrow For Professional',
-        amount: cashflow.professionalEscrowAllocated,
-        className: 'bg-amber-400',
-      },
-      {
-        key: 'project-escrow',
-        label: 'In Client/Project Escrow',
-        amount: cashflow.clientEscrowUnallocated,
-        className: 'bg-blue-400',
-      },
-      {
         key: 'remaining',
-        label: 'Remaining To Fund',
+        label: 'Remainder to Fund',
         amount: cashflow.remainingToFund,
         className: 'bg-slate-600',
       },
@@ -868,14 +994,14 @@ export default function ProjectFinancialsCard({
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               {cashflowSegments.map((segment) => (
                 <div key={`legend-${segment.key}`} className="rounded-md border border-slate-700 bg-slate-900/60 p-2">
-                  <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-white">{formatHKD(segment.amount)}</p>
+                  <div className="mt-1 flex items-center gap-2">
                     <span className={`inline-block h-2 w-2 rounded-full ${segment.className}`} />
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-300">{segment.label}</p>
+                    <p className="text-[10px] font-normal text-slate-300">{segment.label}</p>
                   </div>
-                  <p className="mt-1 text-sm font-semibold text-white">{formatHKD(segment.amount)}</p>
                 </div>
               ))}
             </div>
@@ -939,6 +1065,77 @@ export default function ProjectFinancialsCard({
                   <p className="text-sm font-semibold text-white mt-1">{formatHKD(paymentPlan.totalAmount)}</p>
                 </div>
               </div>
+
+              {resolvedRole === 'admin' && slaDraft && (
+                <div className="rounded-md border border-indigo-500/30 bg-indigo-500/10 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-white">SLA Policy</h4>
+                      <p className="text-xs text-indigo-100 mt-1">Configure response windows per payment category for this project.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSaveSlaPolicy}
+                      disabled={slaSaving}
+                      className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {slaSaving ? 'Saving...' : 'Save SLA'}
+                    </button>
+                  </div>
+                  <div className="grid gap-2">
+                    {SLA_CATEGORIES.map((category) => {
+                      const rule = slaDraft[category] || { mode: 'hours' as SlaMode, value: 24 };
+                      const valueOptions = rule.mode === 'hours' ? HOURS_OPTIONS : WORKING_DAY_OPTIONS;
+                      return (
+                        <div key={category} className="grid gap-2 rounded-md border border-indigo-400/20 bg-slate-900/40 p-2 sm:grid-cols-[minmax(0,1fr),120px,120px] sm:items-center">
+                          <p className="text-xs text-white">{SLA_LABEL_BY_CATEGORY[category]}</p>
+                          <select
+                            value={rule.mode}
+                            onChange={(event) => {
+                              const mode = event.target.value as SlaMode;
+                              setSlaDraft((prev) => {
+                                const base = prev || {};
+                                const nextValue = mode === 'hours' ? 24 : 3;
+                                return {
+                                  ...base,
+                                  [category]: {
+                                    mode,
+                                    value: nextValue,
+                                  },
+                                };
+                              });
+                            }}
+                            className="rounded-md border border-indigo-300/40 bg-slate-900 px-2 py-1 text-xs text-white"
+                          >
+                            <option value="hours">Hours</option>
+                            <option value="working_days">Working days</option>
+                          </select>
+                          <select
+                            value={rule.value}
+                            onChange={(event) => {
+                              const value = Number(event.target.value);
+                              setSlaDraft((prev) => ({
+                                ...(prev || {}),
+                                [category]: {
+                                  mode: rule.mode,
+                                  value,
+                                },
+                              }));
+                            }}
+                            className="rounded-md border border-indigo-300/40 bg-slate-900 px-2 py-1 text-xs text-white"
+                          >
+                            {valueOptions.map((value) => (
+                              <option key={`${category}-${rule.mode}-${value}`} value={value}>
+                                {rule.mode === 'hours' ? `${value}h` : `${value}d`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {paymentPlan.projectScale === 'SCALE_3' && (
                 <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-3">
@@ -1155,6 +1352,7 @@ export default function ProjectFinancialsCard({
                   const userMatches = tx.actionBy && user?.id === tx.actionBy;
                   const highlightActor = !tx.actionComplete && (roleMatches || userMatches);
                   const isInfo = statusKey === 'info';
+                  const slaItem = slaStatusByTxId[tx.id];
 
                   const actionButton = () => {
                     if (isInfo) {
@@ -1262,10 +1460,26 @@ export default function ProjectFinancialsCard({
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-white">{getTypeLabel(tx.type)}</span>
+                            {slaItem && (
+                              <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                slaItem.slaStatus === 'breached'
+                                  ? 'bg-rose-500/20 text-rose-200'
+                                  : slaItem.slaStatus === 'at_risk'
+                                    ? 'bg-amber-500/20 text-amber-200'
+                                    : 'bg-emerald-500/20 text-emerald-200'
+                              }`}>
+                                SLA: {slaItem.slaStatus.replace('_', ' ')}
+                              </span>
+                            )}
                           </div>
                           {tx.auditSummary?.latestAction && (
                             <span className="inline-flex w-fit items-center rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-200">
                               Last audited: {formatAuditActionLabel(tx.auditSummary.latestAction)}
+                            </span>
+                          )}
+                          {slaItem && (
+                            <span className="inline-flex w-fit items-center rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-medium text-indigo-100">
+                              Due: {new Date(slaItem.slaDueAt).toLocaleString('en-HK')} ({slaItem.slaRule.value}{slaItem.slaRule.mode === 'hours' ? 'h' : 'd'})
                             </span>
                           )}
                         </div>
