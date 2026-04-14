@@ -121,6 +121,53 @@ export class FinancialController {
   }
 
   /**
+   * GET /financial/project/:projectId/sla-policy - Get project SLA policy
+   */
+  @Get('project/:projectId/sla-policy')
+  @UseGuards(CombinedAuthGuard)
+  async getProjectSlaPolicy(@Param('projectId') projectId: string) {
+    return this.financialService.getProjectSlaPolicy(projectId);
+  }
+
+  /**
+   * PUT /financial/project/:projectId/sla-policy - Upsert project SLA policy overrides
+   * Admin only
+   */
+  @Put('project/:projectId/sla-policy')
+  @UseGuards(AuthGuard('jwt'))
+  async upsertProjectSlaPolicy(
+    @Param('projectId') projectId: string,
+    @Body()
+    body: {
+      categories?: Record<
+        string,
+        {
+          mode: 'hours' | 'working_days';
+          value: number;
+        }
+      >;
+    },
+    @Request() req: any,
+  ) {
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only admins can update SLA policy');
+    }
+    return this.financialService.upsertProjectSlaPolicy(projectId, body || {});
+  }
+
+  /**
+   * GET /financial/project/:projectId/sla-status - Get SLA status for pending financial actions
+   */
+  @Get('project/:projectId/sla-status')
+  @UseGuards(CombinedAuthGuard)
+  async getProjectSlaStatus(
+    @Param('projectId') projectId: string,
+    @Query('projectProfessionalId') projectProfessionalId?: string,
+  ) {
+    return this.financialService.getProjectSlaStatus(projectId, projectProfessionalId);
+  }
+
+  /**
    * GET /financial/project/:projectId/statement - Get escrow statement (ledger) for a project
    * Requires authentication
    */

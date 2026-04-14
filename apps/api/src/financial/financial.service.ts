@@ -37,6 +37,27 @@ export interface UpdateFinancialTransactionDto {
   notes?: string;
 }
 
+type SlaMode = 'hours' | 'working_days';
+type SlaCategory =
+  | 'escrow_deposit'
+  | 'upfront_payment'
+  | 'milestone_payment'
+  | 'final_payment'
+  | 'cancellation_payment'
+  | 'retention_release';
+
+type SlaRule = {
+  mode: SlaMode;
+  value: number;
+};
+
+type SlaCategoryPolicy = Record<SlaCategory, SlaRule>;
+
+type StoredSlaPolicy = {
+  version: 1;
+  categories: Partial<SlaCategoryPolicy>;
+};
+
 @Injectable()
 export class FinancialService {
   constructor(
@@ -46,6 +67,143 @@ export class FinancialService {
     private notificationService: NotificationService,
     private stripePaymentsService: StripePaymentsService,
   ) {}
+
+  private readonly slaMarker = '__FOH_SLA_POLICY__';
+  private readonly allowedHourIncrements = new Set([12, 24, 36, 48, 72, 96]);
+  private readonly allowedWorkingDayIncrements = new Set([1, 2, 3, 4, 5]);
+
+  private getDefaultSlaByScale(scale?: string | null): SlaCategoryPolicy {
+    const normalized = String(scale || 'SCALE_1').toUpperCase();
+    const base: SlaRule =
+      normalized === 'SCALE_3'
+        ? { mode: 'working_days', value: 3 }
+        : normalized === 'SCALE_2'
+          ? { mode: 'hours', value: 48 }
+          : { mode: 'hours', value: 24 };
+
+    return {
+      escrow_deposit: { ...base },
+      upfront_payment: { ...base },
+      milestone_payment: { ...base },
+      final_payment: { ...base },
+      cancellation_payment: { ...base },
+      retention_release: { ...base },
+    };
+  }
+
+  private parseStoredSlaPolicy(adminComment?: string | null): StoredSlaPolicy | null {
+    if (!adminComment) return null;
+    const index = adminComment.indexOf(this.slaMarker);
+    if (index < 0) return null;
+    const payload = adminComment.slice(index + this.slaMarker.length).trim();
+    if (!payload) return null;
+    try {
+      const parsed = JSON.parse(payload);
+      if (parsed && typeof parsed === 'object') {
+        return parsed as StoredSlaPolicy;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  private stripSlaPolicyMarker(adminComment?: string | null) {
+    if (!adminComment) return '';
+    const index = adminComment.indexOf(this.slaMarker);
+    if (index < 0) return adminComment.trim();
+    return adminComment.slice(0, index).trim();
+  }
+
+  private mergeSlaPolicy(scale: string | null | undefined, stored?: StoredSlaPolicy | null): SlaCategoryPolicy {
+    const defaults = this.getDefaultSlaByScale(scale);
+    if (!stored?.categories) return defaults;
+
+    const merged = { ...defaults };
+    (Object.keys(stored.categories) as SlaCategory[]).forEach((key) => {
+      const rule = stored.categories[key];
+      if (!rule) return;
+      if ((rule.mode !== 'hours' && rule.mode !== 'working_days') || !Number.isFinite(rule.value)) return;
+      merged[key] = {
+        mode: rule.mode,
+        value: Math.max(1, Math.floor(Number(rule.value))),
+      };
+    });
+    return merged;
+  }
+
+  private validateSlaCategories(categories?: Record<string, { mode: SlaMode; value: number }>) {
+    if (!categories || typeof categories !== 'object') return;
+
+    const allowedKeys: SlaCategory[] = [
+      'escrow_deposit',
+      'upfront_payment',
+      'milestone_payment',
+      'final_payment',
+      'cancellation_payment',
+      'retention_release',
+    ];
+
+    for (const [rawKey, rawRule] of Object.entries(categories)) {
+      if (!allowedKeys.includes(rawKey as SlaCategory)) {
+        throw new BadRequestException(`Unsupported SLA category: ${rawKey}`);
+      }
+      if (!rawRule || (rawRule.mode !== 'hours' && rawRule.mode !== 'working_days')) {
+        throw new BadRequestException(`Invalid SLA mode for category ${rawKey}`);
+      }
+      const value = Math.floor(Number(rawRule.value));
+      if (!Number.isFinite(value) || value <= 0) {
+        throw new BadRequestException(`Invalid SLA value for category ${rawKey}`);
+      }
+      if (rawRule.mode === 'hours' && !this.allowedHourIncrements.has(value)) {
+        throw new BadRequestException(`SLA hours for ${rawKey} must be one of 12,24,36,48,72,96`);
+      }
+      if (rawRule.mode === 'working_days' && !this.allowedWorkingDayIncrements.has(value)) {
+        throw new BadRequestException(`SLA working days for ${rawKey} must be one of 1,2,3,4,5`);
+      }
+    }
+  }
+
+  private addWorkingDays(startAt: Date, days: number): Date {
+    const result = new Date(startAt);
+    let remaining = Math.max(0, Math.floor(days));
+    while (remaining > 0) {
+      result.setDate(result.getDate() + 1);
+      const day = result.getDay();
+      if (day !== 0 && day !== 6) {
+        remaining -= 1;
+      }
+    }
+    return result;
+  }
+
+  private resolveSlaCategoryForTransaction(input: {
+    type: string;
+    notes?: string | null;
+    amount: number;
+    planTotal: number;
+    retentionReleaseAt?: Date | null;
+  }): SlaCategory | null {
+    const type = String(input.type || '').toLowerCase();
+    if (type === 'escrow_deposit' || type === 'escrow_deposit_confirmation' || type === 'escrow_deposit_request') {
+      return 'escrow_deposit';
+    }
+    if (type === 'retention_release') {
+      return 'retention_release';
+    }
+    if (type === 'cancellation_payment') {
+      return 'cancellation_payment';
+    }
+    if (type === 'payment_request' || type === 'release_payment') {
+      const meta = this.parseMilestoneMetadata(input.notes);
+      if (meta?.milestoneSequence === 1) return 'upfront_payment';
+      if (meta?.milestoneTitle && /final|completion/i.test(meta.milestoneTitle)) return 'final_payment';
+      if (meta?.paymentMilestoneId) return 'milestone_payment';
+      if (input.planTotal > 0 && input.amount >= input.planTotal * 0.95) return 'final_payment';
+      return 'milestone_payment';
+    }
+    return null;
+  }
 
   private appendNote(existing: string | null | undefined, extra: string) {
     const trimmedExtra = String(extra || '').trim();
@@ -1637,6 +1795,170 @@ export class FinancialService {
       projectName: m.paymentPlan?.project?.projectName,
       paymentPlanId: m.paymentPlanId,
     }));
+  }
+
+  async getProjectSlaPolicy(projectId: string) {
+    const plan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+      select: {
+        projectScale: true,
+        adminComment: true,
+      },
+    });
+
+    const project = !plan
+      ? await this.prisma.project.findUnique({
+          where: { id: projectId },
+          select: { projectScale: true },
+        })
+      : null;
+
+    if (!plan && !project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const scale = String(plan?.projectScale || project?.projectScale || 'SCALE_1');
+    const stored = this.parseStoredSlaPolicy(plan?.adminComment);
+    const effectivePolicy = this.mergeSlaPolicy(scale, stored);
+
+    return {
+      projectId,
+      projectScale: scale,
+      effectivePolicy,
+      overrides: stored?.categories || {},
+    };
+  }
+
+  async upsertProjectSlaPolicy(
+    projectId: string,
+    body: {
+      categories?: Record<string, { mode: SlaMode; value: number }>;
+    },
+  ) {
+    this.validateSlaCategories(body.categories);
+
+    const plan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+      select: {
+        id: true,
+        projectScale: true,
+        adminComment: true,
+      },
+    });
+
+    if (!plan) {
+      throw new BadRequestException('Payment plan must exist before setting project SLA policy');
+    }
+
+    const stored: StoredSlaPolicy = {
+      version: 1,
+      categories: (body.categories || {}) as Partial<SlaCategoryPolicy>,
+    };
+
+    const cleanComment = this.stripSlaPolicyMarker(plan.adminComment);
+    const nextComment = [
+      cleanComment || null,
+      `${this.slaMarker}${JSON.stringify(stored)}`,
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+
+    await (this.prisma as any).projectPaymentPlan.update({
+      where: { id: plan.id },
+      data: {
+        adminComment: nextComment,
+      },
+    });
+
+    return this.getProjectSlaPolicy(projectId);
+  }
+
+  async getProjectSlaStatus(projectId: string, projectProfessionalId?: string | null) {
+    const policy = await this.getProjectSlaPolicy(projectId);
+
+    const plan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+      select: {
+        totalAmount: true,
+        retentionReleaseAt: true,
+      },
+    });
+
+    const transactions = await this.prisma.financialTransaction.findMany({
+      where: {
+        projectId,
+        ...(projectProfessionalId ? { projectProfessionalId } : {}),
+        status: 'pending',
+        actionComplete: false,
+      },
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+        createdAt: true,
+        notes: true,
+        actionByRole: true,
+        projectProfessionalId: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const now = new Date();
+    const planTotal = Number(plan?.totalAmount || 0);
+
+    const rows = transactions
+      .map((tx) => {
+        const amount = Number(tx.amount || 0);
+        const category = this.resolveSlaCategoryForTransaction({
+          type: tx.type,
+          notes: tx.notes,
+          amount,
+          planTotal,
+          retentionReleaseAt: plan?.retentionReleaseAt || null,
+        });
+
+        if (!category) return null;
+        const rule = policy.effectivePolicy[category];
+        if (!rule) return null;
+
+        const startsAt = new Date(tx.createdAt);
+        const dueAt =
+          rule.mode === 'hours'
+            ? new Date(startsAt.getTime() + rule.value * 60 * 60 * 1000)
+            : this.addWorkingDays(startsAt, rule.value);
+
+        const totalMs = dueAt.getTime() - startsAt.getTime();
+        const elapsedMs = now.getTime() - startsAt.getTime();
+
+        const slaStatus: 'on_track' | 'at_risk' | 'breached' =
+          now > dueAt
+            ? 'breached'
+            : totalMs > 0 && elapsedMs / totalMs >= 0.8
+              ? 'at_risk'
+              : 'on_track';
+
+        return {
+          transactionId: tx.id,
+          projectProfessionalId: tx.projectProfessionalId,
+          type: tx.type,
+          amount,
+          actionByRole: tx.actionByRole,
+          slaCategory: category,
+          slaRule: rule,
+          slaStartsAt: startsAt,
+          slaDueAt: dueAt,
+          slaStatus,
+          hoursRemaining: Number(((dueAt.getTime() - now.getTime()) / (1000 * 60 * 60)).toFixed(2)),
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      projectId,
+      projectScale: policy.projectScale,
+      effectivePolicy: policy.effectivePolicy,
+      items: rows,
+    };
   }
 
   /**

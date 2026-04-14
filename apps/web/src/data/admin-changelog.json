@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-14-6d2802b",
+    "date": "2026-04-14T19:06:12+08:00",
+    "title": "feat(financial): add project SLA policy + status endpoints (no schema changes)",
+    "summary": "feat(financial): add project SLA policy + status endpoints (no schema changes)",
+    "areas": [
+      "api",
+      "infra"
+    ],
+    "commit": "6d2802b",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "docs/professional-escrow-wallet-spec.md"
+    ]
+  },
+  {
     "id": "2026-04-14-8f7a4c3",
     "date": "2026-04-14T17:53:18+08:00",
     "title": "feat(wallet): add payout-processing stage before paid out",
