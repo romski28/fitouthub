@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-69e3e25",
+    "date": "2026-04-15T11:48:28+08:00",
+    "title": "fix(api): harden admin project deletion cleanup",
+    "summary": "fix(api): harden admin project deletion cleanup",
+    "areas": [
+      "api"
+    ],
+    "commit": "69e3e25",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-15-116182c",
     "date": "2026-04-15T11:22:47+08:00",
     "title": "feat(web): add interactive project sentiment badge and hide professional assist badge",

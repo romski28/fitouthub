@@ -5335,46 +5335,213 @@ Please review the project details and respond with your quote or decline the inv
   async hardRemove(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
-      select: { notes: true },
+      select: {
+        notes: true,
+        photos: {
+          select: {
+            url: true,
+            note: true,
+          },
+        },
+        milestones: {
+          select: {
+            notes: true,
+            photoUrls: true,
+          },
+        },
+        locationDetails: {
+          select: {
+            photoUrls: true,
+          },
+        },
+        assistRequests: {
+          select: {
+            id: true,
+            notes: true,
+            messages: {
+              select: {
+                content: true,
+              },
+            },
+          },
+        },
+        chatThread: {
+          select: {
+            id: true,
+            messages: {
+              select: {
+                content: true,
+                attachments: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    if (project?.notes) {
-      await this.deleteProjectFiles(project.notes);
-    }
-
-    return this.prisma.project.delete({
-      where: { id },
+    const supportRequests = await this.prisma.supportRequest.findMany({
+      where: { projectId: id },
+      select: {
+        id: true,
+        body: true,
+        notes: true,
+        replies: true,
+      },
     });
+
+    const privateThreads = await this.prisma.privateChatThread.findMany({
+      where: { projectId: id },
+      select: {
+        id: true,
+        messages: {
+          select: {
+            content: true,
+            attachments: true,
+          },
+        },
+      },
+    });
+
+    const assistIds = project?.assistRequests?.map((request) => request.id) || [];
+    const supportIds = supportRequests.map((request) => request.id);
+    const privateIds = privateThreads.map((thread) => thread.id);
+    const projectThreadIds = project?.chatThread?.id ? [project.chatThread.id] : [];
+
+    const assignmentFilters: Array<{ sourceType: string; sourceId: string }> = [
+      { sourceType: 'project', sourceId: id },
+      ...assistIds.map((sourceId) => ({ sourceType: 'assist', sourceId })),
+      ...supportIds.map((sourceId) => ({ sourceType: 'support', sourceId })),
+      ...privateIds.map((sourceId) => ({ sourceType: 'private', sourceId })),
+      ...projectThreadIds.map((sourceId) => ({ sourceType: 'project', sourceId })),
+    ];
+
+    const caseWhereOr: Array<Record<string, string>> = [{ projectId: id }];
+    assistIds.forEach((assistRequestId) => caseWhereOr.push({ assistRequestId }));
+    supportIds.forEach((supportRequestId) => caseWhereOr.push({ supportRequestId }));
+    privateIds.forEach((privateChatId) => caseWhereOr.push({ privateChatId }));
+
+    const fileCandidates: unknown[] = [
+      project?.notes,
+      ...(project?.photos || []).flatMap((photo) => [photo.url, photo.note]),
+      ...(project?.milestones || []).flatMap((milestone) => [milestone.notes, milestone.photoUrls]),
+      project?.locationDetails?.photoUrls,
+      ...(project?.assistRequests || []).flatMap((request) => [
+        request.notes,
+        request.messages.map((message) => message.content),
+      ]),
+      ...(project?.chatThread?.messages || []).flatMap((message) => [message.content, message.attachments]),
+      ...supportRequests.flatMap((request) => [request.body, request.notes, request.replies]),
+      ...privateThreads.flatMap((thread) =>
+        thread.messages.flatMap((message) => [message.content, message.attachments]),
+      ),
+    ];
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      if (assignmentFilters.length > 0) {
+        await tx.adminMessageAssignment.deleteMany({
+          where: {
+            OR: assignmentFilters,
+          },
+        });
+      }
+
+      if (caseWhereOr.length > 0) {
+        await (tx as any).case.deleteMany({
+          where: {
+            OR: caseWhereOr,
+          },
+        });
+      }
+
+      if (supportIds.length > 0) {
+        await tx.supportRequest.deleteMany({
+          where: {
+            id: { in: supportIds },
+          },
+        });
+      }
+
+      if (privateIds.length > 0) {
+        await tx.privateChatThread.deleteMany({
+          where: {
+            id: { in: privateIds },
+          },
+        });
+      }
+
+      await (tx as any).activityLog.deleteMany({
+        where: {
+          resource: 'Project',
+          resourceId: id,
+        },
+      });
+
+      return tx.project.delete({
+        where: { id },
+      });
+    });
+
+    await this.deleteProjectFiles(fileCandidates);
+
+    return result;
   }
 
-  private async deleteProjectFiles(notes: string) {
-    const uploadsRoot = resolve(process.cwd(), 'uploads');
-    const matches =
-      notes.match(/(https?:\/\/[^\s,;]+|\/uploads\/[^\s,;]+)/g) || [];
-
-    const files = matches
-      .map((url) => {
-        const idx = url.indexOf('/uploads/');
-        if (idx === -1) return null;
-        const relative = url.slice(idx + '/uploads/'.length);
-        if (!relative) return null;
-        const target = resolve(uploadsRoot, relative);
-        // Prevent path traversal
-        if (!target.startsWith(uploadsRoot)) return null;
-        return target;
-      })
-      .filter((p): p is string => Boolean(p));
+  private async deleteProjectFiles(values: unknown[]) {
+    const files = this.extractUploadFilepaths(values);
+    if (files.length === 0) {
+      return;
+    }
 
     await Promise.all(
       files.map(async (filepath) => {
         try {
           await fs.unlink(filepath);
         } catch (err) {
-          // Ignore missing files or permission issues to avoid blocking deletion
           return;
         }
       }),
     );
+  }
+
+  private extractUploadFilepaths(values: unknown[]): string[] {
+    const uploadsRoot = resolve(process.cwd(), 'uploads');
+    const filepaths = new Set<string>();
+
+    const visit = (value: unknown) => {
+      if (value == null) return;
+
+      if (typeof value === 'string') {
+        const matches = value.match(/(https?:\/\/[^\s,;"')]+|\/uploads\/[^\s,;"')]+)/g) || [];
+        matches.forEach((raw) => {
+          const uploadIndex = raw.indexOf('/uploads/');
+          if (uploadIndex === -1) return;
+
+          const relative = raw
+            .slice(uploadIndex + '/uploads/'.length)
+            .split(/[?#]/)[0]
+            .trim();
+          if (!relative) return;
+
+          const target = resolve(uploadsRoot, relative);
+          if (!target.startsWith(uploadsRoot)) return;
+
+          filepaths.add(target);
+        });
+        return;
+      }
+
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+
+      if (typeof value === 'object') {
+        Object.values(value as Record<string, unknown>).forEach(visit);
+      }
+    };
+
+    values.forEach(visit);
+    return Array.from(filepaths);
   }
 
   // Removed payInvoice flow; payments are handled via escrow and payment requests
