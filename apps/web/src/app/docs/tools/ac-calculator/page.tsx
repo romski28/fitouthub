@@ -17,6 +17,7 @@ import {
 
 type SavedAcProject = {
   id: string;
+  updatedAt?: string;
   title: string;
   notes?: string | null;
   calculationMethod: CalculationMethod;
@@ -64,6 +65,31 @@ type DraftRoom = {
   largeWindows: boolean;
 };
 
+type DraftFieldErrors = {
+  name: string;
+  lengthMeters: string;
+  widthMeters: string;
+  heightMeters: string;
+  occupants: string;
+};
+
+type ShareableSnapshot = {
+  title: string;
+  notes: string;
+  combineRooms: boolean;
+  rooms: Array<{
+    name: string;
+    lengthMeters: number;
+    widthMeters: number;
+    heightMeters: number;
+    heatProfile: HeatProfile;
+    occupants: number;
+    floor?: number;
+    westFacing: boolean;
+    largeWindows: boolean;
+  }>;
+};
+
 const createDraftRoom = (): DraftRoom => ({
   name: '',
   lengthMeters: '',
@@ -83,9 +109,55 @@ const parsePositiveNumber = (value: string): number | null => {
 };
 
 const parseOccupants = (value: string): number | null => {
+  if (!value.trim()) return null;
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 1) return null;
   return Math.max(1, Math.round(parsed));
+};
+
+const validateDraftRoom = (draft: DraftRoom): { canAdd: boolean; errors: DraftFieldErrors } => {
+  const errors: DraftFieldErrors = {
+    name: draft.name.trim() ? '' : 'Room name is required.',
+    lengthMeters: parsePositiveNumber(draft.lengthMeters) !== null ? '' : 'Length must be greater than 0.',
+    widthMeters: parsePositiveNumber(draft.widthMeters) !== null ? '' : 'Width must be greater than 0.',
+    heightMeters: parsePositiveNumber(draft.heightMeters) !== null ? '' : 'Height must be greater than 0.',
+    occupants: parseOccupants(draft.occupants) !== null ? '' : 'Occupants must be at least 1.',
+  };
+
+  return {
+    canAdd: Object.values(errors).every((error) => !error),
+    errors,
+  };
+};
+
+const createPlanSnapshot = (args: {
+  title: string;
+  notes: string;
+  combineRooms: boolean;
+  saveToLinkLater: boolean;
+  linkedProjectId: string;
+  rooms: RoomInput[];
+}): string => {
+  const snapshot = {
+    title: args.title,
+    notes: args.notes,
+    combineRooms: args.combineRooms,
+    linkedProjectId: args.saveToLinkLater ? null : args.linkedProjectId || null,
+    rooms: args.rooms.map((room) => ({
+      id: room.id,
+      name: room.name,
+      lengthMeters: room.lengthMeters,
+      widthMeters: room.widthMeters,
+      heightMeters: room.heightMeters,
+      heatProfile: room.heatProfile,
+      occupants: room.occupants,
+      floor: room.floor ?? null,
+      westFacing: Boolean(room.westFacing),
+      largeWindows: Boolean(room.largeWindows),
+    })),
+  };
+
+  return JSON.stringify(snapshot);
 };
 
 const buildRoomFromDraft = (draft: DraftRoom, roomIndex: number): { room: RoomInput | null; error: string } => {
@@ -146,7 +218,11 @@ export default function AcCalculatorPage() {
   const [showExpertInputs, setShowExpertInputs] = React.useState(false);
   const [draftRoom, setDraftRoom] = React.useState<DraftRoom>(createDraftRoom());
   const [draftMessage, setDraftMessage] = React.useState('');
+  const [draftAttemptedAdd, setDraftAttemptedAdd] = React.useState(false);
   const [rooms, setRooms] = React.useState<RoomInput[]>([]);
+  const [editingRoomId, setEditingRoomId] = React.useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = React.useState<DraftRoom>(createDraftRoom());
+  const [editingMessage, setEditingMessage] = React.useState('');
   const [savedProjects, setSavedProjects] = React.useState<SavedAcProject[]>([]);
   const [clientProjects, setClientProjects] = React.useState<ClientProjectOption[]>([]);
   const [activeSavedId, setActiveSavedId] = React.useState<string | null>(null);
@@ -155,6 +231,9 @@ export default function AcCalculatorPage() {
   const [saveState, setSaveState] = React.useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMessage, setSaveMessage] = React.useState('');
   const [loadingSaved, setLoadingSaved] = React.useState(false);
+  const [savedSnapshot, setSavedSnapshot] = React.useState('');
+  const [lastSavedAt, setLastSavedAt] = React.useState<string | null>(null);
+  const [shareMessage, setShareMessage] = React.useState('');
 
   const hasRooms = rooms.length > 0;
   const roomResults = React.useMemo(
@@ -165,6 +244,61 @@ export default function AcCalculatorPage() {
     () => (hasRooms ? calculateSummary(roomResults, combineRooms) : null),
     [hasRooms, roomResults, combineRooms],
   );
+  const draftValidation = React.useMemo(() => validateDraftRoom(draftRoom), [draftRoom]);
+  const canAddDraftRoom = draftValidation.canAdd;
+  const currentSnapshot = React.useMemo(
+    () =>
+      createPlanSnapshot({
+        title,
+        notes,
+        combineRooms,
+        saveToLinkLater,
+        linkedProjectId,
+        rooms,
+      }),
+    [title, notes, combineRooms, saveToLinkLater, linkedProjectId, rooms],
+  );
+  const isDirty = savedSnapshot ? currentSnapshot !== savedSnapshot : hasRooms;
+
+  React.useEffect(() => {
+    if (!savedSnapshot) {
+      setSavedSnapshot(currentSnapshot);
+    }
+  }, [currentSnapshot, savedSnapshot]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('shared');
+    if (!encoded) return;
+
+    try {
+      const shared = JSON.parse(decodeURIComponent(encoded)) as ShareableSnapshot;
+      if (!Array.isArray(shared.rooms) || shared.rooms.length === 0) return;
+
+      setTitle(shared.title || 'Shared AC Plan');
+      setNotes(shared.notes || '');
+      setCombineRooms(Boolean(shared.combineRooms));
+      setRooms(
+        shared.rooms.map((room, index) => ({
+          id: `shared-room-${Date.now()}-${index + 1}`,
+          name: room.name || `Room ${index + 1}`,
+          lengthMeters: Number(room.lengthMeters) || 1,
+          widthMeters: Number(room.widthMeters) || 1,
+          heightMeters: Number(room.heightMeters) || 2.6,
+          heatProfile: (room.heatProfile || 'warm') as HeatProfile,
+          occupants: Math.max(1, Number(room.occupants) || 1),
+          floor: room.floor,
+          westFacing: Boolean(room.westFacing),
+          largeWindows: Boolean(room.largeWindows),
+        })),
+      );
+      setDraftMessage('Shared plan loaded from link.');
+      setSavedSnapshot('');
+    } catch {
+      setDraftMessage('Unable to read shared plan from link.');
+    }
+  }, []);
 
   const refreshSavedProjects = React.useCallback(async () => {
     if (!token) return;
@@ -241,9 +375,11 @@ export default function AcCalculatorPage() {
   const clearDraftForm = () => {
     setDraftRoom(createDraftRoom());
     setDraftMessage('');
+    setDraftAttemptedAdd(false);
   };
 
   const addDraftRoom = () => {
+    setDraftAttemptedAdd(true);
     const { room, error } = buildRoomFromDraft(draftRoom, rooms.length);
     if (!room) {
       setDraftMessage(error);
@@ -254,10 +390,54 @@ export default function AcCalculatorPage() {
     setDraftRoom(createDraftRoom());
     setDraftMessage('Room added to report.');
     setSaveMessage('');
+    setDraftAttemptedAdd(false);
   };
 
   const removeRoom = (id: string) => {
     setRooms((prev) => prev.filter((room) => room.id !== id));
+    if (editingRoomId === id) {
+      setEditingRoomId(null);
+      setEditingDraft(createDraftRoom());
+      setEditingMessage('');
+    }
+  };
+
+  const startEditRoom = (room: RoomInput) => {
+    setEditingRoomId(room.id);
+    setEditingDraft({
+      name: room.name,
+      lengthMeters: String(room.lengthMeters),
+      widthMeters: String(room.widthMeters),
+      heightMeters: String(room.heightMeters),
+      heatProfile: room.heatProfile,
+      occupants: String(room.occupants),
+      floor: room.floor === undefined ? '' : String(room.floor),
+      westFacing: Boolean(room.westFacing),
+      largeWindows: Boolean(room.largeWindows),
+    });
+    setEditingMessage('');
+  };
+
+  const cancelEditRoom = () => {
+    setEditingRoomId(null);
+    setEditingDraft(createDraftRoom());
+    setEditingMessage('');
+  };
+
+  const saveEditedRoom = () => {
+    if (!editingRoomId) return;
+    const roomIndex = rooms.findIndex((room) => room.id === editingRoomId);
+    const { room, error } = buildRoomFromDraft(editingDraft, roomIndex >= 0 ? roomIndex : 0);
+    if (!room) {
+      setEditingMessage(error);
+      return;
+    }
+
+    setRooms((prev) => prev.map((existing) => (existing.id === editingRoomId ? { ...room, id: editingRoomId } : existing)));
+    setEditingMessage('Room updated.');
+    setEditingRoomId(null);
+    setEditingDraft(createDraftRoom());
+    setSaveMessage('');
   };
 
   const resetCalculator = () => {
@@ -269,10 +449,26 @@ export default function AcCalculatorPage() {
     setRooms([]);
     setDraftRoom(createDraftRoom());
     setDraftMessage('');
+    setDraftAttemptedAdd(false);
+    setEditingRoomId(null);
+    setEditingDraft(createDraftRoom());
+    setEditingMessage('');
     setSaveToLinkLater(true);
     setLinkedProjectId('');
     setSaveState('idle');
     setSaveMessage('');
+    setShareMessage('');
+    setLastSavedAt(null);
+    setSavedSnapshot(
+      createPlanSnapshot({
+        title: 'My Hong Kong AC Plan',
+        notes: '',
+        combineRooms: true,
+        saveToLinkLater: true,
+        linkedProjectId: '',
+        rooms: [],
+      }),
+    );
   };
 
   const hydrateFromSaved = (saved: SavedAcProject) => {
@@ -282,8 +478,7 @@ export default function AcCalculatorPage() {
     setCombineRooms(Boolean(saved.combineRooms));
     setSaveToLinkLater(!saved.linkedProjectId);
     setLinkedProjectId(saved.linkedProjectId || '');
-    setRooms(
-      saved.rooms.map((room, index) => ({
+    const hydratedRooms = saved.rooms.map((room, index) => ({
         id: room.id || `room-${Date.now()}-${index + 1}`,
         name: room.name,
         lengthMeters: Number(room.lengthMeters) || 1,
@@ -294,12 +489,28 @@ export default function AcCalculatorPage() {
         floor: room.floor ?? undefined,
         westFacing: Boolean(room.westFacing),
         largeWindows: Boolean(room.largeWindows),
-      })),
-    );
+      }));
+    setRooms(hydratedRooms);
     setDraftRoom(createDraftRoom());
     setDraftMessage('Saved plan loaded.');
+    setDraftAttemptedAdd(false);
+    setEditingRoomId(null);
+    setEditingDraft(createDraftRoom());
+    setEditingMessage('');
     setSaveState('saved');
     setSaveMessage('Saved plan loaded.');
+    setShareMessage('');
+    setLastSavedAt(saved.updatedAt || new Date().toISOString());
+    setSavedSnapshot(
+      createPlanSnapshot({
+        title: saved.title,
+        notes: saved.notes || '',
+        combineRooms: Boolean(saved.combineRooms),
+        saveToLinkLater: !saved.linkedProjectId,
+        linkedProjectId: saved.linkedProjectId || '',
+        rooms: hydratedRooms,
+      }),
+    );
   };
 
   const buildPayload = () => ({
@@ -360,10 +571,54 @@ export default function AcCalculatorPage() {
       setActiveSavedId(saved.id);
       setSaveState('saved');
       setSaveMessage('AC plan saved for later.');
+      setSavedSnapshot(currentSnapshot);
+      setLastSavedAt(new Date().toISOString());
       await refreshSavedProjects();
     } catch (error) {
       setSaveState('error');
       setSaveMessage(error instanceof Error ? error.message : 'Failed to save AC plan');
+    }
+  };
+
+  const exportSummaryPdf = () => {
+    if (!hasRooms) {
+      setShareMessage('Add at least one room before exporting.');
+      return;
+    }
+    window.print();
+  };
+
+  const copyShareLink = async () => {
+    if (!hasRooms) {
+      setShareMessage('Add at least one room before creating a share link.');
+      return;
+    }
+
+    const sharePayload: ShareableSnapshot = {
+      title,
+      notes,
+      combineRooms,
+      rooms: rooms.map((room) => ({
+        name: room.name,
+        lengthMeters: room.lengthMeters,
+        widthMeters: room.widthMeters,
+        heightMeters: room.heightMeters,
+        heatProfile: room.heatProfile,
+        occupants: room.occupants,
+        floor: room.floor ?? undefined,
+        westFacing: Boolean(room.westFacing),
+        largeWindows: Boolean(room.largeWindows),
+      })),
+    };
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('shared', encodeURIComponent(JSON.stringify(sharePayload)));
+
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setShareMessage('Share link copied.');
+    } catch {
+      setShareMessage('Unable to copy link automatically. Please copy from the browser address bar.');
     }
   };
 
@@ -422,6 +677,10 @@ export default function AcCalculatorPage() {
                   placeholder="e.g. Happy Valley AC refresh"
                 />
               </label>
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <span className={isDirty ? 'text-amber-300' : 'text-emerald-300'}>{isDirty ? 'Unsaved changes' : 'All changes saved'}</span>
+                {lastSavedAt ? <span className="text-slate-400">Last saved: {new Date(lastSavedAt).toLocaleString()}</span> : null}
+              </div>
 
               {isProfessionalUser ? (
                 <div className="space-y-2">
@@ -450,6 +709,7 @@ export default function AcCalculatorPage() {
                       className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
                       placeholder="e.g. Living Room"
                     />
+                    {draftAttemptedAdd && draftValidation.errors.name ? <p className="text-xs text-rose-300">{draftValidation.errors.name}</p> : null}
                   </label>
 
                   <div className="w-full xl:flex-[1.2]">
@@ -465,6 +725,9 @@ export default function AcCalculatorPage() {
                           className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
                           placeholder="3.2"
                         />
+                        {draftAttemptedAdd && draftValidation.errors.lengthMeters ? (
+                          <p className="text-xs text-rose-300">{draftValidation.errors.lengthMeters}</p>
+                        ) : null}
                       </label>
 
                       <label className="block space-y-2">
@@ -478,6 +741,9 @@ export default function AcCalculatorPage() {
                           className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
                           placeholder="2.8"
                         />
+                        {draftAttemptedAdd && draftValidation.errors.widthMeters ? (
+                          <p className="text-xs text-rose-300">{draftValidation.errors.widthMeters}</p>
+                        ) : null}
                       </label>
 
                       <label className="block space-y-2">
@@ -491,6 +757,9 @@ export default function AcCalculatorPage() {
                           className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
                           placeholder="2.6"
                         />
+                        {draftAttemptedAdd && draftValidation.errors.heightMeters ? (
+                          <p className="text-xs text-rose-300">{draftValidation.errors.heightMeters}</p>
+                        ) : null}
                       </label>
                     </div>
                   </div>
@@ -522,6 +791,9 @@ export default function AcCalculatorPage() {
                         className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
                         placeholder="1"
                       />
+                      {draftAttemptedAdd && draftValidation.errors.occupants ? (
+                        <p className="text-xs text-rose-300">{draftValidation.errors.occupants}</p>
+                      ) : null}
                     </label>
 
                     <label className="block space-y-2">
@@ -568,7 +840,8 @@ export default function AcCalculatorPage() {
                 <button
                   type="button"
                   onClick={addDraftRoom}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+                  disabled={!canAddDraftRoom}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Add this room
                 </button>
@@ -620,7 +893,117 @@ export default function AcCalculatorPage() {
                   </div>
                 </div>
 
-                <div className="max-w-full overflow-x-auto rounded-xl border border-slate-700">
+                {editingRoomId ? (
+                  <div className="space-y-3 rounded-xl border border-sky-500/30 bg-sky-500/10 p-4">
+                    <p className="text-sm font-semibold text-sky-200">Editing room</p>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <input
+                        value={editingDraft.name}
+                        onChange={(e) => setEditingDraft((prev) => ({ ...prev, name: e.target.value }))}
+                        className="rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-sky-400"
+                        placeholder="Room name"
+                      />
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={editingDraft.lengthMeters}
+                        onChange={(e) => setEditingDraft((prev) => ({ ...prev, lengthMeters: e.target.value }))}
+                        className="rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-sky-400"
+                        placeholder="Length"
+                      />
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={editingDraft.widthMeters}
+                        onChange={(e) => setEditingDraft((prev) => ({ ...prev, widthMeters: e.target.value }))}
+                        className="rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-sky-400"
+                        placeholder="Width"
+                      />
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={editingDraft.heightMeters}
+                        onChange={(e) => setEditingDraft((prev) => ({ ...prev, heightMeters: e.target.value }))}
+                        className="rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-sky-400"
+                        placeholder="Height"
+                      />
+                      <select
+                        value={editingDraft.heatProfile}
+                        onChange={(e) => setEditingDraft((prev) => ({ ...prev, heatProfile: e.target.value as HeatProfile }))}
+                        className="rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-sky-400"
+                      >
+                        <option value="cool">Cool</option>
+                        <option value="warm">Warm</option>
+                        <option value="hot">Hot</option>
+                      </select>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={editingDraft.occupants}
+                        onChange={(e) => setEditingDraft((prev) => ({ ...prev, occupants: e.target.value }))}
+                        className="rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-sky-400"
+                        placeholder="Occupants"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={saveEditedRoom}
+                        className="rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-500"
+                      >
+                        Save room changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditRoom}
+                        className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {editingMessage ? <p className="text-xs text-rose-200">{editingMessage}</p> : null}
+                  </div>
+                ) : null}
+
+                <div className="space-y-3 md:hidden">
+                  {roomResults.map((room) => (
+                    <div key={`${room.id}-card`} className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-white">{room.name}</p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEditRoom(room)}
+                            className="rounded border border-sky-500/40 px-2 py-1 text-[11px] font-semibold text-sky-200 hover:bg-sky-500/10"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeRoom(room.id)}
+                            className="rounded border border-rose-500/40 px-2 py-1 text-[11px] font-semibold text-rose-200 hover:bg-rose-500/10"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-300">
+                        <p>L × W × H: {room.lengthMeters.toFixed(1)} × {room.widthMeters.toFixed(1)} × {room.heightMeters.toFixed(1)}</p>
+                        <p>Area: {room.areaSqm.toFixed(2)} m²</p>
+                        <p>Heat: {room.heatProfile}</p>
+                        <p>Occupants: {room.occupants}</p>
+                        <p className="text-emerald-300">Load: {formatBtu(room.calculatedBtu)}</p>
+                        <p>Unit: {formatUnitSize(room.suggestedUnitSize)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hidden max-w-full overflow-x-auto rounded-xl border border-slate-700 md:block">
                   <table className="min-w-full whitespace-nowrap text-sm">
                     <thead className="bg-slate-950">
                       <tr className="text-left text-slate-300">
@@ -651,6 +1034,13 @@ export default function AcCalculatorPage() {
                           <td className="px-3 py-2 text-slate-200">{formatUnitSize(room.suggestedUnitSize)}</td>
                           <td className="px-3 py-2 text-slate-200">{room.recommendedAcType}</td>
                           <td className="px-3 py-2">
+                            <button
+                              type="button"
+                              onClick={() => startEditRoom(room)}
+                              className="mr-2 rounded border border-sky-500/40 px-2 py-1 text-xs font-semibold text-sky-200 hover:bg-sky-500/10"
+                            >
+                              Edit
+                            </button>
                             <button
                               type="button"
                               onClick={() => removeRoom(room.id)}
@@ -694,6 +1084,34 @@ export default function AcCalculatorPage() {
                         ))}
                       </ul>
                     </div>
+
+                    <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">How this estimate works</p>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">
+                        <li>Uses room area as the core load estimate for a first-pass sizing check.</li>
+                        <li>Adjusts recommendation by room heat profile and occupancy assumptions.</li>
+                        <li>Does not replace on-site inspection, insulation checks, or pipe-run constraints.</li>
+                      </ul>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={exportSummaryPdf}
+                        className="rounded-lg border border-white/20 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+                      >
+                        Export PDF
+                      </button>
+                      <button
+                        type="button"
+                        onClick={copyShareLink}
+                        className="rounded-lg border border-sky-500/40 px-4 py-2 text-xs font-semibold text-sky-200 hover:bg-sky-500/10"
+                      >
+                        Copy share link
+                      </button>
+                    </div>
+
+                    {shareMessage ? <p className="text-xs text-slate-300">{shareMessage}</p> : null}
 
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
                       <p className="text-sm font-semibold text-amber-200">Before you buy</p>
@@ -798,6 +1216,12 @@ export default function AcCalculatorPage() {
 
               {saveMessage ? (
                 <p className={`text-sm ${saveState === 'error' ? 'text-rose-300' : 'text-emerald-300'}`}>{saveMessage}</p>
+              ) : null}
+
+              {canSave ? (
+                <p className={`text-xs ${isDirty ? 'text-amber-300' : 'text-emerald-300'}`}>
+                  {isDirty ? 'You have unsaved changes.' : 'Saved state is up to date.'}
+                </p>
               ) : null}
 
               {!canSave ? (

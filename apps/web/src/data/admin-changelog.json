@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-a00499a",
+    "date": "2026-04-15T18:27:21+08:00",
+    "title": "feat(web): AC calculator usability - validation, edit, mobile cards, save state, share link, assumptions",
+    "summary": "feat(web): AC calculator usability - validation, edit, mobile cards, save state, share link, assumptions",
+    "areas": [
+      "web"
+    ],
+    "commit": "a00499a",
+    "files": [
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-0c9b87a",
     "date": "2026-04-15T13:53:59+08:00",
     "title": "refactor(web): keep AC calculator content single-column and mobile-safe",
