@@ -506,6 +506,17 @@ export class MilestonesService {
       assignment.project?.projectScale ||
       'SCALE_1';
 
+    const paymentPlanMilestones = assignment.project?.paymentPlan?.milestones || [];
+    const hasFinancialActionsStarted = paymentPlanMilestones.some(
+      (milestone: any) => milestone.status !== 'scheduled',
+    );
+
+    if (hasFinancialActionsStarted) {
+      throw new BadRequestException(
+        'Cannot reset milestones after financial actions have started on this payment plan',
+      );
+    }
+
     const defaultTitles =
       scale === 'SCALE_1'
         ? ['Site Preparation', 'Final Handover']
@@ -600,6 +611,31 @@ export class MilestonesService {
           });
         }),
       );
+
+      const syncedBySequence = new Map(synced.map((row: any) => [row.sequence, row]));
+
+      if (assignment.project?.paymentPlan?.id) {
+        const relinkUpdates = paymentPlanMilestones.map((milestone: any) => {
+          const linkedScheduleMilestone = syncedBySequence.get(milestone.sequence);
+          if (!linkedScheduleMilestone) {
+            return null;
+          }
+
+          return tx.paymentMilestone.update({
+            where: { id: milestone.id },
+            data: {
+              projectMilestoneId: linkedScheduleMilestone.id,
+              plannedDueAt:
+                linkedScheduleMilestone.plannedEndDate ||
+                linkedScheduleMilestone.plannedStartDate ||
+                milestone.plannedDueAt ||
+                null,
+            },
+          });
+        });
+
+        await Promise.all(relinkUpdates.filter(Boolean));
+      }
 
       return {
         success: true,

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-15-04b1576",
+    "date": "2026-04-15T10:15:34+08:00",
+    "title": "fix(milestones): gate reset after financial actions and relink payment milestones by sequence",
+    "summary": "fix(milestones): gate reset after financial actions and relink payment milestones by sequence",
+    "areas": [
+      "api"
+    ],
+    "commit": "04b1576",
+    "files": [
+      "apps/api/prisma/sql/fix-orphan-payment-milestone-links.sql",
+      "apps/api/src/milestones/milestones.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-14-bb66bdd",
     "date": "2026-04-14T23:50:53+08:00",
     "title": "fix(financials): sync schedule date updates and collapse to single schedule-edit action",
