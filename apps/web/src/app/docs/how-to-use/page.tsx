@@ -19,7 +19,7 @@ export default function HowToUsePage() {
         <h1 className="text-3xl font-bold">How to Use FitoutHub</h1>
         <p className="text-neutral-600">
           A quick guide for new users: finding contractors, creating accounts, and managing projects.
-          For the full manual, see <Link href="/docs" className="underline">Docs</Link> or the
+          For the full manual, see <Link href="/docs/user-manual" className="underline">User Manual</Link> or the
           <Link href="https://github.com/romski28/fitouthub/blob/main/docs/user-manual.md" className="underline ml-1">markdown version</Link>.
         </p>
       </header>

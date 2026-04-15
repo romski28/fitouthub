@@ -1,5 +1,32 @@
 [
   {
+    "id": "2026-04-15-6998b09",
+    "date": "2026-04-15T12:04:52+08:00",
+    "title": "feat(docs-tools): add AC calculator and saved planning flow",
+    "summary": "feat(docs-tools): add AC calculator and saved planning flow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6998b09",
+    "files": [
+      "apps/api/prisma/migrations/20260415_add_ac_projects_tool/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/ac-projects/ac-projects.controller.ts",
+      "apps/api/src/ac-projects/ac-projects.module.ts",
+      "apps/api/src/ac-projects/ac-projects.service.ts",
+      "apps/api/src/app.module.ts",
+      "apps/web/src/app/docs/how-to-use/page.tsx",
+      "apps/web/src/app/docs/page.tsx",
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx",
+      "apps/web/src/app/docs/user-manual/page.tsx",
+      "apps/web/src/i18n/locales/en.json",
+      "apps/web/src/i18n/locales/zh-HK.json",
+      "apps/web/src/i18n/request.ts",
+      "apps/web/src/lib/ac-calculator.ts"
+    ]
+  },
+  {
     "id": "2026-04-15-69e3e25",
     "date": "2026-04-15T11:48:28+08:00",
     "title": "fix(api): harden admin project deletion cleanup",

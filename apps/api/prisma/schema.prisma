@@ -199,6 +199,7 @@ model User {
   claimedAdminMessages            AdminMessageAssignment[] @relation("AdminMessageClaimedBy")
   assignedAdminMessages           AdminMessageAssignment[] @relation("AdminMessageAssignedTo")
   escrowCheckoutOtpChallenges     EscrowCheckoutOtpChallenge[]
+  acProjects                      AcProject[]
 }
 
 model Tradesman {
@@ -308,6 +309,7 @@ model Professional {
   otpVerifiedAt           DateTime?
   sessionToken            String?
   regionCoverage          ProfessionalRegionCoverage[]
+  acProjects              AcProject[]
 }
 
 model RegionZone {
@@ -444,6 +446,60 @@ model Project {
   professionalSignedBy         User?                    @relation("ProfessionalContractSignature", fields: [professionalSignedById], references: [id])
   supportRequests              SupportRequest[]
   paymentPlan                  ProjectPaymentPlan?
+  acProjects                   AcProject[]
+}
+
+model AcProject {
+  id                  String       @id @default(cuid())
+  userId              String?
+  professionalId      String?
+  linkedProjectId     String?
+  title               String
+  notes               String?
+  calculationMethod   String       @default("area")
+  combineRooms        Boolean      @default(false)
+  totalBtu            Int?
+  recommendedSystem   String?
+  compressorSuggestion String?
+  shoppingList        Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  user                User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  professional        Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  linkedProject       Project?     @relation(fields: [linkedProjectId], references: [id], onDelete: SetNull)
+  rooms               AcRoom[]
+
+  @@index([userId])
+  @@index([professionalId])
+  @@index([linkedProjectId])
+  @@index([updatedAt])
+}
+
+model AcRoom {
+  id                String    @id @default(cuid())
+  acProjectId       String
+  name              String
+  lengthMeters      Decimal   @db.Decimal(8, 2)
+  widthMeters       Decimal   @db.Decimal(8, 2)
+  heightMeters      Decimal   @db.Decimal(8, 2)
+  heatProfile       String    @default("warm")
+  occupants         Int       @default(1)
+  floor             Int?
+  westFacing        Boolean   @default(false)
+  largeWindows      Boolean   @default(false)
+  calculatedArea    Decimal?  @db.Decimal(10, 2)
+  calculatedVolume  Decimal?  @db.Decimal(10, 2)
+  calculatedBtu     Int?
+  suggestedUnitSize Int?
+  recommendedAcType String?
+  notes             Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  acProject         AcProject @relation(fields: [acProjectId], references: [id], onDelete: Cascade)
+
+  @@index([acProjectId])
 }
 
 model ProjectPhoto {

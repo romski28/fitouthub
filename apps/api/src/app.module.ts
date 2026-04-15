@@ -37,6 +37,7 @@ import { AiModule } from './ai/ai.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { QuestionnairesModule } from './questionnaires/questionnaires.module';
+import { AcProjectsModule } from './ac-projects/ac-projects.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { QuestionnairesModule } from './questionnaires/questionnaires.module';
     RealtimeModule,
     SupportRequestsModule,
     AiModule,
+    AcProjectsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },
