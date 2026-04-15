@@ -440,93 +440,103 @@ export default function AcCalculatorPage() {
             <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Room entry</p>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <label className="block space-y-2 xl:col-span-2">
-                  <span className="text-sm text-slate-300">Room name</span>
-                  <input
-                    value={draftRoom.name}
-                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, name: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    placeholder="e.g. Living Room"
-                  />
-                </label>
+              <div className="space-y-4">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+                  <label className="block w-full space-y-2 xl:flex-1">
+                    <span className="text-sm text-slate-300">Room name</span>
+                    <input
+                      value={draftRoom.name}
+                      onChange={(e) => setDraftRoom((prev) => ({ ...prev, name: e.target.value }))}
+                      className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                      placeholder="e.g. Living Room"
+                    />
+                  </label>
 
-                <label className="block space-y-2">
-                  <span className="text-sm text-slate-300">Length (m)</span>
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={draftRoom.lengthMeters}
-                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, lengthMeters: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    placeholder="3.2"
-                  />
-                </label>
+                  <div className="w-full overflow-x-auto xl:flex-[1.2]">
+                    <div className="grid min-w-[420px] grid-cols-3 gap-4 xl:min-w-0">
+                      <label className="block space-y-2">
+                        <span className="text-sm text-slate-300">Length (m)</span>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={draftRoom.lengthMeters}
+                          onChange={(e) => setDraftRoom((prev) => ({ ...prev, lengthMeters: e.target.value }))}
+                          className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          placeholder="3.2"
+                        />
+                      </label>
 
-                <label className="block space-y-2">
-                  <span className="text-sm text-slate-300">Width (m)</span>
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={draftRoom.widthMeters}
-                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, widthMeters: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    placeholder="2.8"
-                  />
-                </label>
+                      <label className="block space-y-2">
+                        <span className="text-sm text-slate-300">Width (m)</span>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={draftRoom.widthMeters}
+                          onChange={(e) => setDraftRoom((prev) => ({ ...prev, widthMeters: e.target.value }))}
+                          className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          placeholder="2.8"
+                        />
+                      </label>
 
-                <label className="block space-y-2">
-                  <span className="text-sm text-slate-300">Height (m)</span>
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={draftRoom.heightMeters}
-                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, heightMeters: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    placeholder="2.6"
-                  />
-                </label>
+                      <label className="block space-y-2">
+                        <span className="text-sm text-slate-300">Height (m)</span>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={draftRoom.heightMeters}
+                          onChange={(e) => setDraftRoom((prev) => ({ ...prev, heightMeters: e.target.value }))}
+                          className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          placeholder="2.6"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
 
-                <label className="block space-y-2">
-                  <span className="text-sm text-slate-300">General room feel</span>
-                  <select
-                    value={draftRoom.heatProfile}
-                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, heatProfile: e.target.value as HeatProfile }))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                  >
-                    <option value="cool">Cool</option>
-                    <option value="warm">Warm</option>
-                    <option value="hot">Hot</option>
-                  </select>
-                </label>
+                <div className="w-full overflow-x-auto">
+                  <div className="grid min-w-[420px] grid-cols-3 gap-4">
+                    <label className="block space-y-2">
+                      <span className="text-sm text-slate-300">General room feel</span>
+                      <select
+                        value={draftRoom.heatProfile}
+                        onChange={(e) => setDraftRoom((prev) => ({ ...prev, heatProfile: e.target.value as HeatProfile }))}
+                        className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                      >
+                        <option value="cool">Cool</option>
+                        <option value="warm">Warm</option>
+                        <option value="hot">Hot</option>
+                      </select>
+                    </label>
 
-                <label className="block space-y-2">
-                  <span className="text-sm text-slate-300">Occupants</span>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={draftRoom.occupants}
-                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, occupants: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    placeholder="1"
-                  />
-                </label>
+                    <label className="block space-y-2">
+                      <span className="text-sm text-slate-300">Occupants</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={draftRoom.occupants}
+                        onChange={(e) => setDraftRoom((prev) => ({ ...prev, occupants: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                        placeholder="1"
+                      />
+                    </label>
 
-                <label className="block space-y-2">
-                  <span className="text-sm text-slate-300">Floor (optional)</span>
-                  <input
-                    type="number"
-                    step="1"
-                    value={draftRoom.floor}
-                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, floor: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    placeholder="e.g. 12"
-                  />
-                </label>
+                    <label className="block space-y-2">
+                      <span className="text-sm text-slate-300">Floor (optional)</span>
+                      <input
+                        type="number"
+                        step="1"
+                        value={draftRoom.floor}
+                        onChange={(e) => setDraftRoom((prev) => ({ ...prev, floor: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                        placeholder="e.g. 12"
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
 
               {isProfessionalUser && showExpertInputs ? (

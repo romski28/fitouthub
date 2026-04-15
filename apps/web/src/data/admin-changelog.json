@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-ece36b6",
+    "date": "2026-04-15T13:22:54+08:00",
+    "title": "refactor(web): enforce grouped room input rows",
+    "summary": "refactor(web): enforce grouped room input rows",
+    "areas": [
+      "web"
+    ],
+    "commit": "ece36b6",
+    "files": [
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-0eee5f2",
     "date": "2026-04-15T13:09:01+08:00",
     "title": "refactor(web): rebalance AC calculator form and report flow",
