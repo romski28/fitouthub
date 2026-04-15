@@ -86,8 +86,9 @@ SET
   "projectMilestoneId" = bfs.id,
   "plannedDueAt" = COALESCE(bfs."plannedEndDate", bfs."plannedStartDate", pm."plannedDueAt")
 FROM target_plan tp
-JOIN best_financial_schedule bfs ON bfs.sequence = pm.sequence
+JOIN best_financial_schedule bfs ON TRUE
 WHERE pm."paymentPlanId" = tp.id
+  AND bfs.sequence = pm.sequence
   AND (
     pm."projectMilestoneId" IS NULL
     OR NOT EXISTS (
