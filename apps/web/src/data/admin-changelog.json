@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-6b38191",
+    "date": "2026-04-15T10:21:59+08:00",
+    "title": "fix(sql): replace corrupted orphan-link script with valid params-cte version",
+    "summary": "fix(sql): replace corrupted orphan-link script with valid params-cte version",
+    "areas": [
+      "api"
+    ],
+    "commit": "6b38191",
+    "files": [
+      "apps/api/prisma/sql/fix-orphan-payment-milestone-links.sql"
+    ]
+  },
+  {
     "id": "2026-04-15-434c105",
     "date": "2026-04-15T10:19:06+08:00",
     "title": "fix(sql): replace unsupported named placeholders with params CTE",

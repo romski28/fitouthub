@@ -5,7 +5,7 @@
 -- 1) Replace the two values in the params CTE below:
 --    - '__PROJECT_ID__'
 --    - '__PROJECT_PROFESSIONAL_ID__'
--- 2) Execute inside a transaction.
+-- 2) Execute this whole script in one run.
 --
 -- Notes:
 -- - This script does NOT change schema.
@@ -13,15 +13,6 @@
 -- - It prefers financial schedule milestones belonging to the selected professional assignment.
 
 BEGIN;
-
--- Set your target IDs here before running:
--- Example UUID format: 'cmngvpsxc0004fa2dt3kjpfc8'
-WITH params AS (
-  SELECT
-    '__PROJECT_ID__'::text AS project_id,
-    '__PROJECT_PROFESSIONAL_ID__'::text AS project_professional_id
-)
-SELECT 1;
 
 -- Optional: inspect current orphaned rows before update
 WITH params AS (
@@ -50,31 +41,40 @@ WHERE pp."projectId" = (SELECT project_id FROM params)
   )
 ORDER BY pm.sequence;
 
-WITH target_plan AS (
-  SELECT id
-  FROM "ProjectPaymentPlan"
-  WHERE "projectId" = :project_id
-  LIMIT 1
-),
+-- Repair: relink orphans by sequence
 WITH params AS (
   SELECT
     '__PROJECT_ID__'::text AS project_id,
     '__PROJECT_PROFESSIONAL_ID__'::text AS project_professional_id
 ),
+target_plan AS (
+  SELECT id
+  FROM "ProjectPaymentPlan"
+  WHERE "projectId" = (SELECT project_id FROM params)
+  LIMIT 1
+),
 financial_schedule AS (
   SELECT
     m.id,
-  WHERE "projectId" = (SELECT project_id FROM params)
+    m.sequence,
     m."plannedStartDate",
     m."plannedEndDate",
     ROW_NUMBER() OVER (
       PARTITION BY m.sequence
-      ORDER BY CASE WHEN m."projectProfessionalId" = (SELECT project_professional_id FROM params) THEN 0 ELSE 1 END, m."updatedAt" DESC
+      ORDER BY
+        CASE
+          WHEN m."projectProfessionalId" = (SELECT project_professional_id FROM params) THEN 0
+          ELSE 1
+        END,
+        m."updatedAt" DESC
     ) AS rn
   FROM "ProjectMilestone" m
   WHERE m."projectId" = (SELECT project_id FROM params)
     AND m."isFinancial" = TRUE
-    AND (m."projectProfessionalId" = (SELECT project_professional_id FROM params) OR m."projectProfessionalId" IS NULL)
+    AND (
+      m."projectProfessionalId" = (SELECT project_professional_id FROM params)
+      OR m."projectProfessionalId" IS NULL
+    )
 ),
 best_financial_schedule AS (
   SELECT *
@@ -108,7 +108,8 @@ SELECT
   pm.sequence,
   pm.title,
   pm.status,
-  pm."projectMilestoneId"
+  pm."projectMilestoneId",
+  pm."plannedDueAt"
 FROM "PaymentMilestone" pm
 JOIN "ProjectPaymentPlan" pp ON pp.id = pm."paymentPlanId"
 WHERE pp."projectId" = (SELECT project_id FROM params)
