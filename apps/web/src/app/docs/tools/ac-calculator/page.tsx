@@ -410,8 +410,8 @@ export default function AcCalculatorPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-          <section className="space-y-6">
+        <div className="space-y-6">
+          <section className="min-w-0 space-y-6">
             <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-slate-200">Plan name</span>
@@ -499,7 +499,7 @@ export default function AcCalculatorPage() {
                 <div className="w-full">
                   <div className="grid grid-cols-3 gap-3 sm:gap-4">
                     <label className="block space-y-2">
-                      <span className="text-sm text-slate-300">General room feel</span>
+                      <span className="text-sm text-slate-300">Room feels</span>
                       <select
                         value={draftRoom.heatProfile}
                         onChange={(e) => setDraftRoom((prev) => ({ ...prev, heatProfile: e.target.value as HeatProfile }))}
@@ -525,14 +525,14 @@ export default function AcCalculatorPage() {
                     </label>
 
                     <label className="block space-y-2">
-                      <span className="text-sm text-slate-300">Floor (optional)</span>
+                      <span className="text-sm text-slate-300">Floor</span>
                       <input
                         type="number"
                         step="1"
                         value={draftRoom.floor}
                         onChange={(e) => setDraftRoom((prev) => ({ ...prev, floor: e.target.value }))}
                         className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                        placeholder="e.g. 12"
+                        placeholder="Optional, e.g. 12"
                       />
                     </label>
                   </div>
@@ -598,7 +598,7 @@ export default function AcCalculatorPage() {
                 <p className="text-sm text-slate-300">Add at least one room to generate the report.</p>
               </div>
             ) : (
-              <div className="space-y-4 rounded-2xl border border-slate-700 bg-slate-900/70 p-5">
+              <div className="min-w-0 space-y-4 rounded-2xl border border-slate-700 bg-slate-900/70 p-5">
                 <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3">
                   <p className="text-sm font-medium text-white">System preference</p>
                   <p className="mt-1 text-xs text-slate-400">This sets whether you are planning room-by-room units or exploring a shared system approach.</p>
@@ -620,8 +620,8 @@ export default function AcCalculatorPage() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-slate-700">
-                  <table className="min-w-full text-sm">
+                <div className="max-w-full overflow-x-auto rounded-xl border border-slate-700">
+                  <table className="min-w-full whitespace-nowrap text-sm">
                     <thead className="bg-slate-950">
                       <tr className="text-left text-slate-300">
                         <th className="px-3 py-2 font-semibold">Room</th>
@@ -709,7 +709,7 @@ export default function AcCalculatorPage() {
             )}
           </section>
 
-          <aside className="space-y-6">
+          <aside className="min-w-0 space-y-6">
             <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>

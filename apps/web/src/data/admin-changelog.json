@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-0c9b87a",
+    "date": "2026-04-15T13:53:59+08:00",
+    "title": "refactor(web): keep AC calculator content single-column and mobile-safe",
+    "summary": "refactor(web): keep AC calculator content single-column and mobile-safe",
+    "areas": [
+      "web"
+    ],
+    "commit": "0c9b87a",
+    "files": [
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-5face40",
     "date": "2026-04-15T13:33:35+08:00",
     "title": "fix(web): prevent AC calculator mobile overflow",
