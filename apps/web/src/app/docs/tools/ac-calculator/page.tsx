@@ -76,12 +76,14 @@ export default function AcCalculatorPage() {
   const token = accessToken || professionalAccessToken || null;
   const canSave = Boolean(token && (isLoggedIn || professionalLoggedIn));
   const isClientUser = Boolean(accessToken && isLoggedIn && !professionalLoggedIn);
+  const isProfessionalUser = Boolean(professionalLoggedIn);
   const actorLabel = user?.nickname || professional?.fullName || professional?.email || 'you';
 
   const [title, setTitle] = React.useState('My Hong Kong AC Plan');
   const [notes, setNotes] = React.useState('');
-  const [combineRooms, setCombineRooms] = React.useState(false);
-  const [calculationMethod, setCalculationMethod] = React.useState<CalculationMethod>('area');
+  const [combineRooms, setCombineRooms] = React.useState(true);
+  const calculationMethod: CalculationMethod = 'area';
+  const [showExpertInputs, setShowExpertInputs] = React.useState(false);
   const [rooms, setRooms] = React.useState<RoomInput[]>([createRoom(0)]);
   const [savedProjects, setSavedProjects] = React.useState<SavedAcProject[]>([]);
   const [clientProjects, setClientProjects] = React.useState<ClientProjectOption[]>([]);
@@ -189,8 +191,8 @@ export default function AcCalculatorPage() {
     setActiveSavedId(null);
     setTitle('My Hong Kong AC Plan');
     setNotes('');
-    setCombineRooms(false);
-    setCalculationMethod('area');
+    setCombineRooms(true);
+    setShowExpertInputs(false);
     setRooms([createRoom(0)]);
     setSaveToLinkLater(true);
     setLinkedProjectId('');
@@ -205,7 +207,6 @@ export default function AcCalculatorPage() {
     setCombineRooms(Boolean(saved.combineRooms));
     setSaveToLinkLater(!saved.linkedProjectId);
     setLinkedProjectId(saved.linkedProjectId || '');
-    setCalculationMethod(saved.calculationMethod || 'area');
     setRooms(
       saved.rooms.map((room, index) => ({
         id: room.id || createRoom(index).id,
@@ -331,27 +332,29 @@ export default function AcCalculatorPage() {
         <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
           <section className="space-y-6">
             <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex flex-wrap items-end gap-4">
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-slate-200">Plan name</span>
                   <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    className="w-[22rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
                     placeholder="e.g. Happy Valley AC refresh"
                   />
                 </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-200">Calculation mode</span>
-                  <select
-                    value={calculationMethod}
-                    onChange={(e) => setCalculationMethod(e.target.value as CalculationMethod)}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                <div className="rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-2">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Method</p>
+                  <p className="text-sm font-medium text-white">Area rule (sqm × 700)</p>
+                </div>
+                {isProfessionalUser ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowExpertInputs((prev) => !prev)}
+                    className={`rounded-lg px-3 py-2 text-xs font-semibold ${showExpertInputs ? 'bg-sky-500/20 text-sky-200 border border-sky-500/40' : 'bg-slate-800 text-slate-200 border border-slate-700'}`}
                   >
-                    <option value="area">Area method (sqm × 700)</option>
-                    <option value="volume">Volume method (cbm × 250)</option>
-                  </select>
-                </label>
+                    {showExpertInputs ? 'Expert mode on' : 'Expert mode'}
+                  </button>
+                ) : null}
               </div>
 
               <label className="space-y-2 block">
@@ -445,26 +448,26 @@ export default function AcCalculatorPage() {
                     )}
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="flex flex-wrap items-end gap-3">
                     <label className="space-y-2">
                       <span className="text-sm text-slate-300">Room name</span>
-                      <input value={room.name} onChange={(e) => updateRoom(room.id, { name: e.target.value })} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
+                      <input value={room.name} onChange={(e) => updateRoom(room.id, { name: e.target.value })} className="w-[13rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm text-slate-300">Length (m)</span>
-                      <input type="number" min="0.1" step="0.1" value={room.lengthMeters} onChange={(e) => updateRoom(room.id, { lengthMeters: Number(e.target.value) })} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
+                      <input type="number" min="0.1" step="0.1" value={room.lengthMeters} onChange={(e) => updateRoom(room.id, { lengthMeters: Number(e.target.value) })} className="w-[7.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm text-slate-300">Width (m)</span>
-                      <input type="number" min="0.1" step="0.1" value={room.widthMeters} onChange={(e) => updateRoom(room.id, { widthMeters: Number(e.target.value) })} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
+                      <input type="number" min="0.1" step="0.1" value={room.widthMeters} onChange={(e) => updateRoom(room.id, { widthMeters: Number(e.target.value) })} className="w-[7.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm text-slate-300">Height (m)</span>
-                      <input type="number" min="0.1" step="0.1" value={room.heightMeters} onChange={(e) => updateRoom(room.id, { heightMeters: Number(e.target.value) })} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
+                      <input type="number" min="0.1" step="0.1" value={room.heightMeters} onChange={(e) => updateRoom(room.id, { heightMeters: Number(e.target.value) })} className="w-[7.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm text-slate-300">General room feel</span>
-                      <select value={room.heatProfile} onChange={(e) => updateRoom(room.id, { heatProfile: e.target.value as HeatProfile })} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400">
+                      <select value={room.heatProfile} onChange={(e) => updateRoom(room.id, { heatProfile: e.target.value as HeatProfile })} className="w-[8.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400">
                         <option value="cool">Cool</option>
                         <option value="warm">Warm</option>
                         <option value="hot">Hot</option>
@@ -472,24 +475,26 @@ export default function AcCalculatorPage() {
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm text-slate-300">Occupants</span>
-                      <input type="number" min="1" step="1" value={room.occupants} onChange={(e) => updateRoom(room.id, { occupants: Number(e.target.value) })} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
+                      <input type="number" min="1" step="1" value={room.occupants} onChange={(e) => updateRoom(room.id, { occupants: Number(e.target.value) })} className="w-[7rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm text-slate-300">Floor</span>
-                      <input type="number" step="1" value={room.floor ?? ''} onChange={(e) => updateRoom(room.id, { floor: e.target.value === '' ? undefined : Number(e.target.value) })} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" placeholder="Optional" />
+                      <input type="number" step="1" value={room.floor ?? ''} onChange={(e) => updateRoom(room.id, { floor: e.target.value === '' ? undefined : Number(e.target.value) })} className="w-[7rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" placeholder="Optional" />
                     </label>
                   </div>
 
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">
-                      <input type="checkbox" checked={Boolean(room.westFacing)} onChange={(e) => updateRoom(room.id, { westFacing: e.target.checked })} />
-                      West-facing / afternoon sun
-                    </label>
-                    <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">
-                      <input type="checkbox" checked={Boolean(room.largeWindows)} onChange={(e) => updateRoom(room.id, { largeWindows: e.target.checked })} />
-                      Large windows / more glazing
-                    </label>
-                  </div>
+                  {isProfessionalUser && showExpertInputs ? (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">
+                        <input type="checkbox" checked={Boolean(room.westFacing)} onChange={(e) => updateRoom(room.id, { westFacing: e.target.checked })} />
+                        West-facing / afternoon sun
+                      </label>
+                      <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">
+                        <input type="checkbox" checked={Boolean(room.largeWindows)} onChange={(e) => updateRoom(room.id, { largeWindows: e.target.checked })} />
+                        Large windows / more glazing
+                      </label>
+                    </div>
+                  ) : null}
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 rounded-xl border border-slate-700 bg-slate-950/60 p-4">
                     <div>
@@ -550,17 +555,21 @@ export default function AcCalculatorPage() {
             <div className="rounded-2xl border border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 p-5 space-y-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Home summary</p>
-                <h2 className="mt-1 text-2xl font-bold text-white">{formatBtu(summary.totalBtu)}</h2>
               </div>
 
-              <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Recommended whole-home approach</p>
-                <p className="mt-2 text-sm text-slate-200">{summary.recommendedSystem}</p>
-              </div>
-
-              <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Compressor thinking</p>
-                <p className="mt-2 text-sm text-slate-200">{summary.compressorSuggestion}</p>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Total load</p>
+                  <p className="mt-2 text-lg font-semibold text-emerald-300">{formatBtu(summary.totalBtu)}</p>
+                </div>
+                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4 md:col-span-2">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Recommended whole-home approach</p>
+                  <p className="mt-2 text-sm text-slate-200">{summary.recommendedSystem}</p>
+                </div>
+                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4 md:col-span-3">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Compressor thinking</p>
+                  <p className="mt-2 text-sm text-slate-200">{summary.compressorSuggestion}</p>
+                </div>
               </div>
 
               <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">

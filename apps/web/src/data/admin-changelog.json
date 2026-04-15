@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-80e2f31",
+    "date": "2026-04-15T12:44:37+08:00",
+    "title": "refactor(web): simplify AC calculator input and defaults",
+    "summary": "refactor(web): simplify AC calculator input and defaults",
+    "areas": [
+      "web"
+    ],
+    "commit": "80e2f31",
+    "files": [
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-6998b09",
     "date": "2026-04-15T12:04:52+08:00",
     "title": "feat(docs-tools): add AC calculator and saved planning flow",
