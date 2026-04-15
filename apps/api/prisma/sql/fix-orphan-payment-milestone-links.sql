@@ -2,7 +2,9 @@
 -- Use when Plan-aligned Payment Milestones shows orphan rows after reset.
 --
 -- How to run:
--- 1) Replace :project_id and :project_professional_id placeholders.
+-- 1) Replace the two values in the params CTE below:
+--    - '__PROJECT_ID__'
+--    - '__PROJECT_PROFESSIONAL_ID__'
 -- 2) Execute inside a transaction.
 --
 -- Notes:
@@ -12,7 +14,21 @@
 
 BEGIN;
 
+-- Set your target IDs here before running:
+-- Example UUID format: 'cmngvpsxc0004fa2dt3kjpfc8'
+WITH params AS (
+  SELECT
+    '__PROJECT_ID__'::text AS project_id,
+    '__PROJECT_PROFESSIONAL_ID__'::text AS project_professional_id
+)
+SELECT 1;
+
 -- Optional: inspect current orphaned rows before update
+WITH params AS (
+  SELECT
+    '__PROJECT_ID__'::text AS project_id,
+    '__PROJECT_PROFESSIONAL_ID__'::text AS project_professional_id
+)
 SELECT
   pm.id,
   pm.sequence,
@@ -23,7 +39,7 @@ SELECT
   pp."projectProfessionalId"
 FROM "PaymentMilestone" pm
 JOIN "ProjectPaymentPlan" pp ON pp.id = pm."paymentPlanId"
-WHERE pp."projectId" = :project_id
+WHERE pp."projectId" = (SELECT project_id FROM params)
   AND (
     pm."projectMilestoneId" IS NULL
     OR NOT EXISTS (
@@ -40,20 +56,25 @@ WITH target_plan AS (
   WHERE "projectId" = :project_id
   LIMIT 1
 ),
+WITH params AS (
+  SELECT
+    '__PROJECT_ID__'::text AS project_id,
+    '__PROJECT_PROFESSIONAL_ID__'::text AS project_professional_id
+),
 financial_schedule AS (
   SELECT
     m.id,
-    m.sequence,
+  WHERE "projectId" = (SELECT project_id FROM params)
     m."plannedStartDate",
     m."plannedEndDate",
     ROW_NUMBER() OVER (
       PARTITION BY m.sequence
-      ORDER BY CASE WHEN m."projectProfessionalId" = :project_professional_id THEN 0 ELSE 1 END, m."updatedAt" DESC
+      ORDER BY CASE WHEN m."projectProfessionalId" = (SELECT project_professional_id FROM params) THEN 0 ELSE 1 END, m."updatedAt" DESC
     ) AS rn
   FROM "ProjectMilestone" m
-  WHERE m."projectId" = :project_id
+  WHERE m."projectId" = (SELECT project_id FROM params)
     AND m."isFinancial" = TRUE
-    AND (m."projectProfessionalId" = :project_professional_id OR m."projectProfessionalId" IS NULL)
+    AND (m."projectProfessionalId" = (SELECT project_professional_id FROM params) OR m."projectProfessionalId" IS NULL)
 ),
 best_financial_schedule AS (
   SELECT *
@@ -77,6 +98,11 @@ WHERE pm."paymentPlanId" = tp.id
   );
 
 -- Optional: verify after update
+WITH params AS (
+  SELECT
+    '__PROJECT_ID__'::text AS project_id,
+    '__PROJECT_PROFESSIONAL_ID__'::text AS project_professional_id
+)
 SELECT
   pm.id,
   pm.sequence,
@@ -85,7 +111,7 @@ SELECT
   pm."projectMilestoneId"
 FROM "PaymentMilestone" pm
 JOIN "ProjectPaymentPlan" pp ON pp.id = pm."paymentPlanId"
-WHERE pp."projectId" = :project_id
+WHERE pp."projectId" = (SELECT project_id FROM params)
 ORDER BY pm.sequence;
 
 COMMIT;
