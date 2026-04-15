@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-04-15-116182c",
+    "date": "2026-04-15T11:22:47+08:00",
+    "title": "feat(web): add interactive project sentiment badge and hide professional assist badge",
+    "summary": "feat(web): add interactive project sentiment badge and hide professional assist badge",
+    "areas": [
+      "web"
+    ],
+    "commit": "116182c",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/project-info-card.tsx",
+      "apps/web/src/components/project-sentiment-badge.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-339c2c2",
     "date": "2026-04-15T10:24:20+08:00",
     "title": "fix(sql): resolve update-from alias scope error in orphan-link repair",

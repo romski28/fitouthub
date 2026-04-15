@@ -137,47 +137,50 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     return percentComplete;
   };
 
-  // Fetch milestones
-  useEffect(() => {
+  const fetchMilestones = React.useCallback(async (options?: { silent?: boolean }) => {
     if (!projectProfessionalId) return;
 
-    const fetchMilestones = async () => {
-      try {
+    try {
+      if (!options?.silent) {
         setLoading(true);
-        setError(null);
+      }
+      setError(null);
 
-        // Try to fetch by projectProfessional first
-        const response = await fetch(
-          `${API_BASE_URL}/milestones/project-professional/${projectProfessionalId}`,
-          {
-            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-          }
-        );
-
-        if (!response.ok && response.status !== 404) {
-          throw new Error('Failed to fetch milestones');
+      const response = await fetch(
+        `${API_BASE_URL}/milestones/project-professional/${projectProfessionalId}?_ts=${Date.now()}`,
+        {
+          cache: 'no-store',
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
         }
+      );
 
-        if (response.ok) {
-          const data = await response.json();
-          const milestonesData = Array.isArray(data) ? data : data.milestones || [];
-          console.log(`[ScheduleTab] Fetched ${milestonesData.length} milestones`);
-          setMilestones(milestonesData);
-        } else {
-          // No milestones yet
-          console.log('[ScheduleTab] No milestones found (404)');
-          setMilestones([]);
-        }
-      } catch (err) {
-        console.error('Error fetching milestones:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load schedule');
-      } finally {
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Failed to fetch milestones');
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        const milestonesData = Array.isArray(data) ? data : data.milestones || [];
+        console.log(`[ScheduleTab] Fetched ${milestonesData.length} milestones`);
+        setMilestones(milestonesData);
+      } else {
+        console.log('[ScheduleTab] No milestones found (404)');
+        setMilestones([]);
+      }
+    } catch (err) {
+      console.error('Error fetching milestones:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load schedule');
+    } finally {
+      if (!options?.silent) {
         setLoading(false);
       }
-    };
-
-    fetchMilestones();
+    }
   }, [projectProfessionalId, accessToken]);
+
+  // Fetch milestones
+  useEffect(() => {
+    fetchMilestones();
+  }, [fetchMilestones]);
 
   useEffect(() => {
     if (!projectId || !accessToken || !isAwarded) return;
@@ -675,19 +678,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         throw new Error(data.message || 'Failed to reset milestones to default');
       }
 
-      const refreshed = await fetch(
-        `${API_BASE_URL}/milestones/project-professional/${projectProfessionalId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-      if (refreshed.ok) {
-        const refreshedData = await refreshed.json();
-        const milestonesData = Array.isArray(refreshedData) ? refreshedData : refreshedData?.milestones || [];
-        setMilestones(milestonesData);
-      }
+      await fetchMilestones({ silent: true });
 
       onMilestonesUpdate?.();
       if (typeof window !== 'undefined') {

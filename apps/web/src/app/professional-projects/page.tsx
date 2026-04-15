@@ -8,6 +8,7 @@ import { colors } from '@/styles/theme';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
+import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { useRoleGuard } from '@/hooks/use-role-guard';
 import { fetchWithRetry } from '@/lib/http';
 import {
@@ -18,7 +19,6 @@ import {
   type NextStepAction,
 } from '@/lib/next-steps';
 import type { UpdatesSummary } from '@/lib/updates-cache';
-import { fetchAssistPresenceByProject } from '@/lib/assist-requests';
 
 interface ProjectProfessional {
   id: string;
@@ -37,8 +37,6 @@ interface ProjectProfessional {
   quotedAt?: string;
   unreadCount?: number;
 }
-
-type AssistStatus = 'open' | 'in_progress' | 'closed';
 
 type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
 
@@ -74,7 +72,6 @@ export default function ProfessionalProjectsPage() {
   const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
@@ -183,46 +180,6 @@ export default function ProfessionalProjectsPage() {
     };
   }, [isLoggedIn, accessToken, projectIdsKey, nextStepCacheScope]);
 
-  useEffect(() => {
-    if (!isLoggedIn || !accessToken || projects.length === 0) return;
-
-    let cancelled = false;
-
-    const loadAssistance = async () => {
-      try {
-        const entries = await Promise.all(
-          projects.map(async (projectProf) => {
-            try {
-              const assist = await fetchAssistPresenceByProject(projectProf.project.id, accessToken, {
-                cacheScope: nextStepCacheScope,
-              });
-              const hasAssist = !!assist.hasAssist;
-              const status = (assist.status as AssistStatus | undefined) || undefined;
-              return [projectProf.project.id, hasAssist, status] as const;
-            } catch {
-              return [projectProf.project.id, false, undefined] as const;
-            }
-          }),
-        );
-
-        if (!cancelled) {
-          const next: Record<string, { hasAssist: boolean; status?: AssistStatus }> = {};
-          entries.forEach(([id, has, status]) => {
-            next[id] = { hasAssist: has, status };
-          });
-          setAssistMap(next);
-        }
-      } catch {
-      }
-    };
-
-    loadAssistance();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedIn, accessToken, projectIdsKey]);
-
   const handleCompleteNextStep = async (
     event: MouseEvent<HTMLButtonElement>,
     projectId: string,
@@ -322,7 +279,6 @@ export default function ProfessionalProjectsPage() {
                 const statusBadge = projectProf.status === 'awarded' ? 'bg-purple-400/20 text-purple-200' : 
                   projectProf.status === 'quoted' ? 'bg-blue-400/20 text-blue-200' : 
                   projectProf.status === 'accepted' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-amber-400/20 text-amber-200';
-                const assistInfo = assistMap[projectProf.project.id];
                 const unreadCount = projectProf.unreadCount ?? 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 const secondaryActionHref = secondaryAction ? getProfessionalShowMeHref(projectProf.id, secondaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
@@ -340,9 +296,10 @@ export default function ProfessionalProjectsPage() {
                           <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusBadge}`}>
                             {projectProf.status}
                           </span>
-                          <span className={`rounded-full px-2 py-1 font-semibold ${assistInfo?.hasAssist ? 'bg-emerald-500/20 text-emerald-200' : 'bg-slate-500/20 text-slate-200'}`}>
-                            {assistInfo?.hasAssist ? 'Assist requested' : 'No assist'}
-                          </span>
+                          <ProjectSentimentBadge
+                            projectId={projectProf.project.id}
+                            storageScope="professional"
+                          />
                         </div>
                       </div>
                       

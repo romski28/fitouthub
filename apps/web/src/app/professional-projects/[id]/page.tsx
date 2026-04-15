@@ -1388,6 +1388,8 @@ export default function ProjectDetailPage() {
               title={project!.project.projectName}
               region={project!.project.region}
               status={project!.status}
+              projectSentimentKey={project!.project.id}
+              projectSentimentScope="professional"
               notes={project!.project.notes || undefined}
               createdAt={project!.createdAt}
               updatedAt={project!.updatedAt}

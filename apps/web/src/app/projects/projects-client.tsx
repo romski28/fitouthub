@@ -8,6 +8,7 @@ import { API_BASE_URL } from "@/config/api";
 import { ModalOverlay } from "@/components/modal-overlay";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { ProjectForm, type ProjectFormData } from "@/components/project-form";
+import { ProjectSentimentBadge } from "@/components/project-sentiment-badge";
 import { Project } from "@/lib/types";
 import { BackToTop } from "@/components/back-to-top";
 import { UpdatesButton } from "@/components/updates-button";
@@ -794,6 +795,10 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           alt={assistInfo?.hasAssist ? t('assistRequestedAlt') : t('noAssistAlt')}
                           title={assistInfo?.hasAssist ? t('assistRequestedTitle') : t('noAssistTitle')}
                           className={`h-6 w-6 object-contain ${assistInfo?.hasAssist ? '' : 'opacity-70'}`}
+                        />
+                        <ProjectSentimentBadge
+                          projectId={project.id}
+                          storageScope="client"
                         />
                       </div>
                     </div>

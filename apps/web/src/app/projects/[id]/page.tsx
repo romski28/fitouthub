@@ -23,6 +23,7 @@ import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
+import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -1708,13 +1709,19 @@ export default function ClientProjectDetailPage() {
                 </p>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <span
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                    projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  {projectStatus.replace('_', ' ')}
-                </span>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                      projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {projectStatus.replace('_', ' ')}
+                  </span>
+                  <ProjectSentimentBadge
+                    projectId={project.id}
+                    storageScope="client"
+                  />
+                </div>
                 {projectStatus === 'awarded' && project.professionals?.some((pp) => pp.status === 'awarded') && (
                   <span className="text-xs font-medium text-slate-300">
                     {project.professionals.find((pp) => pp.status === 'awarded')?.professional.fullName || 

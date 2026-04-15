@@ -1,5 +1,6 @@
 import React from 'react';
 import StatusPill, { statusToneFromStatus } from './status-pill';
+import { ProjectSentimentBadge } from './project-sentiment-badge';
 
 type Role = 'client' | 'admin' | 'professional';
 
@@ -13,6 +14,8 @@ export type ProjectInfoProps = {
   updatedAt?: string;
   awardedDisplayName?: string;
   quoteAmount?: string | number;
+  projectSentimentKey?: string;
+  projectSentimentScope?: 'client' | 'professional' | 'shared';
   showWithdrawButton?: boolean;
   withdrawing?: boolean;
   onWithdraw?: () => void;
@@ -42,6 +45,8 @@ export default function ProjectInfoCard({
   updatedAt,
   awardedDisplayName,
   quoteAmount,
+  projectSentimentKey,
+  projectSentimentScope = 'shared',
   showWithdrawButton,
   withdrawing,
   onWithdraw,
@@ -81,11 +86,19 @@ export default function ProjectInfoCard({
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <StatusPill
-              status={status}
-              label={status.replace('_', ' ')}
-              tone={statusToneFromStatus(status)}
-            />
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <StatusPill
+                status={status}
+                label={status.replace('_', ' ')}
+                tone={statusToneFromStatus(status)}
+              />
+              {projectSentimentKey && (
+                <ProjectSentimentBadge
+                  projectId={projectSentimentKey}
+                  storageScope={projectSentimentScope}
+                />
+              )}
+            </div>
             {status === 'awarded' && awardedDisplayName && (
               <span className={`text-xs font-medium ${isProfessional ? 'text-slate-100' : 'text-slate-300'}`}>{awardedDisplayName}</span>
             )}
