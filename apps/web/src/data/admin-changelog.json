@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-0eee5f2",
+    "date": "2026-04-15T13:09:01+08:00",
+    "title": "refactor(web): rebalance AC calculator form and report flow",
+    "summary": "refactor(web): rebalance AC calculator form and report flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "0eee5f2",
+    "files": [
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-80e2f31",
     "date": "2026-04-15T12:44:37+08:00",
     "title": "refactor(web): simplify AC calculator input and defaults",

@@ -52,18 +52,78 @@ type ClientProjectOption = {
   status?: string | null;
 };
 
-const createRoom = (index: number): RoomInput => ({
-  id: `room-${Date.now()}-${index}`,
-  name: index === 0 ? 'Living Room' : `Room ${index + 1}`,
-  lengthMeters: 3.2,
-  widthMeters: 2.8,
-  heightMeters: 2.6,
+type DraftRoom = {
+  name: string;
+  lengthMeters: string;
+  widthMeters: string;
+  heightMeters: string;
+  heatProfile: HeatProfile;
+  occupants: string;
+  floor: string;
+  westFacing: boolean;
+  largeWindows: boolean;
+};
+
+const createDraftRoom = (): DraftRoom => ({
+  name: '',
+  lengthMeters: '',
+  widthMeters: '',
+  heightMeters: '',
   heatProfile: 'warm',
-  occupants: 1,
-  floor: undefined,
+  occupants: '',
+  floor: '',
   westFacing: false,
   largeWindows: false,
 });
+
+const parsePositiveNumber = (value: string): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+};
+
+const parseOccupants = (value: string): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1) return null;
+  return Math.max(1, Math.round(parsed));
+};
+
+const buildRoomFromDraft = (draft: DraftRoom, roomIndex: number): { room: RoomInput | null; error: string } => {
+  const lengthMeters = parsePositiveNumber(draft.lengthMeters);
+  const widthMeters = parsePositiveNumber(draft.widthMeters);
+  const heightMeters = parsePositiveNumber(draft.heightMeters);
+  const occupants = parseOccupants(draft.occupants || '1');
+
+  if (!draft.name.trim()) {
+    return { room: null, error: 'Please add a room name before adding this room.' };
+  }
+
+  if (lengthMeters === null || widthMeters === null || heightMeters === null) {
+    return { room: null, error: 'Length, width, and height must be greater than 0.' };
+  }
+
+  if (occupants === null) {
+    return { room: null, error: 'Occupants must be at least 1.' };
+  }
+
+  const parsedFloor = draft.floor.trim() ? Number(draft.floor) : undefined;
+
+  return {
+    room: {
+      id: `room-${Date.now()}-${roomIndex + 1}`,
+      name: draft.name.trim(),
+      lengthMeters,
+      widthMeters,
+      heightMeters,
+      heatProfile: draft.heatProfile,
+      occupants,
+      floor: Number.isFinite(parsedFloor as number) ? parsedFloor : undefined,
+      westFacing: draft.westFacing,
+      largeWindows: draft.largeWindows,
+    },
+    error: '',
+  };
+};
 
 export default function AcCalculatorPage() {
   const { isLoggedIn, accessToken, user } = useAuth();
@@ -84,7 +144,9 @@ export default function AcCalculatorPage() {
   const [combineRooms, setCombineRooms] = React.useState(true);
   const calculationMethod: CalculationMethod = 'area';
   const [showExpertInputs, setShowExpertInputs] = React.useState(false);
-  const [rooms, setRooms] = React.useState<RoomInput[]>([createRoom(0)]);
+  const [draftRoom, setDraftRoom] = React.useState<DraftRoom>(createDraftRoom());
+  const [draftMessage, setDraftMessage] = React.useState('');
+  const [rooms, setRooms] = React.useState<RoomInput[]>([]);
   const [savedProjects, setSavedProjects] = React.useState<SavedAcProject[]>([]);
   const [clientProjects, setClientProjects] = React.useState<ClientProjectOption[]>([]);
   const [activeSavedId, setActiveSavedId] = React.useState<string | null>(null);
@@ -94,13 +156,14 @@ export default function AcCalculatorPage() {
   const [saveMessage, setSaveMessage] = React.useState('');
   const [loadingSaved, setLoadingSaved] = React.useState(false);
 
+  const hasRooms = rooms.length > 0;
   const roomResults = React.useMemo(
     () => rooms.map((room) => calculateRoom(room, calculationMethod, combineRooms)),
     [rooms, calculationMethod, combineRooms],
   );
   const summary = React.useMemo(
-    () => calculateSummary(roomResults, combineRooms),
-    [roomResults, combineRooms],
+    () => (hasRooms ? calculateSummary(roomResults, combineRooms) : null),
+    [hasRooms, roomResults, combineRooms],
   );
 
   const refreshSavedProjects = React.useCallback(async () => {
@@ -154,7 +217,7 @@ export default function AcCalculatorPage() {
 
         setClientProjects(
           rows
-            .map((project: any) => ({
+            .map((project: { id?: unknown; projectName?: unknown; status?: unknown }) => ({
               id: String(project?.id || ''),
               projectName: String(project?.projectName || 'Untitled project'),
               status: project?.status ? String(project.status) : null,
@@ -175,16 +238,26 @@ export default function AcCalculatorPage() {
     };
   }, [isClientUser, accessToken]);
 
-  const updateRoom = (id: string, patch: Partial<RoomInput>) => {
-    setRooms((prev) => prev.map((room) => (room.id === id ? { ...room, ...patch } : room)));
+  const clearDraftForm = () => {
+    setDraftRoom(createDraftRoom());
+    setDraftMessage('');
   };
 
-  const addRoom = () => {
-    setRooms((prev) => [...prev, createRoom(prev.length)]);
+  const addDraftRoom = () => {
+    const { room, error } = buildRoomFromDraft(draftRoom, rooms.length);
+    if (!room) {
+      setDraftMessage(error);
+      return;
+    }
+
+    setRooms((prev) => [...prev, room]);
+    setDraftRoom(createDraftRoom());
+    setDraftMessage('Room added to report.');
+    setSaveMessage('');
   };
 
   const removeRoom = (id: string) => {
-    setRooms((prev) => (prev.length > 1 ? prev.filter((room) => room.id !== id) : prev));
+    setRooms((prev) => prev.filter((room) => room.id !== id));
   };
 
   const resetCalculator = () => {
@@ -193,7 +266,9 @@ export default function AcCalculatorPage() {
     setNotes('');
     setCombineRooms(true);
     setShowExpertInputs(false);
-    setRooms([createRoom(0)]);
+    setRooms([]);
+    setDraftRoom(createDraftRoom());
+    setDraftMessage('');
     setSaveToLinkLater(true);
     setLinkedProjectId('');
     setSaveState('idle');
@@ -209,7 +284,7 @@ export default function AcCalculatorPage() {
     setLinkedProjectId(saved.linkedProjectId || '');
     setRooms(
       saved.rooms.map((room, index) => ({
-        id: room.id || createRoom(index).id,
+        id: room.id || `room-${Date.now()}-${index + 1}`,
         name: room.name,
         lengthMeters: Number(room.lengthMeters) || 1,
         widthMeters: Number(room.widthMeters) || 1,
@@ -221,6 +296,8 @@ export default function AcCalculatorPage() {
         largeWindows: Boolean(room.largeWindows),
       })),
     );
+    setDraftRoom(createDraftRoom());
+    setDraftMessage('Saved plan loaded.');
     setSaveState('saved');
     setSaveMessage('Saved plan loaded.');
   };
@@ -231,10 +308,10 @@ export default function AcCalculatorPage() {
     calculationMethod,
     combineRooms,
     linkedProjectId: saveToLinkLater ? null : linkedProjectId || null,
-    totalBtu: summary.totalBtu,
-    recommendedSystem: summary.recommendedSystem,
-    compressorSuggestion: summary.compressorSuggestion,
-    shoppingList: summary.shoppingList,
+    totalBtu: summary?.totalBtu ?? null,
+    recommendedSystem: summary?.recommendedSystem ?? null,
+    compressorSuggestion: summary?.compressorSuggestion ?? null,
+    shoppingList: summary?.shoppingList ?? [],
     rooms: roomResults.map((room) => ({
       name: room.name,
       lengthMeters: room.lengthMeters,
@@ -256,6 +333,11 @@ export default function AcCalculatorPage() {
 
   const saveProject = async () => {
     if (!token) return;
+    if (!hasRooms) {
+      setSaveState('error');
+      setSaveMessage('Add at least one room before saving this plan.');
+      return;
+    }
     try {
       setSaveState('saving');
       setSaveMessage('Saving your AC plan...');
@@ -307,15 +389,14 @@ export default function AcCalculatorPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">Docs &amp; Tools</p>
               <h1 className="text-3xl font-bold">Air-Conditioning Calculator</h1>
               <p className="max-w-3xl text-sm text-slate-300">
-                A friendly first-pass helper for Hong Kong homes. Add rooms, estimate BTU needs, compare likely unit types,
-                and keep a saved scenario if you are logged in.
+                A friendly first-pass helper for Hong Kong homes. Enter one room at a time, add it to your report, and save your plan if needed.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 text-sm">
@@ -332,75 +413,344 @@ export default function AcCalculatorPage() {
         <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
           <section className="space-y-6">
             <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
-              <div className="flex flex-wrap items-end gap-4">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-200">Plan name</span>
-                  <input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-[22rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    placeholder="e.g. Happy Valley AC refresh"
-                  />
-                </label>
-                <div className="rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-2">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Method</p>
-                  <p className="text-sm font-medium text-white">Area rule (sqm × 700)</p>
-                </div>
-                {isProfessionalUser ? (
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-200">Plan name</span>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                  placeholder="e.g. Happy Valley AC refresh"
+                />
+              </label>
+
+              {isProfessionalUser ? (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium text-slate-200">Expert inputs</span>
                   <button
                     type="button"
                     onClick={() => setShowExpertInputs((prev) => !prev)}
-                    className={`rounded-lg px-3 py-2 text-xs font-semibold ${showExpertInputs ? 'bg-sky-500/20 text-sky-200 border border-sky-500/40' : 'bg-slate-800 text-slate-200 border border-slate-700'}`}
+                    className={`rounded-lg px-3 py-2 text-xs font-semibold ${showExpertInputs ? 'border border-sky-500/40 bg-sky-500/20 text-sky-200' : 'border border-slate-700 bg-slate-800 text-slate-200'}`}
                   >
                     {showExpertInputs ? 'Expert mode on' : 'Expert mode'}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Room entry</p>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <label className="block space-y-2 xl:col-span-2">
+                  <span className="text-sm text-slate-300">Room name</span>
+                  <input
+                    value={draftRoom.name}
+                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    placeholder="e.g. Living Room"
+                  />
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm text-slate-300">Length (m)</span>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    value={draftRoom.lengthMeters}
+                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, lengthMeters: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    placeholder="3.2"
+                  />
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm text-slate-300">Width (m)</span>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    value={draftRoom.widthMeters}
+                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, widthMeters: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    placeholder="2.8"
+                  />
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm text-slate-300">Height (m)</span>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    value={draftRoom.heightMeters}
+                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, heightMeters: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    placeholder="2.6"
+                  />
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm text-slate-300">General room feel</span>
+                  <select
+                    value={draftRoom.heatProfile}
+                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, heatProfile: e.target.value as HeatProfile }))}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                  >
+                    <option value="cool">Cool</option>
+                    <option value="warm">Warm</option>
+                    <option value="hot">Hot</option>
+                  </select>
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm text-slate-300">Occupants</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={draftRoom.occupants}
+                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, occupants: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    placeholder="1"
+                  />
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm text-slate-300">Floor (optional)</span>
+                  <input
+                    type="number"
+                    step="1"
+                    value={draftRoom.floor}
+                    onChange={(e) => setDraftRoom((prev) => ({ ...prev, floor: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    placeholder="e.g. 12"
+                  />
+                </label>
+              </div>
+
+              {isProfessionalUser && showExpertInputs ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block space-y-2">
+                    <span className="text-sm text-slate-300">West-facing / afternoon sun</span>
+                    <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(draftRoom.westFacing)}
+                        onChange={(e) => setDraftRoom((prev) => ({ ...prev, westFacing: e.target.checked }))}
+                      />
+                    </div>
+                  </label>
+                  <label className="block space-y-2">
+                    <span className="text-sm text-slate-300">Large windows / more glazing</span>
+                    <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(draftRoom.largeWindows)}
+                        onChange={(e) => setDraftRoom((prev) => ({ ...prev, largeWindows: e.target.checked }))}
+                      />
+                    </div>
+                  </label>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-3 border-t border-slate-700 pt-4">
+                <button
+                  type="button"
+                  onClick={addDraftRoom}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+                >
+                  Add this room
+                </button>
+                <button
+                  type="button"
+                  onClick={clearDraftForm}
+                  className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={resetCalculator}
+                  className="rounded-lg border border-rose-500/40 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/10"
+                >
+                  Reset all
+                </button>
+              </div>
+
+              {draftMessage ? (
+                <p className={`text-sm ${draftMessage === 'Room added to report.' ? 'text-emerald-300' : 'text-rose-300'}`}>{draftMessage}</p>
+              ) : null}
+            </div>
+
+            {!hasRooms ? (
+              <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5">
+                <p className="text-sm text-slate-300">Add at least one room to generate the report.</p>
+              </div>
+            ) : (
+              <div className="space-y-4 rounded-2xl border border-slate-700 bg-slate-900/70 p-5">
+                <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3">
+                  <p className="text-sm font-medium text-white">System preference</p>
+                  <p className="mt-1 text-xs text-slate-400">This sets whether you are planning room-by-room units or exploring a shared system approach.</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCombineRooms(true)}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold ${combineRooms ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-200'}`}
+                    >
+                      Can use shared system
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCombineRooms(false)}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold ${!combineRooms ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-200'}`}
+                    >
+                      Use room-by-room units
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-700">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-950">
+                      <tr className="text-left text-slate-300">
+                        <th className="px-3 py-2 font-semibold">Room</th>
+                        <th className="px-3 py-2 font-semibold">L (m)</th>
+                        <th className="px-3 py-2 font-semibold">W (m)</th>
+                        <th className="px-3 py-2 font-semibold">H (m)</th>
+                        <th className="px-3 py-2 font-semibold">Area (m²)</th>
+                        <th className="px-3 py-2 font-semibold">Heat</th>
+                        <th className="px-3 py-2 font-semibold">Occupants</th>
+                        <th className="px-3 py-2 font-semibold">BTU</th>
+                        <th className="px-3 py-2 font-semibold">Suggested unit</th>
+                        <th className="px-3 py-2 font-semibold">AC type</th>
+                        <th className="px-3 py-2 font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {roomResults.map((room) => (
+                        <tr key={room.id} className="border-t border-slate-800 bg-slate-900/50">
+                          <td className="px-3 py-2 text-white">{room.name}</td>
+                          <td className="px-3 py-2 text-slate-200">{room.lengthMeters.toFixed(1)}</td>
+                          <td className="px-3 py-2 text-slate-200">{room.widthMeters.toFixed(1)}</td>
+                          <td className="px-3 py-2 text-slate-200">{room.heightMeters.toFixed(1)}</td>
+                          <td className="px-3 py-2 text-slate-200">{room.areaSqm.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-slate-200">{room.heatProfile}</td>
+                          <td className="px-3 py-2 text-slate-200">{room.occupants}</td>
+                          <td className="px-3 py-2 text-emerald-300">{formatBtu(room.calculatedBtu)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatUnitSize(room.suggestedUnitSize)}</td>
+                          <td className="px-3 py-2 text-slate-200">{room.recommendedAcType}</td>
+                          <td className="px-3 py-2">
+                            <button
+                              type="button"
+                              onClick={() => removeRoom(room.id)}
+                              className="rounded border border-rose-500/40 px-2 py-1 text-xs font-semibold text-rose-200 hover:bg-rose-500/10"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {summary ? (
+                  <>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
+                        <p className="text-xs uppercase tracking-wide text-slate-400">Total load</p>
+                        <p className="mt-2 text-lg font-semibold text-emerald-300">{formatBtu(summary.totalBtu)}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4 md:col-span-2">
+                        <p className="text-xs uppercase tracking-wide text-slate-400">Recommended whole-home approach</p>
+                        <p className="mt-2 text-sm text-slate-200">{summary.recommendedSystem}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Compressor thinking</p>
+                      <p className="mt-2 text-sm text-slate-200">{summary.compressorSuggestion}</p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Shopping list</p>
+                      <ul className="mt-2 space-y-2 text-sm text-slate-200">
+                        {summary.shoppingList.map((item) => (
+                          <li key={item.unitSize} className="flex items-center justify-between">
+                            <span>{formatUnitSize(item.unitSize)}</span>
+                            <span className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-300">× {item.count}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                      <p className="text-sm font-semibold text-amber-200">Before you buy</p>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
+                        {summary.summaryNotes.map((note) => (
+                          <li key={note}>{note}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            )}
+          </section>
+
+          <aside className="space-y-6">
+            <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Saved plans</p>
+                  <p className="text-xs text-slate-400">{canSave ? `Signed in as ${actorLabel}` : 'Sign in to use saved plans'}</p>
+                </div>
+                {canSave ? (
+                  <button
+                    type="button"
+                    onClick={refreshSavedProjects}
+                    className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+                  >
+                    Refresh
                   </button>
                 ) : null}
               </div>
 
-              <label className="space-y-2 block">
-                <span className="text-sm font-medium text-slate-200">Friendly planner notes</span>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-24 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                  placeholder="Any site quirks? Tall windows, direct sun, landlord limits, or future project ideas..."
-                />
-              </label>
-
-              <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3">
-                <div>
-                  <p className="font-medium text-white">Combine rooms for one shared system?</p>
-                  <p className="text-xs text-slate-400">Useful when you are thinking about ducted, multi-split, or a whole-zone solution.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCombineRooms((prev) => !prev)}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold ${combineRooms ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-200'}`}
-                >
-                  {combineRooms ? 'Combined' : 'Separate rooms'}
-                </button>
-              </label>
-
-              {canSave && (
-                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4 space-y-3">
-                  <label className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-white">Save to link to project later?</p>
-                      <p className="text-xs text-slate-400">
-                        Keep this AC plan as a standalone helper now, or attach it to an existing formal project.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSaveToLinkLater((prev) => !prev)}
-                      className={`rounded-full px-4 py-2 text-xs font-semibold ${saveToLinkLater ? 'bg-emerald-500 text-slate-950' : 'bg-sky-500/20 text-sky-200'}`}
-                    >
-                      {saveToLinkLater ? 'Yes' : 'No'}
-                    </button>
+              {canSave ? (
+                <>
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-slate-200">Friendly planner notes (optional)</span>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="min-h-24 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                      placeholder="Anything you want to remember when saving this plan..."
+                    />
                   </label>
 
-                  {!saveToLinkLater && isClientUser && (
-                    <label className="space-y-2 block">
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-slate-200">Save mode</span>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSaveToLinkLater(true)}
+                        className={`rounded-full px-4 py-2 text-xs font-semibold ${saveToLinkLater ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-200'}`}
+                      >
+                        Save and link later
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSaveToLinkLater(false)}
+                        className={`rounded-full px-4 py-2 text-xs font-semibold ${!saveToLinkLater ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-200'}`}
+                      >
+                        Link now
+                      </button>
+                    </div>
+                  </label>
+
+                  {!saveToLinkLater && isClientUser ? (
+                    <label className="block space-y-2">
                       <span className="text-sm font-medium text-slate-200">Choose a project to attach now</span>
                       <select
                         value={linkedProjectId}
@@ -410,205 +760,38 @@ export default function AcCalculatorPage() {
                         <option value="">Select a project</option>
                         {clientProjects.map((project) => (
                           <option key={project.id} value={project.id}>
-                            {project.projectName}{project.status ? ` (${project.status})` : ''}
+                            {project.projectName}
+                            {project.status ? ` (${project.status})` : ''}
                           </option>
                         ))}
                       </select>
                       {clientProjects.length === 0 ? (
-                        <p className="text-xs text-amber-200">No formal client projects found yet, so this plan will stay standalone until one exists.</p>
+                        <p className="text-xs text-amber-200">No formal client projects found yet.</p>
                       ) : null}
                     </label>
-                  )}
-
-                  {!saveToLinkLater && !isClientUser && (
-                    <p className="text-xs text-slate-400">
-                      Project linking is currently enabled for signed-in client project owners. Professional accounts can still save standalone plans.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {rooms.map((room, index) => (
-                <div key={room.id} className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Room {index + 1}</p>
-                      <h2 className="text-xl font-semibold text-white">{room.name || `Room ${index + 1}`}</h2>
-                    </div>
-                    {rooms.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeRoom(room.id)}
-                        className="rounded-lg border border-rose-500/40 px-3 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/10"
-                      >
-                        Remove room
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-end gap-3">
-                    <label className="space-y-2">
-                      <span className="text-sm text-slate-300">Room name</span>
-                      <input value={room.name} onChange={(e) => updateRoom(room.id, { name: e.target.value })} className="w-[13rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm text-slate-300">Length (m)</span>
-                      <input type="number" min="0.1" step="0.1" value={room.lengthMeters} onChange={(e) => updateRoom(room.id, { lengthMeters: Number(e.target.value) })} className="w-[7.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm text-slate-300">Width (m)</span>
-                      <input type="number" min="0.1" step="0.1" value={room.widthMeters} onChange={(e) => updateRoom(room.id, { widthMeters: Number(e.target.value) })} className="w-[7.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm text-slate-300">Height (m)</span>
-                      <input type="number" min="0.1" step="0.1" value={room.heightMeters} onChange={(e) => updateRoom(room.id, { heightMeters: Number(e.target.value) })} className="w-[7.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm text-slate-300">General room feel</span>
-                      <select value={room.heatProfile} onChange={(e) => updateRoom(room.id, { heatProfile: e.target.value as HeatProfile })} className="w-[8.5rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400">
-                        <option value="cool">Cool</option>
-                        <option value="warm">Warm</option>
-                        <option value="hot">Hot</option>
-                      </select>
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm text-slate-300">Occupants</span>
-                      <input type="number" min="1" step="1" value={room.occupants} onChange={(e) => updateRoom(room.id, { occupants: Number(e.target.value) })} className="w-[7rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" />
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm text-slate-300">Floor</span>
-                      <input type="number" step="1" value={room.floor ?? ''} onChange={(e) => updateRoom(room.id, { floor: e.target.value === '' ? undefined : Number(e.target.value) })} className="w-[7rem] max-w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-400" placeholder="Optional" />
-                    </label>
-                  </div>
-
-                  {isProfessionalUser && showExpertInputs ? (
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">
-                        <input type="checkbox" checked={Boolean(room.westFacing)} onChange={(e) => updateRoom(room.id, { westFacing: e.target.checked })} />
-                        West-facing / afternoon sun
-                      </label>
-                      <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">
-                        <input type="checkbox" checked={Boolean(room.largeWindows)} onChange={(e) => updateRoom(room.id, { largeWindows: e.target.checked })} />
-                        Large windows / more glazing
-                      </label>
-                    </div>
                   ) : null}
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 rounded-xl border border-slate-700 bg-slate-950/60 p-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-400">Area</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{roomResults[index].areaSqm.toFixed(2)} m²</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-400">Cooling load</p>
-                      <p className="mt-1 text-lg font-semibold text-emerald-300">{formatBtu(roomResults[index].calculatedBtu)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-400">AC type</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{roomResults[index].recommendedAcType}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-400">Suggested size</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{formatUnitSize(roomResults[index].suggestedUnitSize)}</p>
-                    </div>
-                  </div>
+                  {!saveToLinkLater && !isClientUser ? (
+                    <p className="text-xs text-slate-400">Project linking is currently available for signed-in client project owners.</p>
+                  ) : null}
 
-                  {roomResults[index].notes.length > 0 && (
-                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-                      <p className="text-sm font-semibold text-amber-200">Notes for this room</p>
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-                        {roomResults[index].notes.map((note) => (
-                          <li key={note}>{note}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={addRoom} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">
-                + Add another room
-              </button>
-              <button type="button" onClick={resetCalculator} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10">
-                Start fresh
-              </button>
-              {canSave ? (
-                <button type="button" onClick={saveProject} disabled={saveState === 'saving'} className="rounded-lg border border-sky-400/40 px-4 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-500/10 disabled:opacity-70">
-                  {saveState === 'saving' ? 'Saving...' : activeSavedId ? 'Update saved plan' : 'Save for later'}
-                </button>
-              ) : (
-                <div className="rounded-lg border border-dashed border-slate-600 px-4 py-2 text-sm text-slate-400">
-                  Log in to save this AC plan for later.
-                </div>
-              )}
-            </div>
-            {saveMessage && (
-              <p className={`text-sm ${saveState === 'error' ? 'text-rose-300' : 'text-emerald-300'}`}>{saveMessage}</p>
-            )}
-          </section>
-
-          <aside className="space-y-6">
-            <div className="rounded-2xl border border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 p-5 space-y-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Home summary</p>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Total load</p>
-                  <p className="mt-2 text-lg font-semibold text-emerald-300">{formatBtu(summary.totalBtu)}</p>
-                </div>
-                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4 md:col-span-2">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Recommended whole-home approach</p>
-                  <p className="mt-2 text-sm text-slate-200">{summary.recommendedSystem}</p>
-                </div>
-                <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4 md:col-span-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Compressor thinking</p>
-                  <p className="mt-2 text-sm text-slate-200">{summary.compressorSuggestion}</p>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Shopping list</p>
-                <ul className="mt-2 space-y-2 text-sm text-slate-200">
-                  {summary.shoppingList.map((item) => (
-                    <li key={item.unitSize} className="flex items-center justify-between">
-                      <span>{formatUnitSize(item.unitSize)}</span>
-                      <span className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-300">× {item.count}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-                <p className="text-sm font-semibold text-amber-200">Before you buy</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-                  {summary.summaryNotes.map((note) => (
-                    <li key={note}>{note}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Saved plans</p>
-                  <p className="text-xs text-slate-400">{canSave ? `Signed in as ${actorLabel}` : 'Available after login'}</p>
-                </div>
-                {canSave && (
-                  <button type="button" onClick={refreshSavedProjects} className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10">
-                    Refresh
+                  <button
+                    type="button"
+                    onClick={saveProject}
+                    disabled={saveState === 'saving'}
+                    className="w-full rounded-lg border border-sky-400/40 px-4 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-500/10 disabled:opacity-70"
+                  >
+                    {saveState === 'saving' ? 'Saving...' : activeSavedId ? 'Update saved plan' : 'Save for later'}
                   </button>
-                )}
-              </div>
+                </>
+              ) : null}
+
+              {saveMessage ? (
+                <p className={`text-sm ${saveState === 'error' ? 'text-rose-300' : 'text-emerald-300'}`}>{saveMessage}</p>
+              ) : null}
 
               {!canSave ? (
-                <p className="text-sm text-slate-400">Sign in to store multiple apartment cooling scenarios and revisit them later.</p>
+                <p className="text-sm text-slate-400">Saved plans are available after sign in.</p>
               ) : loadingSaved ? (
                 <p className="text-sm text-slate-400">Loading saved plans...</p>
               ) : savedProjects.length === 0 ? (
@@ -616,21 +799,34 @@ export default function AcCalculatorPage() {
               ) : (
                 <div className="space-y-3">
                   {savedProjects.map((project) => (
-                    <div key={project.id} className={`rounded-xl border p-4 ${activeSavedId === project.id ? 'border-emerald-400 bg-emerald-500/10' : 'border-slate-700 bg-slate-950/70'}`}>
+                    <div
+                      key={project.id}
+                      className={`rounded-xl border p-4 ${activeSavedId === project.id ? 'border-emerald-400 bg-emerald-500/10' : 'border-slate-700 bg-slate-950/70'}`}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-semibold text-white">{project.title}</p>
-                          <p className="text-xs text-slate-400">{project.rooms.length} room{project.rooms.length === 1 ? '' : 's'} • {project.totalBtu ? formatBtu(project.totalBtu) : 'Draft'}</p>
+                          <p className="text-xs text-slate-400">
+                            {project.rooms.length} room{project.rooms.length === 1 ? '' : 's'} • {project.totalBtu ? formatBtu(project.totalBtu) : 'Draft'}
+                          </p>
                           <p className="mt-1 text-[11px] text-slate-500">
                             {project.linkedProjectId ? 'Linked to a formal project' : 'Saved to link later'}
                           </p>
                         </div>
-                        <button type="button" onClick={() => deleteSavedProject(project.id)} className="text-xs font-semibold text-rose-300 hover:text-rose-200">
+                        <button
+                          type="button"
+                          onClick={() => deleteSavedProject(project.id)}
+                          className="text-xs font-semibold text-rose-300 hover:text-rose-200"
+                        >
                           Delete
                         </button>
                       </div>
                       <div className="mt-3 flex gap-2">
-                        <button type="button" onClick={() => hydrateFromSaved(project)} className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => hydrateFromSaved(project)}
+                          className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700"
+                        >
                           Load plan
                         </button>
                       </div>
