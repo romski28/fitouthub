@@ -452,8 +452,8 @@ export default function AcCalculatorPage() {
                     />
                   </label>
 
-                  <div className="w-full overflow-x-auto xl:flex-[1.2]">
-                    <div className="grid min-w-[420px] grid-cols-3 gap-4 xl:min-w-0">
+                  <div className="w-full xl:flex-[1.2]">
+                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
                       <label className="block space-y-2">
                         <span className="text-sm text-slate-300">Length (m)</span>
                         <input
@@ -496,8 +496,8 @@ export default function AcCalculatorPage() {
                   </div>
                 </div>
 
-                <div className="w-full overflow-x-auto">
-                  <div className="grid min-w-[420px] grid-cols-3 gap-4">
+                <div className="w-full">
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4">
                     <label className="block space-y-2">
                       <span className="text-sm text-slate-300">General room feel</span>
                       <select

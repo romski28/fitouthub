@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-15-5face40",
+    "date": "2026-04-15T13:33:35+08:00",
+    "title": "fix(web): prevent AC calculator mobile overflow",
+    "summary": "fix(web): prevent AC calculator mobile overflow",
+    "areas": [
+      "web"
+    ],
+    "commit": "5face40",
+    "files": [
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-ece36b6",
     "date": "2026-04-15T13:22:54+08:00",
     "title": "refactor(web): enforce grouped room input rows",
