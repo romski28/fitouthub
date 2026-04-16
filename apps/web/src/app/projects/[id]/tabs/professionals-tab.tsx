@@ -84,6 +84,55 @@ const formatDuration = (minutes?: number) => {
   return `${minutes} min`;
 };
 
+const formatDateOnly = (date: Date) => {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  } catch {
+    return '—';
+  }
+};
+
+const formatTimeOnly = (date: Date) => {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+  } catch {
+    return '—';
+  }
+};
+
+const formatScheduleWindow = (startAt?: string, durationMinutes?: number) => {
+  if (!startAt && !durationMinutes) return '—';
+  if (!startAt) return `Duration ${formatDuration(durationMinutes)}`;
+
+  const start = new Date(startAt);
+  if (Number.isNaN(start.getTime())) return '—';
+
+  if (!durationMinutes || !Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+    return formatDate(startAt);
+  }
+
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+  const spansMultipleDays =
+    durationMinutes >= 1440 ||
+    start.getFullYear() !== end.getFullYear() ||
+    start.getMonth() !== end.getMonth() ||
+    start.getDate() !== end.getDate();
+
+  if (spansMultipleDays) {
+    return `${formatDateOnly(start)} to ${formatDateOnly(end)}`;
+  }
+
+  return `${formatDateOnly(start)} ${formatTimeOnly(start)} to ${formatTimeOnly(end)}`;
+};
+
 const getNumericQuote = (value?: number | string) => {
   if (value === undefined || value === null || value === '') return Number.NaN;
   return typeof value === 'number' ? value : Number(value);
@@ -221,78 +270,6 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
 
   return (
     <div className="space-y-4">
-      {comparableQuotedProfessionals.length > 0 && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-300">Decision snapshot</p>
-              <h3 className="text-lg font-bold text-white">Review the best signals before you award</h3>
-              <p className="text-sm text-slate-300">
-                Quotes are sorted so you can compare price, start speed, duration, and negotiation options without leaving this tab.
-              </p>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <InsightCard
-                label="Lowest quote"
-                primary={lowestQuoteProfessional ? formatHKD(lowestQuoteProfessional.quoteAmount) : '—'}
-                secondary={lowestQuoteProfessional ? (lowestQuoteProfessional.professional.fullName || lowestQuoteProfessional.professional.businessName || 'Professional') : undefined}
-              />
-              <InsightCard
-                label="Earliest start"
-                primary={earliestStartProfessional?.quoteEstimatedStartAt ? formatDate(earliestStartProfessional.quoteEstimatedStartAt) : '—'}
-                secondary={earliestStartProfessional ? (earliestStartProfessional.professional.fullName || earliestStartProfessional.professional.businessName || 'Professional') : undefined}
-              />
-              <InsightCard
-                label="Shortest duration"
-                primary={shortestDurationProfessional?.quoteEstimatedDurationMinutes ? formatDuration(shortestDurationProfessional.quoteEstimatedDurationMinutes) : '—'}
-                secondary={shortestDurationProfessional ? (shortestDurationProfessional.professional.fullName || shortestDurationProfessional.professional.businessName || 'Professional') : undefined}
-              />
-            </div>
-          </div>
-
-          {comparableQuotedProfessionals.length > 1 && (
-            <div className="mt-4 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900/60">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-700 text-left text-slate-300">
-                    <th className="px-3 py-2 font-semibold">Professional</th>
-                    <th className="px-3 py-2 font-semibold">Quote</th>
-                    <th className="px-3 py-2 font-semibold">Start</th>
-                    <th className="px-3 py-2 font-semibold">Duration</th>
-                    <th className="px-3 py-2 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparableQuotedProfessionals.map((pp) => {
-                    const isLowest = lowestQuoteProfessional?.id === pp.id;
-                    const isFastest = earliestStartProfessional?.id === pp.id;
-                    const isShortest = shortestDurationProfessional?.id === pp.id;
-                    return (
-                      <tr key={`compare-${pp.id}`} className="border-b border-slate-800 last:border-b-0">
-                        <td className="px-3 py-2 text-white">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-semibold">{pp.professional.fullName || pp.professional.businessName || 'Professional'}</span>
-                            <div className="flex flex-wrap gap-1">
-                              {isLowest && <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">Lowest quote</span>}
-                              {isFastest && <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">Earliest start</span>}
-                              {isShortest && <span className="rounded-full bg-violet-600/20 px-2 py-0.5 text-[11px] font-semibold text-violet-200">Shortest duration</span>}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 text-white font-semibold">{formatHKD(pp.quoteAmount)}</td>
-                        <td className="px-3 py-2 text-slate-300">{formatDate(pp.quoteEstimatedStartAt)}</td>
-                        <td className="px-3 py-2 text-slate-300">{formatDuration(pp.quoteEstimatedDurationMinutes)}</td>
-                        <td className="px-3 py-2 text-slate-300 capitalize">{pp.status.replace(/_/g, ' ')}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Required Trades - always visible */}
       <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-white mb-1.5">Required Trades</p>
@@ -360,12 +337,19 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                       </div>
                     )}
 
-                    {pp.quoteAmount && (
-                      <div className="mb-3 p-2 rounded-md bg-slate-900/60 border border-slate-700">
+                    <div className="mb-3 grid grid-cols-2 gap-2">
+                      <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
                         <p className="text-xs text-white font-semibold">Quote Price</p>
                         <p className="text-lg font-bold text-white">{formatHKD(pp.quoteAmount)}</p>
                       </div>
-                    )}
+                      <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
+                        <p className="text-xs text-white font-semibold">Schedule</p>
+                        <p className="text-sm text-slate-200">{formatScheduleWindow(pp.quoteEstimatedStartAt, pp.quoteEstimatedDurationMinutes)}</p>
+                        {pp.quoteEstimatedDurationMinutes ? (
+                          <p className="mt-1 text-[11px] text-slate-400">{formatDuration(pp.quoteEstimatedDurationMinutes)}</p>
+                        ) : null}
+                      </div>
+                    </div>
 
                     {pp.quoteNotes && (
                       <div className="mb-3 p-2 rounded-md bg-slate-900/60 text-sm text-slate-200 border border-slate-700">
@@ -374,55 +358,58 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                       </div>
                     )}
 
-                    {(pp.quoteEstimatedStartAt || pp.quoteEstimatedDurationMinutes) && (
-                      <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                        <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
-                          <p className="text-xs text-white font-semibold mb-1">Estimated Start</p>
-                          <p className="text-sm text-slate-200">{formatDate(pp.quoteEstimatedStartAt)}</p>
-                        </div>
-                        <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
-                          <p className="text-xs text-white font-semibold mb-1">Estimated Duration</p>
-                          <p className="text-sm text-slate-200">{formatDuration(pp.quoteEstimatedDurationMinutes)}</p>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="text-xs text-slate-400 mb-3">
                       Quoted: {formatDate(pp.quotedAt)}
                     </div>
 
                     {pp.quoteAmount && (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         <button
                           type="button"
                           onClick={() => onOpenChat?.(pp)}
-                          className="rounded-md bg-sky-900 border border-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 transition"
+                          className="inline-flex w-full items-center justify-center rounded-md bg-sky-900 border border-sky-500 px-2 py-2 text-sm font-semibold text-white hover:bg-sky-800 transition"
+                          aria-label="Chat"
                         >
-                          💬 Chat
+                          <span aria-hidden="true">💬</span>
+                          <span className="hidden sm:inline ml-1">Chat</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRequestBetter(pp)}
                           disabled={actionBusy === `request-better-${pp.id}`}
-                          className="rounded-md border border-amber-500 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/10 disabled:opacity-50 transition"
+                          className="inline-flex w-full items-center justify-center rounded-md border border-amber-500 px-2 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/10 disabled:opacity-50 transition"
+                          aria-label="Improve offer"
                         >
-                          {actionBusy === `request-better-${pp.id}` ? '…' : 'Request Better Quote'}
+                          {actionBusy === `request-better-${pp.id}` ? '…' : (
+                            <>
+                              <span aria-hidden="true">↺</span>
+                              <span className="hidden sm:inline ml-1">Improve offer</span>
+                            </>
+                          )}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAwarded(pp)}
                           disabled={actionBusy === 'award'}
-                          className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                          className="inline-flex w-full items-center justify-center rounded-md bg-emerald-600 px-2 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                          aria-label="Award"
                         >
-                          {actionBusy === 'award' ? '…' : '✓ Award'}
+                          {actionBusy === 'award' ? '…' : (
+                            <>
+                              <span aria-hidden="true">✓</span>
+                              <span className="hidden sm:inline ml-1">Award</span>
+                            </>
+                          )}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleReject(pp)}
                           disabled={actionBusy === `reject-${pp.id}`}
-                          className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+                          className="inline-flex w-full items-center justify-center rounded-md bg-rose-600 px-2 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+                          aria-label="Decline"
                         >
-                          ✕
+                          <span aria-hidden="true">✕</span>
+                          <span className="hidden sm:inline ml-1">Decline</span>
                         </button>
                       </div>
                     )}
@@ -491,14 +478,13 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                 )}
 
                 {(awardedProfessional.quoteEstimatedStartAt || awardedProfessional.quoteEstimatedDurationMinutes) && (
-                  <div className="grid gap-3 mb-3 sm:grid-cols-2">
+                  <div className="grid gap-3 mb-3">
                     <div className="rounded-md bg-slate-900/60 p-3 border border-slate-700">
-                      <p className="text-xs text-white font-semibold uppercase">Estimated Start</p>
-                      <p className="text-sm text-slate-200 mt-1">{formatDate(awardedProfessional.quoteEstimatedStartAt)}</p>
-                    </div>
-                    <div className="rounded-md bg-slate-900/60 p-3 border border-slate-700">
-                      <p className="text-xs text-white font-semibold uppercase">Estimated Duration</p>
-                      <p className="text-sm text-slate-200 mt-1">{formatDuration(awardedProfessional.quoteEstimatedDurationMinutes)}</p>
+                      <p className="text-xs text-white font-semibold uppercase">Schedule</p>
+                      <p className="text-sm text-slate-200 mt-1">{formatScheduleWindow(awardedProfessional.quoteEstimatedStartAt, awardedProfessional.quoteEstimatedDurationMinutes)}</p>
+                      {awardedProfessional.quoteEstimatedDurationMinutes ? (
+                        <p className="mt-1 text-xs text-slate-400">{formatDuration(awardedProfessional.quoteEstimatedDurationMinutes)}</p>
+                      ) : null}
                     </div>
                   </div>
                 )}
@@ -549,21 +535,3 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
     </div>
   );
 };
-
-function InsightCard({
-  label,
-  primary,
-  secondary,
-}: {
-  label: string;
-  primary: string;
-  secondary?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-white">{primary}</p>
-      {secondary && <p className="mt-1 text-xs text-slate-400">{secondary}</p>}
-    </div>
-  );
-}
