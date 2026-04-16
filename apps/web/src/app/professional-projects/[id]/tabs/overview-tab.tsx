@@ -260,7 +260,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   <label htmlFor="estimatedStartDate" className="block text-sm font-semibold text-white mb-1">
                     Start Date *
@@ -280,48 +280,46 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <label htmlFor="estimatedStartHour" className="block text-sm font-semibold text-white mb-1">
                     Start Time *
                   </label>
-                  <div className="rounded-md border border-slate-600 bg-slate-900 p-3">
-                    <div className="flex items-center gap-2">
-                      <select
-                        id="estimatedStartHour"
-                        required
-                        disabled={submittingQuote}
-                        value={selectedHour}
-                        onChange={(e) => {
-                          const nextHour = e.target.value;
-                          setSelectedHour(nextHour);
-                          updateStartTime(nextHour, selectedMinute);
-                        }}
-                        className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-                      >
-                        <option value="">Hour</option>
-                        {TIME_HOUR_OPTIONS.map((hour) => (
-                          <option key={hour} value={hour}>
-                            {hour}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="text-sm font-semibold text-slate-300">:</span>
-                      <select
-                        id="estimatedStartMinute"
-                        required
-                        disabled={submittingQuote}
-                        value={selectedMinute}
-                        onChange={(e) => {
-                          const nextMinute = e.target.value;
-                          setSelectedMinute(nextMinute);
-                          updateStartTime(selectedHour, nextMinute);
-                        }}
-                        className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-                      >
-                        <option value="">Mins</option>
-                        {TIME_MINUTE_OPTIONS.map((minute) => (
-                          <option key={minute} value={minute}>
-                            {minute}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      id="estimatedStartHour"
+                      required
+                      disabled={submittingQuote}
+                      value={selectedHour}
+                      onChange={(e) => {
+                        const nextHour = e.target.value;
+                        setSelectedHour(nextHour);
+                        updateStartTime(nextHour, selectedMinute);
+                      }}
+                      className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                    >
+                      <option value="">Hour</option>
+                      {TIME_HOUR_OPTIONS.map((hour) => (
+                        <option key={hour} value={hour}>
+                          {hour}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-sm font-semibold text-slate-300">:</span>
+                    <select
+                      id="estimatedStartMinute"
+                      required
+                      disabled={submittingQuote}
+                      value={selectedMinute}
+                      onChange={(e) => {
+                        const nextMinute = e.target.value;
+                        setSelectedMinute(nextMinute);
+                        updateStartTime(selectedHour, nextMinute);
+                      }}
+                      className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                    >
+                      <option value="">Mins</option>
+                      {TIME_MINUTE_OPTIONS.map((minute) => (
+                        <option key={minute} value={minute}>
+                          {minute}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -329,7 +327,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <label htmlFor="estimatedDurationValue" className="block text-sm font-semibold text-white mb-1">
                     Estimated Duration *
                   </label>
-                  <div className="space-y-2">
+                  <div className="flex items-center gap-2">
                     <input
                       id="estimatedDurationValue"
                       type="number"
@@ -339,10 +337,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       disabled={submittingQuote}
                       value={quoteForm.estimatedDurationValue}
                       onChange={(e) => onUpdateQuoteForm({ estimatedDurationValue: e.target.value })}
-                      className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                      className="w-24 sm:w-28 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                       placeholder="e.g. 8"
                     />
-                    <div className="inline-flex w-full overflow-hidden rounded-md border border-slate-600 bg-slate-900">
+                    <div className="inline-flex min-w-0 flex-1 overflow-hidden rounded-md border border-slate-600 bg-slate-900">
                       <button
                         type="button"
                         onClick={() => onUpdateQuoteForm({ estimatedDurationUnit: 'hours' })}

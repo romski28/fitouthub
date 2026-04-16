@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-16-a43932b",
+    "date": "2026-04-16T17:48:04+08:00",
+    "title": "fix: reduce disruptive pro project refresh and align quote inputs",
+    "summary": "fix: reduce disruptive pro project refresh and align quote inputs",
+    "areas": [
+      "web"
+    ],
+    "commit": "a43932b",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-63d62cc",
     "date": "2026-04-16T17:24:05+08:00",
     "title": "fix: make quote time selector functional and improve dark picker visibility",

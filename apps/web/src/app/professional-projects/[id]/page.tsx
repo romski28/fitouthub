@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
@@ -232,6 +232,9 @@ export default function ProjectDetailPage() {
   const [assistOpen, setAssistOpen] = useState(false);
   const [assistModalSubmitting, setAssistModalSubmitting] = useState(false);
   const [assistModalError, setAssistModalError] = useState<string | null>(null);
+  const hasLoadedProjectRef = useRef(false);
+  const lastProjectFetchAtRef = useRef(0);
+  const quoteFormDirtyRef = useRef(false);
 
   const toggleAccordion = (id: string) => {
     setExpandedAccordions((prev) => ({
@@ -286,8 +289,21 @@ export default function ProjectDetailPage() {
     }
 
     const fetchProject = async () => {
+      const now = Date.now();
+      const shouldThrottleBackgroundFetch =
+        hasLoadedProjectRef.current && now - lastProjectFetchAtRef.current < 90_000;
+
+      if (shouldThrottleBackgroundFetch) {
+        return;
+      }
+
+      lastProjectFetchAtRef.current = now;
+
       try {
-        setLoading(true);
+        // Keep the page stable once we have initial data to avoid focus-trigger bounce.
+        if (!hasLoadedProjectRef.current) {
+          setLoading(true);
+        }
         const response = await fetchWithRetry(
           `${API_BASE_URL}/professional/projects/${projectProfessionalId}`,
           {
@@ -309,9 +325,10 @@ export default function ProjectDetailPage() {
 
         const data = await response.json();
         setProject(data);
+        hasLoadedProjectRef.current = true;
 
-        // Pre-fill quote form if quote already exists
-        if (data.quoteAmount) {
+        // Pre-fill quote form if quote already exists and user is not actively editing.
+        if (data.quoteAmount && !quoteFormDirtyRef.current && !submittingQuote) {
           setQuoteForm({
             amount: data.quoteAmount,
             notes: data.quoteNotes || '',
@@ -332,7 +349,7 @@ export default function ProjectDetailPage() {
       }
     };
 
-    fetchProject();
+    void fetchProject();
     // Fetch messages and mark client messages as read
     const fetchMessages = async () => {
       try {
@@ -372,7 +389,7 @@ export default function ProjectDetailPage() {
     if (accessToken) {
       fetchMessages();
     }
-  }, [isLoggedIn, accessToken, projectProfessionalId, router]);
+  }, [isLoggedIn, accessToken, projectProfessionalId, router, submittingQuote]);
 
   const reloadPaymentPlan = async () => {
     if (!accessToken || !project?.project?.id) {
@@ -826,6 +843,7 @@ export default function ProjectDetailPage() {
           quoteForm.estimatedDurationValue,
         estimatedDurationUnit: (nextProject?.quoteEstimatedDurationUnit as 'hours' | 'days') || quoteForm.estimatedDurationUnit,
       });
+      quoteFormDirtyRef.current = false;
       await showWorkflowSuccessToast({
         successMessage: isUpdate
           ? 'Quote updated successfully!'
@@ -1454,10 +1472,13 @@ export default function ProjectDetailPage() {
               project={project}
               quoteForm={quoteForm}
               onUpdateQuoteForm={(patch) =>
-                setQuoteForm((prev) => ({
-                  ...prev,
-                  ...patch,
-                }))
+                {
+                  quoteFormDirtyRef.current = true;
+                  setQuoteForm((prev) => ({
+                    ...prev,
+                    ...patch,
+                  }));
+                }
               }
               onSubmitQuote={handleSubmitQuote}
               onAccept={handleAccept}
