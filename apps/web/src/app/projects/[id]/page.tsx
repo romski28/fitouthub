@@ -263,6 +263,7 @@ export default function ClientProjectDetailPage() {
   // Prevents the full-page loading spinner from firing on background token-refresh
   // re-fetches, which would unmount ProjectFinancialsCard and wipe OTP modal state.
   const hasLoadedRef = useRef(false);
+  const lastSiteAccessRefreshAtRef = useRef(0);
 
   // Schedule & contractor contact editing state
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -533,8 +534,9 @@ export default function ClientProjectDetailPage() {
       if (!hasLoadedRef.current) {
         setLoading(true);
       }
-      const response = await fetchWithRetry(`${API_BASE_URL}/projects/${projectId}`, {
+      const response = await fetchWithRetry(`${API_BASE_URL}/projects/${projectId}?_ts=${Date.now()}`, {
         method: 'GET',
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -576,9 +578,10 @@ export default function ClientProjectDetailPage() {
     setSiteAccessError(null);
     try {
       const response = await fetchWithRetry(
-        `${API_BASE_URL}/projects/${projectId}/site-access/requests`,
+        `${API_BASE_URL}/projects/${projectId}/site-access/requests?_ts=${Date.now()}`,
         {
           method: 'GET',
+          cache: 'no-store',
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
@@ -611,9 +614,10 @@ export default function ClientProjectDetailPage() {
     setSiteVisitError(null);
     try {
       const response = await fetchWithRetry(
-        `${API_BASE_URL}/projects/${projectId}/site-visits`,
+        `${API_BASE_URL}/projects/${projectId}/site-visits?_ts=${Date.now()}`,
         {
           method: 'GET',
+          cache: 'no-store',
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
@@ -909,6 +913,39 @@ export default function ClientProjectDetailPage() {
     fetchSiteAccessRequests();
     fetchSiteVisits();
   }, [isLoggedIn, accessToken, projectId, router]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken || !projectId) return;
+
+    const refreshSiteAccessData = () => {
+      const now = Date.now();
+      if (now - lastSiteAccessRefreshAtRef.current < 30_000) {
+        return;
+      }
+
+      lastSiteAccessRefreshAtRef.current = now;
+      void fetchSiteAccessRequests();
+      void fetchSiteVisits();
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshSiteAccessData();
+      }
+    };
+
+    const handleFocus = () => {
+      refreshSiteAccessData();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isLoggedIn, accessToken, projectId]);
 
   useEffect(() => {
     if (!siteAccessData) return;

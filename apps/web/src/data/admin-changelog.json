@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-ec824dd",
+    "date": "2026-04-16T19:44:08+08:00",
+    "title": "fix: refresh client site-access data on focus and bypass stale cache",
+    "summary": "fix: refresh client site-access data on focus and bypass stale cache",
+    "areas": [
+      "web"
+    ],
+    "commit": "ec824dd",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-10ae7ac",
     "date": "2026-04-16T18:38:15+08:00",
     "title": "refactor: tighten professional hero copy and quote action guidance",
