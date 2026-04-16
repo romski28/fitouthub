@@ -48,6 +48,22 @@ export default function DocsPage() {
               <h3 className="mt-2 text-xl font-semibold text-white">Paint Quantity Calculator</h3>
               <p className="mt-2 text-sm text-slate-300">Estimate wall-paint quantity by room dimensions, opening deductions, and number of coats.</p>
             </Link>
+            <div className="rounded-2xl border border-dashed border-slate-600 bg-slate-900/50 p-5">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">Helper tool #3</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Electrical Load Estimator</h3>
+              <p className="mt-2 text-sm text-slate-300">Plan circuit demand across rooms and major appliances for an early sizing check.</p>
+              <span className="mt-3 inline-flex rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-200">
+                Coming soon!
+              </span>
+            </div>
+            <div className="rounded-2xl border border-dashed border-slate-600 bg-slate-900/50 p-5">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">Helper tool #4</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Tile Quantity Calculator</h3>
+              <p className="mt-2 text-sm text-slate-300">Estimate tile counts, wastage allowance, and box totals for floors and walls.</p>
+              <span className="mt-3 inline-flex rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-200">
+                Coming soon!
+              </span>
+            </div>
           </div>
         </section>
       </div>

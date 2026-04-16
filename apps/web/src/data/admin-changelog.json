@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-adc0367",
+    "date": "2026-04-16T12:18:40+08:00",
+    "title": "feat(web): add coming-soon cards for upcoming docs tools",
+    "summary": "feat(web): add coming-soon cards for upcoming docs tools",
+    "areas": [
+      "web"
+    ],
+    "commit": "adc0367",
+    "files": [
+      "apps/web/src/app/docs/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-4a4bf48",
     "date": "2026-04-16T12:16:56+08:00",
     "title": "feat(web): simplify bidder board layout and action controls",
