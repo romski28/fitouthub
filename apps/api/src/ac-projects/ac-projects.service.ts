@@ -21,13 +21,46 @@ export class AcProjectsService {
 
     const linkedProjectFilter = linkedProjectId?.trim();
 
+    // If professional is filtering by linkedProjectId, verify they own that project
+    // and then return all plans linked to it (allowing cross-actor access).
+    // Otherwise, use standard actor-based filtering.
+    let whereClause: any = this.buildActorWhere(actor);
+
+    if (linkedProjectFilter) {
+      // For professionals querying by linkedProjectId, check ownership of the project
+      if (actor.isProfessional) {
+        const project = await (this.prisma as any).project.findFirst({
+          where: {
+            id: linkedProjectFilter,
+            professionals: {
+              some: {
+                professionalId: actor.actorId,
+              },
+            },
+          },
+          select: { id: true },
+        });
+
+        // If professional doesn't own the project, forbid access
+        if (!project) {
+          throw new ForbiddenException(
+            'You do not have access to this project',
+          );
+        }
+
+        // Professional owns the project; query all plans linked to it (not filtered by actor)
+        whereClause = { linkedProjectId: linkedProjectFilter };
+      } else {
+        // For clients, still apply actor filter
+        whereClause = {
+          ...this.buildActorWhere(actor),
+          linkedProjectId: linkedProjectFilter,
+        };
+      }
+    }
+
     const rows = await (this.prisma as any).acProject.findMany({
-      where: {
-        ...this.buildActorWhere(actor),
-        ...(linkedProjectFilter
-          ? { linkedProjectId: linkedProjectFilter }
-          : {}),
-      },
+      where: whereClause,
       include: {
         rooms: {
           orderBy: [{ createdAt: 'asc' }, { name: 'asc' }],

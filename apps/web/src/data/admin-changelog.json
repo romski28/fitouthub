@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-403a559",
+    "date": "2026-04-16T10:35:37+08:00",
+    "title": "fix(api): allow professionals to see client ac plans linked to their projects",
+    "summary": "fix(api): allow professionals to see client ac plans linked to their projects",
+    "areas": [
+      "api"
+    ],
+    "commit": "403a559",
+    "files": [
+      "apps/api/src/ac-projects/ac-projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-16-65b86d8",
     "date": "2026-04-16T09:50:55+08:00",
     "title": "feat(web+api): add print/share hardening, docs paint tool, and linked AC plans tab",
