@@ -108,13 +108,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   submittingQuote,
 }) => {
   const [nowMs, setNowMs] = React.useState<number | null>(null);
-  const [selectedHour = '', selectedMinute = ''] = quoteForm.estimatedStartTime.split(':');
+  const [selectedHour, setSelectedHour] = React.useState('');
+  const [selectedMinute, setSelectedMinute] = React.useState('');
+
+  React.useEffect(() => {
+    const [hour = '', minute = ''] = quoteForm.estimatedStartTime.split(':');
+    setSelectedHour(hour);
+    setSelectedMinute(minute);
+  }, [quoteForm.estimatedStartTime]);
 
   const updateStartTime = React.useCallback(
-    (part: 'hour' | 'minute', value: string) => {
-      const nextHour = part === 'hour' ? value : selectedHour;
-      const nextMinute = part === 'minute' ? value : selectedMinute;
-
+    (nextHour: string, nextMinute: string) => {
       if (!nextHour || !nextMinute) {
         onUpdateQuoteForm({ estimatedStartTime: '' });
         return;
@@ -122,7 +126,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       onUpdateQuoteForm({ estimatedStartTime: `${nextHour}:${nextMinute}` });
     },
-    [onUpdateQuoteForm, selectedHour, selectedMinute],
+    [onUpdateQuoteForm],
   );
 
   React.useEffect(() => {
@@ -283,7 +287,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         required
                         disabled={submittingQuote}
                         value={selectedHour}
-                        onChange={(e) => updateStartTime('hour', e.target.value)}
+                        onChange={(e) => {
+                          const nextHour = e.target.value;
+                          setSelectedHour(nextHour);
+                          updateStartTime(nextHour, selectedMinute);
+                        }}
                         className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                       >
                         <option value="">Hour</option>
@@ -294,28 +302,26 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         ))}
                       </select>
                       <span className="text-sm font-semibold text-slate-300">:</span>
-                      <div className="grid w-full grid-cols-4 gap-1">
-                        {TIME_MINUTE_OPTIONS.map((minute) => {
-                          const isActive = selectedMinute === minute;
-                          return (
-                            <button
-                              key={minute}
-                              type="button"
-                              onClick={() => updateStartTime('minute', minute)}
-                              disabled={submittingQuote}
-                              className={`rounded-md border px-0 py-2 text-sm font-semibold transition ${
-                                isActive
-                                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
-                                  : 'border-slate-600 bg-slate-950 text-slate-200 hover:border-slate-500 hover:bg-slate-800'
-                              } disabled:opacity-50`}
-                            >
-                              {minute}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <select
+                        id="estimatedStartMinute"
+                        required
+                        disabled={submittingQuote}
+                        value={selectedMinute}
+                        onChange={(e) => {
+                          const nextMinute = e.target.value;
+                          setSelectedMinute(nextMinute);
+                          updateStartTime(selectedHour, nextMinute);
+                        }}
+                        className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                      >
+                        <option value="">Mins</option>
+                        {TIME_MINUTE_OPTIONS.map((minute) => (
+                          <option key={minute} value={minute}>
+                            {minute}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                    <p className="mt-2 text-xs text-slate-400">15-minute slots only</p>
                   </div>
                 </div>
 
@@ -323,7 +329,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <label htmlFor="estimatedDurationValue" className="block text-sm font-semibold text-white mb-1">
                     Estimated Duration *
                   </label>
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <input
                       id="estimatedDurationValue"
                       type="number"
@@ -336,14 +342,32 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                       placeholder="e.g. 8"
                     />
-                    <button
-                      type="button"
-                      onClick={() => onUpdateQuoteForm({ estimatedDurationUnit: quoteForm.estimatedDurationUnit === 'hours' ? 'days' : 'hours' })}
-                      disabled={submittingQuote}
-                      className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-700 hover:border-slate-500 transition"
-                    >
-                      {quoteForm.estimatedDurationUnit === 'hours' ? 'Hours' : 'Days'}
-                    </button>
+                    <div className="inline-flex w-full overflow-hidden rounded-md border border-slate-600 bg-slate-900">
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuoteForm({ estimatedDurationUnit: 'hours' })}
+                        disabled={submittingQuote}
+                        className={`w-1/2 px-3 py-2 text-sm font-semibold transition ${
+                          quoteForm.estimatedDurationUnit === 'hours'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-transparent text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        Hours
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuoteForm({ estimatedDurationUnit: 'days' })}
+                        disabled={submittingQuote}
+                        className={`w-1/2 border-l border-slate-600 px-3 py-2 text-sm font-semibold transition ${
+                          quoteForm.estimatedDurationUnit === 'days'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-transparent text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        Days
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-16-63d62cc",
+    "date": "2026-04-16T17:24:05+08:00",
+    "title": "fix: make quote time selector functional and improve dark picker visibility",
+    "summary": "fix: make quote time selector functional and improve dark picker visibility",
+    "areas": [
+      "web"
+    ],
+    "commit": "63d62cc",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-a943ec8",
     "date": "2026-04-16T14:19:12+08:00",
     "title": "refactor: improve professional quote time selector UI",
