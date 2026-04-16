@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-16-a943ec8",
+    "date": "2026-04-16T14:19:12+08:00",
+    "title": "refactor: improve professional quote time selector UI",
+    "summary": "refactor: improve professional quote time selector UI",
+    "areas": [
+      "web"
+    ],
+    "commit": "a943ec8",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-d6f2633",
     "date": "2026-04-16T14:00:24+08:00",
     "title": "feat: quote submission improvements - gated button, hours/days duration toggle",

@@ -87,6 +87,27 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.quote-picker-input {
+  color-scheme: dark;
+}
+
+.quote-picker-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1) brightness(1.25);
+  opacity: 0.9;
+}
+
+.quote-dark-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
 .browse-page-shell {
   min-height: 100%;
   background:

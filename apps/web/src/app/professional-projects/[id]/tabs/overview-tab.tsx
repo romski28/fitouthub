@@ -4,6 +4,12 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 
+const TIME_HOUR_OPTIONS = Array.from({ length: 24 }, (_, index) =>
+  String(index).padStart(2, '0'),
+);
+
+const TIME_MINUTE_OPTIONS = ['00', '15', '30', '45'] as const;
+
 interface OverviewTabProps {
   tab?: string;
   project: {
@@ -102,6 +108,22 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   submittingQuote,
 }) => {
   const [nowMs, setNowMs] = React.useState<number | null>(null);
+  const [selectedHour = '', selectedMinute = ''] = quoteForm.estimatedStartTime.split(':');
+
+  const updateStartTime = React.useCallback(
+    (part: 'hour' | 'minute', value: string) => {
+      const nextHour = part === 'hour' ? value : selectedHour;
+      const nextMinute = part === 'minute' ? value : selectedMinute;
+
+      if (!nextHour || !nextMinute) {
+        onUpdateQuoteForm({ estimatedStartTime: '' });
+        return;
+      }
+
+      onUpdateQuoteForm({ estimatedStartTime: `${nextHour}:${nextMinute}` });
+    },
+    [onUpdateQuoteForm, selectedHour, selectedMinute],
+  );
 
   React.useEffect(() => {
     setNowMs(Date.now());
@@ -246,24 +268,55 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     disabled={submittingQuote}
                     value={quoteForm.estimatedStartDate}
                     onChange={(e) => onUpdateQuoteForm({ estimatedStartDate: e.target.value })}
-                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                    className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="estimatedStartTime" className="block text-sm font-semibold text-white mb-1">
+                  <label htmlFor="estimatedStartHour" className="block text-sm font-semibold text-white mb-1">
                     Start Time *
                   </label>
-                  <input
-                    id="estimatedStartTime"
-                    type="time"
-                    step={900}
-                    required
-                    disabled={submittingQuote}
-                    value={quoteForm.estimatedStartTime}
-                    onChange={(e) => onUpdateQuoteForm({ estimatedStartTime: e.target.value })}
-                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
-                  />
+                  <div className="rounded-md border border-slate-600 bg-slate-900 p-3">
+                    <div className="flex items-center gap-2">
+                      <select
+                        id="estimatedStartHour"
+                        required
+                        disabled={submittingQuote}
+                        value={selectedHour}
+                        onChange={(e) => updateStartTime('hour', e.target.value)}
+                        className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                      >
+                        <option value="">Hour</option>
+                        {TIME_HOUR_OPTIONS.map((hour) => (
+                          <option key={hour} value={hour}>
+                            {hour}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-sm font-semibold text-slate-300">:</span>
+                      <div className="grid w-full grid-cols-4 gap-1">
+                        {TIME_MINUTE_OPTIONS.map((minute) => {
+                          const isActive = selectedMinute === minute;
+                          return (
+                            <button
+                              key={minute}
+                              type="button"
+                              onClick={() => updateStartTime('minute', minute)}
+                              disabled={submittingQuote}
+                              className={`rounded-md border px-0 py-2 text-sm font-semibold transition ${
+                                isActive
+                                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
+                                  : 'border-slate-600 bg-slate-950 text-slate-200 hover:border-slate-500 hover:bg-slate-800'
+                              } disabled:opacity-50`}
+                            >
+                              {minute}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-400">15-minute slots only</p>
+                  </div>
                 </div>
 
                 <div>
@@ -299,13 +352,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="flex flex-wrap gap-3">
               {/* Calculate form validity */}
               {(() => {
-                const isFormValid =
+                const isFormValid = Boolean(
                   quoteForm.amount.trim() &&
-                  parseFloat(quoteForm.amount) > 0 &&
-                  quoteForm.estimatedStartDate &&
-                  quoteForm.estimatedStartTime &&
-                  quoteForm.estimatedDurationValue &&
-                  parseFloat(quoteForm.estimatedDurationValue) > 0;
+                    parseFloat(quoteForm.amount) > 0 &&
+                    quoteForm.estimatedStartDate &&
+                    quoteForm.estimatedStartTime &&
+                    quoteForm.estimatedDurationValue &&
+                    parseFloat(quoteForm.estimatedDurationValue) > 0,
+                );
 
                 return (
                   <>
