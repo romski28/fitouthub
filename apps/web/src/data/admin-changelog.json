@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-bd8cc15",
+    "date": "2026-04-16T13:00:05+08:00",
+    "title": "fix: convert quote start datetime to UTC ISO before submission",
+    "summary": "fix: convert quote start datetime to UTC ISO before submission",
+    "areas": [
+      "web"
+    ],
+    "commit": "bd8cc15",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-cec9196",
     "date": "2026-04-16T12:41:32+08:00",
     "title": "feat(web): make bidder board status copy conversational",

@@ -715,7 +715,7 @@ export default function ProjectDetailPage() {
       return;
     }
 
-    const quoteEstimatedStartAt = `${quoteForm.estimatedStartDate}T${quoteForm.estimatedStartTime}`;
+    const quoteEstimatedStartAt = new Date(`${quoteForm.estimatedStartDate}T${quoteForm.estimatedStartTime}`).toISOString();
 
     if (!quoteForm.estimatedDurationHours) {
       setError('Please enter an estimated duration');
