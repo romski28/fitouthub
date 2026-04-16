@@ -148,6 +148,12 @@ const durationMinutesToHoursInput = (value?: number | null) => {
   return Number.isInteger(hours) ? String(hours) : hours.toFixed(2).replace(/\.00$/, '').replace(/0$/, '');
 };
 
+const durationMinutesToDaysInput = (value?: number | null) => {
+  if (value == null || !Number.isFinite(value)) return '';
+  const days = value / (24 * 60);
+  return Number.isInteger(days) ? String(days) : days.toFixed(2).replace(/\.00$/, '').replace(/0$/, '');
+};
+
 interface SiteAccessVisit {
   id: string;
   status: 'proposed' | 'accepted' | 'declined' | 'cancelled' | 'completed' | string;
@@ -189,7 +195,8 @@ export default function ProjectDetailPage() {
     notes: '',
     estimatedStartDate: '',
     estimatedStartTime: '',
-    estimatedDurationHours: '',
+    estimatedDurationValue: '',
+    estimatedDurationUnit: 'hours' as 'hours' | 'days',
   });
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -310,7 +317,11 @@ export default function ProjectDetailPage() {
             notes: data.quoteNotes || '',
             estimatedStartDate: toDateInputValue(data.quoteEstimatedStartAt),
             estimatedStartTime: toTimeInputValue(data.quoteEstimatedStartAt),
-            estimatedDurationHours: durationMinutesToHoursInput(data.quoteEstimatedDurationMinutes),
+            estimatedDurationValue:
+              (data.quoteEstimatedDurationUnit === 'days'
+                ? durationMinutesToDaysInput(data.quoteEstimatedDurationMinutes)
+                : durationMinutesToHoursInput(data.quoteEstimatedDurationMinutes)) || '',
+            estimatedDurationUnit: (data.quoteEstimatedDurationUnit as 'hours' | 'days') || 'hours',
           });
         }
       } catch (err) {
@@ -717,18 +728,24 @@ export default function ProjectDetailPage() {
 
     const quoteEstimatedStartAt = new Date(`${quoteForm.estimatedStartDate}T${quoteForm.estimatedStartTime}`).toISOString();
 
-    if (!quoteForm.estimatedDurationHours) {
+    if (!quoteForm.estimatedDurationValue) {
       setError('Please enter an estimated duration');
       return;
     }
 
-    const durationHours = parseFloat(quoteForm.estimatedDurationHours);
-    if (isNaN(durationHours) || durationHours <= 0) {
+    const durationValue = parseFloat(quoteForm.estimatedDurationValue);
+    if (isNaN(durationValue) || durationValue <= 0) {
       setError('Please enter a valid estimated duration');
       return;
     }
 
-    const quoteEstimatedDurationMinutes = Math.round(durationHours * 60);
+    // Convert duration to minutes based on unit
+    let quoteEstimatedDurationMinutes: number;
+    if (quoteForm.estimatedDurationUnit === 'days') {
+      quoteEstimatedDurationMinutes = Math.round(durationValue * 24 * 60);
+    } else {
+      quoteEstimatedDurationMinutes = Math.round(durationValue * 60);
+    }
 
     setSubmittingQuote(true);
     setError(null);
@@ -754,6 +771,7 @@ export default function ProjectDetailPage() {
               quoteNotes: quoteForm.notes,
               quoteEstimatedStartAt,
               quoteEstimatedDurationMinutes,
+              quoteEstimatedDurationUnit: quoteForm.estimatedDurationUnit,
             }),
           },
         );
@@ -772,6 +790,7 @@ export default function ProjectDetailPage() {
               quoteNotes: quoteForm.notes,
               quoteEstimatedStartAt,
               quoteEstimatedDurationMinutes,
+              quoteEstimatedDurationUnit: quoteForm.estimatedDurationUnit,
             }),
           },
         );
@@ -800,9 +819,12 @@ export default function ProjectDetailPage() {
           toDateInputValue(nextProject?.quoteEstimatedStartAt) || quoteForm.estimatedStartDate,
         estimatedStartTime:
           toTimeInputValue(nextProject?.quoteEstimatedStartAt) || quoteForm.estimatedStartTime,
-        estimatedDurationHours:
-          durationMinutesToHoursInput(nextProject?.quoteEstimatedDurationMinutes) ||
-          quoteForm.estimatedDurationHours,
+        estimatedDurationValue:
+          (nextProject?.quoteEstimatedDurationUnit === 'days'
+            ? durationMinutesToDaysInput(nextProject?.quoteEstimatedDurationMinutes)
+            : durationMinutesToHoursInput(nextProject?.quoteEstimatedDurationMinutes)) ||
+          quoteForm.estimatedDurationValue,
+        estimatedDurationUnit: (nextProject?.quoteEstimatedDurationUnit as 'hours' | 'days') || quoteForm.estimatedDurationUnit,
       });
       await showWorkflowSuccessToast({
         successMessage: isUpdate

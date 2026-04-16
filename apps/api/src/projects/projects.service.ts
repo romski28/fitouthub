@@ -258,11 +258,13 @@ export class ProjectsService {
     input: {
       quoteEstimatedStartAt?: string | Date | null;
       quoteEstimatedDurationMinutes?: number | string | null;
+      quoteEstimatedDurationUnit?: string | null;
     },
     options?: { required?: boolean },
   ) {
     const rawStart = input.quoteEstimatedStartAt;
     const rawDuration = input.quoteEstimatedDurationMinutes;
+    const rawUnit = input.quoteEstimatedDurationUnit || 'hours';
     const hasStart =
       rawStart !== undefined &&
       rawStart !== null &&
@@ -282,6 +284,7 @@ export class ProjectsService {
       return {
         quoteEstimatedStartAt: null,
         quoteEstimatedDurationMinutes: null,
+        quoteEstimatedDurationUnit: 'hours',
       };
     }
 
@@ -297,20 +300,37 @@ export class ProjectsService {
       throw new BadRequestException('Invalid estimated start date');
     }
 
-    const durationMinutes = Number(rawDuration);
-    if (!Number.isFinite(durationMinutes) || durationMinutes < 30) {
+    const durationValue = Number(rawDuration);
+    if (!Number.isFinite(durationValue) || durationValue <= 0) {
+      throw new BadRequestException(
+        'Estimated duration must be greater than zero',
+      );
+    }
+
+    // Convert duration to minutes based on unit
+    let durationMinutes: number;
+    if (rawUnit === 'days') {
+      if (durationValue > 365) {
+        throw new BadRequestException('Duration in days cannot exceed 365 days');
+      }
+      durationMinutes = Math.round(durationValue * 24 * 60);
+    } else {
+      if (durationValue > 60 * 24 * 365) {
+        throw new BadRequestException('Estimated duration is too large');
+      }
+      durationMinutes = Math.round(durationValue * 60);
+    }
+
+    if (durationMinutes < 30) {
       throw new BadRequestException(
         'Estimated duration must be at least 30 minutes',
       );
     }
 
-    if (durationMinutes > 60 * 24 * 365) {
-      throw new BadRequestException('Estimated duration is too large');
-    }
-
     return {
       quoteEstimatedStartAt,
-      quoteEstimatedDurationMinutes: Math.round(durationMinutes),
+      quoteEstimatedDurationMinutes: durationMinutes,
+      quoteEstimatedDurationUnit: ['hours', 'days'].includes(rawUnit) ? rawUnit : 'hours',
     };
   }
 
@@ -4892,6 +4912,7 @@ Please review the project details and respond with your quote or decline the inv
     quoteNotes?: string,
     quoteEstimatedStartAt?: string,
     quoteEstimatedDurationMinutes?: number,
+    quoteEstimatedDurationUnit?: string,
   ) {
     // Verify ProjectProfessional exists
     const projectProfessional =
@@ -4916,6 +4937,7 @@ Please review the project details and respond with your quote or decline the inv
       {
         quoteEstimatedStartAt,
         quoteEstimatedDurationMinutes,
+        quoteEstimatedDurationUnit,
       },
       { required: true },
     );
@@ -4934,6 +4956,7 @@ Please review the project details and respond with your quote or decline the inv
         quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
         quoteEstimatedDurationMinutes:
           quoteSchedule.quoteEstimatedDurationMinutes,
+        quoteEstimatedDurationUnit: quoteSchedule.quoteEstimatedDurationUnit,
         quotedAt: new Date(),
         status: 'quoted', // Reset to quoted for client review
       },

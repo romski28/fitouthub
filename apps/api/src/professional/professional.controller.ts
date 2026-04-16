@@ -51,9 +51,11 @@ export class ProfessionalController {
   private normalizeQuoteSchedule(input: {
     quoteEstimatedStartAt?: string | Date | null;
     quoteEstimatedDurationMinutes?: number | string | null;
+    quoteEstimatedDurationUnit?: string | null;
   }) {
     const rawStart = input.quoteEstimatedStartAt;
     const rawDuration = input.quoteEstimatedDurationMinutes;
+    const rawUnit = input.quoteEstimatedDurationUnit || 'hours';
     const hasStart =
       rawStart !== undefined && rawStart !== null && String(rawStart).trim().length > 0;
     const hasDuration =
@@ -71,20 +73,37 @@ export class ProfessionalController {
       throw new BadRequestException('Invalid estimated start date');
     }
 
-    const durationMinutes = Number(rawDuration);
-    if (!Number.isFinite(durationMinutes) || durationMinutes < 30) {
+    const durationValue = Number(rawDuration);
+    if (!Number.isFinite(durationValue) || durationValue <= 0) {
+      throw new BadRequestException(
+        'Estimated duration must be greater than zero',
+      );
+    }
+
+    // Convert duration to minutes based on unit
+    let durationMinutes: number;
+    if (rawUnit === 'days') {
+      if (durationValue > 365) {
+        throw new BadRequestException('Duration in days cannot exceed 365 days');
+      }
+      durationMinutes = Math.round(durationValue * 24 * 60);
+    } else {
+      if (durationValue > 60 * 24 * 365) {
+        throw new BadRequestException('Estimated duration is too large');
+      }
+      durationMinutes = Math.round(durationValue * 60);
+    }
+
+    if (durationMinutes < 30) {
       throw new BadRequestException(
         'Estimated duration must be at least 30 minutes',
       );
     }
 
-    if (durationMinutes > 60 * 24 * 365) {
-      throw new BadRequestException('Estimated duration is too large');
-    }
-
     return {
       quoteEstimatedStartAt,
-      quoteEstimatedDurationMinutes: Math.round(durationMinutes),
+      quoteEstimatedDurationMinutes: durationMinutes,
+      quoteEstimatedDurationUnit: ['hours', 'days'].includes(rawUnit) ? rawUnit : 'hours',
     };
   }
 
@@ -639,6 +658,7 @@ export class ProfessionalController {
       quoteNotes?: string;
       quoteEstimatedStartAt?: string;
       quoteEstimatedDurationMinutes?: number | string;
+      quoteEstimatedDurationUnit?: string;
     },
   ) {
     try {
@@ -672,6 +692,7 @@ export class ProfessionalController {
       const quoteSchedule = this.normalizeQuoteSchedule({
         quoteEstimatedStartAt: body.quoteEstimatedStartAt,
         quoteEstimatedDurationMinutes: body.quoteEstimatedDurationMinutes,
+        quoteEstimatedDurationUnit: body.quoteEstimatedDurationUnit,
       });
 
       if (projectProfessional.quotedAt) {
@@ -707,6 +728,7 @@ export class ProfessionalController {
           quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
           quoteEstimatedDurationMinutes:
             quoteSchedule.quoteEstimatedDurationMinutes,
+          quoteEstimatedDurationUnit: quoteSchedule.quoteEstimatedDurationUnit,
           quotedAt: new Date(),
           status: 'quoted',
           respondedAt: projectProfessional.respondedAt || new Date(),

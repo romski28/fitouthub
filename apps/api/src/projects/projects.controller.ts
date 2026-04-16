@@ -712,6 +712,7 @@ export class ProjectsController {
       quoteNotes?: string;
       quoteEstimatedStartAt?: string;
       quoteEstimatedDurationMinutes?: number;
+      quoteEstimatedDurationUnit?: string;
     },
   ) {
     return this.projectsService.updateQuote(
@@ -721,6 +722,7 @@ export class ProjectsController {
       body.quoteNotes,
       body.quoteEstimatedStartAt,
       body.quoteEstimatedDurationMinutes,
+      body.quoteEstimatedDurationUnit,
     );
   }
 

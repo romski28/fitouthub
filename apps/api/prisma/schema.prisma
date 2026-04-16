@@ -524,6 +524,7 @@ model ProjectProfessional {
   quoteNotes              String?
   quoteEstimatedStartAt   DateTime?
   quoteEstimatedDurationMinutes Int?
+  quoteEstimatedDurationUnit String @default("hours")
   quotedAt                DateTime?
   directContactShared     Boolean                @default(false)
   directContactSharedAt   DateTime?

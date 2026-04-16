@@ -39,7 +39,8 @@ interface OverviewTabProps {
     notes: string;
     estimatedStartDate: string;
     estimatedStartTime: string;
-    estimatedDurationHours: string;
+    estimatedDurationValue: string;
+    estimatedDurationUnit: 'hours' | 'days';
   };
   onUpdateQuoteForm: (
     patch: Partial<{
@@ -47,7 +48,8 @@ interface OverviewTabProps {
       notes: string;
       estimatedStartDate: string;
       estimatedStartTime: string;
-      estimatedDurationHours: string;
+      estimatedDurationValue: string;
+      estimatedDurationUnit: 'hours' | 'days';
     }>,
   ) => void;
   onSubmitQuote: (e: React.FormEvent) => Promise<void>;
@@ -265,65 +267,91 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="estimatedDurationHours" className="block text-sm font-semibold text-white mb-1">
-                    Estimated Duration (hours) *
+                  <label htmlFor="estimatedDurationValue" className="block text-sm font-semibold text-white mb-1">
+                    Estimated Duration *
                   </label>
-                  <input
-                    id="estimatedDurationHours"
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    required
-                    disabled={submittingQuote}
-                    value={quoteForm.estimatedDurationHours}
-                    onChange={(e) => onUpdateQuoteForm({ estimatedDurationHours: e.target.value })}
-                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
-                    placeholder="e.g. 8"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      id="estimatedDurationValue"
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      required
+                      disabled={submittingQuote}
+                      value={quoteForm.estimatedDurationValue}
+                      onChange={(e) => onUpdateQuoteForm({ estimatedDurationValue: e.target.value })}
+                      className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                      placeholder="e.g. 8"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onUpdateQuoteForm({ estimatedDurationUnit: quoteForm.estimatedDurationUnit === 'hours' ? 'days' : 'hours' })}
+                      disabled={submittingQuote}
+                      className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-700 hover:border-slate-500 transition"
+                    >
+                      {quoteForm.estimatedDurationUnit === 'hours' ? 'Hours' : 'Days'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={submittingQuote}
-                className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-              >
-                {submittingQuote ? 'Submitting...' : project.quotedAt ? 'Update Quote' : 'Submit Quote'}
-              </button>
+              {/* Calculate form validity */}
+              {(() => {
+                const isFormValid =
+                  quoteForm.amount.trim() &&
+                  parseFloat(quoteForm.amount) > 0 &&
+                  quoteForm.estimatedStartDate &&
+                  quoteForm.estimatedStartTime &&
+                  quoteForm.estimatedDurationValue &&
+                  parseFloat(quoteForm.estimatedDurationValue) > 0;
 
-              {project.status === 'counter_requested' && (
-                <button
-                  type="button"
-                  onClick={onKeepCurrentQuote}
-                  disabled={submittingQuote}
-                  className="flex-1 min-w-40 rounded-md bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600 disabled:opacity-50 transition"
-                >
-                  {submittingQuote ? 'Processing...' : 'Confirm Quotation'}
-                </button>
-              )}
+                return (
+                  <>
+                    <button
+                      type="submit"
+                      disabled={submittingQuote || !isFormValid}
+                      title={!isFormValid ? 'Please fill in all required fields to submit' : ''}
+                      className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {submittingQuote ? 'Submitting...' : project.quotedAt ? 'Update Quote' : 'Submit Quote'}
+                    </button>
 
-              {project.status === 'pending' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={onAccept}
-                    disabled={submittingQuote}
-                    className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                  >
-                    {submittingQuote ? 'Processing...' : 'Accept Project'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onReject}
-                    disabled={submittingQuote}
-                    className="flex-1 min-w-40 rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
-                  >
-                    {submittingQuote ? 'Processing...' : 'Decline Project'}
-                  </button>
-                </>
-              )}
+                    {project.status === 'counter_requested' && (
+                      <button
+                        type="button"
+                        onClick={onKeepCurrentQuote}
+                        disabled={submittingQuote}
+                        className="flex-1 min-w-40 rounded-md bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600 disabled:opacity-50 transition"
+                      >
+                        {submittingQuote ? 'Processing...' : 'Confirm Quotation'}
+                      </button>
+                    )}
+
+                    {project.status === 'pending' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={onAccept}
+                          disabled={submittingQuote}
+                          className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                        >
+                          {submittingQuote ? 'Processing...' : 'Accept Project'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={onReject}
+                          disabled={submittingQuote}
+                          className="flex-1 min-w-40 rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+                        >
+                          {submittingQuote ? 'Processing...' : 'Decline Project'}
+                        </button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </form>
         </div>
