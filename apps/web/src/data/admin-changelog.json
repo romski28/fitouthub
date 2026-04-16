@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-0de9033",
+    "date": "2026-04-16T22:52:57+08:00",
+    "title": "types: add quoteEstimatedDurationUnit field to ProjectProfessional interface",
+    "summary": "types: add quoteEstimatedDurationUnit field to ProjectProfessional interface",
+    "areas": [
+      "web"
+    ],
+    "commit": "0de9033",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-92dd48c",
     "date": "2026-04-16T22:42:59+08:00",
     "title": "refactor: split client site-access form into 3 parts and gate authorization",

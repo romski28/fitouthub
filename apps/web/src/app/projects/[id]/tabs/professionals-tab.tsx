@@ -14,6 +14,7 @@ interface ProjectProfessional {
   quoteNotes?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
+  quoteEstimatedDurationUnit?: 'hours' | 'days';
   quotedAt?: string;
   createdAt?: string;
   quoteReminderSentAt?: string;
