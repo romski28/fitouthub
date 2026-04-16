@@ -234,6 +234,7 @@ export default function AcCalculatorPage() {
   const [savedSnapshot, setSavedSnapshot] = React.useState('');
   const [lastSavedAt, setLastSavedAt] = React.useState<string | null>(null);
   const [shareMessage, setShareMessage] = React.useState('');
+  const [shareWarning, setShareWarning] = React.useState('');
 
   const hasRooms = rooms.length > 0;
   const roomResults = React.useMemo(
@@ -269,7 +270,33 @@ export default function AcCalculatorPage() {
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
+    const sharedSavedId = params.get('sharedSavedId');
     const encoded = params.get('shared');
+
+    if (sharedSavedId && token) {
+      const loadSavedById = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/ac-projects/${sharedSavedId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+          });
+
+          if (!response.ok) {
+            throw new Error('Could not load shared saved plan');
+          }
+
+          const saved = await response.json();
+          hydrateFromSaved(saved as SavedAcProject);
+          setShareMessage('Shared saved plan loaded.');
+        } catch {
+          setShareMessage('Could not load shared saved plan.');
+        }
+      };
+
+      loadSavedById();
+      return;
+    }
+
     if (!encoded) return;
 
     try {
@@ -298,7 +325,7 @@ export default function AcCalculatorPage() {
     } catch {
       setDraftMessage('Unable to read shared plan from link.');
     }
-  }, []);
+  }, [token]);
 
   const refreshSavedProjects = React.useCallback(async () => {
     if (!token) return;
@@ -594,6 +621,24 @@ export default function AcCalculatorPage() {
       return;
     }
 
+    setShareWarning('');
+
+    const baseUrl = new URL(window.location.href);
+    baseUrl.searchParams.delete('shared');
+    baseUrl.searchParams.delete('sharedSavedId');
+
+    // If the plan is already saved, share a short ID-based link for reliability.
+    if (activeSavedId) {
+      baseUrl.searchParams.set('sharedSavedId', activeSavedId);
+      try {
+        await navigator.clipboard.writeText(baseUrl.toString());
+        setShareMessage('Short share link copied. Recipients may need account access.');
+      } catch {
+        setShareMessage('Unable to copy link automatically. Please copy from the browser address bar.');
+      }
+      return;
+    }
+
     const sharePayload: ShareableSnapshot = {
       title,
       notes,
@@ -611,11 +656,14 @@ export default function AcCalculatorPage() {
       })),
     };
 
-    const url = new URL(window.location.href);
-    url.searchParams.set('shared', encodeURIComponent(JSON.stringify(sharePayload)));
+    baseUrl.searchParams.set('shared', encodeURIComponent(JSON.stringify(sharePayload)));
+
+    if (baseUrl.toString().length > 1800) {
+      setShareWarning('This link is very long and may fail in some messaging apps. Save the plan first to share a short link.');
+    }
 
     try {
-      await navigator.clipboard.writeText(url.toString());
+      await navigator.clipboard.writeText(baseUrl.toString());
       setShareMessage('Share link copied.');
     } catch {
       setShareMessage('Unable to copy link automatically. Please copy from the browser address bar.');
@@ -645,7 +693,7 @@ export default function AcCalculatorPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-6 shadow-sm">
+        <div className="print:hidden rounded-2xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">Docs &amp; Tools</p>
@@ -667,7 +715,7 @@ export default function AcCalculatorPage() {
 
         <div className="space-y-6">
           <section className="min-w-0 space-y-6">
-            <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
+            <div className="print:hidden rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-slate-200">Plan name</span>
                 <input
@@ -696,7 +744,7 @@ export default function AcCalculatorPage() {
               ) : null}
             </div>
 
-            <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
+            <div className="print:hidden rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Room entry</p>
 
               <div className="space-y-4">
@@ -949,7 +997,7 @@ export default function AcCalculatorPage() {
                         placeholder="Occupants"
                       />
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="print:hidden flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={saveEditedRoom}
@@ -1111,7 +1159,8 @@ export default function AcCalculatorPage() {
                       </button>
                     </div>
 
-                    {shareMessage ? <p className="text-xs text-slate-300">{shareMessage}</p> : null}
+                    {shareMessage ? <p className="print:hidden text-xs text-slate-300">{shareMessage}</p> : null}
+                    {shareWarning ? <p className="print:hidden text-xs text-amber-300">{shareWarning}</p> : null}
 
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
                       <p className="text-sm font-semibold text-amber-200">Before you buy</p>
@@ -1127,7 +1176,7 @@ export default function AcCalculatorPage() {
             )}
           </section>
 
-          <aside className="min-w-0 space-y-6">
+          <aside className="print:hidden min-w-0 space-y-6">
             <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -1272,6 +1321,25 @@ export default function AcCalculatorPage() {
           </aside>
         </div>
       </div>
+      <style jsx global>{`
+        @media print {
+          body {
+            background: #ffffff !important;
+            color: #111827 !important;
+          }
+
+          main, section, div {
+            background: transparent !important;
+            color: #111827 !important;
+            box-shadow: none !important;
+          }
+
+          table, th, td {
+            border-color: #d1d5db !important;
+            color: #111827 !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }

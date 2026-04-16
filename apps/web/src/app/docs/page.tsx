@@ -43,11 +43,11 @@ export default function DocsPage() {
               <h3 className="mt-2 text-xl font-semibold text-white">Hong Kong AC Calculator</h3>
               <p className="mt-2 text-sm text-slate-300">Estimate room-by-room BTU demand, suggested unit sizes, multi-split suitability, and an initial compressor direction.</p>
             </Link>
-            <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 p-5">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">Coming soon</p>
-              <h3 className="mt-2 text-xl font-semibold text-white">More planning helpers</h3>
-              <p className="mt-2 text-sm text-slate-400">This section is ready for future homeowner tools that can later connect into formal projects.</p>
-            </div>
+            <Link href="/docs/tools/paint-calculator" className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-900 to-slate-800 p-5 transition hover:border-sky-400 hover:from-slate-900 hover:to-slate-700">
+              <p className="text-sm font-semibold uppercase tracking-wide text-sky-300">Helper tool #2</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Paint Quantity Calculator</h3>
+              <p className="mt-2 text-sm text-slate-300">Estimate wall-paint quantity by room dimensions, opening deductions, and number of coats.</p>
+            </Link>
           </div>
         </section>
       </div>

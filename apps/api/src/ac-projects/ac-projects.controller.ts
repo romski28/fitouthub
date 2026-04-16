@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Query,
   Param,
   Post,
   Put,
@@ -18,8 +19,11 @@ export class AcProjectsController {
   constructor(private readonly acProjectsService: AcProjectsService) {}
 
   @Get()
-  list(@Req() req: any) {
-    return this.acProjectsService.listForActor(this.getActor(req));
+  list(@Req() req: any, @Query('linkedProjectId') linkedProjectId?: string) {
+    return this.acProjectsService.listForActor(
+      this.getActor(req),
+      linkedProjectId,
+    );
   }
 
   @Get(':id')
@@ -44,11 +48,13 @@ export class AcProjectsController {
 
   private getActor(req: any) {
     const actorId = req.user?.id || req.user?.sub;
-    const isProfessional = Boolean(req.user?.isProfessional || req.user?.role === 'professional');
+    const isProfessional = Boolean(
+      req.user?.isProfessional || req.user?.role === 'professional',
+    );
     return {
       actorId,
       isProfessional,
-      role: isProfessional ? 'professional' : (req.user?.role || 'client'),
+      role: isProfessional ? 'professional' : req.user?.role || 'client',
     };
   }
 }

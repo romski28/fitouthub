@@ -16,11 +16,18 @@ type ActorContext = {
 export class AcProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listForActor(actor: ActorContext) {
+  async listForActor(actor: ActorContext, linkedProjectId?: string) {
     this.ensureActor(actor);
 
+    const linkedProjectFilter = linkedProjectId?.trim();
+
     const rows = await (this.prisma as any).acProject.findMany({
-      where: this.buildActorWhere(actor),
+      where: {
+        ...this.buildActorWhere(actor),
+        ...(linkedProjectFilter
+          ? { linkedProjectId: linkedProjectFilter }
+          : {}),
+      },
       include: {
         rooms: {
           orderBy: [{ createdAt: 'asc' }, { name: 'asc' }],
@@ -85,7 +92,9 @@ export class AcProjectsService {
 
       return (tx as any).acProject.findUnique({
         where: { id: project.id },
-        include: { rooms: { orderBy: [{ createdAt: 'asc' }, { name: 'asc' }] } },
+        include: {
+          rooms: { orderBy: [{ createdAt: 'asc' }, { name: 'asc' }] },
+        },
       });
     });
 
@@ -137,7 +146,9 @@ export class AcProjectsService {
 
       return (tx as any).acProject.findUnique({
         where: { id },
-        include: { rooms: { orderBy: [{ createdAt: 'asc' }, { name: 'asc' }] } },
+        include: {
+          rooms: { orderBy: [{ createdAt: 'asc' }, { name: 'asc' }] },
+        },
       });
     });
 
@@ -189,7 +200,8 @@ export class AcProjectsService {
     return {
       title,
       notes: this.asNullableString(body?.notes),
-      calculationMethod: body?.calculationMethod === 'volume' ? 'volume' : 'area',
+      calculationMethod:
+        body?.calculationMethod === 'volume' ? 'volume' : 'area',
       combineRooms: Boolean(body?.combineRooms),
       totalBtu: this.asNullableInt(body?.totalBtu),
       recommendedSystem: this.asNullableString(body?.recommendedSystem),
@@ -198,10 +210,21 @@ export class AcProjectsService {
       linkedProjectId: this.asNullableString(body?.linkedProjectId),
       rooms: rooms.map((room: any) => ({
         name: String(room?.name || 'Room').trim() || 'Room',
-        lengthMeters: this.asDecimal(room?.lengthMeters, 'Room length is required'),
-        widthMeters: this.asDecimal(room?.widthMeters, 'Room width is required'),
-        heightMeters: this.asDecimal(room?.heightMeters, 'Room height is required'),
-        heatProfile: ['cool', 'warm', 'hot'].includes(String(room?.heatProfile || '').toLowerCase())
+        lengthMeters: this.asDecimal(
+          room?.lengthMeters,
+          'Room length is required',
+        ),
+        widthMeters: this.asDecimal(
+          room?.widthMeters,
+          'Room width is required',
+        ),
+        heightMeters: this.asDecimal(
+          room?.heightMeters,
+          'Room height is required',
+        ),
+        heatProfile: ['cool', 'warm', 'hot'].includes(
+          String(room?.heatProfile || '').toLowerCase(),
+        )
           ? String(room.heatProfile).toLowerCase()
           : 'warm',
         occupants: Math.max(1, Number(room?.occupants) || 1),

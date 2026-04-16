@@ -17,6 +17,7 @@ import { ContractTab } from './tabs/contract-tab';
 import { FinancialsTab } from './tabs/financials-tab';
 import { ScheduleTab } from './tabs/schedule-tab';
 import { ChatTab } from './tabs/chat-tab';
+import { AcPlansTab } from './tabs/ac-plans-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 
 interface ProjectDetail {
@@ -256,7 +257,7 @@ export default function ProjectDetailPage() {
     const requestedTab = searchParams.get('tab');
     if (!requestedTab || !project) return;
 
-    const allowedTabs = new Set(['overview', 'financials', 'chat']);
+    const allowedTabs = new Set(['overview', 'financials', 'chat', 'ac-plans']);
     if (project.status === 'awarded') {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
@@ -1420,6 +1421,7 @@ export default function ProjectDetailPage() {
                   
                   // Always show financials and chat
                   tabsArray.push({ id: 'financials', label: 'Financials', icon: '💳' });
+                  tabsArray.push({ id: 'ac-plans', label: 'AC Plans', icon: '❄️' });
                   tabsArray.push({ id: 'chat', label: 'Chat', icon: '💬' });
                   
                   return tabsArray;
@@ -1533,6 +1535,12 @@ export default function ProjectDetailPage() {
                   notes,
                 }));
               }}
+            />
+
+            <AcPlansTab
+              tab="ac-plans"
+              projectId={project.project.id}
+              accessToken={accessToken || null}
             />
 
             <ChatTab

@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-04-16-65b86d8",
+    "date": "2026-04-16T09:50:55+08:00",
+    "title": "feat(web+api): add print/share hardening, docs paint tool, and linked AC plans tab",
+    "summary": "feat(web+api): add print/share hardening, docs paint tool, and linked AC plans tab",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "65b86d8",
+    "files": [
+      "apps/api/src/ac-projects/ac-projects.controller.ts",
+      "apps/api/src/ac-projects/ac-projects.service.ts",
+      "apps/web/src/app/docs/page.tsx",
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx",
+      "apps/web/src/app/docs/tools/paint-calculator/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/ac-plans-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-15-a00499a",
     "date": "2026-04-15T18:27:21+08:00",
     "title": "feat(web): AC calculator usability - validation, edit, mobile cards, save state, share link, assumptions",
