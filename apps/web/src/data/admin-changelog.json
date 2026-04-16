@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-16-3514063",
+    "date": "2026-04-16T13:30:11+08:00",
+    "title": "refactor: move project hero badges to separate row on mobile",
+    "summary": "refactor: move project hero badges to separate row on mobile",
+    "areas": [
+      "web"
+    ],
+    "commit": "3514063",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/project-sentiment-badge.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-bd8cc15",
     "date": "2026-04-16T13:00:05+08:00",
     "title": "fix: convert quote start datetime to UTC ISO before submission",

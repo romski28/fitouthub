@@ -32,9 +32,10 @@ const normalizeSentiment = (value: unknown): ProjectSentiment => {
 type ProjectSentimentBadgeProps = {
   projectId: string;
   storageScope: 'client' | 'professional' | 'shared';
+  hideTextOnMobile?: boolean;
 };
 
-export function ProjectSentimentBadge({ projectId, storageScope }: ProjectSentimentBadgeProps) {
+export function ProjectSentimentBadge({ projectId, storageScope, hideTextOnMobile }: ProjectSentimentBadgeProps) {
   const storageKey = `fitouthub:project-sentiment:${storageScope}:${projectId}`;
   const [sentiment, setSentiment] = React.useState<ProjectSentiment>('ok');
 
@@ -71,7 +72,7 @@ export function ProjectSentimentBadge({ projectId, storageScope }: ProjectSentim
       aria-label={`Project sentiment ${meta.label}. Click to change sentiment.`}
     >
       <span aria-hidden="true">{meta.emoji}</span>
-      <span>{meta.label}</span>
+      <span className={hideTextOnMobile ? 'hidden md:inline' : ''}>{meta.label}</span>
     </button>
   );
 }

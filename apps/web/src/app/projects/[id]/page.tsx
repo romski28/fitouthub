@@ -1700,16 +1700,32 @@ export default function ClientProjectDetailPage() {
         <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm overflow-hidden">
           <div className="px-5 py-4 text-white rounded-t-xl bg-gradient-to-r from-slate-900 to-slate-800">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
+              <div>
                 <h1 className="text-2xl font-bold text-white">
                   {project.projectName}
                 </h1>
                 <p className="text-sm font-semibold uppercase tracking-wide mt-1 text-emerald-300">
                   {project.region}
                 </p>
+                {/* Badges row - mobile only, right-aligned, below region */}
+                <div className="flex justify-end gap-2 mt-3 md:hidden">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                      projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {projectStatus.replace('_', ' ')}
+                  </span>
+                  <ProjectSentimentBadge
+                    projectId={project.id}
+                    storageScope="client"
+                    hideTextOnMobile
+                  />
+                </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                {/* Badges row - desktop only, inline */}
+                <div className="hidden md:flex items-center justify-end gap-2">
                   <span
                     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                       projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
