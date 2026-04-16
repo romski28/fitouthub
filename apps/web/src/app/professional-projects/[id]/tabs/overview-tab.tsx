@@ -62,6 +62,7 @@ interface OverviewTabProps {
   onAccept: () => Promise<void>;
   onReject: () => Promise<void>;
   onKeepCurrentQuote: () => Promise<void>;
+  onOpenAccessSchedule?: () => void;
   submittingQuote: boolean;
   accessToken: string | null;
 }
@@ -105,6 +106,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onAccept,
   onReject,
   onKeepCurrentQuote,
+  onOpenAccessSchedule,
   submittingQuote,
 }) => {
   const [nowMs, setNowMs] = React.useState<number | null>(null);
@@ -211,6 +213,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {project.status === 'quoted' && (
             <div className="mb-4 rounded-md border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm text-slate-300">
               You can adjust your quote if needed. Submit a revised amount or keep your current offer.
+            </div>
+          )}
+
+          {project.status !== 'awarded' && (
+            <div className="mb-4 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+              You can request site access before quoting to better appraise the project while tentatively accepting it.
+              <button
+                type="button"
+                onClick={() => onOpenAccessSchedule?.()}
+                className="ml-1 font-semibold underline underline-offset-2 hover:text-white"
+              >
+                Go to Access & Schedule
+              </button>
             </div>
           )}
 
@@ -413,7 +428,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           disabled={submittingQuote}
                           className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                         >
-                          {submittingQuote ? 'Processing...' : 'Accept Project'}
+                          {submittingQuote ? 'Processing...' : 'Tentatively accept'}
                         </button>
                         <button
                           type="button"

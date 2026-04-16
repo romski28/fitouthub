@@ -132,10 +132,12 @@ export default function ProjectInfoCard({
       {notes && (
         <div className="p-5 space-y-4">
           <div className={`rounded-md px-3 py-2 text-sm border ${isProfessional ? 'bg-slate-900/35 border-slate-700/80' : 'bg-surface-muted border-border'}`}>
-            <p className={`font-semibold mb-1 ${isProfessional ? 'text-white' : 'text-strong'}`}>Project description and client</p>
+            {!isProfessional && (
+              <p className={`font-semibold mb-1 ${isProfessional ? 'text-white' : 'text-strong'}`}>Project description</p>
+            )}
             <p className={`${isProfessional ? 'text-slate-200' : 'text-muted'} leading-relaxed`}>
               {isProfessional
-                ? `Project description for ${clientName || 'client'}: ${notes}`
+                ? `${notes} for ${clientName || 'client'}.`
                 : notes}
             </p>
             <div className={`flex gap-4 mt-3 pt-2 border-t text-xs ${isProfessional ? 'border-slate-700 text-slate-300' : 'border-border text-muted'}`}>

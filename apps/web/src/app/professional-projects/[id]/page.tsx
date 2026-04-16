@@ -1485,6 +1485,7 @@ export default function ProjectDetailPage() {
               onAccept={handleAccept}
               onReject={handleReject}
               onKeepCurrentQuote={handleKeepCurrentQuote}
+              onOpenAccessSchedule={() => setActiveTab('site-access')}
               submittingQuote={submittingQuote}
               accessToken={accessToken}
             />

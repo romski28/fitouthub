@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-16-10ae7ac",
+    "date": "2026-04-16T18:38:15+08:00",
+    "title": "refactor: tighten professional hero copy and quote action guidance",
+    "summary": "refactor: tighten professional hero copy and quote action guidance",
+    "areas": [
+      "web"
+    ],
+    "commit": "10ae7ac",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/project-info-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-c1ca60f",
     "date": "2026-04-16T17:59:15+08:00",
     "title": "refactor: move professional project details into hero and simplify overview",
