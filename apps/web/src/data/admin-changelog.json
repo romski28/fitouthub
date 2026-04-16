@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-ae3f0bd",
+    "date": "2026-04-16T22:28:01+08:00",
+    "title": "style: align client site-access form to dark overview theme",
+    "summary": "style: align client site-access form to dark overview theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "ae3f0bd",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-ec824dd",
     "date": "2026-04-16T19:44:08+08:00",
     "title": "fix: refresh client site-access data on focus and bypass stale cache",

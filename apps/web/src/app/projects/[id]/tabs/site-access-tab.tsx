@@ -324,13 +324,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2 flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
                             <span>Property Details</span>
                             <span
                               className={`text-[11px] font-semibold rounded-full px-2 py-0.5 border ${
                                 projectIsAwarded
-                                  ? 'bg-rose-100 text-rose-800 border-rose-200'
-                                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                                  ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
+                                  : 'bg-slate-700/40 text-slate-300 border-slate-600'
                               }`}
                             >
                               {projectIsAwarded ? 'Required now' : 'Required after award'}
@@ -338,11 +338,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                           </h4>
                           <div className="grid grid-cols-3 gap-3">
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Property Type</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Property Type</label>
                               <select
                                 value={locationDetailsForm.propertyType || ''}
                                 onChange={(e) => onUpdateLocationDetailsForm({ propertyType: e.target.value })}
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Property Type') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Property Type') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               >
                                 <option value="">Select type</option>
                                 <option value="residential">Residential</option>
@@ -354,104 +354,104 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Property Size (sq ft)</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Property Size (sq ft)</label>
                               <input
                                 type="text"
                                 value={locationDetailsForm.propertySize}
                                 onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
                                 placeholder="e.g., 800"
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Property Size') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Property Size') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Property Age (years)</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Property Age (years)</label>
                               <input
                                 type="text"
                                 value={locationDetailsForm.propertyAge}
                                 onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
                                 placeholder="e.g., 15"
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Property Age') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Property Age') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               />
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-2">Existing Conditions</label>
+                            <label className="block text-xs font-semibold text-white mb-2">Existing Conditions</label>
                             <textarea
                               value={locationDetailsForm.existingConditions}
                               onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
                               placeholder="Describe current state, any issues, damages, etc."
-                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Existing Conditions') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                              className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Existing Conditions') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               rows={2}
                             />
                           </div>
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-800 border-b pb-2 flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
                             <span>Access and Control</span>
                             <span
                               className={`text-[11px] font-semibold rounded-full px-2 py-0.5 border ${
                                 projectIsAwarded
-                                  ? 'bg-rose-100 text-rose-800 border-rose-200'
-                                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                                  ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
+                                  : 'bg-slate-700/40 text-slate-300 border-slate-600'
                               }`}
                             >
                               {projectIsAwarded ? 'Required now' : 'Required after award'}
                             </span>
                           </h4>
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-2">Access Details</label>
+                            <label className="block text-xs font-semibold text-white mb-2">Access Details</label>
                             <textarea
                               value={locationDetailsForm.accessDetails}
                               onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
                               placeholder="e.g., Security gate, 24/7 access, notify 2 hours before"
-                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Access Details') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                              className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Access Details') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               rows={2}
                             />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-2">Access Hours</label>
+                            <label className="block text-xs font-semibold text-white mb-2">Access Hours</label>
                             <input
                               type="text"
                               value={locationDetailsForm.accessHoursDescription}
                               onChange={(e) => onUpdateLocationDetailsForm({ accessHoursDescription: e.target.value })}
                               placeholder="e.g., Mon-Fri 9am-6pm, weekends by appointment"
-                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Access Hours') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                              className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Access Hours') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                             />
                           </div>
 
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">On-site Contact Name</label>
+                              <label className="block text-xs font-semibold text-white mb-2">On-site Contact Name</label>
                               <input
                                 type="text"
                                 value={locationDetailsForm.onSiteContactName}
                                 onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactName: e.target.value })}
                                 placeholder="Contact person"
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('On-site Contact Name') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('On-site Contact Name') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-slate-700 mb-2">Contact Phone</label>
+                              <label className="block text-xs font-semibold text-white mb-2">Contact Phone</label>
                               <input
                                 type="tel"
                                 value={locationDetailsForm.onSiteContactPhone}
                                 onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactPhone: e.target.value })}
                                 placeholder="Phone number"
-                                className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('On-site Contact Phone') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                                className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('On-site Contact Phone') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                               />
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-2">Desired Start Date</label>
+                            <label className="block text-xs font-semibold text-white mb-2">Desired Start Date</label>
                             <input
                               type="date"
                               value={locationDetailsForm.desiredStartDate}
                               onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
-                              className={`w-full rounded border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none ${isFieldBlocked('Desired Start Date') ? 'border-rose-500 bg-rose-50' : 'border-slate-300'}`}
+                              className={`w-full rounded border px-3 py-2 text-sm text-white bg-slate-900 focus:border-emerald-500 focus:outline-none ${isFieldBlocked('Desired Start Date') ? 'border-rose-500 bg-rose-500/10' : 'border-slate-600'}`}
                             />
                           </div>
                         </div>
