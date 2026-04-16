@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-92dd48c",
+    "date": "2026-04-16T22:42:59+08:00",
+    "title": "refactor: split client site-access form into 3 parts and gate authorization",
+    "summary": "refactor: split client site-access form into 3 parts and gate authorization",
+    "areas": [
+      "web"
+    ],
+    "commit": "92dd48c",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-ae3f0bd",
     "date": "2026-04-16T22:28:01+08:00",
     "title": "style: align client site-access form to dark overview theme",

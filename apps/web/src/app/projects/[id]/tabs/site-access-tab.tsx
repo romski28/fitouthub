@@ -166,8 +166,14 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   addressFull: siteAccessData?.addressFull || '',
                 };
 
+                const hasBasicLocation =
+                  Boolean(locationDetailsForm.addressFull?.trim()) &&
+                  Boolean(locationDetailsForm.unitNumber?.trim()) &&
+                  Boolean(locationDetailsForm.floorLevel?.trim());
+                const canAuthorizeAccess = form.status === 'denied' || hasBasicLocation;
+
                 const statusColor = {
-                  pending: 'bg-amber-500/15 border-amber-500/40',
+                  pending: 'bg-white/5 border-white/20',
                   approved_no_visit: 'bg-emerald-500/15 border-emerald-500/40',
                   approved_visit_scheduled: 'bg-sky-900/30 border-sky-500/40',
                   denied: 'bg-rose-500/15 border-rose-500/40',
@@ -214,7 +220,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
                         <div className="space-y-3">
                           <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
-                            <span>Access Request Response</span>
+                            <span>Part 1: Professional Request and Authorisation</span>
                             <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
                               Required now
                             </span>
@@ -273,11 +279,14 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
                         <div className="space-y-3">
                           <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
-                            <span>Basic Location Information</span>
+                            <span>Part 2: Basic Property Details</span>
                             <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
-                              Required now
+                              Required to grant access
                             </span>
                           </h4>
+                          <p className="text-xs text-slate-300">
+                            Share these details first so the professional can be authorised for access/visit.
+                          </p>
                           <div>
                             <label className="block text-xs font-semibold text-white mb-2">Full Address *</label>
                             <input
@@ -324,6 +333,18 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                         </div>
 
                         <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
+                            <span>Part 3: Advanced Property Details</span>
+                            <span
+                              className={`text-[11px] font-semibold rounded-full px-2 py-0.5 border ${
+                                projectIsAwarded
+                                  ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
+                                  : 'bg-slate-700/40 text-slate-300 border-slate-600'
+                              }`}
+                            >
+                              {projectIsAwarded ? 'Required now' : 'Optional now, can be filled later'}
+                            </span>
+                          </h4>
                           <h4 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
                             <span>Property Details</span>
                             <span
@@ -465,7 +486,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                                 toast.error('Failed to respond to request');
                               }
                             }}
-                            disabled={submittingSiteAccess === request.id || isSubmittingLocationDetails}
+                            disabled={submittingSiteAccess === request.id || isSubmittingLocationDetails || !canAuthorizeAccess}
+                            title={!canAuthorizeAccess ? 'Complete Part 2 basic property details before granting access' : ''}
                             className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded hover:bg-emerald-700 disabled:opacity-50 transition"
                           >
                             {submittingSiteAccess === request.id || isSubmittingLocationDetails ? 'Saving…' : 'Save and Send Response'}
