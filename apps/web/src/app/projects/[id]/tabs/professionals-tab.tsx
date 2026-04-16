@@ -84,16 +84,23 @@ const formatDuration = (minutes?: number) => {
   return `${minutes} min`;
 };
 
-const formatDateOnly = (date: Date) => {
+const formatShortDayDate = (date: Date) => {
   try {
     return new Intl.DateTimeFormat('en-GB', {
+      weekday: 'short',
       day: '2-digit',
       month: 'short',
-      year: 'numeric',
     }).format(date);
   } catch {
     return '—';
   }
+};
+
+const formatShortDayDateFromString = (date?: string) => {
+  if (!date) return '—';
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return formatShortDayDate(parsed);
 };
 
 const formatTimeOnly = (date: Date) => {
@@ -109,14 +116,13 @@ const formatTimeOnly = (date: Date) => {
 };
 
 const formatScheduleWindow = (startAt?: string, durationMinutes?: number) => {
-  if (!startAt && !durationMinutes) return '—';
-  if (!startAt) return `Duration ${formatDuration(durationMinutes)}`;
+  if (!startAt) return '—';
 
   const start = new Date(startAt);
   if (Number.isNaN(start.getTime())) return '—';
 
   if (!durationMinutes || !Number.isFinite(durationMinutes) || durationMinutes <= 0) {
-    return formatDate(startAt);
+    return `on ${formatShortDayDate(start)}`;
   }
 
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
@@ -127,10 +133,10 @@ const formatScheduleWindow = (startAt?: string, durationMinutes?: number) => {
     start.getDate() !== end.getDate();
 
   if (spansMultipleDays) {
-    return `${formatDateOnly(start)} to ${formatDateOnly(end)}`;
+    return `between ${formatShortDayDate(start)} and ${formatShortDayDate(end)}`;
   }
 
-  return `${formatDateOnly(start)} ${formatTimeOnly(start)} to ${formatTimeOnly(end)}`;
+  return `on ${formatShortDayDate(start)} from ${formatTimeOnly(start)} to ${formatTimeOnly(end)}`;
 };
 
 const getNumericQuote = (value?: number | string) => {
@@ -161,9 +167,6 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   const earliestStartProfessional = [...comparableQuotedProfessionals]
     .filter((pp) => !!pp.quoteEstimatedStartAt)
     .sort((a, b) => new Date(a.quoteEstimatedStartAt || 0).getTime() - new Date(b.quoteEstimatedStartAt || 0).getTime())[0];
-  const shortestDurationProfessional = [...comparableQuotedProfessionals]
-    .filter((pp) => !!pp.quoteEstimatedDurationMinutes)
-    .sort((a, b) => (a.quoteEstimatedDurationMinutes || Number.MAX_SAFE_INTEGER) - (b.quoteEstimatedDurationMinutes || Number.MAX_SAFE_INTEGER))[0];
   const biddingProfessionals = [...professionals].filter(
     (p) => !['awarded', 'declined', 'rejected', 'withdrawn', 'award_reversed'].includes((p.status || '').toLowerCase()),
   ).sort((a, b) => {
@@ -177,6 +180,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   });
   const awardedProfessional = professionals.find((p) => p.status === 'awarded');
   const declinedProfessionals = professionals.filter((p) => p.status === 'declined');
+  const isClass3Project = String(project?.projectScale || '').toUpperCase() === 'SCALE_3';
 
   const handleAwarded = async (professional: ProjectProfessional) => {
     if (!accessToken) return;
@@ -303,7 +307,6 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                 const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
                 const isLowestQuote = lowestQuoteProfessional?.id === pp.id;
                 const isEarliestStart = earliestStartProfessional?.id === pp.id;
-                const isShortestDuration = shortestDurationProfessional?.id === pp.id;
                 return (
                   <div
                     key={pp.id}
@@ -312,11 +315,10 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <p className="font-semibold text-white">{displayName}</p>
-                        {(isLowestQuote || isEarliestStart || isShortestDuration) && (
+                        {(isLowestQuote || isEarliestStart) && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {isLowestQuote && <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">Lowest quote</span>}
                             {isEarliestStart && <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">Earliest start</span>}
-                            {isShortestDuration && <span className="rounded-full bg-violet-600/20 px-2 py-0.5 text-[11px] font-semibold text-violet-200">Shortest duration</span>}
                           </div>
                         )}
                       </div>
@@ -337,18 +339,38 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                       </div>
                     )}
 
-                    <div className="mb-3 grid grid-cols-2 gap-2">
-                      <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
-                        <p className="text-xs text-white font-semibold">Quote Price</p>
-                        <p className="text-lg font-bold text-white">{formatHKD(pp.quoteAmount)}</p>
-                      </div>
-                      <div className="rounded-md bg-slate-900/60 p-2 border border-slate-700">
-                        <p className="text-xs text-white font-semibold">Schedule</p>
-                        <p className="text-sm text-slate-200">{formatScheduleWindow(pp.quoteEstimatedStartAt, pp.quoteEstimatedDurationMinutes)}</p>
-                        {pp.quoteEstimatedDurationMinutes ? (
-                          <p className="mt-1 text-[11px] text-slate-400">{formatDuration(pp.quoteEstimatedDurationMinutes)}</p>
-                        ) : null}
-                      </div>
+                    <div className="mb-3 rounded-md bg-slate-900/60 p-3 border border-slate-700">
+                      {(() => {
+                        const hasQuote = Number.isFinite(getNumericQuote(pp.quoteAmount));
+                        const scheduleText = formatScheduleWindow(pp.quoteEstimatedStartAt, pp.quoteEstimatedDurationMinutes);
+                        const statusLower = (pp.status || '').toLowerCase();
+
+                        let summary = `${displayName} is reviewing your project invitation.`;
+                        if (statusLower === 'accepted') {
+                          summary = `${displayName} has accepted your project.`;
+                        } else if (statusLower === 'declined' || statusLower === 'rejected') {
+                          summary = `${displayName} has declined your project.`;
+                        } else if (hasQuote && statusLower === 'counter_requested') {
+                          summary = `${displayName} quoted ${formatHKD(pp.quoteAmount)} to complete the project, and you asked for an improved offer.`;
+                        } else if (hasQuote) {
+                          if (scheduleText !== '—') {
+                            summary = `${displayName} has quoted ${formatHKD(pp.quoteAmount)} to carry out the work ${scheduleText}.`;
+                          } else if (isClass3Project) {
+                            summary = `${displayName} has quoted ${formatHKD(pp.quoteAmount)} to carry out the work. Schedule details are pending.`;
+                          } else {
+                            summary = `${displayName} has quoted ${formatHKD(pp.quoteAmount)} to carry out the work. Schedule details are typically finalised after award.`;
+                          }
+                        }
+
+                        return (
+                          <>
+                            <p className="text-sm text-slate-100">{summary}</p>
+                            {pp.quotedAt && (
+                              <p className="mt-1 text-xs text-slate-400">Quoted on {formatShortDayDateFromString(pp.quotedAt)}</p>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {pp.quoteNotes && (
@@ -357,10 +379,6 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                         <p>{pp.quoteNotes}</p>
                       </div>
                     )}
-
-                    <div className="text-xs text-slate-400 mb-3">
-                      Quoted: {formatDate(pp.quotedAt)}
-                    </div>
 
                     {pp.quoteAmount && (
                       <div className="grid grid-cols-4 gap-2">
@@ -477,21 +495,14 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                   </div>
                 )}
 
-                {(awardedProfessional.quoteEstimatedStartAt || awardedProfessional.quoteEstimatedDurationMinutes) && (
-                  <div className="grid gap-3 mb-3">
-                    <div className="rounded-md bg-slate-900/60 p-3 border border-slate-700">
-                      <p className="text-xs text-white font-semibold uppercase">Schedule</p>
-                      <p className="text-sm text-slate-200 mt-1">{formatScheduleWindow(awardedProfessional.quoteEstimatedStartAt, awardedProfessional.quoteEstimatedDurationMinutes)}</p>
-                      {awardedProfessional.quoteEstimatedDurationMinutes ? (
-                        <p className="mt-1 text-xs text-slate-400">{formatDuration(awardedProfessional.quoteEstimatedDurationMinutes)}</p>
-                      ) : null}
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-xs text-slate-200">
-                  Awarded on: {formatDate(awardedProfessional.quotedAt)}
-                </p>
+                <div className="mb-3 rounded-md bg-slate-900/60 p-3 border border-slate-700">
+                  <p className="text-sm text-slate-100">
+                    {(awardedProfessional.professional.fullName || awardedProfessional.professional.businessName || awardedProfessional.professional.email)} has quoted {formatHKD(awardedProfessional.quoteAmount)} and was awarded for this project{awardedProfessional.quoteEstimatedStartAt ? ` ${formatScheduleWindow(awardedProfessional.quoteEstimatedStartAt, awardedProfessional.quoteEstimatedDurationMinutes)}` : ''}.
+                  </p>
+                  {awardedProfessional.quotedAt && (
+                    <p className="mt-1 text-xs text-slate-400">Quoted on {formatShortDayDateFromString(awardedProfessional.quotedAt)}</p>
+                  )}
+                </div>
               </div>
             </div>
           </AccordionItem>
@@ -520,10 +531,16 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                       </span>
                     </div>
 
+                    <p className="text-sm text-white mt-2">
+                      {displayName} has declined your project.
+                    </p>
                     {pp.quoteAmount && (
-                      <p className="text-sm text-white mt-2">
-                        <strong>Quote was:</strong> {formatHKD(pp.quoteAmount)}
+                      <p className="text-sm text-slate-200 mt-1">
+                        {displayName} previously quoted {formatHKD(pp.quoteAmount)}.
                       </p>
+                    )}
+                    {pp.quotedAt && (
+                      <p className="text-xs text-slate-300 mt-1">Quoted on {formatShortDayDateFromString(pp.quotedAt)}</p>
                     )}
                   </div>
                 );

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-16-cec9196",
+    "date": "2026-04-16T12:41:32+08:00",
+    "title": "feat(web): make bidder board status copy conversational",
+    "summary": "feat(web): make bidder board status copy conversational",
+    "areas": [
+      "web"
+    ],
+    "commit": "cec9196",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-adc0367",
     "date": "2026-04-16T12:18:40+08:00",
     "title": "feat(web): add coming-soon cards for upcoming docs tools",
