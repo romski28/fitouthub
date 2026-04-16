@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-16-c1ca60f",
+    "date": "2026-04-16T17:59:15+08:00",
+    "title": "refactor: move professional project details into hero and simplify overview",
+    "summary": "refactor: move professional project details into hero and simplify overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "c1ca60f",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/project-info-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-a43932b",
     "date": "2026-04-16T17:48:04+08:00",
     "title": "fix: reduce disruptive pro project refresh and align quote inputs",

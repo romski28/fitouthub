@@ -479,42 +479,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       ) : null}
 
-      {/* Project Info */}
-      <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
-        <h2 className="text-lg font-bold text-white mb-4">Project Details</h2>
-
-        {project.project.notes && (
-          <div className="rounded-md bg-slate-900/50 px-3 py-3 text-sm border border-slate-700 mb-4">
-            <p className="font-semibold text-white mb-1">Description</p>
-            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{project.project.notes}</p>
-          </div>
-        )}
-        
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Project Name</p>
-            <p className="text-base font-semibold text-white">{project.project.projectName}</p>
-          </div>
-          
-          <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Client</p>
-            <p className="text-base font-semibold text-white">{project.project.clientName}</p>
-          </div>
-          
-          <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3 sm:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Invited Date</p>
-            <p className="text-sm font-semibold text-white">
-              {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '—'}
-            </p>
-          </div>
+      {project.project.aiIntake && (
+        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+          <ProjectAiPanel aiIntake={project.project.aiIntake} mode="professional" />
         </div>
-
-        {project.project.aiIntake && (
-          <div className="mt-4 pt-4 border-t border-slate-700">
-            <ProjectAiPanel aiIntake={project.project.aiIntake} mode="professional" />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

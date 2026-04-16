@@ -1432,6 +1432,7 @@ export default function ProjectDetailPage() {
               projectSentimentKey={project!.project.id}
               projectSentimentScope="professional"
               notes={project!.project.notes || undefined}
+              clientName={project!.project.clientName}
               createdAt={project!.createdAt}
               updatedAt={project!.updatedAt}
               quoteAmount={project!.quoteAmount}
