@@ -34,13 +34,25 @@ interface ProjectProfessional {
   };
 }
 
+interface SiteAccessRequestSummary {
+  id: string;
+  status: string;
+  requestedAt: string;
+  visitScheduledAt?: string | null;
+  professional?: {
+    id: string;
+  };
+}
+
 interface ProfessionalsTabProps {
   project: any;
   professionals: ProjectProfessional[];
+  siteAccessRequests?: SiteAccessRequestSummary[];
   expandedAccordions: Record<string, boolean>;
   onToggleAccordion: (id: string) => void;
   accessToken: string;
   onOpenChat?: (professional: ProjectProfessional | null) => void;
+  onOpenAccessSchedule?: () => void;
   onAwarded?: (professional: ProjectProfessional) => void;
   onProfessionalsChanged?: () => void | Promise<void>;
   onActionBusy?: (kind: string | null) => void;
@@ -154,10 +166,12 @@ const getComparableQuotedProfessionals = (professionals: ProjectProfessional[]) 
 export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   project,
   professionals,
+  siteAccessRequests = [],
   expandedAccordions,
   onToggleAccordion,
   accessToken,
   onOpenChat,
+  onOpenAccessSchedule,
   onAwarded,
   onProfessionalsChanged,
   onActionBusy,
@@ -182,6 +196,11 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   const awardedProfessional = professionals.find((p) => p.status === 'awarded');
   const declinedProfessionals = professionals.filter((p) => p.status === 'declined');
   const isClass3Project = String(project?.projectScale || '').toUpperCase() === 'SCALE_3';
+  const pendingAccessByProfessionalId = new Map(
+    siteAccessRequests
+      .filter((request) => request.status === 'pending' && request.professional?.id)
+      .map((request) => [request.professional!.id, request]),
+  );
 
   const handleAwarded = async (professional: ProjectProfessional) => {
     if (!accessToken) return;
@@ -308,6 +327,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                 const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
                 const isLowestQuote = lowestQuoteProfessional?.id === pp.id;
                 const isEarliestStart = earliestStartProfessional?.id === pp.id;
+                const pendingSiteAccess = pendingAccessByProfessionalId.get(pp.professionalId);
                 return (
                   <div
                     key={pp.id}
@@ -338,6 +358,24 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                           )}
                         </span>
                       </div>
+                    )}
+
+                    {pendingSiteAccess && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenAccessSchedule?.()}
+                        className="site-access-throb mb-3 w-full rounded-md border border-sky-400/70 bg-sky-500/10 px-3 py-2 text-left text-xs text-sky-100 hover:bg-sky-500/20"
+                      >
+                        <span className="font-semibold">Site access request pending</span>
+                        <span className="block mt-1 text-sky-200">
+                          {pendingSiteAccess.visitScheduledAt
+                            ? `Proposed: ${formatDate(pendingSiteAccess.visitScheduledAt)}`
+                            : 'Professional is waiting for your access response.'}
+                        </span>
+                        <span className="mt-1 inline-block font-semibold underline underline-offset-2">
+                          Open Access & Schedule
+                        </span>
+                      </button>
                     )}
 
                     <div className="mb-3 rounded-md bg-slate-900/60 p-3 border border-slate-700">

@@ -34,6 +34,25 @@
   animation: pulse-slow 2.5s ease-in-out infinite;
 }
 
+@keyframes site-access-throb {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.15);
+    border-color: rgba(125, 211, 252, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.08);
+    border-color: rgba(125, 211, 252, 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.15);
+    border-color: rgba(125, 211, 252, 0.45);
+  }
+}
+
+.site-access-throb {
+  animation: site-access-throb 1.8s ease-in-out infinite;
+}
+
 @keyframes home-ticker-scroll {
   0% {
     transform: translateX(0);

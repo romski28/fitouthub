@@ -3037,7 +3037,14 @@ Please review the project details and respond with your quote or decline the inv
     }));
   }
 
-  async requestSiteAccess(projectId: string, professionalId: string) {
+  async requestSiteAccess(
+    projectId: string,
+    professionalId: string,
+    body?: {
+      visitScheduledFor?: string;
+      visitScheduledAt?: string;
+    },
+  ) {
     const projectProfessional =
       await this.prisma.projectProfessional.findUnique({
         where: {
@@ -3079,12 +3086,33 @@ Please review the project details and respond with your quote or decline the inv
       };
     }
 
+    const visitDate = body?.visitScheduledFor?.trim();
+    const visitTime = body?.visitScheduledAt?.trim();
+
+    if ((visitDate && !visitTime) || (!visitDate && visitTime)) {
+      throw new BadRequestException('Both visit date and visit time are required');
+    }
+
+    let requestedVisitAt: Date | null = null;
+    let requestedVisitFor: Date | null = null;
+
+    if (visitDate && visitTime) {
+      const parsed = new Date(`${visitDate}T${visitTime}`);
+      if (Number.isNaN(parsed.getTime())) {
+        throw new BadRequestException('Invalid requested visit date/time');
+      }
+      requestedVisitAt = parsed;
+      requestedVisitFor = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+    }
+
     const request = await this.prisma.siteAccessRequest.create({
       data: {
         projectId,
         projectProfessionalId: projectProfessional.id,
         professionalId,
         status: 'pending',
+        visitScheduledFor: requestedVisitFor,
+        visitScheduledAt: requestedVisitAt,
       },
     });
 
@@ -3097,7 +3125,9 @@ Please review the project details and respond with your quote or decline the inv
       'professional',
       null,
       professionalId,
-      `${professionalName} requested site access on ${this.formatDateTime(new Date())}.`,
+      requestedVisitAt
+        ? `${professionalName} requested site access on ${this.formatDateTime(new Date())} and proposed a visit for ${this.formatDateTime(requestedVisitAt)}.`
+        : `${professionalName} requested site access on ${this.formatDateTime(new Date())}.`,
     );
 
     return {

@@ -439,7 +439,10 @@ export class ProjectsController {
       throw new HttpException('Professional not found', HttpStatus.UNAUTHORIZED);
     }
 
-    return this.projectsService.requestSiteAccess(projectId, professionalId);
+    return this.projectsService.requestSiteAccess(projectId, professionalId, {
+      visitScheduledFor: body.visitScheduledFor,
+      visitScheduledAt: body.visitScheduledAt,
+    });
   }
 
   @Post(':id/site-access-data')

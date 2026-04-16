@@ -643,10 +643,23 @@ export default function ClientProjectDetailPage() {
     }
   };
 
-  const handleRespondToSiteAccessRequest = async (requestId: string) => {
+  const handleRespondToSiteAccessRequest = async (
+    requestId: string,
+    patch?: {
+      status?: 'approved_no_visit' | 'approved_visit_scheduled' | 'denied';
+      visitScheduledFor?: string;
+      visitScheduledAt?: string;
+      reasonDenied?: string;
+    },
+  ) => {
     if (!accessToken) return;
     const form = siteAccessForms[requestId];
     if (!form) return;
+
+    const mergedForm = {
+      ...form,
+      ...patch,
+    };
 
     const locationPayload = {
       addressFull: locationDetailsForm.addressFull || form.addressFull || siteAccessData?.addressFull || '',
@@ -705,19 +718,19 @@ export default function ClientProjectDetailPage() {
       if (!locationPayload.desiredStartDate?.trim()) locationBlockers.push('Desired Start Date');
     }
 
-    if (form.status === 'approved_visit_scheduled' && !form.visitScheduledFor) {
-      setSiteAccessBlockers(['Visit date']);
-      toast.error('Please select a visit date');
+    if (mergedForm.status === 'approved_visit_scheduled' && (!mergedForm.visitScheduledFor || !mergedForm.visitScheduledAt)) {
+      setSiteAccessBlockers(['Visit date', 'Visit time']);
+      toast.error('Please select both visit date and time');
       return;
     }
 
-    if (form.status === 'denied' && !form.reasonDenied) {
+    if (mergedForm.status === 'denied' && !mergedForm.reasonDenied) {
       setSiteAccessBlockers(['Reason for denial']);
       toast.error('Please provide a reason for denial');
       return;
     }
 
-    if (form.status !== 'denied' && locationBlockers.length > 0) {
+    if (mergedForm.status !== 'denied' && locationBlockers.length > 0) {
       setSiteAccessBlockers(locationBlockers);
       const scope = isAwarded
         ? 'Awarded stage requires full form completion'
@@ -739,10 +752,10 @@ export default function ClientProjectDetailPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            status: form.status,
-            visitScheduledFor: form.visitScheduledFor || undefined,
-            visitScheduledAt: form.visitScheduledAt || undefined,
-            reasonDenied: form.reasonDenied || undefined,
+            status: mergedForm.status,
+            visitScheduledFor: mergedForm.visitScheduledFor || undefined,
+            visitScheduledAt: mergedForm.visitScheduledAt || undefined,
+            reasonDenied: mergedForm.reasonDenied || undefined,
             addressFull: locationPayload.addressFull,
             unitNumber: locationPayload.unitNumber,
             floorLevel: locationPayload.floorLevel,
@@ -758,7 +771,7 @@ export default function ClientProjectDetailPage() {
         throw new Error(data.message || 'Failed to respond to request');
       }
 
-      if (form.status !== 'denied' && isAwarded) {
+      if (mergedForm.status !== 'denied' && isAwarded) {
         setSubmittingLocationDetails(true);
         setLocationDetailsError(null);
         const locationResponse = await fetch(
@@ -1967,8 +1980,8 @@ export default function ClientProjectDetailPage() {
               siteAccessBlockers={siteAccessBlockers}
               expandedAccordions={expandedAccordions}
               onToggleAccordion={toggleAccordion}
-              onRespondToRequest={async (requestId) => {
-                await handleRespondToSiteAccessRequest(requestId);
+              onRespondToRequest={async (requestId, patch) => {
+                await handleRespondToSiteAccessRequest(requestId, patch);
               }}
               onRespondToVisit={async (visitId, status) => {
                 await handleRespondToSiteVisit(visitId, status);
@@ -2012,6 +2025,7 @@ export default function ClientProjectDetailPage() {
               <ProfessionalsTab
                 project={project}
                 professionals={project.professionals || []}
+                siteAccessRequests={siteAccessRequests}
                 expandedAccordions={expandedAccordions}
                 onToggleAccordion={toggleAccordion}
                 accessToken={accessToken || ''}
@@ -2023,6 +2037,7 @@ export default function ClientProjectDetailPage() {
                 onAwarded={async () => {
                   await fetchProject();
                 }}
+                onOpenAccessSchedule={() => setActiveTab('site-access')}
                 onProfessionalsChanged={async () => {
                   await fetchProject();
                 }}

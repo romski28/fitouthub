@@ -46,6 +46,10 @@ interface SiteAccessTabProps {
   expandedAccordions: Record<string, boolean>;
   onToggleAccordion: (id: string) => void;
   onRequestSiteAccess: () => Promise<void>;
+  siteAccessRequestDate: string;
+  onUpdateSiteAccessRequestDate: (date: string) => void;
+  siteAccessRequestTime: string;
+  onUpdateSiteAccessRequestTime: (time: string) => void;
   onRequestSiteVisit: () => Promise<void>;
   onRespondSiteVisit: (visitId: string, status: 'accepted' | 'declined') => Promise<void>;
   onCompleteSiteVisit: (visitId: string) => Promise<void>;
@@ -73,6 +77,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   expandedAccordions,
   onToggleAccordion,
   onRequestSiteAccess,
+  siteAccessRequestDate,
+  onUpdateSiteAccessRequestDate,
+  siteAccessRequestTime,
+  onUpdateSiteAccessRequestTime,
   onRequestSiteVisit,
   onRespondSiteVisit,
   onCompleteSiteVisit,
@@ -90,6 +98,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   onUpdateVisitResponseNotes,
 }) => {
   const acceptedVisit = siteVisits.find((visit) => visit.status === 'accepted');
+  const canRequestSiteAccess = Boolean(siteAccessRequestDate && siteAccessRequestTime);
 
   return (
     <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
@@ -123,6 +132,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               {siteAccessStatus.requestStatus === 'pending' && (
                 <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
                   Awaiting client approval. You can still submit a quote without site access.
+                  {siteAccessStatus.visitScheduledAt && (
+                    <span className="block mt-1 text-amber-100">
+                      Requested visit: {new Date(siteAccessStatus.visitScheduledAt).toLocaleString()}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -187,14 +201,41 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               )}
 
               {!siteAccessStatus.hasAccess && (
-                <button
-                  type="button"
-                  onClick={onRequestSiteAccess}
-                  disabled={siteAccessActionLoading || siteAccessStatus.requestStatus === 'pending'}
-                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                >
-                  {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
-                </button>
+                <div className="space-y-3 rounded-md border border-slate-700 bg-slate-900/60 p-4">
+                  <p className="text-sm font-semibold text-white">Request Site Access</p>
+                  <p className="text-xs text-slate-300">
+                    Propose a preferred date and time so the client can accept, update, or decline.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Date</label>
+                      <input
+                        type="date"
+                        value={siteAccessRequestDate}
+                        onChange={(e) => onUpdateSiteAccessRequestDate(e.target.value)}
+                        className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Time</label>
+                      <input
+                        type="time"
+                        value={siteAccessRequestTime}
+                        onChange={(e) => onUpdateSiteAccessRequestTime(e.target.value)}
+                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onRequestSiteAccess}
+                    disabled={siteAccessActionLoading || siteAccessStatus.requestStatus === 'pending' || !canRequestSiteAccess}
+                    title={!canRequestSiteAccess ? 'Choose both date and time to request site access' : ''}
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                  >
+                    {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
+                  </button>
+                </div>
               )}
 
               <p className="text-xs text-slate-400">

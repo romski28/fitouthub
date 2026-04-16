@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-04-16-943aa9b",
+    "date": "2026-04-16T23:29:27+08:00",
+    "title": "feat: polish site access flow with proposed visit scheduling and tabbed client workflow",
+    "summary": "feat: polish site access flow with proposed visit scheduling and tabbed client workflow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "943aa9b",
+    "files": [
+      "apps/api/src/projects/dto/request-site-access.dto.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-16-0de9033",
     "date": "2026-04-16T22:52:57+08:00",
     "title": "types: add quoteEstimatedDurationUnit field to ProjectProfessional interface",

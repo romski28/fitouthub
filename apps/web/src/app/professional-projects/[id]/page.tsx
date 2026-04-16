@@ -223,6 +223,8 @@ export default function ProjectDetailPage() {
   const [siteVisitLoading, setSiteVisitLoading] = useState(false);
   const [siteVisitError, setSiteVisitError] = useState<string | null>(null);
   const [siteVisitActionLoading, setSiteVisitActionLoading] = useState(false);
+  const [siteAccessRequestDate, setSiteAccessRequestDate] = useState('');
+  const [siteAccessRequestTime, setSiteAccessRequestTime] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [visitTime, setVisitTime] = useState('');
   const [visitRequestNotes, setVisitRequestNotes] = useState('');
@@ -524,6 +526,12 @@ export default function ProjectDetailPage() {
 
   const handleRequestSiteAccess = async () => {
     if (!accessToken || !project?.project?.id) return;
+
+    if (!siteAccessRequestDate || !siteAccessRequestTime) {
+      setSiteAccessError('Please choose a preferred site access date and time');
+      return;
+    }
+
     setSiteAccessActionLoading(true);
     setSiteAccessError(null);
 
@@ -536,7 +544,10 @@ export default function ProjectDetailPage() {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            visitScheduledFor: siteAccessRequestDate,
+            visitScheduledAt: siteAccessRequestTime,
+          }),
         },
       );
 
@@ -560,13 +571,15 @@ export default function ProjectDetailPage() {
       setSiteAccessStatus((prev) => ({
         requestId: data.request?.id || prev?.requestId || null,
         requestStatus: data.request?.status || 'pending',
-        visitScheduledFor: prev?.visitScheduledFor || null,
-        visitScheduledAt: prev?.visitScheduledAt || null,
+        visitScheduledFor: data.request?.visitScheduledFor || prev?.visitScheduledFor || null,
+        visitScheduledAt: data.request?.visitScheduledAt || prev?.visitScheduledAt || null,
         visitedAt: prev?.visitedAt || null,
         reasonDenied: prev?.reasonDenied || null,
         hasAccess: prev?.hasAccess || false,
         siteAccessData: prev?.siteAccessData || null,
       }));
+      setSiteAccessRequestDate('');
+      setSiteAccessRequestTime('');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to request site access';
       setSiteAccessError(message);
@@ -1501,6 +1514,10 @@ export default function ProjectDetailPage() {
               expandedAccordions={expandedAccordions}
               onToggleAccordion={toggleAccordion}
               onRequestSiteAccess={handleRequestSiteAccess}
+              siteAccessRequestDate={siteAccessRequestDate}
+              onUpdateSiteAccessRequestDate={setSiteAccessRequestDate}
+              siteAccessRequestTime={siteAccessRequestTime}
+              onUpdateSiteAccessRequestTime={setSiteAccessRequestTime}
               onRequestSiteVisit={handleRequestSiteVisit}
               onRespondSiteVisit={handleRespondSiteVisit}
               onCompleteSiteVisit={handleCompleteSiteVisit}
