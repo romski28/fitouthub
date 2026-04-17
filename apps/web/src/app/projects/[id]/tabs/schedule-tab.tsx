@@ -7,6 +7,7 @@ interface Milestone {
   id: string;
   projectId: string;
   projectProfessionalId?: string;
+  isFinancial?: boolean;
   title: string;
   description?: string;
   sequence: number;

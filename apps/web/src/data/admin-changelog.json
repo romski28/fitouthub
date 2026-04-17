@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-17-4f1a6c2",
+    "date": "2026-04-17T14:37:22+08:00",
+    "title": "fix: add missing isFinancial field to client schedule milestone type",
+    "summary": "fix: add missing isFinancial field to client schedule milestone type",
+    "areas": [
+      "web"
+    ],
+    "commit": "4f1a6c2",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-17-6eeb65e",
     "date": "2026-04-17T14:32:49+08:00",
     "title": "feat: simplify schedule workflow and add FoH escalation entry",
