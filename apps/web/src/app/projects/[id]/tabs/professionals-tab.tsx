@@ -182,6 +182,9 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   const earliestStartProfessional = [...comparableQuotedProfessionals]
     .filter((pp) => !!pp.quoteEstimatedStartAt)
     .sort((a, b) => new Date(a.quoteEstimatedStartAt || 0).getTime() - new Date(b.quoteEstimatedStartAt || 0).getTime())[0];
+  const quickestDurationProfessional = [...comparableQuotedProfessionals]
+    .filter((pp) => Number.isFinite(Number(pp.quoteEstimatedDurationMinutes)) && Number(pp.quoteEstimatedDurationMinutes) > 0)
+    .sort((a, b) => Number(a.quoteEstimatedDurationMinutes || 0) - Number(b.quoteEstimatedDurationMinutes || 0))[0];
   const biddingProfessionals = [...professionals].filter(
     (p) => !['awarded', 'declined', 'rejected', 'withdrawn', 'award_reversed'].includes((p.status || '').toLowerCase()),
   ).sort((a, b) => {
@@ -325,27 +328,58 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
             <div className="space-y-3">
               {biddingProfessionals.map((pp) => {
                 const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
+                const hasQuote = Number.isFinite(getNumericQuote(pp.quoteAmount));
                 const isLowestQuote = lowestQuoteProfessional?.id === pp.id;
                 const isEarliestStart = earliestStartProfessional?.id === pp.id;
+                const isQuickestDuration = quickestDurationProfessional?.id === pp.id;
                 const pendingSiteAccess = pendingAccessByProfessionalId.get(pp.professionalId);
                 return (
                   <div
                     key={pp.id}
                     className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 hover:border-emerald-500/40 transition"
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <p className="font-semibold text-white">{displayName}</p>
-                        {(isLowestQuote || isEarliestStart) && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {isLowestQuote && <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">Lowest quote</span>}
-                            {isEarliestStart && <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">Earliest start</span>}
-                          </div>
-                        )}
+                    <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-white">{displayName}</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {isLowestQuote && (
+                            <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">
+                              Best quote
+                            </span>
+                          )}
+                          {isEarliestStart && (
+                            <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">
+                              Earliest start
+                            </span>
+                          )}
+                          {isQuickestDuration && (
+                            <span className="rounded-full bg-indigo-600/20 px-2 py-0.5 text-[11px] font-semibold text-indigo-200">
+                              Quickest duration
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-slate-900 text-slate-200 border border-slate-600">
-                        {pp.status}
-                      </span>
+
+                      <div className="flex flex-col items-start gap-2 sm:items-end">
+                        {hasQuote ? (
+                          <span
+                            className={`rounded-md border px-3 py-1.5 text-lg font-bold leading-none ${
+                              isLowestQuote
+                                ? 'border-emerald-500/50 bg-emerald-600/20 text-emerald-200'
+                                : 'border-slate-500/50 bg-slate-900/70 text-slate-100'
+                            }`}
+                          >
+                            {formatHKD(pp.quoteAmount)}
+                          </span>
+                        ) : (
+                          <span className="rounded-md border border-slate-600 bg-slate-900/70 px-2.5 py-1 text-xs font-semibold text-slate-300">
+                            Awaiting quote
+                          </span>
+                        )}
+                        <span className="text-xs font-semibold capitalize px-2 py-1 rounded bg-slate-900 text-slate-200 border border-slate-600">
+                          {pp.status}
+                        </span>
+                      </div>
                     </div>
 
                     {pp.quoteReminderSentAt && (
@@ -380,7 +414,6 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
 
                     <div className="mb-3 rounded-md bg-slate-900/60 p-3 border border-slate-700">
                       {(() => {
-                        const hasQuote = Number.isFinite(getNumericQuote(pp.quoteAmount));
                         const scheduleText = formatScheduleWindow(pp.quoteEstimatedStartAt, pp.quoteEstimatedDurationMinutes);
                         const statusLower = (pp.status || '').toLowerCase();
 
@@ -390,14 +423,14 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                         } else if (statusLower === 'declined' || statusLower === 'rejected') {
                           summary = `${displayName} has declined your project.`;
                         } else if (hasQuote && statusLower === 'counter_requested') {
-                          summary = `${displayName} quoted ${formatHKD(pp.quoteAmount)} to complete the project, and you asked for an improved offer.`;
+                          summary = `${displayName} submitted a quote and you asked for an improved offer.`;
                         } else if (hasQuote) {
                           if (scheduleText !== '—') {
-                            summary = `${displayName} has quoted ${formatHKD(pp.quoteAmount)} to carry out the work ${scheduleText}.`;
+                            summary = `${displayName} can carry out the work ${scheduleText}.`;
                           } else if (isClass3Project) {
-                            summary = `${displayName} has quoted ${formatHKD(pp.quoteAmount)} to carry out the work. Schedule details are pending.`;
+                            summary = `${displayName} has shared a quote. Schedule details are pending.`;
                           } else {
-                            summary = `${displayName} has quoted ${formatHKD(pp.quoteAmount)} to carry out the work. Schedule details are typically finalised after award.`;
+                            summary = `${displayName} has shared a quote. Schedule details are typically finalised after award.`;
                           }
                         }
 

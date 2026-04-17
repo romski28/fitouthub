@@ -75,6 +75,7 @@ interface SiteAccessTabProps {
   onUpdateSiteVisitResponseNotes: (visitId: string, notes: string) => void;
   locationDetailsForm: any;
   onUpdateLocationDetailsForm: (patch: any) => void;
+  onSubmitLocationDetails: () => Promise<boolean>;
   isSubmittingLocationDetails: boolean;
   locationDetailsError: string | null;
 }
@@ -139,10 +140,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   onUpdateSiteAccessForm,
   locationDetailsForm,
   onUpdateLocationDetailsForm,
+  onSubmitLocationDetails,
   isSubmittingLocationDetails,
   locationDetailsError,
 }) => {
   const [activeSection, setActiveSection] = useState<'access-requests' | 'basic-address' | 'building-information'>('access-requests');
+  const [basicAddressSaved, setBasicAddressSaved] = useState(false);
+  const [buildingInfoSaved, setBuildingInfoSaved] = useState(false);
 
   const hasBasicLocation =
     Boolean(locationDetailsForm.addressFull?.trim()) &&
@@ -482,6 +486,30 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               />
             </div>
           </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const saved = await onSubmitLocationDetails();
+                  if (saved) {
+                    setBasicAddressSaved(true);
+                    setTimeout(() => setBasicAddressSaved(false), 12000);
+                  }
+                } catch {
+                  toast.error('Failed to save basic address');
+                }
+              }}
+              disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {isSubmittingLocationDetails ? 'Saving…' : 'Save Basic Address'}
+            </button>
+          </div>
+          {basicAddressSaved && (
+            <p className="text-right text-xs font-semibold text-emerald-300">Saved just now</p>
+          )}
         </div>
       )}
 
@@ -586,6 +614,30 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               />
             </div>
           </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const saved = await onSubmitLocationDetails();
+                  if (saved) {
+                    setBuildingInfoSaved(true);
+                    setTimeout(() => setBuildingInfoSaved(false), 12000);
+                  }
+                } catch {
+                  toast.error('Failed to update building information');
+                }
+              }}
+              disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
+              className="rounded-md border border-sky-500 bg-sky-900/40 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:bg-sky-900/60 disabled:opacity-50"
+            >
+              {isSubmittingLocationDetails ? 'Saving…' : 'Update Building Information'}
+            </button>
+          </div>
+          {buildingInfoSaved && (
+            <p className="text-right text-xs font-semibold text-emerald-300">Saved just now</p>
+          )}
         </div>
       )}
     </div>

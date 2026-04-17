@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-17-f7d40b2",
+    "date": "2026-04-17T11:23:33+08:00",
+    "title": "feat: save buttons on location sub-tabs, inline confirmation, and bidding board quote value redesign",
+    "summary": "feat: save buttons on location sub-tabs, inline confirmation, and bidding board quote value redesign",
+    "areas": [
+      "web"
+    ],
+    "commit": "f7d40b2",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-17-34f0791",
     "date": "2026-04-17T10:59:22+08:00",
     "title": "fix: bootstrap awarded project milestones from quoted start date",

@@ -847,8 +847,8 @@ export default function ClientProjectDetailPage() {
     }
   };
 
-  const handleSubmitLocationDetails = async () => {
-    if (!accessToken || !projectId) return;
+  const handleSubmitLocationDetails = async (): Promise<boolean> => {
+    if (!accessToken || !projectId) return false;
     setSubmittingLocationDetails(true);
     setLocationDetailsError(null);
     setLocationDetailsSuccess(false);
@@ -904,9 +904,11 @@ export default function ClientProjectDetailPage() {
       setLocationDetailsSuccess(true);
       toast.success('Location details submitted.');
       await fetchProject();
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit location details';
       setLocationDetailsError(message);
+      return false;
     } finally {
       setSubmittingLocationDetails(false);
     }
@@ -2013,6 +2015,7 @@ export default function ClientProjectDetailPage() {
                   ...patch,
                 }));
               }}
+              onSubmitLocationDetails={handleSubmitLocationDetails}
               isSubmittingLocationDetails={submittingLocationDetails}
               locationDetailsError={locationDetailsError}
             />
