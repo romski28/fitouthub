@@ -344,17 +344,17 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {isLowestQuote && (
                             <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">
-                              Best quote
+                              Cheapest
                             </span>
                           )}
                           {isEarliestStart && (
                             <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">
-                              Earliest start
+                              Soonest
                             </span>
                           )}
                           {isQuickestDuration && (
                             <span className="rounded-full bg-indigo-600/20 px-2 py-0.5 text-[11px] font-semibold text-indigo-200">
-                              Quickest duration
+                              Fastest
                             </span>
                           )}
                         </div>

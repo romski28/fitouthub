@@ -66,6 +66,11 @@ export class DeclineMilestoneAccessDto {
   reason: string;
 }
 
+export class MilestoneCompletionFeedbackDto {
+  action: 'agreed' | 'questioned';
+  reason?: string;
+}
+
 export class CreateMultipleMilestonesDto {
   projectId: string;
   projectProfessionalId?: string;

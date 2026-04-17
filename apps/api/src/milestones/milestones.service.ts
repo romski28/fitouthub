@@ -342,6 +342,89 @@ export class MilestonesService {
     };
   }
 
+  async submitMilestoneCompletionFeedback(
+    milestoneId: string,
+    clientUserId: string,
+    action: 'agreed' | 'questioned',
+    reason?: string,
+  ) {
+    const milestone = await this.prisma.projectMilestone.findUnique({
+      where: { id: milestoneId },
+      include: {
+        project: true,
+        projectProfessional: {
+          include: {
+            professional: true,
+          },
+        },
+      },
+    });
+
+    if (!milestone) {
+      throw new NotFoundException('Milestone not found');
+    }
+
+    if (!milestone.projectProfessionalId) {
+      throw new BadRequestException('Milestone is not linked to a professional project assignment');
+    }
+
+    const isOwner =
+      (milestone.project.userId && milestone.project.userId === clientUserId) ||
+      (milestone.project.clientId && milestone.project.clientId === clientUserId) ||
+      (!milestone.project.userId && !milestone.project.clientId);
+
+    if (!isOwner) {
+      throw new BadRequestException('You do not have access to this milestone');
+    }
+
+    if (milestone.percentComplete < 100) {
+      throw new BadRequestException('Feedback is only available when milestone completion is 100%');
+    }
+
+    const messageContent =
+      action === 'agreed'
+        ? `Client agreed milestone completion: "${milestone.title}".`
+        : `Question on completion of ${milestone.title}${reason ? `: ${reason}` : '.'}`;
+
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId: milestone.projectProfessionalId,
+        senderType: 'client',
+        senderClientId: clientUserId,
+        content: messageContent,
+      },
+    });
+
+    try {
+      const professional = milestone.projectProfessional?.professional;
+      if (professional?.id && professional?.phone) {
+        await this.notificationService.send({
+          professionalId: professional.id,
+          phoneNumber: professional.phone,
+          eventType:
+            action === 'agreed'
+              ? 'milestone_completion_confirmed'
+              : 'milestone_completion_questioned',
+          message:
+            action === 'agreed'
+              ? `Client agreed completion for milestone "${milestone.title}".`
+              : `Client raised a completion query for milestone "${milestone.title}"${reason ? `: ${reason}` : ''}.`,
+        });
+      }
+    } catch (notificationError) {
+      console.warn(
+        '[MilestonesService] Failed to send milestone completion feedback notification:',
+        notificationError,
+      );
+    }
+
+    return {
+      success: true,
+      action,
+      message: messageContent,
+    };
+  }
+
   async deleteMilestone(id: string) {
     return this.prisma.projectMilestone.delete({
       where: { id },

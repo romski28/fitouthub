@@ -29,6 +29,34 @@ export class ContractService {
     const professionalEmail =
       awardedProfessional?.professional?.user?.email || 'N/A';
 
+    const quotedAmount =
+      awardedProfessional?.quoteAmount instanceof Decimal
+        ? awardedProfessional.quoteAmount.toFixed(2)
+        : Number(awardedProfessional?.quoteAmount ?? 0).toFixed(2);
+
+    const quoteStartAt = awardedProfessional?.quoteEstimatedStartAt
+      ? new Date(awardedProfessional.quoteEstimatedStartAt)
+      : null;
+
+    const quoteDurationMinutes = Number(
+      awardedProfessional?.quoteEstimatedDurationMinutes ?? NaN,
+    );
+
+    const quoteEndAt =
+      quoteStartAt && Number.isFinite(quoteDurationMinutes) && quoteDurationMinutes > 0
+        ? new Date(quoteStartAt.getTime() + quoteDurationMinutes * 60_000)
+        : null;
+
+    const estimatedStartDate =
+      quoteStartAt && !Number.isNaN(quoteStartAt.getTime())
+        ? quoteStartAt.toLocaleDateString('en-US')
+        : 'To be confirmed';
+
+    const estimatedEndDate =
+      quoteEndAt && !Number.isNaN(quoteEndAt.getTime())
+        ? quoteEndAt.toLocaleDateString('en-US')
+        : 'To be confirmed';
+
     return `
 RENOVATION SERVICES AGREEMENT
 
@@ -48,14 +76,13 @@ Location: ${project.region}
 The Professional agrees to perform the renovation services as described in the project proposal and accepted quote for the above-referenced project.
 
 2. PAYMENT TERMS
-Total Contract Amount: ${project.paymentCurrency} ${awardedProfessional?.agreedPrice?.toFixed?.(2) || '0.00'}
-Budget: ${project.paymentCurrency} ${project.approvedBudget?.toFixed?.(2) || '0.00'}
+Total Contract Amount: ${project.paymentCurrency} ${quotedAmount}
 
 Payment is made according to the milestone schedule agreed by both parties through FitOutHub.
 
 3. TIMELINE
-Estimated Start Date: ${project.startDate ? new Date(project.startDate).toLocaleDateString('en-US') : 'To be confirmed'}
-Estimated Completion Date: ${project.endDate ? new Date(project.endDate).toLocaleDateString('en-US') : 'To be confirmed'}
+Estimated Start Date: ${estimatedStartDate}
+Estimated Completion Date: ${estimatedEndDate}
 
 4. RESPONSIBILITIES
 - Professional performs work to industry standard and legal requirements.
@@ -144,7 +171,13 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       );
     }
 
-    if (!project.contractContent) {
+    const shouldRefreshLegacyUnsignedContract =
+      Boolean(project.contractContent) &&
+      !project.clientSignedAt &&
+      !project.professionalSignedAt &&
+      project.contractContent.includes('Budget:');
+
+    if (!project.contractContent || shouldRefreshLegacyUnsignedContract) {
       const contractContent = this.generateContractContent(
         project,
         project.awardedProjectProfessional,

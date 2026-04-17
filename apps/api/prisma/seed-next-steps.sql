@@ -37,7 +37,7 @@ VALUES
   (gen_random_uuid()::text, 'BIDDING_CLOSED', 'PROFESSIONAL', 'PREPARE_CONTRACT', 'Prepare contract', 'Prepare terms for contract stage if selected.', true, false, true, NULL, 1, NOW(), NOW()),
 
   -- CONTRACT_PHASE stage
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'CLIENT', 'REVIEW_CONTRACT', 'Review contract', 'Review terms and approve or request changes.', true, false, true, NULL, 1, NOW(), NOW()),
+  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'CLIENT', 'REVIEW_CONTRACT', 'Review agreement', 'Review terms and approve or request changes.', true, false, true, NULL, 1, NOW(), NOW()),
   (gen_random_uuid()::text, 'CONTRACT_PHASE', 'PROFESSIONAL', 'SUBMIT_CONTRACT', 'Submit contract', 'Submit draft contract with milestones and schedule.', true, false, true, NULL, 1, NOW(), NOW()),
 
   -- PRE_WORK stage

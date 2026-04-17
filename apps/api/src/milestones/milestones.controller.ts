@@ -11,7 +11,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { MilestonesService } from './milestones.service';
-import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, DeclineMilestoneAccessDto } from './dtos';
+import {
+  CreateMilestoneDto,
+  UpdateMilestoneDto,
+  CreateMultipleMilestonesDto,
+  DeclineMilestoneAccessDto,
+  MilestoneCompletionFeedbackDto,
+} from './dtos';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('milestones')
@@ -152,6 +158,34 @@ export class MilestonesController {
     }
 
     return this.milestonesService.declineMilestoneAccess(id, userId, body.reason.trim());
+  }
+
+  @Post(':id/completion-feedback')
+  @UseGuards(AuthGuard('jwt'))
+  async submitMilestoneCompletionFeedback(
+    @Param('id') id: string,
+    @Body() body: MilestoneCompletionFeedbackDto,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new BadRequestException('Client authentication required');
+    }
+
+    if (!body?.action || !['agreed', 'questioned'].includes(body.action)) {
+      throw new BadRequestException('action must be either "agreed" or "questioned"');
+    }
+
+    if (body.action === 'questioned' && (!body.reason || body.reason.trim().length < 3)) {
+      throw new BadRequestException('Please provide a short reason when raising a query');
+    }
+
+    return this.milestonesService.submitMilestoneCompletionFeedback(
+      id,
+      userId,
+      body.action,
+      body.reason?.trim(),
+    );
   }
 
   @Delete(':id')

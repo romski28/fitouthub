@@ -1539,6 +1539,7 @@ export default function ProjectDetailPage() {
               tab="contract"
               projectId={project.project.id}
               accessToken={accessToken}
+              onOpenScheduleTab={() => setActiveTab('schedule')}
             />
 
             <ScheduleTab

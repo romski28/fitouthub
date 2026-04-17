@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-04-17-6eeb65e",
+    "date": "2026-04-17T14:32:49+08:00",
+    "title": "feat: simplify schedule workflow and add FoH escalation entry",
+    "summary": "feat: simplify schedule workflow and add FoH escalation entry",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6eeb65e",
+    "files": [
+      "apps/api/prisma/migrations/20260417_update_review_contract_label/migration.sql",
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/milestones/dtos.ts",
+      "apps/api/src/milestones/milestones.controller.ts",
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/api/src/projects/contract.service.ts",
+      "apps/api/src/projects/dto/respond-project-start-proposal.dto.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-17-f7d40b2",
     "date": "2026-04-17T11:23:33+08:00",
     "title": "feat: save buttons on location sub-tabs, inline confirmation, and bidding board quote value redesign",

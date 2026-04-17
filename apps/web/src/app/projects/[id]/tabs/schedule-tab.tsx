@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MilestoneTimeline } from '@/components/milestone-timeline';
 import { API_BASE_URL } from '@/config/api';
 
 interface Milestone {
@@ -48,14 +47,16 @@ interface ClientScheduleTabProps {
   projectId: string;
   projectStatus: string;
   accessToken: string | null;
-  awardedProfessionalId?: string;
+  awardedProjectProfessionalId?: string;
+  onOpenChatTab?: () => void;
 }
 
 export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   projectId,
   projectStatus,
   accessToken,
-  awardedProfessionalId,
+  awardedProjectProfessionalId,
+  onOpenChatTab,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [startProposals, setStartProposals] = useState<StartProposal[]>([]);
@@ -64,8 +65,10 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   const [proposalLoading, setProposalLoading] = useState(false);
   const [proposalBusyId, setProposalBusyId] = useState<string | null>(null);
   const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
-  const [declineReasonByMilestone, setDeclineReasonByMilestone] = useState<Record<string, string>>({});
-  const [decliningMilestoneId, setDecliningMilestoneId] = useState<string | null>(null);
+  const [updateDateByProposal, setUpdateDateByProposal] = useState<Record<string, string>>({});
+  const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
+  const [queryReasonByMilestone, setQueryReasonByMilestone] = useState<Record<string, string>>({});
+  const [feedbackBusyMilestoneId, setFeedbackBusyMilestoneId] = useState<string | null>(null);
 
   const isAwarded = projectStatus === 'awarded';
 
@@ -137,10 +140,20 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
     }
   };
 
-  const handleRespondStartProposal = async (proposalId: string, status: 'accepted' | 'declined') => {
+  const handleRespondStartProposal = async (proposalId: string, status: 'accepted' | 'updated') => {
     if (!accessToken) {
       setError('Authentication required');
       return;
+    }
+
+    if (status === 'updated') {
+      const date = updateDateByProposal[proposalId];
+      const time = updateTimeByProposal[proposalId] || '09:00';
+      const updatedAt = date ? new Date(`${date}T${time}`) : null;
+      if (!updatedAt || Number.isNaN(updatedAt.getTime())) {
+        setError('Please provide a valid updated start date and time.');
+        return;
+      }
     }
 
     try {
@@ -152,10 +165,23 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-          status,
-          responseNotes: proposalResponseNotes[proposalId] || undefined,
-        }),
+        body: JSON.stringify(
+          status === 'updated'
+            ? {
+                status: 'updated',
+                updatedScheduledAt: (() => {
+                  const date = updateDateByProposal[proposalId];
+                  const time = updateTimeByProposal[proposalId] || '09:00';
+                  if (!date) return undefined;
+                  return new Date(`${date}T${time}`).toISOString();
+                })(),
+                responseNotes: proposalResponseNotes[proposalId] || undefined,
+              }
+            : {
+                status,
+                responseNotes: proposalResponseNotes[proposalId] || undefined,
+              },
+        ),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -174,48 +200,54 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
     }
   };
 
-  const handleDeclineAccess = async (milestoneId: string) => {
+  const handleMilestoneCompletionFeedback = async (
+    milestoneId: string,
+    action: 'agreed' | 'questioned',
+  ) => {
     if (!accessToken) {
       setError('Authentication required');
       return;
     }
 
-    const reason = (declineReasonByMilestone[milestoneId] || '').trim();
-    if (reason.length < 3) {
-      setError('Please provide a short reason (at least 3 characters).');
+    if (!awardedProjectProfessionalId) {
+      setError('No awarded professional thread is available for this project yet.');
+      return;
+    }
+
+    const reason = (queryReasonByMilestone[milestoneId] || '').trim();
+    if (action === 'questioned' && reason.length < 3) {
+      setError('Please provide a short reason before raising a query.');
       return;
     }
 
     try {
       setError(null);
-      setDecliningMilestoneId(milestoneId);
+      setFeedbackBusyMilestoneId(milestoneId);
 
-      const response = await fetch(`${API_BASE_URL}/milestones/${milestoneId}/decline-access`, {
+      const response = await fetch(`${API_BASE_URL}/milestones/${milestoneId}/completion-feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ action, reason: action === 'questioned' ? reason : undefined }),
       });
 
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || err.error || 'Failed to decline access date');
+        throw new Error(data.message || 'Failed to submit milestone feedback');
       }
 
-      const result = await response.json();
-      const updatedMilestone = result?.milestone;
-      if (updatedMilestone) {
-        setMilestones((prev) =>
-          prev.map((m) => (m.id === milestoneId ? { ...m, ...updatedMilestone } : m)),
-        );
+      if (action === 'agreed') {
+        setQueryReasonByMilestone((prev) => ({ ...prev, [milestoneId]: '' }));
+      } else {
+        onOpenChatTab?.();
       }
     } catch (err) {
-      console.error('Failed to decline access for milestone:', err);
-      setError(err instanceof Error ? err.message : 'Failed to decline access date');
+      console.error('Failed to submit milestone completion feedback:', err);
+      setError(err instanceof Error ? err.message : 'Failed to submit milestone feedback');
     } finally {
-      setDecliningMilestoneId(null);
+      setFeedbackBusyMilestoneId(null);
     }
   };
 
@@ -267,6 +299,48 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   const hasEarlierDeclinedProposal = startProposals.slice(1).some((proposal) => proposal.status === 'declined');
   const isResharedForApproval =
     latestStartProposal?.status === 'proposed' && hasEarlierDeclinedProposal;
+
+  useEffect(() => {
+    if (!latestStartProposal?.id || latestStartProposal.status !== 'proposed') return;
+    const proposalDate = new Date(latestStartProposal.proposedStartAt);
+    if (Number.isNaN(proposalDate.getTime())) return;
+    const pad = (value: number) => String(value).padStart(2, '0');
+    const dateValue = `${proposalDate.getFullYear()}-${pad(proposalDate.getMonth() + 1)}-${pad(proposalDate.getDate())}`;
+    const timeValue = `${pad(proposalDate.getHours())}:${pad(proposalDate.getMinutes())}`;
+    setUpdateDateByProposal((prev) => (prev[latestStartProposal.id] ? prev : { ...prev, [latestStartProposal.id]: dateValue }));
+    setUpdateTimeByProposal((prev) => (prev[latestStartProposal.id] ? prev : { ...prev, [latestStartProposal.id]: timeValue }));
+  }, [latestStartProposal]);
+
+  const scheduleMilestones = milestones
+    .filter((milestone) => !milestone.isFinancial)
+    .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+
+  const getMilestoneDurationMs = (milestone: Milestone) => {
+    const start = milestone.plannedStartDate ? new Date(milestone.plannedStartDate) : null;
+    const end = milestone.plannedEndDate ? new Date(milestone.plannedEndDate) : null;
+    if (start && end && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      return Math.max(end.getTime() - start.getTime(), 24 * 60 * 60 * 1000);
+    }
+    return 24 * 60 * 60 * 1000;
+  };
+
+  const weightedProgressPercent = (() => {
+    if (!scheduleMilestones.length) return 0;
+    const totals = scheduleMilestones.reduce(
+      (acc, milestone) => {
+        const durationMs = getMilestoneDurationMs(milestone);
+        const pct = Math.max(0, Math.min(100, milestone.percentComplete || 0));
+        return {
+          weightedDone: acc.weightedDone + durationMs * (pct / 100),
+          weightedTotal: acc.weightedTotal + durationMs,
+        };
+      },
+      { weightedDone: 0, weightedTotal: 0 },
+    );
+
+    if (totals.weightedTotal <= 0) return 0;
+    return Math.round((totals.weightedDone / totals.weightedTotal) * 100);
+  })();
 
   return (
     <div className="space-y-6">
@@ -339,10 +413,40 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
 
                 {latestStartProposal.status === 'proposed' && (
                   <div className="mt-4 space-y-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="text-xs text-slate-200">
+                        <span className="mb-1 block">Updated start date</span>
+                        <input
+                          type="date"
+                          value={updateDateByProposal[latestStartProposal.id] || ''}
+                          onChange={(e) =>
+                            setUpdateDateByProposal((prev) => ({
+                              ...prev,
+                              [latestStartProposal.id]: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"
+                        />
+                      </label>
+                      <label className="text-xs text-slate-200">
+                        <span className="mb-1 block">Updated start time</span>
+                        <input
+                          type="time"
+                          value={updateTimeByProposal[latestStartProposal.id] || ''}
+                          onChange={(e) =>
+                            setUpdateTimeByProposal((prev) => ({
+                              ...prev,
+                              [latestStartProposal.id]: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"
+                        />
+                      </label>
+                    </div>
                     <textarea
                       value={proposalResponseNotes[latestStartProposal.id] || ''}
                       onChange={(e) => setProposalResponseNotes((prev) => ({ ...prev, [latestStartProposal.id]: e.target.value }))}
-                      placeholder="Optional note if you need a change or want to add context"
+                      placeholder="Optional note for the professional"
                       className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"
                       rows={3}
                     />
@@ -352,14 +456,14 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
                         disabled={proposalBusyId === latestStartProposal.id}
                         className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                       >
-                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Accept Start Details'}
+                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Accept'}
                       </button>
                       <button
-                        onClick={() => handleRespondStartProposal(latestStartProposal.id, 'declined')}
+                        onClick={() => handleRespondStartProposal(latestStartProposal.id, 'updated')}
                         disabled={proposalBusyId === latestStartProposal.id}
-                        className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+                        className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
                       >
-                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Decline / Request Change'}
+                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Update'}
                       </button>
                     </div>
                   </div>
@@ -372,7 +476,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
               <p className="text-sm text-slate-300">Loading schedule...</p>
             </div>
-          ) : milestones.length === 0 ? (
+          ) : scheduleMilestones.length === 0 ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
               <p className="text-sm text-slate-300">
                 📋 No detailed task schedule yet. For simple jobs, the agreed start details above may be enough; for more complex work, milestones will appear here.
@@ -380,72 +484,113 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
             </div>
           ) : (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-6">
-              <div className="mb-5 rounded-md border border-slate-700 bg-slate-800/50 p-4">
-                <h4 className="text-sm font-semibold text-white mb-3">Site Access Requests by Task</h4>
-                <div className="space-y-3">
-                  {milestones.filter((m) => m.siteAccessRequired).length === 0 ? (
-                    <p className="text-xs text-slate-300">No current tasks require site access.</p>
-                  ) : (
-                    milestones
-                      .filter((m) => m.siteAccessRequired)
-                      .map((m) => (
-                        <div key={`access-${m.id}`} className="rounded-md border border-slate-700 bg-slate-900/60 p-3">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div>
-                              <p className="text-sm font-semibold text-white">{m.title}</p>
-                              <p className="text-xs text-slate-300">Requested date(s): {formatDateRange(m.plannedStartDate, m.plannedEndDate)}</p>
-                            </div>
-                            {m.accessDeclined ? (
-                              <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-1 text-[11px] font-semibold text-amber-200">
-                                Access Declined
-                              </span>
-                            ) : (
-                              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-1 text-[11px] font-semibold text-emerald-200">
-                                Access Requested
-                              </span>
-                            )}
-                          </div>
+              <h3 className="text-lg font-semibold text-white mb-4">Contractor Schedule</h3>
 
-                          {m.accessDeclined ? (
-                            <p className="text-xs text-amber-200">
-                              Reason: {m.accessDeclinedReason || 'No reason provided'}
-                            </p>
-                          ) : (
-                            <div className="space-y-2">
-                              <textarea
-                                value={declineReasonByMilestone[m.id] || ''}
-                                onChange={(e) =>
-                                  setDeclineReasonByMilestone((prev) => ({ ...prev, [m.id]: e.target.value }))
-                                }
-                                placeholder="Reason for declining these access dates"
-                                className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-white"
-                                rows={2}
-                              />
-                              <button
-                                onClick={() => handleDeclineAccess(m.id)}
-                                disabled={decliningMilestoneId === m.id}
-                                className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
-                              >
-                                {decliningMilestoneId === m.id ? 'Declining…' : 'Decline Access for These Dates'}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                  )}
+              <div className="mb-5 rounded-md border border-slate-700 bg-slate-800/40 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-white">Overall Progress (duration-weighted)</p>
+                  <p className="text-sm font-semibold text-emerald-300">{weightedProgressPercent}%</p>
+                </div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-700">
+                  <div className="h-full bg-emerald-500" style={{ width: `${weightedProgressPercent}%` }} />
                 </div>
               </div>
 
-              <h3 className="text-lg font-semibold text-white mb-6">Project Timeline & Progress</h3>
-              <MilestoneTimeline
-                milestones={milestones.map(m => ({
-                  ...m,
-                  photoUrls: m.photoUrls || []
-                }))}
-                title="Contractor's Schedule"
-                showPhotos={true}
-                editable={false}
-              />
+              <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-950/50">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-slate-300">
+                      <th className="px-3 py-2 text-left font-semibold">Milestone</th>
+                      <th className="px-3 py-2 text-left font-semibold">Start</th>
+                      <th className="px-3 py-2 text-left font-semibold">Finish</th>
+                      <th className="px-3 py-2 text-left font-semibold">% Complete</th>
+                      <th className="px-3 py-2 text-left font-semibold">Client Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scheduleMilestones.map((milestone) => {
+                      const canReview = milestone.percentComplete >= 100;
+                      const isBusy = feedbackBusyMilestoneId === milestone.id;
+                      return (
+                        <tr key={milestone.id} className="border-b border-slate-800 align-top">
+                          <td className="px-3 py-3 text-white">
+                            <p className="font-semibold">{milestone.title}</p>
+                            {milestone.description ? (
+                              <p className="mt-1 text-xs text-slate-400">{milestone.description}</p>
+                            ) : null}
+                          </td>
+                          <td className="px-3 py-3 text-slate-300">{formatDate(milestone.plannedStartDate)}</td>
+                          <td className="px-3 py-3 text-slate-300">{formatDate(milestone.plannedEndDate)}</td>
+                          <td className="px-3 py-3">
+                            <span className="rounded-full border border-slate-600 bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200">
+                              {Math.max(0, Math.min(100, milestone.percentComplete || 0))}%
+                            </span>
+                          </td>
+                          <td className="px-3 py-3">
+                            {!canReview ? (
+                              <span className="text-xs text-slate-500">Available at 100% complete</span>
+                            ) : (
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleMilestoneCompletionFeedback(
+                                        milestone.id,
+                                        'agreed',
+                                      )
+                                    }
+                                    disabled={isBusy}
+                                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                  >
+                                    Agree
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleMilestoneCompletionFeedback(
+                                        milestone.id,
+                                        'questioned',
+                                      )
+                                    }
+                                    disabled={isBusy}
+                                    className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+                                  >
+                                    Raise Query
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => onOpenChatTab?.()}
+                                    className="inline-flex items-center gap-1 rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/20"
+                                    title="Escalate to Fitout Hub"
+                                  >
+                                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-400 text-[9px] font-bold text-slate-950">
+                                      FoH
+                                    </span>
+                                    Escalate
+                                  </button>
+                                </div>
+                                <textarea
+                                  value={queryReasonByMilestone[milestone.id] || ''}
+                                  onChange={(e) =>
+                                    setQueryReasonByMilestone((prev) => ({
+                                      ...prev,
+                                      [milestone.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder={`Question on completion of ${milestone.title}`}
+                                  rows={2}
+                                  className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-white"
+                                />
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

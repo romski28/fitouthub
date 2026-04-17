@@ -84,6 +84,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [proposalNotes, setProposalNotes] = useState('');
   const [proposalFormInitialized, setProposalFormInitialized] = useState(false);
   const [prefilledFromQuote, setPrefilledFromQuote] = useState(false);
+  const [percentDraftByMilestone, setPercentDraftByMilestone] = useState<Record<string, string>>({});
 
   const isAwarded = projectStatus === 'awarded';
 
@@ -163,6 +164,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         const milestonesData = Array.isArray(data) ? data : data.milestones || [];
         console.log(`[ScheduleTab] Fetched ${milestonesData.length} milestones`);
         setMilestones(milestonesData);
+        setPercentDraftByMilestone(
+          milestonesData.reduce((acc: Record<string, string>, milestone: Milestone) => {
+            acc[milestone.id] = String(Math.max(0, Math.min(100, milestone.percentComplete || 0)));
+            return acc;
+          }, {}),
+        );
       } else {
         console.log('[ScheduleTab] No milestones found (404)');
         setMilestones([]);
@@ -541,6 +548,30 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const handleDeleteTask = (index: number) => {
     // Just show confirmation dialog
     setDeleteConfirmIndex(index);
+  };
+
+  const handleSavePercentComplete = async (milestone: Milestone) => {
+    const rawValue = percentDraftByMilestone[milestone.id] ?? String(milestone.percentComplete || 0);
+    const numericValue = Number(rawValue);
+    if (!Number.isFinite(numericValue) || numericValue < 0 || numericValue > 100) {
+      setError('Percent complete must be between 0 and 100');
+      return;
+    }
+
+    await handleUpdateMilestone(milestone.id, {
+      title: milestone.title,
+      sequence: milestone.sequence,
+      status: numericValue >= 100 ? 'completed' : numericValue <= 0 ? 'not_started' : 'in_progress',
+      percentComplete: Math.round(numericValue),
+      plannedStartDate: milestone.plannedStartDate,
+      plannedEndDate: milestone.plannedEndDate,
+      startTimeSlot: milestone.startTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+      endTimeSlot: milestone.endTimeSlot as 'AM' | 'PM' | 'ALL_DAY' | undefined,
+      estimatedHours: milestone.estimatedHours,
+      siteAccessRequired: milestone.siteAccessRequired,
+      siteAccessNotes: milestone.siteAccessNotes,
+      description: milestone.description,
+    });
   };
 
   const financialMilestones = milestones
@@ -926,146 +957,89 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Timeline</h3>
-                  <p className="text-xs text-slate-400 mt-1">💰 marks milestones tied to payment release. Add extra non-financial tasks anywhere around them.</p>
+                  <h3 className="text-lg font-semibold text-white">Schedule</h3>
+                  <p className="text-xs text-slate-400 mt-1">Milestone name, start, finish and % complete.</p>
                 </div>
                 <span className="text-xs text-slate-400">{financialMilestones.length} financial · {workMilestones.length} non-financial</span>
               </div>
 
-              {combinedMilestones.map((milestone, index) => {
-                const statusPercent = getStatusPercent(milestone.status, milestone.percentComplete);
-                const statusLabel =
-                  statusPercent === 100 ? "Complete" :
-                  statusPercent === 0 ? "Not Started" :
-                  `${statusPercent}% Complete`;
-                const showProgressBar = statusPercent > 0 && statusPercent < 100;
-                const sameDate = isSameDate(milestone.plannedStartDate, milestone.plannedEndDate);
-                const isFinancialMilestone = !!milestone.isFinancial;
-
-                return (
-                  <div
-                    key={milestone.id || index}
-                    className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg border border-slate-700 hover:from-slate-800 hover:to-slate-700 transition overflow-hidden"
-                    draggable={!isFinancialMilestone}
-                    onDragStart={() => {
-                      if (!isFinancialMilestone) setDraggedMilestoneId(milestone.id);
-                    }}
-                    onDragOver={(e) => {
-                      if (!isFinancialMilestone) e.preventDefault();
-                    }}
-                    onDrop={() => {
-                      if (!isFinancialMilestone) handleDropMilestone(milestone.id);
-                    }}
-                    onDragEnd={() => setDraggedMilestoneId(null)}
-                  >
-                    <div className="flex items-stretch">
-                      <div className="w-24 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-3">
-                        {sameDate ? (
-                          <>
-                            <div className="text-xs font-semibold uppercase tracking-wide">
-                              {formatWeekday(milestone.plannedStartDate)}
-                            </div>
-                            <div className="text-sm font-semibold mt-1">
-                              {formatDayMonth(milestone.plannedStartDate)}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-[10px] font-semibold">
-                              {formatDayMonth(milestone.plannedStartDate)}
-                            </div>
-                            <div className="text-[9px] font-medium my-0.5">thru</div>
-                            <div className="text-[10px] font-semibold">
-                              {formatDayMonth(milestone.plannedEndDate)}
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex-1 p-3 flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start gap-2 mb-2 flex-wrap">
-                            <h4 className="text-base font-semibold text-white">
-                              {isFinancialMilestone ? '💰 ' : ''}{milestone.title}
-                            </h4>
-                            {isFinancialMilestone && (
-                              <span className="rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200">
-                                Financial release
+              <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-950/50">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-slate-300">
+                      <th className="px-3 py-2 text-left font-semibold">Milestone</th>
+                      <th className="px-3 py-2 text-left font-semibold">Start</th>
+                      <th className="px-3 py-2 text-left font-semibold">Finish</th>
+                      <th className="px-3 py-2 text-left font-semibold">% Complete</th>
+                      <th className="px-3 py-2 text-left font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {combinedMilestones.map((milestone, index) => {
+                      const isFinancialMilestone = !!milestone.isFinancial;
+                      return (
+                        <tr key={milestone.id || index} className="border-b border-slate-800">
+                          <td className="px-3 py-3 text-white">
+                            <span className="font-semibold">{isFinancialMilestone ? '💰 ' : ''}{milestone.title}</span>
+                            {isFinancialMilestone ? (
+                              <span className="ml-2 rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200">
+                                Financial
                               </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1 flex-wrap mb-2">
-                            <span className="text-xs text-slate-300">
-                              {statusLabel}
-                            </span>
-                            {showProgressBar && (
-                              <div className="w-24">
-                                <div className="relative h-3 bg-slate-700 rounded-full overflow-hidden border border-slate-600">
-                                  <div
-                                    className="absolute left-0 top-0 h-full bg-emerald-500"
-                                    style={{ width: `${statusPercent}%` }}
-                                  />
-                                  <span className="relative z-10 block text-[8px] font-semibold text-white text-center leading-3">
-                                    {statusPercent}%
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {milestone.accessDeclined && (
-                            <div className="mb-2 rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-1">
-                              <p className="text-[11px] font-semibold text-amber-200">
-                                ⚠ Access blocked for requested date{milestone.plannedEndDate ? 's' : ''}
-                              </p>
-                              {milestone.accessDeclinedReason && (
-                                <p className="text-[11px] text-amber-300">
-                                  Client reason: {milestone.accessDeclinedReason}
-                                </p>
+                            ) : null}
+                          </td>
+                          <td className="px-3 py-3 text-slate-300">{formatDayMonth(milestone.plannedStartDate) || 'No date'}</td>
+                          <td className="px-3 py-3 text-slate-300">{formatDayMonth(milestone.plannedEndDate) || 'No date'}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={percentDraftByMilestone[milestone.id] ?? String(milestone.percentComplete || 0)}
+                                onChange={(e) =>
+                                  setPercentDraftByMilestone((prev) => ({
+                                    ...prev,
+                                    [milestone.id]: e.target.value,
+                                  }))
+                                }
+                                className="w-20 rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                              />
+                              <span className="text-xs text-slate-400">%</span>
+                              <button
+                                type="button"
+                                onClick={() => handleSavePercentComplete(milestone)}
+                                className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/20"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setEditingIndex(index)}
+                                className="p-2 text-slate-300 hover:bg-slate-700 rounded transition"
+                                title={isFinancialMilestone ? 'Edit milestone' : 'Edit task'}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              {!isFinancialMilestone && (
+                                <button
+                                  onClick={() => handleDeleteTask(index)}
+                                  className="p-2 text-slate-300 hover:bg-rose-500/20 hover:text-rose-200 rounded transition"
+                                  title="Delete task"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               )}
                             </div>
-                          )}
-
-                          {milestone.description && (
-                            <p className="text-xs text-slate-300 mb-2">
-                              {milestone.description}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex gap-2 flex-shrink-0">
-                          {!isFinancialMilestone && (
-                            <button
-                              type="button"
-                              className="p-2 text-slate-300 hover:bg-slate-700 rounded transition cursor-grab"
-                              title="Drag to reorder"
-                            >
-                              <GripVertical className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setEditingIndex(index)}
-                            className="p-2 text-slate-300 hover:bg-slate-700 rounded transition"
-                            title={isFinancialMilestone ? 'Edit milestone' : 'Edit task'}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          {!isFinancialMilestone && (
-                            <button
-                              onClick={() => handleDeleteTask(index)}
-                              className="p-2 text-slate-300 hover:bg-rose-500/20 hover:text-rose-200 rounded transition"
-                              title="Delete task"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

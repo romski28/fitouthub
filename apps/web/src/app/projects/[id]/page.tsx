@@ -2069,7 +2069,14 @@ export default function ClientProjectDetailPage() {
                 projectId={projectId}
                 projectStatus={projectStatus}
                 accessToken={accessToken || null}
-                awardedProfessionalId={project.professionals?.find((pp) => pp.status === 'awarded')?.professionalId}
+                awardedProjectProfessionalId={project.professionals?.find((pp) => pp.status === 'awarded')?.id}
+                onOpenChatTab={() => {
+                  const awardedProfessional = project.professionals?.find((pp) => pp.status === 'awarded');
+                  if (awardedProfessional) {
+                    setSelectedProfessional(awardedProfessional);
+                  }
+                  setActiveTab('chat');
+                }}
               />
             </div>
           )}

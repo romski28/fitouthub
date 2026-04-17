@@ -2927,7 +2927,11 @@ Please review the project details and respond with your quote or decline the inv
     proposalId: string,
     actorId: string,
     isProfessional: boolean,
-    body: { status: 'accepted' | 'declined'; responseNotes?: string },
+    body: {
+      status: 'accepted' | 'declined' | 'updated';
+      updatedScheduledAt?: string;
+      responseNotes?: string;
+    },
   ) {
     if (isProfessional) {
       throw new BadRequestException('Only clients can respond to start proposals');
@@ -2955,13 +2959,27 @@ Please review the project details and respond with your quote or decline the inv
     await this.assertClientProjectAccess(proposal.projectId, actorId);
 
     const responseNotes = body.responseNotes?.trim() || undefined;
+    const updatedScheduledAt = body.updatedScheduledAt
+      ? new Date(body.updatedScheduledAt)
+      : null;
+
+    if (body.status === 'updated') {
+      if (!updatedScheduledAt || Number.isNaN(updatedScheduledAt.getTime())) {
+        throw new BadRequestException('updatedScheduledAt is required when status is updated');
+      }
+    }
+
     const projectedEndAt = this.calculateProposalEndDate(proposal.proposedStartAt, proposal.durationMinutes);
+    const updatedProjectedEndAt =
+      updatedScheduledAt && !Number.isNaN(updatedScheduledAt.getTime())
+        ? this.calculateProposalEndDate(updatedScheduledAt, proposal.durationMinutes)
+        : null;
 
     const updated = await this.prisma.$transaction(async (prisma) => {
       const updatedProposal = await prisma.projectStartProposal.update({
         where: { id: proposalId },
         data: {
-          status: body.status,
+          status: body.status === 'updated' ? 'declined' : body.status,
           respondedAt: new Date(),
           respondedBy: actorId,
           responseNotes,
@@ -2991,7 +3009,43 @@ Please review the project details and respond with your quote or decline the inv
         });
       }
 
-      return updatedProposal;
+      if (body.status === 'updated' && updatedScheduledAt) {
+        await prisma.projectStartProposal.updateMany({
+          where: {
+            projectId: proposal.projectId,
+            projectProfessionalId: proposal.projectProfessionalId,
+            status: 'proposed',
+          },
+          data: {
+            status: 'superseded',
+            respondedAt: new Date(),
+          },
+        });
+
+        const replacementProposal = await prisma.projectStartProposal.create({
+          data: {
+            projectId: proposal.projectId,
+            projectProfessionalId: proposal.projectProfessionalId,
+            professionalId: proposal.professionalId,
+            status: 'proposed',
+            proposedStartAt: updatedScheduledAt,
+            durationMinutes: proposal.durationMinutes,
+            notes: responseNotes || proposal.notes || undefined,
+          },
+          include: {
+            project: true,
+            professional: true,
+            projectProfessional: true,
+          },
+        });
+
+        return {
+          ...replacementProposal,
+          __previousProposalId: updatedProposal.id,
+        } as any;
+      }
+
+      return updatedProposal as any;
     });
 
     const professionalName =
@@ -3005,7 +3059,9 @@ Please review the project details and respond with your quote or decline the inv
       null,
       body.status === 'accepted'
         ? `Client accepted the proposed start of ${this.formatDateTime(proposal.proposedStartAt)} (${durationLabel}).`
-        : `Client declined the proposed start of ${this.formatDateTime(proposal.proposedStartAt)}${responseNotes ? `: ${responseNotes}` : '.'}`,
+        : body.status === 'updated' && updatedScheduledAt
+          ? `Client suggested an updated start: ${this.formatDateTime(updatedScheduledAt)} (${durationLabel}).${responseNotes ? ` Note: ${responseNotes}` : ''}`
+          : `Client declined the proposed start of ${this.formatDateTime(proposal.proposedStartAt)}${responseNotes ? `: ${responseNotes}` : '.'}`,
     );
 
     try {
@@ -3013,10 +3069,16 @@ Please review the project details and respond with your quote or decline the inv
         await this.notificationService.send({
           professionalId: proposal.professional.id,
           phoneNumber: proposal.professional.phone,
-          eventType: body.status === 'accepted' ? 'project_start_accepted' : 'project_start_declined',
-          message: body.status === 'accepted'
-            ? `Your proposed start for "${proposal.project.projectName}" was accepted. Agreed start: ${this.formatDateTime(proposal.proposedStartAt)}.`
-            : `Your proposed start for "${proposal.project.projectName}" was declined${responseNotes ? `: ${responseNotes}` : '.'}`,
+          eventType:
+            body.status === 'accepted'
+              ? 'project_start_accepted'
+              : 'project_start_declined',
+          message:
+            body.status === 'accepted'
+              ? `Your proposed start for "${proposal.project.projectName}" was accepted. Agreed start: ${this.formatDateTime(proposal.proposedStartAt)}.`
+              : body.status === 'updated' && updatedScheduledAt
+                ? `Client proposed an updated start for "${proposal.project.projectName}": ${this.formatDateTime(updatedScheduledAt)}${responseNotes ? ` (${responseNotes})` : ''}.`
+                : `Your proposed start for "${proposal.project.projectName}" was declined${responseNotes ? `: ${responseNotes}` : '.'}`,
         });
       }
     } catch (error) {
@@ -3027,7 +3089,10 @@ Please review the project details and respond with your quote or decline the inv
       success: true,
       proposal: {
         ...updated,
-        projectedEndAt,
+        projectedEndAt:
+          body.status === 'updated' && updatedProjectedEndAt
+            ? updatedProjectedEndAt
+            : projectedEndAt,
       },
     };
   }

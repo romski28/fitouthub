@@ -54,7 +54,7 @@ const nextStepSeeds: NextStepSeed[] = [
   { projectStage: ProjectStage.BIDDING_CLOSED, role: 'CLIENT', actionKey: 'SELECT_PROFESSIONAL', actionLabel: 'Select professional', description: 'Choose a professional to proceed.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.BIDDING_CLOSED, role: 'PROFESSIONAL', actionKey: 'PREPARE_CONTRACT', actionLabel: 'Prepare contract', description: 'Prepare terms for contract stage if selected.', isPrimary: true, displayOrder: 1 },
 
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'REVIEW_CONTRACT', actionLabel: 'Review contract', description: 'Review terms and approve or request changes.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'REVIEW_CONTRACT', actionLabel: 'Review agreement', description: 'Review terms and approve or request changes.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.CONTRACT_PHASE, role: 'PROFESSIONAL', actionKey: 'SUBMIT_CONTRACT', actionLabel: 'Submit contract', description: 'Submit draft contract with milestones and schedule.', isPrimary: true, displayOrder: 1 },
 
   { projectStage: ProjectStage.PRE_WORK, role: 'CLIENT', actionKey: 'CONFIRM_START_DETAILS', actionLabel: 'Confirm start details', description: 'Confirm schedule, access and payment setup.', isPrimary: true, displayOrder: 1 },

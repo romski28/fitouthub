@@ -33,6 +33,7 @@ interface ContractTabProps {
   tab?: string;
   projectId: string;
   accessToken: string | null;
+  onOpenScheduleTab?: () => void;
 }
 
 const formatDate = (date?: string | null) => {
@@ -53,6 +54,7 @@ const formatDate = (date?: string | null) => {
 export const ContractTab: React.FC<ContractTabProps> = ({
   projectId,
   accessToken,
+  onOpenScheduleTab,
 }) => {
   const [contract, setContract] = useState<ContractData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,6 +104,10 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   const handleSignContract = async () => {
     if (!contract?.canSign || !accessToken) return;
 
+    const shouldNudgeStartDate = Boolean(
+      contract.clientSignedAt && !contract.professionalSignedAt,
+    );
+
     try {
       setSigning(true);
 
@@ -125,13 +131,18 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         projectId,
         token: accessToken,
         preferFallbackGuidance: true,
-        fallbackGuidance: result.isFullySigned
+        fallbackGuidance: result.isFullySigned && shouldNudgeStartDate
           ? {
-              nextStepLabel: 'Wait for client escrow deposit',
-              canActNow: false,
-              waitReason:
-                'No action needed now; the client must deposit funds to escrow.',
+              nextStepLabel: 'Confirm project start date',
+              canActNow: true,
             }
+          : result.isFullySigned
+            ? {
+                nextStepLabel: 'Wait for client escrow deposit',
+                canActNow: false,
+                waitReason:
+                  'No action needed now; the client must deposit funds to escrow.',
+              }
           : {
               nextStepLabel: 'Wait for client signature',
               canActNow: false,
@@ -139,6 +150,39 @@ export const ContractTab: React.FC<ContractTabProps> = ({
                 'No action needed now; the client needs to sign the agreement.',
             },
       });
+
+      if (result.isFullySigned && shouldNudgeStartDate) {
+        toast.custom(
+          (toastState) => (
+            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-lg">
+              <p className="text-sm font-semibold text-white">Agreement fully signed</p>
+              <p className="mt-1 text-xs text-slate-300">
+                Would you like to confirm the project start date now?
+              </p>
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => toast.dismiss(toastState.id)}
+                  className="rounded-md border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.dismiss(toastState.id);
+                    onOpenScheduleTab?.();
+                  }}
+                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                >
+                  Confirm start date
+                </button>
+              </div>
+            </div>
+          ),
+          { duration: 10000 },
+        );
+      }
 
       // Refresh contract data
       await fetchContract();
