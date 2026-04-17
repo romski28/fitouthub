@@ -487,8 +487,18 @@ export class ProjectsService {
       existingFinancialRows.map((row: any) => [row.sequence, row]),
     );
 
-    for (const paymentMilestone of input.paymentMilestones) {
+    const orderedPaymentMilestones = [...input.paymentMilestones].sort(
+      (a, b) => (a.sequence || 0) - (b.sequence || 0),
+    );
+
+    let previousPlannedDueAt: Date | null = null;
+
+    for (const paymentMilestone of orderedPaymentMilestones) {
       let linkedProjectMilestone: any = null;
+      const sequence = Number(paymentMilestone.sequence) || 0;
+      const plannedEndDate = paymentMilestone.plannedDueAt || null;
+      const computedPlannedStartDate =
+        sequence <= 1 ? plannedEndDate : previousPlannedDueAt;
 
       if (paymentMilestone.projectMilestoneId) {
         linkedProjectMilestone = await tx.projectMilestone.findFirst({
@@ -506,7 +516,9 @@ export class ProjectsService {
             where: { id: existingBySequence.id },
             data: {
               title: paymentMilestone.title,
-              plannedEndDate: paymentMilestone.plannedDueAt || existingBySequence.plannedEndDate || null,
+              plannedStartDate:
+                computedPlannedStartDate || existingBySequence.plannedStartDate || null,
+              plannedEndDate: plannedEndDate || existingBySequence.plannedEndDate || null,
               isFinancial: true,
             },
           });
@@ -519,7 +531,8 @@ export class ProjectsService {
               sequence: paymentMilestone.sequence,
               status: 'not_started',
               percentComplete: 0,
-              plannedEndDate: paymentMilestone.plannedDueAt || null,
+              plannedStartDate: computedPlannedStartDate,
+              plannedEndDate,
               isFinancial: true,
             },
           });
@@ -529,7 +542,18 @@ export class ProjectsService {
           where: { id: linkedProjectMilestone.id },
           data: {
             isFinancial: true,
-            plannedEndDate: paymentMilestone.plannedDueAt || linkedProjectMilestone.plannedEndDate || null,
+            plannedStartDate:
+              computedPlannedStartDate || linkedProjectMilestone.plannedStartDate || null,
+            plannedEndDate: plannedEndDate || linkedProjectMilestone.plannedEndDate || null,
+          },
+        });
+      } else {
+        linkedProjectMilestone = await tx.projectMilestone.update({
+          where: { id: linkedProjectMilestone.id },
+          data: {
+            plannedStartDate:
+              linkedProjectMilestone.plannedStartDate || computedPlannedStartDate || null,
+            plannedEndDate: plannedEndDate || linkedProjectMilestone.plannedEndDate || null,
           },
         });
       }
@@ -548,6 +572,8 @@ export class ProjectsService {
             null,
         },
       });
+
+      previousPlannedDueAt = plannedEndDate || previousPlannedDueAt;
     }
   }
 
@@ -4152,6 +4178,20 @@ Please review the project details and respond with your quote or decline the inv
       throw new Error('Professional has not submitted a quote yet');
     }
 
+    const quoteStartAt = projectProfessional.quoteEstimatedStartAt
+      ? new Date(projectProfessional.quoteEstimatedStartAt)
+      : null;
+    const hasValidQuoteStartAt =
+      !!quoteStartAt && !Number.isNaN(quoteStartAt.getTime());
+    const quoteDurationMinutes = Math.max(
+      0,
+      Number((projectProfessional as any)?.quoteEstimatedDurationMinutes) || 0,
+    );
+    const quoteEndAt =
+      hasValidQuoteStartAt && quoteDurationMinutes > 0
+        ? new Date((quoteStartAt as Date).getTime() + quoteDurationMinutes * 60 * 1000)
+        : null;
+
     const { awarded } = await this.prisma.$transaction(async (tx) => {
       // Update this professional's status to "awarded"
       const awardedPP = await tx.projectProfessional.update({
@@ -4193,6 +4233,8 @@ Please review the project details and respond with your quote or decline the inv
           status: 'awarded',
           currentStage: ProjectStage.CONTRACT_PHASE,
           awardedProjectProfessionalId: awardedPP.id,
+          startDate: hasValidQuoteStartAt ? (quoteStartAt as Date) : undefined,
+          endDate: quoteEndAt || undefined,
         },
       });
 
@@ -4231,22 +4273,22 @@ Please review the project details and respond with your quote or decline the inv
           },
         });
 
-        await this.ensureProjectPaymentPlan(tx as any, {
-          projectId,
-          projectProfessionalId: awardedPP.id,
-          totalAmount: quoteAmount.toNumber(),
-          explicitScale: (projectProfessional.project as any)?.projectScale || null,
-          quoteEstimatedDurationMinutes:
-            (projectProfessional as any)?.quoteEstimatedDurationMinutes || null,
-          quoteEstimatedStartAt:
-            (projectProfessional as any)?.quoteEstimatedStartAt || null,
-          tradesRequired: (projectProfessional.project as any)?.tradesRequired || [],
-          isEmergency: (projectProfessional.project as any)?.isEmergency || false,
-        });
-
         // Escrow deposit request is intentionally created later,
         // after both parties have signed the standard contract.
       }
+
+      await this.ensureProjectPaymentPlan(tx as any, {
+        projectId,
+        projectProfessionalId: awardedPP.id,
+        totalAmount: quoteAmount.toNumber(),
+        explicitScale: (projectProfessional.project as any)?.projectScale || null,
+        quoteEstimatedDurationMinutes:
+          (projectProfessional as any)?.quoteEstimatedDurationMinutes || null,
+        quoteEstimatedStartAt:
+          (projectProfessional as any)?.quoteEstimatedStartAt || null,
+        tradesRequired: (projectProfessional.project as any)?.tradesRequired || [],
+        isEmergency: (projectProfessional.project as any)?.isEmergency || false,
+      });
 
       return { awarded: awardedPP };
     });

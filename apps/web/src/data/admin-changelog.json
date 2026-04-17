@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-17-34f0791",
+    "date": "2026-04-17T10:59:22+08:00",
+    "title": "fix: bootstrap awarded project milestones from quoted start date",
+    "summary": "fix: bootstrap awarded project milestones from quoted start date",
+    "areas": [
+      "api"
+    ],
+    "commit": "34f0791",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-16-943aa9b",
     "date": "2026-04-16T23:29:27+08:00",
     "title": "feat: polish site access flow with proposed visit scheduling and tabbed client workflow",
