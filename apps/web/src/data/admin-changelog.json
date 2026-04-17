@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-17-cc507c0",
+    "date": "2026-04-17T14:42:06+08:00",
+    "title": "fix: guard nullable contractContent in legacy agreement refresh",
+    "summary": "fix: guard nullable contractContent in legacy agreement refresh",
+    "areas": [
+      "api"
+    ],
+    "commit": "cc507c0",
+    "files": [
+      "apps/api/src/projects/contract.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-17-4f1a6c2",
     "date": "2026-04-17T14:37:22+08:00",
     "title": "fix: add missing isFinancial field to client schedule milestone type",

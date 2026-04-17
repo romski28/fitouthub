@@ -175,7 +175,7 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       Boolean(project.contractContent) &&
       !project.clientSignedAt &&
       !project.professionalSignedAt &&
-      project.contractContent.includes('Budget:');
+      (project.contractContent?.includes('Budget:') ?? false);
 
     if (!project.contractContent || shouldRefreshLegacyUnsignedContract) {
       const contractContent = this.generateContractContent(
