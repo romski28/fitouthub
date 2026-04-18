@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-18-b295171",
+    "date": "2026-04-18T12:23:55+08:00",
+    "title": "feat: client schedule tab now shows all milestones (common view)",
+    "summary": "feat: client schedule tab now shows all milestones (common view)",
+    "areas": [
+      "web"
+    ],
+    "commit": "b295171",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-18-60b79f2",
     "date": "2026-04-18T09:54:05+08:00",
     "title": "feat: unified start-date negotiation panel with history table",

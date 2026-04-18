@@ -241,19 +241,19 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
     }
   };
 
-  // Fetch milestones for the awarded professional
+  // Fetch milestones via the awarded professional thread (same dataset as professional view)
   useEffect(() => {
-    if (!projectId || !isAwarded) return;
+    if (!isAwarded || !awardedProjectProfessionalId) return;
 
     const fetchMilestones = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Fetch milestones by project ID
         const response = await fetch(
-          `${API_BASE_URL}/milestones/project/${projectId}`,
+          `${API_BASE_URL}/milestones/project-professional/${awardedProjectProfessionalId}?_ts=${Date.now()}`,
           {
+            cache: 'no-store',
             headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
           }
         );
@@ -266,7 +266,6 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
           const data = await response.json();
           setMilestones(Array.isArray(data) ? data : data.milestones || []);
         } else {
-          // No milestones yet
           setMilestones([]);
         }
       } catch (err) {
@@ -278,7 +277,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
     };
 
     fetchMilestones();
-  }, [projectId, isAwarded, accessToken]);
+  }, [isAwarded, awardedProjectProfessionalId, accessToken]);
 
   useEffect(() => {
     fetchStartProposals();
@@ -298,9 +297,10 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
     setUpdateTimeByProposal((prev) => ({ ...prev, [openProposal.id]: prev[openProposal.id] ?? timeVal }));
   }, [openProposal?.id, openProposal?.proposedStartAt]);
 
-  const scheduleMilestones = milestones
-    .filter((milestone) => !milestone.isFinancial)
-    .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+  // All milestones sorted by sequence — same view as professional
+  const combinedMilestones = [...milestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+  // Keep scheduleMilestones alias for the weighted progress calculation
+  const scheduleMilestones = combinedMilestones;
 
   const getMilestoneDurationMs = (milestone: Milestone) => {
     const start = milestone.plannedStartDate ? new Date(milestone.plannedStartDate) : null;
@@ -363,24 +363,35 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
               <p className="text-sm text-slate-300">Loading schedule...</p>
             </div>
-          ) : scheduleMilestones.length === 0 ? (
+          ) : !awardedProjectProfessionalId ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
               <p className="text-sm text-slate-300">
-                📋 No detailed task schedule yet. For simple jobs, the agreed start details above may be enough; for more complex work, milestones will appear here.
+                📋 Schedule will appear here once you award the project.
+              </p>
+            </div>
+          ) : combinedMilestones.length === 0 ? (
+            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">
+              <p className="text-sm text-slate-300">
+                📋 No tasks in the schedule yet. The contractor will set these up.
               </p>
             </div>
           ) : (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Contractor Schedule</h3>
-
-              <div className="mb-5 rounded-md border border-slate-700 bg-slate-800/40 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-white">Overall Progress (duration-weighted)</p>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Schedule</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {combinedMilestones.filter((m) => !!m.isFinancial).length} financial · {combinedMilestones.filter((m) => !m.isFinancial).length} work tasks
+                  </p>
+                </div>
+                <div className="text-right">
                   <p className="text-sm font-semibold text-emerald-300">{weightedProgressPercent}%</p>
+                  <p className="text-xs text-slate-400">overall progress</p>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-700">
-                  <div className="h-full bg-emerald-500" style={{ width: `${weightedProgressPercent}%` }} />
-                </div>
+              </div>
+
+              <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-slate-700">
+                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${weightedProgressPercent}%` }} />
               </div>
 
               <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-950/50">
@@ -391,17 +402,25 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
                       <th className="px-3 py-2 text-left font-semibold">Start</th>
                       <th className="px-3 py-2 text-left font-semibold">Finish</th>
                       <th className="px-3 py-2 text-left font-semibold">% Complete</th>
-                      <th className="px-3 py-2 text-left font-semibold">Client Action</th>
+                      <th className="px-3 py-2 text-left font-semibold">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {scheduleMilestones.map((milestone) => {
-                      const canReview = milestone.percentComplete >= 100;
+                    {combinedMilestones.map((milestone) => {
+                      const isFinancial = !!milestone.isFinancial;
+                      const canReview = !isFinancial && milestone.percentComplete >= 100;
                       const isBusy = feedbackBusyMilestoneId === milestone.id;
                       return (
                         <tr key={milestone.id} className="border-b border-slate-800 align-top">
                           <td className="px-3 py-3 text-white">
-                            <p className="font-semibold">{milestone.title}</p>
+                            <p className="font-semibold">
+                              {isFinancial ? '💰 ' : ''}{milestone.title}
+                            </p>
+                            {isFinancial && (
+                              <span className="mt-1 inline-block rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200">
+                                Financial
+                              </span>
+                            )}
                             {milestone.description ? (
                               <p className="mt-1 text-xs text-slate-400">{milestone.description}</p>
                             ) : null}
@@ -414,19 +433,16 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
                             </span>
                           </td>
                           <td className="px-3 py-3">
-                            {!canReview ? (
-                              <span className="text-xs text-slate-500">Available at 100% complete</span>
+                            {isFinancial ? (
+                              <span className="text-xs text-slate-500">—</span>
+                            ) : !canReview ? (
+                              <span className="text-xs text-slate-500">Available at 100%</span>
                             ) : (
                               <div className="space-y-2">
                                 <div className="flex flex-wrap gap-2">
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      handleMilestoneCompletionFeedback(
-                                        milestone.id,
-                                        'agreed',
-                                      )
-                                    }
+                                    onClick={() => handleMilestoneCompletionFeedback(milestone.id, 'agreed')}
                                     disabled={isBusy}
                                     className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                                   >
@@ -434,12 +450,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      handleMilestoneCompletionFeedback(
-                                        milestone.id,
-                                        'questioned',
-                                      )
-                                    }
+                                    onClick={() => handleMilestoneCompletionFeedback(milestone.id, 'questioned')}
                                     disabled={isBusy}
                                     className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
                                   >
