@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-18-73dcc53",
+    "date": "2026-04-18T13:42:24+08:00",
+    "title": "fix: CONFIRM_SCHEDULE action key navigates to schedule tab",
+    "summary": "fix: CONFIRM_SCHEDULE action key navigates to schedule tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "73dcc53",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-04-18-3589c7f",
     "date": "2026-04-18T13:25:41+08:00",
     "title": "feat: confirm schedule flow with next-step tracking",

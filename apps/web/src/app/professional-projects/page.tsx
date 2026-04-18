@@ -50,6 +50,7 @@ const professionalActionTabMap: Record<string, string> = {
   SIGN_CONTRACT: 'contract',
   SUBMIT_PROGRESS_UPDATE: 'schedule',
   CONFIRM_START_DATE: 'schedule',
+  CONFIRM_SCHEDULE: 'schedule',
   REQUEST_FINAL_WALKTHROUGH: 'schedule',
   ADDRESS_FINAL_ITEMS: 'schedule',
   PROVIDE_WARRANTY_DETAILS: 'schedule',
