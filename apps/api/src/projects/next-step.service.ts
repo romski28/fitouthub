@@ -66,6 +66,7 @@ export class NextStepService {
       select: {
         currentStage: true,
         status: true,
+        projectScale: true,
         userId: true,
         clientId: true,
         awardedProjectProfessionalId: true,
@@ -327,6 +328,16 @@ export class NextStepService {
         Boolean(project.clientSignedAt) &&
         Boolean(project.professionalSignedAt);
 
+      const acceptedStartProposal = contractFullySigned
+        ? await this.prisma.projectStartProposal.findFirst({
+            where: {
+              projectId,
+              status: 'accepted',
+            },
+            orderBy: { createdAt: 'desc' },
+          })
+        : null;
+
       const latestStartProposal = contractFullySigned
         ? await this.prisma.projectStartProposal.findFirst({
             where: {
@@ -358,6 +369,51 @@ export class NextStepService {
       // Only offer escrow deposit AFTER both parties have signed the contract.
       // Until then, the standard CONTRACT_PHASE step (sign contract) should show.
       if (!pendingPaymentRequest && contractFullySigned && !latestStartProposal) {
+        const isScale3Project = project.projectScale === 'SCALE_3';
+
+        if (isScale3Project && acceptedStartProposal) {
+          const clientScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
+            where: {
+              projectId,
+              userId,
+              actionKey: 'CONFIRM_SCHEDULE',
+              userAction: 'COMPLETED',
+              projectStage: effectiveStage,
+            },
+          });
+
+          if (!clientScheduleConfirmed) {
+            availableConfigSteps = [
+              {
+                actionKey: 'CONFIRM_SCHEDULE',
+                actionLabel: 'Agree milestone schedule',
+                description:
+                  'Start date is agreed. Please review and confirm the milestone schedule before funding escrow.',
+                isPrimary: true,
+                isElective: false,
+                requiresAction: true,
+                estimatedDurationMinutes: 8,
+                displayOrder: 1,
+              } as any,
+            ];
+            return {
+              PRIMARY: availableConfigSteps.map((s) => ({
+                actionKey: s.actionKey,
+                actionLabel: s.actionLabel,
+                description: s.description || undefined,
+                isPrimary: s.isPrimary,
+                isElective: s.isElective,
+                requiresAction: s.requiresAction,
+                estimatedDurationMinutes: s.estimatedDurationMinutes || undefined,
+                displayOrder: s.displayOrder,
+              })),
+              ELECTIVE: [],
+              status: project.status,
+              stage: effectiveStage,
+            };
+          }
+        }
+
         const pendingEscrowRequest =
           await this.prisma.financialTransaction.findFirst({
             where: {

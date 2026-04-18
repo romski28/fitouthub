@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
-import { ProjectProgressBar } from '@/components/project-progress-bar';
-import ProjectFinancialsCard from '@/components/project-financials-card';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 import toast from 'react-hot-toast';
@@ -39,13 +37,10 @@ interface OverviewTabProps {
   expandedAccordions: Record<string, boolean>;
   onToggleAccordion: (id: string) => void;
   accessToken: string;
-  fundsSecured: boolean;
   onScheduleUpdate: (data: { startDate?: string; endDate?: string }) => Promise<void>;
   onContactUpdate: (data: { name?: string; phone?: string; email?: string }) => Promise<void>;
-  onPayInvoice: () => Promise<void>;
   isUpdatingSchedule: boolean;
   isUpdatingContact: boolean;
-  isPayingInvoice: boolean;
 }
 
 const formatDate = (date?: string) => {
@@ -222,13 +217,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   expandedAccordions,
   onToggleAccordion,
   accessToken,
-  fundsSecured,
   onScheduleUpdate,
   onContactUpdate,
-  onPayInvoice,
   isUpdatingSchedule,
   isUpdatingContact,
-  isPayingInvoice,
 }) => {
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({
@@ -311,12 +303,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   };
 
   const projectStatus = project.status ?? 'pending';
-  const awardedPro = project.professionals?.find((pp) => pp.status === 'awarded');
-  const projectCostValue = Number(awardedPro?.quoteAmount || project.approvedBudget || project.budget || 0);
-  const hasConfirmedSimpleSchedule = Boolean(project.startDate || project.endDate);
-  const hasAwardedQuoteTiming = Boolean(
-    awardedPro?.quoteEstimatedStartAt || awardedPro?.quoteEstimatedDurationMinutes,
-  );
   const hasAiInsights = Boolean(
     project.aiIntake &&
       (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
@@ -591,53 +577,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
           </div>
         </AccordionItem>
-
-        {/* Progress & Financials */}
-        <div id="progress-financials-section">
-        <AccordionItem
-          id="progress-financials"
-          title="Progress & Financials"
-          isOpen={expandedAccordions['progress-financials'] === true}
-          onToggle={onToggleAccordion}
-        >
-          <div className="space-y-4">
-            {/* Project Progress Bar */}
-            <ProjectProgressBar
-              project={{
-                id: project.id,
-                status: project.status,
-                startDate: project.startDate,
-                endDate: project.endDate,
-                professionals:
-                  project.professionals?.map((p) => ({
-                    status: p.status,
-                    quoteAmount: p.quoteAmount,
-                    invoice: p.invoice || null,
-                  })) || [],
-              }}
-              hasAssist={false}
-              variant="compact"
-              fundsSecured={fundsSecured}
-            />
-
-            {/* Project Financials */}
-            {accessToken && (
-              <ProjectFinancialsCard
-                projectId={project.id}
-                accessToken={accessToken}
-                projectCost={projectCostValue}
-                originalBudget={project.budget}
-                role="client"
-                onClarify={() => {
-                  // This callback could trigger navigation to chat tab
-                  // For now, just console log
-                  console.log('Clarify clicked');
-                }}
-              />
-            )}
-          </div>
-        </AccordionItem>
-        </div>
       </AccordionGroup>
     </div>
   );

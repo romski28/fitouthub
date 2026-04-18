@@ -8,10 +8,8 @@ import { fetchWithRetry } from '@/lib/http';
 import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
-import { ProjectProgressBar } from '@/components/project-progress-bar';
 import ProjectChat from '@/components/project-chat';
 import ChatImageUploader from '@/components/chat-image-uploader';
-import ProjectFinancialsCard from '@/components/project-financials-card';
 import { useFundsSecured } from '@/hooks/use-funds-secured';
 import { ProjectImagesCard } from '@/components/project-images-card';
 import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project-tabs';
@@ -19,6 +17,7 @@ import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
 import { SiteAccessTab } from '@/app/projects/[id]/tabs/site-access-tab';
 import { ProfessionalsTab } from '@/app/projects/[id]/tabs/professionals-tab';
 import { ClientScheduleTab } from '@/app/projects/[id]/tabs/schedule-tab';
+import { ClientFinancialsTab } from '@/app/projects/[id]/tabs/financials-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
@@ -255,7 +254,6 @@ export default function ClientProjectDetailPage() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [awardedProfessional, setAwardedProfessional] = useState<ProjectProfessional | null>(null);
   const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
-  const [payingInvoice, setPayingInvoice] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
 
@@ -390,6 +388,7 @@ export default function ClientProjectDetailPage() {
     if (isAwarded) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
+      allowedTabs.add('financials');
     }
 
     if (requestedTab === 'assist' && assistRequestId) {
@@ -409,19 +408,8 @@ export default function ClientProjectDetailPage() {
     const requestedSection = searchParams.get('section');
     if (requestedSection !== 'progress-financials') return;
 
-    setActiveTab('overview');
-    setExpandedAccordions((prev) => ({
-      ...prev,
-      'progress-financials': true,
-    }));
-
-    const scrollTimer = setTimeout(() => {
-      const target = document.getElementById('progress-financials-section');
-      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 200);
-
-    return () => clearTimeout(scrollTimer);
-  }, [searchParams]);
+    setActiveTab(isAwarded ? 'financials' : 'overview');
+  }, [searchParams, isAwarded]);
 
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
@@ -1400,53 +1388,6 @@ export default function ClientProjectDetailPage() {
     }
   };
 
-  const handlePayInvoice = async () => {
-    if (!accessToken || !projectId) return;
-
-    const confirmed = window.confirm(
-      'Are you ready to pay the invoice? The funds will be held in escrow by Fitout Hub until the project is completed.'
-    );
-
-    if (!confirmed) return;
-
-    setPayingInvoice(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/pay-invoice`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Payment failed');
-      }
-
-      await showWorkflowSuccessToast({
-        successMessage: 'Payment successful! Funds deposited into escrow.',
-        projectId,
-        token: accessToken,
-        fallbackGuidance: {
-          nextStepLabel: 'Await platform verification',
-          canActNow: false,
-          waitReason:
-            'No action needed now; Fitout Hub will verify and unlock the next stage.',
-        },
-      });
-      
-      // Refresh project to update invoice status
-      await fetchProject();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to process payment';
-      toast.error(message);
-      console.error('Payment error:', err);
-    } finally {
-      setPayingInvoice(false);
-    }
-  };
-
   const handleSaveImageNote = async (photoId: string, note: string) => {
     if (!accessToken || !projectId) return;
 
@@ -1922,6 +1863,7 @@ export default function ClientProjectDetailPage() {
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'contract', label: 'Agreement', icon: '📄' },
               { id: 'schedule', label: 'Schedule', icon: '📅' },
+              { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
               { id: 'media', label: 'Media', icon: '🖼️' },
             ] : undefined}
@@ -1936,7 +1878,6 @@ export default function ClientProjectDetailPage() {
               expandedAccordions={expandedAccordions}
               onToggleAccordion={toggleAccordion}
               accessToken={accessToken || ''}
-              fundsSecured={fundsSecured}
               onScheduleUpdate={async (data) => {
                 const res = await fetch(`${API_BASE_URL}/projects/${projectId}/schedule`, {
                   method: 'POST',
@@ -1963,10 +1904,28 @@ export default function ClientProjectDetailPage() {
                 const updated = await res.json();
                 setProject((prev) => prev ? { ...prev, ...updated.project } : null);
               }}
-              onPayInvoice={handlePayInvoice}
               isUpdatingSchedule={updatingSchedule}
               isUpdatingContact={updatingContact}
-              isPayingInvoice={payingInvoice}
+            />
+          </div>
+        )}
+
+        {/* Tab Content - Financials */}
+        {activeTab === 'financials' && isAwarded && project && (
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+            <ClientFinancialsTab
+              projectId={projectId}
+              accessToken={accessToken || null}
+              projectCost={projectCostValue}
+              originalBudget={project.approvedBudget || project.budget || undefined}
+              onOpenChatTab={() => {
+                const awardedProfessional = project.professionals?.find((pp) => pp.status === 'awarded');
+                if (awardedProfessional) {
+                  setSelectedProfessional(awardedProfessional);
+                }
+                setViewingAssistChat(false);
+                setActiveTab('chat');
+              }}
             />
           </div>
         )}
@@ -2070,6 +2029,8 @@ export default function ClientProjectDetailPage() {
                 projectStatus={projectStatus}
                 accessToken={accessToken || null}
                 awardedProjectProfessionalId={project.professionals?.find((pp) => pp.status === 'awarded')?.id}
+                fundsSecured={fundsSecured}
+                projectProgressData={project}
                 onOpenChatTab={() => {
                   const awardedProfessional = project.professionals?.find((pp) => pp.status === 'awarded');
                   if (awardedProfessional) {

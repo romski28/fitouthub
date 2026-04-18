@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { StartDateNegotiationPanel, StartProposalRow } from '@/components/start-date-negotiation-panel';
+import { ProjectProgressBar } from '@/components/project-progress-bar';
 
 // ---------------------------------------------------------------------------
 
@@ -36,6 +37,18 @@ interface ClientScheduleTabProps {
   projectStatus: string;
   accessToken: string | null;
   awardedProjectProfessionalId?: string;
+  fundsSecured: boolean;
+  projectProgressData: {
+    id: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    professionals?: Array<{
+      status?: string;
+      quoteAmount?: string | number;
+      invoice?: { id: string; amount: string; paymentStatus: string; paidAt?: string } | null;
+    }>;
+  };
   onOpenChatTab?: () => void;
 }
 
@@ -44,6 +57,8 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   projectStatus,
   accessToken,
   awardedProjectProfessionalId,
+  fundsSecured,
+  projectProgressData,
   onOpenChatTab,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -491,6 +506,27 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
               </div>
             </div>
           )}
+
+          <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+            <p className="mb-3 text-sm font-semibold text-white">Project Progress</p>
+            <ProjectProgressBar
+              project={{
+                id: projectProgressData.id,
+                status: projectProgressData.status,
+                startDate: projectProgressData.startDate,
+                endDate: projectProgressData.endDate,
+                professionals:
+                  projectProgressData.professionals?.map((p) => ({
+                    status: p.status,
+                    quoteAmount: p.quoteAmount,
+                    invoice: p.invoice || null,
+                  })) || [],
+              }}
+              hasAssist={false}
+              variant="compact"
+              fundsSecured={fundsSecured}
+            />
+          </div>
         </>
       )}
     </div>

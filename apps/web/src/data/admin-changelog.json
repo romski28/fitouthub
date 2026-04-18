@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-04-18-de971e2",
+    "date": "2026-04-18T14:10:27+08:00",
+    "title": "Refactor client financial flow and add class-3 schedule gate",
+    "summary": "Refactor client financial flow and add class-3 schedule gate",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "de971e2",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-18-73dcc53",
     "date": "2026-04-18T13:42:24+08:00",
     "title": "fix: CONFIRM_SCHEDULE action key navigates to schedule tab",

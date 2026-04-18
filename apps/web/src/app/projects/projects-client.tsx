@@ -49,8 +49,8 @@ const clientActionTabMap: Record<string, string> = {
   CONFIRM_SITE_VISIT: 'site-access',
   REVIEW_CONTRACT: 'contract',
   SIGN_CONTRACT: 'contract',
-  DEPOSIT_ESCROW_FUNDS: 'overview',
-  REVIEW_PAYMENT_REQUEST: 'overview',
+  DEPOSIT_ESCROW_FUNDS: 'financials',
+  REVIEW_PAYMENT_REQUEST: 'financials',
   CONFIRM_START_DATE: 'schedule',
   CONFIRM_SCHEDULE: 'schedule',
   CONFIRM_START_DETAILS: 'schedule',
@@ -61,9 +61,7 @@ const clientActionTabMap: Record<string, string> = {
   REPORT_DEFECT: 'schedule',
 };
 
-const clientActionSectionMap: Record<string, string> = {
-  DEPOSIT_ESCROW_FUNDS: 'progress-financials',
-};
+const clientActionSectionMap: Record<string, string> = {};
 
 function getClientShowMeHref(projectId: string, actionKey: string) {
   const tab = clientActionTabMap[actionKey] || 'overview';

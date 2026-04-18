@@ -990,8 +990,8 @@ export default function ProjectFinancialsCard({
       ) : error ? (
         <div className="p-5 text-sm text-rose-400">{error}</div>
       ) : (
-        <div className="p-5 space-y-6">
-          <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
+        <div className="p-5 flex flex-col gap-6">
+          <div className="order-1 rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-white">Cashflow Overview</h3>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
@@ -1059,7 +1059,7 @@ export default function ProjectFinancialsCard({
 
           {/* Payment Plan (Phase A visibility) */}
           {!paymentPlanLoading && paymentPlan && (
-            <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
+            <div className="order-3 rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white">Payment Plan</h3>
                 <StatusPill
@@ -1335,7 +1335,7 @@ export default function ProjectFinancialsCard({
           )}
 
           {/* Transactions table */}
-          <div className="overflow-x-auto">
+          <div className="order-2 overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-left text-white border-b border-slate-600">
