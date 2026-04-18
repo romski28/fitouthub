@@ -303,9 +303,37 @@ export class NextStepService {
         Boolean(project.clientSignedAt) &&
         Boolean(project.professionalSignedAt);
 
+      const latestStartProposal = contractFullySigned
+        ? await this.prisma.projectStartProposal.findFirst({
+            where: {
+              projectId,
+              status: 'proposed',
+            },
+            orderBy: { createdAt: 'desc' },
+          })
+        : null;
+
+      if (!pendingPaymentRequest && latestStartProposal) {
+        availableConfigSteps = [
+          {
+            actionKey: 'CONFIRM_START_DETAILS',
+            actionLabel: 'Confirm start details',
+            description:
+              latestStartProposal.proposedByRole === 'professional'
+                ? 'Review the proposed start date and either accept it or send back an update.'
+                : 'The client has sent back an updated start date. Review it and respond.',
+            isPrimary: true,
+            isElective: false,
+            requiresAction: latestStartProposal.proposedByRole === 'professional',
+            estimatedDurationMinutes: 5,
+            displayOrder: 1,
+          } as any,
+        ];
+      }
+
       // Only offer escrow deposit AFTER both parties have signed the contract.
       // Until then, the standard CONTRACT_PHASE step (sign contract) should show.
-      if (!pendingPaymentRequest && contractFullySigned) {
+      if (!pendingPaymentRequest && contractFullySigned && !latestStartProposal) {
         const pendingEscrowRequest =
           await this.prisma.financialTransaction.findFirst({
             where: {

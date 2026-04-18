@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-04-18-60b79f2",
+    "date": "2026-04-18T09:54:05+08:00",
+    "title": "feat: unified start-date negotiation panel with history table",
+    "summary": "feat: unified start-date negotiation panel with history table",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "60b79f2",
+    "files": [
+      "apps/api/prisma/migrations/20260418_add_start_proposal_proposer_fields/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/start-date-negotiation-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-04-17-cc507c0",
     "date": "2026-04-17T14:42:06+08:00",
     "title": "fix: guard nullable contractContent in legacy agreement refresh",

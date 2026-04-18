@@ -2815,6 +2815,14 @@ Please review the project details and respond with your quote or decline the inv
     return new Date(startAt.getTime() + durationMinutes * 60 * 1000);
   }
 
+  private getStartProposalActorRole(isProfessional: boolean): 'professional' | 'client' {
+    return isProfessional ? 'professional' : 'client';
+  }
+
+  private getStartProposalActorLabel(role: 'professional' | 'client') {
+    return role === 'professional' ? 'Professional' : 'Client';
+  }
+
   async requestProjectStartProposal(
     projectId: string,
     professionalId: string,
@@ -2858,23 +2866,33 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Start details can only be proposed for awarded projects');
     }
 
-    await this.prisma.projectStartProposal.updateMany({
+    const latestProposal = await this.prisma.projectStartProposal.findFirst({
       where: {
         projectId,
         projectProfessionalId: projectProfessional.id,
-        status: 'proposed',
       },
-      data: {
-        status: 'superseded',
-        respondedAt: new Date(),
-      },
+      orderBy: { createdAt: 'desc' },
     });
+
+    if (latestProposal?.status === 'accepted') {
+      throw new BadRequestException('Start details have already been agreed for this project');
+    }
+
+    if (latestProposal?.status === 'proposed') {
+      throw new BadRequestException(
+        latestProposal.proposedByRole === 'professional'
+          ? 'Wait for the client to accept or update your proposed start first'
+          : 'Use the response action on the latest client update instead of sending a new proposal',
+      );
+    }
 
     const proposal = await this.prisma.projectStartProposal.create({
       data: {
         projectId,
         projectProfessionalId: projectProfessional.id,
         professionalId,
+        proposedByRole: 'professional',
+        proposedByUserId: professionalId,
         proposedStartAt: scheduledAt,
         durationMinutes,
         notes: body.notes?.trim() || undefined,
@@ -2933,10 +2951,6 @@ Please review the project details and respond with your quote or decline the inv
       responseNotes?: string;
     },
   ) {
-    if (isProfessional) {
-      throw new BadRequestException('Only clients can respond to start proposals');
-    }
-
     const proposal = await this.prisma.projectStartProposal.findUnique({
       where: { id: proposalId },
       include: {
@@ -2956,7 +2970,34 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('This start proposal has already been responded to');
     }
 
-    await this.assertClientProjectAccess(proposal.projectId, actorId);
+    const actorRole = this.getStartProposalActorRole(isProfessional);
+    const actorLabel = this.getStartProposalActorLabel(actorRole);
+    const recipientRole = actorRole === 'professional' ? 'client' : 'professional';
+
+    if (proposal.proposedByRole === actorRole) {
+      throw new BadRequestException(
+        actorRole === 'professional'
+          ? 'Wait for the client to accept or update your proposed start first'
+          : 'Wait for the professional to respond before updating the start again',
+      );
+    }
+
+    if (isProfessional) {
+      const projectProfessional = await this.prisma.projectProfessional.findUnique({
+        where: {
+          projectId_professionalId: {
+            projectId: proposal.projectId,
+            professionalId: actorId,
+          },
+        },
+      });
+
+      if (!projectProfessional || projectProfessional.id !== proposal.projectProfessionalId) {
+        throw new BadRequestException('You do not have access to this start proposal');
+      }
+    } else {
+      await this.assertClientProjectAccess(proposal.projectId, actorId);
+    }
 
     const responseNotes = body.responseNotes?.trim() || undefined;
     const updatedScheduledAt = body.updatedScheduledAt
@@ -3010,23 +3051,13 @@ Please review the project details and respond with your quote or decline the inv
       }
 
       if (body.status === 'updated' && updatedScheduledAt) {
-        await prisma.projectStartProposal.updateMany({
-          where: {
-            projectId: proposal.projectId,
-            projectProfessionalId: proposal.projectProfessionalId,
-            status: 'proposed',
-          },
-          data: {
-            status: 'superseded',
-            respondedAt: new Date(),
-          },
-        });
-
         const replacementProposal = await prisma.projectStartProposal.create({
           data: {
             projectId: proposal.projectId,
             projectProfessionalId: proposal.projectProfessionalId,
             professionalId: proposal.professionalId,
+            proposedByRole: actorRole,
+            proposedByUserId: actorId,
             status: 'proposed',
             proposedStartAt: updatedScheduledAt,
             durationMinutes: proposal.durationMinutes,
@@ -3054,31 +3085,41 @@ Please review the project details and respond with your quote or decline the inv
 
     await this.addProjectChatMessage(
       proposal.projectId,
-      'client',
-      actorId,
-      null,
+      actorRole,
+      isProfessional ? null : actorId,
+      isProfessional ? actorId : null,
       body.status === 'accepted'
-        ? `Client accepted the proposed start of ${this.formatDateTime(proposal.proposedStartAt)} (${durationLabel}).`
+        ? `${actorLabel} accepted the proposed start of ${this.formatDateTime(proposal.proposedStartAt)} (${durationLabel}).`
         : body.status === 'updated' && updatedScheduledAt
-          ? `Client suggested an updated start: ${this.formatDateTime(updatedScheduledAt)} (${durationLabel}).${responseNotes ? ` Note: ${responseNotes}` : ''}`
-          : `Client declined the proposed start of ${this.formatDateTime(proposal.proposedStartAt)}${responseNotes ? `: ${responseNotes}` : '.'}`,
+          ? `${actorLabel} proposed an updated start: ${this.formatDateTime(updatedScheduledAt)} (${durationLabel}).${responseNotes ? ` Note: ${responseNotes}` : ''}`
+          : `${actorLabel} declined the proposed start of ${this.formatDateTime(proposal.proposedStartAt)}${responseNotes ? `: ${responseNotes}` : '.'}`,
     );
 
     try {
-      if (proposal.professional?.id && proposal.professional?.phone) {
+      const client = proposal.project?.user;
+      const clientPhone = client?.mobile || null;
+      const notifyClient = recipientRole === 'client' && client?.id && clientPhone;
+      const notifyProfessional =
+        recipientRole === 'professional' && proposal.professional?.id && proposal.professional?.phone;
+
+      if (notifyClient || notifyProfessional) {
         await this.notificationService.send({
-          professionalId: proposal.professional.id,
-          phoneNumber: proposal.professional.phone,
+          ...(notifyClient
+            ? { userId: client!.id, phoneNumber: clientPhone! }
+            : {
+                professionalId: proposal.professional!.id,
+                phoneNumber: proposal.professional!.phone,
+              }),
           eventType:
             body.status === 'accepted'
               ? 'project_start_accepted'
               : 'project_start_declined',
           message:
             body.status === 'accepted'
-              ? `Your proposed start for "${proposal.project.projectName}" was accepted. Agreed start: ${this.formatDateTime(proposal.proposedStartAt)}.`
+              ? `${actorLabel} accepted the proposed start for "${proposal.project.projectName}". Agreed start: ${this.formatDateTime(proposal.proposedStartAt)}.`
               : body.status === 'updated' && updatedScheduledAt
-                ? `Client proposed an updated start for "${proposal.project.projectName}": ${this.formatDateTime(updatedScheduledAt)}${responseNotes ? ` (${responseNotes})` : ''}.`
-                : `Your proposed start for "${proposal.project.projectName}" was declined${responseNotes ? `: ${responseNotes}` : '.'}`,
+                ? `${actorLabel} proposed an updated start for "${proposal.project.projectName}": ${this.formatDateTime(updatedScheduledAt)}${responseNotes ? ` (${responseNotes})` : ''}.`
+                : `${actorLabel} declined the proposed start for "${proposal.project.projectName}"${responseNotes ? `: ${responseNotes}` : '.'}`,
         });
       }
     } catch (error) {

@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
+import { StartDateNegotiationPanel, StartProposalRow } from '@/components/start-date-negotiation-panel';
+
+// ---------------------------------------------------------------------------
 
 interface Milestone {
   id: string;
@@ -27,22 +30,6 @@ interface Milestone {
   updatedAt: string;
 }
 
-interface StartProposal {
-  id: string;
-  status: 'proposed' | 'accepted' | 'declined' | 'superseded' | string;
-  proposedStartAt: string;
-  durationMinutes: number;
-  notes?: string | null;
-  responseNotes?: string | null;
-  respondedAt?: string | null;
-  projectedEndAt?: string;
-  createdAt: string;
-  professional?: {
-    businessName?: string | null;
-    fullName?: string | null;
-  };
-}
-
 interface ClientScheduleTabProps {
   tab?: string;
   projectId: string;
@@ -60,7 +47,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   onOpenChatTab,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [startProposals, setStartProposals] = useState<StartProposal[]>([]);
+  const [startProposals, setStartProposals] = useState<StartProposalRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [proposalLoading, setProposalLoading] = useState(false);
@@ -190,8 +177,10 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
         throw new Error(data.message || 'Failed to respond to start proposal');
       }
 
-      if (data?.proposal) {
-        setStartProposals((prev) => prev.map((proposal) => proposal.id === proposalId ? { ...proposal, ...data.proposal } : proposal));
+      await fetchStartProposals();
+
+      if (status === 'updated') {
+        setProposalResponseNotes((prev) => ({ ...prev, [proposalId]: '' }));
       }
     } catch (err) {
       console.error('Failed to respond to start proposal:', err);
@@ -296,21 +285,18 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   }, [projectId, isAwarded, accessToken]);
 
   const latestStartProposal = startProposals[0];
-  const proposerName = latestStartProposal?.professional?.businessName || latestStartProposal?.professional?.fullName || 'Professional';
-  const hasEarlierDeclinedProposal = startProposals.slice(1).some((proposal) => proposal.status === 'declined');
-  const isResharedForApproval =
-    latestStartProposal?.status === 'proposed' && hasEarlierDeclinedProposal;
+  const openProposal = startProposals.find((p) => p.status === 'proposed') ?? null;
 
   useEffect(() => {
-    if (!latestStartProposal?.id || latestStartProposal.status !== 'proposed') return;
-    const proposalDate = new Date(latestStartProposal.proposedStartAt);
-    if (Number.isNaN(proposalDate.getTime())) return;
-    const pad = (value: number) => String(value).padStart(2, '0');
-    const dateValue = `${proposalDate.getFullYear()}-${pad(proposalDate.getMonth() + 1)}-${pad(proposalDate.getDate())}`;
-    const timeValue = `${pad(proposalDate.getHours())}:${pad(proposalDate.getMinutes())}`;
-    setUpdateDateByProposal((prev) => (prev[latestStartProposal.id] ? prev : { ...prev, [latestStartProposal.id]: dateValue }));
-    setUpdateTimeByProposal((prev) => (prev[latestStartProposal.id] ? prev : { ...prev, [latestStartProposal.id]: timeValue }));
-  }, [latestStartProposal]);
+    if (!openProposal?.id) return;
+    const d = new Date(openProposal.proposedStartAt);
+    if (Number.isNaN(d.getTime())) return;
+    const pad = (v: number) => String(v).padStart(2, '0');
+    const dateVal = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const timeVal = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    setUpdateDateByProposal((prev) => ({ ...prev, [openProposal.id]: prev[openProposal.id] ?? dateVal }));
+    setUpdateTimeByProposal((prev) => ({ ...prev, [openProposal.id]: prev[openProposal.id] ?? timeVal }));
+  }, [openProposal?.id, openProposal?.proposedStartAt]);
 
   const scheduleMilestones = milestones
     .filter((milestone) => !milestone.isFinancial)
@@ -359,119 +345,19 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
             </div>
           )}
 
-          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">Simple lane</p>
-            <h3 className="mt-1 text-lg font-semibold text-white">Agree simple start details</h3>
-            <p className="mt-2 text-sm text-slate-200">
-              For simple jobs, just agree a start date, time and expected duration. For larger projects, use the detailed schedule further down.
-            </p>
-
-            {proposalLoading ? (
-              <p className="mt-4 text-sm text-slate-300">Loading proposed start details…</p>
-            ) : !latestStartProposal ? (
-              <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
-                No start proposal yet. The awarded professional can send one from their Schedule tab.
-              </div>
-            ) : (
-              <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/60 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold text-white">{proposerName}</span>
-                  <span className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${
-                    latestStartProposal.status === 'accepted'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : latestStartProposal.status === 'proposed'
-                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-                        : latestStartProposal.status === 'declined'
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                          : 'bg-slate-500/20 text-slate-300 border border-slate-500/40'
-                  }`}>
-                    {latestStartProposal.status}
-                  </span>
-                  {isResharedForApproval && (
-                    <span className="rounded-full px-2 py-1 text-[11px] font-semibold uppercase bg-amber-500/20 text-amber-200 border border-amber-500/40">
-                      Reshared for approval
-                    </span>
-                  )}
-                </div>
-                {isResharedForApproval && (
-                  <p className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                    The professional updated the timing after earlier feedback and has resent it for your approval.
-                  </p>
-                )}
-                <div className="mt-3 space-y-1 text-sm text-slate-200">
-                  <p>Proposed start: <span className="font-medium text-white">{formatDateTime(latestStartProposal.proposedStartAt)}</span></p>
-                  <p>Estimated duration: <span className="font-medium text-white">{formatDuration(latestStartProposal.durationMinutes)}</span></p>
-                  {latestStartProposal.projectedEndAt && (
-                    <p>Estimated finish: <span className="font-medium text-white">{formatDateTime(latestStartProposal.projectedEndAt)}</span></p>
-                  )}
-                </div>
-                {latestStartProposal.notes && (
-                  <p className="mt-3 text-sm text-slate-300">Notes: {latestStartProposal.notes}</p>
-                )}
-                {latestStartProposal.responseNotes && latestStartProposal.status !== 'proposed' && (
-                  <p className="mt-2 text-sm text-slate-300">Response: {latestStartProposal.responseNotes}</p>
-                )}
-
-                {latestStartProposal.status === 'proposed' && (
-                  <div className="mt-4 space-y-3">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="text-xs text-slate-200">
-                        <span className="mb-1 block">Updated start date</span>
-                        <input
-                          type="date"
-                          value={updateDateByProposal[latestStartProposal.id] || ''}
-                          onChange={(e) =>
-                            setUpdateDateByProposal((prev) => ({
-                              ...prev,
-                              [latestStartProposal.id]: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"
-                        />
-                      </label>
-                      <label className="text-xs text-slate-200">
-                        <span className="mb-1 block">Updated start time</span>
-                        <input
-                          type="time"
-                          value={updateTimeByProposal[latestStartProposal.id] || ''}
-                          onChange={(e) =>
-                            setUpdateTimeByProposal((prev) => ({
-                              ...prev,
-                              [latestStartProposal.id]: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"
-                        />
-                      </label>
-                    </div>
-                    <textarea
-                      value={proposalResponseNotes[latestStartProposal.id] || ''}
-                      onChange={(e) => setProposalResponseNotes((prev) => ({ ...prev, [latestStartProposal.id]: e.target.value }))}
-                      placeholder="Optional note for the professional"
-                      className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"
-                      rows={3}
-                    />
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        onClick={() => handleRespondStartProposal(latestStartProposal.id, 'accepted')}
-                        disabled={proposalBusyId === latestStartProposal.id}
-                        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                      >
-                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Accept'}
-                      </button>
-                      <button
-                        onClick={() => handleRespondStartProposal(latestStartProposal.id, 'updated')}
-                        disabled={proposalBusyId === latestStartProposal.id}
-                        className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
-                      >
-                        {proposalBusyId === latestStartProposal.id ? 'Saving…' : 'Update'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <StartDateNegotiationPanel
+            proposals={startProposals}
+            proposalLoading={proposalLoading}
+            proposalBusyId={proposalBusyId}
+            updateDateByProposal={updateDateByProposal}
+            updateTimeByProposal={updateTimeByProposal}
+            proposalResponseNotes={proposalResponseNotes}
+            setUpdateDateByProposal={setUpdateDateByProposal}
+            setUpdateTimeByProposal={setUpdateTimeByProposal}
+            setProposalResponseNotes={setProposalResponseNotes}
+            onRespond={handleRespondStartProposal}
+            viewerRole="client"
+          />
 
           {loading ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-8 text-center">

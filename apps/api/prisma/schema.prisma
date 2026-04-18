@@ -617,6 +617,8 @@ model ProjectStartProposal {
   projectId             String
   projectProfessionalId String
   professionalId        String
+  proposedByRole        String                     @default("professional")
+  proposedByUserId      String?
   status                ProjectStartProposalStatus @default(proposed)
   proposedStartAt       DateTime
   durationMinutes       Int
@@ -636,6 +638,7 @@ model ProjectStartProposal {
   @@index([professionalId])
   @@index([status])
   @@index([projectId, status])
+  @@index([projectId, projectProfessionalId, status, createdAt])
 }
 
 model EscrowLedger {

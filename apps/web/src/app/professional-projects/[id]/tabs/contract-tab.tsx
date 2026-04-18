@@ -138,10 +138,10 @@ export const ContractTab: React.FC<ContractTabProps> = ({
             }
           : result.isFullySigned
             ? {
-                nextStepLabel: 'Wait for client escrow deposit',
+                nextStepLabel: 'Wait for client start-date response',
                 canActNow: false,
                 waitReason:
-                  'No action needed now; the client must deposit funds to escrow.',
+                  'No action needed now; the client needs to accept or update the proposed start date.',
               }
           : {
               nextStepLabel: 'Wait for client signature',

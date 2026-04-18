@@ -41,7 +41,7 @@ VALUES
   (gen_random_uuid()::text, 'CONTRACT_PHASE', 'PROFESSIONAL', 'SUBMIT_CONTRACT', 'Submit contract', 'Submit draft contract with milestones and schedule.', true, false, true, NULL, 1, NOW(), NOW()),
 
   -- PRE_WORK stage
-  (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'CONFIRM_START_DETAILS', 'Confirm start details', 'Confirm schedule, access and payment setup.', true, false, true, NULL, 1, NOW(), NOW()),
+  (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'CONFIRM_START_DETAILS', 'Confirm start details', 'Accept or update the proposed start date before work begins.', true, false, true, NULL, 1, NOW(), NOW()),
   (gen_random_uuid()::text, 'PRE_WORK', 'PROFESSIONAL', 'CONFIRM_START_DATE', 'Confirm start date', 'Confirm kickoff date and resource plan.', true, false, true, NULL, 1, NOW(), NOW()),
 
   -- WORK_IN_PROGRESS stage
