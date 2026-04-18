@@ -979,7 +979,7 @@ export default function ProjectFinancialsCard({
         </div>
         {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
           <div className="text-right">
-            <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Original Budget</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Confirmed Quotation</p>
             <p className="text-lg font-bold text-white">{formatHKD(originalBudget)}</p>
           </div>
         )}
