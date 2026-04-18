@@ -1,0 +1,118 @@
+'use client';
+
+import React from 'react';
+
+export type WaitingParty = 'professional' | 'client' | 'platform';
+
+export interface WorkflowNextStep {
+  actionLabel: string;
+  description?: string;
+  requiresAction: boolean;   // false → waiting on another party or platform
+  tab?: string;              // tab to navigate to when CTA is clicked
+  waitingFor?: WaitingParty; // shown when requiresAction === false
+}
+
+interface WorkflowCompletionModalProps {
+  isOpen: boolean;
+  completedLabel: string;      // "Start date agreed!"
+  completedDescription?: string;
+  nextStep: WorkflowNextStep | null;
+  onNavigate?: () => void;     // called when the user clicks the CTA
+  onClose: () => void;
+}
+
+const waitingCopy: Record<WaitingParty, string> = {
+  professional: 'The professional will be notified and needs to act next.',
+  client: 'The client will be notified and needs to act next.',
+  platform: 'Fitout Hub has been notified and will process this shortly.',
+};
+
+export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = ({
+  isOpen,
+  completedLabel,
+  completedDescription,
+  nextStep,
+  onNavigate,
+  onClose,
+}) => {
+  if (!isOpen) return null;
+
+  const canActNow = nextStep?.requiresAction === true;
+  const waitingFor = nextStep?.waitingFor;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={completedLabel}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+        {/* Success header */}
+        <div className="flex items-start gap-3 rounded-t-2xl bg-emerald-900/40 border-b border-emerald-700/40 px-5 py-4">
+          <span className="mt-0.5 text-xl">✅</span>
+          <div>
+            <p className="text-base font-bold text-emerald-300">{completedLabel}</p>
+            {completedDescription && (
+              <p className="mt-1 text-sm text-emerald-200/80">{completedDescription}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Next step body */}
+        {nextStep && (
+          <div className="px-5 py-4 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              {canActNow ? 'Your next step' : 'What happens next'}
+            </p>
+
+            <div className={`rounded-lg border px-4 py-3 space-y-1 ${
+              canActNow
+                ? 'border-amber-500/40 bg-amber-500/10'
+                : 'border-slate-600 bg-slate-800/60'
+            }`}>
+              <p className={`text-sm font-semibold ${canActNow ? 'text-amber-200' : 'text-slate-200'}`}>
+                {nextStep.actionLabel}
+              </p>
+              {nextStep.description && (
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {nextStep.description}
+                </p>
+              )}
+            </div>
+
+            {!canActNow && waitingFor && (
+              <div className="flex items-start gap-2 rounded-lg border border-sky-700/40 bg-sky-900/20 px-3 py-2.5">
+                <span className="text-sky-400 text-sm mt-0.5">⏳</span>
+                <p className="text-xs text-sky-300">{waitingCopy[waitingFor]}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
+          >
+            Close
+          </button>
+          {canActNow && onNavigate && (
+            <button
+              type="button"
+              onClick={() => {
+                onNavigate();
+                onClose();
+              }}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+            >
+              Go there now →
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

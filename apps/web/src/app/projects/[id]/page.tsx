@@ -2005,6 +2005,7 @@ export default function ClientProjectDetailPage() {
                 }}
                 onActionBusy={setActionBusy}
                 actionBusy={actionBusy}
+                onNavigateTab={(tab) => setActiveTab(tab)}
               />
             </div>
           )}
@@ -2016,6 +2017,7 @@ export default function ClientProjectDetailPage() {
                 projectId={project.id}
                 accessToken={accessToken || ''}
                 userRole="client"
+                onNavigateTab={(tab) => setActiveTab(tab)}
               />
             </div>
           )}
@@ -2038,6 +2040,7 @@ export default function ClientProjectDetailPage() {
                   }
                   setActiveTab('chat');
                 }}
+                onNavigateTab={(tab) => setActiveTab(tab)}
               />
             </div>
           )}

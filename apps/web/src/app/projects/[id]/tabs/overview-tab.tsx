@@ -110,6 +110,11 @@ type TimelineStepDef = {
   tab: string;
 };
 
+type TimelineMetric = {
+  label: string;
+  value: string;
+};
+
 const timelineSteps: TimelineStepDef[] = [
   {
     id: 'created-invite',
@@ -307,6 +312,30 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     project.aiIntake &&
       (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
   );
+  const [expandedTimelineCards, setExpandedTimelineCards] = useState<Record<string, boolean>>({});
+
+  const invitedCount = project.professionals?.length ?? 0;
+  const quotedProfessionals =
+    project.professionals?.filter((pp) => {
+      const status = String(pp?.status || '').toLowerCase();
+      return (
+        status === 'quoted' ||
+        status === 'counter_requested' ||
+        status === 'awarded' ||
+        Boolean(pp?.quotedAt)
+      );
+    }) ?? [];
+  const quotedCount = quotedProfessionals.length;
+  const pendingQuoteCount = Math.max(invitedCount - quotedCount, 0);
+  const awardedProfessional =
+    project.professionals?.find((pp) => String(pp?.status || '').toLowerCase() === 'awarded') || null;
+  const awardedQuoteValue = awardedProfessional?.quoteAmount;
+  const budgetValue = Number(project.approvedBudget || project.budget || 0);
+  const awardedQuoteNumeric = Number(awardedQuoteValue || 0);
+  const budgetDeltaValue =
+    budgetValue > 0 && Number.isFinite(awardedQuoteNumeric)
+      ? awardedQuoteNumeric - budgetValue
+      : null;
 
   const currentTimelineStepIndex = useMemo(() => {
     const actionKey = primaryNextStep?.actionKey;
@@ -322,42 +351,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       ? timelineSteps[currentTimelineStepIndex]
       : null;
 
-  const maxTimelineStartIndex = Math.max(0, timelineSteps.length - 3);
-  const homeTimelineStartIndex = Math.min(
-    Math.max(currentTimelineStepIndex - 1, 0),
-    maxTimelineStartIndex,
-  );
-  const [timelineStartIndex, setTimelineStartIndex] = useState(homeTimelineStartIndex);
-
-  useEffect(() => {
-    setTimelineStartIndex((previous) => {
-      const clampedPrevious = Math.min(Math.max(previous, 0), maxTimelineStartIndex);
-      const windowEnd = clampedPrevious + 2;
-      if (currentTimelineStepIndex < clampedPrevious || currentTimelineStepIndex > windowEnd) {
-        return homeTimelineStartIndex;
-      }
-      return clampedPrevious;
-    });
-  }, [currentTimelineStepIndex, homeTimelineStartIndex, maxTimelineStartIndex]);
-
-  const timelineWindow = useMemo(
-    () =>
-      timelineSteps
-        .map((step, index) => ({ step, index }))
-        .slice(timelineStartIndex, timelineStartIndex + 3),
-    [timelineStartIndex],
-  );
-
-  const handleTimelineWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    if (event.deltaY === 0) return;
-    setTimelineStartIndex((prev) => {
-      if (event.deltaY > 0) {
-        return Math.min(maxTimelineStartIndex, prev + 1);
-      }
-      return Math.max(0, prev - 1);
-    });
-  };
-
   const currentStepIsDelayed = useMemo(() => {
     if (!currentTimelineStep) return false;
     const referenceDate = project.updatedAt || project.createdAt;
@@ -367,6 +360,73 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     const seventyTwoHoursMs = 72 * 60 * 60 * 1000;
     return ageMs > seventyTwoHoursMs;
   }, [currentTimelineStep, project.updatedAt, project.createdAt]);
+
+  const getTimelineMetrics = (stepId: string): TimelineMetric[] => {
+    switch (stepId) {
+      case 'created-invite':
+        return [
+          { label: 'Invited', value: String(invitedCount) },
+          { label: 'Accepted/Quoted', value: String(quotedCount) },
+          { label: 'Pending', value: String(pendingQuoteCount) },
+        ];
+      case 'bidding':
+      case 'compare':
+        return [
+          { label: 'Quotes Received', value: String(quotedCount) },
+          {
+            label: 'Lowest Quote',
+            value:
+              quotedProfessionals.length > 0
+                ? formatHKD(
+                    Math.min(
+                      ...quotedProfessionals
+                        .map((p) => Number(p?.quoteAmount || Number.POSITIVE_INFINITY))
+                        .filter((n) => Number.isFinite(n)),
+                    ),
+                  )
+                : '—',
+          },
+          { label: 'Pending Quotes', value: String(pendingQuoteCount) },
+        ];
+      case 'select':
+        return [
+          {
+            label: 'Awarded Pro',
+            value: awardedProfessional ? (awardedProfessional.professional?.fullName || awardedProfessional.professional?.businessName || 'Yes') : 'No',
+          },
+          { label: 'Awarded Quote', value: awardedProfessional ? formatHKD(awardedQuoteValue) : '—' },
+          {
+            label: 'Vs Budget',
+            value:
+              budgetDeltaValue === null
+                ? '—'
+                : `${budgetDeltaValue >= 0 ? '+' : ''}${formatHKD(Math.abs(budgetDeltaValue))}`,
+          },
+        ];
+      case 'contract':
+        return [
+          { label: 'Current Stage', value: currentTimelineStep?.title || 'Contract' },
+          { label: 'Status', value: projectStatus },
+          { label: 'Last Updated', value: formatDate(project.updatedAt) },
+        ];
+      case 'pre-work':
+        return [
+          { label: 'Start Date', value: formatDate(project.startDate) },
+          { label: 'End Date', value: formatDate(project.endDate) },
+          { label: 'Next Action', value: primaryNextStep?.actionLabel || '—' },
+        ];
+      default:
+        return [
+          { label: 'Status', value: projectStatus },
+          { label: 'Current Action', value: primaryNextStep?.actionLabel || '—' },
+          { label: 'Updated', value: formatDate(project.updatedAt) },
+        ];
+    }
+  };
+
+  const toggleTimelineCard = (id: string) => {
+    setExpandedTimelineCards((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
     <div className="space-y-4">
@@ -451,51 +511,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
 
             {!timelineLoading && (
-              <div className="space-y-2" onWheel={handleTimelineWheel}>
-                <div className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTimelineStartIndex((prev) => Math.max(0, prev - 1))}
-                      disabled={timelineStartIndex === 0}
-                      className="inline-flex items-center rounded-md border border-slate-600 bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-600 disabled:opacity-50 transition"
-                    >
-                      ↑ Up
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTimelineStartIndex(homeTimelineStartIndex)}
-                      disabled={timelineStartIndex === homeTimelineStartIndex}
-                      className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                    >
-                      Home
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTimelineStartIndex((prev) => Math.min(maxTimelineStartIndex, prev + 1))
-                      }
-                      disabled={timelineStartIndex >= maxTimelineStartIndex}
-                      className="inline-flex items-center rounded-md border border-slate-600 bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-600 disabled:opacity-50 transition"
-                    >
-                      Down ↓
-                    </button>
-                  </div>
-                  <p className="mt-2 text-[11px] text-slate-500">
-                    Showing steps {timelineStartIndex + 1}–
-                    {Math.min(timelineStartIndex + 3, timelineSteps.length)} of {timelineSteps.length}
-                  </p>
-                </div>
-
-                {timelineWindow.map(({ step, index }) => {
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500">
+                  Scroll left/right to view all {timelineSteps.length} stages.
+                </p>
+                <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+                {timelineSteps.map((step, index) => {
                   const isComplete = index < currentTimelineStepIndex;
                   const isCurrent = index === currentTimelineStepIndex;
-                  const isFuture = index > currentTimelineStepIndex;
                   const currentStepHref = `/projects/${project.id}?tab=${encodeURIComponent(step.tab)}`;
                   const currentActionLabel =
                     primaryNextStep?.actionLabel && primaryNextStep.actionLabel !== step.title
                       ? primaryNextStep.actionLabel
                       : null;
+                  const metrics = getTimelineMetrics(step.id);
+                  const detailsOpen = expandedTimelineCards[step.id] === true || isCurrent;
 
                   const toneClasses = isComplete
                     ? {
@@ -532,10 +562,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   return (
                     <div
                       key={step.id}
-                      className={`rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
+                      className={`min-w-[280px] sm:min-w-[340px] max-w-[380px] snap-start rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="flex items-start gap-3 flex-1">
+                      <div className="flex items-start gap-3 flex-1">
                           <span className={`mt-1 h-2.5 w-2.5 rounded-full ${toneClasses.dot}`} />
                           <div className="flex-1 space-y-2">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -561,18 +590,44 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                                 )}
                               </div>
                             </div>
+
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {metrics.map((metric) => (
+                                <div key={metric.label} className="rounded border border-slate-700 bg-slate-900/50 p-2">
+                                  <p className="text-[10px] uppercase tracking-wide text-slate-400">{metric.label}</p>
+                                  <p className="mt-1 text-xs font-semibold text-slate-100 break-words">{metric.value}</p>
+                                </div>
+                              ))}
+                            </div>
+
                             <p className="text-xs text-slate-400">{step.description}</p>
-                            {isCurrent && primaryNextStep?.description && (
-                              <p className="text-xs text-slate-300">
-                                {primaryNextStep.description}
-                              </p>
+                            <button
+                              type="button"
+                              onClick={() => toggleTimelineCard(step.id)}
+                              className="text-xs font-semibold text-sky-300 hover:text-sky-200"
+                            >
+                              {detailsOpen ? 'Hide details' : 'Show details'}
+                            </button>
+
+                            {detailsOpen && (
+                              <div className="rounded-md border border-slate-700 bg-slate-950/40 p-2.5 space-y-2">
+                                <p className="text-[11px] text-slate-300">
+                                  {isCurrent && primaryNextStep?.description
+                                    ? primaryNextStep.description
+                                    : 'No additional events recorded for this stage yet.'}
+                                </p>
+                                <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
+                                  <span>Updated: {formatDateTime(project.updatedAt)}</span>
+                                  {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>
-                      </div>
                     </div>
                   );
                 })}
+                </div>
               </div>
             )}
           </div>

@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
+import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 
 interface ProjectProfessional {
   id: string;
@@ -57,7 +59,27 @@ interface ProfessionalsTabProps {
   onProfessionalsChanged?: () => void | Promise<void>;
   onActionBusy?: (kind: string | null) => void;
   actionBusy?: string | null;
+  onNavigateTab?: (tab: string) => void;
 }
+
+const actionToTab: Record<string, string> = {
+  REVIEW_CONTRACT: 'contract',
+  SIGN_CONTRACT: 'contract',
+  CONFIRM_START_DETAILS: 'schedule',
+  CONFIRM_SCHEDULE: 'schedule',
+  DEPOSIT_ESCROW_FUNDS: 'financials',
+  REVIEW_PAYMENT_REQUEST: 'financials',
+  REVIEW_PROGRESS: 'schedule',
+  APPROVE_MILESTONE: 'schedule',
+};
+
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
 
 const formatDate = (date?: string) => {
   if (!date) return '—';
@@ -176,7 +198,39 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   onProfessionalsChanged,
   onActionBusy,
   actionBusy,
+  onNavigateTab,
 }) => {
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+
+  const openWorkflowModal = async (completedLabel: string) => {
+    if (!accessToken) return;
+
+    try {
+      const next = await fetchPrimaryNextStep(project.id, accessToken, {
+        cacheScope: `client-professionals-modal:${project.id}`,
+        forceRefresh: true,
+      });
+      const tab = next?.actionKey ? actionToTab[next.actionKey] : undefined;
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab,
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      toast.success(completedLabel);
+    }
+  };
+
   const comparableQuotedProfessionals = getComparableQuotedProfessionals(professionals);
   const lowestQuoteProfessional = comparableQuotedProfessionals[0];
   const earliestStartProfessional = [...comparableQuotedProfessionals]
@@ -225,7 +279,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
         throw new Error(errData.message || 'Failed to award quote');
       }
 
-      toast.success('Quote awarded successfully!');
+      await openWorkflowModal('Quote awarded successfully!');
       await onProfessionalsChanged?.();
       onAwarded?.(professional);
     } catch (err) {
@@ -285,7 +339,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
         throw new Error(errData.message || 'Failed to request a better quote');
       }
 
-      toast.success('Requested a revised quote.');
+      await openWorkflowModal('Requested a revised quote.');
       await onProfessionalsChanged?.();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to request a better quote';
@@ -621,6 +675,18 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
           </AccordionItem>
         )}
       </AccordionGroup>
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        onNavigate={
+          workflowModalNextStep?.tab
+            ? () => onNavigateTab?.(workflowModalNextStep.tab as string)
+            : undefined
+        }
+        onClose={() => setWorkflowModalOpen(false)}
+      />
     </div>
   );
 };

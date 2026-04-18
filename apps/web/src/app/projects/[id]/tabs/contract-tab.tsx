@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
-import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
+import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 
 interface ContractData {
   projectId: string;
@@ -33,7 +34,27 @@ interface ContractTabProps {
   projectId: string;
   accessToken: string | null;
   userRole: 'client' | 'professional';
+  onNavigateTab?: (tab: string) => void;
 }
+
+const actionToTab: Record<string, string> = {
+  REVIEW_CONTRACT: 'contract',
+  SIGN_CONTRACT: 'contract',
+  CONFIRM_START_DETAILS: 'schedule',
+  CONFIRM_SCHEDULE: 'schedule',
+  DEPOSIT_ESCROW_FUNDS: 'financials',
+  REVIEW_PAYMENT_REQUEST: 'financials',
+  REVIEW_PROGRESS: 'schedule',
+  APPROVE_MILESTONE: 'schedule',
+};
+
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
 
 const formatDate = (date?: string | null) => {
   if (!date) return '—';
@@ -54,11 +75,43 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   projectId,
   accessToken,
   userRole,
+  onNavigateTab,
 }) => {
   const [contract, setContract] = useState<ContractData | null>(null);
   const [loading, setLoading] = useState(true);
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+
+  const openWorkflowModal = async (completedLabel: string) => {
+    if (!accessToken) return;
+
+    try {
+      const next = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: `client-contract-modal:${projectId}`,
+        forceRefresh: true,
+      });
+
+      const tab = next?.actionKey ? actionToTab[next.actionKey] : undefined;
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab,
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      toast.success(completedLabel);
+    }
+  };
 
   const fetchContract = useCallback(async () => {
     if (!accessToken) {
@@ -120,39 +173,8 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         throw new Error(errorData.message || 'Failed to sign agreement');
       }
 
-      const result = await response.json();
-      await showWorkflowSuccessToast({
-        successMessage: 'Agreement signed successfully!',
-        projectId,
-        token: accessToken,
-        preferFallbackGuidance: true,
-        fallbackGuidance:
-          userRole === 'client'
-            ? result.isFullySigned
-              ? {
-                  nextStepLabel: 'Confirm project start date',
-                  canActNow: true,
-                }
-              : {
-                  nextStepLabel: 'Wait for professional signature',
-                  canActNow: false,
-                  waitReason:
-                    'No action needed now; the professional needs to sign the agreement.',
-                }
-            : result.isFullySigned
-              ? {
-                  nextStepLabel: 'Wait for client start-date response',
-                  canActNow: false,
-                  waitReason:
-                    'No action needed now; the client needs to accept or update the proposed start date.',
-                }
-              : {
-                  nextStepLabel: 'Wait for client signature',
-                  canActNow: false,
-                  waitReason:
-                    'No action needed now; the client needs to sign the agreement.',
-                },
-      });
+      await response.json();
+      await openWorkflowModal('Agreement signed successfully!');
 
       // Refresh contract data
       await fetchContract();
@@ -364,6 +386,18 @@ export const ContractTab: React.FC<ContractTabProps> = ({
           </p>
         </div>
       )}
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        onNavigate={
+          workflowModalNextStep?.tab
+            ? () => onNavigateTab?.(workflowModalNextStep.tab as string)
+            : undefined
+        }
+        onClose={() => setWorkflowModalOpen(false)}
+      />
     </div>
   );
 };

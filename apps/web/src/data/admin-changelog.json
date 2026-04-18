@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-18-cb3d939",
+    "date": "2026-04-18T16:09:44+08:00",
+    "title": "Implement workflow completion modal and refactor client timeline to horizontal scroll",
+    "summary": "Implement workflow completion modal and refactor client timeline to horizontal scroll",
+    "areas": [
+      "web"
+    ],
+    "commit": "cb3d939",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/workflow-completion-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-18-de971e2",
     "date": "2026-04-18T14:10:27+08:00",
     "title": "Refactor client financial flow and add class-3 schedule gate",

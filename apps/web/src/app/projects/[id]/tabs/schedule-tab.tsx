@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { StartDateNegotiationPanel, StartProposalRow } from '@/components/start-date-negotiation-panel';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
+import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 
 // ---------------------------------------------------------------------------
 
@@ -50,7 +52,26 @@ interface ClientScheduleTabProps {
     }>;
   };
   onOpenChatTab?: () => void;
+  onNavigateTab?: (tab: string) => void;
 }
+
+const actionToTab: Record<string, string> = {
+  CONFIRM_START_DETAILS: 'schedule',
+  CONFIRM_SCHEDULE: 'schedule',
+  DEPOSIT_ESCROW_FUNDS: 'financials',
+  REVIEW_PAYMENT_REQUEST: 'financials',
+  REVIEW_PROGRESS: 'schedule',
+  APPROVE_MILESTONE: 'schedule',
+  CONFIRM_NEXT_PHASE: 'schedule',
+};
+
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
 
 export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   projectId,
@@ -60,6 +81,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   fundsSecured,
   projectProgressData,
   onOpenChatTab,
+  onNavigateTab,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [startProposals, setStartProposals] = useState<StartProposalRow[]>([]);
@@ -72,8 +94,39 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
   const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
   const [queryReasonByMilestone, setQueryReasonByMilestone] = useState<Record<string, string>>({});
   const [feedbackBusyMilestoneId, setFeedbackBusyMilestoneId] = useState<string | null>(null);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
 
   const isAwarded = projectStatus === 'awarded';
+
+  const openWorkflowModal = async (completedLabel: string) => {
+    if (!accessToken) return;
+
+    try {
+      const next = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: `client-schedule-modal:${projectId}`,
+        forceRefresh: true,
+      });
+
+      const tab = next?.actionKey ? actionToTab[next.actionKey] : undefined;
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab,
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      // Keep silent fallback to avoid interrupting core action flow.
+    }
+  };
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'No date set';
@@ -193,6 +246,11 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
       }
 
       await fetchStartProposals();
+      await openWorkflowModal(
+        status === 'accepted'
+          ? 'Start date confirmed.'
+          : 'Updated start date sent to professional.',
+      );
 
       if (status === 'updated') {
         setProposalResponseNotes((prev) => ({ ...prev, [proposalId]: '' }));
@@ -245,6 +303,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
 
       if (action === 'agreed') {
         setQueryReasonByMilestone((prev) => ({ ...prev, [milestoneId]: '' }));
+        await openWorkflowModal('Milestone completion confirmed.');
       } else {
         onOpenChatTab?.();
       }
@@ -529,6 +588,18 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
           </div>
         </>
       )}
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        onNavigate={
+          workflowModalNextStep?.tab
+            ? () => onNavigateTab?.(workflowModalNextStep.tab as string)
+            : undefined
+        }
+        onClose={() => setWorkflowModalOpen(false)}
+      />
     </div>
   );
 };
