@@ -94,6 +94,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
   const [updateDateByProposal, setUpdateDateByProposal] = useState<Record<string, string>>({});
   const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
+  const [scheduleNextStep, setScheduleNextStep] = useState<{ actionKey: string; actionLabel: string; description?: string } | null>(null);
+  const [nextStepLoading, setNextStepLoading] = useState(false);
+  const [confirmingSchedule, setConfirmingSchedule] = useState(false);
 
   const isAwarded = projectStatus === 'awarded';
 
@@ -828,6 +831,56 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     }
   };
 
+  const fetchNextSteps = React.useCallback(async () => {
+    if (!projectId || !accessToken || !isAwarded) return;
+    setNextStepLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const primary: Array<{ actionKey: string; actionLabel: string; description?: string }> = data.PRIMARY ?? [];
+      const followUp = primary.find((s) => s.actionKey === 'START_PROJECT' || s.actionKey === 'WAIT_FOR_CLIENT_FUNDS');
+      setScheduleNextStep(followUp ?? null);
+    } catch {
+      // silently ignore — schedule confirmation state is nice-to-have
+    } finally {
+      setNextStepLoading(false);
+    }
+  }, [projectId, accessToken, isAwarded]);
+
+  useEffect(() => {
+    fetchNextSteps();
+  }, [fetchNextSteps]);
+
+  const handleConfirmSchedule = async () => {
+    if (!projectId || !accessToken || confirmingSchedule) return;
+    setConfirmingSchedule(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps/CONFIRM_SCHEDULE`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ userAction: 'COMPLETED' }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.message || 'Failed to confirm schedule');
+      }
+      await fetchNextSteps();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: { message: 'Schedule confirmed', type: 'success' },
+        }));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to confirm schedule');
+    } finally {
+      setConfirmingSchedule(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 space-y-6">
       {!isAwarded ? (
@@ -843,30 +896,6 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
               <p className="text-sm font-medium text-rose-200">{error}</p>
             </div>
           )}
-
-          <div className="flex items-center justify-between rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3">
-            <div>
-              <h3 className="text-sm font-semibold text-white">Schedule Actions</h3>
-              <p className="text-xs text-slate-400">Review the default financial milestone spine, then add and manage any extra non-financial work tasks.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {reorderSaving && <span className="text-xs text-slate-300">Saving order...</span>}
-              <button
-                onClick={handleResetMilestonesToDefault}
-                disabled={resettingDefaults}
-                className="inline-flex items-center justify-center rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-50"
-              >
-                {resettingDefaults ? 'Resetting...' : 'Reset to Defaults'}
-              </button>
-              <button
-                onClick={() => setIsAddingNew(true)}
-                disabled={isAddingNew || editingIndex !== null}
-                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-              >
-                + Add Task
-              </button>
-            </div>
-          </div>
 
           <StartDateNegotiationPanel
             proposals={startProposals}
@@ -894,6 +923,61 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             setPrefilledFromQuote={setPrefilledFromQuote}
             setProposalFormInitialized={setProposalFormInitialized}
           />
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Schedule</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Milestone name, start, finish and % complete.</p>
+              </div>
+              <span className="text-xs text-slate-400">{financialMilestones.length} financial · {workMilestones.length} non-financial</span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3">
+              <p className="text-xs text-slate-400">Review the default financial milestone spine, then add and manage any extra non-financial work tasks.</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                {reorderSaving && <span className="text-xs text-slate-300">Saving order...</span>}
+                <button
+                  onClick={handleResetMilestonesToDefault}
+                  disabled={resettingDefaults}
+                  className="inline-flex items-center justify-center rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-50"
+                >
+                  {resettingDefaults ? 'Resetting...' : 'Reset to Defaults'}
+                </button>
+                <button
+                  onClick={() => setIsAddingNew(true)}
+                  disabled={isAddingNew || editingIndex !== null}
+                  className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  + Add Task
+                </button>
+                {!scheduleNextStep && !nextStepLoading && (
+                  <button
+                    onClick={handleConfirmSchedule}
+                    disabled={confirmingSchedule}
+                    className="inline-flex items-center justify-center rounded-md border border-sky-500/50 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20 disabled:opacity-50"
+                  >
+                    {confirmingSchedule ? 'Confirming…' : '✓ Confirm Schedule'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {scheduleNextStep && (
+              <div className="flex items-start gap-3 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3">
+                <span className="mt-0.5 text-lg leading-none">✅</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-200">Schedule confirmed</p>
+                  {scheduleNextStep.description && (
+                    <p className="mt-0.5 text-xs text-slate-300">{scheduleNextStep.description}</p>
+                  )}
+                  <p className="mt-2 text-sm font-semibold text-white">
+                    Next step: {scheduleNextStep.actionLabel}{' '}
+                    {scheduleNextStep.actionKey === 'START_PROJECT' ? '🚀' : '⏳'}
+                  </p>
+                </div>
+              </div>
+            )}
 
           {loading ? (
             <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-center">
@@ -963,16 +1047,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-white">Schedule</h3>
-                  <p className="text-xs text-slate-400 mt-1">Milestone name, start, finish and % complete.</p>
-                </div>
-                <span className="text-xs text-slate-400">{financialMilestones.length} financial · {workMilestones.length} non-financial</span>
-              </div>
-
-              <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-950/50">
+            <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-950/50">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-700 text-slate-300">
@@ -1049,8 +1124,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   </tbody>
                 </table>
               </div>
-            </div>
           )}
+          </div>
         </>
       )}
 

@@ -71,6 +71,7 @@ export class NextStepService {
         awardedProjectProfessionalId: true,
         clientSignedAt: true,
         professionalSignedAt: true,
+        escrowHeld: true,
         _count: {
           select: {
             professionals: true,
@@ -256,16 +257,39 @@ export class NextStepService {
       }
 
       if (role === 'PROFESSIONAL' && clientSigned && professionalSigned) {
-        availableConfigSteps = [
-          createSyntheticPrimaryStep(
-            'CONFIRM_START_DATE',
-            'Confirm start plan',
-            true,
-            role,
-            effectiveStage,
-            'Set proposed start date, expected duration, and site access requirements while escrow is being secured.',
-          ),
-        ];
+        // Check if professional has already confirmed the schedule
+        const scheduleActions = await this.prisma.nextStepAction.findMany({
+          where: { projectId, userId, projectStage: effectiveStage, actionKey: 'CONFIRM_SCHEDULE' },
+          select: { userAction: true },
+        });
+        const scheduleConfirmed = scheduleActions.some((a) => a.userAction === 'COMPLETED');
+
+        if (scheduleConfirmed) {
+          const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              escrowFunded ? 'START_PROJECT' : 'WAIT_FOR_CLIENT_FUNDS',
+              escrowFunded ? 'Start the project' : 'Wait for client funds',
+              escrowFunded,
+              role,
+              effectiveStage,
+              escrowFunded
+                ? 'Escrow is funded. You are ready to begin work on site.'
+                : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',
+            ),
+          ];
+        } else {
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'CONFIRM_SCHEDULE',
+              'Confirm schedule',
+              true,
+              role,
+              effectiveStage,
+              'Set the start date, build your milestone schedule, then confirm it is ready.',
+            ),
+          ];
+        }
       }
     }
 

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-18-3589c7f",
+    "date": "2026-04-18T13:25:41+08:00",
+    "title": "feat: confirm schedule flow with next-step tracking",
+    "summary": "feat: confirm schedule flow with next-step tracking",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "3589c7f",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-18-b295171",
     "date": "2026-04-18T12:23:55+08:00",
     "title": "feat: client schedule tab now shows all milestones (common view)",
