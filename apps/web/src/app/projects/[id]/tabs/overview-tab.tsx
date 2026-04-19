@@ -20,6 +20,8 @@ interface ProjectDetail {
   endDate?: string;
   createdAt?: string;
   updatedAt?: string;
+  clientSignedAt?: string;
+  professionalSignedAt?: string;
   contractorContactName?: string;
   contractorContactPhone?: string;
   contractorContactEmail?: string;
@@ -94,6 +96,16 @@ const formatDuration = (minutes?: number) => {
     return `${(minutes / 60).toFixed(1).replace(/\.0$/, '')} hours`;
   }
   return `${minutes} min`;
+};
+
+const formatRangeWithBreak = (
+  min: number | null,
+  max: number | null,
+  formatter: (value: number) => string,
+) => {
+  if (min === null || max === null) return '—';
+  if (min === max) return formatter(min);
+  return `Lowest: ${formatter(min)}\nHighest: ${formatter(max)}`;
 };
 
 const projectStatusBadge: Record<string, string> = {
@@ -310,18 +322,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         ];
       }
       case 'bidding': {
-        const declinedCount = project.professionals?.filter((p) => {
+        const declinedByProfessionalCount = project.professionals?.filter((p) => {
           const st = String(p?.status || '').toLowerCase();
-          return st === 'declined' || st === 'rejected' || st === 'withdrawn';
+          // Count only declines initiated by professionals.
+          return st === 'declined';
         }).length ?? 0;
-        const notReceivedCount = Math.max(invitedCount - quotedCount - declinedCount, 0);
+        const notReceivedCount = Math.max(invitedCount - quotedCount - declinedByProfessionalCount, 0);
+        const lastQuoteAt = quotedProfessionals.reduce<string | undefined>((latest, p) => {
+          if (!p?.quotedAt) return latest;
+          if (!latest) return p.quotedAt;
+          return new Date(p.quotedAt) > new Date(latest) ? p.quotedAt : latest;
+        }, undefined);
         const hasExtension = project.professionals?.some(
           (p) => p?.quoteExtendedUntil || p?.quoteReminderSentAt,
         ) ?? false;
         return [
           { label: 'Quotes Received', value: `${quotedCount} of ${invitedCount}` },
-          { label: 'Quotes Declined', value: String(declinedCount) },
+          { label: 'Quotes Declined', value: String(declinedByProfessionalCount) },
           { label: 'Quotes Not Received', value: String(notReceivedCount) },
+          { label: 'Last Quote Received', value: formatDate(lastQuoteAt) },
           { label: 'Extension Given', value: hasExtension ? 'Yes' : 'No' },
         ];
       }
@@ -342,22 +361,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         const quoteMin = quoteAmounts.length > 0 ? Math.min(...quoteAmounts) : null;
         const quoteMax = quoteAmounts.length > 0 ? Math.max(...quoteAmounts) : null;
         const quoteRange =
-          quoteMin !== null && quoteMax !== null
-            ? quoteMin === quoteMax
-              ? formatHKD(quoteMin)
-              : `${formatHKD(quoteMin)} – ${formatHKD(quoteMax)}`
-            : '—';
+          formatRangeWithBreak(quoteMin, quoteMax, (value) => formatHKD(value));
         const durations = quotedProfessionals
           .map((p) => Number(p?.quoteEstimatedDurationMinutes))
           .filter((n) => Number.isFinite(n) && n > 0);
         const durMin = durations.length > 0 ? Math.min(...durations) : null;
         const durMax = durations.length > 0 ? Math.max(...durations) : null;
         const durationRange =
-          durMin !== null && durMax !== null
-            ? durMin === durMax
-              ? formatDuration(durMin)
-              : `${formatDuration(durMin)} – ${formatDuration(durMax)}`
-            : '—';
+          formatRangeWithBreak(durMin, durMax, (value) => formatDuration(value));
         return [
           { label: 'Quote Range', value: quoteRange },
           { label: 'Duration Range', value: durationRange },
@@ -371,18 +382,30 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           },
           { label: 'Awarded Quote', value: awardedProfessional ? formatHKD(awardedQuoteValue) : '—' },
           {
-            label: 'Vs Budget',
-            value:
-              budgetDeltaValue === null
-                ? '—'
-                : `${budgetDeltaValue >= 0 ? '+' : ''}${formatHKD(Math.abs(budgetDeltaValue))}`,
+            label: 'Agreed Duration',
+            value: awardedProfessional ? formatDuration(Number(awardedProfessional?.quoteEstimatedDurationMinutes)) : '—',
+          },
+          {
+            label: 'Date Awarded',
+            value: awardedProfessional
+              ? formatDate(
+                  awardedProfessional?.updatedAt ||
+                    awardedProfessional?.respondedAt ||
+                    awardedProfessional?.quotedAt,
+                )
+              : 'No',
           },
         ];
       case 'contract':
         return [
-          { label: 'Current Stage', value: currentTimelineStep?.title || 'Contract' },
-          { label: 'Status', value: projectStatus },
-          { label: 'Last Updated', value: formatDate(project.updatedAt) },
+          {
+            label: 'Professional Signed',
+            value: project.professionalSignedAt ? formatDate(project.professionalSignedAt) : 'No',
+          },
+          {
+            label: 'Client Signed',
+            value: project.clientSignedAt ? formatDate(project.clientSignedAt) : 'No',
+          },
         ];
       case 'escrow-funding':
         return [
@@ -595,9 +618,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       {/* Metrics: always stacked, never wrapped */}
                       <div className="flex flex-col gap-1">
                         {metrics.map((metric) => (
-                          <div key={metric.label} className="flex items-center justify-between rounded border border-slate-700 bg-slate-900/50 px-2 py-1.5">
+                          <div key={metric.label} className="flex items-start justify-between rounded border border-slate-700 bg-slate-900/50 px-2 py-1.5">
                             <p className="text-[10px] uppercase tracking-wide text-slate-400">{metric.label}</p>
-                            <p className="text-xs font-semibold text-slate-100 text-right">{metric.value}</p>
+                            <p className="whitespace-pre-line text-xs font-semibold leading-tight text-slate-100 text-right">{metric.value}</p>
                           </div>
                         ))}
                       </div>
