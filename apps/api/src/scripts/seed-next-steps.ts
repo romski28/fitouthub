@@ -54,8 +54,11 @@ const nextStepSeeds: NextStepSeed[] = [
   { projectStage: ProjectStage.BIDDING_CLOSED, role: 'CLIENT', actionKey: 'SELECT_PROFESSIONAL', actionLabel: 'Select professional', description: 'Choose a professional to proceed.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.BIDDING_CLOSED, role: 'PROFESSIONAL', actionKey: 'PREPARE_CONTRACT', actionLabel: 'Prepare contract', description: 'Prepare terms for contract stage if selected.', isPrimary: true, displayOrder: 1 },
 
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'REVIEW_CONTRACT', actionLabel: 'Review agreement', description: 'Review terms and approve or request changes.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'REVIEW_CONTRACT', actionLabel: 'Review agreement', description: 'Review terms and confirm the contract is ready for signature.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'SIGN_CONTRACT', actionLabel: 'Sign agreement', description: 'Sign the agreement once terms are confirmed.', isPrimary: true, requiresAction: true, displayOrder: 2 },
+  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'DEPOSIT_ESCROW_FUNDS', actionLabel: 'Deposit funds to escrow', description: 'After both signatures are complete, deposit funds to escrow before work starts.', isPrimary: true, requiresAction: true, displayOrder: 3 },
   { projectStage: ProjectStage.CONTRACT_PHASE, role: 'PROFESSIONAL', actionKey: 'SUBMIT_CONTRACT', actionLabel: 'Submit contract', description: 'Submit draft contract with milestones and schedule.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'PROFESSIONAL', actionKey: 'SIGN_CONTRACT', actionLabel: 'Sign agreement', description: 'Sign the agreement after client review to unlock escrow funding.', isPrimary: true, requiresAction: true, displayOrder: 2 },
 
   { projectStage: ProjectStage.PRE_WORK, role: 'CLIENT', actionKey: 'CONFIRM_START_DETAILS', actionLabel: 'Confirm start details', description: 'Accept or update the proposed start date before work begins.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.PRE_WORK, role: 'PROFESSIONAL', actionKey: 'CONFIRM_START_DATE', actionLabel: 'Confirm start date', description: 'Confirm kickoff date and resource plan.', isPrimary: true, displayOrder: 1 },

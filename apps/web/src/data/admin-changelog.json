@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-19-21ec7e5",
+    "date": "2026-04-19T09:39:52+08:00",
+    "title": "Align next-step seed config with agreement and escrow stages",
+    "summary": "Align next-step seed config with agreement and escrow stages",
+    "areas": [
+      "api"
+    ],
+    "commit": "21ec7e5",
+    "files": [
+      "apps/api/src/scripts/seed-next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-19-5302b7a",
     "date": "2026-04-19T09:38:23+08:00",
     "title": "Refine client process timeline card behavior and stage routing",
