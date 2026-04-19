@@ -1431,6 +1431,15 @@ export class ProjectsService {
               professional: true,
             },
           },
+          paymentPlan: {
+            include: {
+              milestones: {
+                orderBy: {
+                  sequence: 'asc',
+                },
+              },
+            },
+          },
           aiIntake: true,
           photos: true,
         },
@@ -1461,6 +1470,15 @@ export class ProjectsService {
           professionals: {
             include: {
               professional: true,
+            },
+          },
+          paymentPlan: {
+            include: {
+              milestones: {
+                orderBy: {
+                  sequence: 'asc',
+                },
+              },
             },
           },
           aiIntake: {

@@ -25,9 +25,10 @@ interface ProjectDetail {
   projectScale?: string;
   escrowHeld?: string | number;
   escrowRequired?: string | number;
-  milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number }>;
+  escrowHeldUpdatedAt?: string;
+  milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number; escrowFundedAt?: string }>;
   paymentPlan?: {
-    milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number }>;
+    milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number; escrowFundedAt?: string }>;
   };
   contractorContactName?: string;
   contractorContactPhone?: string;
@@ -447,9 +448,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         const firstMilestoneAmount = firstMilestone
           ? firstMilestone.amount ?? firstMilestone.totalAmount
           : null;
+        const firstEscrowFundedAt = allMilestones
+          .filter((m) => Boolean(m?.escrowFundedAt))
+          .sort((a, b) => Number(new Date(a?.escrowFundedAt || 0)) - Number(new Date(b?.escrowFundedAt || 0)))[0]
+          ?.escrowFundedAt;
 
         return [
           { label: 'Escrow Funded', value: formatHKD(escrowFundedValue) },
+          {
+            label: 'Escrow Funded On',
+            value: formatDate(firstEscrowFundedAt || (escrowFundedValue > 0 ? project.escrowHeldUpdatedAt : undefined)),
+          },
           { label: 'Escrow to Project', value: escrowToProjectPct },
           { label: 'First Milestone Value', value: firstMilestoneAmount !== null ? formatHKD(firstMilestoneAmount as any) : '—' },
         ];

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-19-f7a7fdc",
+    "date": "2026-04-19T11:37:34+08:00",
+    "title": "Add escrow funded date metric to timeline and include payment milestones in project detail",
+    "summary": "Add escrow funded date metric to timeline and include payment milestones in project detail",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f7a7fdc",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-d837bc2",
     "date": "2026-04-19T11:27:15+08:00",
     "title": "Add agreement project class and escrow funding metrics",
