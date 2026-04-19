@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-19-5302b7a",
+    "date": "2026-04-19T09:38:23+08:00",
+    "title": "Refine client process timeline card behavior and stage routing",
+    "summary": "Refine client process timeline card behavior and stage routing",
+    "areas": [
+      "web"
+    ],
+    "commit": "5302b7a",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-18-9856de5",
     "date": "2026-04-18T16:10:39+08:00",
     "title": "Change budget label from 'Original Budget' to 'Confirmed Quotation' in financials card",

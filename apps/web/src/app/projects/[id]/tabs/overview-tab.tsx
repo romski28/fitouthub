@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
@@ -153,10 +153,17 @@ const timelineSteps: TimelineStepDef[] = [
   },
   {
     id: 'contract',
-    title: 'Contract & Sign-off',
-    description: 'Review terms and finalise the contract.',
-    actionKeys: ['REVIEW_CONTRACT'],
+    title: 'Agreement & Sign-off',
+    description: 'Review terms and complete agreement signatures.',
+    actionKeys: ['REVIEW_CONTRACT', 'SIGN_CONTRACT'],
     tab: 'contract',
+  },
+  {
+    id: 'escrow-funding',
+    title: 'Escrow Funding',
+    description: 'Deposit funds to escrow before work starts.',
+    actionKeys: ['DEPOSIT_ESCROW_FUNDS'],
+    tab: 'financials',
   },
   {
     id: 'pre-work',
@@ -209,7 +216,7 @@ const inferTimelineIndexFromStatus = (status?: string) => {
     return timelineSteps.length;
   }
 
-  if (normalized === 'started') return 7;
+  if (normalized === 'started') return 8;
   if (normalized === 'awarded' || normalized === 'approved') return 5;
   if (normalized === 'quoted' || normalized === 'counter_requested') return 3;
   if (normalized === 'pending') return 1;
@@ -241,6 +248,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   });
   const [primaryNextStep, setPrimaryNextStep] = useState<NextStepAction | null>(null);
   const [timelineLoading, setTimelineLoading] = useState(false);
+  const timelineContainerRef = useRef<HTMLDivElement | null>(null);
+  const timelineCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!accessToken) return;
@@ -361,6 +370,29 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     return ageMs > seventyTwoHoursMs;
   }, [currentTimelineStep, project.updatedAt, project.createdAt]);
 
+  useEffect(() => {
+    if (timelineLoading) return;
+    if (expandedAccordions['timeline-preview'] !== true) return;
+    if (!currentTimelineStep) return;
+
+    const card = timelineCardRefs.current[currentTimelineStep.id];
+    if (!card) return;
+
+    requestAnimationFrame(() => {
+      card.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'start',
+        block: 'nearest',
+      });
+    });
+  }, [
+    timelineLoading,
+    expandedAccordions,
+    currentTimelineStep,
+    currentTimelineStepIndex,
+    primaryNextStep?.actionKey,
+  ]);
+
   const getTimelineMetrics = (stepId: string): TimelineMetric[] => {
     switch (stepId) {
       case 'created-invite':
@@ -407,6 +439,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         return [
           { label: 'Current Stage', value: currentTimelineStep?.title || 'Contract' },
           { label: 'Status', value: projectStatus },
+          { label: 'Last Updated', value: formatDate(project.updatedAt) },
+        ];
+      case 'escrow-funding':
+        return [
+          { label: 'Current Stage', value: 'Escrow Funding' },
+          { label: 'Next Action', value: primaryNextStep?.actionLabel || 'Deposit funds' },
           { label: 'Last Updated', value: formatDate(project.updatedAt) },
         ];
       case 'pre-work':
@@ -515,7 +553,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <p className="text-[11px] text-slate-500">
                   Scroll left/right to view all {timelineSteps.length} stages.
                 </p>
-                <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+                <div
+                  ref={timelineContainerRef}
+                  className="flex gap-3 overflow-x-auto px-1 pb-2 snap-x snap-mandatory"
+                >
                 {timelineSteps.map((step, index) => {
                   const isComplete = index < currentTimelineStepIndex;
                   const isCurrent = index === currentTimelineStepIndex;
@@ -533,7 +574,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         border: 'border-emerald-500/40',
                         bg: 'bg-emerald-500/15',
                         text: 'text-emerald-200',
-                        label: 'Complete',
                       }
                     : isCurrent
                       ? currentStepIsDelayed
@@ -542,30 +582,29 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                             border: 'border-rose-500/40',
                             bg: 'bg-rose-500/15',
                             text: 'text-rose-200',
-                            label: 'Delayed',
                           }
                         : {
                             dot: 'bg-amber-500',
                             border: 'border-amber-500/40',
                             bg: 'bg-amber-500/15',
                             text: 'text-amber-200',
-                            label: 'In progress',
                           }
                       : {
                           dot: 'bg-slate-500',
                           border: 'border-slate-600',
                           bg: 'bg-slate-800/50',
                           text: 'text-slate-300',
-                          label: 'Planned',
                         };
 
                   return (
                     <div
                       key={step.id}
-                      className={`min-w-[280px] sm:min-w-[340px] max-w-[380px] snap-start rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
+                      ref={(el) => {
+                        timelineCardRefs.current[step.id] = el;
+                      }}
+                      className={`w-[calc(100%-0.5rem)] shrink-0 snap-start rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
                     >
                       <div className="flex items-start gap-3 flex-1">
-                          <span className={`mt-1 h-2.5 w-2.5 rounded-full ${toneClasses.dot}`} />
                           <div className="flex-1 space-y-2">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                               <div>
@@ -576,10 +615,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                                   </p>
                                 )}
                               </div>
-                              <div className="flex flex-col items-start gap-2 self-start">
-                                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${toneClasses.text}`}>
-                                  {toneClasses.label}
-                                </span>
+                              <div className="flex flex-col items-end gap-2 self-start">
+                                <span className={`mt-0.5 h-[15px] w-[15px] rounded-full ${toneClasses.dot}`} />
                                 {isCurrent && (
                                   <Link
                                     href={currentStepHref}
