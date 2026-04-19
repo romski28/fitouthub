@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-19-eae99f4",
+    "date": "2026-04-19T21:26:09+08:00",
+    "title": "Add service-level Release A tests for cap math and wallet summary",
+    "summary": "Add service-level Release A tests for cap math and wallet summary",
+    "areas": [
+      "api"
+    ],
+    "commit": "eae99f4",
+    "files": [
+      "apps/api/src/financial/financial.service.release-a.spec.ts"
+    ]
+  },
+  {
     "id": "2026-04-19-5dc17b6",
     "date": "2026-04-19T21:23:16+08:00",
     "title": "Add automated tests for Release A financial procurement endpoints",
