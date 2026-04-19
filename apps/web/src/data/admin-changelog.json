@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-19-5dc17b6",
+    "date": "2026-04-19T21:23:16+08:00",
+    "title": "Add automated tests for Release A financial procurement endpoints",
+    "summary": "Add automated tests for Release A financial procurement endpoints",
+    "areas": [
+      "api"
+    ],
+    "commit": "5dc17b6",
+    "files": [
+      "apps/api/src/financial/financial.controller.spec.ts"
+    ]
+  },
+  {
     "id": "2026-04-19-e8bf22e",
     "date": "2026-04-19T21:16:03+08:00",
     "title": "Implement Release A milestone procurement-gated wallet controls",
