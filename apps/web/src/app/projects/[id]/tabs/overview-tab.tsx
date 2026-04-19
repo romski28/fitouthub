@@ -296,31 +296,50 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   const getTimelineMetrics = (stepId: string): TimelineMetric[] => {
     switch (stepId) {
-      case 'created-invite':
+      case 'created-invite': {
+        const firstInviteDate = project.professionals?.reduce<string | undefined>((earliest, pp) => {
+          if (!pp?.createdAt) return earliest;
+          if (!earliest) return pp.createdAt;
+          return new Date(pp.createdAt) < new Date(earliest) ? pp.createdAt : earliest;
+        }, undefined);
         return [
-          { label: 'Invited', value: String(invitedCount) },
-          { label: 'Accepted/Quoted', value: String(quotedCount) },
-          { label: 'Pending', value: String(pendingQuoteCount) },
+          { label: 'Professionals Invited', value: invitedCount > 0 ? String(invitedCount) : '—' },
+          { label: 'Date of Invitation', value: formatDate(firstInviteDate) },
         ];
-      case 'bidding':
-      case 'compare':
+      }
+      case 'bidding': {
+        const quoteAmounts = quotedProfessionals
+          .map((p) => Number(p?.quoteAmount))
+          .filter((n) => Number.isFinite(n) && n > 0);
+        const quoteMin = quoteAmounts.length > 0 ? Math.min(...quoteAmounts) : null;
+        const quoteMax = quoteAmounts.length > 0 ? Math.max(...quoteAmounts) : null;
+        const quoteRange =
+          quoteMin !== null && quoteMax !== null
+            ? quoteMin === quoteMax
+              ? formatHKD(quoteMin)
+              : `${formatHKD(quoteMin)} – ${formatHKD(quoteMax)}`
+            : '—';
+        const durations = quotedProfessionals
+          .map((p) => Number(p?.quoteEstimatedDurationMinutes))
+          .filter((n) => Number.isFinite(n) && n > 0);
+        const durMin = durations.length > 0 ? Math.min(...durations) : null;
+        const durMax = durations.length > 0 ? Math.max(...durations) : null;
+        const durationRange =
+          durMin !== null && durMax !== null
+            ? durMin === durMax
+              ? formatDuration(durMin)
+              : `${formatDuration(durMin)} – ${formatDuration(durMax)}`
+            : '—';
+        const hasExtension = project.professionals?.some(
+          (p) => p?.quoteExtendedUntil || p?.quoteReminderSentAt,
+        ) ?? false;
         return [
-          { label: 'Quotes Received', value: String(quotedCount) },
-          {
-            label: 'Lowest Quote',
-            value:
-              quotedProfessionals.length > 0
-                ? formatHKD(
-                    Math.min(
-                      ...quotedProfessionals
-                        .map((p) => Number(p?.quoteAmount || Number.POSITIVE_INFINITY))
-                        .filter((n) => Number.isFinite(n)),
-                    ),
-                  )
-                : '—',
-          },
-          { label: 'Pending Quotes', value: String(pendingQuoteCount) },
+          { label: 'Quotes Received', value: `${quotedCount} of ${invitedCount}` },
+          { label: 'Quote Range', value: quoteRange },
+          { label: 'Duration Range', value: durationRange },
+          { label: 'Extension Given', value: hasExtension ? 'Yes' : 'No' },
         ];
+      }
       case 'select':
         return [
           {
@@ -560,16 +579,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         ))}
                       </div>
 
-                      {/* Expandable detail drawer */}
-                      <button
-                        type="button"
-                        onClick={() => toggleTimelineCard(step.id)}
-                        className="mt-2 text-xs font-semibold text-sky-300 hover:text-sky-200"
-                      >
-                        {detailsOpen ? 'Hide details' : 'Show details'}
-                      </button>
+                      {/* Expandable detail drawer — hidden for stages with no extra data */}
+                      {step.id !== 'created-invite' && (
+                        <button
+                          type="button"
+                          onClick={() => toggleTimelineCard(step.id)}
+                          className="mt-2 text-xs font-semibold text-sky-300 hover:text-sky-200"
+                        >
+                          {detailsOpen ? 'Hide details' : 'Show details'}
+                        </button>
+                      )}
 
-                      {detailsOpen && (
+                      {step.id !== 'created-invite' && detailsOpen && (
                         <div className="mt-1.5 rounded-md border border-slate-700 bg-slate-950/40 p-2.5 space-y-2">
                           <p className="text-[11px] text-slate-300">
                             {isCurrent && primaryNextStep?.description

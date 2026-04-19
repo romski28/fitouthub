@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-19-dc0bb89",
+    "date": "2026-04-19T10:20:11+08:00",
+    "title": "Update timeline card metrics for created-invite and bidding stages",
+    "summary": "Update timeline card metrics for created-invite and bidding stages",
+    "areas": [
+      "web"
+    ],
+    "commit": "dc0bb89",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-2178c4f",
     "date": "2026-04-19T10:06:32+08:00",
     "title": "Refine timeline card layout",
