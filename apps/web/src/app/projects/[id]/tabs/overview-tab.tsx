@@ -508,7 +508,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       ref={(el) => {
                         timelineCardRefs.current[step.id] = el;
                       }}
-                      className={`w-[calc(100%-0.5rem)] shrink-0 snap-start rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
+                      className={`w-[calc(100%-0.5rem)] sm:w-[calc((100%-0.75rem)/2)] lg:w-[calc((100%-1.5rem)/3)] 2xl:w-[calc((100%-2.25rem)/4)] min-w-0 shrink-0 snap-start rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
                     >
                       <div className="flex items-start gap-3 flex-1">
                           <div className="flex-1 space-y-2">
