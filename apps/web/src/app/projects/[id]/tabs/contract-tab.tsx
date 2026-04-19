@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
+import { getClientTabForAction } from '@/lib/client-workflow';
 
 interface ContractData {
   projectId: string;
@@ -36,17 +37,6 @@ interface ContractTabProps {
   userRole: 'client' | 'professional';
   onNavigateTab?: (tab: string) => void;
 }
-
-const actionToTab: Record<string, string> = {
-  REVIEW_CONTRACT: 'contract',
-  SIGN_CONTRACT: 'contract',
-  CONFIRM_START_DETAILS: 'schedule',
-  CONFIRM_SCHEDULE: 'schedule',
-  DEPOSIT_ESCROW_FUNDS: 'financials',
-  REVIEW_PAYMENT_REQUEST: 'financials',
-  REVIEW_PROGRESS: 'schedule',
-  APPROVE_MILESTONE: 'schedule',
-};
 
 const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
   if (!actionKey) return undefined;
@@ -94,7 +84,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         forceRefresh: true,
       });
 
-      const tab = next?.actionKey ? actionToTab[next.actionKey] : undefined;
+      const tab = next?.actionKey ? getClientTabForAction(next.actionKey) : undefined;
       setWorkflowModalCompletedLabel(completedLabel);
       setWorkflowModalNextStep(
         next

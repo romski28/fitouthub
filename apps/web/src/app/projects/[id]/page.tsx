@@ -361,6 +361,9 @@ export default function ClientProjectDetailPage() {
   const projectStatus = project?.status ?? 'pending';
   const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
   const isAwarded = projectStatus === 'awarded' || Boolean(awardedPro);
+  const statusNormalized = projectStatus.toLowerCase();
+  const hasPostAwardLifecycleAccess =
+    isAwarded || ['started', 'completed', 'rated'].includes(statusNormalized);
   const hasAnyProfessional = (project?.professionals?.length ?? 0) > 0;
   const quoteOverdueBlocker = hasQuoteOverdueBlocker(project);
   const projectCostValue = Number(awardedPro?.quoteAmount || project?.approvedBudget || project?.budget || 0);
@@ -388,6 +391,8 @@ export default function ClientProjectDetailPage() {
     if (isAwarded) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
+    }
+    if (hasPostAwardLifecycleAccess) {
       allowedTabs.add('financials');
     }
 
@@ -402,7 +407,7 @@ export default function ClientProjectDetailPage() {
     }
 
     setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
-  }, [searchParams, isAwarded, assistRequestId, hasAnyProfessional]);
+  }, [searchParams, isAwarded, assistRequestId, hasAnyProfessional, hasPostAwardLifecycleAccess]);
 
   useEffect(() => {
     const requestedSection = searchParams.get('section');
@@ -1866,6 +1871,13 @@ export default function ClientProjectDetailPage() {
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
               { id: 'media', label: 'Media', icon: '🖼️' },
+            ] : hasPostAwardLifecycleAccess ? [
+              { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'site-access', label: 'Site Access', icon: '📍' },
+              { id: 'professionals', label: 'Professionals', icon: '👥' },
+              { id: 'financials', label: 'Financials', icon: '💳' },
+              { id: 'chat', label: 'Chat', icon: '💬' },
+              { id: 'media', label: 'Media', icon: '🖼️' },
             ] : undefined}
           />
         </div>
@@ -1911,7 +1923,7 @@ export default function ClientProjectDetailPage() {
         )}
 
         {/* Tab Content - Financials */}
-        {activeTab === 'financials' && isAwarded && project && (
+        {activeTab === 'financials' && hasPostAwardLifecycleAccess && project && (
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
             <ClientFinancialsTab
               projectId={projectId}

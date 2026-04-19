@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
+import { clientTimelineSteps, getClientTabForAction } from '@/lib/client-workflow';
 import toast from 'react-hot-toast';
 
 interface ProjectDetail {
@@ -102,112 +103,12 @@ const projectStatusBadge: Record<string, string> = {
   awarded: 'bg-blue-500/20 text-blue-200 border border-blue-500/40',
 };
 
-type TimelineStepDef = {
-  id: string;
-  title: string;
-  description: string;
-  actionKeys: string[];
-  tab: string;
-};
-
 type TimelineMetric = {
   label: string;
   value: string;
 };
 
-const timelineSteps: TimelineStepDef[] = [
-  {
-    id: 'created-invite',
-    title: 'Project Created & Invite',
-    description: 'Create the project and invite professionals to bid.',
-    actionKeys: ['WAIT_FOR_QUOTES', 'INVITE_PROFESSIONALS'],
-    tab: 'professionals',
-  },
-  {
-    id: 'bidding',
-    title: 'Bidding & Quote Intake',
-    description: 'Collect and review incoming quotations.',
-    actionKeys: ['REVIEW_INCOMING_QUOTES', 'REQUEST_SITE_VISIT'],
-    tab: 'professionals',
-  },
-  {
-    id: 'site-visit',
-    title: 'Site Visit Coordination',
-    description: 'Confirm access and schedule site visit where needed.',
-    actionKeys: ['CONFIRM_SITE_VISIT'],
-    tab: 'site-access',
-  },
-  {
-    id: 'compare',
-    title: 'Compare Quotes',
-    description: 'Review and compare final offers.',
-    actionKeys: ['COMPARE_QUOTES'],
-    tab: 'professionals',
-  },
-  {
-    id: 'select',
-    title: 'Select Professional',
-    description: 'Choose who will execute the project.',
-    actionKeys: ['SELECT_PROFESSIONAL'],
-    tab: 'professionals',
-  },
-  {
-    id: 'contract',
-    title: 'Agreement & Sign-off',
-    description: 'Review terms and complete agreement signatures.',
-    actionKeys: ['REVIEW_CONTRACT', 'SIGN_CONTRACT'],
-    tab: 'contract',
-  },
-  {
-    id: 'escrow-funding',
-    title: 'Escrow Funding',
-    description: 'Deposit funds to escrow before work starts.',
-    actionKeys: ['DEPOSIT_ESCROW_FUNDS'],
-    tab: 'financials',
-  },
-  {
-    id: 'pre-work',
-    title: 'Pre-work Setup',
-    description: 'Confirm start details before works begin.',
-    actionKeys: ['CONFIRM_START_DETAILS'],
-    tab: 'schedule',
-  },
-  {
-    id: 'work-progress',
-    title: 'Work In Progress',
-    description: 'Track updates and monitor delivery progress.',
-    actionKeys: ['REVIEW_PROGRESS'],
-    tab: 'schedule',
-  },
-  {
-    id: 'milestones',
-    title: 'Milestone Review',
-    description: 'Approve milestones and confirm next phase.',
-    actionKeys: ['APPROVE_MILESTONE', 'CONFIRM_NEXT_PHASE'],
-    tab: 'schedule',
-  },
-  {
-    id: 'final-inspection-plan',
-    title: 'Final Inspection Planning',
-    description: 'Arrange final walkthrough and close-out checks.',
-    actionKeys: ['SCHEDULE_FINAL_INSPECTION'],
-    tab: 'schedule',
-  },
-  {
-    id: 'handover',
-    title: 'Final Approval & Handover',
-    description: 'Approve final work and complete handover.',
-    actionKeys: ['APPROVE_FINAL_WORK'],
-    tab: 'schedule',
-  },
-  {
-    id: 'warranty',
-    title: 'Warranty Period',
-    description: 'Monitor defects and warranty support.',
-    actionKeys: ['ENTER_WARRANTY_PERIOD', 'REPORT_DEFECT'],
-    tab: 'schedule',
-  },
-];
+const timelineSteps = clientTimelineSteps;
 
 const inferTimelineIndexFromStatus = (status?: string) => {
   const normalized = (status || '').toLowerCase();
@@ -560,7 +461,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 {timelineSteps.map((step, index) => {
                   const isComplete = index < currentTimelineStepIndex;
                   const isCurrent = index === currentTimelineStepIndex;
-                  const currentStepHref = `/projects/${project.id}?tab=${encodeURIComponent(step.tab)}`;
+                  const stepActionKey =
+                    (isCurrent && primaryNextStep?.actionKey) ||
+                    step.actionKeys.find((actionKey) => Boolean(getClientTabForAction(actionKey))) ||
+                    undefined;
+                  const stepTab = getClientTabForAction(stepActionKey) || 'overview';
+                  const currentStepHref = `/projects/${project.id}?tab=${encodeURIComponent(stepTab)}`;
                   const currentActionLabel =
                     primaryNextStep?.actionLabel && primaryNextStep.actionLabel !== step.title
                       ? primaryNextStep.actionLabel

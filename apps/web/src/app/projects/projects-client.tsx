@@ -23,6 +23,7 @@ import {
 import type { UpdatesSummary } from "@/lib/updates-cache";
 import { fetchAssistPresenceByProject } from "@/lib/assist-requests";
 import { extractObjectKeyFromValue, getUploadResponseKeys } from "@/lib/media-assets";
+import { clientActionTabMap } from '@/lib/client-workflow';
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -39,27 +40,6 @@ const statusColors: Record<string, string> = {
 type AssistStatus = "open" | "in_progress" | "closed";
 
 type SummaryTone = 'slate' | 'emerald' | 'amber' | 'rose';
-
-const clientActionTabMap: Record<string, string> = {
-  INVITE_PROFESSIONALS: 'professionals',
-  REVIEW_INCOMING_QUOTES: 'professionals',
-  COMPARE_QUOTES: 'professionals',
-  SELECT_PROFESSIONAL: 'professionals',
-  REQUEST_SITE_VISIT: 'site-access',
-  CONFIRM_SITE_VISIT: 'site-access',
-  REVIEW_CONTRACT: 'contract',
-  SIGN_CONTRACT: 'contract',
-  DEPOSIT_ESCROW_FUNDS: 'financials',
-  REVIEW_PAYMENT_REQUEST: 'financials',
-  CONFIRM_START_DATE: 'schedule',
-  CONFIRM_SCHEDULE: 'schedule',
-  CONFIRM_START_DETAILS: 'schedule',
-  REVIEW_PROGRESS: 'schedule',
-  APPROVE_MILESTONE: 'schedule',
-  SCHEDULE_FINAL_INSPECTION: 'schedule',
-  APPROVE_FINAL_WORK: 'schedule',
-  REPORT_DEFECT: 'schedule',
-};
 
 const clientActionSectionMap: Record<string, string> = {};
 

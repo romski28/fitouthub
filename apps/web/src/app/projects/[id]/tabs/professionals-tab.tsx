@@ -6,6 +6,7 @@ import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
+import { getClientTabForAction } from '@/lib/client-workflow';
 
 interface ProjectProfessional {
   id: string;
@@ -61,17 +62,6 @@ interface ProfessionalsTabProps {
   actionBusy?: string | null;
   onNavigateTab?: (tab: string) => void;
 }
-
-const actionToTab: Record<string, string> = {
-  REVIEW_CONTRACT: 'contract',
-  SIGN_CONTRACT: 'contract',
-  CONFIRM_START_DETAILS: 'schedule',
-  CONFIRM_SCHEDULE: 'schedule',
-  DEPOSIT_ESCROW_FUNDS: 'financials',
-  REVIEW_PAYMENT_REQUEST: 'financials',
-  REVIEW_PROGRESS: 'schedule',
-  APPROVE_MILESTONE: 'schedule',
-};
 
 const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
   if (!actionKey) return undefined;
@@ -212,7 +202,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
         cacheScope: `client-professionals-modal:${project.id}`,
         forceRefresh: true,
       });
-      const tab = next?.actionKey ? actionToTab[next.actionKey] : undefined;
+      const tab = next?.actionKey ? getClientTabForAction(next.actionKey) : undefined;
       setWorkflowModalCompletedLabel(completedLabel);
       setWorkflowModalNextStep(
         next

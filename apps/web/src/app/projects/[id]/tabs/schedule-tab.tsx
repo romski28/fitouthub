@@ -6,6 +6,7 @@ import { StartDateNegotiationPanel, StartProposalRow } from '@/components/start-
 import { ProjectProgressBar } from '@/components/project-progress-bar';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
+import { getClientTabForAction } from '@/lib/client-workflow';
 
 // ---------------------------------------------------------------------------
 
@@ -55,16 +56,6 @@ interface ClientScheduleTabProps {
   onNavigateTab?: (tab: string) => void;
 }
 
-const actionToTab: Record<string, string> = {
-  CONFIRM_START_DETAILS: 'schedule',
-  CONFIRM_SCHEDULE: 'schedule',
-  DEPOSIT_ESCROW_FUNDS: 'financials',
-  REVIEW_PAYMENT_REQUEST: 'financials',
-  REVIEW_PROGRESS: 'schedule',
-  APPROVE_MILESTONE: 'schedule',
-  CONFIRM_NEXT_PHASE: 'schedule',
-};
-
 const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
   if (!actionKey) return undefined;
   if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
@@ -109,7 +100,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
         forceRefresh: true,
       });
 
-      const tab = next?.actionKey ? actionToTab[next.actionKey] : undefined;
+      const tab = next?.actionKey ? getClientTabForAction(next.actionKey) : undefined;
       setWorkflowModalCompletedLabel(completedLabel);
       setWorkflowModalNextStep(
         next

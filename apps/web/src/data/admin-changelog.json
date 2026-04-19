@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-04-19-2b710b9",
+    "date": "2026-04-19T09:46:28+08:00",
+    "title": "Fuse client workflow mapping and fix escrow open-stage routing",
+    "summary": "Fuse client workflow mapping and fix escrow open-stage routing",
+    "areas": [
+      "web"
+    ],
+    "commit": "2b710b9",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/lib/client-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-19-21ec7e5",
     "date": "2026-04-19T09:39:52+08:00",
     "title": "Align next-step seed config with agreement and escrow stages",
