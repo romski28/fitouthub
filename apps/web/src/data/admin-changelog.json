@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-19-e8bf22e",
+    "date": "2026-04-19T21:16:03+08:00",
+    "title": "Implement Release A milestone procurement-gated wallet controls",
+    "summary": "Implement Release A milestone procurement-gated wallet controls",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e8bf22e",
+    "files": [
+      "apps/api/prisma/migrations/20260419_add_milestone_procurement_evidence/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-0ccb913",
     "date": "2026-04-19T12:00:17+08:00",
     "title": "Update pre-work timeline metric to Date Status from start proposal conversation",

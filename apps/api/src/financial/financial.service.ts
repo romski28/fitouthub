@@ -374,6 +374,67 @@ export class FinancialService {
     }
   }
 
+  private serializeMilestoneMetadata(extra: Record<string, unknown>) {
+    return `__FOH_MILESTONE__${JSON.stringify(extra)}`;
+  }
+
+  private toAmount(value: unknown) {
+    if (value == null) return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    if (value instanceof Decimal) {
+      return Number(value.toString());
+    }
+    if (typeof value === 'object' && value && 'toString' in (value as any)) {
+      const parsed = Number((value as any).toString());
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  }
+
+  private async getMilestoneProcurementContext(projectId: string, milestoneId: string) {
+    const paymentPlan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId },
+      include: {
+        project: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+        projectProfessional: {
+          select: {
+            id: true,
+            professionalId: true,
+          },
+        },
+        milestones: {
+          where: { id: milestoneId },
+          take: 1,
+        },
+      },
+    });
+
+    if (!paymentPlan) {
+      throw new NotFoundException('Payment plan not found for this project');
+    }
+
+    const milestone = paymentPlan.milestones?.[0];
+    if (!milestone) {
+      throw new NotFoundException('Milestone not found for this project');
+    }
+
+    return {
+      paymentPlan,
+      milestone,
+      project: paymentPlan.project,
+      projectProfessional: paymentPlan.projectProfessional,
+    };
+  }
+
   private hashOtpCode(code: string) {
     return createHash('sha256').update(code).digest('hex');
   }
@@ -2197,6 +2258,432 @@ export class FinancialService {
     return updated;
   }
 
+  async authorizeMilestoneFohCap(input: {
+    projectId: string;
+    milestoneId: string;
+    actorId: string;
+    actorRole: 'client' | 'admin';
+    amount?: number;
+    notes?: string;
+  }) {
+    const { paymentPlan, milestone, project, projectProfessional } =
+      await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
+
+    if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
+      throw new BadRequestException('Milestone 1 cap authorization is only required for Class 1 and 2 projects');
+    }
+
+    if (Number(milestone.sequence) !== 1) {
+      throw new BadRequestException('Only milestone 1 supports procurement-gated cap authorization');
+    }
+
+    if (input.actorRole === 'client' && project?.userId !== input.actorId) {
+      throw new ForbiddenException('Only the project client can authorize this cap');
+    }
+
+    if (!['escrow_funded', 'release_requested'].includes(String(milestone.status || ''))) {
+      throw new BadRequestException(`Milestone is in status '${milestone.status}' and cannot be capped yet`);
+    }
+
+    const requestedAmount = Number(input.amount || milestone.amount || 0);
+    if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+      throw new BadRequestException('Cap amount must be greater than 0');
+    }
+
+    const transaction = await this.prisma.financialTransaction.create({
+      data: {
+        projectId: input.projectId,
+        projectProfessionalId: projectProfessional?.id || null,
+        type: 'milestone_foh_allocation_cap',
+        description: `Client authorized Milestone ${milestone.sequence} cap to professional FoH wallet`,
+        amount: new Decimal(requestedAmount.toFixed(2)),
+        status: 'confirmed',
+        requestedBy: input.actorId,
+        requestedByRole: input.actorRole,
+        actionBy: input.actorId,
+        actionByRole: input.actorRole,
+        actionAt: new Date(),
+        actionComplete: true,
+        notes: [
+          input.notes ? String(input.notes).trim() : null,
+          this.serializeMilestoneMetadata({
+            paymentMilestoneId: milestone.id,
+            paymentPlanId: paymentPlan.id,
+            milestoneSequence: milestone.sequence,
+            milestoneTitle: milestone.title,
+            context: 'foh_cap_authorized',
+          }),
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      },
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId: transaction.id,
+      action: 'milestone_foh_cap_authorized',
+      actorId: input.actorId,
+      actorRole: input.actorRole,
+      details: 'Milestone 1 FoH cap authorized by client/admin',
+      metadata: {
+        projectId: input.projectId,
+        milestoneId: milestone.id,
+        amount: requestedAmount,
+      },
+    });
+
+    return {
+      success: true,
+      transaction,
+      walletSummary: await this.getProjectWalletSummary(input.projectId, projectProfessional?.id || null),
+    };
+  }
+
+  async submitMilestoneProcurementEvidence(input: {
+    projectId: string;
+    milestoneId: string;
+    actorId: string;
+    actorRole: 'professional' | 'admin';
+    claimedAmount: number;
+    invoiceUrls?: string[];
+    photoUrls?: string[];
+    notes?: string;
+  }) {
+    const { paymentPlan, milestone, projectProfessional } =
+      await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
+
+    if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
+      throw new BadRequestException('Procurement evidence workflow is only for Class 1 and 2 projects');
+    }
+    if (Number(milestone.sequence) !== 1) {
+      throw new BadRequestException('Only milestone 1 accepts procurement evidence');
+    }
+
+    if (
+      input.actorRole === 'professional' &&
+      projectProfessional?.professionalId &&
+      projectProfessional.professionalId !== input.actorId
+    ) {
+      throw new ForbiddenException('You can only submit evidence for your awarded project');
+    }
+
+    const claimedAmount = Number(input.claimedAmount || 0);
+    if (!Number.isFinite(claimedAmount) || claimedAmount <= 0) {
+      throw new BadRequestException('claimedAmount must be greater than 0');
+    }
+
+    const invoiceUrls = (input.invoiceUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
+    const photoUrls = (input.photoUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
+
+    const evidence = await (this.prisma as any).milestoneProcurementEvidence.create({
+      data: {
+        projectId: input.projectId,
+        paymentMilestoneId: milestone.id,
+        projectProfessionalId: projectProfessional?.id || null,
+        submittedBy: input.actorId,
+        submittedByRole: input.actorRole,
+        claimedAmount: new Decimal(claimedAmount.toFixed(2)),
+        invoiceUrls,
+        photoUrls,
+        notes: input.notes?.trim() || null,
+        status: 'pending',
+      },
+    });
+
+    return {
+      success: true,
+      evidence,
+    };
+  }
+
+  async getMilestoneProcurementEvidence(projectId: string, milestoneId: string) {
+    await this.getMilestoneProcurementContext(projectId, milestoneId);
+    return (this.prisma as any).milestoneProcurementEvidence.findMany({
+      where: {
+        projectId,
+        paymentMilestoneId: milestoneId,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async reviewMilestoneProcurementEvidence(input: {
+    projectId: string;
+    milestoneId: string;
+    evidenceId: string;
+    actorId: string;
+    actorRole: 'client' | 'admin';
+    decision: 'approved' | 'rejected';
+    approvedAmount?: number;
+    reviewNotes?: string;
+    titleTransferAcknowledged?: boolean;
+  }) {
+    const { paymentPlan, milestone, project, projectProfessional } =
+      await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
+
+    if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
+      throw new BadRequestException('Procurement evidence review is only for Class 1 and 2 projects');
+    }
+    if (Number(milestone.sequence) !== 1) {
+      throw new BadRequestException('Only milestone 1 supports procurement evidence review');
+    }
+    if (input.actorRole === 'client' && project?.userId !== input.actorId) {
+      throw new ForbiddenException('Only the project client can review this evidence');
+    }
+
+    const evidence = await (this.prisma as any).milestoneProcurementEvidence.findFirst({
+      where: {
+        id: input.evidenceId,
+        projectId: input.projectId,
+        paymentMilestoneId: milestone.id,
+      },
+    });
+
+    if (!evidence) {
+      throw new NotFoundException('Procurement evidence not found');
+    }
+    if (String(evidence.status || '').toLowerCase() !== 'pending') {
+      throw new BadRequestException('This evidence has already been reviewed');
+    }
+
+    const claimed = this.toAmount(evidence.claimedAmount);
+    const requestedApproved =
+      input.decision === 'approved'
+        ? Number(input.approvedAmount ?? claimed)
+        : 0;
+    if (input.decision === 'approved') {
+      if (!Number.isFinite(requestedApproved) || requestedApproved <= 0) {
+        throw new BadRequestException('approvedAmount must be greater than 0 for approved evidence');
+      }
+      if (requestedApproved > claimed) {
+        throw new BadRequestException('approvedAmount cannot exceed claimed amount');
+      }
+    }
+
+    const [capAgg, approvedAgg, returnedAgg] = await this.retryWithBackoff(() =>
+      this.prisma.$transaction([
+        this.prisma.financialTransaction.aggregate({
+          where: {
+            projectId: input.projectId,
+            type: 'milestone_foh_allocation_cap',
+            status: 'confirmed',
+            notes: { contains: milestone.id },
+          },
+          _sum: { amount: true },
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: {
+            projectId: input.projectId,
+            type: 'milestone_procurement_approved',
+            status: 'confirmed',
+            notes: { contains: milestone.id },
+          },
+          _sum: { amount: true },
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: {
+            projectId: input.projectId,
+            type: 'milestone_cap_remainder_return',
+            status: 'confirmed',
+            notes: { contains: milestone.id },
+          },
+          _sum: { amount: true },
+        }),
+      ]),
+    );
+
+    const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
+    const approvedTotal = this.toAmount(approvedAgg?._sum?.amount || 0);
+    const returnedTotal = this.toAmount(returnedAgg?._sum?.amount || 0);
+    const remainingCap = Math.max(capTotal - approvedTotal - returnedTotal, 0);
+
+    if (input.decision === 'approved' && requestedApproved > remainingCap) {
+      throw new BadRequestException('Approved amount exceeds remaining authorized cap');
+    }
+
+    const result = await this.prisma.$transaction(async (prisma) => {
+      const updatedEvidence = await (prisma as any).milestoneProcurementEvidence.update({
+        where: { id: evidence.id },
+        data: {
+          status: input.decision,
+          approvedAmount: input.decision === 'approved' ? new Decimal(requestedApproved.toFixed(2)) : null,
+          reviewedBy: input.actorId,
+          reviewedByRole: input.actorRole,
+          reviewedAt: new Date(),
+          reviewNotes: input.reviewNotes?.trim() || null,
+          titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
+        },
+      });
+
+      let approvalTx: any = null;
+      if (input.decision === 'approved') {
+        approvalTx = await prisma.financialTransaction.create({
+          data: {
+            projectId: input.projectId,
+            projectProfessionalId: projectProfessional?.id || null,
+            type: 'milestone_procurement_approved',
+            description: `Procurement approved for milestone ${milestone.sequence} and moved to transfer-ready`,
+            amount: new Decimal(requestedApproved.toFixed(2)),
+            status: 'confirmed',
+            requestedBy: input.actorId,
+            requestedByRole: input.actorRole,
+            actionBy: input.actorId,
+            actionByRole: input.actorRole,
+            actionAt: new Date(),
+            actionComplete: true,
+            notes: [
+              input.reviewNotes?.trim() || null,
+              this.serializeMilestoneMetadata({
+                paymentMilestoneId: milestone.id,
+                paymentPlanId: paymentPlan.id,
+                milestoneSequence: milestone.sequence,
+                milestoneTitle: milestone.title,
+                context: 'procurement_approved',
+                procurementEvidenceId: evidence.id,
+              }),
+            ]
+              .filter(Boolean)
+              .join(' | '),
+          },
+        });
+      }
+
+      return { updatedEvidence, approvalTx };
+    });
+
+    if (result.approvalTx) {
+      await this.createFinancialAuditLog({
+        transactionId: result.approvalTx.id,
+        action: 'milestone_procurement_approved',
+        actorId: input.actorId,
+        actorRole: input.actorRole,
+        details: 'Procurement evidence approved and funds moved to transfer-ready',
+        metadata: {
+          evidenceId: evidence.id,
+          approvedAmount: requestedApproved,
+          titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
+        },
+      });
+    }
+
+    return {
+      success: true,
+      evidence: result.updatedEvidence,
+      transaction: result.approvalTx,
+      walletSummary: await this.getProjectWalletSummary(input.projectId, projectProfessional?.id || null),
+    };
+  }
+
+  async returnMilestoneFohCapRemainder(input: {
+    projectId: string;
+    milestoneId: string;
+    actorId: string;
+    actorRole: 'client' | 'admin';
+    notes?: string;
+  }) {
+    const { paymentPlan, milestone, project, projectProfessional } =
+      await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
+
+    if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
+      throw new BadRequestException('Cap remainder return applies only to Class 1 and 2 projects');
+    }
+    if (Number(milestone.sequence) !== 1) {
+      throw new BadRequestException('Only milestone 1 supports cap remainder return');
+    }
+    if (input.actorRole === 'client' && project?.userId !== input.actorId) {
+      throw new ForbiddenException('Only the project client can return the cap remainder');
+    }
+
+    const [capAgg, approvedAgg, returnedAgg] = await this.retryWithBackoff(() =>
+      this.prisma.$transaction([
+        this.prisma.financialTransaction.aggregate({
+          where: {
+            projectId: input.projectId,
+            type: 'milestone_foh_allocation_cap',
+            status: 'confirmed',
+            notes: { contains: milestone.id },
+          },
+          _sum: { amount: true },
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: {
+            projectId: input.projectId,
+            type: 'milestone_procurement_approved',
+            status: 'confirmed',
+            notes: { contains: milestone.id },
+          },
+          _sum: { amount: true },
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: {
+            projectId: input.projectId,
+            type: 'milestone_cap_remainder_return',
+            status: 'confirmed',
+            notes: { contains: milestone.id },
+          },
+          _sum: { amount: true },
+        }),
+      ]),
+    );
+
+    const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
+    const approvedTotal = this.toAmount(approvedAgg?._sum?.amount || 0);
+    const returnedTotal = this.toAmount(returnedAgg?._sum?.amount || 0);
+    const remainder = Math.max(capTotal - approvedTotal - returnedTotal, 0);
+
+    if (remainder <= 0) {
+      throw new BadRequestException('No remaining cap amount to return');
+    }
+
+    const transaction = await this.prisma.financialTransaction.create({
+      data: {
+        projectId: input.projectId,
+        projectProfessionalId: projectProfessional?.id || null,
+        type: 'milestone_cap_remainder_return',
+        description: `Returned unspent milestone ${milestone.sequence} cap back to client escrow pool`,
+        amount: new Decimal(remainder.toFixed(2)),
+        status: 'confirmed',
+        requestedBy: input.actorId,
+        requestedByRole: input.actorRole,
+        actionBy: input.actorId,
+        actionByRole: input.actorRole,
+        actionAt: new Date(),
+        actionComplete: true,
+        notes: [
+          input.notes?.trim() || null,
+          this.serializeMilestoneMetadata({
+            paymentMilestoneId: milestone.id,
+            paymentPlanId: paymentPlan.id,
+            milestoneSequence: milestone.sequence,
+            milestoneTitle: milestone.title,
+            context: 'cap_remainder_returned',
+          }),
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      },
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId: transaction.id,
+      action: 'milestone_foh_cap_remainder_returned',
+      actorId: input.actorId,
+      actorRole: input.actorRole,
+      details: 'Returned remaining milestone cap to client escrow pool',
+      metadata: {
+        projectId: input.projectId,
+        milestoneId: milestone.id,
+        amount: remainder,
+      },
+    });
+
+    return {
+      success: true,
+      transaction,
+      walletSummary: await this.getProjectWalletSummary(input.projectId, projectProfessional?.id || null),
+    };
+  }
+
   async getProjectWalletSummary(projectId: string, projectProfessionalId?: string | null) {
     const [project, paymentPlan, transactions] = await this.retryWithBackoff(() =>
       this.prisma.$transaction([
@@ -2239,37 +2726,23 @@ export class FinancialService {
       throw new NotFoundException('Project not found');
     }
 
-    const toAmount = (value: unknown) => {
-      if (value == null) return 0;
-      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-      if (typeof value === 'string') {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : 0;
-      }
-      if (value instanceof Decimal) {
-        return Number(value.toString());
-      }
-      if (typeof value === 'object' && value && 'toString' in (value as any)) {
-        const parsed = Number((value as any).toString());
-        return Number.isFinite(parsed) ? parsed : 0;
-      }
-      return 0;
-    };
-
     const contractValue = paymentPlan
-      ? toAmount((paymentPlan as any).totalAmount)
-      : toAmount(project.approvedBudget ?? project.budget ?? 0);
+      ? this.toAmount((paymentPlan as any).totalAmount)
+      : this.toAmount(project.approvedBudget ?? project.budget ?? 0);
 
     const txByMilestone = new Map<string, Array<{ type: string; status: string; amount: number }>>();
 
     let clientFundedTotal = 0;
     let professionalEscrowAllocated = 0;
     let releasedToProfessionalWallet = 0;
+    let procurementApprovedToTransferReady = 0;
+    let capAllocatedTotal = 0;
+    let capReturnedTotal = 0;
     let professionalInPayoutProcessing = 0;
     let professionalPaidOut = 0;
 
     for (const tx of transactions as Array<{ type: string; status: string; amount: unknown; notes?: string | null }>) {
-      const amount = toAmount(tx.amount);
+      const amount = this.toAmount(tx.amount);
       const status = String(tx.status || '').toLowerCase();
 
       if (
@@ -2288,6 +2761,16 @@ export class FinancialService {
         }
       }
 
+      if (tx.type === 'milestone_foh_allocation_cap' && status === 'confirmed') {
+        capAllocatedTotal += amount;
+      }
+      if (tx.type === 'milestone_procurement_approved' && status === 'confirmed') {
+        procurementApprovedToTransferReady += amount;
+      }
+      if (tx.type === 'milestone_cap_remainder_return' && status === 'confirmed') {
+        capReturnedTotal += amount;
+      }
+
       if (tx.type === 'professional_wallet_transfer') {
         if (status === 'pending') {
           professionalInPayoutProcessing += amount;
@@ -2297,7 +2780,13 @@ export class FinancialService {
         }
       }
 
-      if (tx.type === 'release_payment' || tx.type === 'professional_wallet_transfer') {
+      if (
+        tx.type === 'release_payment' ||
+        tx.type === 'professional_wallet_transfer' ||
+        tx.type === 'milestone_foh_allocation_cap' ||
+        tx.type === 'milestone_procurement_approved' ||
+        tx.type === 'milestone_cap_remainder_return'
+      ) {
         const milestoneMeta = this.parseMilestoneMetadata(tx.notes);
         if (milestoneMeta?.paymentMilestoneId) {
           const bucket = txByMilestone.get(milestoneMeta.paymentMilestoneId) || [];
@@ -2311,11 +2800,20 @@ export class FinancialService {
       }
     }
 
-    const professionalAvailable = Math.max(
-      releasedToProfessionalWallet - professionalInPayoutProcessing - professionalPaidOut,
+    const cappedAllocatedOutstanding = Math.max(
+      capAllocatedTotal - procurementApprovedToTransferReady - capReturnedTotal,
       0,
     );
-    const clientEscrowHeld = Math.max(clientFundedTotal - releasedToProfessionalWallet, 0);
+    professionalEscrowAllocated += cappedAllocatedOutstanding;
+
+    const professionalAvailable = Math.max(
+      releasedToProfessionalWallet + procurementApprovedToTransferReady - professionalInPayoutProcessing - professionalPaidOut,
+      0,
+    );
+    const clientEscrowHeld = Math.max(
+      clientFundedTotal - releasedToProfessionalWallet - procurementApprovedToTransferReady,
+      0,
+    );
     const clientEscrowUnallocated = Math.max(
       clientEscrowHeld - professionalEscrowAllocated,
       0,
@@ -2340,7 +2838,16 @@ export class FinancialService {
         if (entry.type === 'release_payment' && entry.status === 'pending') {
           allocatedAmount += entry.amount;
         }
+        if (entry.type === 'milestone_foh_allocation_cap' && entry.status === 'confirmed') {
+          allocatedAmount += entry.amount;
+        }
+        if (entry.type === 'milestone_cap_remainder_return' && entry.status === 'confirmed') {
+          allocatedAmount -= entry.amount;
+        }
         if (entry.type === 'release_payment' && entry.status === 'confirmed') {
+          availableAmount += entry.amount;
+        }
+        if (entry.type === 'milestone_procurement_approved' && entry.status === 'confirmed') {
           availableAmount += entry.amount;
         }
         if (entry.type === 'professional_wallet_transfer' && entry.status === 'confirmed') {
@@ -2352,7 +2859,7 @@ export class FinancialService {
         id: milestone.id,
         sequence: milestone.sequence,
         title: milestone.title,
-        plannedAmount: toAmount(milestone.amount),
+        plannedAmount: this.toAmount(milestone.amount),
         fundedAmount,
         allocatedAmount,
         availableAmount,

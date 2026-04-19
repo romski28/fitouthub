@@ -98,6 +98,28 @@ interface PaymentPlan {
   milestones: PaymentPlanMilestone[];
 }
 
+interface MilestoneProcurementEvidence {
+  id: string;
+  projectId: string;
+  paymentMilestoneId: string;
+  projectProfessionalId?: string | null;
+  submittedBy: string;
+  submittedByRole: string;
+  claimedAmount: number | string;
+  approvedAmount?: number | string | null;
+  invoiceUrls?: string[];
+  photoUrls?: string[];
+  notes?: string | null;
+  status: 'pending' | 'approved' | 'rejected' | string;
+  reviewedBy?: string | null;
+  reviewedByRole?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+  titleTransferAcknowledged?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface WalletMilestoneBreakdown {
   id: string;
   sequence: number;
@@ -307,6 +329,13 @@ export default function ProjectFinancialsCard({
   const [slaStatusByTxId, setSlaStatusByTxId] = useState<Record<string, SlaStatusItem>>({});
   const [slaDraft, setSlaDraft] = useState<Partial<SlaCategoryPolicy> | null>(null);
   const [slaSaving, setSlaSaving] = useState(false);
+  const [procurementEvidence, setProcurementEvidence] = useState<MilestoneProcurementEvidence[]>([]);
+  const [procurementLoading, setProcurementLoading] = useState(false);
+  const [procurementBusy, setProcurementBusy] = useState<string | null>(null);
+  const [claimedProcurementAmount, setClaimedProcurementAmount] = useState('');
+  const [invoiceUrlsInput, setInvoiceUrlsInput] = useState('');
+  const [photoUrlsInput, setPhotoUrlsInput] = useState('');
+  const [procurementNotes, setProcurementNotes] = useState('');
 
   const isSlaItemRelevantToRole = (item?: SlaStatusItem | null) => {
     if (!item) return false;
@@ -625,6 +654,242 @@ export default function ProjectFinancialsCard({
     }
     return map;
   }, [walletSummary]);
+
+  const firstMilestone = useMemo(() => {
+    const milestones = paymentPlan?.milestones || [];
+    return milestones.find((m) => Number(m.sequence) === 1) || milestones[0] || null;
+  }, [paymentPlan]);
+
+  const firstMilestoneMeta = useMemo(() => {
+    if (!firstMilestone) {
+      return {
+        capTotal: 0,
+        approvedTotal: 0,
+        returnedTotal: 0,
+        remainingCap: 0,
+      };
+    }
+    let capTotal = 0;
+    let approvedTotal = 0;
+    let returnedTotal = 0;
+
+    for (const tx of transactions) {
+      const meta = parseMilestoneMetadataFromNotes(tx.notes);
+      if (!meta?.paymentMilestoneId || meta.paymentMilestoneId !== firstMilestone.id) {
+        continue;
+      }
+      const amount = typeof tx.amount === 'string' ? Number(tx.amount) : Number(tx.amount || 0);
+      const status = String(tx.status || '').toLowerCase();
+      if (!Number.isFinite(amount) || status !== 'confirmed') continue;
+
+      if (tx.type === 'milestone_foh_allocation_cap') capTotal += amount;
+      if (tx.type === 'milestone_procurement_approved') approvedTotal += amount;
+      if (tx.type === 'milestone_cap_remainder_return') returnedTotal += amount;
+    }
+
+    return {
+      capTotal,
+      approvedTotal,
+      returnedTotal,
+      remainingCap: Math.max(capTotal - approvedTotal - returnedTotal, 0),
+    };
+  }, [transactions, firstMilestone]);
+
+  async function fetchProcurementEvidence() {
+    if (!firstMilestone || !paymentPlan || !['SCALE_1', 'SCALE_2'].includes(paymentPlan.projectScale)) {
+      setProcurementEvidence([]);
+      return;
+    }
+    try {
+      setProcurementLoading(true);
+      const res = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/procurement-evidence`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      if (!res.ok) {
+        throw new Error('Failed to load procurement evidence');
+      }
+      const data = await res.json();
+      setProcurementEvidence(Array.isArray(data) ? data : []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load procurement evidence');
+    } finally {
+      setProcurementLoading(false);
+    }
+  }
+
+  const handleAuthorizeMilestoneCap = async () => {
+    if (!firstMilestone) return;
+    const defaultAmount = Number(firstMilestone.amount || 0);
+    const raw = window.prompt('Authorize milestone 1 cap amount (HKD):', String(defaultAmount || ''));
+    if (!raw) return;
+    const amount = Number(raw);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Enter a valid cap amount');
+      return;
+    }
+    try {
+      setProcurementBusy('authorize-cap');
+      const res = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/authorize-foh-cap`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to authorize cap');
+      }
+      toast.success('Milestone cap authorized');
+      await Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to authorize cap');
+    } finally {
+      setProcurementBusy(null);
+    }
+  };
+
+  const handleSubmitProcurementEvidence = async () => {
+    if (!firstMilestone) return;
+    const claimedAmount = Number(claimedProcurementAmount || 0);
+    if (!Number.isFinite(claimedAmount) || claimedAmount <= 0) {
+      toast.error('Enter a valid claimed amount');
+      return;
+    }
+    try {
+      setProcurementBusy('submit-evidence');
+      const res = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/procurement-evidence`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            claimedAmount,
+            invoiceUrls: invoiceUrlsInput.split(',').map((entry) => entry.trim()).filter(Boolean),
+            photoUrls: photoUrlsInput.split(',').map((entry) => entry.trim()).filter(Boolean),
+            notes: procurementNotes || undefined,
+          }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to submit procurement evidence');
+      }
+      toast.success('Procurement evidence submitted');
+      setClaimedProcurementAmount('');
+      setInvoiceUrlsInput('');
+      setPhotoUrlsInput('');
+      setProcurementNotes('');
+      await fetchProcurementEvidence();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit evidence');
+    } finally {
+      setProcurementBusy(null);
+    }
+  };
+
+  const handleReviewEvidence = async (evidence: MilestoneProcurementEvidence, decision: 'approved' | 'rejected') => {
+    if (!firstMilestone) return;
+    let approvedAmount: number | undefined;
+    let titleTransferAcknowledged = false;
+
+    if (decision === 'approved') {
+      const raw = window.prompt(
+        'Approved amount for this evidence (HKD):',
+        String(evidence.claimedAmount || ''),
+      );
+      if (!raw) return;
+      approvedAmount = Number(raw);
+      if (!Number.isFinite(approvedAmount) || approvedAmount <= 0) {
+        toast.error('Enter a valid approved amount');
+        return;
+      }
+      titleTransferAcknowledged = window.confirm(
+        'Confirm title transfer acknowledgement for purchased items?',
+      );
+    }
+
+    try {
+      setProcurementBusy(`review-${evidence.id}`);
+      const res = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/procurement-evidence/${evidence.id}/review`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            decision,
+            approvedAmount,
+            titleTransferAcknowledged,
+          }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to review evidence');
+      }
+      toast.success(decision === 'approved' ? 'Evidence approved' : 'Evidence rejected');
+      await Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to review evidence');
+    } finally {
+      setProcurementBusy(null);
+    }
+  };
+
+  const handleReturnCapRemainder = async () => {
+    if (!firstMilestone) return;
+    if (!window.confirm('Return remaining milestone cap back to client escrow pool?')) return;
+
+    try {
+      setProcurementBusy('return-remainder');
+      const res = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/return-foh-cap-remainder`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to return cap remainder');
+      }
+      toast.success('Cap remainder returned to client escrow pool');
+      await Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to return cap remainder');
+    } finally {
+      setProcurementBusy(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!paymentPlan || !firstMilestone) {
+      setProcurementEvidence([]);
+      return;
+    }
+    if (!['SCALE_1', 'SCALE_2'].includes(paymentPlan.projectScale)) {
+      setProcurementEvidence([]);
+      return;
+    }
+    void fetchProcurementEvidence();
+  }, [paymentPlan?.id, paymentPlan?.projectScale, firstMilestone?.id]);
 
   const handleConfirmDeposit = async (transactionId: string) => {
     try {
@@ -1083,6 +1348,140 @@ export default function ProjectFinancialsCard({
                   <p className="text-sm font-semibold text-white mt-1">{formatHKD(paymentPlan.totalAmount)}</p>
                 </div>
               </div>
+
+              {['SCALE_1', 'SCALE_2'].includes(paymentPlan.projectScale) && firstMilestone && (
+                <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-4 space-y-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-white">Milestone 1 Procurement Gate</h4>
+                      <p className="text-xs text-cyan-100 mt-1">
+                        Client-authorized cap with evidence-based move to transfer-ready.
+                      </p>
+                    </div>
+                    <div className="grid gap-1 text-xs text-cyan-100">
+                      <p>Cap Total: <span className="font-semibold text-white">{formatHKD(firstMilestoneMeta.capTotal)}</span></p>
+                      <p>Approved: <span className="font-semibold text-white">{formatHKD(firstMilestoneMeta.approvedTotal)}</span></p>
+                      <p>Remaining: <span className="font-semibold text-white">{formatHKD(firstMilestoneMeta.remainingCap)}</span></p>
+                    </div>
+                  </div>
+
+                  {(resolvedRole === 'client' || resolvedRole === 'admin') && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAuthorizeMilestoneCap}
+                        disabled={procurementBusy === 'authorize-cap'}
+                        className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
+                      >
+                        {procurementBusy === 'authorize-cap' ? 'Authorizing...' : 'Authorize Milestone 1 Cap'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleReturnCapRemainder}
+                        disabled={procurementBusy === 'return-remainder' || firstMilestoneMeta.remainingCap <= 0}
+                        className="rounded-md bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-600 disabled:opacity-50"
+                      >
+                        {procurementBusy === 'return-remainder' ? 'Returning...' : 'Return Cap Remainder'}
+                      </button>
+                    </div>
+                  )}
+
+                  {resolvedRole === 'professional' && (
+                    <div className="rounded-md border border-cyan-400/30 bg-slate-900/50 p-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Submit Procurement Evidence</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={claimedProcurementAmount}
+                          onChange={(event) => setClaimedProcurementAmount(event.target.value)}
+                          placeholder="Claimed amount"
+                          className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                        />
+                        <input
+                          type="text"
+                          value={invoiceUrlsInput}
+                          onChange={(event) => setInvoiceUrlsInput(event.target.value)}
+                          placeholder="Invoice URLs (comma separated)"
+                          className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                        />
+                        <input
+                          type="text"
+                          value={photoUrlsInput}
+                          onChange={(event) => setPhotoUrlsInput(event.target.value)}
+                          placeholder="Photo URLs (comma separated)"
+                          className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                        />
+                        <input
+                          type="text"
+                          value={procurementNotes}
+                          onChange={(event) => setProcurementNotes(event.target.value)}
+                          placeholder="Notes"
+                          className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSubmitProcurementEvidence}
+                        disabled={procurementBusy === 'submit-evidence'}
+                        className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
+                      >
+                        {procurementBusy === 'submit-evidence' ? 'Submitting...' : 'Submit Evidence'}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Evidence Queue</p>
+                      {procurementLoading && <p className="text-xs text-slate-400">Loading...</p>}
+                    </div>
+                    {procurementEvidence.length === 0 ? (
+                      <p className="text-xs text-slate-400">No procurement evidence submitted yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {procurementEvidence.map((evidence) => (
+                          <div key={evidence.id} className="rounded border border-slate-700 bg-slate-950/40 p-2 space-y-1">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-xs text-white">
+                                Claimed: <span className="font-semibold">{formatHKD(evidence.claimedAmount)}</span>
+                                {evidence.approvedAmount ? ` | Approved: ${formatHKD(evidence.approvedAmount)}` : ''}
+                              </p>
+                              <StatusPill
+                                status={evidence.status}
+                                label={String(evidence.status || '').replace(/_/g, ' ')}
+                                tone={statusToneFromStatus(evidence.status)}
+                              />
+                            </div>
+                            {evidence.notes && <p className="text-xs text-slate-300">{evidence.notes}</p>}
+                            {(resolvedRole === 'client' || resolvedRole === 'admin') && evidence.status === 'pending' && (
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleReviewEvidence(evidence, 'approved')}
+                                  disabled={procurementBusy === `review-${evidence.id}`}
+                                  className="rounded bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                                >
+                                  Approve Amount
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReviewEvidence(evidence, 'rejected')}
+                                  disabled={procurementBusy === `review-${evidence.id}`}
+                                  className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {resolvedRole === 'admin' && slaDraft && (
                 <div className="rounded-md border border-indigo-500/30 bg-indigo-500/10 p-4 space-y-3">

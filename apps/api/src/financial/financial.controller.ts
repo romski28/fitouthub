@@ -394,6 +394,123 @@ export class FinancialController {
     return this.financialService.confirmProfessionalWalletTransfer(transactionId, req.user.id);
   }
 
+  @Post('project/:projectId/milestones/:milestoneId/authorize-foh-cap')
+  @UseGuards(CombinedAuthGuard)
+  async authorizeMilestoneFohCap(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body() body: { amount?: number; notes?: string },
+    @Request() req: any,
+  ) {
+    const actorRole: 'client' | 'admin' = req.user?.role === 'admin' ? 'admin' : 'client';
+    if (req.user?.isProfessional) {
+      throw new ForbiddenException('Professionals cannot authorize milestone cap');
+    }
+
+    return this.financialService.authorizeMilestoneFohCap({
+      projectId,
+      milestoneId,
+      actorId: req.user.id,
+      actorRole,
+      amount: body?.amount,
+      notes: body?.notes,
+    });
+  }
+
+  @Get('project/:projectId/milestones/:milestoneId/procurement-evidence')
+  @UseGuards(CombinedAuthGuard)
+  async getMilestoneProcurementEvidence(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+  ) {
+    return this.financialService.getMilestoneProcurementEvidence(projectId, milestoneId);
+  }
+
+  @Post('project/:projectId/milestones/:milestoneId/procurement-evidence')
+  @UseGuards(CombinedAuthGuard)
+  async submitMilestoneProcurementEvidence(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body()
+    body: {
+      claimedAmount: number;
+      invoiceUrls?: string[];
+      photoUrls?: string[];
+      notes?: string;
+    },
+    @Request() req: any,
+  ) {
+    const actorRole: 'professional' | 'admin' = req.user?.role === 'admin' ? 'admin' : 'professional';
+    if (!req.user?.isProfessional && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only professionals or admins can submit procurement evidence');
+    }
+
+    return this.financialService.submitMilestoneProcurementEvidence({
+      projectId,
+      milestoneId,
+      actorId: req.user.id,
+      actorRole,
+      claimedAmount: Number(body?.claimedAmount || 0),
+      invoiceUrls: Array.isArray(body?.invoiceUrls) ? body.invoiceUrls : [],
+      photoUrls: Array.isArray(body?.photoUrls) ? body.photoUrls : [],
+      notes: body?.notes,
+    });
+  }
+
+  @Post('project/:projectId/milestones/:milestoneId/procurement-evidence/:evidenceId/review')
+  @UseGuards(CombinedAuthGuard)
+  async reviewMilestoneProcurementEvidence(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Param('evidenceId') evidenceId: string,
+    @Body()
+    body: {
+      decision: 'approved' | 'rejected';
+      approvedAmount?: number;
+      reviewNotes?: string;
+      titleTransferAcknowledged?: boolean;
+    },
+    @Request() req: any,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new ForbiddenException('Professionals cannot review procurement evidence');
+    }
+
+    const actorRole: 'client' | 'admin' = req.user?.role === 'admin' ? 'admin' : 'client';
+    return this.financialService.reviewMilestoneProcurementEvidence({
+      projectId,
+      milestoneId,
+      evidenceId,
+      actorId: req.user.id,
+      actorRole,
+      decision: body?.decision,
+      approvedAmount: body?.approvedAmount,
+      reviewNotes: body?.reviewNotes,
+      titleTransferAcknowledged: Boolean(body?.titleTransferAcknowledged),
+    });
+  }
+
+  @Post('project/:projectId/milestones/:milestoneId/return-foh-cap-remainder')
+  @UseGuards(CombinedAuthGuard)
+  async returnMilestoneFohCapRemainder(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body() body: { notes?: string },
+    @Request() req: any,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new ForbiddenException('Professionals cannot return cap remainder');
+    }
+    const actorRole: 'client' | 'admin' = req.user?.role === 'admin' ? 'admin' : 'client';
+    return this.financialService.returnMilestoneFohCapRemainder({
+      projectId,
+      milestoneId,
+      actorId: req.user.id,
+      actorRole,
+      notes: body?.notes,
+    });
+  }
+
   /**
    * GET /financial/pending-release-sla - Admin: milestones awaiting release beyond SLA threshold
    * Admin only

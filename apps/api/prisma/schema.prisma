@@ -420,6 +420,7 @@ model Project {
   chatThread                   ProjectChatThread?
   financialTransactions        FinancialTransaction[]
   escrowLedgers                EscrowLedger[]
+  procurementEvidence          MilestoneProcurementEvidence[]
   approvedBudgetTransaction    FinancialTransaction?   @relation("ApprovedBudgetTx", fields: [approvedBudgetTxId], references: [id])
   awardedProjectProfessional   ProjectProfessional?    @relation("AwardedProjectProfessional", fields: [awardedProjectProfessionalId], references: [id])
   aiIntake                     AiIntake?
@@ -541,6 +542,7 @@ model ProjectProfessional {
   paymentRequests         PaymentRequest[]
   financialTransactions   FinancialTransaction[]
   escrowLedgers           EscrowLedger[]
+  procurementEvidence     MilestoneProcurementEvidence[]
   awardedInProject        Project?               @relation("AwardedProjectProfessional")
   siteAccessRequests      SiteAccessRequest[]
   siteAccessVisits         SiteAccessVisit[]
@@ -605,10 +607,42 @@ model PaymentMilestone {
 
   paymentPlan       ProjectPaymentPlan    @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
   projectMilestone  ProjectMilestone?     @relation(fields: [projectMilestoneId], references: [id], onDelete: SetNull)
+  procurementEvidence MilestoneProcurementEvidence[]
 
   @@unique([paymentPlanId, sequence])
   @@index([projectMilestoneId])
   @@index([paymentPlanId])
+  @@index([status])
+}
+
+model MilestoneProcurementEvidence {
+  id                      String   @id @default(cuid())
+  projectId               String
+  paymentMilestoneId      String
+  projectProfessionalId   String?
+  submittedBy             String
+  submittedByRole         String   @default("professional")
+  claimedAmount           Decimal  @db.Decimal(12, 2)
+  approvedAmount          Decimal? @db.Decimal(12, 2)
+  invoiceUrls             String[] @default([])
+  photoUrls               String[] @default([])
+  notes                   String?
+  status                  String   @default("pending") // pending | approved | rejected
+  reviewedBy              String?
+  reviewedByRole          String?
+  reviewedAt              DateTime?
+  reviewNotes             String?
+  titleTransferAcknowledged Boolean @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  project                 Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paymentMilestone        PaymentMilestone     @relation(fields: [paymentMilestoneId], references: [id], onDelete: Cascade)
+  projectProfessional     ProjectProfessional? @relation(fields: [projectProfessionalId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([paymentMilestoneId])
+  @@index([projectProfessionalId])
   @@index([status])
 }
 
