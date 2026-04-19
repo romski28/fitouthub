@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-19-f5b5da8",
+    "date": "2026-04-19T22:01:07+08:00",
+    "title": "Refine project materials purchase flow",
+    "summary": "Refine project materials purchase flow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f5b5da8",
+    "files": [
+      "apps/api/src/financial/financial.service.release-a.spec.ts",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-eae99f4",
     "date": "2026-04-19T21:26:09+08:00",
     "title": "Add service-level Release A tests for cap math and wallet summary",

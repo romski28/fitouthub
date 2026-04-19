@@ -5,14 +5,34 @@ import { FinancialService } from './financial.service';
 describe('FinancialService Release A', () => {
   const makeService = () => {
     const prisma = {
+      user: {
+        findUnique: jest.fn(),
+      },
+      professional: {
+        findUnique: jest.fn(),
+      },
+      activityLog: {
+        create: jest.fn(),
+      },
       milestoneProcurementEvidence: {
+        create: jest.fn(),
         findFirst: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
       },
       financialTransaction: {
+        aggregate: jest.fn(),
         create: jest.fn(),
       },
       $transaction: jest.fn(),
     } as any;
+
+    prisma.$transaction.mockImplementation(async (input: any) => {
+      if (typeof input === 'function') {
+        return input(prisma);
+      }
+      return input;
+    });
 
     const service = new FinancialService(
       prisma,
@@ -195,5 +215,127 @@ describe('FinancialService Release A', () => {
     expect(m1).toBeTruthy();
     expect(m1?.allocatedAmount).toBe(250);
     expect(m1?.availableAmount).toBe(250);
+  });
+
+  it('runs full Release A lifecycle: authorize cap -> submit evidence -> approve evidence -> return remainder', async () => {
+    const { service, prisma } = makeService();
+
+    jest.spyOn(service as any, 'getMilestoneProcurementContext').mockResolvedValue({
+      paymentPlan: {
+        id: 'plan-1',
+        projectScale: 'SCALE_1',
+      },
+      milestone: {
+        id: 'm1',
+        sequence: 1,
+        title: 'Milestone 1',
+        status: 'escrow_funded',
+        amount: 1000,
+      },
+      project: {
+        id: 'p1',
+        userId: 'client-1',
+      },
+      projectProfessional: {
+        id: 'pprof-1',
+        professionalId: 'pro-1',
+      },
+    });
+
+    jest.spyOn(service, 'getProjectWalletSummary').mockResolvedValue({
+      currency: 'HKD',
+      contractValue: 1000,
+      clientFundedTotal: 1000,
+      clientEscrowHeld: 1000,
+      clientEscrowUnallocated: 1000,
+      professionalEscrowAllocated: 0,
+      professionalInPayoutProcessing: 0,
+      professionalAvailable: 0,
+      professionalPaidOut: 0,
+      remainingToFund: 0,
+      milestoneBreakdown: [],
+    } as any);
+
+    const txTypes: string[] = [];
+    prisma.financialTransaction.create.mockImplementation(async ({ data }: any) => {
+      txTypes.push(data.type);
+      return {
+        id: `tx-${txTypes.length}`,
+        ...data,
+      };
+    });
+
+    prisma.milestoneProcurementEvidence.create.mockResolvedValue({
+      id: 'e-1',
+      status: 'pending',
+      claimedAmount: new Decimal('400.00'),
+    });
+    prisma.milestoneProcurementEvidence.findFirst.mockResolvedValue({
+      id: 'e-1',
+      status: 'pending',
+      claimedAmount: new Decimal('400.00'),
+    });
+    prisma.milestoneProcurementEvidence.update.mockResolvedValue({
+      id: 'e-1',
+      status: 'approved',
+      approvedAmount: new Decimal('300.00'),
+    });
+
+    jest.spyOn(service as any, 'retryWithBackoff')
+      .mockResolvedValueOnce([
+        { _sum: { amount: new Decimal('1000.00') } },
+        { _sum: { amount: new Decimal('0.00') } },
+        { _sum: { amount: new Decimal('0.00') } },
+      ])
+      .mockResolvedValueOnce([
+        { _sum: { amount: new Decimal('1000.00') } },
+        { _sum: { amount: new Decimal('300.00') } },
+        { _sum: { amount: new Decimal('0.00') } },
+      ]);
+
+    await service.authorizeMilestoneFohCap({
+      projectId: 'p1',
+      milestoneId: 'm1',
+      actorId: 'client-1',
+      actorRole: 'client',
+      amount: 1000,
+    });
+
+    await service.submitMilestoneProcurementEvidence({
+      projectId: 'p1',
+      milestoneId: 'm1',
+      actorId: 'pro-1',
+      actorRole: 'professional',
+      claimedAmount: 400,
+      invoiceUrls: ['https://example.com/invoice.pdf'],
+      photoUrls: ['https://example.com/photo.jpg'],
+      notes: 'submitted',
+    });
+
+    await service.reviewMilestoneProcurementEvidence({
+      projectId: 'p1',
+      milestoneId: 'm1',
+      evidenceId: 'e-1',
+      actorId: 'client-1',
+      actorRole: 'client',
+      decision: 'approved',
+      approvedAmount: 300,
+      titleTransferAcknowledged: true,
+    });
+
+    await service.returnMilestoneFohCapRemainder({
+      projectId: 'p1',
+      milestoneId: 'm1',
+      actorId: 'client-1',
+      actorRole: 'client',
+    });
+
+    expect(txTypes).toEqual([
+      'milestone_foh_allocation_cap',
+      'milestone_procurement_approved',
+      'milestone_cap_remainder_return',
+    ]);
+    expect(prisma.milestoneProcurementEvidence.create).toHaveBeenCalledTimes(1);
+    expect(prisma.milestoneProcurementEvidence.update).toHaveBeenCalledTimes(1);
   });
 });

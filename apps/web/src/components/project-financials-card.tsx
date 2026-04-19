@@ -336,6 +336,9 @@ export default function ProjectFinancialsCard({
   const [invoiceUrlsInput, setInvoiceUrlsInput] = useState('');
   const [photoUrlsInput, setPhotoUrlsInput] = useState('');
   const [procurementNotes, setProcurementNotes] = useState('');
+  const [selectedProcurementEvidenceId, setSelectedProcurementEvidenceId] = useState<string | null>(null);
+  const [authorizedProcurementAmount, setAuthorizedProcurementAmount] = useState('');
+  const [titleTransferAcknowledged, setTitleTransferAcknowledged] = useState(false);
 
   const isSlaItemRelevantToRole = (item?: SlaStatusItem | null) => {
     if (!item) return false;
@@ -357,6 +360,7 @@ export default function ProjectFinancialsCard({
   // Prevents the loading spinner from re-appearing on background token-refresh re-fetches,
   // which would hide card content momentarily (and in the page.tsx case, unmount the modal).
   const hasLoadedRef = useRef(false);
+  const materialsPurchasePanelRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedRole = useMemo<ProjectFinancialRole>(() => {
     if (authRole === 'admin' || authRole === 'client' || authRole === 'professional') {
@@ -695,6 +699,69 @@ export default function ProjectFinancialsCard({
     };
   }, [transactions, firstMilestone]);
 
+  const firstWalletMilestone = useMemo(() => {
+    if (!firstMilestone) return null;
+    return walletMilestoneById.get(firstMilestone.id) || null;
+  }, [walletMilestoneById, firstMilestone]);
+
+  const isProcurementWorkflowProject = useMemo(
+    () => Boolean(paymentPlan && ['SCALE_1', 'SCALE_2'].includes(paymentPlan.projectScale) && firstMilestone),
+    [paymentPlan, firstMilestone],
+  );
+
+  const pendingProcurementEvidence = useMemo(
+    () => procurementEvidence.filter((evidence) => String(evidence.status || '').toLowerCase() === 'pending'),
+    [procurementEvidence],
+  );
+
+  const selectedProcurementEvidence = useMemo(() => {
+    if (!selectedProcurementEvidenceId) return pendingProcurementEvidence[0] || null;
+    return pendingProcurementEvidence.find((evidence) => evidence.id === selectedProcurementEvidenceId) || pendingProcurementEvidence[0] || null;
+  }, [pendingProcurementEvidence, selectedProcurementEvidenceId]);
+
+  const hasMilestoneEscrowFunded = useMemo(
+    () => Number(firstWalletMilestone?.fundedAmount || 0) > 0,
+    [firstWalletMilestone],
+  );
+
+  const hasProcurementClaim = procurementEvidence.length > 0;
+  const canReviewMaterialsPurchase =
+    isProcurementWorkflowProject &&
+    hasMilestoneEscrowFunded &&
+    hasProcurementClaim &&
+    (resolvedRole === 'client' || resolvedRole === 'admin');
+  const canSubmitMaterialsPurchaseClaim =
+    isProcurementWorkflowProject &&
+    hasMilestoneEscrowFunded &&
+    resolvedRole === 'professional';
+  const showMaterialsPurchasePanel = canReviewMaterialsPurchase || canSubmitMaterialsPurchaseClaim;
+
+  useEffect(() => {
+    if (pendingProcurementEvidence.length === 0) {
+      setSelectedProcurementEvidenceId(null);
+      return;
+    }
+
+    if (!selectedProcurementEvidenceId || !pendingProcurementEvidence.some((evidence) => evidence.id === selectedProcurementEvidenceId)) {
+      setSelectedProcurementEvidenceId(pendingProcurementEvidence[0].id);
+    }
+  }, [pendingProcurementEvidence, selectedProcurementEvidenceId]);
+
+  useEffect(() => {
+    if (!selectedProcurementEvidence) {
+      setAuthorizedProcurementAmount('');
+      setTitleTransferAcknowledged(false);
+      return;
+    }
+
+    setAuthorizedProcurementAmount(String(selectedProcurementEvidence.claimedAmount ?? ''));
+    setTitleTransferAcknowledged(Boolean(selectedProcurementEvidence.titleTransferAcknowledged));
+  }, [selectedProcurementEvidence?.id]);
+
+  const scrollToMaterialsPurchasePanel = () => {
+    materialsPurchasePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   async function fetchProcurementEvidence() {
     if (!firstMilestone || !paymentPlan || !['SCALE_1', 'SCALE_2'].includes(paymentPlan.projectScale)) {
       setProcurementEvidence([]);
@@ -720,40 +787,36 @@ export default function ProjectFinancialsCard({
     }
   }
 
-  const handleAuthorizeMilestoneCap = async () => {
-    if (!firstMilestone) return;
-    const defaultAmount = Number(firstMilestone.amount || 0);
-    const raw = window.prompt('Authorize milestone 1 cap amount (HKD):', String(defaultAmount || ''));
-    if (!raw) return;
-    const amount = Number(raw);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error('Enter a valid cap amount');
-      return;
+  const authorizeMilestoneCap = async (amount: number) => {
+    if (!firstMilestone) {
+      throw new Error('Missing milestone context');
     }
-    try {
-      setProcurementBusy('authorize-cap');
-      const res = await fetch(
-        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/authorize-foh-cap`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount }),
+
+    const res = await fetch(
+      `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/authorize-foh-cap`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-      );
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to authorize cap');
-      }
-      toast.success('Milestone cap authorized');
-      await Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to authorize cap');
-    } finally {
-      setProcurementBusy(null);
+        body: JSON.stringify({ amount }),
+      },
+    );
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to authorize cap');
     }
+
+    if (data.transaction) {
+      setTransactions((prev) => [data.transaction as Transaction, ...prev]);
+    }
+    if (data.walletSummary) {
+      setWalletSummary(data.walletSummary as WalletSummary);
+    }
+
+    return data;
   };
 
   const handleSubmitProcurementEvidence = async () => {
@@ -798,82 +861,136 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const handleReviewEvidence = async (evidence: MilestoneProcurementEvidence, decision: 'approved' | 'rejected') => {
-    if (!firstMilestone) return;
-    let approvedAmount: number | undefined;
-    let titleTransferAcknowledged = false;
-
-    if (decision === 'approved') {
-      const raw = window.prompt(
-        'Approved amount for this evidence (HKD):',
-        String(evidence.claimedAmount || ''),
-      );
-      if (!raw) return;
-      approvedAmount = Number(raw);
-      if (!Number.isFinite(approvedAmount) || approvedAmount <= 0) {
-        toast.error('Enter a valid approved amount');
-        return;
-      }
-      titleTransferAcknowledged = window.confirm(
-        'Confirm title transfer acknowledgement for purchased items?',
-      );
+  const reviewProcurementEvidence = async (
+    evidence: MilestoneProcurementEvidence,
+    decision: 'approved' | 'rejected',
+    options?: { approvedAmount?: number; titleTransferAcknowledged?: boolean },
+  ) => {
+    if (!firstMilestone) {
+      throw new Error('Missing milestone context');
     }
 
-    try {
-      setProcurementBusy(`review-${evidence.id}`);
-      const res = await fetch(
-        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/procurement-evidence/${evidence.id}/review`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            decision,
-            approvedAmount,
-            titleTransferAcknowledged,
-          }),
+    const res = await fetch(
+      `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/procurement-evidence/${evidence.id}/review`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-      );
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to review evidence');
-      }
-      toast.success(decision === 'approved' ? 'Evidence approved' : 'Evidence rejected');
+        body: JSON.stringify({
+          decision,
+          approvedAmount: options?.approvedAmount,
+          titleTransferAcknowledged: options?.titleTransferAcknowledged,
+        }),
+      },
+    );
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to review evidence');
+    }
+
+    if (data.transaction) {
+      setTransactions((prev) => [data.transaction as Transaction, ...prev]);
+    }
+    if (data.walletSummary) {
+      setWalletSummary(data.walletSummary as WalletSummary);
+    }
+
+    return data;
+  };
+
+  const returnCapRemainder = async () => {
+    if (!firstMilestone) {
+      throw new Error('Missing milestone context');
+    }
+
+    const res = await fetch(
+      `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/return-foh-cap-remainder`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      },
+    );
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to return cap remainder');
+    }
+
+    if (data.transaction) {
+      setTransactions((prev) => [data.transaction as Transaction, ...prev]);
+    }
+    if (data.walletSummary) {
+      setWalletSummary(data.walletSummary as WalletSummary);
+    }
+
+    return data;
+  };
+
+  const handleRejectProcurementEvidence = async (evidence: MilestoneProcurementEvidence) => {
+    try {
+      setProcurementBusy(`reject-${evidence.id}`);
+      await reviewProcurementEvidence(evidence, 'rejected');
+      toast.success('Claim rejected');
       await Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to review evidence');
+      toast.error(err instanceof Error ? err.message : 'Failed to reject claim');
     } finally {
       setProcurementBusy(null);
     }
   };
 
-  const handleReturnCapRemainder = async () => {
-    if (!firstMilestone) return;
-    if (!window.confirm('Return remaining milestone cap back to client escrow pool?')) return;
+  const handleApproveAndSettleProcurement = async () => {
+    if (!firstMilestone || !selectedProcurementEvidence) return;
+
+    const approvedAmount = Number(authorizedProcurementAmount || 0);
+    if (!Number.isFinite(approvedAmount) || approvedAmount <= 0) {
+      toast.error('Enter a valid value to authorise');
+      return;
+    }
+
+    const defaultCapAmount = Number(firstMilestone.amount || 0);
+    const availableCap = firstMilestoneMeta.remainingCap > 0 ? firstMilestoneMeta.remainingCap : defaultCapAmount;
+    if (!Number.isFinite(availableCap) || availableCap <= 0) {
+      toast.error('No milestone amount is available to authorise');
+      return;
+    }
+    if (approvedAmount > availableCap) {
+      toast.error('Authorised amount exceeds the available milestone amount');
+      return;
+    }
 
     try {
-      setProcurementBusy('return-remainder');
-      const res = await fetch(
-        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstMilestone.id}/return-foh-cap-remainder`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}),
-        },
-      );
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to return cap remainder');
+      setProcurementBusy(`settle-${selectedProcurementEvidence.id}`);
+
+      if (firstMilestoneMeta.capTotal <= 0) {
+        await authorizeMilestoneCap(defaultCapAmount);
       }
-      toast.success('Cap remainder returned to client escrow pool');
+
+      await reviewProcurementEvidence(selectedProcurementEvidence, 'approved', {
+        approvedAmount,
+        titleTransferAcknowledged,
+      });
+
+      const remainderAfterApproval = Math.max(availableCap - approvedAmount, 0);
+      if (remainderAfterApproval > 0) {
+        await returnCapRemainder();
+      }
+
+      toast.success(
+        remainderAfterApproval > 0
+          ? 'Authorised amount moved to the professional wallet and the balance returned to client escrow'
+          : 'Authorised amount moved to the professional wallet',
+      );
       await Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to return cap remainder');
+      toast.error(err instanceof Error ? err.message : 'Failed to settle project materials purchase');
     } finally {
       setProcurementBusy(null);
     }
@@ -1344,51 +1461,140 @@ export default function ProjectFinancialsCard({
                   <p className="text-sm font-semibold text-white mt-1">{paymentPlan.escrowFundingPolicy.replace(/_/g, ' ')}</p>
                 </div>
                 <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Plan Total</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Project Total</p>
                   <p className="text-sm font-semibold text-white mt-1">{formatHKD(paymentPlan.totalAmount)}</p>
                 </div>
               </div>
 
-              {['SCALE_1', 'SCALE_2'].includes(paymentPlan.projectScale) && firstMilestone && (
-                <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-4 space-y-3">
+              {canReviewMaterialsPurchase && (
+                <div className="rounded-md border border-cyan-500/20 bg-cyan-500/10 p-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Financial Actions</p>
+                      <p className="mt-1 text-xs text-cyan-100">A materials claim is ready for client review.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={scrollToMaterialsPurchasePanel}
+                      className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700"
+                    >
+                      Review materials purchase
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-left">
+                      <th className="px-3 py-2 text-white font-semibold">#</th>
+                      <th className="px-3 py-2 text-white font-semibold">Milestone</th>
+                      <th className="px-3 py-2 text-white font-semibold">Due</th>
+                      <th className="px-3 py-2 text-white font-semibold">Split</th>
+                      <th className="px-3 py-2 text-white font-semibold">Amount</th>
+                      <th className="px-3 py-2 text-white font-semibold">Funded</th>
+                      <th className="px-3 py-2 text-white font-semibold">Allocated</th>
+                      <th className="px-3 py-2 text-white font-semibold">Available</th>
+                      <th className="px-3 py-2 text-white font-semibold">Status</th>
+                      {(resolvedRole === 'client') && <th className="px-3 py-2 text-white font-semibold text-right">Action</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentPlan.milestones.map((milestone) => {
+                      const linkedTx = txByMilestone.get(milestone.id);
+                      const walletMilestone = walletMilestoneById.get(milestone.id);
+                      const canPayMilestoneEscrow =
+                        resolvedRole === 'client' &&
+                        milestone.status === 'escrow_requested' &&
+                        !!linkedTx?.escrowTx;
+                      const canApproveMilestoneRelease =
+                        resolvedRole === 'client' &&
+                        milestone.status === 'release_requested' &&
+                        !!linkedTx?.releaseTx;
+
+                      return (
+                        <tr key={milestone.id} className="border-b border-slate-800">
+                          <td className="px-3 py-2 text-slate-200">{milestone.sequence}</td>
+                          <td className="px-3 py-2 text-slate-200">
+                            <div>{milestone.title}</div>
+                            {milestone.projectMilestone && (
+                              <div className="text-[11px] text-slate-400 mt-1">
+                                Linked schedule: {milestone.projectMilestone.sequence}. {milestone.projectMilestone.title}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-slate-300">
+                            {milestone.plannedDueAt ? new Date(milestone.plannedDueAt).toLocaleDateString('en-HK') : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-slate-300">
+                            {typeof milestone.percentOfTotal === 'number'
+                              ? `${milestone.percentOfTotal}%`
+                              : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-white font-semibold">{formatHKD(milestone.amount)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.fundedAmount || 0)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.allocatedAmount || 0)}</td>
+                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.availableAmount || 0)}</td>
+                          <td className="px-3 py-2">
+                            <StatusPill
+                              status={milestone.status}
+                              label={milestone.status.replace(/_/g, ' ')}
+                              tone={statusToneFromStatus(milestone.status)}
+                            />
+                          </td>
+                          {resolvedRole === 'client' && (
+                            <td className="px-3 py-2 text-right">
+                              {canPayMilestoneEscrow ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePayEscrow(linkedTx!.escrowTx!.id)}
+                                  disabled={processingId === linkedTx!.escrowTx!.id}
+                                  className="w-[120px] px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
+                                >
+                                  {processingId === linkedTx!.escrowTx!.id ? 'Processing...' : 'Fund Escrow'}
+                                </button>
+                              ) : canApproveMilestoneRelease ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleApprovePayment(linkedTx!.releaseTx!.id)}
+                                  disabled={processingId === linkedTx!.releaseTx!.id}
+                                  className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
+                                >
+                                  {processingId === linkedTx!.releaseTx!.id ? 'Approving...' : 'Approve Release'}
+                                </button>
+                              ) : (
+                                <span className="text-xs text-slate-500">—</span>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {showMaterialsPurchasePanel && (
+                <div ref={materialsPurchasePanelRef} className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-4 space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h4 className="text-sm font-semibold text-white">Milestone 1 Procurement Gate</h4>
-                      <p className="text-xs text-cyan-100 mt-1">
-                        Client-authorized cap with evidence-based move to transfer-ready.
+                      <h4 className="text-sm font-semibold text-white">Project materials purchase</h4>
+                      <p className="mt-1 text-xs text-cyan-100">
+                        Review materials evidence and move the approved amount to the professional wallet.
                       </p>
                     </div>
                     <div className="grid gap-1 text-xs text-cyan-100">
-                      <p>Cap Total: <span className="font-semibold text-white">{formatHKD(firstMilestoneMeta.capTotal)}</span></p>
+                      <p>Milestone: <span className="font-semibold text-white">{firstMilestone?.title || 'Milestone 1'}</span></p>
+                      <p>Funded: <span className="font-semibold text-white">{formatHKD(firstWalletMilestone?.fundedAmount || 0)}</span></p>
                       <p>Approved: <span className="font-semibold text-white">{formatHKD(firstMilestoneMeta.approvedTotal)}</span></p>
-                      <p>Remaining: <span className="font-semibold text-white">{formatHKD(firstMilestoneMeta.remainingCap)}</span></p>
+                      <p>Unallocated balance: <span className="font-semibold text-white">{formatHKD(firstMilestoneMeta.remainingCap > 0 ? firstMilestoneMeta.remainingCap : Math.max(Number(firstMilestone?.amount || 0) - firstMilestoneMeta.approvedTotal - firstMilestoneMeta.returnedTotal, 0))}</span></p>
                     </div>
                   </div>
 
-                  {(resolvedRole === 'client' || resolvedRole === 'admin') && (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleAuthorizeMilestoneCap}
-                        disabled={procurementBusy === 'authorize-cap'}
-                        className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
-                      >
-                        {procurementBusy === 'authorize-cap' ? 'Authorizing...' : 'Authorize Milestone 1 Cap'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleReturnCapRemainder}
-                        disabled={procurementBusy === 'return-remainder' || firstMilestoneMeta.remainingCap <= 0}
-                        className="rounded-md bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-600 disabled:opacity-50"
-                      >
-                        {procurementBusy === 'return-remainder' ? 'Returning...' : 'Return Cap Remainder'}
-                      </button>
-                    </div>
-                  )}
-
-                  {resolvedRole === 'professional' && (
+                  {canSubmitMaterialsPurchaseClaim && (
                     <div className="rounded-md border border-cyan-400/30 bg-slate-900/50 p-3 space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Submit Procurement Evidence</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Submit materials claim</p>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <input
                           type="number"
@@ -1427,59 +1633,181 @@ export default function ProjectFinancialsCard({
                         disabled={procurementBusy === 'submit-evidence'}
                         className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
                       >
-                        {procurementBusy === 'submit-evidence' ? 'Submitting...' : 'Submit Evidence'}
+                        {procurementBusy === 'submit-evidence' ? 'Submitting...' : 'Submit claim'}
                       </button>
                     </div>
                   )}
 
-                  <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-2">
+                  <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Evidence Queue</p>
                       {procurementLoading && <p className="text-xs text-slate-400">Loading...</p>}
                     </div>
                     {procurementEvidence.length === 0 ? (
-                      <p className="text-xs text-slate-400">No procurement evidence submitted yet.</p>
+                      <p className="text-xs text-slate-400">No materials claims submitted yet.</p>
                     ) : (
                       <div className="space-y-2">
-                        {procurementEvidence.map((evidence) => (
-                          <div key={evidence.id} className="rounded border border-slate-700 bg-slate-950/40 p-2 space-y-1">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <p className="text-xs text-white">
-                                Claimed: <span className="font-semibold">{formatHKD(evidence.claimedAmount)}</span>
-                                {evidence.approvedAmount ? ` | Approved: ${formatHKD(evidence.approvedAmount)}` : ''}
-                              </p>
-                              <StatusPill
-                                status={evidence.status}
-                                label={String(evidence.status || '').replace(/_/g, ' ')}
-                                tone={statusToneFromStatus(evidence.status)}
-                              />
-                            </div>
-                            {evidence.notes && <p className="text-xs text-slate-300">{evidence.notes}</p>}
-                            {(resolvedRole === 'client' || resolvedRole === 'admin') && evidence.status === 'pending' && (
-                              <div className="flex gap-2 pt-1">
-                                <button
-                                  type="button"
-                                  onClick={() => handleReviewEvidence(evidence, 'approved')}
-                                  disabled={procurementBusy === `review-${evidence.id}`}
-                                  className="rounded bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                                >
-                                  Approve Amount
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleReviewEvidence(evidence, 'rejected')}
-                                  disabled={procurementBusy === `review-${evidence.id}`}
-                                  className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                                >
-                                  Reject
-                                </button>
+                        {procurementEvidence.map((evidence) => {
+                          const isPending = String(evidence.status || '').toLowerCase() === 'pending';
+                          const isSelected = evidence.id === selectedProcurementEvidence?.id;
+                          return (
+                            <div
+                              key={evidence.id}
+                              className={`rounded border p-2 space-y-2 ${isSelected ? 'border-cyan-400 bg-cyan-500/10' : 'border-slate-700 bg-slate-950/40'}`}
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="space-y-1">
+                                  <p className="text-xs text-white">
+                                    Claimed: <span className="font-semibold">{formatHKD(evidence.claimedAmount)}</span>
+                                    {evidence.approvedAmount ? ` | Approved: ${formatHKD(evidence.approvedAmount)}` : ''}
+                                  </p>
+                                  <p className="text-[11px] text-slate-400">
+                                    Submitted {new Date(evidence.createdAt).toLocaleDateString('en-HK')}
+                                  </p>
+                                </div>
+                                <StatusPill
+                                  status={evidence.status}
+                                  label={String(evidence.status || '').replace(/_/g, ' ')}
+                                  tone={statusToneFromStatus(evidence.status)}
+                                />
                               </div>
-                            )}
-                          </div>
-                        ))}
+                              {evidence.notes && <p className="text-xs text-slate-300">{evidence.notes}</p>}
+                              {canReviewMaterialsPurchase && isPending && (
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedProcurementEvidenceId(evidence.id)}
+                                    className={`rounded px-2 py-1 text-[11px] font-semibold text-white ${isSelected ? 'bg-cyan-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+                                  >
+                                    {isSelected ? 'Selected' : 'Review this claim'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRejectProcurementEvidence(evidence)}
+                                    disabled={procurementBusy === `reject-${evidence.id}`}
+                                    className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                                  >
+                                    {procurementBusy === `reject-${evidence.id}` ? 'Rejecting...' : 'Reject'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
+
+                  {canReviewMaterialsPurchase && (
+                    <div className="rounded-md border border-cyan-400/30 bg-slate-900/50 p-3 space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Settlement</p>
+                        <p className="mt-1 text-xs text-cyan-100">
+                          Enter the amount to authorise for the selected claim. Any remaining milestone 1 balance is returned to the client escrow pool in the same action.
+                        </p>
+                      </div>
+
+                      {selectedProcurementEvidence ? (
+                        <>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={authorizedProcurementAmount}
+                            onChange={(event) => setAuthorizedProcurementAmount(event.target.value)}
+                            placeholder="Value to authorise"
+                            className="w-full rounded-md border border-cyan-300/30 bg-slate-900 px-3 py-2 text-sm text-white"
+                          />
+                          <label className="flex items-center gap-2 text-xs text-cyan-100">
+                            <input
+                              type="checkbox"
+                              checked={titleTransferAcknowledged}
+                              onChange={(event) => setTitleTransferAcknowledged(event.target.checked)}
+                            />
+                            Confirm title transfer acknowledgement for the purchased items
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleApproveAndSettleProcurement}
+                            disabled={procurementBusy === `settle-${selectedProcurementEvidence.id}`}
+                            className="rounded-md bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
+                          >
+                            {procurementBusy === `settle-${selectedProcurementEvidence.id}`
+                              ? 'Processing...'
+                              : 'Authorise purchase and return balance'}
+                          </button>
+                        </>
+                      ) : (
+                        <p className="text-xs text-slate-400">No pending materials claims need review.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {paymentPlan.projectScale === 'SCALE_3' && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">Retention</p>
+                      <p className="text-xs text-amber-100 mt-1">
+                        Optional holdback released one month after completion (admin editable).
+                      </p>
+                    </div>
+                    {(resolvedRole !== 'admin') && (
+                      <p className="text-xs text-amber-100">
+                        {paymentPlan.retentionEnabled
+                          ? `${paymentPlan.retentionPercent}% (${formatHKD(paymentPlan.retentionAmount || 0)})`
+                          : 'Not enabled'}
+                      </p>
+                    )}
+                  </div>
+
+                  {resolvedRole === 'admin' && (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <label className="flex items-center gap-2 text-sm text-amber-100">
+                          <input
+                            type="checkbox"
+                            checked={retentionEnabled}
+                            onChange={(e) => setRetentionEnabled(e.target.checked)}
+                          />
+                          Enable retention
+                        </label>
+                        <label className="text-sm text-amber-100">
+                          <span className="block text-xs mb-1">Retention %</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value={retentionPercent}
+                            onChange={(e) => setRetentionPercent(e.target.value)}
+                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-white"
+                          />
+                        </label>
+                        <label className="text-sm text-amber-100">
+                          <span className="block text-xs mb-1">Retention release date</span>
+                          <input
+                            type="date"
+                            value={retentionReleaseAt}
+                            onChange={(e) => setRetentionReleaseAt(e.target.value)}
+                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-white"
+                          />
+                        </label>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleSaveRetention}
+                          disabled={retentionSaving}
+                          className="rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                        >
+                          {retentionSaving ? 'Saving...' : 'Save retention settings'}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -1574,162 +1902,6 @@ export default function ProjectFinancialsCard({
                 </div>
               )}
 
-              {paymentPlan.projectScale === 'SCALE_3' && (
-                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">Retention</p>
-                      <p className="text-xs text-amber-100 mt-1">
-                        Optional holdback released one month after completion (admin editable).
-                      </p>
-                    </div>
-                    {(resolvedRole !== 'admin') && (
-                      <p className="text-xs text-amber-100">
-                        {paymentPlan.retentionEnabled
-                          ? `${paymentPlan.retentionPercent}% (${formatHKD(paymentPlan.retentionAmount || 0)})`
-                          : 'Not enabled'}
-                      </p>
-                    )}
-                  </div>
-
-                  {resolvedRole === 'admin' && (
-                    <>
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <label className="flex items-center gap-2 text-sm text-amber-100">
-                          <input
-                            type="checkbox"
-                            checked={retentionEnabled}
-                            onChange={(e) => setRetentionEnabled(e.target.checked)}
-                          />
-                          Enable retention
-                        </label>
-                        <label className="text-sm text-amber-100">
-                          <span className="block text-xs mb-1">Retention %</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value={retentionPercent}
-                            onChange={(e) => setRetentionPercent(e.target.value)}
-                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-white"
-                          />
-                        </label>
-                        <label className="text-sm text-amber-100">
-                          <span className="block text-xs mb-1">Retention release date</span>
-                          <input
-                            type="date"
-                            value={retentionReleaseAt}
-                            onChange={(e) => setRetentionReleaseAt(e.target.value)}
-                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-white"
-                          />
-                        </label>
-                      </div>
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleSaveRetention}
-                          disabled={retentionSaving}
-                          className="rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-                        >
-                          {retentionSaving ? 'Saving...' : 'Save retention settings'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-700 text-left">
-                      <th className="px-3 py-2 text-white font-semibold">#</th>
-                      <th className="px-3 py-2 text-white font-semibold">Milestone</th>
-                      <th className="px-3 py-2 text-white font-semibold">Due</th>
-                      <th className="px-3 py-2 text-white font-semibold">Split</th>
-                      <th className="px-3 py-2 text-white font-semibold">Amount</th>
-                      <th className="px-3 py-2 text-white font-semibold">Funded</th>
-                      <th className="px-3 py-2 text-white font-semibold">Allocated</th>
-                      <th className="px-3 py-2 text-white font-semibold">Available</th>
-                      <th className="px-3 py-2 text-white font-semibold">Status</th>
-                      {(resolvedRole === 'client') && <th className="px-3 py-2 text-white font-semibold text-right">Action</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paymentPlan.milestones.map((milestone) => {
-                      const linkedTx = txByMilestone.get(milestone.id);
-                      const walletMilestone = walletMilestoneById.get(milestone.id);
-                      const canPayMilestoneEscrow =
-                        resolvedRole === 'client' &&
-                        milestone.status === 'escrow_requested' &&
-                        !!linkedTx?.escrowTx;
-                      const canApproveMilestoneRelease =
-                        resolvedRole === 'client' &&
-                        milestone.status === 'release_requested' &&
-                        !!linkedTx?.releaseTx;
-
-                      return (
-                        <tr key={milestone.id} className="border-b border-slate-800">
-                          <td className="px-3 py-2 text-slate-200">{milestone.sequence}</td>
-                          <td className="px-3 py-2 text-slate-200">
-                            <div>{milestone.title}</div>
-                            {milestone.projectMilestone && (
-                              <div className="text-[11px] text-slate-400 mt-1">
-                                Linked schedule: {milestone.projectMilestone.sequence}. {milestone.projectMilestone.title}
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-slate-300">
-                            {milestone.plannedDueAt ? new Date(milestone.plannedDueAt).toLocaleDateString('en-HK') : '—'}
-                          </td>
-                          <td className="px-3 py-2 text-slate-300">
-                            {typeof milestone.percentOfTotal === 'number'
-                              ? `${milestone.percentOfTotal}%`
-                              : '—'}
-                          </td>
-                          <td className="px-3 py-2 text-white font-semibold">{formatHKD(milestone.amount)}</td>
-                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.fundedAmount || 0)}</td>
-                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.allocatedAmount || 0)}</td>
-                          <td className="px-3 py-2 text-slate-200">{formatHKD(walletMilestone?.availableAmount || 0)}</td>
-                          <td className="px-3 py-2">
-                            <StatusPill
-                              status={milestone.status}
-                              label={milestone.status.replace(/_/g, ' ')}
-                              tone={statusToneFromStatus(milestone.status)}
-                            />
-                          </td>
-                          {resolvedRole === 'client' && (
-                            <td className="px-3 py-2 text-right">
-                              {canPayMilestoneEscrow ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handlePayEscrow(linkedTx!.escrowTx!.id)}
-                                  disabled={processingId === linkedTx!.escrowTx!.id}
-                                  className="w-[120px] px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
-                                >
-                                  {processingId === linkedTx!.escrowTx!.id ? 'Processing...' : 'Fund Escrow'}
-                                </button>
-                              ) : canApproveMilestoneRelease ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleApprovePayment(linkedTx!.releaseTx!.id)}
-                                  disabled={processingId === linkedTx!.releaseTx!.id}
-                                  className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
-                                >
-                                  {processingId === linkedTx!.releaseTx!.id ? 'Approving...' : 'Approve Release'}
-                                </button>
-                              ) : (
-                                <span className="text-xs text-slate-500">—</span>
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
 
