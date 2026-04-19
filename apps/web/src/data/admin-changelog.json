@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-19-2178c4f",
+    "date": "2026-04-19T10:06:32+08:00",
+    "title": "Refine timeline card layout",
+    "summary": "Refine timeline card layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "2178c4f",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-3b7e202",
     "date": "2026-04-19T09:55:11+08:00",
     "title": "Adjust timeline cards to responsive 1-4 column layout",

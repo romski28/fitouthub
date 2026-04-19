@@ -439,9 +439,26 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           onToggle={onToggleAccordion}
         >
           <div className="space-y-3">
-            <p className="text-xs text-slate-400">
-              Temporary preview of the end-to-end process mapped to next-step workflow logic.
-            </p>
+            {/* Progress bar header */}
+            {!timelineLoading && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">
+                    Stage {Math.min(currentTimelineStepIndex + 1, timelineSteps.length)} of {timelineSteps.length}
+                    {currentTimelineStep ? ` — ${currentTimelineStep.title}` : ''}
+                  </span>
+                  <span className="text-slate-500">
+                    {Math.round((currentTimelineStepIndex / timelineSteps.length) * 100)}% complete
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: `${Math.round((currentTimelineStepIndex / timelineSteps.length) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {timelineLoading && (
               <div className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-400">
@@ -510,63 +527,61 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       }}
                       className={`w-[calc(100%-0.5rem)] sm:w-[calc((100%-0.75rem)/2)] lg:w-[calc((100%-1.5rem)/3)] 2xl:w-[calc((100%-2.25rem)/4)] min-w-0 shrink-0 snap-start rounded-md border px-3 py-2 ${toneClasses.border} ${toneClasses.bg}`}
                     >
-                      <div className="flex items-start gap-3 flex-1">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <p className={`text-sm font-semibold ${toneClasses.text}`}>{step.title}</p>
-                                {isCurrent && currentActionLabel && (
-                                  <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/90">
-                                    Action: {currentActionLabel}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex flex-col items-end gap-2 self-start">
-                                <span className={`mt-0.5 h-[15px] w-[15px] rounded-full ${toneClasses.dot}`} />
-                                {isCurrent && (
-                                  <Link
-                                    href={currentStepHref}
-                                    className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
-                                  >
-                                    Open stage
-                                  </Link>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {metrics.map((metric) => (
-                                <div key={metric.label} className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                                  <p className="text-[10px] uppercase tracking-wide text-slate-400">{metric.label}</p>
-                                  <p className="mt-1 text-xs font-semibold text-slate-100 break-words">{metric.value}</p>
-                                </div>
-                              ))}
-                            </div>
-
-                            <p className="text-xs text-slate-400">{step.description}</p>
-                            <button
-                              type="button"
-                              onClick={() => toggleTimelineCard(step.id)}
-                              className="text-xs font-semibold text-sky-300 hover:text-sky-200"
+                      {/* Card header: title + description + status dot pinned top-right */}
+                      <div className="relative mb-2">
+                        <div className="pr-6">
+                          <p className={`text-sm font-semibold leading-snug ${toneClasses.text}`}>{step.title}</p>
+                          <p className="mt-0.5 text-xs text-slate-400 leading-snug">{step.description}</p>
+                          {isCurrent && currentActionLabel && (
+                            <p className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-white/90">
+                              Action: {currentActionLabel}
+                            </p>
+                          )}
+                          {isCurrent && (
+                            <Link
+                              href={currentStepHref}
+                              className="mt-2 inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
                             >
-                              {detailsOpen ? 'Hide details' : 'Show details'}
-                            </button>
+                              Open stage
+                            </Link>
+                          )}
+                        </div>
+                        {/* Status dot always top-right */}
+                        <span className={`absolute top-0 right-0 h-[15px] w-[15px] rounded-full ${toneClasses.dot}`} />
+                      </div>
 
-                            {detailsOpen && (
-                              <div className="rounded-md border border-slate-700 bg-slate-950/40 p-2.5 space-y-2">
-                                <p className="text-[11px] text-slate-300">
-                                  {isCurrent && primaryNextStep?.description
-                                    ? primaryNextStep.description
-                                    : 'No additional events recorded for this stage yet.'}
-                                </p>
-                                <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
-                                  <span>Updated: {formatDateTime(project.updatedAt)}</span>
-                                  {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
-                                </div>
-                              </div>
-                            )}
+                      {/* Metrics: always stacked, never wrapped */}
+                      <div className="flex flex-col gap-1">
+                        {metrics.map((metric) => (
+                          <div key={metric.label} className="flex items-center justify-between rounded border border-slate-700 bg-slate-900/50 px-2 py-1.5">
+                            <p className="text-[10px] uppercase tracking-wide text-slate-400">{metric.label}</p>
+                            <p className="text-xs font-semibold text-slate-100 text-right">{metric.value}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Expandable detail drawer */}
+                      <button
+                        type="button"
+                        onClick={() => toggleTimelineCard(step.id)}
+                        className="mt-2 text-xs font-semibold text-sky-300 hover:text-sky-200"
+                      >
+                        {detailsOpen ? 'Hide details' : 'Show details'}
+                      </button>
+
+                      {detailsOpen && (
+                        <div className="mt-1.5 rounded-md border border-slate-700 bg-slate-950/40 p-2.5 space-y-2">
+                          <p className="text-[11px] text-slate-300">
+                            {isCurrent && primaryNextStep?.description
+                              ? primaryNextStep.description
+                              : 'No additional events recorded for this stage yet.'}
+                          </p>
+                          <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
+                            <span>Updated: {formatDateTime(project.updatedAt)}</span>
+                            {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
                           </div>
                         </div>
+                      )}
                     </div>
                   );
                 })}
