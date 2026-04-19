@@ -42,6 +42,7 @@ interface OverviewTabProps {
   onContactUpdate: (data: { name?: string; phone?: string; email?: string }) => Promise<void>;
   isUpdatingSchedule: boolean;
   isUpdatingContact: boolean;
+  siteAccessRequests?: any[];
 }
 
 const formatDate = (date?: string) => {
@@ -134,6 +135,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onContactUpdate,
   isUpdatingSchedule,
   isUpdatingContact,
+  siteAccessRequests,
 }) => {
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({
@@ -308,6 +310,32 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         ];
       }
       case 'bidding': {
+        const declinedCount = project.professionals?.filter((p) => {
+          const st = String(p?.status || '').toLowerCase();
+          return st === 'declined' || st === 'rejected' || st === 'withdrawn';
+        }).length ?? 0;
+        const notReceivedCount = Math.max(invitedCount - quotedCount - declinedCount, 0);
+        const hasExtension = project.professionals?.some(
+          (p) => p?.quoteExtendedUntil || p?.quoteReminderSentAt,
+        ) ?? false;
+        return [
+          { label: 'Quotes Received', value: `${quotedCount} of ${invitedCount}` },
+          { label: 'Quotes Declined', value: String(declinedCount) },
+          { label: 'Quotes Not Received', value: String(notReceivedCount) },
+          { label: 'Extension Given', value: hasExtension ? 'Yes' : 'No' },
+        ];
+      }
+      case 'site-visit': {
+        const anyRequested = (siteAccessRequests?.length ?? 0) > 0;
+        const anyGranted = siteAccessRequests?.some((r: any) =>
+          ['approved_no_visit', 'approved_visit_scheduled', 'visited'].includes(r.status)
+        ) ?? false;
+        return [
+          { label: 'Pre-quote access requested', value: anyRequested ? 'Yes' : 'No' },
+          { label: 'Site access granted', value: anyGranted ? 'Yes' : 'No' },
+        ];
+      }
+      case 'compare': {
         const quoteAmounts = quotedProfessionals
           .map((p) => Number(p?.quoteAmount))
           .filter((n) => Number.isFinite(n) && n > 0);
@@ -330,14 +358,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               ? formatDuration(durMin)
               : `${formatDuration(durMin)} – ${formatDuration(durMax)}`
             : '—';
-        const hasExtension = project.professionals?.some(
-          (p) => p?.quoteExtendedUntil || p?.quoteReminderSentAt,
-        ) ?? false;
         return [
-          { label: 'Quotes Received', value: `${quotedCount} of ${invitedCount}` },
           { label: 'Quote Range', value: quoteRange },
           { label: 'Duration Range', value: durationRange },
-          { label: 'Extension Given', value: hasExtension ? 'Yes' : 'No' },
         ];
       }
       case 'select':

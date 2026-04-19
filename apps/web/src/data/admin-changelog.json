@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-19-56fd227",
+    "date": "2026-04-19T11:04:57+08:00",
+    "title": "Update timeline card metrics for site-visit, compare and bidding stages",
+    "summary": "Update timeline card metrics for site-visit, compare and bidding stages",
+    "areas": [
+      "web"
+    ],
+    "commit": "56fd227",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-dc0bb89",
     "date": "2026-04-19T10:20:11+08:00",
     "title": "Update timeline card metrics for created-invite and bidding stages",

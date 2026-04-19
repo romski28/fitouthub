@@ -1918,6 +1918,7 @@ export default function ClientProjectDetailPage() {
               }}
               isUpdatingSchedule={updatingSchedule}
               isUpdatingContact={updatingContact}
+              siteAccessRequests={siteAccessRequests}
             />
           </div>
         )}
