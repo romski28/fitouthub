@@ -253,8 +253,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     project.aiIntake &&
       (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
   );
-  const [expandedTimelineCards, setExpandedTimelineCards] = useState<Record<string, boolean>>({});
-
   const invitedCount = project.professionals?.length ?? 0;
   const quotedProfessionals =
     project.professionals?.filter((pp) => {
@@ -478,10 +476,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     }
   };
 
-  const toggleTimelineCard = (id: string) => {
-    setExpandedTimelineCards((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
   return (
     <div className="space-y-4">
       <AccordionGroup>
@@ -604,7 +598,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       ? primaryNextStep.actionLabel
                       : null;
                   const metrics = getTimelineMetrics(step.id);
-                  const detailsOpen = expandedTimelineCards[step.id] === true || isCurrent;
+                  const detailsHref =
+                    step.id === 'created-invite'
+                      ? `/projects/${project.id}?tab=overview&openAi=1&collapseTimeline=1`
+                      : `/projects/${project.id}?tab=${encodeURIComponent(stepTab)}`;
 
                   const toneClasses = isComplete
                     ? {
@@ -675,29 +672,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         ))}
                       </div>
 
-                      {/* Expandable detail drawer — hidden for stages with no extra data */}
-                      {step.id !== 'created-invite' && (
-                        <button
-                          type="button"
-                          onClick={() => toggleTimelineCard(step.id)}
-                          className="mt-2 text-xs font-semibold text-sky-300 hover:text-sky-200"
+                      {!isCurrent && (
+                        <Link
+                          href={detailsHref}
+                          className="mt-2 inline-flex items-center rounded-md border border-sky-500/50 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/20 transition"
                         >
-                          {detailsOpen ? 'Hide details' : 'Show details'}
-                        </button>
-                      )}
-
-                      {step.id !== 'created-invite' && detailsOpen && (
-                        <div className="mt-1.5 rounded-md border border-slate-700 bg-slate-950/40 p-2.5 space-y-2">
-                          <p className="text-[11px] text-slate-300">
-                            {isCurrent && primaryNextStep?.description
-                              ? primaryNextStep.description
-                              : 'No additional events recorded for this stage yet.'}
-                          </p>
-                          <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
-                            <span>Updated: {formatDateTime(project.updatedAt)}</span>
-                            {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
-                          </div>
-                        </div>
+                          Open details
+                        </Link>
                       )}
                     </div>
                   );

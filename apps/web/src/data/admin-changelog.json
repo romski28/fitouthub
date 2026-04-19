@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-19-b86692f",
+    "date": "2026-04-19T11:49:19+08:00",
+    "title": "Replace empty timeline detail drawers with tab deep-links",
+    "summary": "Replace empty timeline detail drawers with tab deep-links",
+    "areas": [
+      "web"
+    ],
+    "commit": "b86692f",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-f7a7fdc",
     "date": "2026-04-19T11:37:34+08:00",
     "title": "Add escrow funded date metric to timeline and include payment milestones in project detail",

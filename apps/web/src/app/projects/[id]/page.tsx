@@ -417,6 +417,20 @@ export default function ClientProjectDetailPage() {
   }, [searchParams, isAwarded]);
 
   useEffect(() => {
+    if (activeTab !== 'overview') return;
+
+    const openAi = searchParams.get('openAi') === '1';
+    const collapseTimeline = searchParams.get('collapseTimeline') === '1';
+    if (!openAi && !collapseTimeline) return;
+
+    setExpandedAccordions((prev) => ({
+      ...prev,
+      ...(openAi ? { 'from-ai': true } : {}),
+      ...(collapseTimeline ? { 'timeline-preview': false } : {}),
+    }));
+  }, [searchParams, activeTab]);
+
+  useEffect(() => {
     const paymentStatus = searchParams.get('payment');
     if (!paymentStatus) return;
 
