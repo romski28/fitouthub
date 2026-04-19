@@ -30,6 +30,12 @@ interface ProjectDetail {
   paymentPlan?: {
     milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number; escrowFundedAt?: string }>;
   };
+  startProposals?: Array<{
+    status?: string;
+    createdAt?: string;
+    proposedStartAt?: string;
+    respondedAt?: string;
+  }>;
   contractorContactName?: string;
   contractorContactPhone?: string;
   contractorContactEmail?: string;
@@ -461,12 +467,28 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           { label: 'First Milestone Value', value: firstMilestoneAmount !== null ? formatHKD(firstMilestoneAmount as any) : '—' },
         ];
       }
-      case 'pre-work':
+      case 'pre-work': {
+        const latestProposal =
+          project.startProposals
+            ?.slice()
+            .sort((a, b) => Number(new Date(b?.createdAt || 0)) - Number(new Date(a?.createdAt || 0)))[0] || null;
+        const hasConfirmedProposal =
+          project.startProposals?.some((proposal) => String(proposal?.status || '').toLowerCase() === 'accepted') ||
+          false;
+        const dateStatus = hasConfirmedProposal
+          ? 'Confirmed'
+          : latestProposal && String(latestProposal.status || '').toLowerCase() === 'proposed'
+            ? 'Proposed'
+            : project.startDate
+              ? 'Confirmed'
+              : '—';
+
         return [
-          { label: 'Start Date', value: formatDate(project.startDate) },
+          { label: 'Start Date', value: formatDate(project.startDate || latestProposal?.proposedStartAt) },
           { label: 'End Date', value: formatDate(project.endDate) },
-          { label: 'Next Action', value: primaryNextStep?.actionLabel || '—' },
+          { label: 'Date Status', value: dateStatus },
         ];
+      }
       default:
         return [
           { label: 'Status', value: projectStatus },

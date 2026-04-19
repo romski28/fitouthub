@@ -1440,6 +1440,12 @@ export class ProjectsService {
               },
             },
           },
+          startProposals: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 10,
+          },
           aiIntake: true,
           photos: true,
         },
@@ -1480,6 +1486,12 @@ export class ProjectsService {
                 },
               },
             },
+          },
+          startProposals: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 10,
           },
           aiIntake: {
             select: {

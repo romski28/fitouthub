@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-19-0ccb913",
+    "date": "2026-04-19T12:00:17+08:00",
+    "title": "Update pre-work timeline metric to Date Status from start proposal conversation",
+    "summary": "Update pre-work timeline metric to Date Status from start proposal conversation",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0ccb913",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-b86692f",
     "date": "2026-04-19T11:49:19+08:00",
     "title": "Replace empty timeline detail drawers with tab deep-links",
