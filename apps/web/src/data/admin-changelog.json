@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-19-d837bc2",
+    "date": "2026-04-19T11:27:15+08:00",
+    "title": "Add agreement project class and escrow funding metrics",
+    "summary": "Add agreement project class and escrow funding metrics",
+    "areas": [
+      "web"
+    ],
+    "commit": "d837bc2",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-19-132daa0",
     "date": "2026-04-19T11:15:27+08:00",
     "title": "Refine timeline metrics for bidding, compare, select, and contract stages",

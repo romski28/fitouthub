@@ -22,6 +22,13 @@ interface ProjectDetail {
   updatedAt?: string;
   clientSignedAt?: string;
   professionalSignedAt?: string;
+  projectScale?: string;
+  escrowHeld?: string | number;
+  escrowRequired?: string | number;
+  milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number }>;
+  paymentPlan?: {
+    milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number }>;
+  };
   contractorContactName?: string;
   contractorContactPhone?: string;
   contractorContactEmail?: string;
@@ -106,6 +113,15 @@ const formatRangeWithBreak = (
   if (min === null || max === null) return '—';
   if (min === max) return formatter(min);
   return `Lowest: ${formatter(min)}\nHighest: ${formatter(max)}`;
+};
+
+const formatProjectClass = (value?: string) => {
+  const normalized = String(value || '').toUpperCase();
+  if (normalized === 'SCALE_1') return 'Class 1';
+  if (normalized === 'SCALE_2') return 'Class 2';
+  if (normalized === 'SCALE_3') return 'Class 3';
+  if (!normalized) return '—';
+  return value || '—';
 };
 
 const projectStatusBadge: Record<string, string> = {
@@ -399,6 +415,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       case 'contract':
         return [
           {
+            label: 'Project Class',
+            value: formatProjectClass(project.projectScale),
+          },
+          {
             label: 'Professional Signed',
             value: project.professionalSignedAt ? formatDate(project.professionalSignedAt) : 'No',
           },
@@ -408,11 +428,32 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           },
         ];
       case 'escrow-funding':
-        return [
-          { label: 'Current Stage', value: 'Escrow Funding' },
-          { label: 'Next Action', value: primaryNextStep?.actionLabel || 'Deposit funds' },
-          { label: 'Last Updated', value: formatDate(project.updatedAt) },
+      {
+        const escrowFundedValue = Number(project.escrowHeld || 0);
+        const projectValue = Number(project.approvedBudget || project.budget || project.escrowRequired || 0);
+        const escrowToProjectPct =
+          projectValue > 0 && Number.isFinite(escrowFundedValue)
+            ? `${Math.min((escrowFundedValue / projectValue) * 100, 100).toFixed(1).replace(/\.0$/, '')}%`
+            : '—';
+
+        const allMilestones = [
+          ...(project.paymentPlan?.milestones || []),
+          ...(project.milestones || []),
         ];
+        const firstMilestone =
+          allMilestones
+            .slice()
+            .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0))[0] || null;
+        const firstMilestoneAmount = firstMilestone
+          ? firstMilestone.amount ?? firstMilestone.totalAmount
+          : null;
+
+        return [
+          { label: 'Escrow Funded', value: formatHKD(escrowFundedValue) },
+          { label: 'Escrow to Project', value: escrowToProjectPct },
+          { label: 'First Milestone Value', value: firstMilestoneAmount !== null ? formatHKD(firstMilestoneAmount as any) : '—' },
+        ];
+      }
       case 'pre-work':
         return [
           { label: 'Start Date', value: formatDate(project.startDate) },
