@@ -1186,6 +1186,13 @@ export class ProfessionalController {
           throw new BadRequestException('This milestone is not yet funded in escrow for release');
         }
 
+        if (paymentPlan.escrowFundingPolicy !== 'ROLLING_TWO_MILESTONES') {
+          const escrowHeld = Number(projectProfessional.project?.escrowHeld || 0);
+          if (!Number.isFinite(escrowHeld) || escrowHeld <= 0) {
+            throw new BadRequestException('Escrow funding is not confirmed yet for this project');
+          }
+        }
+
         if (!['scheduled', 'escrow_funded'].includes(milestone.status)) {
           throw new BadRequestException('This milestone is not currently eligible for a payment request');
         }

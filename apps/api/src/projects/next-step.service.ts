@@ -47,6 +47,64 @@ const createSyntheticPrimaryStep = (
 export class NextStepService {
   constructor(private prisma: PrismaService) {}
 
+  private async getProfessionalWalletTransferPrerequisiteStatus(
+    projectId: string,
+  ): Promise<'not_required' | 'pending' | 'completed'> {
+    const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
+      where: { projectId },
+      select: {
+        projectScale: true,
+        milestones: {
+          where: { sequence: 1 },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+
+    const normalizedScale = String(paymentPlan?.projectScale || '').toUpperCase();
+    const firstMilestoneId = paymentPlan?.milestones?.[0]?.id;
+
+    if (!firstMilestoneId || !['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
+      return 'not_required';
+    }
+
+    const [claimCount, relatedTransfers] = await this.prisma.$transaction([
+      (this.prisma as any).milestoneProcurementEvidence.count({
+        where: {
+          projectId,
+          paymentMilestoneId: firstMilestoneId,
+        },
+      }),
+      this.prisma.financialTransaction.findMany({
+        where: {
+          projectId,
+          type: {
+            in: ['milestone_procurement_approved', 'professional_wallet_transfer'],
+          },
+          notes: {
+            contains: firstMilestoneId,
+          },
+        },
+        select: {
+          type: true,
+          status: true,
+        },
+      }),
+    ]);
+
+    const hasProcurementSignal = claimCount > 0 || relatedTransfers.length > 0;
+    if (!hasProcurementSignal) {
+      return 'not_required';
+    }
+
+    const transferConfirmed = relatedTransfers.some(
+      (row) => row.type === 'professional_wallet_transfer' && String(row.status || '').toLowerCase() === 'confirmed',
+    );
+
+    return transferConfirmed ? 'completed' : 'pending';
+  }
+
   /**
    * Get available next step actions for a user in a project
    * @param projectId - Project ID
@@ -267,16 +325,34 @@ export class NextStepService {
 
         if (scheduleConfirmed) {
           const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
+
+          let walletTransferPrerequisite: 'not_required' | 'pending' | 'completed' = 'not_required';
+          if (escrowFunded) {
+            walletTransferPrerequisite = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
+          }
+
+          const canStartProject = escrowFunded && walletTransferPrerequisite !== 'pending';
+
           availableConfigSteps = [
             createSyntheticPrimaryStep(
-              escrowFunded ? 'START_PROJECT' : 'WAIT_FOR_CLIENT_FUNDS',
-              escrowFunded ? 'Start the project' : 'Wait for client funds',
-              escrowFunded,
+              canStartProject
+                ? 'START_PROJECT'
+                : escrowFunded
+                  ? 'WAIT_FOR_WALLET_TRANSFER'
+                  : 'WAIT_FOR_CLIENT_FUNDS',
+              canStartProject
+                ? 'Start the project'
+                : escrowFunded
+                  ? 'Wait for wallet transfer completion'
+                  : 'Wait for client funds',
+              canStartProject,
               role,
               effectiveStage,
-              escrowFunded
+              canStartProject
                 ? 'Escrow is funded. You are ready to begin work on site.'
-                : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',
+                : escrowFunded
+                  ? 'Escrow is funded, but wallet transfer is still pending for milestone 1 materials. Work can start after transfer completion.'
+                  : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',
             ),
           ];
         } else {

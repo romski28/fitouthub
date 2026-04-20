@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-20-b17f0e9",
+    "date": "2026-04-20T11:29:45+08:00",
+    "title": "Tighten professional financial gating for escrow and wallet transfer",
+    "summary": "Tighten professional financial gating for escrow and wallet transfer",
+    "areas": [
+      "api"
+    ],
+    "commit": "b17f0e9",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-19-f5b5da8",
     "date": "2026-04-19T22:01:07+08:00",
     "title": "Refine project materials purchase flow",
