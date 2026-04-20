@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-20-c35a0ef",
+    "date": "2026-04-20T14:33:30+08:00",
+    "title": "Show M1 materials wallet CTA on milestone row",
+    "summary": "Show M1 materials wallet CTA on milestone row",
+    "areas": [
+      "web"
+    ],
+    "commit": "c35a0ef",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-20-e6f64fe",
     "date": "2026-04-20T14:29:20+08:00",
     "title": "Fix M1 materials wallet CTA visibility and professional alerts",

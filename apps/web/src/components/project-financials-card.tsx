@@ -220,6 +220,7 @@ const getTypeLabel = (type: string) => {
     advance_payment_rejection: 'Advance Declined',
     release_payment: 'Funds Released To Wallet',
     professional_wallet_transfer: 'Wallet Transfer Completed',
+    milestone_foh_allocation_cap: 'Materials Wallet Transfer',
   };
   return map[type] || type;
 };
@@ -1524,6 +1525,7 @@ export default function ProjectFinancialsCard({
                     {paymentPlan.milestones.map((milestone) => {
                       const linkedTx = txByMilestone.get(milestone.id);
                       const walletMilestone = walletMilestoneById.get(milestone.id);
+                      const milestoneStatus = String(milestone.status || '').toLowerCase();
                       const canPayMilestoneEscrow =
                         resolvedRole === 'client' &&
                         milestone.status === 'escrow_requested' &&
@@ -1532,6 +1534,14 @@ export default function ProjectFinancialsCard({
                         resolvedRole === 'client' &&
                         milestone.status === 'release_requested' &&
                         !!linkedTx?.releaseTx;
+                      const canAuthorizeMaterialsWallet =
+                        resolvedRole === 'client' &&
+                        isProcurementWorkflowProject &&
+                        Number(milestone.sequence) === 1 &&
+                        firstMilestoneMeta.capTotal === 0 &&
+                        (Number(walletMilestone?.fundedAmount || 0) > 0 ||
+                          milestoneStatus === 'escrow_funded' ||
+                          milestoneStatus === 'release_requested');
 
                       return (
                         <tr key={milestone.id} className="border-b border-slate-800">
@@ -1582,6 +1592,15 @@ export default function ProjectFinancialsCard({
                                   className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
                                 >
                                   {processingId === linkedTx!.releaseTx!.id ? 'Approving...' : 'Approve Release'}
+                                </button>
+                              ) : canAuthorizeMaterialsWallet ? (
+                                <button
+                                  type="button"
+                                  onClick={handleAuthorizeMaterialsWalletTransfer}
+                                  disabled={processingId === 'cap-authorize'}
+                                  className="w-[140px] px-3 py-1 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 disabled:bg-slate-400 transition"
+                                >
+                                  {processingId === 'cap-authorize' ? 'Processing...' : 'Transfer to Wallet'}
                                 </button>
                               ) : (
                                 <span className="text-xs text-slate-500">—</span>
