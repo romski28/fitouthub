@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-20-630aa00",
+    "date": "2026-04-20T11:30:19+08:00",
+    "title": "Set up web UI tests and add materials claim interaction test",
+    "summary": "Set up web UI tests and add materials claim interaction test",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "630aa00",
+    "files": [
+      "apps/web/package.json",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.materials.test.tsx",
+      "apps/web/vitest.config.ts",
+      "apps/web/vitest.setup.ts",
+      "pnpm-lock.yaml"
+    ]
+  },
+  {
     "id": "2026-04-20-6fc2904",
     "date": "2026-04-20T11:30:03+08:00",
     "title": "Add professional materials purchase parity in financials tab",
