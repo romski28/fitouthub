@@ -69,40 +69,22 @@ export class NextStepService {
       return 'not_required';
     }
 
-    const [claimCount, relatedTransfers] = await this.prisma.$transaction([
-      (this.prisma as any).milestoneProcurementEvidence.count({
-        where: {
-          projectId,
-          paymentMilestoneId: firstMilestoneId,
-        },
-      }),
-      this.prisma.financialTransaction.findMany({
-        where: {
-          projectId,
-          type: {
-            in: ['milestone_procurement_approved', 'professional_wallet_transfer'],
-          },
-          notes: {
-            contains: firstMilestoneId,
-          },
-        },
-        select: {
-          type: true,
-          status: true,
-        },
-      }),
-    ]);
+    // For SCALE_1/2 the full prerequisite chain is:
+    //   1. Client authorizes the milestone 1 cap (AUTHORIZE_MATERIALS_WALLET client step)
+    //   2. Professional submits materials purchase evidence
+    //   3. Client approves the evidence → proven amount moves to withdrawable wallet
+    // The professional is always gated (pending) until step 3 is confirmed.
+    // This is intentional: for all other scales 'not_required' is returned above.
+    const approvedCount = await this.prisma.financialTransaction.count({
+      where: {
+        projectId,
+        type: 'milestone_procurement_approved',
+        status: 'confirmed',
+        notes: { contains: firstMilestoneId },
+      },
+    });
 
-    const hasProcurementSignal = claimCount > 0 || relatedTransfers.length > 0;
-    if (!hasProcurementSignal) {
-      return 'not_required';
-    }
-
-    const transferConfirmed = relatedTransfers.some(
-      (row) => row.type === 'professional_wallet_transfer' && String(row.status || '').toLowerCase() === 'confirmed',
-    );
-
-    return transferConfirmed ? 'completed' : 'pending';
+    return approvedCount > 0 ? 'completed' : 'pending';
   }
 
   /**
@@ -338,12 +320,12 @@ export class NextStepService {
               canStartProject
                 ? 'START_PROJECT'
                 : escrowFunded
-                  ? 'WAIT_FOR_WALLET_TRANSFER'
+                  ? 'WAIT_FOR_MATERIALS_PROCESS'
                   : 'WAIT_FOR_CLIENT_FUNDS',
               canStartProject
                 ? 'Start the project'
                 : escrowFunded
-                  ? 'Wait for wallet transfer completion'
+                  ? 'Wait for milestone 1 materials process'
                   : 'Wait for client funds',
               canStartProject,
               role,
@@ -351,7 +333,7 @@ export class NextStepService {
               canStartProject
                 ? 'Escrow is funded. You are ready to begin work on site.'
                 : escrowFunded
-                  ? 'Escrow is funded, but wallet transfer is still pending for milestone 1 materials. Work can start after transfer completion.'
+                  ? 'Escrow is funded. The client is completing the milestone 1 materials wallet process. Submit your materials purchase receipts once you have purchased the required materials, then the client will release the confirmed amount to your withdrawable wallet.'
                   : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',
             ),
           ];
@@ -516,6 +498,80 @@ export class NextStepService {
               displayOrder: 1,
             } as any,
           ];
+        }
+
+        // For Class 1/2 projects, two sequential client steps apply after escrow is funded:
+        //   Step A: Client authorizes the milestone 1 cap (no proof needed — nominal allocation).
+        //   Step B: After professional submits purchase receipts, client reviews & approves.
+        // These steps are only for milestone 1. Subsequent milestones use the normal
+        // professional payment-request flow.
+        const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
+        if (escrowNowFunded && !pendingEscrowRequest) {
+          const projectScale = String(project.projectScale || '').toUpperCase();
+          if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {
+            const procPlan = await this.prisma.projectPaymentPlan.findUnique({
+              where: { projectId },
+              select: {
+                milestones: {
+                  where: { sequence: 1 },
+                  select: { id: true },
+                  take: 1,
+                },
+              },
+            });
+            const m1Id = procPlan?.milestones?.[0]?.id;
+            if (m1Id) {
+              const [capCount, pendingEvidenceCount] = await this.prisma.$transaction([
+                this.prisma.financialTransaction.count({
+                  where: {
+                    projectId,
+                    type: 'milestone_foh_allocation_cap',
+                    status: 'confirmed',
+                    notes: { contains: m1Id },
+                  },
+                }),
+                (this.prisma as any).milestoneProcurementEvidence.count({
+                  where: {
+                    projectId,
+                    paymentMilestoneId: m1Id,
+                    status: 'pending',
+                  },
+                }),
+              ]);
+
+              if (capCount === 0) {
+                // Step A: client confirms the nominal wallet allocation (no proof needed).
+                availableConfigSteps = [
+                  {
+                    actionKey: 'AUTHORIZE_MATERIALS_WALLET',
+                    actionLabel: 'Transfer materials funds to professional wallet',
+                    description:
+                      "Escrow is funded. Transfer the agreed milestone 1 amount to the professional's project wallet so they can purchase materials. This makes the funds available to them but not yet withdrawable \u2014 withdrawal requires them to submit purchase receipts for your review.",
+                    isPrimary: true,
+                    isElective: false,
+                    requiresAction: true,
+                    estimatedDurationMinutes: 3,
+                    displayOrder: 1,
+                  } as any,
+                ];
+              } else if (pendingEvidenceCount > 0) {
+                // Step B: professional has submitted receipts, client reviews.
+                availableConfigSteps = [
+                  {
+                    actionKey: 'REVIEW_MATERIALS_PURCHASE',
+                    actionLabel: 'Review materials purchase receipts',
+                    description:
+                      'The professional has submitted purchase receipts. Review and approve to move the confirmed amount to their withdrawable wallet. Any unspent balance will be returned to your escrow.',
+                    isPrimary: true,
+                    isElective: false,
+                    requiresAction: true,
+                    estimatedDurationMinutes: 5,
+                    displayOrder: 1,
+                  } as any,
+                ];
+              }
+            }
+          }
         }
       }
     }

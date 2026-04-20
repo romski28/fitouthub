@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-20-d508ba0",
+    "date": "2026-04-20T13:58:53+08:00",
+    "title": "Clarify M1 materials wallet flow: client controls all transfers, no admin gate",
+    "summary": "Clarify M1 materials wallet flow: client controls all transfers, no admin gate",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "d508ba0",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/lib/client-workflow.ts",
+      "apps/web/src/lib/next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-20-7a46890",
     "date": "2026-04-20T12:47:37+08:00",
     "title": "Fix wallet transfer timeline status semantics and scope",

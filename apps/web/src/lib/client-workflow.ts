@@ -16,6 +16,8 @@ export const clientActionTabMap: Record<string, string> = {
   SIGN_CONTRACT: 'contract',
   DEPOSIT_ESCROW_FUNDS: 'financials',
   REVIEW_PAYMENT_REQUEST: 'financials',
+  AUTHORIZE_MATERIALS_WALLET: 'financials',
+  REVIEW_MATERIALS_PURCHASE: 'financials',
   CONFIRM_START_DATE: 'schedule',
   CONFIRM_SCHEDULE: 'schedule',
   CONFIRM_START_DETAILS: 'schedule',

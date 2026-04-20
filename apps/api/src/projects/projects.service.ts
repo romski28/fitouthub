@@ -1421,11 +1421,15 @@ export class ProjectsService {
   }
 
   private async getWalletTransferTimeline(projectId: string) {
-    const firstWalletTransfer = await this.prisma.financialTransaction.findFirst({
+    // "Wallet transfer" in the Class 1/2 flow = the client authorizing the milestone 1
+    // cap allocation (milestone_foh_allocation_cap). This makes the nominal sum
+    // available to the professional but not yet withdrawable. A separate evidence-
+    // approval step then moves the proven amount to the withdrawable wallet.
+    const firstCapTx = await this.prisma.financialTransaction.findFirst({
       where: {
         projectId,
         status: 'confirmed',
-        type: 'professional_wallet_transfer',
+        type: 'milestone_foh_allocation_cap',
       },
       orderBy: {
         createdAt: 'asc',
@@ -1436,8 +1440,8 @@ export class ProjectsService {
     });
 
     return {
-      walletTransferStatus: firstWalletTransfer ? 'completed' : 'pending',
-      walletTransferCompletedAt: firstWalletTransfer?.createdAt ?? null,
+      walletTransferStatus: firstCapTx ? 'completed' : 'pending',
+      walletTransferCompletedAt: firstCapTx?.createdAt ?? null,
     };
   }
 

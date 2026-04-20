@@ -62,8 +62,30 @@ function cacheKey(projectId: string, scope: string): string {
 
 export function invalidateNextStepCache(projectId: string, cacheScope?: string, token?: string): void {
   const scope = cacheScope || (token ? token.slice(-16) : '');
-  if (!scope) return;
-  nextStepCache.delete(cacheKey(projectId, scope));
+  if (scope) {
+    const key = cacheKey(projectId, scope);
+    nextStepCache.delete(key);
+    nextStepListCache.delete(key);
+    recordInvalidation('next-steps');
+    return;
+  }
+
+  let invalidated = false;
+  for (const key of Array.from(nextStepCache.keys())) {
+    if (key.endsWith(`::${projectId}`)) {
+      nextStepCache.delete(key);
+      invalidated = true;
+    }
+  }
+
+  for (const key of Array.from(nextStepListCache.keys())) {
+    if (key.endsWith(`::${projectId}`)) {
+      nextStepListCache.delete(key);
+      invalidated = true;
+    }
+  }
+
+  if (!invalidated) return;
   recordInvalidation('next-steps');
 }
 

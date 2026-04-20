@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { StartDateNegotiationPanel, StartProposalRow } from '@/components/start-date-negotiation-panel';
 import { ProjectProgressBar } from '@/components/project-progress-bar';
-import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 import { getClientTabForAction } from '@/lib/client-workflow';
 
@@ -236,6 +236,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
         throw new Error(data.message || 'Failed to respond to start proposal');
       }
 
+      invalidateNextStepCache(projectId);
       await fetchStartProposals();
       await openWorkflowModal(
         status === 'accepted'
