@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-20-a4c2625",
+    "date": "2026-04-20T14:17:31+08:00",
+    "title": "Add 'Transfer to Wallet' row in financials timeline for M1 cap authorization",
+    "summary": "Add 'Transfer to Wallet' row in financials timeline for M1 cap authorization",
+    "areas": [
+      "web"
+    ],
+    "commit": "a4c2625",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-20-d508ba0",
     "date": "2026-04-20T13:58:53+08:00",
     "title": "Clarify M1 materials wallet flow: client controls all transfers, no admin gate",

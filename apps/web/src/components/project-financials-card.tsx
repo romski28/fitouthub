@@ -1128,6 +1128,22 @@ export default function ProjectFinancialsCard({
     }
   };
 
+  const handleAuthorizeMaterialsWalletTransfer = async () => {
+    if (!firstMilestone) return;
+    if (!window.confirm(`Transfer ${formatHKD(Number(firstMilestone.amount))} to the professional's materials holding wallet?\n\nThis amount will only become withdrawable by the professional once you approve their purchase invoices.`)) {
+      return;
+    }
+    try {
+      setProcessingId('cap-authorize');
+      await authorizeMilestoneCap(Number(firstMilestone.amount));
+      toast.success('Materials wallet transfer authorized');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to authorize transfer');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleTransferAvailableFunds = async () => {
     if (resolvedRole !== 'professional') {
       return;
@@ -1922,6 +1938,46 @@ export default function ProjectFinancialsCard({
                 {filteredTransactions.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-4 text-center text-slate-300">No financial transactions yet</td>
+                  </tr>
+                )}
+                {/* Pending materials wallet transfer — shown before cap is authorized for SCALE_1/2 projects */}
+                {isProcurementWorkflowProject && hasMilestoneEscrowFunded && firstMilestoneMeta.capTotal === 0 && (resolvedRole === 'client' || resolvedRole === 'admin') && (
+                  <tr className="border-b border-slate-700 bg-indigo-900/10">
+                    <td className="py-2 pr-4 text-slate-400 text-sm">—</td>
+                    <td className="py-2 pr-4 text-white">
+                      <div className="flex items-center gap-2">
+                        <span className="capitalize">Client</span>
+                        {resolvedRole === 'client' && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
+                            You
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4">
+                      <div className="font-medium text-white">Materials Wallet Transfer</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Milestone 1 procurement cap — held in professional wallet until invoices approved
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4 text-white font-semibold">{formatHKD(Number(firstMilestone!.amount))}</td>
+                    <td className="py-2 pr-4">
+                      <StatusPill status="pending" label="pending" tone="warning" />
+                    </td>
+                    <td className="py-2 pr-4 text-right">
+                      <div className="flex items-center gap-2 justify-end">
+                        {resolvedRole === 'client' && (
+                          <button
+                            type="button"
+                            onClick={handleAuthorizeMaterialsWalletTransfer}
+                            disabled={processingId === 'cap-authorize'}
+                            className="w-[140px] px-3 py-1 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 disabled:bg-slate-400 transition"
+                          >
+                            {processingId === 'cap-authorize' ? 'Processing...' : 'Transfer to Wallet'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 )}
                 {filteredTransactions.map((tx) => {
