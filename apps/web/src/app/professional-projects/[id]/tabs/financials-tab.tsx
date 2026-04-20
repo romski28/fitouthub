@@ -17,6 +17,28 @@ interface PaymentRequest {
   rejectionNotes?: string;
 }
 
+interface FinancialSummaryTransaction {
+  id: string;
+  type: string;
+  status: string;
+  notes?: string | null;
+  createdAt: string;
+}
+
+interface ProjectFinancialSummary {
+  escrowConfirmed?: number | string;
+  transactions?: FinancialSummaryTransaction[];
+}
+
+interface MilestoneProcurementEvidence {
+  id: string;
+  claimedAmount: number | string;
+  approvedAmount?: number | string | null;
+  notes?: string | null;
+  status: string;
+  createdAt: string;
+}
+
 interface ProjectFinancials {
   projectBudget?: number;
   totalQuotedAmount?: number;
@@ -157,6 +179,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     plannedDueAt: string;
     projectMilestoneId: string;
   }>>([]);
+  const [projectFinancialSummary, setProjectFinancialSummary] = React.useState<ProjectFinancialSummary | null>(null);
+  const [materialsEvidence, setMaterialsEvidence] = React.useState<MilestoneProcurementEvidence[]>([]);
+  const [materialsLoading, setMaterialsLoading] = React.useState(false);
+  const [materialsBusy, setMaterialsBusy] = React.useState<string | null>(null);
+  const [materialsClaimAmount, setMaterialsClaimAmount] = React.useState('');
+  const [materialsInvoiceUrls, setMaterialsInvoiceUrls] = React.useState('');
+  const [materialsPhotoUrls, setMaterialsPhotoUrls] = React.useState('');
+  const [materialsNotes, setMaterialsNotes] = React.useState('');
   const isAwarded = projectStatus === 'awarded';
   const totalPending = paymentRequests
     .filter((p) => p.status === 'pending')
@@ -194,7 +224,71 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     return 'bg-slate-700 text-slate-200 border border-slate-600';
   };
 
+  const parseMilestoneMetadataFromNotes = (notes?: string | null): { paymentMilestoneId?: string } | null => {
+    if (!notes || typeof notes !== 'string') return null;
+    const marker = '__FOH_MILESTONE__';
+    const index = notes.indexOf(marker);
+    if (index < 0) return null;
+    const payload = notes.slice(index + marker.length).trim();
+    if (!payload) return null;
+    try {
+      const parsed = JSON.parse(payload);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
   const paymentMilestones = paymentPlan?.milestones || [];
+  const firstPaymentMilestone = React.useMemo(
+    () => paymentMilestones.find((milestone) => Number(milestone.sequence) === 1) || paymentMilestones[0] || null,
+    [paymentMilestones],
+  );
+
+  const normalizedProjectScale = String(paymentPlan?.projectScale || '').toUpperCase();
+  const isMaterialsWorkflowProject = Boolean(firstPaymentMilestone && ['SCALE_1', 'SCALE_2'].includes(normalizedProjectScale));
+
+  const escrowConfirmedAmount = Number(projectFinancialSummary?.escrowConfirmed || 0);
+  const hasEscrowFundedMilestone = paymentMilestones.some((milestone) =>
+    ['escrow_funded', 'release_requested', 'released'].includes(String(milestone.status || '').toLowerCase()),
+  );
+  const isEscrowReady = escrowConfirmedAmount > 0 || hasEscrowFundedMilestone;
+
+  const walletTransferStatus = React.useMemo<'pending' | 'completed'>(() => {
+    if (!firstPaymentMilestone) return 'pending';
+
+    const firstMilestoneId = firstPaymentMilestone.id;
+    const txs = Array.isArray(projectFinancialSummary?.transactions)
+      ? projectFinancialSummary?.transactions
+      : [];
+
+    let hasProcurementSignal = false;
+    let transferCompleted = false;
+
+    for (const tx of txs) {
+      const meta = parseMilestoneMetadataFromNotes(tx.notes);
+      if (!meta?.paymentMilestoneId || meta.paymentMilestoneId !== firstMilestoneId) continue;
+
+      const type = String(tx.type || '');
+      const status = String(tx.status || '').toLowerCase();
+
+      if (type === 'milestone_procurement_approved' && status === 'confirmed') {
+        hasProcurementSignal = true;
+      }
+      if (type === 'professional_wallet_transfer') {
+        hasProcurementSignal = true;
+        if (status === 'confirmed') {
+          transferCompleted = true;
+        }
+      }
+    }
+
+    if (transferCompleted) return 'completed';
+    if (hasProcurementSignal) return 'pending';
+    return 'pending';
+  }, [projectFinancialSummary?.transactions, firstPaymentMilestone]);
+
+  const canSubmitMaterialsClaim = isMaterialsWorkflowProject && isEscrowReady;
   const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
 
   const paymentMilestonesByProjectMilestoneId = new Map(
@@ -235,7 +329,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       return paymentMilestone.status === 'escrow_funded';
     }
 
-    return ['scheduled', 'escrow_funded'].includes(paymentMilestone.status);
+    return isEscrowReady && ['scheduled', 'escrow_funded'].includes(paymentMilestone.status);
   });
 
   const fundingEligibleMilestones = paymentPlan?.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES'
@@ -249,6 +343,109 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   ) || eligibleMilestones[0] || null;
 
   const selectedMilestoneTiming = selectedMilestone ? getTiming(getDisplayMilestoneDueAt(selectedMilestone)) : null;
+
+  const fetchProjectFinancialSummary = React.useCallback(async () => {
+    if (!accessToken || !projectId) {
+      setProjectFinancialSummary(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        setProjectFinancialSummary(null);
+        return;
+      }
+
+      const data = (await response.json()) as ProjectFinancialSummary;
+      setProjectFinancialSummary(data || null);
+    } catch {
+      setProjectFinancialSummary(null);
+    }
+  }, [accessToken, projectId]);
+
+  const fetchMaterialsEvidence = React.useCallback(async () => {
+    if (!accessToken || !projectId || !firstPaymentMilestone || !isMaterialsWorkflowProject) {
+      setMaterialsEvidence([]);
+      return;
+    }
+
+    try {
+      setMaterialsLoading(true);
+      const response = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstPaymentMilestone.id}/procurement-evidence`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load materials claims');
+      }
+
+      const data = await response.json();
+      setMaterialsEvidence(Array.isArray(data) ? data : []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load materials claims');
+      setMaterialsEvidence([]);
+    } finally {
+      setMaterialsLoading(false);
+    }
+  }, [accessToken, projectId, firstPaymentMilestone, isMaterialsWorkflowProject]);
+
+  const handleSubmitMaterialsClaim = async () => {
+    if (!accessToken || !projectId || !firstPaymentMilestone) return;
+
+    const claimedAmount = Number(materialsClaimAmount || 0);
+    if (!Number.isFinite(claimedAmount) || claimedAmount <= 0) {
+      toast.error('Enter a valid claimed amount');
+      return;
+    }
+
+    try {
+      setMaterialsBusy('submit');
+      const response = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstPaymentMilestone.id}/procurement-evidence`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            claimedAmount,
+            invoiceUrls: materialsInvoiceUrls.split(',').map((entry) => entry.trim()).filter(Boolean),
+            photoUrls: materialsPhotoUrls.split(',').map((entry) => entry.trim()).filter(Boolean),
+            notes: materialsNotes || undefined,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data as { message?: string }).message || 'Failed to submit materials claim');
+      }
+
+      toast.success('Materials claim submitted');
+      setMaterialsClaimAmount('');
+      setMaterialsInvoiceUrls('');
+      setMaterialsPhotoUrls('');
+      setMaterialsNotes('');
+      await fetchMaterialsEvidence();
+      await fetchProjectFinancialSummary();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit materials claim');
+    } finally {
+      setMaterialsBusy(null);
+    }
+  };
 
   React.useEffect(() => {
     if (!accessToken || !projectProfessionalId) return;
@@ -299,6 +496,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       setScale3Rows(rows);
     }
   }, [paymentPlan]);
+
+  React.useEffect(() => {
+    void fetchProjectFinancialSummary();
+  }, [fetchProjectFinancialSummary]);
+
+  React.useEffect(() => {
+    void fetchMaterialsEvidence();
+  }, [fetchMaterialsEvidence]);
 
   const saveScaleMilestoneSettings = async () => {
     if (!accessToken || !projectId || !paymentPlan) {
@@ -444,6 +649,27 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               Open Schedule for Editing
             </button>
           </div>
+
+          {isMaterialsWorkflowProject && (
+            <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Escrow Funding Sub-Status</p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    Wallet Transfer: {walletTransferStatus === 'completed' ? 'Completed' : 'Pending'}
+                  </p>
+                  <p className="mt-1 text-xs text-cyan-100">
+                    Escrow Funding remains the stage owner. Materials purchase and transfer updates appear here as a sub-status.
+                  </p>
+                </div>
+                <div className="text-right text-xs text-cyan-100">
+                  <p>Milestone: <span className="font-semibold text-white">{firstPaymentMilestone?.title || 'Milestone 1'}</span></p>
+                  <p>Claims submitted: <span className="font-semibold text-white">{materialsEvidence.length}</span></p>
+                  <p>Escrow ready: <span className="font-semibold text-white">{isEscrowReady ? 'Yes' : 'No'}</span></p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {orphanPaymentMilestones.length > 0 && (
             <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
@@ -725,6 +951,12 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               </div>
             )}
 
+            {paymentPlan.escrowFundingPolicy !== 'ROLLING_TWO_MILESTONES' && !isEscrowReady && (
+              <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                Escrow funding is not confirmed yet. Payment requests unlock after escrow is funded.
+              </div>
+            )}
+
             {eligibleMilestones.length > 0 && (
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),auto]">
                 <div>
@@ -796,6 +1028,98 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               />
             </div>
           </div>
+
+          {isMaterialsWorkflowProject && (
+            <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-4 space-y-3">
+              <div>
+                <h4 className="font-semibold text-white">Project Materials Purchase</h4>
+                <p className="text-xs text-cyan-100 mt-1">
+                  Submit materials claims for milestone 1 once escrow funding is ready. Client/admin review and settlement happen on their side.
+                </p>
+              </div>
+
+              {!isEscrowReady && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  Escrow funding is still pending, so materials claims are locked.
+                </div>
+              )}
+
+              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Submit Materials Claim</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={materialsClaimAmount}
+                    onChange={(event) => setMaterialsClaimAmount(event.target.value)}
+                    placeholder="Claimed amount"
+                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={materialsInvoiceUrls}
+                    onChange={(event) => setMaterialsInvoiceUrls(event.target.value)}
+                    placeholder="Invoice URLs (comma separated)"
+                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={materialsPhotoUrls}
+                    onChange={(event) => setMaterialsPhotoUrls(event.target.value)}
+                    placeholder="Photo URLs (comma separated)"
+                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={materialsNotes}
+                    onChange={(event) => setMaterialsNotes(event.target.value)}
+                    placeholder="Notes"
+                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSubmitMaterialsClaim}
+                  disabled={!canSubmitMaterialsClaim || materialsBusy === 'submit'}
+                  className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
+                >
+                  {materialsBusy === 'submit' ? 'Submitting...' : 'Submit claim'}
+                </button>
+              </div>
+
+              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Claim History</p>
+                  {materialsLoading && <p className="text-xs text-slate-400">Loading...</p>}
+                </div>
+
+                {materialsEvidence.length === 0 ? (
+                  <p className="text-xs text-slate-400">No materials claims submitted yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {materialsEvidence.map((evidence) => (
+                      <div key={evidence.id} className="rounded border border-slate-700 bg-slate-950/40 p-2 space-y-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs text-white">
+                            Claimed: <span className="font-semibold">{formatHKD(evidence.claimedAmount)}</span>
+                            {evidence.approvedAmount ? ` | Approved: ${formatHKD(evidence.approvedAmount)}` : ''}
+                          </p>
+                          <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${getStatusClasses(String(evidence.status || ''))}`}>
+                            {String(evidence.status || '').replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Submitted {new Date(evidence.createdAt).toLocaleDateString('en-HK')}
+                        </p>
+                        {evidence.notes && <p className="text-xs text-slate-300">{evidence.notes}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

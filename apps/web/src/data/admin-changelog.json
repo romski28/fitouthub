@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-20-6fc2904",
+    "date": "2026-04-20T11:30:03+08:00",
+    "title": "Add professional materials purchase parity in financials tab",
+    "summary": "Add professional materials purchase parity in financials tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "6fc2904",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-20-b17f0e9",
     "date": "2026-04-20T11:29:45+08:00",
     "title": "Tighten professional financial gating for escrow and wallet transfer",
