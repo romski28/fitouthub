@@ -4,10 +4,11 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
-import { NotificationChannel, ProjectStage } from '@prisma/client';
+import { NotificationChannel, Prisma, ProjectStage } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 import { NotificationService } from '../notifications/notification.service';
@@ -71,6 +72,23 @@ export class FinancialService {
   private readonly slaMarker = '__FOH_SLA_POLICY__';
   private readonly allowedHourIncrements = new Set([12, 24, 36, 48, 72, 96]);
   private readonly allowedWorkingDayIncrements = new Set([1, 2, 3, 4, 5]);
+
+  private isMissingProcurementEvidenceTableError(error: unknown) {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === 'P2021' || error.code === 'P2022')
+    );
+  }
+
+  private rethrowProcurementEvidenceTableError(error: unknown): never {
+    if (this.isMissingProcurementEvidenceTableError(error)) {
+      throw new ServiceUnavailableException(
+        'Procurement evidence database migration has not been applied yet',
+      );
+    }
+
+    throw error;
+  }
 
   private getDefaultSlaByScale(scale?: string | null): SlaCategoryPolicy {
     const normalized = String(scale || 'SCALE_1').toUpperCase();
@@ -2468,20 +2486,25 @@ export class FinancialService {
     const invoiceUrls = (input.invoiceUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
     const photoUrls = (input.photoUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
 
-    const evidence = await (this.prisma as any).milestoneProcurementEvidence.create({
-      data: {
-        projectId: input.projectId,
-        paymentMilestoneId: milestone.id,
-        projectProfessionalId: projectProfessional?.id || null,
-        submittedBy: input.actorId,
-        submittedByRole: input.actorRole,
-        claimedAmount: new Decimal(claimedAmount.toFixed(2)),
-        invoiceUrls,
-        photoUrls,
-        notes: input.notes?.trim() || null,
-        status: 'pending',
-      },
-    });
+    let evidence;
+    try {
+      evidence = await (this.prisma as any).milestoneProcurementEvidence.create({
+        data: {
+          projectId: input.projectId,
+          paymentMilestoneId: milestone.id,
+          projectProfessionalId: projectProfessional?.id || null,
+          submittedBy: input.actorId,
+          submittedByRole: input.actorRole,
+          claimedAmount: new Decimal(claimedAmount.toFixed(2)),
+          invoiceUrls,
+          photoUrls,
+          notes: input.notes?.trim() || null,
+          status: 'pending',
+        },
+      });
+    } catch (error) {
+      this.rethrowProcurementEvidenceTableError(error);
+    }
 
     return {
       success: true,
@@ -2491,13 +2514,20 @@ export class FinancialService {
 
   async getMilestoneProcurementEvidence(projectId: string, milestoneId: string) {
     await this.getMilestoneProcurementContext(projectId, milestoneId);
-    return (this.prisma as any).milestoneProcurementEvidence.findMany({
-      where: {
-        projectId,
-        paymentMilestoneId: milestoneId,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    try {
+      return await (this.prisma as any).milestoneProcurementEvidence.findMany({
+        where: {
+          projectId,
+          paymentMilestoneId: milestoneId,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      if (this.isMissingProcurementEvidenceTableError(error)) {
+        return [];
+      }
+      throw error;
+    }
   }
 
   async reviewMilestoneProcurementEvidence(input: {
@@ -2524,13 +2554,18 @@ export class FinancialService {
       throw new ForbiddenException('Only the project client can review this evidence');
     }
 
-    const evidence = await (this.prisma as any).milestoneProcurementEvidence.findFirst({
-      where: {
-        id: input.evidenceId,
-        projectId: input.projectId,
-        paymentMilestoneId: milestone.id,
-      },
-    });
+    let evidence;
+    try {
+      evidence = await (this.prisma as any).milestoneProcurementEvidence.findFirst({
+        where: {
+          id: input.evidenceId,
+          projectId: input.projectId,
+          paymentMilestoneId: milestone.id,
+        },
+      });
+    } catch (error) {
+      this.rethrowProcurementEvidenceTableError(error);
+    }
 
     if (!evidence) {
       throw new NotFoundException('Procurement evidence not found');
@@ -2595,18 +2630,23 @@ export class FinancialService {
     }
 
     const result = await this.prisma.$transaction(async (prisma) => {
-      const updatedEvidence = await (prisma as any).milestoneProcurementEvidence.update({
-        where: { id: evidence.id },
-        data: {
-          status: input.decision,
-          approvedAmount: input.decision === 'approved' ? new Decimal(requestedApproved.toFixed(2)) : null,
-          reviewedBy: input.actorId,
-          reviewedByRole: input.actorRole,
-          reviewedAt: new Date(),
-          reviewNotes: input.reviewNotes?.trim() || null,
-          titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
-        },
-      });
+      let updatedEvidence;
+      try {
+        updatedEvidence = await (prisma as any).milestoneProcurementEvidence.update({
+          where: { id: evidence.id },
+          data: {
+            status: input.decision,
+            approvedAmount: input.decision === 'approved' ? new Decimal(requestedApproved.toFixed(2)) : null,
+            reviewedBy: input.actorId,
+            reviewedByRole: input.actorRole,
+            reviewedAt: new Date(),
+            reviewNotes: input.reviewNotes?.trim() || null,
+            titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
+          },
+        });
+      } catch (error) {
+        this.rethrowProcurementEvidenceTableError(error);
+      }
 
       let approvalTx: any = null;
       if (input.decision === 'approved') {

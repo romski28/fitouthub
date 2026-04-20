@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-20-8d9c0dd",
+    "date": "2026-04-20T15:03:50+08:00",
+    "title": "Handle missing procurement evidence table gracefully",
+    "summary": "Handle missing procurement evidence table gracefully",
+    "areas": [
+      "api"
+    ],
+    "commit": "8d9c0dd",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-20-c35a0ef",
     "date": "2026-04-20T14:33:30+08:00",
     "title": "Show M1 materials wallet CTA on milestone row",
