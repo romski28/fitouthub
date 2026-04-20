@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-20-7a46890",
+    "date": "2026-04-20T12:47:37+08:00",
+    "title": "Fix wallet transfer timeline status semantics and scope",
+    "summary": "Fix wallet transfer timeline status semantics and scope",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7a46890",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-20-630aa00",
     "date": "2026-04-20T11:30:19+08:00",
     "title": "Set up web UI tests and add materials claim interaction test",

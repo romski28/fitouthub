@@ -30,6 +30,8 @@ interface ProjectDetail {
   paymentPlan?: {
     milestones?: Array<{ amount?: string | number; totalAmount?: string | number; sequence?: number; escrowFundedAt?: string }>;
   };
+  walletTransferStatus?: string | null;
+  walletTransferCompletedAt?: string | null;
   startProposals?: Array<{
     status?: string;
     createdAt?: string;
@@ -456,8 +458,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           .filter((m) => Boolean(m?.escrowFundedAt))
           .sort((a, b) => Number(new Date(a?.escrowFundedAt || 0)) - Number(new Date(b?.escrowFundedAt || 0)))[0]
           ?.escrowFundedAt;
+        const isProcurementWorkflowProject = ['SCALE_1', 'SCALE_2'].includes(String(project.projectScale || '').toUpperCase());
+        const walletTransferStatus =
+          String(project.walletTransferStatus || '').toLowerCase() === 'completed'
+            ? 'Completed'
+            : 'Pending';
 
-        return [
+        const metrics = [
           { label: 'Escrow Funded', value: formatHKD(escrowFundedValue) },
           {
             label: 'Escrow Funded On',
@@ -466,6 +473,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           { label: 'Escrow to Project', value: escrowToProjectPct },
           { label: 'First Milestone Value', value: firstMilestoneAmount !== null ? formatHKD(firstMilestoneAmount as any) : '—' },
         ];
+
+        if (isProcurementWorkflowProject) {
+          metrics.splice(2, 0, { label: 'Wallet Transfer', value: walletTransferStatus });
+        }
+
+        return metrics;
       }
       case 'pre-work': {
         const latestProposal =

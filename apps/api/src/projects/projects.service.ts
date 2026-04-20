@@ -1420,6 +1420,27 @@ export class ProjectsService {
     }
   }
 
+  private async getWalletTransferTimeline(projectId: string) {
+    const firstWalletTransfer = await this.prisma.financialTransaction.findFirst({
+      where: {
+        projectId,
+        status: 'confirmed',
+        type: 'professional_wallet_transfer',
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+      select: {
+        createdAt: true,
+      },
+    });
+
+    return {
+      walletTransferStatus: firstWalletTransfer ? 'completed' : 'pending',
+      walletTransferCompletedAt: firstWalletTransfer?.createdAt ?? null,
+    };
+  }
+
   async findOne(id: string) {
     try {
       const project = await this.prisma.project.findUnique({
@@ -1451,8 +1472,10 @@ export class ProjectsService {
         },
       });
       if (!project) return null;
+      const walletTransferTimeline = await this.getWalletTransferTimeline(project.id);
       return {
         ...project,
+        ...walletTransferTimeline,
         professionals: this.dedupeProfessionals((project as any).professionals),
         photos: this.resolveProjectPhotos((project as any).photos),
       } as any;
@@ -1506,8 +1529,10 @@ export class ProjectsService {
       });
       console.log('[ProjectsService.findOneForClient] Project found:', !!project);
       if (!project) return null;
+      const walletTransferTimeline = await this.getWalletTransferTimeline(project.id);
       return {
         ...project,
+        ...walletTransferTimeline,
         professionals: this.dedupeProfessionals((project as any).professionals),
         photos: this.resolveProjectPhotos((project as any).photos),
       } as any;
