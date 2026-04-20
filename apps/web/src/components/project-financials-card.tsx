@@ -720,8 +720,12 @@ export default function ProjectFinancialsCard({
   }, [pendingProcurementEvidence, selectedProcurementEvidenceId]);
 
   const hasMilestoneEscrowFunded = useMemo(
-    () => Number(firstWalletMilestone?.fundedAmount || 0) > 0,
-    [firstWalletMilestone],
+    () => {
+      const fundedAmount = Number(firstWalletMilestone?.fundedAmount || 0);
+      const milestoneStatus = String(firstMilestone?.status || '').toLowerCase();
+      return fundedAmount > 0 || milestoneStatus === 'escrow_funded' || milestoneStatus === 'release_requested';
+    },
+    [firstWalletMilestone, firstMilestone],
   );
 
   const hasProcurementClaim = procurementEvidence.length > 0;

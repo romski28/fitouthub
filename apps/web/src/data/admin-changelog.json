@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-20-e6f64fe",
+    "date": "2026-04-20T14:29:20+08:00",
+    "title": "Fix M1 materials wallet CTA visibility and professional alerts",
+    "summary": "Fix M1 materials wallet CTA visibility and professional alerts",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e6f64fe",
+    "files": [
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-20-a4c2625",
     "date": "2026-04-20T14:17:31+08:00",
     "title": "Add 'Transfer to Wallet' row in financials timeline for M1 cap authorization",

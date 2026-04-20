@@ -403,12 +403,22 @@ export class FinancialService {
           select: {
             id: true,
             userId: true,
+            projectName: true,
           },
         },
         projectProfessional: {
           select: {
             id: true,
             professionalId: true,
+            professional: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                contactName: true,
+                companyName: true,
+              },
+            },
           },
         },
         milestones: {
@@ -2331,6 +2341,89 @@ export class FinancialService {
         amount: requestedAmount,
       },
     });
+
+    const formatter = new Intl.NumberFormat('en-HK', {
+      style: 'currency',
+      currency: 'HKD',
+      minimumFractionDigits: 0,
+    });
+    const formattedAmount = formatter.format(requestedAmount);
+    const projectName = project?.projectName || 'Project';
+
+    try {
+      const thread = await this.chatService.getOrCreateProjectThread(input.projectId);
+      await this.chatService.addProjectMessage(
+        (thread as any).id || (thread as any).threadId,
+        'admin',
+        null,
+        null,
+        `${projectName} — The client transferred ${formattedAmount} to the milestone 1 materials holding wallet. Submit purchase invoices in financials to move approved amounts into your withdrawable wallet.`,
+        undefined,
+      );
+    } catch (chatError) {
+      console.warn('[FinancialService] Failed to post milestone cap authorization message to chat:', chatError);
+    }
+
+    try {
+      const professional = projectProfessional?.professional;
+      if (professional?.id) {
+        const preference = await this.prisma.notificationPreference.findUnique({
+          where: { professionalId: professional.id },
+          select: {
+            primaryChannel: true,
+            fallbackChannel: true,
+            enableWhatsApp: true,
+            enableSMS: true,
+          },
+        });
+
+        const isMessagingChannel = (channel?: NotificationChannel | null) =>
+          channel === NotificationChannel.WHATSAPP || channel === NotificationChannel.SMS;
+
+        const isChannelEnabled = (channel?: NotificationChannel | null) => {
+          if (!channel) return false;
+          if (channel === NotificationChannel.WHATSAPP) {
+            return preference?.enableWhatsApp ?? true;
+          }
+          if (channel === NotificationChannel.SMS) {
+            return preference?.enableSMS ?? true;
+          }
+          return false;
+        };
+
+        let directChannel: NotificationChannel | null = null;
+        if (isMessagingChannel(preference?.primaryChannel) && isChannelEnabled(preference?.primaryChannel)) {
+          directChannel = preference!.primaryChannel as NotificationChannel;
+        } else if (isMessagingChannel(preference?.fallbackChannel) && isChannelEnabled(preference?.fallbackChannel)) {
+          directChannel = preference!.fallbackChannel as NotificationChannel;
+        } else if (!preference) {
+          directChannel = NotificationChannel.WHATSAPP;
+        }
+
+        const message = `Materials wallet funded: ${formattedAmount} for "${projectName}" is now reserved in your project wallet. Submit purchase invoices for client approval to release approved amounts.`;
+
+        if (professional.phone && directChannel) {
+          await this.notificationService.send({
+            professionalId: professional.id,
+            phoneNumber: professional.phone,
+            channel: directChannel,
+            eventType: 'materials_wallet_funded',
+            message,
+          });
+        } else if (professional.email) {
+          const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
+          await this.emailService.sendMaterialsWalletTransferAuthorizedNotification({
+            to: professional.email,
+            professionalName: professional.contactName || professional.companyName || 'Professional',
+            projectName,
+            amount: formattedAmount,
+            projectUrl: `${webBaseUrl}/professional-projects/${projectProfessional.id}`,
+          });
+        }
+      }
+    } catch (notificationError) {
+      console.warn('[FinancialService] Failed to send milestone cap authorization notifications:', notificationError);
+    }
 
     return {
       success: true,

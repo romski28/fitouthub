@@ -808,6 +808,46 @@ export class EmailService {
     }
   }
 
+  async sendMaterialsWalletTransferAuthorizedNotification(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    amount: string;
+    projectUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send materials wallet authorization notification to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Materials wallet funded: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4f46e5;">Materials Wallet Funded</h2>
+            <p>Hi ${params.professionalName},</p>
+            <p>The client has transferred <strong>${params.amount}</strong> into your milestone 1 materials holding wallet for <strong>${params.projectName}</strong>.</p>
+            <p>This balance is reserved for materials purchases and is not withdrawable yet. Submit your purchase invoices in the project financials tab so the client can approve the supported amount for release to your withdrawable wallet.</p>
+            <div style="margin: 24px 0; text-align: center;">
+              <a href="${params.projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+                View Project
+              </a>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">This notification was sent by Fitout Hub.</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Materials wallet authorization notification sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send materials wallet authorization notification:', error);
+      throw error;
+    }
+  }
+
   /**
    * Send escrow notification to professional when project is awarded
    */
