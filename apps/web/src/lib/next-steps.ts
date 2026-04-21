@@ -5,6 +5,17 @@ export type NextStepAction = {
   actionKey: string;
   actionLabel: string;
   description?: string;
+  modalContent?: {
+    title?: string;
+    body?: string;
+    detailsBody?: string;
+    successTitle?: string;
+    successBody?: string;
+    successNextStepBody?: string;
+    imageUrl?: string;
+    primaryButtonLabel?: string;
+    secondaryButtonLabel?: string;
+  };
   isPrimary: boolean;
   isElective: boolean;
   requiresAction: boolean;

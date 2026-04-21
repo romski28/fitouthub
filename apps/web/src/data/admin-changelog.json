@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-04-21-2626abf",
+    "date": "2026-04-21T16:07:04+08:00",
+    "title": "Scaffold DB-backed next-step modal content management",
+    "summary": "Scaffold DB-backed next-step modal content management",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "2626abf",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/projects/next-step-config.controller.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/admin/next-steps/page.tsx",
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/components/project-financials-card.tsx",
+      "apps/web/src/lib/next-step-modal-content.ts",
+      "apps/web/src/lib/next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-21-c1efe0f",
     "date": "2026-04-21T15:52:43+08:00",
     "title": "Keep wallet modal open for success and next-step message",

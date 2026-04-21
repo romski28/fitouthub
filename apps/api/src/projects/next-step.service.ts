@@ -6,11 +6,24 @@ export interface NextStepAction {
   actionKey: string;
   actionLabel: string;
   description?: string;
+  modalContent?: NextStepModalContent;
   isPrimary: boolean;
   isElective: boolean;
   requiresAction: boolean;
   estimatedDurationMinutes?: number;
   displayOrder: number;
+}
+
+export interface NextStepModalContent {
+  title?: string;
+  body?: string;
+  detailsBody?: string;
+  successTitle?: string;
+  successBody?: string;
+  successNextStepBody?: string;
+  imageUrl?: string;
+  primaryButtonLabel?: string;
+  secondaryButtonLabel?: string;
 }
 
 export interface NextStepResult {
@@ -46,6 +59,26 @@ const createSyntheticPrimaryStep = (
 @Injectable()
 export class NextStepService {
   constructor(private prisma: PrismaService) {}
+
+  private extractModalContent(config: any): NextStepModalContent | undefined {
+    if (!config) return undefined;
+
+    const modalContent: NextStepModalContent = {
+      title: config.modalTitle || undefined,
+      body: config.modalBody || undefined,
+      detailsBody: config.modalDetailsBody || undefined,
+      successTitle: config.modalSuccessTitle || undefined,
+      successBody: config.modalSuccessBody || undefined,
+      successNextStepBody: config.modalSuccessNextStepBody || undefined,
+      imageUrl: config.modalImageUrl || undefined,
+      primaryButtonLabel: config.modalPrimaryButtonLabel || undefined,
+      secondaryButtonLabel: config.modalSecondaryButtonLabel || undefined,
+    };
+
+    return Object.values(modalContent).some((value) => value != null)
+      ? modalContent
+      : undefined;
+  }
 
   private async getProfessionalWalletTransferPrerequisiteStatus(
     projectId: string,
@@ -174,6 +207,27 @@ export class NextStepService {
         role: role,
       },
       orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
+    });
+
+    const modalContentByActionKey = new Map<string, NextStepModalContent>();
+    for (const step of nextSteps) {
+      const modalContent = this.extractModalContent(step);
+      if (modalContent) {
+        modalContentByActionKey.set(step.actionKey, modalContent);
+      }
+    }
+
+    const toApiAction = (step: any): NextStepAction => ({
+      actionKey: step.actionKey,
+      actionLabel: step.actionLabel,
+      description: step.description || undefined,
+      modalContent:
+        this.extractModalContent(step) || modalContentByActionKey.get(step.actionKey),
+      isPrimary: Boolean(step.isPrimary),
+      isElective: Boolean(step.isElective),
+      requiresAction: Boolean(step.requiresAction),
+      estimatedDurationMinutes: step.estimatedDurationMinutes || undefined,
+      displayOrder: Number(step.displayOrder || 0),
     });
 
     let availableConfigSteps = nextSteps;
@@ -455,16 +509,7 @@ export class NextStepService {
               } as any,
             ];
             return {
-              PRIMARY: availableConfigSteps.map((s) => ({
-                actionKey: s.actionKey,
-                actionLabel: s.actionLabel,
-                description: s.description || undefined,
-                isPrimary: s.isPrimary,
-                isElective: s.isElective,
-                requiresAction: s.requiresAction,
-                estimatedDurationMinutes: s.estimatedDurationMinutes || undefined,
-                displayOrder: s.displayOrder,
-              })),
+              PRIMARY: availableConfigSteps.map(toApiAction),
               ELECTIVE: [],
               status: project.status,
               stage: effectiveStage,
@@ -600,29 +645,11 @@ export class NextStepService {
     // Split into primary and elective
     const primary = availableSteps
       .filter((s) => s.isPrimary)
-      .map((s) => ({
-        actionKey: s.actionKey,
-        actionLabel: s.actionLabel,
-        description: s.description || undefined,
-        isPrimary: s.isPrimary,
-        isElective: s.isElective,
-        requiresAction: s.requiresAction,
-        estimatedDurationMinutes: s.estimatedDurationMinutes || undefined,
-        displayOrder: s.displayOrder,
-      }));
+      .map(toApiAction);
 
     const elective = availableSteps
-      .filter((s) => !s.isPrimary)
-      .map((s) => ({
-        actionKey: s.actionKey,
-        actionLabel: s.actionLabel,
-        description: s.description || undefined,
-        isPrimary: s.isPrimary,
-        isElective: s.isElective,
-        requiresAction: s.requiresAction,
-        estimatedDurationMinutes: s.estimatedDurationMinutes || undefined,
-        displayOrder: s.displayOrder,
-      }));
+      .filter((s) => s.isElective)
+      .map(toApiAction);
 
     return {
       PRIMARY: primary,
@@ -735,5 +762,50 @@ export class NextStepService {
 
     // Will be populated by separate seed function
     return { message: 'NextStepConfig ready for seeding' };
+  }
+
+  async listNextStepConfigs(filters?: {
+    role?: string;
+    projectStage?: ProjectStage;
+    actionKey?: string;
+  }) {
+    return this.prisma.nextStepConfig.findMany({
+      where: {
+        role: filters?.role,
+        projectStage: filters?.projectStage,
+        actionKey: filters?.actionKey,
+      },
+      orderBy: [{ projectStage: 'asc' }, { role: 'asc' }, { displayOrder: 'asc' }],
+    });
+  }
+
+  async updateNextStepConfigModalContent(
+    id: string,
+    payload: {
+      modalTitle?: string | null;
+      modalBody?: string | null;
+      modalDetailsBody?: string | null;
+      modalSuccessTitle?: string | null;
+      modalSuccessBody?: string | null;
+      modalSuccessNextStepBody?: string | null;
+      modalImageUrl?: string | null;
+      modalPrimaryButtonLabel?: string | null;
+      modalSecondaryButtonLabel?: string | null;
+    },
+  ) {
+    return this.prisma.nextStepConfig.update({
+      where: { id },
+      data: {
+        modalTitle: payload.modalTitle ?? null,
+        modalBody: payload.modalBody ?? null,
+        modalDetailsBody: payload.modalDetailsBody ?? null,
+        modalSuccessTitle: payload.modalSuccessTitle ?? null,
+        modalSuccessBody: payload.modalSuccessBody ?? null,
+        modalSuccessNextStepBody: payload.modalSuccessNextStepBody ?? null,
+        modalImageUrl: payload.modalImageUrl ?? null,
+        modalPrimaryButtonLabel: payload.modalPrimaryButtonLabel ?? null,
+        modalSecondaryButtonLabel: payload.modalSecondaryButtonLabel ?? null,
+      },
+    });
   }
 }

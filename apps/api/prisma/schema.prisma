@@ -1488,6 +1488,15 @@ model NextStepConfig {
   actionKey                String
   actionLabel              String
   description              String?
+  modalTitle               String?
+  modalBody                String?  @db.Text
+  modalDetailsBody         String?  @db.Text
+  modalSuccessTitle        String?
+  modalSuccessBody         String?  @db.Text
+  modalSuccessNextStepBody String?  @db.Text
+  modalImageUrl            String?
+  modalPrimaryButtonLabel  String?
+  modalSecondaryButtonLabel String?
   isPrimary                Boolean  @default(false)
   isElective               Boolean  @default(false)
   requiresAction           Boolean  @default(true) // false for passive monitoring (e.g., "Wait for quotes")

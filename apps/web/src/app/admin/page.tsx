@@ -783,6 +783,12 @@ export default function AdminDashboardPage() {
       href: "/admin/changelog",
       stat: "Release visibility",
     },
+    {
+      title: "Next-Step Content",
+      description: "Manage DB-backed modal copy and image links for next-step actions.",
+      href: "/admin/next-steps",
+      stat: "Workflow modal content",
+    },
   ];
 
   const analyticsCards = [

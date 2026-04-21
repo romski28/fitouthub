@@ -7,6 +7,12 @@ import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import StatusPill, { statusToneFromStatus } from './status-pill';
 import { useAuth } from '@/context/auth-context';
+import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import {
+  applyNextStepModalTemplate,
+  resolveNextStepModalContent,
+  type NextStepModalContent,
+} from '@/lib/next-step-modal-content';
 
 export type ProjectFinancialRole = 'client' | 'professional' | 'admin';
 
@@ -351,6 +357,9 @@ export default function ProjectFinancialsCard({
   const [showMaterialsWalletModal, setShowMaterialsWalletModal] = useState(false);
   const [showMaterialsWalletSuccess, setShowMaterialsWalletSuccess] = useState(false);
   const [showMaterialsWalletInfo, setShowMaterialsWalletInfo] = useState(false);
+  const [materialsWalletModalContent, setMaterialsWalletModalContent] = useState<NextStepModalContent>(() =>
+    resolveNextStepModalContent('AUTHORIZE_MATERIALS_WALLET'),
+  );
   const [clientDisplayName, setClientDisplayName] = useState('client');
   const [professionalDisplayName, setProfessionalDisplayName] = useState('professional');
   const modalPortalTarget = typeof document !== 'undefined' ? document.body : null;
@@ -1188,6 +1197,24 @@ export default function ProjectFinancialsCard({
     setShowMaterialsWalletModal(false);
   };
 
+  const hydrateMaterialsWalletModalContent = async () => {
+    const fallback = resolveNextStepModalContent('AUTHORIZE_MATERIALS_WALLET');
+    setMaterialsWalletModalContent(fallback);
+
+    try {
+      const next = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: `client-financials-wallet-modal:${projectId}`,
+      });
+      if (next?.actionKey === 'AUTHORIZE_MATERIALS_WALLET') {
+        setMaterialsWalletModalContent(
+          resolveNextStepModalContent('AUTHORIZE_MATERIALS_WALLET', next.modalContent),
+        );
+      }
+    } catch {
+      // Keep fallback content silently when next-step endpoint is unavailable.
+    }
+  };
+
   const handleConfirmMaterialsWalletTransfer = async () => {
     if (!firstMilestone) return;
     try {
@@ -1215,6 +1242,7 @@ export default function ProjectFinancialsCard({
     setShowMaterialsWalletInfo(false);
     setShowMaterialsWalletSuccess(false);
     setShowMaterialsWalletModal(true);
+    void hydrateMaterialsWalletModalContent();
   };
 
   useEffect(() => {
@@ -1227,6 +1255,7 @@ export default function ProjectFinancialsCard({
     setShowMaterialsWalletInfo(false);
     setShowMaterialsWalletSuccess(false);
     setShowMaterialsWalletModal(true);
+    void hydrateMaterialsWalletModalContent();
     onMaterialsWalletAutoOpenHandled?.();
   }, [
     openMaterialsWalletOnLoad,
@@ -1235,6 +1264,8 @@ export default function ProjectFinancialsCard({
     hasMilestoneEscrowFunded,
     firstMilestoneMeta.capTotal,
     onMaterialsWalletAutoOpenHandled,
+    projectId,
+    accessToken,
   ]);
 
   const handleTransferAvailableFunds = async () => {
@@ -2369,27 +2400,39 @@ export default function ProjectFinancialsCard({
               <div className="px-6 pt-10 pb-4 text-center">
                 {showMaterialsWalletSuccess ? (
                   <>
-                    <p className="text-3xl font-bold text-emerald-300">Funds have been transferred!</p>
+                    <p className="text-3xl font-bold text-emerald-300">
+                      {materialsWalletModalContent.successTitle || 'Funds have been transferred!'}
+                    </p>
                     <p className="mt-4 text-base text-slate-100">
-                      {formatHKD(Number(firstMilestone.amount || 0))} has been moved to {professionalDisplayName}&apos;s holding wallet.
+                      {applyNextStepModalTemplate(materialsWalletModalContent.successBody, {
+                        clientName: clientDisplayName,
+                        professionalName: professionalDisplayName,
+                        amount: formatHKD(Number(firstMilestone.amount || 0)),
+                      }) || `${formatHKD(Number(firstMilestone.amount || 0))} has been moved to ${professionalDisplayName}'s holding wallet.`}
                     </p>
                     <p className="mt-4 text-sm text-slate-300">
-                      What&apos;s next? We are working on it!
+                      {materialsWalletModalContent.successNextStepBody || "What's next? We are working on it!"}
                     </p>
                   </>
                 ) : (
                   <>
                     <div className="mb-4 flex justify-center">
                       <img
-                        src="/assets/images/chatbot-avatar-icon.webp"
+                        src={materialsWalletModalContent.imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
                         alt="Action avatar"
                         className="h-20 w-20 rounded-full border border-white/20 object-cover"
                       />
                     </div>
-                    <p className="text-slate-200 text-lg">OK {clientDisplayName}, you need to move</p>
-                    <p className="mt-2 text-4xl font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
-                    <p className="mt-2 text-slate-200 text-2xl">from your wallet to</p>
-                    <p className="text-white text-2xl">{professionalDisplayName}&apos;s holding wallet</p>
+                    <p className="text-slate-200 text-lg">
+                      {materialsWalletModalContent.title || 'Transfer materials funds'}
+                    </p>
+                    <p className="mt-3 text-slate-100 text-base leading-relaxed">
+                      {applyNextStepModalTemplate(materialsWalletModalContent.body, {
+                        clientName: clientDisplayName,
+                        professionalName: professionalDisplayName,
+                        amount: formatHKD(Number(firstMilestone.amount || 0)),
+                      }) || `OK ${clientDisplayName}, you need to move ${formatHKD(Number(firstMilestone.amount || 0))} from your wallet to ${professionalDisplayName}'s holding wallet.`}
+                    </p>
                   </>
                 )}
               </div>
@@ -2422,7 +2465,7 @@ export default function ProjectFinancialsCard({
                       disabled={processingId === 'cap-authorize'}
                       className="min-w-[110px] rounded-lg bg-rose-600 px-4 py-2 text-base font-semibold text-white hover:bg-rose-700 transition disabled:opacity-50"
                     >
-                      Cancel
+                      {materialsWalletModalContent.secondaryButtonLabel || 'Cancel'}
                     </button>
                     <button
                       type="button"
@@ -2430,7 +2473,9 @@ export default function ProjectFinancialsCard({
                       disabled={processingId === 'cap-authorize'}
                       className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition disabled:bg-slate-500"
                     >
-                      {processingId === 'cap-authorize' ? 'Please wait...' : 'OK'}
+                      {processingId === 'cap-authorize'
+                        ? 'Please wait...'
+                        : materialsWalletModalContent.primaryButtonLabel || 'OK'}
                     </button>
                   </>
                 )}
@@ -2440,10 +2485,12 @@ export default function ProjectFinancialsCard({
                 <div className="absolute inset-3 z-10 rounded-xl border border-slate-600 bg-slate-900/95 p-4 shadow-xl">
                   <div className="space-y-3 text-left">
                     <p className="text-sm text-white leading-relaxed">
-                      This amount is moved from {clientDisplayName}&apos;s wallet to {professionalDisplayName}&apos;s materials holding wallet. It is not withdrawable until you review and approve submitted purchase invoices.
-                    </p>
-                    <p className="text-sm text-slate-200 leading-relaxed">
-                      After authorisation, {professionalDisplayName}&apos;s next step is to submit materials evidence for your review.
+                      {applyNextStepModalTemplate(materialsWalletModalContent.detailsBody, {
+                        clientName: clientDisplayName,
+                        professionalName: professionalDisplayName,
+                        amount: formatHKD(Number(firstMilestone.amount || 0)),
+                      }) ||
+                        `This amount is moved from ${clientDisplayName}'s wallet to ${professionalDisplayName}'s materials holding wallet. It is not withdrawable until you review and approve submitted purchase invoices.`}
                     </p>
                   </div>
                   <div className="mt-4 flex justify-center">
