@@ -10,6 +10,8 @@ interface GeneralActionModalProps {
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
   onDetailsAction?: (target: string) => void;
+  onOpenProject?: () => void;
+  detailsTargetFallback?: string;
 }
 
 export function GeneralActionModal({
@@ -19,6 +21,8 @@ export function GeneralActionModal({
   onPrimaryAction,
   onSecondaryAction,
   onDetailsAction,
+  onOpenProject,
+  detailsTargetFallback,
 }: GeneralActionModalProps) {
   const { state } = useNextStepModal();
   const [showDetails, setShowDetails] = useState(false);
@@ -49,12 +53,13 @@ export function GeneralActionModal({
   const secondaryIsDanger =
     secondaryLabelLower.includes('cancel') ||
     secondaryLabelLower.includes('decline');
+  const effectiveDetailsTarget = detailsTarget || detailsTargetFallback;
 
   const handlePrimaryClick = () => {
-    if (primaryActionType === 'navigate_tab' && detailsTarget) {
+    if (primaryActionType === 'navigate_tab' && effectiveDetailsTarget) {
       try {
-        JSON.parse(detailsTarget);
-        onDetailsAction?.(detailsTarget);
+        JSON.parse(effectiveDetailsTarget);
+        onDetailsAction?.(effectiveDetailsTarget);
       } catch {
         // Not JSON, might be a simple action
         onPrimaryAction?.();
@@ -67,8 +72,8 @@ export function GeneralActionModal({
   };
 
   const handleSecondaryClick = () => {
-    if (secondaryActionType === 'navigate_tab' && detailsTarget) {
-      onDetailsAction?.(detailsTarget);
+    if (secondaryActionType === 'navigate_tab' && effectiveDetailsTarget) {
+      onDetailsAction?.(effectiveDetailsTarget);
       return;
     }
 
@@ -131,10 +136,19 @@ export function GeneralActionModal({
                   Close
                 </button>
               )}
-              {detailsTarget && onDetailsAction && (
+              {onOpenProject && (
                 <button
                   type="button"
-                  onClick={() => onDetailsAction(detailsTarget)}
+                  onClick={onOpenProject}
+                  className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                >
+                  Open project
+                </button>
+              )}
+              {effectiveDetailsTarget && onDetailsAction && (
+                <button
+                  type="button"
+                  onClick={() => onDetailsAction(effectiveDetailsTarget)}
                   className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
                 >
                   View details

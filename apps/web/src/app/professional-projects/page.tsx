@@ -19,6 +19,7 @@ import {
   fetchPrimaryNextStep,
   type NextStepAction,
 } from '@/lib/next-steps';
+import { getProfessionalShowMeHref } from '@/lib/professional-workflow';
 import type { UpdatesSummary } from '@/lib/updates-cache';
 
 interface ProjectProfessional {
@@ -40,28 +41,6 @@ interface ProjectProfessional {
 }
 
 type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
-
-const professionalActionTabMap: Record<string, string> = {
-  REQUEST_SITE_ACCESS: 'site-access',
-  ATTEND_SITE_VISIT: 'site-access',
-  PREPARE_REVISED_QUOTE: 'site-access',
-  SUBMIT_QUOTE: 'overview',
-  REPLY_TO_INVITATION: 'overview',
-  REVIEW_CONTRACT: 'contract',
-  SIGN_CONTRACT: 'contract',
-  SUBMIT_PROGRESS_UPDATE: 'schedule',
-  CONFIRM_START_DATE: 'schedule',
-  CONFIRM_SCHEDULE: 'schedule',
-  REQUEST_FINAL_WALKTHROUGH: 'schedule',
-  ADDRESS_FINAL_ITEMS: 'schedule',
-  PROVIDE_WARRANTY_DETAILS: 'schedule',
-  RESPOND_TO_DISPUTE: 'chat',
-};
-
-function getProfessionalShowMeHref(projectProfessionalId: string, actionKey: string) {
-  const tab = professionalActionTabMap[actionKey] || 'overview';
-  return `/professional-projects/${projectProfessionalId}?tab=${encodeURIComponent(tab)}`;
-}
 
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
@@ -101,11 +80,12 @@ export default function ProfessionalProjectsPage() {
     .filter((p) => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))));
 
   const openProfessionalNextStepModal = useCallback(
-    async (action: NextStepAction, projectId: string) => {
+    async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
       if (!professional?.id) return;
       await openModal(
         action.actionKey,
         projectId,
+        `/professional-projects/${projectProfessionalId}?tab=overview`,
         professional.id,
         'PROFESSIONAL',
         action.modalContent,
@@ -360,7 +340,13 @@ export default function ProfessionalProjectsPage() {
                               {primaryAction ? (
                                 <button
                                   type="button"
-                                  onClick={() => void openProfessionalNextStepModal(primaryAction, projectProf.project.id)}
+                                  onClick={() =>
+                                    void openProfessionalNextStepModal(
+                                      primaryAction,
+                                      projectProf.project.id,
+                                      projectProf.id,
+                                    )
+                                  }
                                   className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
                                 >
                                   {primaryAction.actionLabel}
@@ -376,7 +362,13 @@ export default function ProfessionalProjectsPage() {
                               {secondaryAction && (
                                 <button
                                   type="button"
-                                  onClick={() => void openProfessionalNextStepModal(secondaryAction, projectProf.project.id)}
+                                  onClick={() =>
+                                    void openProfessionalNextStepModal(
+                                      secondaryAction,
+                                      projectProf.project.id,
+                                      projectProf.id,
+                                    )
+                                  }
                                   className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap"
                                 >
                                   {secondaryAction.actionLabel}

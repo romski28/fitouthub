@@ -25,6 +25,7 @@ export interface NextStepModalState {
   isLoading: boolean;
   actionKey?: string;
   projectId?: string;
+  projectDetailsPath?: string;
   userId?: string;
   role?: string;
   projectStage?: string;
@@ -37,6 +38,7 @@ interface NextStepModalContextType {
   openModal: (
     actionKey: string,
     projectId: string,
+    projectDetailsPath: string | undefined,
     userId: string,
     role: string,
     modalContent?: NextStepModalContent,
@@ -59,6 +61,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
     async (
       actionKey: string,
       projectId: string,
+      projectDetailsPath: string | undefined,
       userId: string,
       role: string,
       modalContent?: NextStepModalContent,
@@ -70,6 +73,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
         isLoading: true,
         actionKey,
         projectId,
+        projectDetailsPath,
         userId,
         role,
         projectStage,
@@ -103,6 +107,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
       isLoading: false,
       actionKey: undefined,
       projectId: undefined,
+      projectDetailsPath: undefined,
       userId: undefined,
       role: undefined,
       projectStage: undefined,

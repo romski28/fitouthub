@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-21-dcd8e06",
+    "date": "2026-04-21T21:35:53+08:00",
+    "title": "Restore next-step View details fallback and add Open project route",
+    "summary": "Restore next-step View details fallback and add Open project route",
+    "areas": [
+      "web"
+    ],
+    "commit": "dcd8e06",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/components/next-steps/general-action-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx",
+      "apps/web/src/hooks/use-next-step-modal-trigger.ts",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-21-5f27297",
     "date": "2026-04-21T21:06:52+08:00",
     "title": "Fix: include detailsTarget in API NextStepModalContent so View details button renders",

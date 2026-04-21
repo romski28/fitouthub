@@ -8,6 +8,7 @@ import type { NextStepModalContent } from '@/context/next-step-modal-context';
 interface UseNextStepModalTriggerOptions {
   actionKey: string;
   projectId: string;
+  projectDetailsPath?: string;
   modalContent?: NextStepModalContent;
   projectStage?: string;
 }
@@ -29,12 +30,13 @@ export function useNextStepModalTrigger(options: UseNextStepModalTriggerOptions)
     await openModal(
       options.actionKey,
       options.projectId,
+      options.projectDetailsPath || `/projects/${options.projectId}?tab=overview`,
       user.id,
       user.role || 'CLIENT',
       options.modalContent,
       options.projectStage
     );
-  }, [openModal, user?.id, user?.role, options.actionKey, options.projectId, options.modalContent, options.projectStage]);
+  }, [openModal, user?.id, user?.role, options.actionKey, options.projectDetailsPath, options.projectId, options.modalContent, options.projectStage]);
 }
 
 /**

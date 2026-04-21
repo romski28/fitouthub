@@ -3,6 +3,8 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import { getClientTabForAction } from '@/lib/client-workflow';
+import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 import { GeneralActionModal } from './general-action-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
@@ -21,6 +23,23 @@ export function ModalDispatcher({
 }: ModalDispatcherProps) {
   const { state, closeModal } = useNextStepModal();
   const router = useRouter();
+  const fallbackTab = (state.role || '').toUpperCase().includes('PROFESSIONAL')
+    ? getProfessionalTabForAction(state.actionKey)
+    : getClientTabForAction(state.actionKey);
+  const fallbackDetailsTarget = fallbackTab ? JSON.stringify({ tab: fallbackTab }) : undefined;
+
+  const handleOpenProject = useCallback(() => {
+    if (state.projectDetailsPath) {
+      router.push(state.projectDetailsPath);
+      closeModal();
+      return;
+    }
+
+    if (!state.projectId) return;
+
+    router.push(`/projects/${state.projectId}?tab=overview`);
+    closeModal();
+  }, [closeModal, router, state.projectDetailsPath, state.projectId]);
 
   const handleDetailsNavigation = useCallback(
     (target: string) => {
@@ -30,11 +49,20 @@ export function ModalDispatcher({
       }
 
       const parsedTarget = parseDetailsTarget(target);
-      if (!parsedTarget?.tab || !state.projectId) return;
+      if (!parsedTarget?.tab) return;
 
-      // Client details routes are keyed by projectId; professional routes use project-professional id.
-      // Until we persist that id in modal state, only auto-route for client flows.
-      if ((state.role || '').toUpperCase().includes('PROFESSIONAL')) return;
+      if ((state.role || '').toUpperCase().includes('PROFESSIONAL')) {
+        if (!state.projectDetailsPath) return;
+
+        const [pathname, existingQuery = ''] = state.projectDetailsPath.split('?');
+        const query = new URLSearchParams(existingQuery);
+        query.set('tab', parsedTarget.tab);
+        router.push(`${pathname}?${query.toString()}`);
+        closeModal();
+        return;
+      }
+
+      if (!state.projectId) return;
 
       const query = new URLSearchParams({ tab: parsedTarget.tab });
       router.push(`/projects/${state.projectId}?${query.toString()}`);
@@ -64,6 +92,8 @@ export function ModalDispatcher({
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
+        detailsTargetFallback={fallbackDetailsTarget}
+        onOpenProject={handleOpenProject}
         onDetailsAction={handleDetailsNavigation}
       />
     );
@@ -76,6 +106,8 @@ export function ModalDispatcher({
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
+        detailsTargetFallback={fallbackDetailsTarget}
+        onOpenProject={handleOpenProject}
         onDetailsAction={handleDetailsNavigation}
       />
     );
