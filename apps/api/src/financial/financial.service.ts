@@ -2309,13 +2309,29 @@ export class FinancialService {
       throw new ForbiddenException('Only the project client can authorize this cap');
     }
 
-    if (!['escrow_funded', 'release_requested'].includes(String(milestone.status || ''))) {
-      throw new BadRequestException(`Milestone is in status '${milestone.status}' and cannot be capped yet`);
-    }
-
     const requestedAmount = Number(input.amount || milestone.amount || 0);
     if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
       throw new BadRequestException('Cap amount must be greater than 0');
+    }
+
+    const milestoneStatus = String(milestone.status || '').toLowerCase();
+    const standardCapEligibleStatuses = ['escrow_funded', 'release_requested'];
+    let walletSummaryBefore: Awaited<ReturnType<FinancialService['getProjectWalletSummary']>> | null = null;
+
+    if (!standardCapEligibleStatuses.includes(milestoneStatus)) {
+      if (milestoneStatus === 'scheduled') {
+        walletSummaryBefore = await this.getProjectWalletSummary(
+          input.projectId,
+          projectProfessional?.id || null,
+        );
+
+        const availableEscrow = Number(walletSummaryBefore.clientEscrowUnallocated || 0);
+        if (!Number.isFinite(availableEscrow) || availableEscrow + 0.005 < requestedAmount) {
+          throw new BadRequestException('Escrow funding is not confirmed yet for this milestone cap');
+        }
+      } else {
+        throw new BadRequestException(`Milestone is in status '${milestone.status}' and cannot be capped yet`);
+      }
     }
 
     const transaction = await this.prisma.financialTransaction.create({
@@ -2446,7 +2462,9 @@ export class FinancialService {
     return {
       success: true,
       transaction,
-      walletSummary: await this.getProjectWalletSummary(input.projectId, projectProfessional?.id || null),
+      walletSummary:
+        walletSummaryBefore ||
+        (await this.getProjectWalletSummary(input.projectId, projectProfessional?.id || null)),
     };
   }
 

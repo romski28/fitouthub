@@ -84,6 +84,65 @@ describe('FinancialService Release A', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
+  it('authorizeMilestoneFohCap allows milestone 1 when escrow is funded but milestone still shows scheduled', async () => {
+    const { service, prisma } = makeService();
+
+    jest.spyOn(service as any, 'getMilestoneProcurementContext').mockResolvedValue({
+      paymentPlan: {
+        id: 'pp-1',
+        projectScale: 'SCALE_1',
+      },
+      milestone: {
+        id: 'm1',
+        sequence: 1,
+        title: 'Milestone 1',
+        status: 'scheduled',
+        amount: 1000,
+      },
+      project: {
+        id: 'p1',
+        userId: 'client-1',
+        projectName: 'Kitchen Renovation',
+      },
+      projectProfessional: {
+        id: 'pprof-1',
+        professionalId: 'pro-1',
+      },
+    });
+
+    jest.spyOn(service, 'getProjectWalletSummary').mockResolvedValue({
+      currency: 'HKD',
+      contractValue: 1000,
+      clientFundedTotal: 1000,
+      clientEscrowHeld: 1000,
+      clientEscrowUnallocated: 1000,
+      professionalEscrowAllocated: 0,
+      professionalInPayoutProcessing: 0,
+      professionalAvailable: 0,
+      professionalPaidOut: 0,
+      remainingToFund: 0,
+      milestoneBreakdown: [],
+    } as any);
+
+    prisma.financialTransaction.create.mockResolvedValue({
+      id: 'tx-1',
+      type: 'milestone_foh_allocation_cap',
+      status: 'confirmed',
+      amount: new Decimal('1000.00'),
+    });
+
+    const result = await service.authorizeMilestoneFohCap({
+      projectId: 'p1',
+      milestoneId: 'm1',
+      actorId: 'client-1',
+      actorRole: 'client',
+      amount: 1000,
+    });
+
+    expect(prisma.financialTransaction.create).toHaveBeenCalledTimes(1);
+    expect(result.success).toBe(true);
+  });
+
   it('reviewMilestoneProcurementEvidence rejects approval above remaining cap', async () => {
     const { service, prisma } = makeService();
 

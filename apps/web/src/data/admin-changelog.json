@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-21-ac7b7d4",
+    "date": "2026-04-21T15:35:58+08:00",
+    "title": "Allow milestone 1 wallet cap when escrow is already funded",
+    "summary": "Allow milestone 1 wallet cap when escrow is already funded",
+    "areas": [
+      "api"
+    ],
+    "commit": "ac7b7d4",
+    "files": [
+      "apps/api/src/financial/financial.service.release-a.spec.ts",
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-21-8206dca",
     "date": "2026-04-21T15:17:39+08:00",
     "title": "Polish wallet modal names, auto-open reliability, and celebration",
