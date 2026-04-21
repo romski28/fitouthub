@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-4d0d4b2",
+    "date": "2026-04-21T16:58:34+08:00",
+    "title": "Full backfill: 42 crafted UPDATE statements for all next-step workflow actions",
+    "summary": "Full backfill: 42 crafted UPDATE statements for all next-step workflow actions",
+    "areas": [
+      "infra"
+    ],
+    "commit": "4d0d4b2",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql"
+    ]
+  },
+  {
     "id": "2026-04-21-2030b47",
     "date": "2026-04-21T16:35:55+08:00",
     "title": "Wire modal action behavior and backfill next-step modal defaults",
