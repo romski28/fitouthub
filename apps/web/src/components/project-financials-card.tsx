@@ -724,9 +724,14 @@ export default function ProjectFinancialsCard({
     () => {
       const fundedAmount = Number(firstWalletMilestone?.fundedAmount || 0);
       const milestoneStatus = String(firstMilestone?.status || '').toLowerCase();
-      return fundedAmount > 0 || milestoneStatus === 'escrow_funded' || milestoneStatus === 'release_requested';
+      return (
+        fundedAmount > 0 ||
+        milestoneStatus === 'escrow_funded' ||
+        milestoneStatus === 'release_requested' ||
+        escrowConfirmed > 0
+      );
     },
-    [firstWalletMilestone, firstMilestone],
+    [firstWalletMilestone, firstMilestone, escrowConfirmed],
   );
 
   const hasProcurementClaim = procurementEvidence.length > 0;
@@ -1541,7 +1546,8 @@ export default function ProjectFinancialsCard({
                         firstMilestoneMeta.capTotal === 0 &&
                         (Number(walletMilestone?.fundedAmount || 0) > 0 ||
                           milestoneStatus === 'escrow_funded' ||
-                          milestoneStatus === 'release_requested');
+                          milestoneStatus === 'release_requested' ||
+                          escrowConfirmed > 0);
 
                       return (
                         <tr key={milestone.id} className="border-b border-slate-800">
