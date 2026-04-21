@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-21-3132b9b",
+    "date": "2026-04-21T15:02:30+08:00",
+    "title": "Deep-link next step to materials modal and simplify modal copy",
+    "summary": "Deep-link next step to materials modal and simplify modal copy",
+    "areas": [
+      "web"
+    ],
+    "commit": "3132b9b",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-6afd66f",
     "date": "2026-04-21T10:50:04+08:00",
     "title": "Portal financial workflow modals to body overlay",

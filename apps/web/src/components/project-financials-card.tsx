@@ -203,6 +203,7 @@ interface ProjectFinancialsCardProps {
   role: ProjectFinancialRole;
   onClarify?: (transactionId: string) => void; // Callback when client clicks Clarify
   onNavigateTab?: (tab: string) => void;
+  openMaterialsWalletOnLoad?: boolean;
 }
 
 const formatHKD = (value: number | string) => {
@@ -315,6 +316,7 @@ export default function ProjectFinancialsCard({
   role,
   onClarify,
   onNavigateTab,
+  openMaterialsWalletOnLoad,
 }: ProjectFinancialsCardProps) {
   const { role: authRole, user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -358,7 +360,9 @@ export default function ProjectFinancialsCard({
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const [showMaterialsWalletInfo, setShowMaterialsWalletInfo] = useState(false);
   const modalPortalTarget = typeof document !== 'undefined' ? document.body : null;
+  const hasAutoOpenedMaterialsWalletRef = useRef(false);
 
   const isSlaItemRelevantToRole = (item?: SlaStatusItem | null) => {
     if (!item) return false;
@@ -1198,8 +1202,26 @@ export default function ProjectFinancialsCard({
   };
 
   const handleAuthorizeMaterialsWalletTransfer = async () => {
+    setShowMaterialsWalletInfo(false);
     setShowMaterialsWalletModal(true);
   };
+
+  useEffect(() => {
+    if (hasAutoOpenedMaterialsWalletRef.current) return;
+    if (!openMaterialsWalletOnLoad) return;
+    if (resolvedRole !== 'client') return;
+    if (!isProcurementWorkflowProject || !hasMilestoneEscrowFunded || firstMilestoneMeta.capTotal > 0) return;
+
+    hasAutoOpenedMaterialsWalletRef.current = true;
+    setShowMaterialsWalletInfo(false);
+    setShowMaterialsWalletModal(true);
+  }, [
+    openMaterialsWalletOnLoad,
+    resolvedRole,
+    isProcurementWorkflowProject,
+    hasMilestoneEscrowFunded,
+    firstMilestoneMeta.capTotal,
+  ]);
 
   const handleTransferAvailableFunds = async () => {
     if (resolvedRole !== 'professional') {
@@ -2319,30 +2341,21 @@ export default function ProjectFinancialsCard({
       {modalPortalTarget && showMaterialsWalletModal && firstMilestone &&
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Authorize materials wallet transfer">
-            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-start gap-3 rounded-t-2xl bg-indigo-900/40 border-b border-indigo-700/40 px-5 py-4">
-                <span className="mt-0.5 text-xl">💳</span>
-                <div>
-                  <p className="text-base font-bold text-indigo-200">Authorise Materials Wallet Transfer</p>
-                  <p className="mt-1 text-sm text-indigo-100/80">Confirm the milestone 1 transfer for materials purchasing.</p>
-                </div>
-              </div>
+            <div className="relative w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setShowMaterialsWalletInfo(true)}
+                className="absolute right-4 top-4 h-8 w-8 rounded-full border border-white/30 bg-white/10 text-white text-lg font-semibold hover:bg-white/20 transition"
+                aria-label="Show details"
+              >
+                i
+              </button>
 
-              <div className="px-5 py-4 space-y-3">
-                <div className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-200">Transfer Amount</p>
-                  <p className="mt-1 text-lg font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
-                </div>
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  This amount is moved to the professional&apos;s <span className="font-semibold text-white">materials holding wallet</span>.
-                  It is not withdrawable until you review and approve submitted purchase invoices.
-                </p>
-                <div className="flex items-start gap-2 rounded-lg border border-sky-700/40 bg-sky-900/20 px-3 py-2.5">
-                  <span className="text-sky-400 text-sm mt-0.5">⏭️</span>
-                  <p className="text-xs text-sky-200">
-                    After authorisation, the professional&apos;s next step is to submit materials evidence for your review.
-                  </p>
-                </div>
+              <div className="px-6 pt-10 pb-4 text-center">
+                <p className="text-slate-200 text-lg">OK client, you need to move</p>
+                <p className="mt-2 text-4xl font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
+                <p className="mt-2 text-slate-200 text-2xl">from your wallet to</p>
+                <p className="text-white text-2xl font-semibold">the professional&apos;s holding wallet</p>
               </div>
 
               <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
@@ -2350,7 +2363,7 @@ export default function ProjectFinancialsCard({
                   type="button"
                   onClick={() => setShowMaterialsWalletModal(false)}
                   disabled={processingId === 'cap-authorize'}
-                  className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-50"
+                  className="min-w-[110px] rounded-lg bg-rose-600 px-4 py-2 text-base font-semibold text-white hover:bg-rose-700 transition disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -2358,11 +2371,33 @@ export default function ProjectFinancialsCard({
                   type="button"
                   onClick={handleConfirmMaterialsWalletTransfer}
                   disabled={processingId === 'cap-authorize'}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-slate-500"
+                  className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition disabled:bg-slate-500"
                 >
-                  {processingId === 'cap-authorize' ? 'Authorising...' : 'Authorise Payment'}
+                  {processingId === 'cap-authorize' ? 'Authorising...' : 'OK'}
                 </button>
               </div>
+
+              {showMaterialsWalletInfo && (
+                <div className="absolute inset-3 z-10 rounded-xl border border-slate-600 bg-slate-900/95 p-4 shadow-xl">
+                  <div className="space-y-3 text-left">
+                    <p className="text-sm text-white leading-relaxed">
+                      This amount is moved to the professional&apos;s <span className="font-semibold">materials holding wallet</span>. It is not withdrawable until you review and approve submitted purchase invoices.
+                    </p>
+                    <p className="text-sm text-slate-200 leading-relaxed">
+                      After authorisation, the professional&apos;s next step is to submit materials evidence for your review.
+                    </p>
+                  </div>
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowMaterialsWalletInfo(false)}
+                      className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition"
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>,
           modalPortalTarget,

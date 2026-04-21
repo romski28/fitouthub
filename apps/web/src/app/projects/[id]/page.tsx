@@ -417,6 +417,16 @@ export default function ClientProjectDetailPage() {
   }, [searchParams, isAwarded]);
 
   useEffect(() => {
+    const shouldOpenMaterialsWallet = searchParams.get('openMaterialsWallet') === '1';
+    if (!shouldOpenMaterialsWallet || activeTab !== 'financials') return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('openMaterialsWallet');
+    const nextQuery = url.searchParams.toString();
+    router.replace(`${url.pathname}${nextQuery ? `?${nextQuery}` : ''}`, { scroll: false });
+  }, [searchParams, activeTab, router]);
+
+  useEffect(() => {
     if (activeTab !== 'overview') return;
 
     const openAi = searchParams.get('openAi') === '1';
@@ -1946,6 +1956,7 @@ export default function ClientProjectDetailPage() {
               projectCost={projectCostValue}
               originalBudget={project.approvedBudget || project.budget || undefined}
               onNavigateTab={(tab) => setActiveTab(tab)}
+              openMaterialsWalletOnLoad={searchParams.get('openMaterialsWallet') === '1'}
               onOpenChatTab={() => {
                 const awardedProfessional = project.professionals?.find((pp) => pp.status === 'awarded');
                 if (awardedProfessional) {

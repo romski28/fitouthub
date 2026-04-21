@@ -42,14 +42,23 @@ type AssistStatus = "open" | "in_progress" | "closed";
 type SummaryTone = 'slate' | 'emerald' | 'amber' | 'rose';
 
 const clientActionSectionMap: Record<string, string> = {};
+const clientActionQueryMap: Record<string, Record<string, string>> = {
+  AUTHORIZE_MATERIALS_WALLET: { openMaterialsWallet: '1' },
+};
 
 function getClientShowMeHref(projectId: string, actionKey: string) {
   const tab = clientActionTabMap[actionKey] || 'overview';
   const section = clientActionSectionMap[actionKey];
+  const params = new URLSearchParams();
+  params.set('tab', tab);
   if (section) {
-    return `/projects/${projectId}?tab=${encodeURIComponent(tab)}&section=${encodeURIComponent(section)}`;
+    params.set('section', section);
   }
-  return `/projects/${projectId}?tab=${encodeURIComponent(tab)}`;
+  const actionQuery = clientActionQueryMap[actionKey];
+  if (actionQuery) {
+    Object.entries(actionQuery).forEach(([key, value]) => params.set(key, value));
+  }
+  return `/projects/${projectId}?${params.toString()}`;
 }
 
 const assistStatusColors: Record<AssistStatus, string> = {
