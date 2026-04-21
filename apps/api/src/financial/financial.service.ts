@@ -433,8 +433,8 @@ export class FinancialService {
                 id: true,
                 email: true,
                 phone: true,
-                contactName: true,
-                companyName: true,
+                fullName: true,
+                businessName: true,
               },
             },
           },
@@ -2432,7 +2432,7 @@ export class FinancialService {
           const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
           await this.emailService.sendMaterialsWalletTransferAuthorizedNotification({
             to: professional.email,
-            professionalName: professional.contactName || professional.companyName || 'Professional',
+            professionalName: professional.fullName || professional.businessName || 'Professional',
             projectName,
             amount: formattedAmount,
             projectUrl: `${webBaseUrl}/professional-projects/${projectProfessional.id}`,
