@@ -349,6 +349,7 @@ export default function ClientProjectDetailPage() {
     'bidding': true,
     'awarded-details': false,
   });
+  const [openMaterialsWalletOnLoad, setOpenMaterialsWalletOnLoad] = useState(false);
 
   const toggleAccordion = (id: string) => {
     setExpandedAccordions((prev) => ({
@@ -417,14 +418,16 @@ export default function ClientProjectDetailPage() {
   }, [searchParams, isAwarded]);
 
   useEffect(() => {
-    const shouldOpenMaterialsWallet = searchParams.get('openMaterialsWallet') === '1';
-    if (!shouldOpenMaterialsWallet || activeTab !== 'financials') return;
+    setOpenMaterialsWalletOnLoad(searchParams.get('openMaterialsWallet') === '1');
+  }, [searchParams]);
 
+  const handleMaterialsWalletAutoOpenHandled = () => {
+    setOpenMaterialsWalletOnLoad(false);
     const url = new URL(window.location.href);
     url.searchParams.delete('openMaterialsWallet');
     const nextQuery = url.searchParams.toString();
     router.replace(`${url.pathname}${nextQuery ? `?${nextQuery}` : ''}`, { scroll: false });
-  }, [searchParams, activeTab, router]);
+  };
 
   useEffect(() => {
     if (activeTab !== 'overview') return;
@@ -1956,7 +1959,8 @@ export default function ClientProjectDetailPage() {
               projectCost={projectCostValue}
               originalBudget={project.approvedBudget || project.budget || undefined}
               onNavigateTab={(tab) => setActiveTab(tab)}
-              openMaterialsWalletOnLoad={searchParams.get('openMaterialsWallet') === '1'}
+              openMaterialsWalletOnLoad={openMaterialsWalletOnLoad}
+              onMaterialsWalletAutoOpenHandled={handleMaterialsWalletAutoOpenHandled}
               onOpenChatTab={() => {
                 const awardedProfessional = project.professionals?.find((pp) => pp.status === 'awarded');
                 if (awardedProfessional) {

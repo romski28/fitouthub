@@ -11,6 +11,7 @@ interface ClientFinancialsTabProps {
   onOpenChatTab?: () => void;
   onNavigateTab?: (tab: string) => void;
   openMaterialsWalletOnLoad?: boolean;
+  onMaterialsWalletAutoOpenHandled?: () => void;
 }
 
 export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
@@ -21,6 +22,7 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
   onOpenChatTab,
   onNavigateTab,
   openMaterialsWalletOnLoad,
+  onMaterialsWalletAutoOpenHandled,
 }) => {
   if (!accessToken) {
     return (
@@ -41,6 +43,7 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
         onClarify={() => onOpenChatTab?.()}
         onNavigateTab={onNavigateTab}
         openMaterialsWalletOnLoad={openMaterialsWalletOnLoad}
+        onMaterialsWalletAutoOpenHandled={onMaterialsWalletAutoOpenHandled}
       />
     </div>
   );

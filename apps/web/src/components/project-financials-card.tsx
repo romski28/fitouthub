@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
+import confetti from 'canvas-confetti';
 import StatusPill, { statusToneFromStatus } from './status-pill';
 import { useAuth } from '@/context/auth-context';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
@@ -204,6 +205,7 @@ interface ProjectFinancialsCardProps {
   onClarify?: (transactionId: string) => void; // Callback when client clicks Clarify
   onNavigateTab?: (tab: string) => void;
   openMaterialsWalletOnLoad?: boolean;
+  onMaterialsWalletAutoOpenHandled?: () => void;
 }
 
 const formatHKD = (value: number | string) => {
@@ -317,6 +319,7 @@ export default function ProjectFinancialsCard({
   onClarify,
   onNavigateTab,
   openMaterialsWalletOnLoad,
+  onMaterialsWalletAutoOpenHandled,
 }: ProjectFinancialsCardProps) {
   const { role: authRole, user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -361,6 +364,8 @@ export default function ProjectFinancialsCard({
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
   const [showMaterialsWalletInfo, setShowMaterialsWalletInfo] = useState(false);
+  const [clientDisplayName, setClientDisplayName] = useState('client');
+  const [professionalDisplayName, setProfessionalDisplayName] = useState('professional');
   const modalPortalTarget = typeof document !== 'undefined' ? document.body : null;
   const hasAutoOpenedMaterialsWalletRef = useRef(false);
 
@@ -510,6 +515,25 @@ export default function ProjectFinancialsCard({
             setProjectEscrowHeld(projectData.escrowHeld);
           }
 
+          const clientName = [projectData?.user?.firstName, projectData?.user?.surname]
+            .map((value) => String(value || '').trim())
+            .filter(Boolean)
+            .join(' ');
+          if (clientName) {
+            setClientDisplayName(clientName);
+          }
+
+          const professionals = Array.isArray(projectData?.professionals) ? projectData.professionals : [];
+          const awarded = professionals.find((entry: any) => String(entry?.status || '').toLowerCase() === 'awarded') || professionals[0];
+          const profName = String(
+            awarded?.professional?.fullName ||
+            awarded?.professional?.businessName ||
+            '',
+          ).trim();
+          if (profName) {
+            setProfessionalDisplayName(profName);
+          }
+
           setPaymentPlan(paymentPlanData);
           setWalletSummary(walletData);
           setSlaPolicy(policyData);
@@ -544,6 +568,16 @@ export default function ProjectFinancialsCard({
       load();
     }
   }, [projectId, accessToken, projectProfessionalId, resolvedRole]);
+
+  useEffect(() => {
+    const selfName = [user?.firstName, user?.surname]
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+      .join(' ');
+    if (resolvedRole === 'client' && selfName) {
+      setClientDisplayName(selfName);
+    }
+  }, [resolvedRole, user?.firstName, user?.surname]);
 
   useEffect(() => {
     if (!paymentPlan) return;
@@ -1162,6 +1196,13 @@ export default function ProjectFinancialsCard({
   };
 
   const openMaterialsWalletWorkflowModal = async (completedLabel: string) => {
+    const fallbackNextStep: WorkflowNextStep = {
+      actionLabel: 'Work in progress',
+      description: 'We are preparing your next guided action. You can continue in Financials for now.',
+      requiresAction: false,
+      waitingFor: 'platform',
+    };
+
     try {
       const next = await fetchPrimaryNextStep(projectId, accessToken, {
         cacheScope: `client-financials-wallet:${projectId}`,
@@ -1179,11 +1220,13 @@ export default function ProjectFinancialsCard({
               tab,
               waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
             }
-          : null,
+          : fallbackNextStep,
       );
       setWorkflowModalOpen(true);
     } catch {
-      toast.success(completedLabel);
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(fallbackNextStep);
+      setWorkflowModalOpen(true);
     }
   };
 
@@ -1193,6 +1236,15 @@ export default function ProjectFinancialsCard({
       setProcessingId('cap-authorize');
       await authorizeMilestoneCap(Number(firstMilestone.amount));
       setShowMaterialsWalletModal(false);
+      try {
+        await confetti({
+          particleCount: 110,
+          spread: 80,
+          origin: { y: 0.65 },
+        });
+      } catch {
+        // Non-blocking visual enhancement
+      }
       await openMaterialsWalletWorkflowModal('Materials wallet transfer authorised');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to authorize transfer');
@@ -1215,12 +1267,14 @@ export default function ProjectFinancialsCard({
     hasAutoOpenedMaterialsWalletRef.current = true;
     setShowMaterialsWalletInfo(false);
     setShowMaterialsWalletModal(true);
+    onMaterialsWalletAutoOpenHandled?.();
   }, [
     openMaterialsWalletOnLoad,
     resolvedRole,
     isProcurementWorkflowProject,
     hasMilestoneEscrowFunded,
     firstMilestoneMeta.capTotal,
+    onMaterialsWalletAutoOpenHandled,
   ]);
 
   const handleTransferAvailableFunds = async () => {
@@ -2352,13 +2406,31 @@ export default function ProjectFinancialsCard({
               </button>
 
               <div className="px-6 pt-10 pb-4 text-center">
-                <p className="text-slate-200 text-lg">OK client, you need to move</p>
+                <div className="mb-4 flex justify-center">
+                  <img
+                    src="/assets/images/chatbot-avatar-icon.webp"
+                    alt="Action avatar"
+                    className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                  />
+                </div>
+                <p className="text-slate-200 text-lg">OK {clientDisplayName}, you need to move</p>
                 <p className="mt-2 text-4xl font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
                 <p className="mt-2 text-slate-200 text-2xl">from your wallet to</p>
-                <p className="text-white text-2xl font-semibold">the professional&apos;s holding wallet</p>
+                <p className="text-white text-2xl">{professionalDisplayName}&apos;s holding wallet</p>
               </div>
 
               <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateTab?.('financials');
+                    setShowMaterialsWalletModal(false);
+                  }}
+                  disabled={processingId === 'cap-authorize'}
+                  className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 hover:bg-slate-800 transition disabled:opacity-50"
+                >
+                  Details
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowMaterialsWalletModal(false)}
@@ -2373,7 +2445,7 @@ export default function ProjectFinancialsCard({
                   disabled={processingId === 'cap-authorize'}
                   className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition disabled:bg-slate-500"
                 >
-                  {processingId === 'cap-authorize' ? 'Authorising...' : 'OK'}
+                  {processingId === 'cap-authorize' ? 'Please wait...' : 'OK'}
                 </button>
               </div>
 
@@ -2381,10 +2453,10 @@ export default function ProjectFinancialsCard({
                 <div className="absolute inset-3 z-10 rounded-xl border border-slate-600 bg-slate-900/95 p-4 shadow-xl">
                   <div className="space-y-3 text-left">
                     <p className="text-sm text-white leading-relaxed">
-                      This amount is moved to the professional&apos;s <span className="font-semibold">materials holding wallet</span>. It is not withdrawable until you review and approve submitted purchase invoices.
+                      This amount is moved from {clientDisplayName}&apos;s wallet to {professionalDisplayName}&apos;s materials holding wallet. It is not withdrawable until you review and approve submitted purchase invoices.
                     </p>
                     <p className="text-sm text-slate-200 leading-relaxed">
-                      After authorisation, the professional&apos;s next step is to submit materials evidence for your review.
+                      After authorisation, {professionalDisplayName}&apos;s next step is to submit materials evidence for your review.
                     </p>
                   </div>
                   <div className="mt-4 flex justify-center">

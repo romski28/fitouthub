@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-21-8206dca",
+    "date": "2026-04-21T15:17:39+08:00",
+    "title": "Polish wallet modal names, auto-open reliability, and celebration",
+    "summary": "Polish wallet modal names, auto-open reliability, and celebration",
+    "areas": [
+      "web"
+    ],
+    "commit": "8206dca",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-3132b9b",
     "date": "2026-04-21T15:02:30+08:00",
     "title": "Deep-link next step to materials modal and simplify modal copy",
