@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-0117514",
+    "date": "2026-04-21T16:24:02+08:00",
+    "title": "Fix Postgres escaping in manual next-step modal SQL",
+    "summary": "Fix Postgres escaping in manual next-step modal SQL",
+    "areas": [
+      "infra"
+    ],
+    "commit": "0117514",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql"
+    ]
+  },
+  {
     "id": "2026-04-21-73fb40f",
     "date": "2026-04-21T16:21:11+08:00",
     "title": "Expand next-step admin controls and auto-refresh cashflow",
