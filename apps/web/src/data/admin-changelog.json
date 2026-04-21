@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-5f27297",
+    "date": "2026-04-21T21:06:52+08:00",
+    "title": "Fix: include detailsTarget in API NextStepModalContent so View details button renders",
+    "summary": "Fix: include detailsTarget in API NextStepModalContent so View details button renders",
+    "areas": [
+      "api"
+    ],
+    "commit": "5f27297",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-21-15d9b66",
     "date": "2026-04-21T20:54:20+08:00",
     "title": "Fix modal controls: info icon shows detailsBody overlay, View details navigates to project tab",

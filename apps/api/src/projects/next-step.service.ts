@@ -28,6 +28,7 @@ export interface NextStepModalContent {
   primaryActionTarget?: string;
   secondaryActionType?: string;
   secondaryActionTarget?: string;
+  detailsTarget?: string;
 }
 
 export interface NextStepResult {
@@ -81,6 +82,7 @@ export class NextStepService {
       primaryActionTarget: config.modalPrimaryActionTarget || undefined,
       secondaryActionType: config.modalSecondaryActionType || undefined,
       secondaryActionTarget: config.modalSecondaryActionTarget || undefined,
+      detailsTarget: config.detailsTarget || undefined,
     };
 
     return Object.values(modalContent).some((value) => value != null)
