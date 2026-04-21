@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-04-21-73fb40f",
+    "date": "2026-04-21T16:21:11+08:00",
+    "title": "Expand next-step admin controls and auto-refresh cashflow",
+    "summary": "Expand next-step admin controls and auto-refresh cashflow",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "73fb40f",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/next-step-config.controller.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/admin/next-steps/page.tsx",
+      "apps/web/src/components/project-financials-card.tsx",
+      "apps/web/src/lib/next-step-modal-content.ts",
+      "apps/web/src/lib/next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-21-2626abf",
     "date": "2026-04-21T16:07:04+08:00",
     "title": "Scaffold DB-backed next-step modal content management",

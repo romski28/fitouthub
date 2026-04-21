@@ -71,6 +71,10 @@ export class NextStepConfigController {
       modalImageUrl?: string | null;
       modalPrimaryButtonLabel?: string | null;
       modalSecondaryButtonLabel?: string | null;
+      modalPrimaryActionType?: string | null;
+      modalPrimaryActionTarget?: string | null;
+      modalSecondaryActionType?: string | null;
+      modalSecondaryActionTarget?: string | null;
     },
   ) {
     this.ensureAdmin(req);

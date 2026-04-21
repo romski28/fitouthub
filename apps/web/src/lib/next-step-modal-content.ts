@@ -14,6 +14,8 @@ const FALLBACK_MODAL_CONTENT: Record<string, NextStepModalContent> = {
     imageUrl: '/assets/images/chatbot-avatar-icon.webp',
     primaryButtonLabel: 'OK',
     secondaryButtonLabel: 'Cancel',
+    primaryActionType: 'confirm_transfer',
+    secondaryActionType: 'close_modal',
   },
 };
 

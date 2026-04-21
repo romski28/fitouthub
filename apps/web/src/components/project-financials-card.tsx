@@ -617,6 +617,33 @@ export default function ProjectFinancialsCard({
     }
   };
 
+  const refreshWalletSummary = async () => {
+    try {
+      const walletUrl = new URL(`${API_BASE_URL}/financial/project/${projectId}/wallet-summary`);
+      if (projectProfessionalId) {
+        walletUrl.searchParams.set('projectProfessionalId', projectProfessionalId);
+      }
+
+      const walletRes = await fetch(walletUrl.toString(), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!walletRes.ok) return;
+
+      const walletData: WalletSummary | null = await walletRes.json();
+      setWalletSummary(walletData);
+    } catch {
+      // Non-blocking refresh for cashflow overview.
+    }
+  };
+
+  const refreshCashflowOverview = async (includePaymentPlan = false) => {
+    if (includePaymentPlan) {
+      await Promise.all([refreshWalletSummary(), reloadPaymentPlan()]);
+      return;
+    }
+    await refreshWalletSummary();
+  };
+
   const handleSaveSlaPolicy = async () => {
     if (resolvedRole !== 'admin') return;
     if (!slaDraft) return;
@@ -1051,6 +1078,7 @@ export default function ProjectFinancialsCard({
           ? 'Authorised amount moved to the professional wallet and the balance returned to client escrow'
           : 'Authorised amount moved to the professional wallet',
       );
+      await refreshCashflowOverview(true);
       await Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to settle project materials purchase');
@@ -1081,6 +1109,7 @@ export default function ProjectFinancialsCard({
       if (!res.ok) throw new Error('Failed to confirm deposit');
       toast.success('Deposit confirmed');
       setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'confirmed' } : t)));
+      await refreshCashflowOverview(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to confirm deposit');
     } finally {
@@ -1098,6 +1127,7 @@ export default function ProjectFinancialsCard({
       if (!res.ok) throw new Error('Failed to release payment');
       toast.success('Payment released');
       setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'confirmed' } : t)));
+      await refreshCashflowOverview(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to release payment');
     } finally {
@@ -1115,6 +1145,7 @@ export default function ProjectFinancialsCard({
       if (!res.ok) throw new Error('Failed to approve payment');
       toast.success('Payment approved');
       setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'confirmed', type: 'advance_payment_approval' } : t)));
+      await refreshCashflowOverview(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to approve payment');
     } finally {
@@ -1231,6 +1262,7 @@ export default function ProjectFinancialsCard({
       } catch {
         // Non-blocking visual enhancement
       }
+      await refreshCashflowOverview(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to authorize transfer');
     } finally {
@@ -1319,6 +1351,7 @@ export default function ProjectFinancialsCard({
       }
       setTransferAmount('');
       toast.success('Transfer completed');
+      await refreshCashflowOverview();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to transfer wallet funds');
     } finally {
@@ -1339,6 +1372,7 @@ export default function ProjectFinancialsCard({
       }
       toast.success('Wallet transfer marked as paid out');
       setTransactions((txs) => txs.map((t) => (t.id === transactionId ? { ...t, status: 'confirmed', actionComplete: true } : t)));
+      await refreshCashflowOverview();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to confirm wallet transfer');
     } finally {

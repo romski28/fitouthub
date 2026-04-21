@@ -24,6 +24,10 @@ export interface NextStepModalContent {
   imageUrl?: string;
   primaryButtonLabel?: string;
   secondaryButtonLabel?: string;
+  primaryActionType?: string;
+  primaryActionTarget?: string;
+  secondaryActionType?: string;
+  secondaryActionTarget?: string;
 }
 
 export interface NextStepResult {
@@ -73,6 +77,10 @@ export class NextStepService {
       imageUrl: config.modalImageUrl || undefined,
       primaryButtonLabel: config.modalPrimaryButtonLabel || undefined,
       secondaryButtonLabel: config.modalSecondaryButtonLabel || undefined,
+      primaryActionType: config.modalPrimaryActionType || undefined,
+      primaryActionTarget: config.modalPrimaryActionTarget || undefined,
+      secondaryActionType: config.modalSecondaryActionType || undefined,
+      secondaryActionTarget: config.modalSecondaryActionTarget || undefined,
     };
 
     return Object.values(modalContent).some((value) => value != null)
@@ -791,6 +799,10 @@ export class NextStepService {
       modalImageUrl?: string | null;
       modalPrimaryButtonLabel?: string | null;
       modalSecondaryButtonLabel?: string | null;
+      modalPrimaryActionType?: string | null;
+      modalPrimaryActionTarget?: string | null;
+      modalSecondaryActionType?: string | null;
+      modalSecondaryActionTarget?: string | null;
     },
   ) {
     return this.prisma.nextStepConfig.update({
@@ -805,6 +817,10 @@ export class NextStepService {
         modalImageUrl: payload.modalImageUrl ?? null,
         modalPrimaryButtonLabel: payload.modalPrimaryButtonLabel ?? null,
         modalSecondaryButtonLabel: payload.modalSecondaryButtonLabel ?? null,
+        modalPrimaryActionType: payload.modalPrimaryActionType ?? null,
+        modalPrimaryActionTarget: payload.modalPrimaryActionTarget ?? null,
+        modalSecondaryActionType: payload.modalSecondaryActionType ?? null,
+        modalSecondaryActionTarget: payload.modalSecondaryActionTarget ?? null,
       },
     });
   }

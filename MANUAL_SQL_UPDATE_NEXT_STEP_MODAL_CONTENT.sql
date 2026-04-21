@@ -12,7 +12,11 @@ ALTER TABLE "NextStepConfig"
   ADD COLUMN IF NOT EXISTS "modalSuccessNextStepBody" TEXT,
   ADD COLUMN IF NOT EXISTS "modalImageUrl" TEXT,
   ADD COLUMN IF NOT EXISTS "modalPrimaryButtonLabel" TEXT,
-  ADD COLUMN IF NOT EXISTS "modalSecondaryButtonLabel" TEXT;
+  ADD COLUMN IF NOT EXISTS "modalSecondaryButtonLabel" TEXT,
+  ADD COLUMN IF NOT EXISTS "modalPrimaryActionType" TEXT,
+  ADD COLUMN IF NOT EXISTS "modalPrimaryActionTarget" TEXT,
+  ADD COLUMN IF NOT EXISTS "modalSecondaryActionType" TEXT,
+  ADD COLUMN IF NOT EXISTS "modalSecondaryActionTarget" TEXT;
 
 -- Content-only row for the new materials-wallet modal.
 -- isPrimary/isElective are false so it behaves as content storage only.
@@ -32,6 +36,10 @@ INSERT INTO "NextStepConfig" (
   "modalImageUrl",
   "modalPrimaryButtonLabel",
   "modalSecondaryButtonLabel",
+  "modalPrimaryActionType",
+  "modalPrimaryActionTarget",
+  "modalSecondaryActionType",
+  "modalSecondaryActionTarget",
   "isPrimary",
   "isElective",
   "requiresAction",
@@ -55,6 +63,10 @@ VALUES (
   '/assets/images/chatbot-avatar-icon.webp',
   'OK',
   'Cancel',
+  'confirm_transfer',
+  NULL,
+  'close_modal',
+  NULL,
   false,
   false,
   false,
@@ -73,6 +85,10 @@ DO UPDATE SET
   "modalImageUrl" = EXCLUDED."modalImageUrl",
   "modalPrimaryButtonLabel" = EXCLUDED."modalPrimaryButtonLabel",
   "modalSecondaryButtonLabel" = EXCLUDED."modalSecondaryButtonLabel",
+  "modalPrimaryActionType" = EXCLUDED."modalPrimaryActionType",
+  "modalPrimaryActionTarget" = EXCLUDED."modalPrimaryActionTarget",
+  "modalSecondaryActionType" = EXCLUDED."modalSecondaryActionType",
+  "modalSecondaryActionTarget" = EXCLUDED."modalSecondaryActionTarget",
   "updatedAt" = NOW();
 
 COMMIT;

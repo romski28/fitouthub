@@ -15,6 +15,10 @@ export type NextStepAction = {
     imageUrl?: string;
     primaryButtonLabel?: string;
     secondaryButtonLabel?: string;
+    primaryActionType?: string;
+    primaryActionTarget?: string;
+    secondaryActionType?: string;
+    secondaryActionTarget?: string;
   };
   isPrimary: boolean;
   isElective: boolean;

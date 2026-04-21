@@ -21,6 +21,10 @@ type NextStepConfigRow = {
   modalImageUrl?: string | null;
   modalPrimaryButtonLabel?: string | null;
   modalSecondaryButtonLabel?: string | null;
+  modalPrimaryActionType?: string | null;
+  modalPrimaryActionTarget?: string | null;
+  modalSecondaryActionType?: string | null;
+  modalSecondaryActionTarget?: string | null;
   isPrimary: boolean;
   isElective: boolean;
 };
@@ -35,6 +39,10 @@ type ModalContentDraft = {
   modalImageUrl: string;
   modalPrimaryButtonLabel: string;
   modalSecondaryButtonLabel: string;
+  modalPrimaryActionType: string;
+  modalPrimaryActionTarget: string;
+  modalSecondaryActionType: string;
+  modalSecondaryActionTarget: string;
 };
 
 const STAGES = [
@@ -69,6 +77,10 @@ function toDraft(row: NextStepConfigRow | null): ModalContentDraft {
     modalImageUrl: row?.modalImageUrl || '',
     modalPrimaryButtonLabel: row?.modalPrimaryButtonLabel || '',
     modalSecondaryButtonLabel: row?.modalSecondaryButtonLabel || '',
+    modalPrimaryActionType: row?.modalPrimaryActionType || '',
+    modalPrimaryActionTarget: row?.modalPrimaryActionTarget || '',
+    modalSecondaryActionType: row?.modalSecondaryActionType || '',
+    modalSecondaryActionTarget: row?.modalSecondaryActionTarget || '',
   };
 }
 
@@ -265,6 +277,10 @@ export default function AdminNextStepContentPage() {
                   ['modalImageUrl', 'Image URL'],
                   ['modalPrimaryButtonLabel', 'Primary button label'],
                   ['modalSecondaryButtonLabel', 'Secondary button label'],
+                  ['modalPrimaryActionType', 'Primary action type'],
+                  ['modalPrimaryActionTarget', 'Primary action target'],
+                  ['modalSecondaryActionType', 'Secondary action type'],
+                  ['modalSecondaryActionTarget', 'Secondary action target'],
                 ] as Array<[keyof ModalContentDraft, string]>).map(([key, label]) => (
                   <div key={key}>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
