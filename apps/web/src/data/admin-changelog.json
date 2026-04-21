@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-905a82f",
+    "date": "2026-04-21T20:36:11+08:00",
+    "title": "Refine next-step modal to wallet-style dark template",
+    "summary": "Refine next-step modal to wallet-style dark template",
+    "areas": [
+      "web"
+    ],
+    "commit": "905a82f",
+    "files": [
+      "apps/web/src/components/next-steps/general-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-0da8877",
     "date": "2026-04-21T18:48:13+08:00",
     "title": "Wire next-step modals globally and add detailsTarget navigation",

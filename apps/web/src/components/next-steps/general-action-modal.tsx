@@ -39,10 +39,15 @@ export function GeneralActionModal({
     detailsTarget,
   } = state.modalContent;
 
+  const hasDetails = Boolean(detailsBody);
+  const secondaryIsDanger =
+    secondaryButtonLabel.toLowerCase().includes('cancel') ||
+    secondaryButtonLabel.toLowerCase().includes('decline');
+
   const handlePrimaryClick = () => {
     if (primaryActionType === 'navigate_tab' && detailsTarget) {
       try {
-        const target = JSON.parse(detailsTarget);
+        JSON.parse(detailsTarget);
         onDetailsAction?.(detailsTarget);
       } catch {
         // Not JSON, might be a simple action
@@ -71,20 +76,19 @@ export function GeneralActionModal({
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center transition-all ${
-        isOpen ? 'visible bg-black/50' : 'invisible bg-black/0'
+        isOpen ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
       }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-        {/* Back button / Return to modal icon */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-white/30 bg-white/10 text-lg font-semibold text-white transition hover:bg-white/20"
           title="Close"
         >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -94,65 +98,56 @@ export function GeneralActionModal({
           </svg>
         </button>
 
-        {/* Loading state */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500" />
-            <p className="text-gray-600">Loading...</p>
+          <div className="flex flex-col items-center justify-center px-6 py-14">
+            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
+            <p className="text-slate-300">Loading...</p>
           </div>
         ) : (
           <>
-            {/* Modal image */}
-            {imageUrl && (
-              <img
-                src={imageUrl}
-                alt="Step illustration"
-                className="mb-4 h-20 w-20 rounded-lg object-cover"
-              />
+            {hasDetails && (
+              <button
+                type="button"
+                onClick={() => setShowDetails(true)}
+                className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-white/30 bg-white/10 text-lg font-semibold text-white transition hover:bg-white/20"
+                aria-label="Show details"
+              >
+                i
+              </button>
             )}
 
-            {/* Title */}
-            {title && (
-              <h2 className="mb-3 text-xl font-bold text-gray-900">{title}</h2>
-            )}
-
-            {/* Body */}
-            {body && (
-              <p className="mb-4 text-gray-700">{body}</p>
-            )}
-
-            {/* Details (expandable) */}
-            {detailsBody && (
-              <div className="mb-4">
-                <button
-                  onClick={() => setShowDetails(!showDetails)}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
-                >
-                  {showDetails ? 'Hide details' : 'Show details'}
-                </button>
-                {showDetails && (
-                  <div className="mt-2 space-y-2">
-                    <p className="text-sm text-gray-600">{detailsBody}</p>
-                    {detailsTarget && onDetailsAction && (
-                      <button
-                        type="button"
-                        onClick={() => onDetailsAction(detailsTarget)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
-                      >
-                        Open details
-                      </button>
-                    )}
-                  </div>
-                )}
+            <div className="px-6 pb-5 pt-10 text-center">
+              <div className="mb-4 flex justify-center">
+                <img
+                  src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
+                  alt="Step illustration"
+                  className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                />
               </div>
-            )}
 
-            {/* Action buttons */}
-            <div className="mt-6 flex gap-3">
+              {title && <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>}
+
+              {body && <p className="mt-3 text-base leading-relaxed text-slate-100">{body}</p>}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
+              {hasDetails && (
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(true)}
+                  className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                >
+                  Details
+                </button>
+              )}
               {secondaryButtonLabel && (
                 <button
                   onClick={handleSecondaryClick}
-                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className={
+                    secondaryIsDanger
+                      ? 'min-w-[110px] rounded-lg bg-rose-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-rose-700'
+                      : 'min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800'
+                  }
                 >
                   {secondaryButtonLabel}
                 </button>
@@ -160,12 +155,38 @@ export function GeneralActionModal({
               {primaryButtonLabel && (
                 <button
                   onClick={handlePrimaryClick}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700"
                 >
                   {primaryButtonLabel}
                 </button>
               )}
             </div>
+
+            {showDetails && detailsBody && (
+              <div className="absolute inset-3 z-30 rounded-xl border border-slate-600 bg-slate-900/95 p-4 shadow-xl">
+                <div className="space-y-3 text-left">
+                  <p className="text-sm leading-relaxed text-white">{detailsBody}</p>
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  {detailsTarget && onDetailsAction && (
+                    <button
+                      type="button"
+                      onClick={() => onDetailsAction(detailsTarget)}
+                      className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
+                    >
+                      Open details
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowDetails(false)}
+                    className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
