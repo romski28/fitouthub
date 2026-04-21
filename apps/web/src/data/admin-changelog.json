@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-3a2a7f5",
+    "date": "2026-04-21T21:45:32+08:00",
+    "title": "Refine next-step modal navigation button and add flip details card",
+    "summary": "Refine next-step modal navigation button and add flip details card",
+    "areas": [
+      "web"
+    ],
+    "commit": "3a2a7f5",
+    "files": [
+      "apps/web/src/components/next-steps/general-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-dcd8e06",
     "date": "2026-04-21T21:35:53+08:00",
     "title": "Restore next-step View details fallback and add Open project route",
