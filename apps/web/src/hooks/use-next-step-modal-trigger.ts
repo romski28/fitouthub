@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { useAuth } from '@/context/auth-context';
 import type { NextStepModalContent } from '@/context/next-step-modal-context';
@@ -9,6 +10,7 @@ interface UseNextStepModalTriggerOptions {
   actionKey: string;
   projectId: string;
   projectDetailsPath?: string;
+  prefetchPath?: string;
   modalContent?: NextStepModalContent;
   projectStage?: string;
 }
@@ -20,23 +22,31 @@ interface UseNextStepModalTriggerOptions {
 export function useNextStepModalTrigger(options: UseNextStepModalTriggerOptions) {
   const { openModal } = useNextStepModal();
   const { user } = useAuth();
+  const router = useRouter();
+  const userId = user?.id;
+  const userRole = user?.role || 'CLIENT';
 
   return useCallback(async () => {
-    if (!user?.id) {
+    if (!userId) {
       console.warn('User not authenticated, cannot open modal');
       return;
     }
 
+    const projectDetailsPath =
+      options.projectDetailsPath || `/projects/${options.projectId}?tab=overview`;
+
+    router.prefetch(options.prefetchPath || projectDetailsPath);
+
     await openModal(
       options.actionKey,
       options.projectId,
-      options.projectDetailsPath || `/projects/${options.projectId}?tab=overview`,
-      user.id,
-      user.role || 'CLIENT',
+      projectDetailsPath,
+      userId,
+      userRole,
       options.modalContent,
       options.projectStage
     );
-  }, [openModal, user?.id, user?.role, options.actionKey, options.projectDetailsPath, options.projectId, options.modalContent, options.projectStage]);
+  }, [openModal, router, userId, userRole, options.actionKey, options.prefetchPath, options.projectDetailsPath, options.projectId, options.modalContent, options.projectStage]);
 }
 
 /**
@@ -60,7 +70,7 @@ export function parseDetailsTarget(
  * Usage: navigateToDetailsTab(router, projectId, { tab: 'quotes', scrollToId: 'quote-123' })
  */
 export async function navigateToDetailsTab(
-  router: any,
+  router: { push: (href: string) => void },
   projectId: string,
   target: { tab?: string; scrollToId?: string }
 ) {

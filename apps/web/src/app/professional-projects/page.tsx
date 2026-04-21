@@ -82,16 +82,20 @@ export default function ProfessionalProjectsPage() {
   const openProfessionalNextStepModal = useCallback(
     async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
       if (!professional?.id) return;
+      const projectOverviewPath = `/professional-projects/${projectProfessionalId}?tab=overview`;
+
+      router.prefetch(getProfessionalShowMeHref(projectProfessionalId, action.actionKey));
+
       await openModal(
         action.actionKey,
         projectId,
-        `/professional-projects/${projectProfessionalId}?tab=overview`,
+        projectOverviewPath,
         professional.id,
         'PROFESSIONAL',
         action.modalContent,
       );
     },
-    [openModal, professional?.id],
+    [openModal, professional?.id, router],
   );
 
   useEffect(() => {

@@ -180,6 +180,8 @@ function NextStepModalButton({
   const openModal = useNextStepModalTrigger({
     actionKey: action.actionKey,
     projectId,
+    projectDetailsPath: `/projects/${projectId}?tab=overview`,
+    prefetchPath: getClientShowMeHref(projectId, action.actionKey),
     modalContent: action.modalContent,
   });
 
