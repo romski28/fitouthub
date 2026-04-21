@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-04-21-5847dff",
+    "date": "2026-04-21T17:24:23+08:00",
+    "title": "Phase 1: Add detailsTarget schema field, NextStepModalProvider context, GeneralActionModal, and ModalDispatcher",
+    "summary": "Phase 1: Add detailsTarget schema field, NextStepModalProvider context, GeneralActionModal, and ModalDispatcher",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "5847dff",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/web/src/components/next-steps/general-action-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx",
+      "apps/web/src/lib/next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-21-4d0d4b2",
     "date": "2026-04-21T16:58:34+08:00",
     "title": "Full backfill: 42 crafted UPDATE statements for all next-step workflow actions",

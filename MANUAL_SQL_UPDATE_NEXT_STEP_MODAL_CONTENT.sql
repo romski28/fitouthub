@@ -18,11 +18,13 @@ ALTER TABLE "NextStepConfig"
   ADD COLUMN IF NOT EXISTS "modalSecondaryActionType" TEXT,
   ADD COLUMN IF NOT EXISTS "modalSecondaryActionTarget" TEXT;
 
+  -- Add new detailsTarget column for navigation hints
+  ALTER TABLE "NextStepConfig"
+    ADD COLUMN IF NOT EXISTS "detailsTarget" TEXT;
 -- ============================================================================
 -- FULL BACKFILL: Individual UPDATE statements for each next-step workflow action
 -- ============================================================================
 
--- CREATED stage
 UPDATE "NextStepConfig" SET
   "modalTitle" = 'Waiting for professional quotes',
   "modalBody" = 'Your project invitation has been sent to selected professionals. Once they review your project and submit quotes, you''ll be able to compare options and timelines.',
@@ -36,8 +38,22 @@ UPDATE "NextStepConfig" SET
   "modalSecondaryActionType" = 'close_modal'
 WHERE "projectStage" = 'CREATED' AND "role" = 'CLIENT' AND "actionKey" = 'WAIT_FOR_QUOTES' AND "modalTitle" IS NULL;
 
+-- Backfill detailsTarget for key actions with tab navigation
+UPDATE "NextStepConfig" SET "detailsTarget" = '{"tab":"quotes"}' 
+  WHERE "actionKey" IN ('REVIEW_INCOMING_QUOTES', 'COMPARE_QUOTES', 'WAIT_FOR_UPDATED_QUOTES') AND "detailsTarget" IS NULL;
+
+UPDATE "NextStepConfig" SET "detailsTarget" = '{"tab":"contracts"}' 
+  WHERE "actionKey" IN ('REVIEW_CONTRACT', 'SIGN_CONTRACT', 'SUBMIT_CONTRACT') AND "detailsTarget" IS NULL;
+
+UPDATE "NextStepConfig" SET "detailsTarget" = '{"tab":"milestones"}' 
+  WHERE "actionKey" IN ('APPROVE_MILESTONE', 'AWAIT_MILESTONE_APPROVAL') AND "detailsTarget" IS NULL;
+
+UPDATE "NextStepConfig" SET "detailsTarget" = '{"tab":"progress"}' 
+  WHERE "actionKey" IN ('REVIEW_PROGRESS', 'SUBMIT_PROGRESS_UPDATE') AND "detailsTarget" IS NULL;
+
+UPDATE "NextStepConfig" SET "detailsTarget" = '{"tab":"financials"}' 
+  WHERE "actionKey" IN ('DEPOSIT_ESCROW_FUNDS', 'CONFIRM_NEXT_PHASE', 'PROCEED_TO_NEXT_PHASE') AND "detailsTarget" IS NULL;
 UPDATE "NextStepConfig" SET
-  "modalTitle" = 'Invite professionals to quote',
   "modalBody" = 'Search and select professionals you''d like to invite. Send them a personalized invitation with your project details. They''ll have time to review and respond with a quote.',
   "modalDetailsBody" = 'You can invite multiple professionals to create competition and get better pricing. Choose professionals with relevant experience and good reviews.',
   "modalSuccessTitle" = 'Invitations sent',

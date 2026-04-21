@@ -1501,6 +1501,7 @@ model NextStepConfig {
   modalPrimaryActionTarget String?
   modalSecondaryActionType String?
   modalSecondaryActionTarget String?
+    detailsTarget            String?  // JSON: { tab: 'quotes', scrollToId?: 'quote-123' }
   isPrimary                Boolean  @default(false)
   isElective               Boolean  @default(false)
   requiresAction           Boolean  @default(true) // false for passive monitoring (e.g., "Wait for quotes")

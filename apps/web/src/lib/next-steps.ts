@@ -19,6 +19,7 @@ export type NextStepAction = {
     primaryActionTarget?: string;
     secondaryActionType?: string;
     secondaryActionTarget?: string;
+      detailsTarget?: string;
   };
   isPrimary: boolean;
   isElective: boolean;
