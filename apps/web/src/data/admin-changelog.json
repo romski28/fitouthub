@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-21-a1b947b",
+    "date": "2026-04-21T10:42:05+08:00",
+    "title": "Use workflow modal flow for materials wallet authorization",
+    "summary": "Use workflow modal flow for materials wallet authorization",
+    "areas": [
+      "web"
+    ],
+    "commit": "a1b947b",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-8d4139d",
     "date": "2026-04-21T10:30:48+08:00",
     "title": "Use confirmed escrow signal for M1 wallet CTA visibility",

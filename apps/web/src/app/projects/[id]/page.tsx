@@ -1945,6 +1945,7 @@ export default function ClientProjectDetailPage() {
               accessToken={accessToken || null}
               projectCost={projectCostValue}
               originalBudget={project.approvedBudget || project.budget || undefined}
+              onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenChatTab={() => {
                 const awardedProfessional = project.professionals?.find((pp) => pp.status === 'awarded');
                 if (awardedProfessional) {

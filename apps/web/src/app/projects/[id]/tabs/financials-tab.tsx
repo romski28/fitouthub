@@ -9,6 +9,7 @@ interface ClientFinancialsTabProps {
   projectCost: number;
   originalBudget?: string;
   onOpenChatTab?: () => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
@@ -17,6 +18,7 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
   projectCost,
   originalBudget,
   onOpenChatTab,
+  onNavigateTab,
 }) => {
   if (!accessToken) {
     return (
@@ -35,6 +37,7 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
         originalBudget={originalBudget}
         role="client"
         onClarify={() => onOpenChatTab?.()}
+        onNavigateTab={onNavigateTab}
       />
     </div>
   );

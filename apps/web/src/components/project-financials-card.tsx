@@ -5,6 +5,9 @@ import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import StatusPill, { statusToneFromStatus } from './status-pill';
 import { useAuth } from '@/context/auth-context';
+import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { getClientTabForAction } from '@/lib/client-workflow';
+import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 
 export type ProjectFinancialRole = 'client' | 'professional' | 'admin';
 
@@ -198,6 +201,7 @@ interface ProjectFinancialsCardProps {
   originalBudget?: number | string; // Original project budget (for client/admin)
   role: ProjectFinancialRole;
   onClarify?: (transactionId: string) => void; // Callback when client clicks Clarify
+  onNavigateTab?: (tab: string) => void;
 }
 
 const formatHKD = (value: number | string) => {
@@ -267,6 +271,14 @@ const deriveRoleFromToken = (token?: string | null): ProjectFinancialRole | null
   return null;
 };
 
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
+
 const SLA_CATEGORIES: SlaCategory[] = [
   'escrow_deposit',
   'upfront_payment',
@@ -301,6 +313,7 @@ export default function ProjectFinancialsCard({
   originalBudget,
   role,
   onClarify,
+  onNavigateTab,
 }: ProjectFinancialsCardProps) {
   const { role: authRole, user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -340,6 +353,10 @@ export default function ProjectFinancialsCard({
   const [selectedProcurementEvidenceId, setSelectedProcurementEvidenceId] = useState<string | null>(null);
   const [authorizedProcurementAmount, setAuthorizedProcurementAmount] = useState('');
   const [titleTransferAcknowledged, setTitleTransferAcknowledged] = useState(false);
+  const [showMaterialsWalletModal, setShowMaterialsWalletModal] = useState(false);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
 
   const isSlaItemRelevantToRole = (item?: SlaStatusItem | null) => {
     if (!item) return false;
@@ -1138,20 +1155,48 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const handleAuthorizeMaterialsWalletTransfer = async () => {
-    if (!firstMilestone) return;
-    if (!window.confirm(`Transfer ${formatHKD(Number(firstMilestone.amount))} to the professional's materials holding wallet?\n\nThis amount will only become withdrawable by the professional once you approve their purchase invoices.`)) {
-      return;
+  const openMaterialsWalletWorkflowModal = async (completedLabel: string) => {
+    try {
+      const next = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: `client-financials-wallet:${projectId}`,
+        forceRefresh: true,
+      });
+
+      const tab = next?.actionKey ? getClientTabForAction(next.actionKey) : undefined;
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab,
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      toast.success(completedLabel);
     }
+  };
+
+  const handleConfirmMaterialsWalletTransfer = async () => {
+    if (!firstMilestone) return;
     try {
       setProcessingId('cap-authorize');
       await authorizeMilestoneCap(Number(firstMilestone.amount));
-      toast.success('Materials wallet transfer authorized');
+      setShowMaterialsWalletModal(false);
+      await openMaterialsWalletWorkflowModal('Materials wallet transfer authorised');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to authorize transfer');
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const handleAuthorizeMaterialsWalletTransfer = async () => {
+    setShowMaterialsWalletModal(true);
   };
 
   const handleTransferAvailableFunds = async () => {
@@ -2268,6 +2313,69 @@ export default function ProjectFinancialsCard({
           </div>
         </div>
       )}
+
+      {/* Transaction Detail Modal */}
+      {showMaterialsWalletModal && firstMilestone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Authorize materials wallet transfer">
+          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3 rounded-t-2xl bg-indigo-900/40 border-b border-indigo-700/40 px-5 py-4">
+              <span className="mt-0.5 text-xl">💳</span>
+              <div>
+                <p className="text-base font-bold text-indigo-200">Authorise Materials Wallet Transfer</p>
+                <p className="mt-1 text-sm text-indigo-100/80">Confirm the milestone 1 transfer for materials purchasing.</p>
+              </div>
+            </div>
+
+            <div className="px-5 py-4 space-y-3">
+              <div className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-200">Transfer Amount</p>
+                <p className="mt-1 text-lg font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                This amount is moved to the professional&apos;s <span className="font-semibold text-white">materials holding wallet</span>.
+                It is not withdrawable until you review and approve submitted purchase invoices.
+              </p>
+              <div className="flex items-start gap-2 rounded-lg border border-sky-700/40 bg-sky-900/20 px-3 py-2.5">
+                <span className="text-sky-400 text-sm mt-0.5">⏭️</span>
+                <p className="text-xs text-sky-200">
+                  After authorisation, the professional&apos;s next step is to submit materials evidence for your review.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+              <button
+                type="button"
+                onClick={() => setShowMaterialsWalletModal(false)}
+                disabled={processingId === 'cap-authorize'}
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmMaterialsWalletTransfer}
+                disabled={processingId === 'cap-authorize'}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-slate-500"
+              >
+                {processingId === 'cap-authorize' ? 'Authorising...' : 'Authorise Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        onNavigate={
+          workflowModalNextStep?.tab && onNavigateTab
+            ? () => onNavigateTab(workflowModalNextStep.tab as string)
+            : undefined
+        }
+        onClose={() => setWorkflowModalOpen(false)}
+      />
 
       {/* Transaction Detail Modal */}
       {selectedTx && (
