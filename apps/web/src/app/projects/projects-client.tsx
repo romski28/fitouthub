@@ -24,6 +24,7 @@ import type { UpdatesSummary } from "@/lib/updates-cache";
 import { fetchAssistPresenceByProject } from "@/lib/assist-requests";
 import { extractObjectKeyFromValue, getUploadResponseKeys } from "@/lib/media-assets";
 import { clientActionTabMap } from '@/lib/client-workflow';
+import { useNextStepModalTrigger } from '@/hooks/use-next-step-modal-trigger';
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -166,6 +167,36 @@ type ProjectsClientProps = {
   clientId?: string;
   initialShowCreateModal?: boolean;
 };
+
+function NextStepModalButton({
+  action,
+  projectId,
+  variant,
+}: {
+  action: NextStepAction;
+  projectId: string;
+  variant: 'primary' | 'secondary';
+}) {
+  const openModal = useNextStepModalTrigger({
+    actionKey: action.actionKey,
+    projectId,
+    modalContent: action.modalContent,
+  });
+
+  return (
+    <button
+      type="button"
+      onClick={openModal}
+      className={
+        variant === 'primary'
+          ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap'
+          : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap'
+      }
+    >
+      {action.actionLabel}
+    </button>
+  );
+}
 
 function extractPhotoUrls(notes?: string): string[] {
   if (!notes) return [];
@@ -756,7 +787,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
               const quoteOverdue = isQuoteOverdueForProject(project);
               const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
-              const secondaryActionHref = secondaryAction ? getClientShowMeHref(project.id, secondaryAction.actionKey) : `/projects/${project.id}`;
               return (
                 <div key={`dash-${project.id}`} className={`relative rounded-lg px-4 py-3 transition ${
                   quoteOverdue
@@ -828,19 +858,18 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                         ) : (
                           <>
-                            <Link
-                              href={primaryActionHref}
-                              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-                            >
-                              {primaryAction?.actionLabel || 'Open project'}
-                            </Link>
-                            {secondaryAction && (
+                            {primaryAction ? (
+                              <NextStepModalButton action={primaryAction} projectId={project.id} variant="primary" />
+                            ) : (
                               <Link
-                                href={secondaryActionHref}
-                                className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap"
+                                href={primaryActionHref}
+                                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
                               >
-                                {secondaryAction.actionLabel}
+                                Open project
                               </Link>
+                            )}
+                            {secondaryAction && (
+                              <NextStepModalButton action={secondaryAction} projectId={project.id} variant="secondary" />
                             )}
                             {additionalActionCount > 0 && (
                               <span className="text-xs text-slate-300 whitespace-nowrap">

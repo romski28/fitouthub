@@ -7,6 +7,8 @@ import { getMessages } from 'next-intl/server';
 import { AuthProvider } from "@/context/auth-context";
 import { ProfessionalAuthProvider } from "@/context/professional-auth-context";
 import { AuthModalControlProvider } from "@/context/auth-modal-control";
+import { NextStepModalProvider } from "@/context/next-step-modal-context";
+import { ModalDispatcher } from '@/components/next-steps/modal-dispatcher';
 import { NavbarWrapper } from "@/components/navbar-wrapper";
 import { GlobalAuthModal } from "@/components/global-auth-modal";
 import Footer from "@/components/footer";
@@ -43,6 +45,7 @@ export default async function RootLayout({
           <AuthProvider>
             <ProfessionalAuthProvider>
               <AuthModalControlProvider>
+                <NextStepModalProvider>
                 <Toaster position="top-right" />
                 <div className="min-h-screen bg-slate-50 text-slate-900">
                   <NavbarWrapper />
@@ -55,8 +58,10 @@ export default async function RootLayout({
                   </div>
                 </div>
                 <GlobalAuthModal />
+                <ModalDispatcher />
                 <CornerRibbon />
                 <FloatingChat />
+                </NextStepModalProvider>
               </AuthModalControlProvider>
             </ProfessionalAuthProvider>
           </AuthProvider>

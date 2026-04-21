@@ -39,7 +39,8 @@ interface NextStepModalContextType {
     projectId: string,
     userId: string,
     role: string,
-    projectStage?: string
+    modalContent?: NextStepModalContent,
+    projectStage?: string,
   ) => Promise<void>;
   closeModal: () => void;
   updateModalContent: (content: NextStepModalContent) => void;
@@ -60,7 +61,8 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
       projectId: string,
       userId: string,
       role: string,
-      projectStage?: string
+      modalContent?: NextStepModalContent,
+      projectStage?: string,
     ) => {
       // Open modal immediately with loading state
       setState({
@@ -71,7 +73,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
         userId,
         role,
         projectStage,
-        modalContent: undefined,
+        modalContent,
         error: undefined,
       });
 

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { useNextStepModal } from '@/context/next-step-modal-context';
 import { API_BASE_URL } from '@/config/api';
 import { colors } from '@/styles/theme';
 import Link from 'next/link';
@@ -65,6 +66,7 @@ function getProfessionalShowMeHref(projectProfessionalId: string, actionKey: str
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
+  const { openModal } = useNextStepModal();
   const nextStepCacheScope = `professional:${professional?.id || 'anonymous'}`;
   const [projects, setProjects] = useState<ProjectProfessional[]>([]);
 
@@ -97,6 +99,20 @@ export default function ProfessionalProjectsPage() {
   };
   const dashboardProjects = projects
     .filter((p) => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))));
+
+  const openProfessionalNextStepModal = useCallback(
+    async (action: NextStepAction, projectId: string) => {
+      if (!professional?.id) return;
+      await openModal(
+        action.actionKey,
+        projectId,
+        professional.id,
+        'PROFESSIONAL',
+        action.modalContent,
+      );
+    },
+    [openModal, professional?.id],
+  );
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -282,7 +298,6 @@ export default function ProfessionalProjectsPage() {
                   projectProf.status === 'accepted' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-amber-400/20 text-amber-200';
                 const unreadCount = projectProf.unreadCount ?? 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
-                const secondaryActionHref = secondaryAction ? getProfessionalShowMeHref(projectProf.id, secondaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
                   <div key={`dash-${projectProf.id}`} className="relative rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
                     {unreadCount > 0 && (
@@ -342,19 +357,30 @@ export default function ProfessionalProjectsPage() {
                             <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                           ) : (
                             <>
-                              <Link
-                                href={primaryActionHref}
-                                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-                              >
-                                {primaryAction?.actionLabel || 'Open project'}
-                              </Link>
-                              {secondaryAction && (
+                              {primaryAction ? (
+                                <button
+                                  type="button"
+                                  onClick={() => void openProfessionalNextStepModal(primaryAction, projectProf.project.id)}
+                                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                                >
+                                  {primaryAction.actionLabel}
+                                </button>
+                              ) : (
                                 <Link
-                                  href={secondaryActionHref}
+                                  href={primaryActionHref}
+                                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                                >
+                                  Open project
+                                </Link>
+                              )}
+                              {secondaryAction && (
+                                <button
+                                  type="button"
+                                  onClick={() => void openProfessionalNextStepModal(secondaryAction, projectProf.project.id)}
                                   className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap"
                                 >
                                   {secondaryAction.actionLabel}
-                                </Link>
+                                </button>
                               )}
                               {additionalActionCount > 0 && (
                                 <span className="text-xs text-slate-300 whitespace-nowrap">

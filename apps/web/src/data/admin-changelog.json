@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-04-21-0da8877",
+    "date": "2026-04-21T18:48:13+08:00",
+    "title": "Wire next-step modals globally and add detailsTarget navigation",
+    "summary": "Wire next-step modals globally and add detailsTarget navigation",
+    "areas": [
+      "web"
+    ],
+    "commit": "0da8877",
+    "files": [
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/next-steps/general-action-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx",
+      "apps/web/src/hooks/use-next-step-modal-trigger.ts"
+    ]
+  },
+  {
     "id": "2026-04-21-5847dff",
     "date": "2026-04-21T17:24:23+08:00",
     "title": "Phase 1: Add detailsTarget schema field, NextStepModalProvider context, GeneralActionModal, and ModalDispatcher",

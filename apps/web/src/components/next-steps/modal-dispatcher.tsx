@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { GeneralActionModal } from './general-action-modal';
+import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
   projectId?: string;
@@ -18,15 +20,37 @@ export function ModalDispatcher({
   onDetailsNavigate,
 }: ModalDispatcherProps) {
   const { state, closeModal } = useNextStepModal();
+  const router = useRouter();
 
   const handleDetailsNavigation = useCallback(
     (target: string) => {
       if (onDetailsNavigate) {
         onDetailsNavigate(target);
+        return;
       }
-      // Don't close the modal yet - let the parent decide
+
+      const parsedTarget = parseDetailsTarget(target);
+      if (!parsedTarget?.tab || !state.projectId) return;
+
+      // Client details routes are keyed by projectId; professional routes use project-professional id.
+      // Until we persist that id in modal state, only auto-route for client flows.
+      if ((state.role || '').toUpperCase().includes('PROFESSIONAL')) return;
+
+      const query = new URLSearchParams({ tab: parsedTarget.tab });
+      router.push(`/projects/${state.projectId}?${query.toString()}`);
+
+      if (parsedTarget.scrollToId) {
+        setTimeout(() => {
+          const el = document.getElementById(parsedTarget.scrollToId!);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+      }
+
+      closeModal();
     },
-    [onDetailsNavigate]
+    [closeModal, onDetailsNavigate, router, state.projectId, state.role]
   );
 
   // Route to correct modal based on actionKey

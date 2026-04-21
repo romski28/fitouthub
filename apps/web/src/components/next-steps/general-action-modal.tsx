@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useNextStepModal } from '@/context/next-step-modal-context';
-import { useRouter } from 'next/navigation';
 
 interface GeneralActionModalProps {
   isOpen: boolean;
@@ -22,7 +21,6 @@ export function GeneralActionModal({
   onDetailsAction,
 }: GeneralActionModalProps) {
   const { state } = useNextStepModal();
-  const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
 
   if (!isOpen || !state.modalContent) {
@@ -37,6 +35,7 @@ export function GeneralActionModal({
     primaryButtonLabel = 'Continue',
     secondaryButtonLabel = 'Cancel',
     primaryActionType,
+    secondaryActionType,
     detailsTarget,
   } = state.modalContent;
 
@@ -57,6 +56,11 @@ export function GeneralActionModal({
   };
 
   const handleSecondaryClick = () => {
+    if (secondaryActionType === 'navigate_tab' && detailsTarget) {
+      onDetailsAction?.(detailsTarget);
+      return;
+    }
+
     if (secondaryButtonLabel === 'Cancel' || secondaryButtonLabel === 'Back') {
       onClose();
     } else {
@@ -127,7 +131,18 @@ export function GeneralActionModal({
                   {showDetails ? 'Hide details' : 'Show details'}
                 </button>
                 {showDetails && (
-                  <p className="mt-2 text-sm text-gray-600">{detailsBody}</p>
+                  <div className="mt-2 space-y-2">
+                    <p className="text-sm text-gray-600">{detailsBody}</p>
+                    {detailsTarget && onDetailsAction && (
+                      <button
+                        type="button"
+                        onClick={() => onDetailsAction(detailsTarget)}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                      >
+                        Open details
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
