@@ -42,6 +42,15 @@ interface ProjectProfessional {
 
 type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
 
+const professionalCardBorderByStatus: Record<string, string> = {
+  awarded: 'border-purple-300/70',
+  quoted: 'border-blue-300/70',
+  accepted: 'border-emerald-300/70',
+  pending: 'border-amber-300/70',
+  declined: 'border-rose-300/80',
+  rejected: 'border-rose-300/80',
+};
+
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
@@ -277,13 +286,16 @@ export default function ProfessionalProjectsPage() {
                 const primaryAction = actions[0] || null;
                 const secondaryAction = actions[1] || null;
                 const additionalActionCount = Math.max(actions.length - 2, 0);
-                const statusBadge = projectProf.status === 'awarded' ? 'bg-purple-400/20 text-purple-200' : 
-                  projectProf.status === 'quoted' ? 'bg-blue-400/20 text-blue-200' : 
-                  projectProf.status === 'accepted' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-amber-400/20 text-amber-200';
+                const isStopStatus = ['declined', 'rejected'].includes((projectProf.status || '').toLowerCase());
+                const baseBorder = professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
                 const unreadCount = projectProf.unreadCount ?? 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
-                  <div key={`dash-${projectProf.id}`} className="relative rounded-lg bg-white/10 px-4 py-3 transition hover:bg-white/15">
+                  <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-2 px-4 py-3 transition ${
+                    isStopStatus
+                      ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
+                      : `${baseBorder} bg-white/10 hover:bg-white/15`
+                  }`}>
                     {unreadCount > 0 && (
                       <span className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md">
                         {unreadCount > 99 ? '99+' : unreadCount}
@@ -293,12 +305,11 @@ export default function ProfessionalProjectsPage() {
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <p className="truncate text-sm font-bold text-white">{projectProf.project.projectName}</p>
                         <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
-                          <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusBadge}`}>
-                            {projectProf.status}
-                          </span>
                           <ProjectSentimentBadge
                             projectId={projectProf.project.id}
                             storageScope="professional"
+                            iconOnly
+                            size="lg"
                           />
                         </div>
                       </div>

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-21-1084052",
+    "date": "2026-04-21T22:14:03+08:00",
+    "title": "Tidy project lists: status borders, brighter blockers, icon-only sentiment",
+    "summary": "Tidy project lists: status borders, brighter blockers, icon-only sentiment",
+    "areas": [
+      "web"
+    ],
+    "commit": "1084052",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/project-sentiment-badge.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-7c21d26",
     "date": "2026-04-21T22:06:44+08:00",
     "title": "Prefetch project detail routes when opening next-step modal",

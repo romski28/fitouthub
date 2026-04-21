@@ -26,16 +26,17 @@ import { extractObjectKeyFromValue, getUploadResponseKeys } from "@/lib/media-as
 import { clientActionTabMap } from '@/lib/client-workflow';
 import { useNextStepModalTrigger } from '@/hooks/use-next-step-modal-trigger';
 
-const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  awarded: "bg-emerald-100 text-emerald-800",
-  withdrawn: "bg-slate-200 text-slate-800",
-  started: "bg-blue-100 text-blue-800",
-  completed: "bg-emerald-100 text-emerald-800",
-  rated: "bg-purple-100 text-purple-800",
-  quoted: "bg-blue-100 text-blue-800",
-  declined: "bg-slate-100 text-slate-800",
-  counter_requested: "bg-purple-100 text-purple-800",
+const clientCardBorderByStatus: Record<string, string> = {
+  awarded: 'border-emerald-300/70',
+  quoted: 'border-blue-300/70',
+  pending: 'border-amber-300/70',
+  counter_requested: 'border-violet-300/70',
+  withdrawn: 'border-rose-300/80',
+  rejected: 'border-rose-300/80',
+  declined: 'border-rose-300/80',
+  started: 'border-cyan-300/70',
+  completed: 'border-emerald-200/70',
+  rated: 'border-purple-300/70',
 };
 
 type AssistStatus = "open" | "in_progress" | "closed";
@@ -297,23 +298,6 @@ function isQuoteOverdueForProject(project: ExtendedProject): boolean {
       : invitedAtMs + quoteWindowMs;
     return Date.now() > effectiveDeadline;
   });
-}
-
-function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
-  const cls = statusColors[status] || "bg-slate-100 text-slate-800";
-  const labels: Record<string, string> = {
-    pending: t('stats.pending'),
-    awarded: t('stats.awarded'),
-    rejected: t('stats.rejected'),
-    declined: t('declined'),
-    withdrawn: t('status.withdrawn'),
-    started: t('status.started'),
-    completed: t('status.completed'),
-    rated: t('status.rated'),
-    quoted: t('quoted'),
-    counter_requested: t('status.counterRequested'),
-  };
-  return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${cls}`}>{labels[status] || status.replace('_', ' ')}</span>;
 }
 
 function EditProjectModal({
@@ -788,12 +772,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const assistInfo = assistMap[project.id];
               const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
               const quoteOverdue = isQuoteOverdueForProject(project);
+              const isStopStatus = ['withdrawn', 'rejected', 'declined'].includes((project.status || '').toLowerCase());
+              const baseBorder = clientCardBorderByStatus[project.status] || 'border-white/20';
               const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
               return (
-                <div key={`dash-${project.id}`} className={`relative rounded-lg px-4 py-3 transition ${
-                  quoteOverdue
-                    ? 'border border-rose-400/60 bg-rose-500/15 hover:bg-rose-500/20'
-                    : 'bg-white/10 hover:bg-white/15'
+                <div key={`dash-${project.id}`} className={`relative rounded-lg border-2 px-4 py-3 transition ${
+                  quoteOverdue || isStopStatus
+                    ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
+                    : `${baseBorder} bg-white/10 hover:bg-white/15`
                 }`}>
                   {unreadCount > 0 && (
                     <span className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md" title={t('unreadMessages', { count: unreadCount })}>
@@ -804,9 +790,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                       <p className="truncate text-sm font-bold text-white">{project.projectName}</p>
                       <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
-                        <StatusBadge status={project.status} t={t} />
                         {quoteOverdue && (
-                          <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-800">
+                          <span className="inline-flex items-center rounded-full border border-rose-200/90 bg-rose-500/35 px-2 py-1 text-xs font-semibold text-rose-100 shadow-[0_0_10px_rgba(251,113,133,0.3)]">
                             Quote overdue blocker
                           </span>
                         )}
@@ -819,6 +804,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         <ProjectSentimentBadge
                           projectId={project.id}
                           storageScope="client"
+                          iconOnly
+                          size="lg"
                         />
                       </div>
                     </div>

@@ -33,9 +33,17 @@ type ProjectSentimentBadgeProps = {
   projectId: string;
   storageScope: 'client' | 'professional' | 'shared';
   hideTextOnMobile?: boolean;
+  iconOnly?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 };
 
-export function ProjectSentimentBadge({ projectId, storageScope, hideTextOnMobile }: ProjectSentimentBadgeProps) {
+export function ProjectSentimentBadge({
+  projectId,
+  storageScope,
+  hideTextOnMobile,
+  iconOnly = false,
+  size = 'sm',
+}: ProjectSentimentBadgeProps) {
   const storageKey = `fitouthub:project-sentiment:${storageScope}:${projectId}`;
   const [sentiment, setSentiment] = React.useState<ProjectSentiment>('ok');
 
@@ -61,6 +69,7 @@ export function ProjectSentimentBadge({ projectId, storageScope, hideTextOnMobil
   };
 
   const meta = SENTIMENT_META[sentiment];
+  const sizeClass = size === 'lg' ? 'text-lg' : size === 'md' ? 'text-base' : 'text-sm';
 
   return (
     <button
@@ -71,8 +80,8 @@ export function ProjectSentimentBadge({ projectId, storageScope, hideTextOnMobil
       title={`Project sentiment: ${meta.label}. Click to cycle sentiment state.`}
       aria-label={`Project sentiment ${meta.label}. Click to change sentiment.`}
     >
-      <span aria-hidden="true">{meta.emoji}</span>
-      <span className={hideTextOnMobile ? 'hidden md:inline' : ''}>{meta.label}</span>
+      <span aria-hidden="true" className={sizeClass}>{meta.emoji}</span>
+      {!iconOnly && <span className={hideTextOnMobile ? 'hidden md:inline' : ''}>{meta.label}</span>}
     </button>
   );
 }
