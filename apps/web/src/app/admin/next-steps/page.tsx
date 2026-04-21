@@ -265,6 +265,9 @@ export default function AdminNextStepContentPage() {
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">{selectedRow.actionKey}</h2>
                   <p className="text-sm text-slate-600">{selectedRow.projectStage} · {selectedRow.role}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Action types: <code>confirm_transfer</code>, <code>navigate_tab</code>, <code>show_details</code>, <code>close_modal</code>, <code>noop</code>.
+                  </p>
                 </div>
 
                 {([

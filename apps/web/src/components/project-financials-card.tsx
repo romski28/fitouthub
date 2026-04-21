@@ -1228,6 +1228,37 @@ export default function ProjectFinancialsCard({
     setShowMaterialsWalletModal(false);
   };
 
+  const executeMaterialsWalletModalAction = async (
+    actionType: string | undefined,
+    actionTarget: string | undefined,
+    fallbackActionType: 'confirm_transfer' | 'close_modal',
+  ) => {
+    const effectiveActionType = String(actionType || fallbackActionType).toLowerCase();
+    const effectiveTarget = String(actionTarget || 'financials').trim();
+
+    if (effectiveActionType === 'confirm_transfer') {
+      await handleConfirmMaterialsWalletTransfer();
+      return;
+    }
+
+    if (effectiveActionType === 'navigate_tab') {
+      onNavigateTab?.(effectiveTarget || 'financials');
+      closeMaterialsWalletModal();
+      return;
+    }
+
+    if (effectiveActionType === 'show_details') {
+      setShowMaterialsWalletInfo(true);
+      return;
+    }
+
+    if (effectiveActionType === 'noop') {
+      return;
+    }
+
+    closeMaterialsWalletModal();
+  };
+
   const hydrateMaterialsWalletModalContent = async () => {
     const fallback = resolveNextStepModalContent('AUTHORIZE_MATERIALS_WALLET');
     setMaterialsWalletModalContent(fallback);
@@ -2495,7 +2526,13 @@ export default function ProjectFinancialsCard({
                     </button>
                     <button
                       type="button"
-                      onClick={closeMaterialsWalletModal}
+                      onClick={() =>
+                        void executeMaterialsWalletModalAction(
+                          materialsWalletModalContent.secondaryActionType,
+                          materialsWalletModalContent.secondaryActionTarget,
+                          'close_modal',
+                        )
+                      }
                       disabled={processingId === 'cap-authorize'}
                       className="min-w-[110px] rounded-lg bg-rose-600 px-4 py-2 text-base font-semibold text-white hover:bg-rose-700 transition disabled:opacity-50"
                     >
@@ -2503,7 +2540,13 @@ export default function ProjectFinancialsCard({
                     </button>
                     <button
                       type="button"
-                      onClick={handleConfirmMaterialsWalletTransfer}
+                      onClick={() =>
+                        void executeMaterialsWalletModalAction(
+                          materialsWalletModalContent.primaryActionType,
+                          materialsWalletModalContent.primaryActionTarget,
+                          'confirm_transfer',
+                        )
+                      }
                       disabled={processingId === 'cap-authorize'}
                       className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition disabled:bg-slate-500"
                     >

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-21-2030b47",
+    "date": "2026-04-21T16:35:55+08:00",
+    "title": "Wire modal action behavior and backfill next-step modal defaults",
+    "summary": "Wire modal action behavior and backfill next-step modal defaults",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "2030b47",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql",
+      "apps/web/src/app/admin/next-steps/page.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-0117514",
     "date": "2026-04-21T16:24:02+08:00",
     "title": "Fix Postgres escaping in manual next-step modal SQL",

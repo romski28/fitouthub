@@ -18,6 +18,37 @@ ALTER TABLE "NextStepConfig"
   ADD COLUMN IF NOT EXISTS "modalSecondaryActionType" TEXT,
   ADD COLUMN IF NOT EXISTS "modalSecondaryActionTarget" TEXT;
 
+-- Backfill defaults from existing config content so modal fields are not empty.
+UPDATE "NextStepConfig"
+SET
+  "modalTitle" = COALESCE("modalTitle", "actionLabel"),
+  "modalBody" = COALESCE("modalBody", "description", "actionLabel"),
+  "modalDetailsBody" = COALESCE("modalDetailsBody", "description"),
+  "modalSuccessTitle" = COALESCE("modalSuccessTitle", 'Action completed'),
+  "modalSuccessBody" = COALESCE("modalSuccessBody", "description", "actionLabel"),
+  "modalSuccessNextStepBody" = COALESCE("modalSuccessNextStepBody", 'What''s next? We are working on it!'),
+  "modalPrimaryButtonLabel" = COALESCE(
+    "modalPrimaryButtonLabel",
+    CASE WHEN "requiresAction" THEN 'Continue' ELSE 'OK' END
+  ),
+  "modalSecondaryButtonLabel" = COALESCE("modalSecondaryButtonLabel", 'Close'),
+  "modalPrimaryActionType" = COALESCE(
+    "modalPrimaryActionType",
+    CASE WHEN "requiresAction" THEN 'navigate_tab' ELSE 'close_modal' END
+  ),
+  "modalSecondaryActionType" = COALESCE("modalSecondaryActionType", 'close_modal')
+WHERE
+  "modalTitle" IS NULL OR
+  "modalBody" IS NULL OR
+  "modalDetailsBody" IS NULL OR
+  "modalSuccessTitle" IS NULL OR
+  "modalSuccessBody" IS NULL OR
+  "modalSuccessNextStepBody" IS NULL OR
+  "modalPrimaryButtonLabel" IS NULL OR
+  "modalSecondaryButtonLabel" IS NULL OR
+  "modalPrimaryActionType" IS NULL OR
+  "modalSecondaryActionType" IS NULL;
+
 -- Content-only row for the new materials-wallet modal.
 -- isPrimary/isElective are false so it behaves as content storage only.
 INSERT INTO "NextStepConfig" (
