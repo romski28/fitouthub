@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import StatusPill, { statusToneFromStatus } from './status-pill';
@@ -357,6 +358,7 @@ export default function ProjectFinancialsCard({
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null;
 
   const isSlaItemRelevantToRole = (item?: SlaStatusItem | null) => {
     if (!item) return false;
@@ -2314,68 +2316,73 @@ export default function ProjectFinancialsCard({
         </div>
       )}
 
-      {/* Transaction Detail Modal */}
-      {showMaterialsWalletModal && firstMilestone && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Authorize materials wallet transfer">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start gap-3 rounded-t-2xl bg-indigo-900/40 border-b border-indigo-700/40 px-5 py-4">
-              <span className="mt-0.5 text-xl">💳</span>
-              <div>
-                <p className="text-base font-bold text-indigo-200">Authorise Materials Wallet Transfer</p>
-                <p className="mt-1 text-sm text-indigo-100/80">Confirm the milestone 1 transfer for materials purchasing.</p>
+      {modalPortalTarget && showMaterialsWalletModal && firstMilestone &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Authorize materials wallet transfer">
+            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-start gap-3 rounded-t-2xl bg-indigo-900/40 border-b border-indigo-700/40 px-5 py-4">
+                <span className="mt-0.5 text-xl">💳</span>
+                <div>
+                  <p className="text-base font-bold text-indigo-200">Authorise Materials Wallet Transfer</p>
+                  <p className="mt-1 text-sm text-indigo-100/80">Confirm the milestone 1 transfer for materials purchasing.</p>
+                </div>
               </div>
-            </div>
 
-            <div className="px-5 py-4 space-y-3">
-              <div className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-200">Transfer Amount</p>
-                <p className="mt-1 text-lg font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
-              </div>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                This amount is moved to the professional&apos;s <span className="font-semibold text-white">materials holding wallet</span>.
-                It is not withdrawable until you review and approve submitted purchase invoices.
-              </p>
-              <div className="flex items-start gap-2 rounded-lg border border-sky-700/40 bg-sky-900/20 px-3 py-2.5">
-                <span className="text-sky-400 text-sm mt-0.5">⏭️</span>
-                <p className="text-xs text-sky-200">
-                  After authorisation, the professional&apos;s next step is to submit materials evidence for your review.
+              <div className="px-5 py-4 space-y-3">
+                <div className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-200">Transfer Amount</p>
+                  <p className="mt-1 text-lg font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
+                </div>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  This amount is moved to the professional&apos;s <span className="font-semibold text-white">materials holding wallet</span>.
+                  It is not withdrawable until you review and approve submitted purchase invoices.
                 </p>
+                <div className="flex items-start gap-2 rounded-lg border border-sky-700/40 bg-sky-900/20 px-3 py-2.5">
+                  <span className="text-sky-400 text-sm mt-0.5">⏭️</span>
+                  <p className="text-xs text-sky-200">
+                    After authorisation, the professional&apos;s next step is to submit materials evidence for your review.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setShowMaterialsWalletModal(false)}
+                  disabled={processingId === 'cap-authorize'}
+                  className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmMaterialsWalletTransfer}
+                  disabled={processingId === 'cap-authorize'}
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-slate-500"
+                >
+                  {processingId === 'cap-authorize' ? 'Authorising...' : 'Authorise Payment'}
+                </button>
               </div>
             </div>
+          </div>,
+          modalPortalTarget,
+        )}
 
-            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
-              <button
-                type="button"
-                onClick={() => setShowMaterialsWalletModal(false)}
-                disabled={processingId === 'cap-authorize'}
-                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmMaterialsWalletTransfer}
-                disabled={processingId === 'cap-authorize'}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-slate-500"
-              >
-                {processingId === 'cap-authorize' ? 'Authorising...' : 'Authorise Payment'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <WorkflowCompletionModal
-        isOpen={workflowModalOpen}
-        completedLabel={workflowModalCompletedLabel}
-        nextStep={workflowModalNextStep}
-        onNavigate={
-          workflowModalNextStep?.tab && onNavigateTab
-            ? () => onNavigateTab(workflowModalNextStep.tab as string)
-            : undefined
-        }
-        onClose={() => setWorkflowModalOpen(false)}
-      />
+      {modalPortalTarget &&
+        createPortal(
+          <WorkflowCompletionModal
+            isOpen={workflowModalOpen}
+            completedLabel={workflowModalCompletedLabel}
+            nextStep={workflowModalNextStep}
+            onNavigate={
+              workflowModalNextStep?.tab && onNavigateTab
+                ? () => onNavigateTab(workflowModalNextStep.tab as string)
+                : undefined
+            }
+            onClose={() => setWorkflowModalOpen(false)}
+          />,
+          modalPortalTarget,
+        )}
 
       {/* Transaction Detail Modal */}
       {selectedTx && (

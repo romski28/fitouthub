@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-6afd66f",
+    "date": "2026-04-21T10:50:04+08:00",
+    "title": "Portal financial workflow modals to body overlay",
+    "summary": "Portal financial workflow modals to body overlay",
+    "areas": [
+      "web"
+    ],
+    "commit": "6afd66f",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-a1b947b",
     "date": "2026-04-21T10:42:05+08:00",
     "title": "Use workflow modal flow for materials wallet authorization",
