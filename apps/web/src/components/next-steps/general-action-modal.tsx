@@ -131,13 +131,13 @@ export function GeneralActionModal({
                   Close
                 </button>
               )}
-              {hasDetails && (
+              {detailsTarget && onDetailsAction && (
                 <button
                   type="button"
-                  onClick={() => setShowDetails(true)}
+                  onClick={() => onDetailsAction(detailsTarget)}
                   className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
                 >
-                  Details
+                  View details
                 </button>
               )}
               {secondaryButtonLabel && (
@@ -167,16 +167,7 @@ export function GeneralActionModal({
                 <div className="space-y-3 text-left">
                   <p className="text-sm leading-relaxed text-white">{detailsBody}</p>
                 </div>
-                <div className="mt-4 flex items-center justify-center gap-2">
-                  {detailsTarget && onDetailsAction && (
-                    <button
-                      type="button"
-                      onClick={() => onDetailsAction(detailsTarget)}
-                      className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
-                    >
-                      Open details
-                    </button>
-                  )}
+                <div className="mt-4 flex items-center justify-center">
                   <button
                     type="button"
                     onClick={() => setShowDetails(false)}
