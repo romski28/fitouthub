@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-c1efe0f",
+    "date": "2026-04-21T15:52:43+08:00",
+    "title": "Keep wallet modal open for success and next-step message",
+    "summary": "Keep wallet modal open for success and next-step message",
+    "areas": [
+      "web"
+    ],
+    "commit": "c1efe0f",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-ac7b7d4",
     "date": "2026-04-21T15:35:58+08:00",
     "title": "Allow milestone 1 wallet cap when escrow is already funded",

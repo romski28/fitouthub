@@ -7,9 +7,6 @@ import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import StatusPill, { statusToneFromStatus } from './status-pill';
 import { useAuth } from '@/context/auth-context';
-import { fetchPrimaryNextStep } from '@/lib/next-steps';
-import { getClientTabForAction } from '@/lib/client-workflow';
-import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 
 export type ProjectFinancialRole = 'client' | 'professional' | 'admin';
 
@@ -275,14 +272,6 @@ const deriveRoleFromToken = (token?: string | null): ProjectFinancialRole | null
   return null;
 };
 
-const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
-  if (!actionKey) return undefined;
-  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
-  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
-  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
-  return undefined;
-};
-
 const SLA_CATEGORIES: SlaCategory[] = [
   'escrow_deposit',
   'upfront_payment',
@@ -360,9 +349,7 @@ export default function ProjectFinancialsCard({
   const [authorizedProcurementAmount, setAuthorizedProcurementAmount] = useState('');
   const [titleTransferAcknowledged, setTitleTransferAcknowledged] = useState(false);
   const [showMaterialsWalletModal, setShowMaterialsWalletModal] = useState(false);
-  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
-  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
-  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const [showMaterialsWalletSuccess, setShowMaterialsWalletSuccess] = useState(false);
   const [showMaterialsWalletInfo, setShowMaterialsWalletInfo] = useState(false);
   const [clientDisplayName, setClientDisplayName] = useState('client');
   const [professionalDisplayName, setProfessionalDisplayName] = useState('professional');
@@ -1195,39 +1182,10 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const openMaterialsWalletWorkflowModal = async (completedLabel: string) => {
-    const fallbackNextStep: WorkflowNextStep = {
-      actionLabel: 'Work in progress',
-      description: 'We are preparing your next guided action. You can continue in Financials for now.',
-      requiresAction: false,
-      waitingFor: 'platform',
-    };
-
-    try {
-      const next = await fetchPrimaryNextStep(projectId, accessToken, {
-        cacheScope: `client-financials-wallet:${projectId}`,
-        forceRefresh: true,
-      });
-
-      const tab = next?.actionKey ? getClientTabForAction(next.actionKey) : undefined;
-      setWorkflowModalCompletedLabel(completedLabel);
-      setWorkflowModalNextStep(
-        next
-          ? {
-              actionLabel: next.actionLabel,
-              description: next.description,
-              requiresAction: Boolean(next.requiresAction),
-              tab,
-              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
-            }
-          : fallbackNextStep,
-      );
-      setWorkflowModalOpen(true);
-    } catch {
-      setWorkflowModalCompletedLabel(completedLabel);
-      setWorkflowModalNextStep(fallbackNextStep);
-      setWorkflowModalOpen(true);
-    }
+  const closeMaterialsWalletModal = () => {
+    setShowMaterialsWalletInfo(false);
+    setShowMaterialsWalletSuccess(false);
+    setShowMaterialsWalletModal(false);
   };
 
   const handleConfirmMaterialsWalletTransfer = async () => {
@@ -1235,7 +1193,8 @@ export default function ProjectFinancialsCard({
     try {
       setProcessingId('cap-authorize');
       await authorizeMilestoneCap(Number(firstMilestone.amount));
-      setShowMaterialsWalletModal(false);
+      setShowMaterialsWalletInfo(false);
+      setShowMaterialsWalletSuccess(true);
       try {
         await confetti({
           particleCount: 110,
@@ -1245,7 +1204,6 @@ export default function ProjectFinancialsCard({
       } catch {
         // Non-blocking visual enhancement
       }
-      await openMaterialsWalletWorkflowModal('Materials wallet transfer authorised');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to authorize transfer');
     } finally {
@@ -1255,6 +1213,7 @@ export default function ProjectFinancialsCard({
 
   const handleAuthorizeMaterialsWalletTransfer = async () => {
     setShowMaterialsWalletInfo(false);
+    setShowMaterialsWalletSuccess(false);
     setShowMaterialsWalletModal(true);
   };
 
@@ -1266,6 +1225,7 @@ export default function ProjectFinancialsCard({
 
     hasAutoOpenedMaterialsWalletRef.current = true;
     setShowMaterialsWalletInfo(false);
+    setShowMaterialsWalletSuccess(false);
     setShowMaterialsWalletModal(true);
     onMaterialsWalletAutoOpenHandled?.();
   }, [
@@ -2399,6 +2359,7 @@ export default function ProjectFinancialsCard({
               <button
                 type="button"
                 onClick={() => setShowMaterialsWalletInfo(true)}
+                disabled={showMaterialsWalletSuccess}
                 className="absolute right-4 top-4 h-8 w-8 rounded-full border border-white/30 bg-white/10 text-white text-lg font-semibold hover:bg-white/20 transition"
                 aria-label="Show details"
               >
@@ -2406,47 +2367,73 @@ export default function ProjectFinancialsCard({
               </button>
 
               <div className="px-6 pt-10 pb-4 text-center">
-                <div className="mb-4 flex justify-center">
-                  <img
-                    src="/assets/images/chatbot-avatar-icon.webp"
-                    alt="Action avatar"
-                    className="h-20 w-20 rounded-full border border-white/20 object-cover"
-                  />
-                </div>
-                <p className="text-slate-200 text-lg">OK {clientDisplayName}, you need to move</p>
-                <p className="mt-2 text-4xl font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
-                <p className="mt-2 text-slate-200 text-2xl">from your wallet to</p>
-                <p className="text-white text-2xl">{professionalDisplayName}&apos;s holding wallet</p>
+                {showMaterialsWalletSuccess ? (
+                  <>
+                    <p className="text-3xl font-bold text-emerald-300">Funds have been transferred!</p>
+                    <p className="mt-4 text-base text-slate-100">
+                      {formatHKD(Number(firstMilestone.amount || 0))} has been moved to {professionalDisplayName}&apos;s holding wallet.
+                    </p>
+                    <p className="mt-4 text-sm text-slate-300">
+                      What&apos;s next? We are working on it!
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-4 flex justify-center">
+                      <img
+                        src="/assets/images/chatbot-avatar-icon.webp"
+                        alt="Action avatar"
+                        className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                      />
+                    </div>
+                    <p className="text-slate-200 text-lg">OK {clientDisplayName}, you need to move</p>
+                    <p className="mt-2 text-4xl font-bold text-white">{formatHKD(Number(firstMilestone.amount || 0))}</p>
+                    <p className="mt-2 text-slate-200 text-2xl">from your wallet to</p>
+                    <p className="text-white text-2xl">{professionalDisplayName}&apos;s holding wallet</p>
+                  </>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onNavigateTab?.('financials');
-                    setShowMaterialsWalletModal(false);
-                  }}
-                  disabled={processingId === 'cap-authorize'}
-                  className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 hover:bg-slate-800 transition disabled:opacity-50"
-                >
-                  Details
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowMaterialsWalletModal(false)}
-                  disabled={processingId === 'cap-authorize'}
-                  className="min-w-[110px] rounded-lg bg-rose-600 px-4 py-2 text-base font-semibold text-white hover:bg-rose-700 transition disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmMaterialsWalletTransfer}
-                  disabled={processingId === 'cap-authorize'}
-                  className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition disabled:bg-slate-500"
-                >
-                  {processingId === 'cap-authorize' ? 'Please wait...' : 'OK'}
-                </button>
+                {showMaterialsWalletSuccess ? (
+                  <button
+                    type="button"
+                    onClick={closeMaterialsWalletModal}
+                    className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition"
+                  >
+                    Close
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onNavigateTab?.('financials');
+                        closeMaterialsWalletModal();
+                      }}
+                      disabled={processingId === 'cap-authorize'}
+                      className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 hover:bg-slate-800 transition disabled:opacity-50"
+                    >
+                      Details
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeMaterialsWalletModal}
+                      disabled={processingId === 'cap-authorize'}
+                      className="min-w-[110px] rounded-lg bg-rose-600 px-4 py-2 text-base font-semibold text-white hover:bg-rose-700 transition disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmMaterialsWalletTransfer}
+                      disabled={processingId === 'cap-authorize'}
+                      className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 transition disabled:bg-slate-500"
+                    >
+                      {processingId === 'cap-authorize' ? 'Please wait...' : 'OK'}
+                    </button>
+                  </>
+                )}
               </div>
 
               {showMaterialsWalletInfo && (
@@ -2475,21 +2462,6 @@ export default function ProjectFinancialsCard({
           modalPortalTarget,
         )}
 
-      {modalPortalTarget &&
-        createPortal(
-          <WorkflowCompletionModal
-            isOpen={workflowModalOpen}
-            completedLabel={workflowModalCompletedLabel}
-            nextStep={workflowModalNextStep}
-            onNavigate={
-              workflowModalNextStep?.tab && onNavigateTab
-                ? () => onNavigateTab(workflowModalNextStep.tab as string)
-                : undefined
-            }
-            onClose={() => setWorkflowModalOpen(false)}
-          />,
-          modalPortalTarget,
-        )}
 
       {/* Transaction Detail Modal */}
       {selectedTx && (
