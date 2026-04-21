@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-21-78bade3",
+    "date": "2026-04-21T20:47:40+08:00",
+    "title": "Refine modal dismissal controls and use blue info icon",
+    "summary": "Refine modal dismissal controls and use blue info icon",
+    "areas": [
+      "web"
+    ],
+    "commit": "78bade3",
+    "files": [
+      "apps/web/src/components/next-steps/general-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-905a82f",
     "date": "2026-04-21T20:36:11+08:00",
     "title": "Refine next-step modal to wallet-style dark template",

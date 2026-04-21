@@ -40,9 +40,15 @@ export function GeneralActionModal({
   } = state.modalContent;
 
   const hasDetails = Boolean(detailsBody);
+  const secondaryLabelLower = secondaryButtonLabel.toLowerCase();
+  const secondaryClosesModal =
+    secondaryActionType === 'close_modal' ||
+    secondaryLabelLower.includes('cancel') ||
+    secondaryLabelLower.includes('back') ||
+    secondaryLabelLower.includes('close');
   const secondaryIsDanger =
-    secondaryButtonLabel.toLowerCase().includes('cancel') ||
-    secondaryButtonLabel.toLowerCase().includes('decline');
+    secondaryLabelLower.includes('cancel') ||
+    secondaryLabelLower.includes('decline');
 
   const handlePrimaryClick = () => {
     if (primaryActionType === 'navigate_tab' && detailsTarget) {
@@ -83,21 +89,6 @@ export function GeneralActionModal({
       }}
     >
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-white/30 bg-white/10 text-lg font-semibold text-white transition hover:bg-white/20"
-          title="Close"
-        >
-          <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-
         {isLoading ? (
           <div className="flex flex-col items-center justify-center px-6 py-14">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
@@ -109,7 +100,7 @@ export function GeneralActionModal({
               <button
                 type="button"
                 onClick={() => setShowDetails(true)}
-                className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-white/30 bg-white/10 text-lg font-semibold text-white transition hover:bg-white/20"
+                className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
                 aria-label="Show details"
               >
                 i
@@ -131,6 +122,15 @@ export function GeneralActionModal({
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
+              {!secondaryClosesModal && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                >
+                  Close
+                </button>
+              )}
               {hasDetails && (
                 <button
                   type="button"
