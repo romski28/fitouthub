@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-d614f3d",
+    "date": "2026-04-22T17:26:37+08:00",
+    "title": "Add SEED_NEXT_STEP_CONFIG.sql and fix seed script requiresAction bug",
+    "summary": "Add SEED_NEXT_STEP_CONFIG.sql and fix seed script requiresAction bug",
+    "areas": [
+      "api"
+    ],
+    "commit": "d614f3d",
+    "files": [
+      "apps/api/prisma/SEED_NEXT_STEP_CONFIG.sql",
+      "apps/api/src/scripts/seed-next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-22-638c9ba",
     "date": "2026-04-22T17:18:15+08:00",
     "title": "ReviewQuotesModal: fetch real next-step from API after accept (shows Review agreement CTA)",
