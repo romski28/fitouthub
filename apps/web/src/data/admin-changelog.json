@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-f970be8",
+    "date": "2026-04-22T10:07:44+08:00",
+    "title": "Fix compare card button interaction and remove selected checkmark labels",
+    "summary": "Fix compare card button interaction and remove selected checkmark labels",
+    "areas": [
+      "web"
+    ],
+    "commit": "f970be8",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-08fdc04",
     "date": "2026-04-22T09:56:33+08:00",
     "title": "UX refactor: Reorganize professional selection flow and update calendar icon",

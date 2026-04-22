@@ -290,11 +290,10 @@ const ProfessionalCard = memo(({
             className={`browse-card-button-sm shrink-0 ${
               isCompared
                 ? 'border border-indigo-400 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                : 'border border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-not-allowed'
+                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
             }`}
-            disabled={!isCompared}
           >
-            {isCompared ? '✓ Comparing' : '📊 Compare'}
+            {isCompared ? 'Comparing' : 'Compare'}
           </button>
           {showSelectionAction && (
             <button
@@ -307,7 +306,7 @@ const ProfessionalCard = memo(({
                   : 'browse-card-button-success-outline'
               }`}
             >
-              {isSelected ? '✓ Selected' : t('askForHelp')}
+                {isSelected ? 'Selected' : t('askForHelp')}
             </button>
           )}
         </div>
