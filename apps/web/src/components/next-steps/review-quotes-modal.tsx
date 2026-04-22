@@ -6,6 +6,8 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
+import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { getClientTabForAction } from '@/lib/client-workflow';
 
 interface ReviewQuotesModalProps {
   isOpen: boolean;
@@ -87,6 +89,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [acceptedName, setAcceptedName] = useState('');
+  const [resolvedNextStep, setResolvedNextStep] = useState<WorkflowNextStep | null>(null);
 
   const projectId = state.projectId;
 
@@ -138,6 +141,22 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
         throw new Error(errData.message || 'Failed to accept quote');
       }
       setAcceptedName(pp.professional.fullName || pp.professional.businessName || 'the professional');
+      // Fetch the real next step — should be REVIEW_CONTRACT / SIGN_CONTRACT now in CONTRACT_PHASE
+      try {
+        const action = await fetchPrimaryNextStep(state.projectId!, accessToken, { forceRefresh: true });
+        if (action) {
+          setResolvedNextStep({
+            actionLabel: action.actionLabel,
+            description: action.description,
+            requiresAction: Boolean(action.requiresAction),
+            tab: getClientTabForAction(action.actionKey),
+          });
+        } else {
+          setResolvedNextStep(null);
+        }
+      } catch {
+        setResolvedNextStep(null);
+      }
       setShowSuccess(true);
     } catch (err) {
       setAcceptError(err instanceof Error ? err.message : 'Failed to accept quote');
@@ -146,31 +165,26 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     }
   };
 
-  const handleOpenProject = () => {
-    if (state.projectId) {
-      router.push(`/projects/${state.projectId}?tab=professionals`);
-    }
+  const handleNavigate = () => {
+    if (!state.projectId) { onClose(); return; }
+    const tab = resolvedNextStep?.tab ?? 'contract';
+    router.push(`/projects/${state.projectId}?tab=${tab}`);
     onClose();
   };
 
   if (!isOpen) return null;
 
   if (showSuccess) {
-    const nextStep: WorkflowNextStep = {
-      actionLabel: 'Open project',
-      requiresAction: true,
-      tab: 'professionals',
-    };
     return (
       <WorkflowCompletionModal
         isOpen
         onClose={onClose}
         completedLabel="Quote accepted!"
-        completedDescription={`You have accepted ${acceptedName}'s quote. The project moves to the contract phase — get the agreement signed and you are off.`}
-        nextStep={nextStep}
+        completedDescription={`You have accepted ${acceptedName}'s quote. The project moves to the agreement phase — get it signed to unlock escrow and start work.`}
+        nextStep={resolvedNextStep}
         showConfetti
-        primaryActionLabel="Open project"
-        onNavigate={handleOpenProject}
+        primaryActionLabel={resolvedNextStep?.actionLabel ?? 'Review agreement'}
+        onNavigate={handleNavigate}
       />
     );
   }

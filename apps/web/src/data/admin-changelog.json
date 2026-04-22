@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-638c9ba",
+    "date": "2026-04-22T17:18:15+08:00",
+    "title": "ReviewQuotesModal: fetch real next-step from API after accept (shows Review agreement CTA)",
+    "summary": "ReviewQuotesModal: fetch real next-step from API after accept (shows Review agreement CTA)",
+    "areas": [
+      "web"
+    ],
+    "commit": "638c9ba",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-f13347c",
     "date": "2026-04-22T17:08:37+08:00",
     "title": "Add client ReviewQuotesModal and fix dispatcher routing for REVIEW_INCOMING_QUOTES/COMPARE_QUOTES",
