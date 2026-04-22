@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-22-b803f7a",
+    "date": "2026-04-22T22:16:17+08:00",
+    "title": "Fix professional agreement signer and tab visibility",
+    "summary": "Fix professional agreement signer and tab visibility",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b803f7a",
+    "files": [
+      "apps/api/src/projects/contract.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-0f466f8",
     "date": "2026-04-22T22:04:35+08:00",
     "title": "Unify agreement signing completion flow",

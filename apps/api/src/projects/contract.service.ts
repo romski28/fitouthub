@@ -279,9 +279,9 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
     );
 
     const professionalSignerUserId =
-      project.awardedProjectProfessional?.professional?.userId ||
-      fallbackProfessionalMembership?.professional?.userId ||
-      userId;
+      project.awardedProjectProfessional?.professional?.user?.id ||
+      fallbackProfessionalMembership?.professional?.user?.id ||
+      null;
 
     const updateData: any =
       userRole === 'CLIENT'

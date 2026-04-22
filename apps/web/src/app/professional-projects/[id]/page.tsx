@@ -29,6 +29,7 @@ interface ProjectDetail {
     projectName: string;
     clientName: string;
     region: string;
+    currentStage?: string;
     isEmergency?: boolean;
     budget?: string;
     notes?: string;
@@ -178,6 +179,27 @@ const buildProfessionalAssistInitialNotes = (status: string): string => {
   }
 };
 
+const contractWorkflowStages = new Set([
+  'CONTRACT_PHASE',
+  'PRE_WORK',
+  'WORK_IN_PROGRESS',
+  'MILESTONE_PENDING',
+  'PAYMENT_RELEASED',
+  'NEAR_COMPLETION',
+  'FINAL_INSPECTION',
+  'COMPLETE',
+  'WARRANTY_PERIOD',
+  'CLOSED',
+]);
+
+const hasProfessionalContractWorkflow = (project?: ProjectDetail | null) => {
+  if (!project) return false;
+  if (project.status === 'awarded') return true;
+
+  const currentStage = String(project.project?.currentStage || '').toUpperCase();
+  return contractWorkflowStages.has(currentStage);
+};
+
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -253,24 +275,26 @@ export default function ProjectDetailPage() {
   // Auto-switch tabs based on project status
   useEffect(() => {
     if (project) {
+      const inContractWorkflow = hasProfessionalContractWorkflow(project);
       // If on site-access tab but project is awarded, switch to schedule
-      if (activeTab === 'site-access' && project.status === 'awarded') {
+      if (activeTab === 'site-access' && inContractWorkflow) {
         setActiveTab('schedule');
       }
       // If on schedule tab but project is not awarded, switch to site-access
-      if (activeTab === 'schedule' && project.status !== 'awarded') {
+      if (activeTab === 'schedule' && !inContractWorkflow) {
         setActiveTab('site-access');
       }
     }
-  }, [project?.status]);
+  }, [activeTab, project]);
 
   // Allow deep-linking to tab from dashboard/actions via ?tab=
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
     if (!requestedTab || !project) return;
 
+    const inContractWorkflow = hasProfessionalContractWorkflow(project);
     const allowedTabs = new Set(['overview', 'financials', 'chat', 'ac-plans']);
-    if (project.status === 'awarded') {
+    if (inContractWorkflow) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
     } else {
@@ -1457,18 +1481,19 @@ export default function ProjectDetailPage() {
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 tabs={(() => {
+                  const inContractWorkflow = hasProfessionalContractWorkflow(project);
                   // Build tabs array conditionally
                   const tabsArray = [
                     { id: 'overview', label: 'Overview', icon: '📋' },
                   ];
                   
                   // Show Site Access tab only during bidding stage (not awarded)
-                  if (project.status !== 'awarded') {
+                  if (!inContractWorkflow) {
                     tabsArray.push({ id: 'site-access', label: 'Access & Schedule', icon: '📍' });
                   }
                   
                   // Show Contract and Schedule tabs only when awarded
-                  if (project.status === 'awarded') {
+                  if (inContractWorkflow) {
                     tabsArray.push({ id: 'contract', label: 'Agreement', icon: '📄' });
                     tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
                   }
