@@ -16,6 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
+import { PlatformFeeService } from '../common/platform-fee.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
 import { buildPublicAssetUrl } from '../storage/media-assets.util';
@@ -26,6 +27,7 @@ export class ProfessionalController {
   constructor(
     private prisma: PrismaService,
     private email: EmailService,
+    private platformFeeService: PlatformFeeService,
   ) {}
 
   private resolveProfileMediaUrls(professional: any) {
@@ -720,10 +722,23 @@ export class ProfessionalController {
         }
       }
 
+      // Calculate gross price (with platform fee) from professional's base quote
+      const feeBreakdown = await this.platformFeeService.calculateGrossPrice(
+        quoteAmount,
+        professionalId,
+        projectProfessional.project?.clientId,
+      );
+
       await (this.prisma as any).projectProfessional.update({
         where: { id: projectProfessionalId },
         data: {
-          quoteAmount: quoteAmount,
+          quoteBaseAmount: feeBreakdown.baseAmount,
+          quoteAmount: feeBreakdown.grossAmount,  // Client sees this (gross with fee)
+          quotePlatformFeeAmount: feeBreakdown.platformFeeAmount,
+          quotePlatformFeePercent: feeBreakdown.effectivePercent,
+          quotePricingVersion: feeBreakdown.pricingVersion,
+          quotePlatformFeeBreakdown: feeBreakdown as any,
+          feeCalculatedAt: feeBreakdown.calculatedAt,
           quoteNotes: body.quoteNotes || '',
           quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
           quoteEstimatedDurationMinutes:

@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
+import { PlatformFeeService } from '../common/platform-fee.service';
 import { NotificationService } from '../notifications/notification.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -48,6 +49,7 @@ export class ProjectsService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private chatService: ChatService,
+    private platformFeeService: PlatformFeeService,
     private notificationService: NotificationService,
   ) {}
 
@@ -5179,6 +5181,13 @@ Please review the project details and respond with your quote or decline the inv
       { required: true },
     );
 
+    // Calculate gross price (with platform fee) from professional's base quote
+    const feeBreakdown = await this.platformFeeService.calculateGrossPrice(
+      quoteAmount,
+      professionalId,
+      projectProfessional.project?.clientId || undefined,
+    );
+
     // Update quote
     const updated = await this.prisma.projectProfessional.update({
       where: {
@@ -5188,7 +5197,13 @@ Please review the project details and respond with your quote or decline the inv
         },
       },
       data: {
-        quoteAmount,
+        quoteBaseAmount: feeBreakdown.baseAmount,
+        quoteAmount: feeBreakdown.grossAmount,  // Client sees this (gross with fee)
+        quotePlatformFeeAmount: feeBreakdown.platformFeeAmount,
+        quotePlatformFeePercent: feeBreakdown.effectivePercent,
+        quotePricingVersion: feeBreakdown.pricingVersion,
+        quotePlatformFeeBreakdown: feeBreakdown as any,
+        feeCalculatedAt: feeBreakdown.calculatedAt,
         quoteNotes,
         quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
         quoteEstimatedDurationMinutes:
@@ -5208,7 +5223,7 @@ Please review the project details and respond with your quote or decline the inv
         projectProfessionalId: projectProfessional.id,
         senderType: 'professional',
         senderProfessionalId: professionalId,
-        content: `Updated quote: $${quoteAmount} · Estimated start ${this.formatDateTime(quoteSchedule.quoteEstimatedStartAt)} · Duration ${this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes || 0)}${quoteNotes ? ` - ${quoteNotes}` : ''}`,
+        content: `Updated quote: $${feeBreakdown.grossAmount} (base: $${feeBreakdown.baseAmount}) · Estimated start ${this.formatDateTime(quoteSchedule.quoteEstimatedStartAt)} · Duration ${this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes || 0)}${quoteNotes ? ` - ${quoteNotes}` : ''}`,
       },
     });
 
