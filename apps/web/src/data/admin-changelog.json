@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-fae3a62",
+    "date": "2026-04-22T18:34:05+08:00",
+    "title": "Project list: show only primary next-step action button",
+    "summary": "Project list: show only primary next-step action button",
+    "areas": [
+      "web"
+    ],
+    "commit": "fae3a62",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-e224021",
     "date": "2026-04-22T18:09:03+08:00",
     "title": "Smooth quote-accept flow with next-step CTA and instant list refresh",

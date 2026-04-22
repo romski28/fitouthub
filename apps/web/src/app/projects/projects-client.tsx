@@ -791,8 +791,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
             {dashboardProjects.map((project) => {
               const actions = nextStepMap[project.id] || [];
               const primaryAction = actions[0] || null;
-              const secondaryAction = actions[1] || null;
-              const additionalActionCount = Math.max(actions.length - 2, 0);
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               const shouldWaitForQuotes = Boolean(
                 primaryAction &&
@@ -894,19 +892,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               >
                                 Open project
                               </Link>
-                            )}
-                            {secondaryAction && (
-                              <NextStepModalButton
-                                action={secondaryAction}
-                                projectId={project.id}
-                                variant="secondary"
-                                onCompleted={() => refreshProjectNextStep(project.id)}
-                              />
-                            )}
-                            {additionalActionCount > 0 && (
-                              <span className="text-xs text-slate-300 whitespace-nowrap">
-                                +{additionalActionCount} more
-                              </span>
                             )}
                           </>
                         )}
