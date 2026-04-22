@@ -20,12 +20,6 @@ const toDateInput = (value: Date) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-const toTimeInput = (value: Date) => {
-  const hh = String(value.getHours()).padStart(2, '0');
-  const mm = String(value.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
-};
-
 const tomorrowAtNine = () => {
   const date = new Date();
   date.setDate(date.getDate() + 1);
@@ -51,7 +45,8 @@ export function QuoteActionModal({
   const { state } = useNextStepModal();
   const [amount, setAmount] = useState('');
   const [estimatedStartDate, setEstimatedStartDate] = useState(() => toDateInput(tomorrowAtNine()));
-  const [estimatedStartTime, setEstimatedStartTime] = useState(() => toTimeInput(tomorrowAtNine()));
+  const [estimatedStartHour, setEstimatedStartHour] = useState('09');
+  const [estimatedStartMinute, setEstimatedStartMinute] = useState('00');
   const [estimatedDurationValue, setEstimatedDurationValue] = useState('');
   const [estimatedDurationUnit, setEstimatedDurationUnit] = useState<'hours' | 'days'>('hours');
   const [notes, setNotes] = useState('');
@@ -99,16 +94,13 @@ export function QuoteActionModal({
       return;
     }
 
-    if (!estimatedStartDate || !estimatedStartTime) {
+    if (!estimatedStartDate || !estimatedStartHour || !estimatedStartMinute) {
       setError('Please enter an estimated start date and time');
       return;
     }
 
-    const [timeHour, timeMinute] = estimatedStartTime.split(':').map((value) => Number(value));
-    if (!Number.isFinite(timeHour) || !Number.isFinite(timeMinute)) {
-      setError('Please enter a valid estimated start time');
-      return;
-    }
+    const timeHour = Number(estimatedStartHour);
+    const timeMinute = Number(estimatedStartMinute);
     const startMinutes = timeHour * 60 + timeMinute;
     if (startMinutes < 8 * 60 || startMinutes > 18 * 60 || timeMinute % 15 !== 0) {
       setError('Please select a start time between 08:00 and 18:00 in 15-minute intervals');
@@ -131,7 +123,7 @@ export function QuoteActionModal({
       return;
     }
 
-    const quoteEstimatedStartAt = new Date(`${estimatedStartDate}T${estimatedStartTime}`).toISOString();
+    const quoteEstimatedStartAt = new Date(`${estimatedStartDate}T${estimatedStartHour}:${estimatedStartMinute}`).toISOString();
     const quoteEstimatedDurationMinutes =
       estimatedDurationUnit === 'days'
         ? Math.round(durationValue * 24 * 60)
@@ -254,17 +246,29 @@ export function QuoteActionModal({
 
                 <label className="block">
                   <span className="mb-1 block text-sm font-semibold text-slate-200">Estimated start time</span>
-                  <input
-                    type="time"
-                    value={estimatedStartTime}
-                    onChange={(e) => setEstimatedStartTime(e.target.value)}
-                    min="08:00"
-                    max="18:00"
-                    step={900}
-                    lang="en-GB"
-                    className="quote-picker-input w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    disabled={submitting}
-                  />
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={estimatedStartHour}
+                      onChange={(e) => setEstimatedStartHour(e.target.value)}
+                      className="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                      disabled={submitting}
+                    >
+                      {Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0')).map((h) => (
+                        <option key={h} value={h}>{h}:00</option>
+                      ))}
+                    </select>
+                    <select
+                      value={estimatedStartMinute}
+                      onChange={(e) => setEstimatedStartMinute(e.target.value)}
+                      className="w-24 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                      disabled={submitting}
+                    >
+                      <option value="00">:00</option>
+                      <option value="15">:15</option>
+                      <option value="30">:30</option>
+                      <option value="45">:45</option>
+                    </select>
+                  </div>
                 </label>
               </div>
 

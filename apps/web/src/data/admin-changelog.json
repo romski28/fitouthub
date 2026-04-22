@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-65ca826",
+    "date": "2026-04-22T12:15:03+08:00",
+    "title": "Replace time input with custom select pickers for guaranteed 24h + 15-min intervals",
+    "summary": "Replace time input with custom select pickers for guaranteed 24h + 15-min intervals",
+    "areas": [
+      "web"
+    ],
+    "commit": "65ca826",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-246f154",
     "date": "2026-04-22T12:00:21+08:00",
     "title": "Refine agreement wording and constrain quote time picker",
