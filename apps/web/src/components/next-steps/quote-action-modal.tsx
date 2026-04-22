@@ -254,7 +254,7 @@ export function QuoteActionModal({
                       disabled={submitting}
                     >
                       {Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0')).map((h) => (
-                        <option key={h} value={h}>{h}:00</option>
+                        <option key={h} value={h}>{h}</option>
                       ))}
                     </select>
                     <select
@@ -272,33 +272,37 @@ export function QuoteActionModal({
                 </label>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-[2fr_1fr]">
-                <label className="block">
-                  <span className="mb-1 block text-sm font-semibold text-slate-200">Duration</span>
+              <div className="block">
+                <span className="mb-1 block text-sm font-semibold text-slate-200">Duration</span>
+                <div className="flex items-center gap-3">
                   <input
                     type="number"
                     min="0.1"
                     step="0.1"
                     value={estimatedDurationValue}
                     onChange={(e) => setEstimatedDurationValue(e.target.value)}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    className="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
                     placeholder="e.g. 8"
                     disabled={submitting}
                   />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block text-sm font-semibold text-slate-200">Units</span>
-                  <select
-                    value={estimatedDurationUnit}
-                    onChange={(e) => setEstimatedDurationUnit(e.target.value as 'hours' | 'days')}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                    disabled={submitting}
-                  >
-                    <option value="hours">Hours</option>
-                    <option value="days">Days</option>
-                  </select>
-                </label>
+                  <div className="flex overflow-hidden rounded-lg border border-slate-600">
+                    {(['hours', 'days'] as const).map((unit) => (
+                      <button
+                        key={unit}
+                        type="button"
+                        onClick={() => setEstimatedDurationUnit(unit)}
+                        disabled={submitting}
+                        className={`px-4 py-2 text-sm font-semibold transition ${
+                          estimatedDurationUnit === unit
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        }`}
+                      >
+                        {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <label className="block">

@@ -112,7 +112,7 @@ body {
 
 .quote-picker-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  filter: invert(1) brightness(1.4) contrast(1.1);
+  filter: brightness(0) invert(1);
   opacity: 1;
 }
 
