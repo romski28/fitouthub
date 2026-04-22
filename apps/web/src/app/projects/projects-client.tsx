@@ -173,10 +173,16 @@ function NextStepModalButton({
   action,
   projectId,
   variant,
+  disabled = false,
+  labelOverride,
+  disabledTitle,
 }: {
   action: NextStepAction;
   projectId: string;
   variant: 'primary' | 'secondary';
+  disabled?: boolean;
+  labelOverride?: string;
+  disabledTitle?: string;
 }) {
   const openModal = useNextStepModalTrigger({
     actionKey: action.actionKey,
@@ -189,14 +195,16 @@ function NextStepModalButton({
   return (
     <button
       type="button"
-      onClick={openModal}
+      onClick={disabled ? undefined : openModal}
+      disabled={disabled}
+      title={disabled ? disabledTitle : undefined}
       className={
         variant === 'primary'
-          ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap'
-          : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap'
+          ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:hover:bg-slate-600 disabled:text-slate-200 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap disabled:cursor-not-allowed'
+          : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:border-slate-500 disabled:text-slate-300 disabled:hover:bg-transparent transition whitespace-nowrap disabled:cursor-not-allowed'
       }
     >
-      {action.actionLabel}
+      {labelOverride || action.actionLabel}
     </button>
   );
 }
@@ -769,6 +777,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const secondaryAction = actions[1] || null;
               const additionalActionCount = Math.max(actions.length - 2, 0);
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
+              const shouldWaitForQuotes = Boolean(
+                primaryAction &&
+                quotedCount === 0 &&
+                /review\s+quotes?/i.test(primaryAction.actionLabel || ''),
+              );
               const assistInfo = assistMap[project.id];
               const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
               const quoteOverdue = isQuoteOverdueForProject(project);
@@ -848,7 +861,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         ) : (
                           <>
                             {primaryAction ? (
-                              <NextStepModalButton action={primaryAction} projectId={project.id} variant="primary" />
+                              <NextStepModalButton
+                                action={primaryAction}
+                                projectId={project.id}
+                                variant="primary"
+                                disabled={shouldWaitForQuotes}
+                                labelOverride={shouldWaitForQuotes ? 'Wait for quotes' : undefined}
+                                disabledTitle={shouldWaitForQuotes ? 'This step unlocks once at least one quote is received.' : undefined}
+                              />
                             ) : (
                               <Link
                                 href={primaryActionHref}

@@ -521,6 +521,22 @@ export default function CreateProjectPage() {
           </div>
         )}
       </div>
+
+      {isSubmitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-[1px]">
+          <div className="mx-4 w-full max-w-md rounded-2xl border border-white/20 bg-slate-900/90 px-6 py-6 text-center text-white shadow-2xl">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" aria-hidden="true" />
+            <p className="text-base font-semibold">
+              {selectedProfessionals.length > 0 ? 'Opening bidding...' : 'Saving project...'}
+            </p>
+            <p className="mt-1 text-sm text-slate-300">
+              {selectedProfessionals.length > 0
+                ? 'Inviting selected professionals and preparing your project dashboard.'
+                : 'Preparing your project dashboard.'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
