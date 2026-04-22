@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-22-528f748",
+    "date": "2026-04-22T17:45:52+08:00",
+    "title": "Fix PlatformFeeService Nest DI wiring",
+    "summary": "Fix PlatformFeeService Nest DI wiring",
+    "areas": [
+      "api"
+    ],
+    "commit": "528f748",
+    "files": [
+      "apps/api/src/app.module.ts",
+      "apps/api/src/common/platform-fee.service.ts",
+      "apps/api/src/professional/professional.module.ts"
+    ]
+  },
+  {
     "id": "2026-04-22-e54bcc3",
     "date": "2026-04-22T17:31:54+08:00",
     "title": "Fix CONTRACT_PHASE seed: DO UPDATE to correct requiresAction on REVIEW_CONTRACT",

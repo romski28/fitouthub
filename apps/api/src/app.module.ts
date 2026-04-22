@@ -39,6 +39,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { AcProjectsModule } from './ac-projects/ac-projects.module';
+import { PlatformFeeService } from './common/platform-fee.service';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { AcProjectsModule } from './ac-projects/ac-projects.module';
   providers: [
     AppService,
     PrismaService,
+    PlatformFeeService,
     ProjectsService,
     NextStepService,
     AdminActionService,

@@ -1,13 +1,14 @@
 /**
  * Platform Fee Calculation Service
- * Computes professional base quote → gross client price with FoH platform fee
- * 
+ * Computes professional base quote -> gross client price with FoH platform fee
+ *
  * Phase A: Tiered base fee by quote amount + performance/loyalty adjustments
  * Rounding: Floor to nearest $10
  */
 
+import { Injectable } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
 
 export interface PlatformFeeBreakdown {
   baseAmount: number;
@@ -21,12 +22,13 @@ export interface PlatformFeeBreakdown {
   calculatedAt: Date;
 }
 
+@Injectable()
 export class PlatformFeeService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaService) {}
 
   /**
    * Calculate gross price (with platform fee) from professional's base quote
-   * 
+    *
    * @param baseAmount - Professional submitted base quote amount (HKD)
    * @param professionalId - Professional's ID (to look up performance history)
    * @param clientId - Client's ID (to look up loyalty history)
@@ -46,10 +48,7 @@ export class PlatformFeeService {
         effectiveFrom: { lte: now },
         AND: [
           {
-            OR: [
-              { effectiveTo: null },
-              { effectiveTo: { gt: now } },
-            ],
+            OR: [{ effectiveTo: null }, { effectiveTo: { gt: now } }],
           },
           {
             minAmount: { lte: new Decimal(baseAmount) },
@@ -123,10 +122,7 @@ export class PlatformFeeService {
         effectiveFrom: { lte: asOf },
         AND: [
           {
-            OR: [
-              { effectiveTo: null },
-              { effectiveTo: { gt: asOf } },
-            ],
+            OR: [{ effectiveTo: null }, { effectiveTo: { gt: asOf } }],
           },
           {
             minProjects: { lte: awardedCount },
@@ -166,10 +162,7 @@ export class PlatformFeeService {
         effectiveFrom: { lte: asOf },
         AND: [
           {
-            OR: [
-              { effectiveTo: null },
-              { effectiveTo: { gt: asOf } },
-            ],
+            OR: [{ effectiveTo: null }, { effectiveTo: { gt: asOf } }],
           },
           {
             minProjects: { lte: projectCount },
