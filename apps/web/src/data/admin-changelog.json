@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-f262ac2",
+    "date": "2026-04-22T11:08:01+08:00",
+    "title": "Ensure professional next-step modal opens with fallback content",
+    "summary": "Ensure professional next-step modal opens with fallback content",
+    "areas": [
+      "web"
+    ],
+    "commit": "f262ac2",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-50080ec",
     "date": "2026-04-22T11:03:24+08:00",
     "title": "Add bidding submit waiting overlay and gate review quotes when none available",

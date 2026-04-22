@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'reac
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import type { NextStepModalContent } from '@/context/next-step-modal-context';
 import { API_BASE_URL } from '@/config/api';
 import { colors } from '@/styles/theme';
 import Link from 'next/link';
@@ -51,6 +52,22 @@ const professionalCardBorderByStatus: Record<string, string> = {
   rejected: 'border-rose-300/80',
 };
 
+function getProfessionalFallbackModalContent(action: NextStepAction): NextStepModalContent {
+  const isQuoteAction = ['SUBMIT_QUOTE', 'PREPARE_REVISED_QUOTE'].includes(action.actionKey);
+  const defaultTitle = action.actionLabel || 'Next step';
+  const defaultBody = action.description || 'Open this project to continue your next required action.';
+
+  return {
+    title: defaultTitle,
+    body: defaultBody,
+    detailsBody: action.description || defaultBody,
+    primaryButtonLabel: isQuoteAction ? 'Open quote form' : 'Continue',
+    secondaryButtonLabel: 'Close',
+    primaryActionType: 'navigate_tab',
+    secondaryActionType: 'close_modal',
+  };
+}
+
 export default function ProfessionalProjectsPage() {
   const router = useRouter();
   const { isLoggedIn, professional, accessToken } = useProfessionalAuth();
@@ -92,6 +109,7 @@ export default function ProfessionalProjectsPage() {
     async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
       if (!professional?.id) return;
       const projectOverviewPath = `/professional-projects/${projectProfessionalId}?tab=overview`;
+      const modalContent = action.modalContent || getProfessionalFallbackModalContent(action);
 
       router.prefetch(getProfessionalShowMeHref(projectProfessionalId, action.actionKey));
 
@@ -101,7 +119,7 @@ export default function ProfessionalProjectsPage() {
         projectOverviewPath,
         professional.id,
         'PROFESSIONAL',
-        action.modalContent,
+        modalContent,
       );
     },
     [openModal, professional?.id, router],
