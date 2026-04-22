@@ -279,7 +279,7 @@ const ProfessionalCard = memo(({
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
-            className="browse-card-button-sm w-full border-2 border-sky-400 bg-sky-400/10 text-sky-100 hover:bg-sky-400/20"
+            className="browse-card-button-sm w-full border-2 border-sky-500 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20"
           >
             Show More
           </button>
@@ -289,8 +289,8 @@ const ProfessionalCard = memo(({
             title={isCompared ? 'Remove from comparison' : 'Add to comparison (need 3+ for comparison)'}
             className={`browse-card-button-sm w-full border-2 ${
               isCompared
-                ? 'border-violet-400 bg-violet-400/10 text-violet-100 hover:bg-violet-400/20'
-                : 'border-violet-500/70 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20'
+                ? 'border-violet-500 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20'
+                : 'border-violet-500 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20'
             }`}
           >
             {isCompared ? 'Comparing' : 'Compare'}
@@ -302,8 +302,8 @@ const ProfessionalCard = memo(({
               disabled={disableSelection}
               className={`browse-card-button-sm w-full border-2 ${
                 isSelected
-                  ? 'border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20'
-                  : 'border-emerald-500/80 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
+                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
+                  : 'border-emerald-500 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
               }`}
             >
                 {isSelected ? 'Selected' : t('askForHelp')}
@@ -1105,53 +1105,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         </div>
       )}
 
-      {/* Compare bar — fixed so it stays visible as soon as items are selected */}
+      {/* Compare action — floating top-right button shown when at least one item is selected */}
       {compareIds.size > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-violet-300 bg-gradient-to-r from-violet-100 to-slate-100 px-4 py-3 shadow-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold text-violet-900 shrink-0">Compare:</span>
-              <div className="flex flex-wrap gap-1.5 min-w-0">
-                {Array.from(compareIds).map((id) => {
-                  const pro = filtered.find((p) => p.id === id);
-                  if (!pro) return null;
-                  return (
-                    <span key={id} className="flex items-center gap-1 rounded-full border border-violet-300 bg-white pl-2.5 pr-1 py-0.5 text-[11px] font-medium text-violet-800">
-                      {pro.fullName || pro.businessName || 'Professional'}
-                      <button
-                        type="button"
-                        onClick={() => toggleCompare(pro)}
-                        className="rounded-full p-0.5 text-violet-400 hover:bg-violet-200 hover:text-violet-700"
-                        aria-label={`Remove ${pro.fullName || pro.businessName} from comparison`}
-                      >
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCompareIds(new Set())}
-                className="rounded-lg border border-violet-300 bg-white px-3 py-1.5 text-xs font-semibold text-violet-800 transition hover:bg-violet-100"
-              >
-                Clear
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCompare(true)}
-                disabled={compareIds.size < 2}
-                className="rounded-lg bg-violet-700 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-violet-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Compare {compareIds.size >= 2 ? `${compareIds.size}` : '(need ≥2)'} →
-              </button>
-            </div>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowCompare(true)}
+          disabled={compareIds.size < 2}
+          className="fixed right-4 top-24 z-40 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-violet-500 bg-violet-500/10 text-violet-700 shadow-lg transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-label={
+            compareIds.size < 2
+              ? `Compare disabled until 2 selected (${compareIds.size} selected)`
+              : `Compare ${compareIds.size} selected professionals`
+          }
+          title={compareIds.size < 2 ? 'Select at least 2 to compare' : `Compare ${compareIds.size} professionals`}
+        >
+          <span className="text-[10px] font-semibold leading-none">Compare</span>
+          <span className="text-sm font-bold leading-none">{compareIds.size}</span>
+        </button>
       )}
 
       <ProjectShareModal
@@ -1174,8 +1144,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         isSelected={detailsPro ? selectedIds.has(detailsPro.id) : false}
       />
 
-      {/* Selection band — sticky bottom with selected professionals and finish button */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-200 bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 shadow-2xl">
+      {/* Selection band — centered fixed footer to avoid viewport-edge jitter */}
+      <div className="fixed bottom-3 left-1/2 z-40 w-[min(1200px,calc(100%-1rem))] -translate-x-1/2 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 shadow-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <span className="text-sm font-semibold text-white shrink-0">

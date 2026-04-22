@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-361508f",
+    "date": "2026-04-22T10:27:13+08:00",
+    "title": "Adjust button contrast, replace compare bar with floating compare button, and stabilize selection band",
+    "summary": "Adjust button contrast, replace compare bar with floating compare button, and stabilize selection band",
+    "areas": [
+      "web"
+    ],
+    "commit": "361508f",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-34e75e3",
     "date": "2026-04-22T10:18:16+08:00",
     "title": "Improve compare bar visibility and unify card action button styles",
