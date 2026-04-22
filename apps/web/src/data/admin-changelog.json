@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-22-0f466f8",
+    "date": "2026-04-22T22:04:35+08:00",
+    "title": "Unify agreement signing completion flow",
+    "summary": "Unify agreement signing completion flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "0f466f8",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/components/next-steps/contract-action-modal.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-22-4ff8f57",
     "date": "2026-04-22T21:39:14+08:00",
     "title": "Unify professional agreement CTA and fix contract access",

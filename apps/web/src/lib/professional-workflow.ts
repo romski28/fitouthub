@@ -4,6 +4,7 @@ export const professionalActionTabMap: Record<string, string> = {
   PREPARE_REVISED_QUOTE: 'site-access',
   SUBMIT_QUOTE: 'overview',
   REPLY_TO_INVITATION: 'overview',
+  SUBMIT_CONTRACT: 'contract',
   REVIEW_CONTRACT: 'contract',
   SIGN_CONTRACT: 'contract',
   SUBMIT_PROGRESS_UPDATE: 'schedule',

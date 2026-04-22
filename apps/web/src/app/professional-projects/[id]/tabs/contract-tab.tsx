@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
-import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
+import { completeNextStep, fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
+import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
+import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 
 interface ContractData {
   projectId: string;
@@ -36,6 +38,14 @@ interface ContractTabProps {
   onOpenScheduleTab?: () => void;
 }
 
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
+
 const formatDate = (date?: string | null) => {
   if (!date) return '—';
   try {
@@ -60,6 +70,37 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   const [loading, setLoading] = useState(true);
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+
+  const openWorkflowModal = useCallback(async (completedLabel: string) => {
+    if (!accessToken) return;
+
+    try {
+      const next = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: `professional-contract-modal:${projectId}`,
+        forceRefresh: true,
+      });
+
+      const tab = next?.actionKey ? getProfessionalTabForAction(next.actionKey) : undefined;
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab,
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      toast.success(completedLabel);
+    }
+  }, [accessToken, projectId]);
 
   const fetchContract = useCallback(async () => {
     if (!accessToken) {
@@ -104,10 +145,6 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   const handleSignContract = async () => {
     if (!contract?.canSign || !accessToken) return;
 
-    const shouldNudgeStartDate = Boolean(
-      contract.clientSignedAt && !contract.professionalSignedAt,
-    );
-
     try {
       setSigning(true);
 
@@ -125,64 +162,10 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         throw new Error(errorData.message || 'Failed to sign agreement');
       }
 
-      const result = await response.json();
-      await showWorkflowSuccessToast({
-        successMessage: 'Agreement signed successfully!',
-        projectId,
-        token: accessToken,
-        preferFallbackGuidance: true,
-        fallbackGuidance: result.isFullySigned && shouldNudgeStartDate
-          ? {
-              nextStepLabel: 'Confirm project start date',
-              canActNow: true,
-            }
-          : result.isFullySigned
-            ? {
-                nextStepLabel: 'Wait for client start-date response',
-                canActNow: false,
-                waitReason:
-                  'No action needed now; the client needs to accept or update the proposed start date.',
-              }
-          : {
-              nextStepLabel: 'Wait for client signature',
-              canActNow: false,
-              waitReason:
-                'No action needed now; the client needs to sign the agreement.',
-            },
-      });
-
-      if (result.isFullySigned && shouldNudgeStartDate) {
-        toast.custom(
-          (toastState) => (
-            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-lg">
-              <p className="text-sm font-semibold text-white">Agreement fully signed</p>
-              <p className="mt-1 text-xs text-slate-300">
-                Would you like to confirm the project start date now?
-              </p>
-              <div className="mt-3 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => toast.dismiss(toastState.id)}
-                  className="rounded-md border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    toast.dismiss(toastState.id);
-                    onOpenScheduleTab?.();
-                  }}
-                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                >
-                  Confirm start date
-                </button>
-              </div>
-            </div>
-          ),
-          { duration: 10000 },
-        );
-      }
+      await response.json();
+      await completeNextStep(projectId, 'SIGN_CONTRACT', accessToken, `professional-contract-modal:${projectId}`);
+      invalidateNextStepCache(projectId);
+      await openWorkflowModal('Agreement signed successfully!');
 
       // Refresh contract data
       await fetchContract();
@@ -414,6 +397,23 @@ export const ContractTab: React.FC<ContractTabProps> = ({
           </p>
         </div>
       )}
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        showConfetti
+        additionalActionLabel={workflowModalNextStep?.tab === 'schedule' ? 'Open schedule tab' : undefined}
+        onAdditionalAction={workflowModalNextStep?.tab === 'schedule' ? onOpenScheduleTab : undefined}
+        onNavigate={
+          workflowModalNextStep?.tab === 'schedule'
+            ? onOpenScheduleTab
+            : undefined
+        }
+        showPrimaryActionOverride={workflowModalNextStep?.tab === 'schedule'}
+        primaryActionLabel="Open next step"
+        onClose={() => setWorkflowModalOpen(false)}
+      />
       </div>
     </div>
   );

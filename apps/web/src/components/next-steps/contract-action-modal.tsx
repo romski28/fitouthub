@@ -6,6 +6,10 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import { completeNextStep, fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
+import { WorkflowCompletionModal, type WaitingParty, type WorkflowNextStep } from '@/components/workflow-completion-modal';
+import { getClientTabForAction } from '@/lib/client-workflow';
+import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 
 interface ContractActionModalProps {
   isOpen: boolean;
@@ -21,6 +25,14 @@ interface ContractData {
   isFullySigned: boolean;
   canSign: boolean;
 }
+
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
 
 const toAgreementText = (text: string | undefined, fallback: string): string => {
   const source = (text || '').trim();
@@ -66,11 +78,19 @@ export function ContractActionModal({
   const [contract, setContract] = useState<ContractData | null>(null);
   const [contractLoading, setContractLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signing, setSigning] = useState(false);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
 
   const roleUpper = (state.role || '').toUpperCase();
   const token = useMemo(
     () => (roleUpper.includes('PROFESSIONAL') ? professionalAccessToken : clientAccessToken),
     [clientAccessToken, professionalAccessToken, roleUpper],
+  );
+  const nextStepCacheScope = useMemo(
+    () => `${roleUpper.includes('PROFESSIONAL') ? 'professional' : 'client'}-contract-modal:${state.projectId || 'unknown'}`,
+    [roleUpper, state.projectId],
   );
 
   const loadContract = useCallback(async () => {
@@ -109,6 +129,42 @@ export function ContractActionModal({
     void loadContract();
   }, [isOpen, loadContract, state.modalContent]);
 
+  const getTabForAction = useCallback((actionKey?: string) => {
+    if (!actionKey) return undefined;
+    return roleUpper.includes('PROFESSIONAL')
+      ? getProfessionalTabForAction(actionKey)
+      : getClientTabForAction(actionKey);
+  }, [roleUpper]);
+
+  const openWorkflowModal = useCallback(async (completedLabel: string) => {
+    if (!state.projectId || !token) return;
+
+    try {
+      const next = await fetchPrimaryNextStep(state.projectId, token, {
+        cacheScope: nextStepCacheScope,
+        forceRefresh: true,
+      });
+
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab: getTabForAction(next.actionKey),
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(null);
+      setWorkflowModalOpen(true);
+    }
+  }, [getTabForAction, nextStepCacheScope, state.projectId, token]);
+
   const navigateToContractTab = useCallback(() => {
     if (state.projectDetailsPath) {
       router.push(upsertTab(state.projectDetailsPath, 'contract'));
@@ -122,7 +178,59 @@ export function ContractActionModal({
     }
   }, [onClose, router, state.projectDetailsPath, state.projectId]);
 
-  if (!isOpen || !state.modalContent) return null;
+  const navigateToNextStepTab = useCallback(() => {
+    const nextTab = workflowModalNextStep?.tab;
+    if (!nextTab) return;
+
+    if (state.projectDetailsPath) {
+      router.push(upsertTab(state.projectDetailsPath, nextTab));
+      return;
+    }
+
+    if (state.projectId) {
+      router.push(`/projects/${state.projectId}?tab=${encodeURIComponent(nextTab)}`);
+    }
+  }, [router, state.projectDetailsPath, state.projectId, workflowModalNextStep?.tab]);
+
+  const handleSignNow = useCallback(async () => {
+    if (!state.projectId || !token || !contract?.canSign) return;
+
+    try {
+      setSigning(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE_URL}/projects/${state.projectId}/contract/sign`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to sign agreement');
+      }
+
+      await response.json();
+      await completeNextStep(state.projectId, 'SIGN_CONTRACT', token, nextStepCacheScope);
+      invalidateNextStepCache(state.projectId);
+      await loadContract();
+      state.onCompleted?.({ projectId: state.projectId, actionKey: 'SIGN_CONTRACT' });
+      await openWorkflowModal('Agreement signed successfully!');
+    } catch (signError) {
+      const message =
+        signError instanceof Error ? signError.message : 'Failed to sign agreement';
+      setError(message);
+    } finally {
+      setSigning(false);
+    }
+  }, [contract?.canSign, loadContract, nextStepCacheScope, onClose, openWorkflowModal, state, token]);
+
+  const showMainModal = isOpen && Boolean(state.modalContent);
+
+  if (!showMainModal && !workflowModalOpen) return null;
 
   const {
     title,
@@ -130,7 +238,7 @@ export function ContractActionModal({
     imageUrl,
     primaryButtonLabel,
     secondaryButtonLabel,
-  } = state.modalContent;
+  } = state.modalContent || {};
 
   const agreementTitle = toAgreementText(title, 'Agreement');
   const agreementBody = toAgreementText(body, '');
@@ -139,105 +247,124 @@ export function ContractActionModal({
   const requestChangesAdminOnly = /request\s+changes/i.test(agreementSecondaryButtonLabel);
 
   const secondaryLabel = requestChangesAdminOnly ? 'Later' : agreementSecondaryButtonLabel;
+  const showSignNow = Boolean(contract?.canSign) && !contractLoading;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all ${
-        isOpen ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
-      }`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center px-6 py-14">
-            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
-            <p className="text-slate-300">Loading...</p>
-          </div>
-        ) : (
-          <div className="max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-slate-700 px-6 py-5">
-              <div className="flex items-start gap-4">
-                <img
-                  src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
-                  alt="Agreement"
-                  className="h-14 w-14 rounded-full border border-white/20 object-cover"
-                />
-                <div>
-                  <h2 className="text-2xl font-bold text-emerald-300">{agreementTitle}</h2>
-                  {agreementBody ? <p className="mt-1 text-sm text-slate-200">{agreementBody}</p> : null}
+    <>
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center transition-all ${
+          showMainModal ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
+        }`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center px-6 py-14">
+              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
+              <p className="text-slate-300">Loading...</p>
+            </div>
+          ) : (
+            <div className="max-h-[90vh] overflow-y-auto">
+              <div className="border-b border-slate-700 px-6 py-5">
+                <div className="flex items-start gap-4">
+                  <img
+                    src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
+                    alt="Agreement"
+                    className="h-14 w-14 rounded-full border border-white/20 object-cover"
+                  />
+                  <div>
+                    <h2 className="text-2xl font-bold text-emerald-300">{agreementTitle}</h2>
+                    {agreementBody ? <p className="mt-1 text-sm text-slate-200">{agreementBody}</p> : null}
+                  </div>
                 </div>
               </div>
+
+              <div className="grid gap-4 px-6 py-5">
+                {contractLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-300">
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
+                    Loading agreement details...
+                  </div>
+                ) : contract ? (
+                  <div className="grid gap-3 rounded-xl border border-slate-700 bg-slate-800/60 p-4 text-sm text-slate-200">
+                    <p>
+                      <span className="text-slate-400">Project:</span>{' '}
+                      <span className="font-semibold text-white">{contract.projectName || 'Agreement'}</span>
+                    </p>
+                    <p>
+                      <span className="text-slate-400">Generated:</span>{' '}
+                      <span>{formatDate(contract.contractGeneratedAt)}</span>
+                    </p>
+                    <p>
+                      <span className="text-slate-400">Client signature:</span>{' '}
+                      <span>{formatDate(contract.clientSignedAt)}</span>
+                    </p>
+                    <p>
+                      <span className="text-slate-400">Professional signature:</span>{' '}
+                      <span>{formatDate(contract.professionalSignedAt)}</span>
+                    </p>
+                    <p>
+                      <span className="text-slate-400">Status:</span>{' '}
+                      <span className={contract.isFullySigned ? 'text-emerald-300 font-semibold' : 'text-amber-300 font-semibold'}>
+                        {contract.isFullySigned ? 'Fully signed' : 'Pending signatures'}
+                      </span>
+                    </p>
+                  </div>
+                ) : null}
+
+                {error ? (
+                  <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                    {error}
+                  </div>
+                ) : null}
+
+                {requestChangesAdminOnly ? (
+                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                    Fitout Hub admin handles formal agreement change requests. If amendments are needed, contact support and the admin team will coordinate updates.
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={navigateToContractTab}
+                  disabled={contractLoading || signing}
+                  className="min-w-[140px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Review first
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignNow}
+                  disabled={!showSignNow || signing}
+                  className="min-w-[150px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {signing ? 'Signing...' : 'Sign now'}
+                </button>
+              </div>
             </div>
-
-            <div className="grid gap-4 px-6 py-5">
-              {contractLoading ? (
-                <div className="flex items-center gap-2 text-sm text-slate-300">
-                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
-                  Loading agreement details...
-                </div>
-              ) : contract ? (
-                <div className="grid gap-3 rounded-xl border border-slate-700 bg-slate-800/60 p-4 text-sm text-slate-200">
-                  <p>
-                    <span className="text-slate-400">Project:</span>{' '}
-                    <span className="font-semibold text-white">{contract.projectName || 'Agreement'}</span>
-                  </p>
-                  <p>
-                    <span className="text-slate-400">Generated:</span>{' '}
-                    <span>{formatDate(contract.contractGeneratedAt)}</span>
-                  </p>
-                  <p>
-                    <span className="text-slate-400">Client signature:</span>{' '}
-                    <span>{formatDate(contract.clientSignedAt)}</span>
-                  </p>
-                  <p>
-                    <span className="text-slate-400">Professional signature:</span>{' '}
-                    <span>{formatDate(contract.professionalSignedAt)}</span>
-                  </p>
-                  <p>
-                    <span className="text-slate-400">Status:</span>{' '}
-                    <span className={contract.isFullySigned ? 'text-emerald-300 font-semibold' : 'text-amber-300 font-semibold'}>
-                      {contract.isFullySigned ? 'Fully signed' : 'Pending signatures'}
-                    </span>
-                  </p>
-                </div>
-              ) : null}
-
-              {error ? (
-                <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
-                  {error}
-                </div>
-              ) : null}
-
-              {requestChangesAdminOnly ? (
-                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-                  Fitout Hub admin handles formal agreement change requests. If amendments are needed, contact support and the admin team will coordinate updates.
-                </div>
-              ) : null}
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={contractLoading}
-                className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {secondaryLabel}
-              </button>
-              <button
-                type="button"
-                onClick={navigateToContractTab}
-                disabled={contractLoading}
-                className="min-w-[150px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {agreementPrimaryButtonLabel}
-              </button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        showConfetti
+        primaryActionLabel="Open next step"
+        onNavigate={workflowModalNextStep?.tab ? () => {
+          navigateToNextStepTab();
+          onClose();
+        } : undefined}
+        onClose={() => {
+          setWorkflowModalOpen(false);
+          onClose();
+        }}
+      />
+    </>
   );
 }

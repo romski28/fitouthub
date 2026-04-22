@@ -125,6 +125,18 @@ export default function ProfessionalProjectsPage() {
         professional.id,
         'PROFESSIONAL',
         modalContent,
+        undefined,
+        async () => {
+          try {
+            const refreshedActions = await fetchPrimaryNextSteps(projectId, accessToken, {
+              cacheScope: nextStepCacheScope,
+              forceRefresh: true,
+            });
+            setNextStepMap((prev) => ({ ...prev, [projectId]: refreshedActions }));
+          } catch (refreshError) {
+            console.warn('[professional-projects] Failed to refresh next-step actions after modal completion', refreshError);
+          }
+        },
       );
     },
     [accessToken, nextStepCacheScope, openModal, professional?.id, router],
