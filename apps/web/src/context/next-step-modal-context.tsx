@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { API_BASE_URL } from '@/config/api';
 
 export interface NextStepModalContent {
   title?: string;
@@ -31,6 +30,7 @@ export interface NextStepModalState {
   projectStage?: string;
   modalContent?: NextStepModalContent;
   error?: string;
+  onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void;
 }
 
 interface NextStepModalContextType {
@@ -43,6 +43,7 @@ interface NextStepModalContextType {
     role: string,
     modalContent?: NextStepModalContent,
     projectStage?: string,
+    onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void,
   ) => Promise<void>;
   closeModal: () => void;
   updateModalContent: (content: NextStepModalContent) => void;
@@ -66,6 +67,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
       role: string,
       modalContent?: NextStepModalContent,
       projectStage?: string,
+      onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void,
     ) => {
       // Open modal immediately with loading state
       setState({
@@ -79,6 +81,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
         projectStage,
         modalContent,
         error: undefined,
+        onCompleted,
       });
 
       // Fetch modal content in background
@@ -113,6 +116,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
       projectStage: undefined,
       modalContent: undefined,
       error: undefined,
+      onCompleted: undefined,
     });
   }, []);
 

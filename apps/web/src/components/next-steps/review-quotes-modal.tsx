@@ -1,12 +1,12 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
-import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { fetchPrimaryNextStep, NextStepAction } from '@/lib/next-steps';
 import { getClientTabForAction } from '@/lib/client-workflow';
 
 interface ReviewQuotesModalProps {
@@ -80,7 +80,7 @@ const formatDuration = (minutes?: number, unit?: 'hours' | 'days') => {
 export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const router = useRouter();
   const { accessToken } = useAuth();
-  const { state } = useNextStepModal();
+  const { state, openModal } = useNextStepModal();
 
   const [professionals, setProfessionals] = useState<QuotedProfessional[]>([]);
   const [fetching, setFetching] = useState(false);
@@ -90,6 +90,8 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [acceptedName, setAcceptedName] = useState('');
   const [resolvedNextStep, setResolvedNextStep] = useState<WorkflowNextStep | null>(null);
+  const [resolvedNextAction, setResolvedNextAction] = useState<NextStepAction | null>(null);
+  const hasNotifiedCompletionRef = useRef(false);
 
   const projectId = state.projectId;
 
@@ -120,9 +122,17 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     if (isOpen) {
       setShowSuccess(false);
       setAcceptError(null);
+      setResolvedNextAction(null);
+      hasNotifiedCompletionRef.current = false;
       fetchQuotes();
     }
   }, [isOpen, fetchQuotes]);
+
+  const notifyCompleted = useCallback(() => {
+    if (hasNotifiedCompletionRef.current) return;
+    hasNotifiedCompletionRef.current = true;
+    state.onCompleted?.({ projectId: state.projectId, actionKey: 'QUOTE_ACCEPTED' });
+  }, [state]);
 
   const handleAccept = async (pp: QuotedProfessional) => {
     if (!accessToken) return;
@@ -145,6 +155,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
       try {
         const action = await fetchPrimaryNextStep(state.projectId!, accessToken, { forceRefresh: true });
         if (action) {
+          setResolvedNextAction(action);
           setResolvedNextStep({
             actionLabel: action.actionLabel,
             description: action.description,
@@ -152,9 +163,11 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
             tab: getClientTabForAction(action.actionKey),
           });
         } else {
+          setResolvedNextAction(null);
           setResolvedNextStep(null);
         }
       } catch {
+        setResolvedNextAction(null);
         setResolvedNextStep(null);
       }
       setShowSuccess(true);
@@ -165,10 +178,41 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     }
   };
 
-  const handleNavigate = () => {
+  const handleOpenProject = () => {
     if (!state.projectId) { onClose(); return; }
+    notifyCompleted();
     const tab = resolvedNextStep?.tab ?? 'contract';
     router.push(`/projects/${state.projectId}?tab=${tab}`);
+    onClose();
+  };
+
+  const handleDoNextStep = async () => {
+    if (!state.projectId || !state.userId || !state.role) {
+      handleOpenProject();
+      return;
+    }
+
+    if (!resolvedNextAction) {
+      handleOpenProject();
+      return;
+    }
+
+    notifyCompleted();
+    const tab = getClientTabForAction(resolvedNextAction.actionKey) || 'contract';
+    await openModal(
+      resolvedNextAction.actionKey,
+      state.projectId,
+      `/projects/${state.projectId}?tab=${tab}`,
+      state.userId,
+      state.role,
+      resolvedNextAction.modalContent,
+      state.projectStage,
+      state.onCompleted,
+    );
+  };
+
+  const handleLater = () => {
+    notifyCompleted();
     onClose();
   };
 
@@ -178,13 +222,17 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     return (
       <WorkflowCompletionModal
         isOpen
-        onClose={onClose}
+        onClose={handleLater}
         completedLabel="Quote accepted!"
         completedDescription={`You have accepted ${acceptedName}'s quote. The project moves to the agreement phase — get it signed to unlock escrow and start work.`}
         nextStep={resolvedNextStep}
         showConfetti
         primaryActionLabel={resolvedNextStep?.actionLabel ?? 'Review agreement'}
-        onNavigate={handleNavigate}
+        additionalActionLabel="Open project"
+        secondaryActionLabel="Later"
+        showPrimaryActionOverride={Boolean(resolvedNextAction)}
+        onNavigate={handleDoNextStep}
+        onAdditionalAction={handleOpenProject}
       />
     );
   }

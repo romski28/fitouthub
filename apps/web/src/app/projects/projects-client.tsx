@@ -176,6 +176,7 @@ function NextStepModalButton({
   disabled = false,
   labelOverride,
   disabledTitle,
+  onCompleted,
 }: {
   action: NextStepAction;
   projectId: string;
@@ -183,6 +184,7 @@ function NextStepModalButton({
   disabled?: boolean;
   labelOverride?: string;
   disabledTitle?: string;
+  onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void;
 }) {
   const openModal = useNextStepModalTrigger({
     actionKey: action.actionKey,
@@ -190,6 +192,7 @@ function NextStepModalButton({
     projectDetailsPath: `/projects/${projectId}?tab=overview`,
     prefetchPath: getClientShowMeHref(projectId, action.actionKey),
     modalContent: action.modalContent,
+    onCompleted,
   });
 
   return (
@@ -729,6 +732,20 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     setEditing((prev) => (prev && prev.id === id ? null : prev));
   };
 
+  const refreshProjectNextStep = async (projectId: string) => {
+    if (!accessToken) return;
+    try {
+      const refreshed = await fetchPrimaryNextSteps(projectId, accessToken, {
+        cacheScope: nextStepCacheScope,
+        forceRefresh: true,
+      });
+      setNextStepMap((prev) => ({ ...prev, [projectId]: refreshed }));
+      router.refresh();
+    } catch {
+      // Best-effort refresh only.
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Recent Activity (secondary) */}
@@ -868,6 +885,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                                 disabled={shouldWaitForQuotes}
                                 labelOverride={shouldWaitForQuotes ? 'Wait for quotes' : undefined}
                                 disabledTitle={shouldWaitForQuotes ? 'This step unlocks once at least one quote is received.' : undefined}
+                                onCompleted={() => refreshProjectNextStep(project.id)}
                               />
                             ) : (
                               <Link
@@ -878,7 +896,12 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               </Link>
                             )}
                             {secondaryAction && (
-                              <NextStepModalButton action={secondaryAction} projectId={project.id} variant="secondary" />
+                              <NextStepModalButton
+                                action={secondaryAction}
+                                projectId={project.id}
+                                variant="secondary"
+                                onCompleted={() => refreshProjectNextStep(project.id)}
+                              />
                             )}
                             {additionalActionCount > 0 && (
                               <span className="text-xs text-slate-300 whitespace-nowrap">

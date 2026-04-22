@@ -19,9 +19,12 @@ interface WorkflowCompletionModalProps {
   completedDescription?: string;
   nextStep: WorkflowNextStep | null;
   primaryActionLabel?: string;
+  additionalActionLabel?: string;
   secondaryActionLabel?: string;
   showConfetti?: boolean;
+  showPrimaryActionOverride?: boolean;
   onNavigate?: () => void;     // called when the user clicks the CTA
+  onAdditionalAction?: () => void;
   onClose: () => void;
 }
 
@@ -37,9 +40,12 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   completedDescription,
   nextStep,
   primaryActionLabel = 'Go there now ->',
+  additionalActionLabel,
   secondaryActionLabel = 'Close',
   showConfetti = false,
+  showPrimaryActionOverride,
   onNavigate,
+  onAdditionalAction,
   onClose,
 }) => {
   const hasFiredConfettiRef = React.useRef(false);
@@ -63,6 +69,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   if (!isOpen) return null;
 
   const canActNow = nextStep?.requiresAction === true;
+  const showPrimaryAction = (showPrimaryActionOverride ?? canActNow) && Boolean(onNavigate);
   const waitingFor = nextStep?.waitingFor;
 
   return (
@@ -124,7 +131,19 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
           >
             {secondaryActionLabel}
           </button>
-          {canActNow && onNavigate && (
+          {onAdditionalAction && additionalActionLabel && (
+            <button
+              type="button"
+              onClick={() => {
+                onAdditionalAction();
+                onClose();
+              }}
+              className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-800 transition"
+            >
+              {additionalActionLabel}
+            </button>
+          )}
+          {showPrimaryAction && onNavigate && (
             <button
               type="button"
               onClick={() => {

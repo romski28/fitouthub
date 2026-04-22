@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-22-e224021",
+    "date": "2026-04-22T18:09:03+08:00",
+    "title": "Smooth quote-accept flow with next-step CTA and instant list refresh",
+    "summary": "Smooth quote-accept flow with next-step CTA and instant list refresh",
+    "areas": [
+      "web"
+    ],
+    "commit": "e224021",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx",
+      "apps/web/src/components/workflow-completion-modal.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx",
+      "apps/web/src/hooks/use-next-step-modal-trigger.ts"
+    ]
+  },
+  {
     "id": "2026-04-22-528f748",
     "date": "2026-04-22T17:45:52+08:00",
     "title": "Fix PlatformFeeService Nest DI wiring",

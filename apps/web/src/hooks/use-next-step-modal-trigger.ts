@@ -13,6 +13,7 @@ interface UseNextStepModalTriggerOptions {
   prefetchPath?: string;
   modalContent?: NextStepModalContent;
   projectStage?: string;
+  onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void;
 }
 
 /**
@@ -44,9 +45,10 @@ export function useNextStepModalTrigger(options: UseNextStepModalTriggerOptions)
       userId,
       userRole,
       options.modalContent,
-      options.projectStage
+      options.projectStage,
+      options.onCompleted,
     );
-  }, [openModal, router, userId, userRole, options.actionKey, options.prefetchPath, options.projectDetailsPath, options.projectId, options.modalContent, options.projectStage]);
+  }, [openModal, router, userId, userRole, options.actionKey, options.prefetchPath, options.projectDetailsPath, options.projectId, options.modalContent, options.projectStage, options.onCompleted]);
 }
 
 /**

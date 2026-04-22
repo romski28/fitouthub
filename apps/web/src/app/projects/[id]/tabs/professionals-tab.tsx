@@ -670,6 +670,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
         isOpen={workflowModalOpen}
         completedLabel={workflowModalCompletedLabel}
         nextStep={workflowModalNextStep}
+        showPrimaryActionOverride={Boolean(workflowModalNextStep?.tab)}
         onNavigate={
           workflowModalNextStep?.tab
             ? () => onNavigateTab?.(workflowModalNextStep.tab as string)
