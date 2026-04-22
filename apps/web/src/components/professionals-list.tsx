@@ -170,8 +170,14 @@ const ProfessionalCard = memo(({
       : 'border-slate-700';
 
   return (
-    <div className={`browse-card ${accentColor} bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-slate-100`}>
-      <div className="browse-card-header bg-gradient-to-r from-slate-800 to-slate-700">
+    <div
+      className={`browse-card ${accentColor} text-slate-100`}
+      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #334155 100%)' }}
+    >
+      <div
+        className="browse-card-header"
+        style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' }}
+      >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 min-w-0">

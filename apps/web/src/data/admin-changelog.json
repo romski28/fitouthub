@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-eb199fa",
+    "date": "2026-04-22T10:45:15+08:00",
+    "title": "Force dark gradient background on professional cards",
+    "summary": "Force dark gradient background on professional cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "eb199fa",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-b45d3e3",
     "date": "2026-04-22T10:37:06+08:00",
     "title": "Set solid action button fills, solid compare counter, and invert professional cards",
