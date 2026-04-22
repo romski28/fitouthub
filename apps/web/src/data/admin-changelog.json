@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-b45d3e3",
+    "date": "2026-04-22T10:37:06+08:00",
+    "title": "Set solid action button fills, solid compare counter, and invert professional cards",
+    "summary": "Set solid action button fills, solid compare counter, and invert professional cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "b45d3e3",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-361508f",
     "date": "2026-04-22T10:27:13+08:00",
     "title": "Adjust button contrast, replace compare bar with floating compare button, and stabilize selection band",

@@ -164,14 +164,14 @@ const ProfessionalCard = memo(({
   const highlightedZones = useMemo(() => deriveHighlightedZones(pro), [pro]);
 
   const accentColor = isSelected
-    ? 'border-emerald-400 ring-2 ring-emerald-200'
+    ? 'border-emerald-400 ring-2 ring-emerald-300/70'
     : isCompared
-      ? 'border-indigo-300 ring-2 ring-indigo-100'
-      : 'border-slate-200';
+      ? 'border-violet-400 ring-2 ring-violet-300/70'
+      : 'border-slate-700';
 
   return (
-    <div className={`browse-card ${accentColor}`}>
-      <div className="browse-card-header">
+    <div className={`browse-card ${accentColor} bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-slate-100`}>
+      <div className="browse-card-header bg-gradient-to-r from-slate-800 to-slate-700">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 min-w-0">
@@ -181,7 +181,7 @@ const ProfessionalCard = memo(({
               </h3>
             </div>
             {pro.businessName && pro.fullName && pro.businessName !== pro.fullName && (
-              <p className="ml-6 truncate text-[11px] text-slate-300">{pro.businessName}</p>
+              <p className="ml-6 truncate text-[11px] text-slate-200">{pro.businessName}</p>
             )}
           </div>
           <span className="shrink-0 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-white/40">
@@ -194,10 +194,10 @@ const ProfessionalCard = memo(({
         {/* Trades (aggregated) */}
         {tradeBadges.length > 0 && (
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Trades</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">Trades</p>
               <div className="flex flex-wrap items-center gap-1.5">
                 {visibleTrades.map((trade) => (
-                  <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">
                     {trade}
                   </span>
                 ))}
@@ -205,7 +205,7 @@ const ProfessionalCard = memo(({
                   <button
                     type="button"
                     onClick={() => setShowAllTrades(true)}
-                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                    className="rounded-full bg-slate-700 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-slate-600"
                   >
                     +{hiddenTradesCount} more
                   </button>
@@ -214,7 +214,7 @@ const ProfessionalCard = memo(({
                   <button
                     type="button"
                     onClick={() => setShowAllTrades(false)}
-                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                    className="rounded-full bg-slate-700 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-slate-600"
                   >
                     Show less
                   </button>
@@ -226,10 +226,10 @@ const ProfessionalCard = memo(({
           {/* Areas covered (deduplicated) */}
           {serviceAreas.length > 0 && (
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Areas covered</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">Areas covered</p>
               <div className="flex flex-wrap items-center gap-1.5">
                 {visibleAreas.map((area) => (
-                  <span key={`${pro.id}-area-${area}`} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                  <span key={`${pro.id}-area-${area}`} className="rounded-full bg-slate-700 px-2.5 py-0.5 text-[11px] font-medium text-white">
                     {area}
                   </span>
                 ))}
@@ -237,7 +237,7 @@ const ProfessionalCard = memo(({
                   <button
                     type="button"
                     onClick={() => setShowAllAreas(true)}
-                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                    className="rounded-full bg-slate-700 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-slate-600"
                   >
                     +{hiddenAreasCount} more
                   </button>
@@ -246,7 +246,7 @@ const ProfessionalCard = memo(({
                   <button
                     type="button"
                     onClick={() => setShowAllAreas(false)}
-                    className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                    className="rounded-full bg-slate-700 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-slate-600"
                   >
                     Show less
                   </button>
@@ -257,20 +257,20 @@ const ProfessionalCard = memo(({
 
           {highlightedZones.length > 0 && (
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Coverage map</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">Coverage map</p>
               <HkZoneMap highlightedCodes={highlightedZones} compact />
             </div>
           )}
 
           {/* Stats */}
-          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+          <div className="flex items-center gap-3 text-[11px] text-slate-300">
             {refCount > 0 && <span>📁 {refCount} refs</span>}
             {photoCount > 0 && <span>🖼 {photoCount} photos</span>}
             {pro.emergencyCalloutAvailable && (
-              <span className="font-semibold text-rose-500">⚡ Emergency</span>
+              <span className="font-semibold text-rose-300">⚡ Emergency</span>
             )}
             {isAdmin && (
-              <span className="ml-auto truncate text-slate-400">{pro.email}</span>
+              <span className="ml-auto truncate text-slate-300">{pro.email}</span>
             )}
           </div>
 
@@ -279,7 +279,7 @@ const ProfessionalCard = memo(({
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
-            className="browse-card-button-sm w-full border-2 border-sky-500 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20"
+            className="browse-card-button-sm w-full border-2 border-sky-500 bg-sky-500 text-white hover:bg-sky-600"
           >
             Show More
           </button>
@@ -289,8 +289,8 @@ const ProfessionalCard = memo(({
             title={isCompared ? 'Remove from comparison' : 'Add to comparison (need 3+ for comparison)'}
             className={`browse-card-button-sm w-full border-2 ${
               isCompared
-                ? 'border-violet-500 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20'
-                : 'border-violet-500 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20'
+                ? 'border-violet-600 bg-violet-600 text-white hover:bg-violet-700'
+                : 'border-violet-600 bg-violet-600 text-white hover:bg-violet-700'
             }`}
           >
             {isCompared ? 'Comparing' : 'Compare'}
@@ -302,8 +302,8 @@ const ProfessionalCard = memo(({
               disabled={disableSelection}
               className={`browse-card-button-sm w-full border-2 ${
                 isSelected
-                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
-                  : 'border-emerald-500 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
+                  ? 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
               }`}
             >
                 {isSelected ? 'Selected' : t('askForHelp')}
@@ -1111,7 +1111,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           type="button"
           onClick={() => setShowCompare(true)}
           disabled={compareIds.size < 2}
-          className="fixed right-4 top-24 z-40 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-violet-500 bg-violet-500/10 text-violet-700 shadow-lg transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="fixed right-4 top-24 z-40 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-violet-600 bg-violet-600 text-white shadow-lg transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-100 disabled:border-violet-900 disabled:bg-violet-900"
           aria-label={
             compareIds.size < 2
               ? `Compare disabled until 2 selected (${compareIds.size} selected)`
