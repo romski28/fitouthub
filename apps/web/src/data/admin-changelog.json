@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-e54bcc3",
+    "date": "2026-04-22T17:31:54+08:00",
+    "title": "Fix CONTRACT_PHASE seed: DO UPDATE to correct requiresAction on REVIEW_CONTRACT",
+    "summary": "Fix CONTRACT_PHASE seed: DO UPDATE to correct requiresAction on REVIEW_CONTRACT",
+    "areas": [
+      "api"
+    ],
+    "commit": "e54bcc3",
+    "files": [
+      "apps/api/prisma/SEED_NEXT_STEP_CONFIG.sql"
+    ]
+  },
+  {
     "id": "2026-04-22-d614f3d",
     "date": "2026-04-22T17:26:37+08:00",
     "title": "Add SEED_NEXT_STEP_CONFIG.sql and fix seed script requiresAction bug",

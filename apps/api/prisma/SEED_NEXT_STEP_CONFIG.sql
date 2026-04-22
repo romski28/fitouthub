@@ -191,7 +191,14 @@ VALUES
    'Sign the agreement after client review to unlock escrow funding.',
    true, false, true, 2, NOW(), NOW())
 
-ON CONFLICT ("projectStage","role","actionKey") DO NOTHING;
+ON CONFLICT ("projectStage","role","actionKey") DO UPDATE SET
+  "actionLabel"    = EXCLUDED."actionLabel",
+  "description"    = EXCLUDED."description",
+  "isPrimary"      = EXCLUDED."isPrimary",
+  "isElective"     = EXCLUDED."isElective",
+  "requiresAction" = EXCLUDED."requiresAction",   -- critical: fixes REVIEW_CONTRACT true→false
+  "displayOrder"   = EXCLUDED."displayOrder",
+  "updatedAt"      = NOW();
 
 -- ---------------------------------------------------------------------------
 -- PRE_WORK stage
