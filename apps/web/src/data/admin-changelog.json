@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-8a1663c",
+    "date": "2026-04-22T09:04:13+08:00",
+    "title": "Fix create-project professional handoff and clarify bidding recipients",
+    "summary": "Fix create-project professional handoff and clarify bidding recipients",
+    "areas": [
+      "web"
+    ],
+    "commit": "8a1663c",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-21-1084052",
     "date": "2026-04-21T22:14:03+08:00",
     "title": "Tidy project lists: status borders, brighter blockers, icon-only sentiment",

@@ -82,19 +82,12 @@ export default function CreateProjectPage() {
 
       const storedDraft = sessionStorage.getItem('createProjectDraft');
       let parsedDraftForDebug: CreateProjectDraft | null = null;
+      let parsedStoredDraft: CreateProjectDraft | null = null;
       if (storedDraft) {
         try {
           const parsed = JSON.parse(storedDraft) as CreateProjectDraft;
           parsedDraftForDebug = parsed;
-          setInitialFormData(parsed.initialData || {});
-          setSelectedProfessionals(
-            Array.isArray(parsed.selectedProfessionals)
-              ? filterProjectSelectableProfessionals(parsed.selectedProfessionals)
-              : [],
-          );
-          if (parsed.aiIntakeId) {
-            setAiIntakeId(parsed.aiIntakeId);
-          }
+          parsedStoredDraft = parsed;
         } catch (e) {
           console.warn('[create-project] Failed to parse createProjectDraft:', e);
         } finally {
@@ -102,19 +95,34 @@ export default function CreateProjectPage() {
         }
       }
 
-      if (!storedDraft) {
-        const memoryDraft = getCreateProjectDraftHandoff();
-        if (memoryDraft) {
-          parsedDraftForDebug = memoryDraft;
-          setInitialFormData(memoryDraft.initialData || {});
-          setSelectedProfessionals(
-            Array.isArray(memoryDraft.selectedProfessionals)
-              ? filterProjectSelectableProfessionals(memoryDraft.selectedProfessionals)
-              : [],
-          );
-          if (memoryDraft.aiIntakeId) {
-            setAiIntakeId(memoryDraft.aiIntakeId);
+      const memoryDraft = getCreateProjectDraftHandoff();
+      if (!parsedDraftForDebug && memoryDraft) {
+        parsedDraftForDebug = memoryDraft;
+      }
+
+      const mergedDraft = parsedStoredDraft || memoryDraft
+        ? {
+            initialData: {
+              ...(parsedStoredDraft?.initialData || {}),
+              ...(memoryDraft?.initialData || {}),
+            },
+            selectedProfessionals:
+              memoryDraft?.selectedProfessionals?.length
+                ? memoryDraft.selectedProfessionals
+                : parsedStoredDraft?.selectedProfessionals,
+            aiIntakeId: memoryDraft?.aiIntakeId || parsedStoredDraft?.aiIntakeId,
           }
+        : null;
+
+      if (mergedDraft) {
+        setInitialFormData(mergedDraft.initialData || {});
+        setSelectedProfessionals(
+          Array.isArray(mergedDraft.selectedProfessionals)
+            ? filterProjectSelectableProfessionals(mergedDraft.selectedProfessionals)
+            : [],
+        );
+        if (mergedDraft.aiIntakeId) {
+          setAiIntakeId(mergedDraft.aiIntakeId);
         }
       }
 
@@ -358,6 +366,10 @@ export default function CreateProjectPage() {
   };
 
   const invitedCount = selectedProfessionals.length;
+  const selectedProfessionalNames = selectedProfessionals.map(
+    (professional) =>
+      professional.businessName || professional.fullName || professional.email || 'Professional',
+  );
   const tradeSummary = initialFormData.tradesRequired?.length
     ? initialFormData.tradesRequired.join(', ')
     : descriptionData?.tradesRequired?.length
@@ -424,6 +436,37 @@ export default function CreateProjectPage() {
                 <p className="mt-1 text-sm font-semibold text-white">{emergencySummary ? 'Emergency' : 'Standard'}</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-5 text-white shadow-lg shadow-emerald-950/20">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Bidding recipients</p>
+              <h2 className="text-xl font-bold text-white">
+                {invitedCount > 0
+                  ? `${invitedCount} selected professional${invitedCount === 1 ? '' : 's'} will be invited when you submit`
+                  : 'No professionals selected yet'}
+              </h2>
+              <p className="max-w-2xl text-sm text-slate-200">
+                {invitedCount > 0
+                  ? 'These professionals will be linked to the project immediately and bidding will open as soon as you confirm the final form.'
+                  : 'This project will be saved without invitations. You can still invite professionals later from the project list or details page.'}
+              </p>
+            </div>
+
+            {invitedCount > 0 ? (
+              <div className="flex max-w-2xl flex-wrap gap-2 lg:justify-end">
+                {selectedProfessionalNames.map((name, index) => (
+                  <span
+                    key={`${name}-${index}`}
+                    className="rounded-full border border-emerald-300/40 bg-emerald-400/15 px-3 py-1.5 text-sm font-medium text-emerald-100"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
 
