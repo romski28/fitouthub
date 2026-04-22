@@ -6,6 +6,7 @@ import { useNextStepModal } from '@/context/next-step-modal-context';
 import { getClientTabForAction } from '@/lib/client-workflow';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 import { GeneralActionModal } from './general-action-modal';
+import { QuoteActionModal } from './quote-action-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -100,7 +101,7 @@ export function ModalDispatcher({
   }
 
   // Payment/transfer actions
-  if (modalType === 'payment' || modalType === 'quote' || modalType === 'contract') {
+  if (modalType === 'payment' || modalType === 'contract') {
     return (
       <GeneralActionModal
         isOpen={state.isOpen}
@@ -109,6 +110,16 @@ export function ModalDispatcher({
         detailsTargetFallback={fallbackDetailsTarget}
         onOpenProject={handleOpenProject}
         onDetailsAction={handleDetailsNavigation}
+      />
+    );
+  }
+
+  if (modalType === 'quote') {
+    return (
+      <QuoteActionModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
       />
     );
   }
