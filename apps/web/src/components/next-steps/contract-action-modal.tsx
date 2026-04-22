@@ -65,7 +65,6 @@ export function ContractActionModal({
 
   const [contract, setContract] = useState<ContractData | null>(null);
   const [contractLoading, setContractLoading] = useState(false);
-  const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const roleUpper = (state.role || '').toUpperCase();
@@ -123,36 +122,6 @@ export function ContractActionModal({
     }
   }, [onClose, router, state.projectDetailsPath, state.projectId]);
 
-  const signContract = useCallback(async () => {
-    if (!state.projectId || !token) return;
-
-    setSigning(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/projects/${state.projectId}/contract/sign`, {
-        method: 'POST',
-        cache: 'no-store',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to sign agreement');
-      }
-
-      await loadContract();
-    } catch (submitError) {
-      const message =
-        submitError instanceof Error ? submitError.message : 'Failed to sign agreement';
-      setError(message);
-    } finally {
-      setSigning(false);
-    }
-  }, [loadContract, state.projectId, token]);
-
   if (!isOpen || !state.modalContent) return null;
 
   const {
@@ -165,12 +134,11 @@ export function ContractActionModal({
 
   const agreementTitle = toAgreementText(title, 'Agreement');
   const agreementBody = toAgreementText(body, '');
-  const agreementPrimaryButtonLabel = toAgreementText(primaryButtonLabel, 'Open agreement');
-  const agreementSecondaryButtonLabel = toAgreementText(secondaryButtonLabel, 'Close');
+  const agreementPrimaryButtonLabel = toAgreementText(primaryButtonLabel, 'Review agreement');
+  const agreementSecondaryButtonLabel = toAgreementText(secondaryButtonLabel, 'Later');
+  const requestChangesAdminOnly = /request\s+changes/i.test(agreementSecondaryButtonLabel);
 
-  const canSignNow = Boolean(contract?.canSign && !contract?.isFullySigned);
-  const signActionKeys = new Set(['SIGN_CONTRACT', 'SUBMIT_CONTRACT']);
-  const primaryDoesSign = signActionKeys.has(state.actionKey || '') && canSignNow;
+  const secondaryLabel = requestChangesAdminOnly ? 'Later' : agreementSecondaryButtonLabel;
 
   return (
     <div
@@ -241,36 +209,30 @@ export function ContractActionModal({
                   {error}
                 </div>
               ) : null}
+
+              {requestChangesAdminOnly ? (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                  Fitout Hub admin handles formal agreement change requests. If amendments are needed, contact support and the admin team will coordinate updates.
+                </div>
+              ) : null}
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
               <button
                 type="button"
                 onClick={onClose}
-                disabled={signing}
+                disabled={contractLoading}
                 className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {agreementSecondaryButtonLabel}
+                {secondaryLabel}
               </button>
               <button
                 type="button"
                 onClick={navigateToContractTab}
-                disabled={signing}
-                className="min-w-[140px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                View agreement
-              </button>
-              <button
-                type="button"
-                onClick={primaryDoesSign ? () => void signContract() : navigateToContractTab}
-                disabled={signing || (primaryDoesSign && !canSignNow)}
+                disabled={contractLoading}
                 className="min-w-[150px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {primaryDoesSign
-                  ? signing
-                    ? 'Signing...'
-                    : agreementPrimaryButtonLabel
-                  : agreementPrimaryButtonLabel}
+                {agreementPrimaryButtonLabel}
               </button>
             </div>
           </div>

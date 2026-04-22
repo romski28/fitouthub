@@ -241,14 +241,14 @@ WHERE "projectStage" = 'BIDDING_CLOSED' AND "role" = 'PROFESSIONAL' AND "actionK
 
 -- CONTRACT_PHASE stage
 UPDATE "NextStepConfig" SET
-  "modalTitle" = 'Review the contract',
-  "modalBody" = 'Carefully review all contract terms including scope, timeline, payment schedule, change order procedures, and warranty. Ask for clarifications if anything is unclear.',
-  "modalDetailsBody" = 'Make sure the contract accurately reflects everything you discussed. Don''t skip this step—a clear contract protects both you and the professional.',
-  "modalSuccessTitle" = 'Contract reviewed',
-  "modalSuccessBody" = 'You''ve reviewed the contract terms.',
-  "modalSuccessNextStepBody" = 'When satisfied with the terms, sign the contract to proceed.',
-  "modalPrimaryButtonLabel" = 'Review contract',
-  "modalSecondaryButtonLabel" = 'Request changes',
+  "modalTitle" = 'Review the agreement',
+  "modalBody" = 'Carefully review all agreement terms including scope, timeline, payment schedule, change order procedures, and warranty.',
+  "modalDetailsBody" = 'Make sure the agreement accurately reflects everything you discussed. Fitout Hub admin coordinates formal amendment requests when needed.',
+  "modalSuccessTitle" = 'Agreement reviewed',
+  "modalSuccessBody" = 'You''ve reviewed the agreement terms.',
+  "modalSuccessNextStepBody" = 'When satisfied with the terms, sign the agreement to proceed.',
+  "modalPrimaryButtonLabel" = 'Review agreement',
+  "modalSecondaryButtonLabel" = 'Later',
   "modalPrimaryActionType" = 'navigate_tab',
   "modalSecondaryActionType" = 'close_modal'
 WHERE "projectStage" = 'CONTRACT_PHASE' AND "role" = 'CLIENT' AND "actionKey" = 'REVIEW_CONTRACT' AND "modalTitle" IS NULL;

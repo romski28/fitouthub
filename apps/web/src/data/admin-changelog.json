@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-22-0aead27",
+    "date": "2026-04-22T18:47:30+08:00",
+    "title": "Contract modal: remove duplicate actions and admin-only request-change hint",
+    "summary": "Contract modal: remove duplicate actions and admin-only request-change hint",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "0aead27",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql",
+      "apps/api/prisma/FIX_CONTRACT_MODAL_LABELS.sql",
+      "apps/web/src/components/next-steps/contract-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-fae3a62",
     "date": "2026-04-22T18:34:05+08:00",
     "title": "Project list: show only primary next-step action button",
