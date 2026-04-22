@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-18394bd",
+    "date": "2026-04-22T22:52:02+08:00",
+    "title": "Refine start-date modal defaults and notes layout",
+    "summary": "Refine start-date modal defaults and notes layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "18394bd",
+    "files": [
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx",
+      "apps/web/src/components/start-date-negotiation-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-5396048",
     "date": "2026-04-22T22:39:47+08:00",
     "title": "Add start-date next-step modal flow",

@@ -58,20 +58,26 @@ export function StartDateActionModal({
 
   const latestProposal = useMemo(() => proposals[0], [proposals]);
 
-  useEffect(() => {
-    if (!latestProposal || proposalFormInitialized) return;
+  const applyDefaultSchedule = useCallback((params: {
+    scheduledAt?: string | null;
+    durationMinutes?: number | null;
+    notes?: string | null;
+    prefilled: boolean;
+  }) => {
+    const { scheduledAt, durationMinutes, notes, prefilled } = params;
+    if (!scheduledAt) return;
 
-    const proposedAt = new Date(latestProposal.proposedStartAt);
-    if (!Number.isNaN(proposedAt.getTime())) {
-      const pad = (value: number) => String(value).padStart(2, '0');
-      setProposalDate(
-        `${proposedAt.getFullYear()}-${pad(proposedAt.getMonth() + 1)}-${pad(proposedAt.getDate())}`,
-      );
-      setProposalTime(`${pad(proposedAt.getHours())}:${pad(proposedAt.getMinutes())}`);
-    }
+    const proposedAt = new Date(scheduledAt);
+    if (Number.isNaN(proposedAt.getTime())) return;
 
-    if (latestProposal.durationMinutes) {
-      const hours = latestProposal.durationMinutes / 60;
+    const pad = (value: number) => String(value).padStart(2, '0');
+    setProposalDate(
+      `${proposedAt.getFullYear()}-${pad(proposedAt.getMonth() + 1)}-${pad(proposedAt.getDate())}`,
+    );
+    setProposalTime(`${pad(proposedAt.getHours())}:${pad(proposedAt.getMinutes())}`);
+
+    if (durationMinutes && durationMinutes > 0) {
+      const hours = durationMinutes / 60;
       setProposalDurationHours(
         Number.isInteger(hours)
           ? String(hours)
@@ -79,9 +85,74 @@ export function StartDateActionModal({
       );
     }
 
-    setProposalNotes(latestProposal.notes || '');
+    if (notes) {
+      setProposalNotes(notes);
+    }
+
+    setPrefilledFromQuote(prefilled);
     setProposalFormInitialized(true);
-  }, [latestProposal, proposalFormInitialized]);
+  }, []);
+
+  const hydrateFromQuoteDefaults = useCallback(async () => {
+    if (!isProfessional || !projectProfessionalId || !token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/professional/projects/${projectProfessionalId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+
+      const detail = await response.json();
+      applyDefaultSchedule({
+        scheduledAt: detail?.quoteEstimatedStartAt,
+        durationMinutes: detail?.quoteEstimatedDurationMinutes,
+        notes: detail?.quoteNotes,
+        prefilled: true,
+      });
+    } catch {
+      // Best-effort prefill only.
+    }
+  }, [applyDefaultSchedule, isProfessional, projectProfessionalId, token]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Prevent stale values when modal is reopened for another project/state.
+    setProposalDate('');
+    setProposalTime('09:00');
+    setProposalDurationHours('4');
+    setProposalNotes('');
+    setProposalFormInitialized(false);
+    setPrefilledFromQuote(false);
+    setProposalResponseNotes({});
+    setUpdateDateByProposal({});
+    setUpdateTimeByProposal({});
+  }, [isOpen, projectId]);
+
+  useEffect(() => {
+    if (proposalFormInitialized) return;
+
+    if (latestProposal) {
+      applyDefaultSchedule({
+        scheduledAt: latestProposal.proposedStartAt,
+        durationMinutes: latestProposal.durationMinutes,
+        notes: latestProposal.notes,
+        prefilled: false,
+      });
+      return;
+    }
+
+    if (!proposalLoading && proposals.length === 0) {
+      void hydrateFromQuoteDefaults();
+    }
+  }, [
+    applyDefaultSchedule,
+    hydrateFromQuoteDefaults,
+    latestProposal,
+    proposalFormInitialized,
+    proposalLoading,
+    proposals.length,
+  ]);
 
   const fetchStartProposals = useCallback(async () => {
     if (!projectId || !token) return;
@@ -103,7 +174,12 @@ export function StartDateActionModal({
       }
 
       const data = await response.json();
-      setProposals(Array.isArray(data) ? data : []);
+      const rows: StartProposalRow[] = Array.isArray(data) ? data : [];
+      rows.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      setProposals(rows);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load start proposal');
     } finally {

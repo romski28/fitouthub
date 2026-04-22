@@ -160,7 +160,7 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
                       Prefilled from your awarded quote timing. Review and send to the client.
                     </div>
                   )}
-                  <div className={inputRowClass}>
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     <label className="text-sm text-slate-200">
                       <span className="mb-1 block text-xs">Start date</span>
                       <input type="date" value={proposalDate} onChange={(e) => { setProposalDate?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }} className={inputClass} />
@@ -173,11 +173,17 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
                       <span className="mb-1 block text-xs">Duration (hrs)</span>
                       <input type="number" min="0.5" step="0.5" value={proposalDurationHours} onChange={(e) => { setProposalDurationHours?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }} className={inputClass} />
                     </label>
-                    <label className="text-sm text-slate-200">
-                      <span className="mb-1 block text-xs">Notes (optional)</span>
-                      <input type="text" value={proposalNotes} onChange={(e) => { setProposalNotes?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }} placeholder="Access, materials, etc." className={inputClass} />
-                    </label>
                   </div>
+                  <label className="block text-sm text-slate-200">
+                    <span className="mb-1 block text-xs">Notes (optional)</span>
+                    <textarea
+                      value={proposalNotes}
+                      onChange={(e) => { setProposalNotes?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }}
+                      placeholder="Access, materials, logistics, dependencies, etc."
+                      rows={3}
+                      className={`${inputClass} min-h-[92px] resize-y`}
+                    />
+                  </label>
                   <div className="flex justify-end">
                     <button onClick={onSubmitNew} disabled={proposalSubmitting} className="rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
                       {proposalSubmitting ? 'Sending…' : prefilledFromQuote ? 'Confirm & Send to Client' : 'Send Proposal'}
