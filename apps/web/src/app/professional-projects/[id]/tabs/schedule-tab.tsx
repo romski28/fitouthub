@@ -922,6 +922,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             setProposalNotes={setProposalNotes}
             setPrefilledFromQuote={setPrefilledFromQuote}
             setProposalFormInitialized={setProposalFormInitialized}
+            allowDurationEdit={false}
           />
 
           <div className="space-y-3">

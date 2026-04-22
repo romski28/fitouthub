@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-23-fc5e6c8",
+    "date": "2026-04-23T00:31:18+08:00",
+    "title": "Disable duration editing in schedule start-date panel",
+    "summary": "Disable duration editing in schedule start-date panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "fc5e6c8",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/start-date-negotiation-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-ed7d99f",
     "date": "2026-04-22T22:57:39+08:00",
     "title": "Clarify fixed duration in start-date modal",

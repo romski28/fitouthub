@@ -179,9 +179,13 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
                     ) : (
                       <div className="text-sm text-slate-200">
                         <span className="mb-1 block text-xs">Duration</span>
-                        <div className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200">
-                          {proposalDurationHours ? `${proposalDurationHours} hour${proposalDurationHours === '1' ? '' : 's'}` : '4 hours'}
-                        </div>
+                        <input
+                          type="text"
+                          value={proposalDurationHours ? `${proposalDurationHours} hour${proposalDurationHours === '1' ? '' : 's'}` : '4 hours'}
+                          disabled
+                          readOnly
+                          className={`${inputClass} cursor-not-allowed opacity-80`}
+                        />
                         <p className="mt-1 text-[11px] text-slate-400">Duration is fixed based on the agreed quote/proposal.</p>
                       </div>
                     )}
