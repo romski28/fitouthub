@@ -115,7 +115,7 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
 
   const inputClass =
     'w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white ' +
-    '[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-150';
+    '[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert';
 
   const activeProposalId = openProposal?.id ?? '';
 

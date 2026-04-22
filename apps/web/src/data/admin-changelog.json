@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-22-08fdc04",
+    "date": "2026-04-22T09:56:33+08:00",
+    "title": "UX refactor: Reorganize professional selection flow and update calendar icon",
+    "summary": "UX refactor: Reorganize professional selection flow and update calendar icon",
+    "areas": [
+      "web"
+    ],
+    "commit": "08fdc04",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/components/project-form.tsx",
+      "apps/web/src/components/start-date-negotiation-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-8a1663c",
     "date": "2026-04-22T09:04:13+08:00",
     "title": "Fix create-project professional handoff and clarify bidding recipients",

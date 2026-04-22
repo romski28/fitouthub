@@ -286,14 +286,15 @@ const ProfessionalCard = memo(({
           <button
             type="button"
             onClick={() => onCompare(pro)}
-            title={isCompared ? 'Remove from comparison' : 'Add to comparison'}
+            title={isCompared ? 'Remove from comparison' : 'Add to comparison (need 3+ for comparison)'}
             className={`browse-card-button-sm shrink-0 ${
               isCompared
                 ? 'border border-indigo-400 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                : 'border border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-not-allowed'
             }`}
+            disabled={!isCompared}
           >
-            {isCompared ? '✓ Comparing' : '⊕ Compare'}
+            {isCompared ? '✓ Comparing' : '📊 Compare'}
           </button>
           {showSelectionAction && (
             <button
@@ -1105,28 +1106,54 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         </div>
       )}
 
-      {canInviteProfessionals && selectedIds.size > 0 ? (
-        <div className="fixed top-20 right-6 z-40 flex flex-col items-end gap-2">
-          <button
-            type="button"
-            onClick={handleInviteSelected}
-            disabled={blockInviteForMissingLocation}
-            className="rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition animate-pulse-slow px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label={t('actions.shareProjectAria')}
-          >
-            <div className="flex flex-col items-center justify-center text-center">
-              <span className="text-xs font-semibold leading-tight">
-                {selectedIds.size === 1 ? t('actions.inviteOne') : t('actions.inviteMany', { count: selectedIds.size })}
-              </span>
-              {selectedIds.size < 3 && (
-                <span className="text-[9px] text-indigo-200 mt-0.5">
-                  {t('actions.recommendAtLeastThree')}
-                </span>
-              )}
+      {/* Compare bar — sticky top when ≥1 professional is being compared */}
+      {compareIds.size > 0 && (
+        <div className="sticky top-0 z-30 border-b border-slate-300 bg-gradient-to-r from-slate-100 to-slate-50 px-4 py-3 shadow-sm">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-semibold text-slate-700 shrink-0">📊 Compare:</span>
+              <div className="flex flex-wrap gap-1.5 min-w-0">
+                {Array.from(compareIds).map((id) => {
+                  const pro = filtered.find((p) => p.id === id);
+                  if (!pro) return null;
+                  return (
+                    <span key={id} className="flex items-center gap-1 rounded-full bg-white border border-slate-200 pl-2.5 pr-1 py-0.5 text-[11px] font-medium text-slate-700">
+                      {pro.fullName || pro.businessName || 'Professional'}
+                      <button
+                        type="button"
+                        onClick={() => toggleCompare(pro)}
+                        className="rounded-full p-0.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                        aria-label={`Remove ${pro.fullName || pro.businessName} from comparison`}
+                      >
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
             </div>
-          </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCompareIds(new Set())}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCompare(true)}
+                disabled={compareIds.size < 2}
+                className="rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Compare {compareIds.size >= 2 ? `${compareIds.size}` : '(need ≥2)'} →
+              </button>
+            </div>
+          </div>
         </div>
-      ) : null}
+      )}
 
       <ProjectShareModal
         isOpen={isModalOpen}
@@ -1148,24 +1175,26 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         isSelected={detailsPro ? selectedIds.has(detailsPro.id) : false}
       />
 
-      {/* Comparison tray — sticky bottom bar when ≥1 professional is being compared */}
-      {compareIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-indigo-200 bg-indigo-600 px-4 py-3 shadow-2xl">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold text-white shrink-0">Comparing:</span>
-              <div className="flex flex-wrap gap-1.5 min-w-0">
-                {Array.from(compareIds).map((id) => {
+      {/* Selection band — sticky bottom with selected professionals and finish button */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-200 bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 shadow-2xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="text-sm font-semibold text-white shrink-0">
+              {selectedIds.size === 0 ? '0 selected' : selectedIds.size === 1 ? '1 selected' : `${selectedIds.size} selected`}
+            </span>
+            {selectedIds.size > 0 && (
+              <div className="hidden md:flex flex-wrap gap-1.5 min-w-0">
+                {Array.from(selectedIds).map((id) => {
                   const pro = filtered.find((p) => p.id === id);
                   if (!pro) return null;
                   return (
-                    <span key={id} className="flex items-center gap-1 rounded-full bg-indigo-500 pl-2.5 pr-1 py-0.5 text-[11px] font-semibold text-white">
+                    <span key={id} className="flex items-center gap-1 rounded-full bg-emerald-500 pl-2.5 pr-1 py-0.5 text-[11px] font-semibold text-white">
                       {pro.fullName || pro.businessName || 'Professional'}
                       <button
                         type="button"
-                        onClick={() => toggleCompare(pro)}
-                        className="rounded-full p-0.5 hover:bg-indigo-400"
-                        aria-label={`Remove ${pro.fullName || pro.businessName} from comparison`}
+                        onClick={() => toggleSelection(pro)}
+                        className="rounded-full p-0.5 hover:bg-emerald-400 text-emerald-100"
+                        aria-label={`Deselect ${pro.fullName || pro.businessName}`}
                       >
                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -1175,27 +1204,30 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   );
                 })}
               </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {selectedIds.size > 0 && (
               <button
                 type="button"
-                onClick={() => setCompareIds(new Set())}
-                className="rounded-lg border border-indigo-400 px-3 py-1.5 text-xs font-semibold text-indigo-100 transition hover:bg-indigo-500"
+                onClick={() => setSelectedIds(new Set())}
+                className="rounded-lg border border-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500"
               >
                 Clear
               </button>
-              <button
-                type="button"
-                onClick={() => setShowCompare(true)}
-                disabled={compareIds.size < 2}
-                className="rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Compare {compareIds.size >= 2 ? `${compareIds.size}` : '(need ≥2)'} professionals →
-              </button>
-            </div>
+            )}
+            <button
+              type="button"
+              onClick={handleInviteSelected}
+              disabled={blockInviteForMissingLocation}
+              className="rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={t('actions.shareProjectAria')}
+            >
+              Finish creating your project →
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Comparison overlay */}
       {showCompare && (

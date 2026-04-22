@@ -1001,7 +1001,7 @@ export function ProjectForm({
               disabled={isReadOnly || isSubmitting}
               className={`rounded-md border px-3 py-2 text-sm ${
                 mode === 'create'
-                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert'
+                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
                   : 'border-slate-300'
               }`}
             />
@@ -1072,7 +1072,7 @@ export function ProjectForm({
               disabled={isReadOnly || isSubmitting}
               className={`rounded-md border px-3 py-2 text-sm ${
                 mode === 'create'
-                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert'
+                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
                   : 'border-slate-300'
               }`}
             />
