@@ -104,6 +104,17 @@ export function QuoteActionModal({
       return;
     }
 
+    const [timeHour, timeMinute] = estimatedStartTime.split(':').map((value) => Number(value));
+    if (!Number.isFinite(timeHour) || !Number.isFinite(timeMinute)) {
+      setError('Please enter a valid estimated start time');
+      return;
+    }
+    const startMinutes = timeHour * 60 + timeMinute;
+    if (startMinutes < 8 * 60 || startMinutes > 18 * 60 || timeMinute % 15 !== 0) {
+      setError('Please select a start time between 08:00 and 18:00 in 15-minute intervals');
+      return;
+    }
+
     if (!estimatedDurationValue) {
       setError('Please enter an estimated duration');
       return;
@@ -236,7 +247,7 @@ export function QuoteActionModal({
                     type="date"
                     value={estimatedStartDate}
                     onChange={(e) => setEstimatedStartDate(e.target.value)}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    className="quote-picker-input w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
                     disabled={submitting}
                   />
                 </label>
@@ -247,7 +258,11 @@ export function QuoteActionModal({
                     type="time"
                     value={estimatedStartTime}
                     onChange={(e) => setEstimatedStartTime(e.target.value)}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                    min="08:00"
+                    max="18:00"
+                    step={900}
+                    lang="en-GB"
+                    className="quote-picker-input w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
                     disabled={submitting}
                   />
                 </label>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-246f154",
+    "date": "2026-04-22T12:00:21+08:00",
+    "title": "Refine agreement wording and constrain quote time picker",
+    "summary": "Refine agreement wording and constrain quote time picker",
+    "areas": [
+      "web"
+    ],
+    "commit": "246f154",
+    "files": [
+      "apps/web/src/components/next-steps/contract-action-modal.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-f407d6a",
     "date": "2026-04-22T11:56:02+08:00",
     "title": "Add shared contract action modal for client and professional next steps",

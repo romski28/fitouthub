@@ -22,6 +22,15 @@ interface ContractData {
   canSign: boolean;
 }
 
+const toAgreementText = (text: string | undefined, fallback: string): string => {
+  const source = (text || '').trim();
+  if (!source) return fallback;
+
+  return source
+    .replace(/\b[Cc]ontracts\b/g, (value) => (value[0] === 'C' ? 'Agreements' : 'agreements'))
+    .replace(/\b[Cc]ontract\b/g, (value) => (value[0] === 'C' ? 'Agreement' : 'agreement'));
+};
+
 const formatDate = (date?: string | null) => {
   if (!date) return 'Pending';
   try {
@@ -147,12 +156,17 @@ export function ContractActionModal({
   if (!isOpen || !state.modalContent) return null;
 
   const {
-    title = 'Agreement',
+    title,
     body,
     imageUrl,
-    primaryButtonLabel = 'Open agreement',
-    secondaryButtonLabel = 'Close',
+    primaryButtonLabel,
+    secondaryButtonLabel,
   } = state.modalContent;
+
+  const agreementTitle = toAgreementText(title, 'Agreement');
+  const agreementBody = toAgreementText(body, '');
+  const agreementPrimaryButtonLabel = toAgreementText(primaryButtonLabel, 'Open agreement');
+  const agreementSecondaryButtonLabel = toAgreementText(secondaryButtonLabel, 'Close');
 
   const canSignNow = Boolean(contract?.canSign && !contract?.isFullySigned);
   const signActionKeys = new Set(['SIGN_CONTRACT', 'SUBMIT_CONTRACT']);
@@ -183,8 +197,8 @@ export function ContractActionModal({
                   className="h-14 w-14 rounded-full border border-white/20 object-cover"
                 />
                 <div>
-                  <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
-                  {body ? <p className="mt-1 text-sm text-slate-200">{body}</p> : null}
+                  <h2 className="text-2xl font-bold text-emerald-300">{agreementTitle}</h2>
+                  {agreementBody ? <p className="mt-1 text-sm text-slate-200">{agreementBody}</p> : null}
                 </div>
               </div>
             </div>
@@ -236,7 +250,7 @@ export function ContractActionModal({
                 disabled={signing}
                 className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {secondaryButtonLabel}
+                {agreementSecondaryButtonLabel}
               </button>
               <button
                 type="button"
@@ -255,8 +269,8 @@ export function ContractActionModal({
                 {primaryDoesSign
                   ? signing
                     ? 'Signing...'
-                    : primaryButtonLabel
-                  : primaryButtonLabel || 'Open agreement'}
+                    : agreementPrimaryButtonLabel
+                  : agreementPrimaryButtonLabel}
               </button>
             </div>
           </div>
