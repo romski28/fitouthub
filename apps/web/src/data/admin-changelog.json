@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-f407d6a",
+    "date": "2026-04-22T11:56:02+08:00",
+    "title": "Add shared contract action modal for client and professional next steps",
+    "summary": "Add shared contract action modal for client and professional next steps",
+    "areas": [
+      "web"
+    ],
+    "commit": "f407d6a",
+    "files": [
+      "apps/web/src/components/next-steps/contract-action-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-266355b",
     "date": "2026-04-22T11:52:12+08:00",
     "title": "Add interactive quote modal template for next-step quote actions",

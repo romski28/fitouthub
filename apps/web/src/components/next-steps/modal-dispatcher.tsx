@@ -7,6 +7,7 @@ import { getClientTabForAction } from '@/lib/client-workflow';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 import { GeneralActionModal } from './general-action-modal';
 import { QuoteActionModal } from './quote-action-modal';
+import { ContractActionModal } from './contract-action-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -101,7 +102,7 @@ export function ModalDispatcher({
   }
 
   // Payment/transfer actions
-  if (modalType === 'payment' || modalType === 'contract') {
+  if (modalType === 'payment') {
     return (
       <GeneralActionModal
         isOpen={state.isOpen}
@@ -117,6 +118,16 @@ export function ModalDispatcher({
   if (modalType === 'quote') {
     return (
       <QuoteActionModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
+  if (modalType === 'contract') {
+    return (
+      <ContractActionModal
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
