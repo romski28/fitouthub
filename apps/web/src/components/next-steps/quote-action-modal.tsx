@@ -1,10 +1,11 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
 
 interface QuoteActionModalProps {
   isOpen: boolean;
@@ -52,6 +53,7 @@ export function QuoteActionModal({
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const projectProfessionalId = useMemo(
     () => inferProjectProfessionalId(state.projectDetailsPath),
@@ -68,9 +70,17 @@ export function QuoteActionModal({
     secondaryButtonLabel = 'Cancel',
   } = state.modalContent;
 
+  useEffect(() => {
+    if (!isOpen) {
+      setShowSuccess(false);
+      setError(null);
+    }
+  }, [isOpen]);
+
   const handleClose = () => {
     if (submitting) return;
     setError(null);
+    setShowSuccess(false);
     onClose();
   };
 
@@ -173,11 +183,7 @@ export function QuoteActionModal({
       }
 
       onSubmitted?.();
-      onClose();
-
-      if (state.projectDetailsPath) {
-        router.push(state.projectDetailsPath);
-      }
+      setShowSuccess(true);
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : 'Failed to submit quote';
       setError(message);
@@ -185,6 +191,36 @@ export function QuoteActionModal({
       setSubmitting(false);
     }
   };
+
+  const successNextStep: WorkflowNextStep = {
+    actionLabel: 'Check back for the client response',
+    description: 'You will see updates in this project as soon as the client reviews your quote.',
+    requiresAction: true,
+  };
+
+  if (showSuccess) {
+    return (
+      <WorkflowCompletionModal
+        isOpen={isOpen}
+        completedLabel="Your quote has gone to the client! Fingers crossed!"
+        completedDescription="Nice work. Your quote is now in the client\'s queue for review."
+        nextStep={successNextStep}
+        primaryActionLabel="Open project"
+        secondaryActionLabel="Later"
+        showConfetti
+        onNavigate={() => {
+          if (state.projectDetailsPath) {
+            router.push(state.projectDetailsPath);
+            return;
+          }
+          if (state.projectId) {
+            router.push(`/projects/${state.projectId}?tab=overview`);
+          }
+        }}
+        onClose={handleClose}
+      />
+    );
+  }
 
   return (
     <div

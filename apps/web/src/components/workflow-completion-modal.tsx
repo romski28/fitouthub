@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import confetti from 'canvas-confetti';
 
 export type WaitingParty = 'professional' | 'client' | 'platform';
 
@@ -17,6 +18,9 @@ interface WorkflowCompletionModalProps {
   completedLabel: string;      // "Start date agreed!"
   completedDescription?: string;
   nextStep: WorkflowNextStep | null;
+  primaryActionLabel?: string;
+  secondaryActionLabel?: string;
+  showConfetti?: boolean;
   onNavigate?: () => void;     // called when the user clicks the CTA
   onClose: () => void;
 }
@@ -32,9 +36,30 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   completedLabel,
   completedDescription,
   nextStep,
+  primaryActionLabel = 'Go there now ->',
+  secondaryActionLabel = 'Close',
+  showConfetti = false,
   onNavigate,
   onClose,
 }) => {
+  const hasFiredConfettiRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      hasFiredConfettiRef.current = false;
+      return;
+    }
+
+    if (!showConfetti || hasFiredConfettiRef.current) return;
+    hasFiredConfettiRef.current = true;
+
+    confetti({
+      particleCount: 110,
+      spread: 80,
+      origin: { y: 0.65 },
+    });
+  }, [isOpen, showConfetti]);
+
   if (!isOpen) return null;
 
   const canActNow = nextStep?.requiresAction === true;
@@ -97,7 +122,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
             onClick={onClose}
             className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
           >
-            Close
+            {secondaryActionLabel}
           </button>
           {canActNow && onNavigate && (
             <button
@@ -108,7 +133,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
               }}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
             >
-              Go there now →
+              {primaryActionLabel}
             </button>
           )}
         </div>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-3e22fd1",
+    "date": "2026-04-22T12:38:11+08:00",
+    "title": "Add reusable confetti success screen for quote submission",
+    "summary": "Add reusable confetti success screen for quote submission",
+    "areas": [
+      "web"
+    ],
+    "commit": "3e22fd1",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/workflow-completion-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-315933b",
     "date": "2026-04-22T12:27:24+08:00",
     "title": "Fix calendar icon colour, clean hour picker, add duration unit toggle",
