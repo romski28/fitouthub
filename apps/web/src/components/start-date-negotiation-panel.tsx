@@ -48,6 +48,7 @@ export interface StartDateNegotiationPanelProps {
   setProposalNotes?: React.Dispatch<React.SetStateAction<string>>;
   setPrefilledFromQuote?: React.Dispatch<React.SetStateAction<boolean>>;
   setProposalFormInitialized?: React.Dispatch<React.SetStateAction<boolean>>;
+  allowDurationEdit?: boolean;
 }
 
 const fmtDT = (dateStr?: string) => {
@@ -96,6 +97,7 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
   setProposalNotes,
   setPrefilledFromQuote,
   setProposalFormInitialized,
+  allowDurationEdit = true,
 }) => {
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -169,10 +171,20 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
                       <span className="mb-1 block text-xs">Start time</span>
                       <input type="time" value={proposalTime} onChange={(e) => { setProposalTime?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }} className={inputClass} />
                     </label>
-                    <label className="text-sm text-slate-200">
-                      <span className="mb-1 block text-xs">Duration (hrs)</span>
-                      <input type="number" min="0.5" step="0.5" value={proposalDurationHours} onChange={(e) => { setProposalDurationHours?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }} className={inputClass} />
-                    </label>
+                    {allowDurationEdit ? (
+                      <label className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Duration (hrs)</span>
+                        <input type="number" min="0.5" step="0.5" value={proposalDurationHours} onChange={(e) => { setProposalDurationHours?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }} className={inputClass} />
+                      </label>
+                    ) : (
+                      <div className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Duration</span>
+                        <div className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200">
+                          {proposalDurationHours ? `${proposalDurationHours} hour${proposalDurationHours === '1' ? '' : 's'}` : '4 hours'}
+                        </div>
+                        <p className="mt-1 text-[11px] text-slate-400">Duration is fixed based on the agreed quote/proposal.</p>
+                      </div>
+                    )}
                   </div>
                   <label className="block text-sm text-slate-200">
                     <span className="mb-1 block text-xs">Notes (optional)</span>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-ed7d99f",
+    "date": "2026-04-22T22:57:39+08:00",
+    "title": "Clarify fixed duration in start-date modal",
+    "summary": "Clarify fixed duration in start-date modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "ed7d99f",
+    "files": [
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx",
+      "apps/web/src/components/start-date-negotiation-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-18394bd",
     "date": "2026-04-22T22:52:02+08:00",
     "title": "Refine start-date modal defaults and notes layout",

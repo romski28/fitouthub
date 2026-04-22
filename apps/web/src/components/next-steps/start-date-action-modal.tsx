@@ -319,7 +319,7 @@ export function StartDateActionModal({
   const title = state.modalContent?.title || (isProfessional ? 'Confirm start date' : 'Review start date');
   const body = state.modalContent?.body ||
     (isProfessional
-      ? 'Propose a realistic start date and duration for client agreement.'
+      ? 'Confirm a realistic start date and time for client agreement. Duration is fixed from the agreed quote/proposal.'
       : 'Review and respond to the professional start-date proposal.');
 
   return (
@@ -382,6 +382,7 @@ export function StartDateActionModal({
                 setProposalNotes={setProposalNotes}
                 setPrefilledFromQuote={setPrefilledFromQuote}
                 setProposalFormInitialized={setProposalFormInitialized}
+                allowDurationEdit={false}
               />
             </div>
 
