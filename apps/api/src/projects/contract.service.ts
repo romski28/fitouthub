@@ -130,6 +130,22 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
         professionalSignedBy: {
           select: { id: true, firstName: true, surname: true, email: true },
         },
+        professionals: {
+          include: {
+            professional: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    surname: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -225,6 +241,13 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
             },
           },
         },
+        professionals: {
+          include: {
+            professional: {
+              include: { user: true },
+            },
+          },
+        },
       },
     });
 
@@ -249,8 +272,16 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       throw new BadRequestException('You have already signed this contract');
     }
 
+    const fallbackProfessionalMembership = project.professionals?.find(
+      (membership) =>
+        membership.professionalId === userId ||
+        membership.professional?.userId === userId,
+    );
+
     const professionalSignerUserId =
-      project.awardedProjectProfessional?.professional?.userId || null;
+      project.awardedProjectProfessional?.professional?.userId ||
+      fallbackProfessionalMembership?.professional?.userId ||
+      userId;
 
     const updateData: any =
       userRole === 'CLIENT'
@@ -360,6 +391,21 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
     if (
       awardedProfessional?.professionalId === userId ||
       awardedProfessional?.professional?.userId === userId
+    ) {
+      return 'PROFESSIONAL';
+    }
+
+    const matchingProfessionalMembership = project.professionals?.find(
+      (membership: any) =>
+        membership.professionalId === userId ||
+        membership.professional?.userId === userId,
+    );
+
+    if (
+      matchingProfessionalMembership &&
+      ['awarded', 'accepted', 'quoted'].includes(
+        String(matchingProfessionalMembership.status || '').toLowerCase(),
+      )
     ) {
       return 'PROFESSIONAL';
     }

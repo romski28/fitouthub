@@ -18,6 +18,18 @@ WHERE "projectStage" = 'CONTRACT_PHASE'
   AND "role" = 'CLIENT'
   AND "actionKey" = 'REVIEW_CONTRACT';
 
+UPDATE "NextStepConfig"
+SET
+  "actionLabel" = 'Review agreement',
+  "modalTitle" = 'Review the agreement',
+  "modalBody" = 'Review your drafted agreement terms, milestones, and payment schedule before sending to the client for signature.',
+  "modalDetailsBody" = 'Ensure the agreement is complete and accurate. Once sent, the client reviews and signs before you complete your signature.',
+  "modalPrimaryButtonLabel" = 'Review agreement',
+  "updatedAt" = NOW()
+WHERE "projectStage" = 'CONTRACT_PHASE'
+  AND "role" = 'PROFESSIONAL'
+  AND "actionKey" = 'SUBMIT_CONTRACT';
+
 -- Verification
 -- SELECT "projectStage", "role", "actionKey", "modalPrimaryButtonLabel", "modalSecondaryButtonLabel"
 -- FROM "NextStepConfig"

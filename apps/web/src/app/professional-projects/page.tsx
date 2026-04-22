@@ -307,8 +307,6 @@ export default function ProfessionalProjectsPage() {
               {dashboardProjects.map((projectProf) => {
                 const actions = nextStepMap[projectProf.project.id] || [];
                 const primaryAction = actions[0] || null;
-                const secondaryAction = actions[1] || null;
-                const additionalActionCount = Math.max(actions.length - 2, 0);
                 const isStopStatus = ['declined', 'rejected'].includes((projectProf.status || '').toLowerCase());
                 const baseBorder = professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
                 const unreadCount = projectProf.unreadCount ?? 0;
@@ -396,26 +394,6 @@ export default function ProfessionalProjectsPage() {
                                 >
                                   Open project
                                 </Link>
-                              )}
-                              {secondaryAction && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void openProfessionalNextStepModal(
-                                      secondaryAction,
-                                      projectProf.project.id,
-                                      projectProf.id,
-                                    )
-                                  }
-                                  className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap"
-                                >
-                                  {secondaryAction.actionLabel}
-                                </button>
-                              )}
-                              {additionalActionCount > 0 && (
-                                <span className="text-xs text-slate-300 whitespace-nowrap">
-                                  +{additionalActionCount} more
-                                </span>
                               )}
                             </>
                           )}

@@ -280,17 +280,27 @@ UPDATE "NextStepConfig" SET
 WHERE "projectStage" = 'CONTRACT_PHASE' AND "role" = 'CLIENT' AND "actionKey" = 'DEPOSIT_ESCROW_FUNDS' AND "modalTitle" IS NULL;
 
 UPDATE "NextStepConfig" SET
-  "modalTitle" = 'Submit the contract',
-  "modalBody" = 'Submit your drafted contract with terms, milestones, and payment schedule for the client to review and sign.',
-  "modalDetailsBody" = 'Be clear and professional in your contract terms. This document protects both parties and sets expectations.',
-  "modalSuccessTitle" = 'Contract submitted',
-  "modalSuccessBody" = 'Your contract has been delivered to the client.',
-  "modalSuccessNextStepBody" = 'The client will review and sign. Once both signatures are complete, you can begin work after escrow funding.',
-  "modalPrimaryButtonLabel" = 'Submit contract',
+  "modalTitle" = 'Review the agreement',
+  "modalBody" = 'Review your drafted agreement terms, milestones, and payment schedule before sending to the client for signature.',
+  "modalDetailsBody" = 'Ensure the agreement is complete and accurate. Once sent, the client reviews and signs before you complete your signature.',
+  "modalSuccessTitle" = 'Agreement reviewed',
+  "modalSuccessBody" = 'Your agreement is ready for client review and signature.',
+  "modalSuccessNextStepBody" = 'After the client signs, you will sign to finalize and move to escrow funding.',
+  "modalPrimaryButtonLabel" = 'Review agreement',
   "modalSecondaryButtonLabel" = 'Review first',
   "modalPrimaryActionType" = 'navigate_tab',
   "modalSecondaryActionType" = 'close_modal'
 WHERE "projectStage" = 'CONTRACT_PHASE' AND "role" = 'PROFESSIONAL' AND "actionKey" = 'SUBMIT_CONTRACT' AND "modalTitle" IS NULL;
+
+-- Normalize professional pre-sign action label and modal copy for existing rows too.
+UPDATE "NextStepConfig" SET
+  "actionLabel" = 'Review agreement',
+  "modalTitle" = 'Review the agreement',
+  "modalBody" = 'Review your drafted agreement terms, milestones, and payment schedule before sending to the client for signature.',
+  "modalDetailsBody" = 'Ensure the agreement is complete and accurate. Once sent, the client reviews and signs before you complete your signature.',
+  "modalPrimaryButtonLabel" = 'Review agreement',
+  "updatedAt" = NOW()
+WHERE "projectStage" = 'CONTRACT_PHASE' AND "role" = 'PROFESSIONAL' AND "actionKey" = 'SUBMIT_CONTRACT';
 
 UPDATE "NextStepConfig" SET
   "modalTitle" = 'Sign the contract',

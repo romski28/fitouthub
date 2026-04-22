@@ -153,7 +153,7 @@ ON CONFLICT ("projectStage","role","actionKey") DO NOTHING;
 --
 -- Flow after client accepts a quote:
 --   1. acceptQuote() sets Project.currentStage = 'CONTRACT_PHASE'
---   2. Professional sees SUBMIT_CONTRACT first
+--   2. Professional sees REVIEW_AGREEMENT (SUBMIT_CONTRACT action key) first
 --   3. Client sees REVIEW_CONTRACT (requiresAction=false = waiting for professional)
 --   4. Once contract submitted: client sees SIGN_CONTRACT (requiresAction=true)
 --   5. After both sign: client sees DEPOSIT_ESCROW_FUNDS
@@ -182,7 +182,7 @@ VALUES
 
   -- Professional steps
   (gen_random_uuid()::text, 'CONTRACT_PHASE', 'PROFESSIONAL',
-   'SUBMIT_CONTRACT', 'Submit contract',
+    'SUBMIT_CONTRACT', 'Review agreement',
    'Submit draft contract with milestones and schedule.',
    true, false, true, 1, NOW(), NOW()),
 

@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-04-22-4ff8f57",
+    "date": "2026-04-22T21:39:14+08:00",
+    "title": "Unify professional agreement CTA and fix contract access",
+    "summary": "Unify professional agreement CTA and fix contract access",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "4ff8f57",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql",
+      "apps/api/prisma/FIX_CONTRACT_MODAL_LABELS.sql",
+      "apps/api/prisma/SEED_NEXT_STEP_CONFIG.sql",
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/projects/contract.service.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-79fb9c6",
     "date": "2026-04-22T19:04:59+08:00",
     "title": "Invalidate next-step cache after agreement signing",

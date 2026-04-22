@@ -316,6 +316,24 @@ export class NextStepService {
       const clientSigned = Boolean(project.clientSignedAt);
       const professionalSigned = Boolean(project.professionalSignedAt);
 
+      if (role === 'PROFESSIONAL' && !clientSigned && !professionalSigned) {
+        const submitContractStep = nextSteps.find(
+          (step) => step.actionKey === 'SUBMIT_CONTRACT',
+        );
+        availableConfigSteps = submitContractStep
+          ? [submitContractStep]
+          : [
+              createSyntheticPrimaryStep(
+                'SUBMIT_CONTRACT',
+                'Review agreement',
+                true,
+                role,
+                effectiveStage,
+                'Submit your drafted agreement so the client can review and sign.',
+              ),
+            ];
+      }
+
       if (role === 'CLIENT' && clientSigned && !professionalSigned) {
         availableConfigSteps = [
           createSyntheticPrimaryStep(
@@ -343,22 +361,21 @@ export class NextStepService {
       }
 
       if (role === 'PROFESSIONAL' && clientSigned && !professionalSigned) {
-        const contractSigningSteps = nextSteps.filter((step) =>
-          ['REVIEW_CONTRACT', 'SIGN_CONTRACT'].includes(step.actionKey),
-        );
-        availableConfigSteps =
-          contractSigningSteps.length > 0
-            ? contractSigningSteps
-            : [
-                createSyntheticPrimaryStep(
-                  'SIGN_CONTRACT',
-                  'Sign contract',
-                  true,
-                  role,
-                  effectiveStage,
-                  'Sign the contract so the client can proceed to escrow funding.',
-                ),
-              ];
+        const signContractStep =
+          nextSteps.find((step) => step.actionKey === 'SIGN_CONTRACT') ||
+          nextSteps.find((step) => step.actionKey === 'REVIEW_CONTRACT');
+        availableConfigSteps = signContractStep
+          ? [signContractStep]
+          : [
+              createSyntheticPrimaryStep(
+                'SIGN_CONTRACT',
+                'Sign contract',
+                true,
+                role,
+                effectiveStage,
+                'Sign the contract so the client can proceed to escrow funding.',
+              ),
+            ];
       }
 
       if (role === 'PROFESSIONAL' && clientSigned && professionalSigned) {
