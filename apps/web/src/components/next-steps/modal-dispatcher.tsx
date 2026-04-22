@@ -9,6 +9,7 @@ import { GeneralActionModal } from './general-action-modal';
 import { QuoteActionModal } from './quote-action-modal';
 import { ReviewQuotesModal } from './review-quotes-modal';
 import { ContractActionModal } from './contract-action-modal';
+import { StartDateActionModal } from './start-date-action-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -81,7 +82,7 @@ export function ModalDispatcher({
 
       closeModal();
     },
-    [closeModal, onDetailsNavigate, router, state.projectId, state.role]
+    [closeModal, onDetailsNavigate, router, state.projectDetailsPath, state.projectId, state.role]
   );
 
   // Route to correct modal based on actionKey
@@ -145,6 +146,16 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'start-date') {
+    return (
+      <StartDateActionModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -152,7 +163,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'review-quotes' | 'contract' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'review-quotes' | 'contract' | 'start-date' {
   // Payment-related actions
   if (
     [
@@ -183,6 +194,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'rev
     ].includes(actionKey)
   ) {
     return 'contract';
+  }
+
+  if (['CONFIRM_START_DATE', 'CONFIRM_START_DETAILS', 'CONFIRM_SCHEDULE'].includes(actionKey)) {
+    return 'start-date';
   }
 
   // Default to general modal
