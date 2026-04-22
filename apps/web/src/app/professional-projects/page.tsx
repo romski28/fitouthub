@@ -90,7 +90,11 @@ export default function ProfessionalProjectsPage() {
 
   const openProfessionalNextStepModal = useCallback(
     async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
-      if (!professional?.id || !accessToken) return;
+      console.log('[prof-modal] click', { profId: professional?.id, hasToken: !!accessToken, actionKey: action.actionKey, hasModalContent: !!action.modalContent });
+      if (!professional?.id || !accessToken) {
+        console.warn('[prof-modal] blocked: missing professional.id or accessToken');
+        return;
+      }
       const projectOverviewPath = `/professional-projects/${projectProfessionalId}?tab=overview`;
       let modalContent = action.modalContent;
 
@@ -118,6 +122,7 @@ export default function ProfessionalProjectsPage() {
 
       router.prefetch(getProfessionalShowMeHref(projectProfessionalId, action.actionKey));
 
+      console.log('[prof-modal] calling openModal', { actionKey: action.actionKey, hasModalContent: !!modalContent });
       await openModal(
         action.actionKey,
         projectId,
@@ -126,6 +131,7 @@ export default function ProfessionalProjectsPage() {
         'PROFESSIONAL',
         modalContent,
       );
+      console.log('[prof-modal] openModal resolved');
     },
     [accessToken, nextStepCacheScope, openModal, professional?.id, router],
   );

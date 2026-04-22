@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-f89328d",
+    "date": "2026-04-22T11:38:18+08:00",
+    "title": "Add debug logs to diagnose Submit Quote modal not opening",
+    "summary": "Add debug logs to diagnose Submit Quote modal not opening",
+    "areas": [
+      "web"
+    ],
+    "commit": "f89328d",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-1095080",
     "date": "2026-04-22T11:21:10+08:00",
     "title": "Refresh professional next-step modal content from API before opening",
