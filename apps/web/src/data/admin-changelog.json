@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-1095080",
+    "date": "2026-04-22T11:21:10+08:00",
+    "title": "Refresh professional next-step modal content from API before opening",
+    "summary": "Refresh professional next-step modal content from API before opening",
+    "areas": [
+      "web"
+    ],
+    "commit": "1095080",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-f262ac2",
     "date": "2026-04-22T11:08:01+08:00",
     "title": "Ensure professional next-step modal opens with fallback content",
