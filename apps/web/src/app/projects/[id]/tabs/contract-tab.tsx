@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
-import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 import { getClientTabForAction } from '@/lib/client-workflow';
 
@@ -164,6 +164,8 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       }
 
       await response.json();
+      // Ensure list and detail views don't reuse stale next-step cache after signing.
+      invalidateNextStepCache(projectId);
       await openWorkflowModal('Agreement signed successfully!');
 
       // Refresh contract data

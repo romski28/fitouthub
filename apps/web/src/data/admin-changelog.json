@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-79fb9c6",
+    "date": "2026-04-22T19:04:59+08:00",
+    "title": "Invalidate next-step cache after agreement signing",
+    "summary": "Invalidate next-step cache after agreement signing",
+    "areas": [
+      "web"
+    ],
+    "commit": "79fb9c6",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/contract-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-0aead27",
     "date": "2026-04-22T18:47:30+08:00",
     "title": "Contract modal: remove duplicate actions and admin-only request-change hint",
