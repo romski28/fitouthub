@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-d437f3a",
+    "date": "2026-04-22T13:01:33+08:00",
+    "title": "Add comprehensive Phase A implementation summary",
+    "summary": "Add comprehensive Phase A implementation summary",
+    "areas": [
+      "infra"
+    ],
+    "commit": "d437f3a",
+    "files": [
+      "PLATFORM_FEE_PHASE_A_COMPLETE.md"
+    ]
+  },
+  {
     "id": "2026-04-22-afa6999",
     "date": "2026-04-22T13:00:43+08:00",
     "title": "Phase A platform fee implementation: tiered schema, fee service, quote endpoints",
