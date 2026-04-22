@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-e5429b5",
+    "date": "2026-04-22T11:42:38+08:00",
+    "title": "Fix ModalDispatcher returning null for quote/contract action types",
+    "summary": "Fix ModalDispatcher returning null for quote/contract action types",
+    "areas": [
+      "web"
+    ],
+    "commit": "e5429b5",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-f89328d",
     "date": "2026-04-22T11:38:18+08:00",
     "title": "Add debug logs to diagnose Submit Quote modal not opening",

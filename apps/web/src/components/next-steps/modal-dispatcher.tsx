@@ -100,7 +100,7 @@ export function ModalDispatcher({
   }
 
   // Payment/transfer actions
-  if (modalType === 'payment') {
+  if (modalType === 'payment' || modalType === 'quote' || modalType === 'contract') {
     return (
       <GeneralActionModal
         isOpen={state.isOpen}
