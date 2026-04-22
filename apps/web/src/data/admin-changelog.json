@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-22-34e75e3",
+    "date": "2026-04-22T10:18:16+08:00",
+    "title": "Improve compare bar visibility and unify card action button styles",
+    "summary": "Improve compare bar visibility and unify card action button styles",
+    "areas": [
+      "web"
+    ],
+    "commit": "34e75e3",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-f970be8",
     "date": "2026-04-22T10:07:44+08:00",
     "title": "Fix compare card button interaction and remove selected checkmark labels",

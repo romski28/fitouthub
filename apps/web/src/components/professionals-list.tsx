@@ -274,23 +274,23 @@ const ProfessionalCard = memo(({
             )}
           </div>
 
-        {/* Actions — all buttons share the same height via browse-card-button-sm */}
-        <div className="mt-auto flex items-stretch gap-1.5">
+        {/* Actions — equal-width buttons with consistent visual language */}
+        <div className={`mt-auto grid gap-1.5 ${showSelectionAction ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
-            className="browse-card-button-sm browse-card-button-secondary flex-1 whitespace-nowrap"
+            className="browse-card-button-sm w-full border-2 border-sky-400 bg-sky-400/10 text-sky-100 hover:bg-sky-400/20"
           >
-            {t('viewDetails')}
+            Show More
           </button>
           <button
             type="button"
             onClick={() => onCompare(pro)}
             title={isCompared ? 'Remove from comparison' : 'Add to comparison (need 3+ for comparison)'}
-            className={`browse-card-button-sm shrink-0 ${
+            className={`browse-card-button-sm w-full border-2 ${
               isCompared
-                ? 'border border-indigo-400 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                ? 'border-violet-400 bg-violet-400/10 text-violet-100 hover:bg-violet-400/20'
+                : 'border-violet-500/70 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20'
             }`}
           >
             {isCompared ? 'Comparing' : 'Compare'}
@@ -300,10 +300,10 @@ const ProfessionalCard = memo(({
               type="button"
               onClick={() => onToggle(pro)}
               disabled={disableSelection}
-              className={`browse-card-button-sm shrink-0 ${
+              className={`browse-card-button-sm w-full border-2 ${
                 isSelected
-                  ? 'browse-card-button-success'
-                  : 'browse-card-button-success-outline'
+                  ? 'border-emerald-400 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20'
+                  : 'border-emerald-500/80 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
               }`}
             >
                 {isSelected ? 'Selected' : t('askForHelp')}
@@ -1105,23 +1105,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         </div>
       )}
 
-      {/* Compare bar — sticky top when ≥1 professional is being compared */}
+      {/* Compare bar — fixed so it stays visible as soon as items are selected */}
       {compareIds.size > 0 && (
-        <div className="sticky top-0 z-30 border-b border-slate-300 bg-gradient-to-r from-slate-100 to-slate-50 px-4 py-3 shadow-sm">
+        <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-violet-300 bg-gradient-to-r from-violet-100 to-slate-100 px-4 py-3 shadow-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold text-slate-700 shrink-0">📊 Compare:</span>
+              <span className="text-sm font-semibold text-violet-900 shrink-0">Compare:</span>
               <div className="flex flex-wrap gap-1.5 min-w-0">
                 {Array.from(compareIds).map((id) => {
                   const pro = filtered.find((p) => p.id === id);
                   if (!pro) return null;
                   return (
-                    <span key={id} className="flex items-center gap-1 rounded-full bg-white border border-slate-200 pl-2.5 pr-1 py-0.5 text-[11px] font-medium text-slate-700">
+                    <span key={id} className="flex items-center gap-1 rounded-full border border-violet-300 bg-white pl-2.5 pr-1 py-0.5 text-[11px] font-medium text-violet-800">
                       {pro.fullName || pro.businessName || 'Professional'}
                       <button
                         type="button"
                         onClick={() => toggleCompare(pro)}
-                        className="rounded-full p-0.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                        className="rounded-full p-0.5 text-violet-400 hover:bg-violet-200 hover:text-violet-700"
                         aria-label={`Remove ${pro.fullName || pro.businessName} from comparison`}
                       >
                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1137,7 +1137,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               <button
                 type="button"
                 onClick={() => setCompareIds(new Set())}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                className="rounded-lg border border-violet-300 bg-white px-3 py-1.5 text-xs font-semibold text-violet-800 transition hover:bg-violet-100"
               >
                 Clear
               </button>
@@ -1145,7 +1145,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 type="button"
                 onClick={() => setShowCompare(true)}
                 disabled={compareIds.size < 2}
-                className="rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-lg bg-violet-700 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-violet-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Compare {compareIds.size >= 2 ? `${compareIds.size}` : '(need ≥2)'} →
               </button>
