@@ -7,6 +7,7 @@ import { getClientTabForAction } from '@/lib/client-workflow';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 import { GeneralActionModal } from './general-action-modal';
 import { QuoteActionModal } from './quote-action-modal';
+import { ReviewQuotesModal } from './review-quotes-modal';
 import { ContractActionModal } from './contract-action-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
@@ -125,6 +126,15 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'review-quotes') {
+    return (
+      <ReviewQuotesModal
+        isOpen={state.isOpen}
+        onClose={closeModal}
+      />
+    );
+  }
+
   if (modalType === 'contract') {
     return (
       <ContractActionModal
@@ -142,7 +152,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'contract' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'review-quotes' | 'contract' {
   // Payment-related actions
   if (
     [
@@ -154,16 +164,14 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'con
     return 'payment';
   }
 
-  // Quote-related actions
-  if (
-    [
-      'SUBMIT_QUOTE',
-      'PREPARE_REVISED_QUOTE',
-      'REVIEW_INCOMING_QUOTES',
-      'COMPARE_QUOTES',
-    ].includes(actionKey)
-  ) {
+  // Professional: submit/revise quote
+  if (['SUBMIT_QUOTE', 'PREPARE_REVISED_QUOTE'].includes(actionKey)) {
     return 'quote';
+  }
+
+  // Client: review received quotes
+  if (['REVIEW_INCOMING_QUOTES', 'COMPARE_QUOTES'].includes(actionKey)) {
+    return 'review-quotes';
   }
 
   // Contract-related actions

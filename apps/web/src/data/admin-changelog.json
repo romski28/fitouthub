@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-22-f13347c",
+    "date": "2026-04-22T17:08:37+08:00",
+    "title": "Add client ReviewQuotesModal and fix dispatcher routing for REVIEW_INCOMING_QUOTES/COMPARE_QUOTES",
+    "summary": "Add client ReviewQuotesModal and fix dispatcher routing for REVIEW_INCOMING_QUOTES/COMPARE_QUOTES",
+    "areas": [
+      "web"
+    ],
+    "commit": "f13347c",
+    "files": [
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-22-d437f3a",
     "date": "2026-04-22T13:01:33+08:00",
     "title": "Add comprehensive Phase A implementation summary",
