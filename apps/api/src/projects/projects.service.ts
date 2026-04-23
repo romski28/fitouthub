@@ -2884,6 +2884,24 @@ Please review the project details and respond with your quote or decline the inv
     return role === 'professional' ? 'Professional' : 'Client';
   }
 
+  private isProjectInContractWorkflowStage(stage?: string | null) {
+    const contractWorkflowStages = new Set([
+      'CONTRACT_PHASE',
+      'PRE_WORK',
+      'WORK_IN_PROGRESS',
+      'MILESTONE_PENDING',
+      'PAYMENT_RELEASED',
+      'NEAR_COMPLETION',
+      'FINAL_INSPECTION',
+      'COMPLETE',
+      'WARRANTY_PERIOD',
+      'CLOSED',
+    ]);
+
+    const normalizedStage = String(stage || '').toUpperCase();
+    return contractWorkflowStages.has(normalizedStage);
+  }
+
   async requestProjectStartProposal(
     projectId: string,
     professionalId: string,
@@ -2923,7 +2941,12 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Professional is not linked to this project');
     }
 
-    if (projectProfessional.status !== 'awarded') {
+    const isAwardedStatus = String(projectProfessional.status || '').toLowerCase() === 'awarded';
+    const isContractWorkflowStage = this.isProjectInContractWorkflowStage(
+      projectProfessional.project?.currentStage,
+    );
+
+    if (!isAwardedStatus && !isContractWorkflowStage) {
       throw new BadRequestException('Start details can only be proposed for awarded projects');
     }
 

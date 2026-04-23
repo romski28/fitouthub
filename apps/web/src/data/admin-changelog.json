@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-23-e4992a4",
+    "date": "2026-04-23T09:16:38+08:00",
+    "title": "Align start proposal eligibility with contract workflow stages",
+    "summary": "Align start proposal eligibility with contract workflow stages",
+    "areas": [
+      "api"
+    ],
+    "commit": "e4992a4",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-23-fc5e6c8",
     "date": "2026-04-23T00:31:18+08:00",
     "title": "Disable duration editing in schedule start-date panel",
