@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-23-5c0be28",
+    "date": "2026-04-23T23:10:57+08:00",
+    "title": "Add details flip support to quote modal",
+    "summary": "Add details flip support to quote modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "5c0be28",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-d827fa1",
     "date": "2026-04-23T22:40:16+08:00",
     "title": "Add professional inspection slot booking",
