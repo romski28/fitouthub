@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-23-18e96f5",
+    "date": "2026-04-23T17:01:53+08:00",
+    "title": "fix: align bulk clean with single-delete workflow",
+    "summary": "fix: align bulk clean with single-delete workflow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "18e96f5",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/admin/projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-b0a99b5",
     "date": "2026-04-23T16:41:43+08:00",
     "title": "fix: delete modal — spinner, progress bar, error display, block dismiss during purge",

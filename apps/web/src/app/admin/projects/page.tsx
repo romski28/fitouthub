@@ -250,6 +250,8 @@ export default function AdminProjectsPage() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkCleanPreviewResult | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkDeleteConfirmText, setBulkDeleteConfirmText] = useState("");
+  const [bulkExecuteResult, setBulkExecuteResult] = useState<{ action: string; affected: number; skipped: number } | null>(null);
   const cancelledStatuses = ["rejected", "withdrawn", "declined"];
   const bulkStatusOptions = [
     "pending",
@@ -436,6 +438,7 @@ export default function AdminProjectsPage() {
     if (!accessToken) return;
     setBulkLoading(true);
     setBulkError(null);
+    setBulkExecuteResult(null);
     try {
       const payload = buildBulkPayload();
       const res = await fetch(`${API_BASE_URL}/projects/admin/bulk-clean-execute`, {
@@ -447,7 +450,10 @@ export default function AdminProjectsPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(await res.text());
-      await runBulkPreview();
+      const data = await res.json();
+      setBulkExecuteResult({ action: data.action, affected: data.affected, skipped: data.skipped });
+      setBulkResult(null);
+      setBulkDeleteConfirmText("");
       await fetchProjects();
     } catch (err) {
       setBulkError(err instanceof Error ? err.message : "Failed to run bulk execute");
@@ -791,6 +797,8 @@ export default function AdminProjectsPage() {
           onClose={() => {
             if (bulkLoading) return;
             setBulkCleanOpen(false);
+            setBulkExecuteResult(null);
+            setBulkDeleteConfirmText("");
           }}
           maxWidth="max-w-3xl"
         >
@@ -896,6 +904,47 @@ export default function AdminProjectsPage() {
               </div>
             )}
 
+            {/* Execute result summary */}
+            {bulkExecuteResult && !bulkLoading && (
+              <div className={`rounded-md border px-3 py-3 text-sm ${
+                bulkExecuteResult.action === 'permanent_delete'
+                  ? 'border-rose-200 bg-rose-50 text-rose-800'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                }`}>
+                <p className="font-semibold">
+                  {bulkExecuteResult.action === 'permanent_delete' ? '🗑 Purge complete' : '✓ Archive complete'}
+                </p>
+                <p className="mt-1">
+                  <span className="font-semibold">{bulkExecuteResult.affected}</span> project{bulkExecuteResult.affected !== 1 ? 's' : ''} {bulkExecuteResult.action === 'permanent_delete' ? 'permanently deleted' : 'archived'}.
+                  {bulkExecuteResult.skipped > 0 && (
+                    <span className="ml-2 text-slate-500">{bulkExecuteResult.skipped} skipped.</span>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* Typed confirmation gate for permanent delete */}
+            {bulkAction === "permanent_delete" && bulkResult && bulkResult.totalMatched > 0 && !bulkExecuteResult && (
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-3 space-y-2">
+                <p className="text-sm font-semibold text-rose-800">
+                  You are about to permanently delete{' '}
+                  <span className="underline">{bulkResult.totalMatched} project{bulkResult.totalMatched !== 1 ? 's' : ''}</span>{' '}
+                  and all their associated records. This cannot be undone.
+                </p>
+                <p className="text-xs text-rose-700">
+                  Type <strong>DELETE</strong> below to unlock the execute button.
+                </p>
+                <input
+                  type="text"
+                  value={bulkDeleteConfirmText}
+                  onChange={(e) => setBulkDeleteConfirmText(e.target.value)}
+                  placeholder="Type DELETE to confirm"
+                  disabled={bulkLoading}
+                  className="w-full rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-mono text-rose-900 placeholder-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                />
+              </div>
+            )}
+
             {bulkResult && (
               <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-sm text-slate-700">
@@ -937,7 +986,11 @@ export default function AdminProjectsPage() {
             <div className="flex flex-wrap gap-2 pt-1">
               <button
                 type="button"
-                onClick={() => setBulkCleanOpen(false)}
+                onClick={() => {
+                  setBulkCleanOpen(false);
+                  setBulkExecuteResult(null);
+                  setBulkDeleteConfirmText("");
+                }}
                 disabled={bulkLoading}
                 className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
@@ -945,23 +998,30 @@ export default function AdminProjectsPage() {
               </button>
               <button
                 type="button"
-                onClick={runBulkPreview}
+                onClick={() => { setBulkExecuteResult(null); setBulkDeleteConfirmText(""); runBulkPreview(); }}
                 disabled={bulkLoading}
                 className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
               >
-                {bulkLoading ? "Running..." : "Preview"}
+                {bulkLoading && !bulkExecuteResult ? "Running..." : "Preview"}
               </button>
               <button
                 type="button"
                 onClick={runBulkExecute}
-                disabled={bulkLoading || !bulkResult || bulkResult.totalMatched === 0}
-                className={`rounded-md px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                disabled={
+                  bulkLoading ||
+                  !bulkResult ||
+                  bulkResult.totalMatched === 0 ||
+                  (bulkAction === "permanent_delete" && bulkDeleteConfirmText !== "DELETE")
+                }
+                className={`rounded-md px-3 py-2 text-sm font-semibold text-white disabled:opacity-40 ${
                   bulkAction === "permanent_delete"
                     ? 'bg-rose-700 hover:bg-rose-800'
                     : 'bg-amber-600 hover:bg-amber-700'
                 }`}
               >
-                {bulkAction === "permanent_delete" ? "Execute Permanent Delete" : "Execute Archive"}
+                {bulkLoading
+                  ? bulkAction === "permanent_delete" ? "Purging..." : "Archiving..."
+                  : bulkAction === "permanent_delete" ? "Execute Permanent Delete" : "Execute Archive"}
               </button>
             </div>
           </div>

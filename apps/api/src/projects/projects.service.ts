@@ -5726,6 +5726,8 @@ Please review the project details and respond with your quote or decline the inv
     createdBefore?: string;
     includeArchived?: boolean;
     limit?: number;
+    adminId?: string;
+    adminName?: string;
   }) {
     const where = this.buildBulkCleanWhere(criteria);
     const safeLimit = Number.isFinite(criteria.limit)
@@ -5776,7 +5778,7 @@ Please review the project details and respond with your quote or decline the inv
 
     let deleted = 0;
     for (const project of candidates) {
-      await this.hardRemove(project.id);
+      await this.hardRemove(project.id, criteria.adminId, criteria.adminName);
       deleted += 1;
     }
 

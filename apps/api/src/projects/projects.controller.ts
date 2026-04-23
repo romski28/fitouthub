@@ -888,6 +888,12 @@ export class ProjectsController {
       throw new BadRequestException('action must be archive or permanent_delete');
     }
 
+    const adminId = req.user?.id || req.user?.sub;
+    const adminName =
+      `${req.user?.firstName || ''} ${req.user?.surname || ''}`.trim() ||
+      req.user?.email ||
+      'Admin';
+
     return this.projectsService.bulkCleanExecute({
       action: body.action,
       statuses: body?.statuses,
@@ -895,6 +901,8 @@ export class ProjectsController {
       createdBefore: body?.createdBefore,
       includeArchived: body?.includeArchived,
       limit: body?.limit,
+      adminId,
+      adminName,
     });
   }
 
