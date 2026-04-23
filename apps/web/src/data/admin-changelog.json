@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-23-b0a99b5",
+    "date": "2026-04-23T16:41:43+08:00",
+    "title": "fix: delete modal — spinner, progress bar, error display, block dismiss during purge",
+    "summary": "fix: delete modal — spinner, progress bar, error display, block dismiss during purge",
+    "areas": [
+      "web"
+    ],
+    "commit": "b0a99b5",
+    "files": [
+      "apps/web/src/app/admin/projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-fa6de93",
     "date": "2026-04-23T16:32:53+08:00",
     "title": "fix: resolve loserChatMessage undefined in awardQuote loser loop",

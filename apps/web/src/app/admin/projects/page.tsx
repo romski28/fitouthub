@@ -234,6 +234,8 @@ export default function AdminProjectsPage() {
   const [archiveId, setArchiveId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "active" | "pending" | "onsite" | "completed" | "cancelled" | "archived"
@@ -352,18 +354,28 @@ export default function AdminProjectsPage() {
 
   const handleDelete = async () => {
     if (!deletingId || !accessToken) return;
-
-    const res = await fetch(`${API_BASE_URL}/projects/${deletingId}/permanent`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!res.ok) throw new Error(await res.text());
-    setProjects((prev) => prev.filter((p) => p.id !== deletingId));
-    setDeletingId(null);
-    setDeleteConfirmStep(1);
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${deletingId}/permanent`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || `Server error ${res.status}`);
+      }
+      setProjects((prev) => prev.filter((p) => p.id !== deletingId));
+      setDeletingId(null);
+      setDeleteConfirmStep(1);
+      setDeleteError(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Delete failed. Please try again.");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const handleArchiveFromDelete = async () => {
@@ -671,69 +683,104 @@ export default function AdminProjectsPage() {
         <ModalOverlay
           isOpen={!!deletingId}
           onClose={() => {
+            if (deleteLoading) return;
             setDeletingId(null);
             setDeleteConfirmStep(1);
+            setDeleteError(null);
           }}
           maxWidth="max-w-lg"
         >
           <div className="space-y-4">
+            {/* Header */}
             <div className="flex items-start gap-3">
-              <div className="mt-1 h-9 w-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="mt-1 h-9 w-9 flex-none rounded-full bg-rose-100 flex items-center justify-center text-rose-700">
+                {deleteLoading ? (
+                  <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
               </div>
               <div className="space-y-1">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  {deleteConfirmStep === 1 ? "Delete Project Permanently?" : "Final Confirmation"}
+                  {deleteLoading
+                    ? "Purging project…"
+                    : deleteConfirmStep === 1
+                    ? "Delete Project Permanently?"
+                    : "Final Confirmation"}
                 </h3>
                 <p className="text-sm text-slate-600">
-                  {deleteConfirmStep === 1
+                  {deleteLoading
+                    ? "Removing all associated records and files. This may take a few seconds — do not close this window."
+                    : deleteConfirmStep === 1
                     ? "Permanent delete is irreversible. If you only want to hide it from platform users, choose Archive instead."
-                    : "This will permanently delete the project and associated records. This cannot be undone."}
+                    : "This will permanently delete the project and every associated record. This cannot be undone."}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDeletingId(null);
-                  setDeleteConfirmStep(1);
-                }}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-              >
-                Cancel
-              </button>
+            {/* In-progress bar */}
+            {deleteLoading && (
+              <div className="overflow-hidden rounded-full bg-rose-100" style={{ height: 4 }}>
+                <div className="h-full animate-pulse rounded-full bg-rose-500" style={{ width: '100%' }} />
+              </div>
+            )}
 
-              {deleteConfirmStep === 1 ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleArchiveFromDelete}
-                    className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition"
-                  >
-                    Archive Instead
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteConfirmStep(2)}
-                    className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
-                  >
-                    Continue Delete
-                  </button>
-                </>
-              ) : (
+            {/* Error message */}
+            {deleteError && !deleteLoading && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <p className="font-semibold">Delete failed</p>
+                <p className="mt-0.5 font-mono text-xs break-all">{deleteError}</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            {!deleteLoading && (
+              <div className="flex flex-wrap gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={handleDelete}
-                  className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800 transition"
+                  onClick={() => {
+                    setDeletingId(null);
+                    setDeleteConfirmStep(1);
+                    setDeleteError(null);
+                  }}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Yes, Delete Permanently
+                  Cancel
                 </button>
-              )}
-            </div>
+
+                {deleteConfirmStep === 1 ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleArchiveFromDelete}
+                      className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition"
+                    >
+                      Archive Instead
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDeleteConfirmStep(2); setDeleteError(null); }}
+                      className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
+                    >
+                      Continue Delete
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800 transition"
+                  >
+                    {deleteError ? "Retry Delete" : "Yes, Delete Permanently"}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </ModalOverlay>
       )}
