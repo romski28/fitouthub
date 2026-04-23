@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-23-6ebacf5",
+    "date": "2026-04-23T10:40:45+08:00",
+    "title": "feat(web): add class badges with roman numerals to project hero",
+    "summary": "feat(web): add class badges with roman numerals to project hero",
+    "areas": [
+      "web"
+    ],
+    "commit": "6ebacf5",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/project-info-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-7f20ee4",
     "date": "2026-04-23T10:32:10+08:00",
     "title": "Refine professional project detail status and hero formatting",

@@ -9,6 +9,7 @@ export type ProjectInfoProps = {
   title: string;
   region: string;
   status: string;
+  projectScale?: string | null;
   notes?: string;
   clientName?: string;
   createdAt?: string;
@@ -54,11 +55,22 @@ const normalizeProfessionalNotes = (value?: string): string[] => {
     .filter(Boolean);
 };
 
+const getProjectClassBadgeLabel = (projectScale?: string | null): string | null => {
+  const normalized = String(projectScale || '').trim().toUpperCase();
+  if (!normalized) return null;
+
+  if (normalized === 'SCALE_1' || normalized === '1' || normalized === 'I') return 'I';
+  if (normalized === 'SCALE_2' || normalized === '2' || normalized === 'II') return 'II';
+  if (normalized === 'SCALE_3' || normalized === '3' || normalized === 'III') return 'III';
+  return null;
+};
+
 export default function ProjectInfoCard({
   role,
   title,
   region,
   status,
+  projectScale,
   notes,
   clientName,
   createdAt,
@@ -76,6 +88,7 @@ export default function ProjectInfoCard({
   const isProfessional = role === 'professional';
   const createdLabel = isProfessional ? 'Invited' : 'Created';
   const professionalNoteLines = isProfessional ? normalizeProfessionalNotes(notes) : [];
+  const projectClassBadgeLabel = getProjectClassBadgeLabel(projectScale);
   
   const formatHKD = (amount?: string | number) => {
     if (!amount) return undefined;
@@ -109,6 +122,11 @@ export default function ProjectInfoCard({
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex flex-wrap items-center justify-end gap-2">
+              {projectClassBadgeLabel && (
+                <span className="inline-flex items-center justify-center rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-indigo-400/40">
+                  Class {projectClassBadgeLabel}
+                </span>
+              )}
               <StatusPill
                 status={status}
                 label={status.replace('_', ' ')}

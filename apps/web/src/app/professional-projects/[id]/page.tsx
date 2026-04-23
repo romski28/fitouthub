@@ -23,12 +23,14 @@ import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/
 interface ProjectDetail {
   id: string;
   projectId: string;
+  projectScale?: string;
   professionalId?: string;
   project: {
     id: string;
     projectName: string;
     clientName: string;
     region: string;
+    projectScale?: string;
     currentStage?: string;
     isEmergency?: boolean;
     budget?: string;
@@ -1464,6 +1466,7 @@ export default function ProjectDetailPage() {
               title={project!.project.projectName}
               region={project!.project.region}
               status={projectDisplayStatus}
+              projectScale={project!.projectScale || project!.project.projectScale}
               projectSentimentKey={project!.project.id}
               projectSentimentScope="professional"
               notes={project!.project.notes || undefined}

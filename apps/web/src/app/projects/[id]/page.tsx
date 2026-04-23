@@ -179,6 +179,15 @@ const projectStatusBadge: Record<string, string> = {
   withdrawn: 'bg-slate-700 text-slate-300 border border-slate-600',
 };
 
+const getProjectClassBadgeLabel = (projectScale?: string | null) => {
+  const normalized = String(projectScale || '').trim().toUpperCase();
+  if (!normalized) return null;
+  if (normalized === 'SCALE_1' || normalized === '1' || normalized === 'I') return 'I';
+  if (normalized === 'SCALE_2' || normalized === '2' || normalized === 'II') return 'II';
+  if (normalized === 'SCALE_3' || normalized === '3' || normalized === 'III') return 'III';
+  return null;
+};
+
 const formatDate = (date?: string) => {
   if (!date) return '—';
   try {
@@ -360,6 +369,7 @@ export default function ClientProjectDetailPage() {
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
+  const projectClassBadge = getProjectClassBadgeLabel((project as any)?.projectScale);
   const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
   const isAwarded = projectStatus === 'awarded' || Boolean(awardedPro);
   const statusNormalized = projectStatus.toLowerCase();
@@ -1739,6 +1749,11 @@ export default function ClientProjectDetailPage() {
                 </p>
                 {/* Badges row - mobile only, right-aligned, below region */}
                 <div className="flex justify-end gap-2 mt-3 md:hidden">
+                  {projectClassBadge && (
+                    <span className="inline-flex items-center justify-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200">
+                      Class {projectClassBadge}
+                    </span>
+                  )}
                   <span
                     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                       projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
@@ -1756,6 +1771,11 @@ export default function ClientProjectDetailPage() {
               <div className="flex flex-col items-end gap-2">
                 {/* Badges row - desktop only, inline */}
                 <div className="hidden md:flex items-center justify-end gap-2">
+                  {projectClassBadge && (
+                    <span className="inline-flex items-center justify-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200">
+                      Class {projectClassBadge}
+                    </span>
+                  )}
                   <span
                     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                       projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
