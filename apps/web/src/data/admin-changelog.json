@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-23-fa6de93",
+    "date": "2026-04-23T16:32:53+08:00",
+    "title": "fix: resolve loserChatMessage undefined in awardQuote loser loop",
+    "summary": "fix: resolve loserChatMessage undefined in awardQuote loser loop",
+    "areas": [
+      "api"
+    ],
+    "commit": "fa6de93",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-23-71d1618",
     "date": "2026-04-23T16:26:58+08:00",
     "title": "feat: purge audit log with blast-radius report in admin analytics",

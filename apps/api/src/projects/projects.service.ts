@@ -4815,7 +4815,10 @@ Please review the project details and respond with your quote or decline the inv
           projectProfessionalId: pp.id,
           senderType: 'client',
           senderClientId: project.clientId,
-          content: loserChatMessage,
+          content:
+            pp.quotedAt || pp.quoteAmount
+              ? `Thank you for your quote on "${project.projectName}". Another professional was selected for this project. We appreciate your time and hope to work with you in the future.`
+              : `Bidding has concluded for "${project.projectName}". Thank you for your interest in this opportunity. We look forward to working with you in the future.`,
         },
       });
     }
