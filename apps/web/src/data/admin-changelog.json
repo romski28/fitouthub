@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-23-71d1618",
+    "date": "2026-04-23T16:26:58+08:00",
+    "title": "feat: purge audit log with blast-radius report in admin analytics",
+    "summary": "feat: purge audit log with blast-radius report in admin analytics",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "71d1618",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/admin/analytics/purge-audit/page.tsx",
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/app/admin/projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-f6404e7",
     "date": "2026-04-23T15:54:45+08:00",
     "title": "fix: revoke non-winner project access while keeping loss history",

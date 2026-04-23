@@ -814,7 +814,29 @@ export class ProjectsController {
     if (tokenRole !== 'admin') {
       throw new ForbiddenException('Only admins can permanently delete projects');
     }
-    return this.projectsService.hardRemove(id);
+    const adminId = req.user?.id || req.user?.sub;
+    const adminName =
+      `${req.user?.firstName || ''} ${req.user?.surname || ''}`.trim() ||
+      req.user?.email ||
+      'Admin';
+    return this.projectsService.hardRemove(id, adminId, adminName);
+  }
+
+  @Get('admin/purge-audit')
+  @UseGuards(CombinedAuthGuard)
+  async getPurgeAuditLogs(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    if (tokenRole !== 'admin') {
+      throw new ForbiddenException('Only admins can view purge audit logs');
+    }
+    return this.projectsService.getPurgeAuditLogs(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Post('admin/bulk-clean-preview')

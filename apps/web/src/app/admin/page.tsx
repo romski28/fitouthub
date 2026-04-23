@@ -804,6 +804,12 @@ export default function AdminDashboardPage() {
       href: "/admin/activity-log",
       stat: "Detailed event history",
     },
+    {
+      title: "Purge Audit Log",
+      description: "Permanent record of every project permanently deleted by an admin, including blast radius and record counts.",
+      href: "/admin/analytics/purge-audit",
+      stat: "Immutable delete history",
+    },
   ];
 
   return (

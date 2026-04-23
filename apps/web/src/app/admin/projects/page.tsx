@@ -51,19 +51,7 @@ type BulkCleanPreviewResult = {
   sampled: number;
   statusBreakdown: Array<{ status: string; count: number }>;
   sampleProjects: Array<{ id: string; projectName: string; status: string; createdAt: string }>;
-  sampleImpact: {
-    projectPhotos: number;
-    projectProfessionals: number;
-    projectAssistRequests: number;
-    projectChatThreads: number;
-    financialTransactions: number;
-    siteAccessRequests: number;
-    siteAccessVisits: number;
-    projectMilestones: number;
-    nextStepActions: number;
-    adminActions: number;
-    supportRequestsLinked: number;
-  };
+  sampleImpact: Record<string, number>;
 };
 
 function formatDate(date?: string): string {
@@ -885,12 +873,14 @@ export default function AdminProjectsPage() {
                   <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
                     <p className="font-semibold text-slate-900 mb-1">Sample Impact</p>
                     <ul className="space-y-1">
-                      <li>Project photos: {bulkResult.sampleImpact.projectPhotos}</li>
-                      <li>Project-professionals: {bulkResult.sampleImpact.projectProfessionals}</li>
-                      <li>Assist requests: {bulkResult.sampleImpact.projectAssistRequests}</li>
-                      <li>Project chat threads: {bulkResult.sampleImpact.projectChatThreads}</li>
-                      <li>Financial transactions: {bulkResult.sampleImpact.financialTransactions}</li>
-                      <li>Milestones: {bulkResult.sampleImpact.projectMilestones}</li>
+                      {Object.entries(bulkResult.sampleImpact)
+                        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+                        .map(([key, value]) => (
+                          <li key={key} className="flex justify-between gap-3">
+                            <span>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase())}</span>
+                            <span className="font-semibold text-slate-900">{value}</span>
+                          </li>
+                        ))}
                     </ul>
                   </div>
                 </div>

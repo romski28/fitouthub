@@ -5497,6 +5497,175 @@ Please review the project details and respond with your quote or decline the inv
     return where;
   }
 
+  private async getProjectDeletionImpact(projectIds: string[]) {
+    if (projectIds.length === 0) {
+      return {
+        projectPhotos: 0,
+        projectProfessionals: 0,
+        messages: 0,
+        paymentRequests: 0,
+        projectPaymentPlans: 0,
+        paymentMilestones: 0,
+        projectAssistRequests: 0,
+        assistMessages: 0,
+        projectChatThreads: 0,
+        projectChatMessages: 0,
+        privateChatThreads: 0,
+        privateChatMessages: 0,
+        financialTransactions: 0,
+        escrowLedgers: 0,
+        procurementEvidence: 0,
+        siteAccessRequests: 0,
+        siteAccessVisits: 0,
+        projectMilestones: 0,
+        projectStartProposals: 0,
+        nextStepActions: 0,
+        adminActions: 0,
+        emailTokens: 0,
+        supportRequestsLinked: 0,
+        questionnaireInvites: 0,
+        aiIntakes: 0,
+        siteAccessData: 0,
+        projectLocationDetails: 0,
+        cases: 0,
+        adminMessageAssignments: 0,
+        acProjectsLinked: 0,
+      };
+    }
+
+    const [projectProfessionalIds, assistRequestIds, projectChatThreadIds, privateChatThreadIds, supportRequestIds, paymentPlanIds] = await Promise.all([
+      this.prisma.projectProfessional.findMany({ where: { projectId: { in: projectIds } }, select: { id: true } }),
+      this.prisma.projectAssistRequest.findMany({ where: { projectId: { in: projectIds } }, select: { id: true } }),
+      this.prisma.projectChatThread.findMany({ where: { projectId: { in: projectIds } }, select: { id: true } }),
+      (this.prisma as any).privateChatThread.findMany({ where: { projectId: { in: projectIds } }, select: { id: true } }),
+      this.prisma.supportRequest.findMany({ where: { projectId: { in: projectIds } }, select: { id: true } }),
+      this.prisma.projectPaymentPlan.findMany({ where: { projectId: { in: projectIds } }, select: { id: true } }),
+    ]);
+
+    const assignmentIds = projectProfessionalIds.map((row) => row.id);
+    const assistIds = assistRequestIds.map((row) => row.id);
+    const projectThreadIds = projectChatThreadIds.map((row) => row.id);
+    const privateIds = privateChatThreadIds.map((row: { id: string }) => row.id);
+    const supportIds = supportRequestIds.map((row) => row.id);
+    const paymentPlanIdList = paymentPlanIds.map((row) => row.id);
+
+    const [
+      projectPhotos,
+      projectProfessionals,
+      messages,
+      paymentRequests,
+      projectPaymentPlans,
+      paymentMilestones,
+      projectAssistRequests,
+      assistMessages,
+      projectChatThreads,
+      projectChatMessages,
+      privateChatThreads,
+      privateChatMessages,
+      financialTransactions,
+      escrowLedgers,
+      procurementEvidence,
+      siteAccessRequests,
+      siteAccessVisits,
+      projectMilestones,
+      projectStartProposals,
+      nextStepActions,
+      adminActions,
+      emailTokens,
+      supportRequestsLinked,
+      questionnaireInvites,
+      aiIntakes,
+      siteAccessData,
+      projectLocationDetails,
+      cases,
+      acProjectsLinked,
+    ] = await Promise.all([
+      this.prisma.projectPhoto.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.projectProfessional.count({ where: { projectId: { in: projectIds } } }),
+      assignmentIds.length ? this.prisma.message.count({ where: { projectProfessionalId: { in: assignmentIds } } }) : Promise.resolve(0),
+      assignmentIds.length ? this.prisma.paymentRequest.count({ where: { projectProfessionalId: { in: assignmentIds } } }) : Promise.resolve(0),
+      this.prisma.projectPaymentPlan.count({ where: { projectId: { in: projectIds } } }),
+      paymentPlanIdList.length ? this.prisma.paymentMilestone.count({ where: { paymentPlanId: { in: paymentPlanIdList } } }) : Promise.resolve(0),
+      this.prisma.projectAssistRequest.count({ where: { projectId: { in: projectIds } } }),
+      assistIds.length ? this.prisma.assistMessage.count({ where: { assistRequestId: { in: assistIds } } }) : Promise.resolve(0),
+      this.prisma.projectChatThread.count({ where: { projectId: { in: projectIds } } }),
+      projectThreadIds.length ? this.prisma.projectChatMessage.count({ where: { threadId: { in: projectThreadIds } } }) : Promise.resolve(0),
+      (this.prisma as any).privateChatThread.count({ where: { projectId: { in: projectIds } } }),
+      privateIds.length ? (this.prisma as any).privateChatMessage.count({ where: { threadId: { in: privateIds } } }) : Promise.resolve(0),
+      this.prisma.financialTransaction.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.escrowLedger.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.milestoneProcurementEvidence.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.siteAccessRequest.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.siteAccessVisit.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.projectMilestone.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.projectStartProposal.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.nextStepAction.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.adminAction.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.emailToken.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.supportRequest.count({ where: { projectId: { in: projectIds } } }),
+      (this.prisma as any).questionnaireInvite.count({ where: { projectId: { in: projectIds } } }),
+      (this.prisma as any).aiIntake.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.siteAccessData.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.projectLocationDetails.count({ where: { projectId: { in: projectIds } } }),
+      (this.prisma as any).case.count({
+        where: {
+          OR: [
+            { projectId: { in: projectIds } },
+            ...(assistIds.length ? [{ assistRequestId: { in: assistIds } }] : []),
+            ...(supportIds.length ? [{ supportRequestId: { in: supportIds } }] : []),
+            ...(privateIds.length ? [{ privateChatId: { in: privateIds } }] : []),
+          ],
+        },
+      }),
+      this.prisma.acProject.count({ where: { linkedProjectId: { in: projectIds } } }),
+    ]);
+
+    const adminMessageAssignments = await this.prisma.adminMessageAssignment.count({
+      where: {
+        OR: [
+          { sourceType: 'project', sourceId: { in: projectIds } },
+          ...(projectThreadIds.length ? [{ sourceType: 'project', sourceId: { in: projectThreadIds } }] : []),
+          ...(assistIds.length ? [{ sourceType: 'assist', sourceId: { in: assistIds } }] : []),
+          ...(supportIds.length ? [{ sourceType: 'support', sourceId: { in: supportIds } }] : []),
+          ...(privateIds.length ? [{ sourceType: 'private', sourceId: { in: privateIds } }] : []),
+        ],
+      },
+    });
+
+    return {
+      projectPhotos,
+      projectProfessionals,
+      messages,
+      paymentRequests,
+      projectPaymentPlans,
+      paymentMilestones,
+      projectAssistRequests,
+      assistMessages,
+      projectChatThreads,
+      projectChatMessages,
+      privateChatThreads,
+      privateChatMessages,
+      financialTransactions,
+      escrowLedgers,
+      procurementEvidence,
+      siteAccessRequests,
+      siteAccessVisits,
+      projectMilestones,
+      projectStartProposals,
+      nextStepActions,
+      adminActions,
+      emailTokens,
+      supportRequestsLinked,
+      questionnaireInvites,
+      aiIntakes,
+      siteAccessData,
+      projectLocationDetails,
+      cases,
+      adminMessageAssignments,
+      acProjectsLinked,
+    };
+  }
+
   async bulkCleanPreview(criteria: {
     statuses?: string[];
     olderThanDays?: number;
@@ -5530,21 +5699,7 @@ Please review the project details and respond with your quote or decline the inv
     ]);
 
     const projectIds = sampleProjects.map((project) => project.id);
-    const affected = projectIds.length
-      ? await Promise.all([
-          this.prisma.projectPhoto.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.projectProfessional.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.projectAssistRequest.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.projectChatThread.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.financialTransaction.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.siteAccessRequest.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.siteAccessVisit.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.projectMilestone.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.nextStepAction.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.adminAction.count({ where: { projectId: { in: projectIds } } }),
-          this.prisma.supportRequest.count({ where: { projectId: { in: projectIds } } }),
-        ])
-      : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const affected = await this.getProjectDeletionImpact(projectIds);
 
     return {
       criteria: {
@@ -5557,19 +5712,7 @@ Please review the project details and respond with your quote or decline the inv
       sampled: sampleProjects.length,
       statusBreakdown: statusBreakdown.map((row) => ({ status: row.status, count: row._count.status })),
       sampleProjects,
-      sampleImpact: {
-        projectPhotos: affected[0],
-        projectProfessionals: affected[1],
-        projectAssistRequests: affected[2],
-        projectChatThreads: affected[3],
-        financialTransactions: affected[4],
-        siteAccessRequests: affected[5],
-        siteAccessVisits: affected[6],
-        projectMilestones: affected[7],
-        nextStepActions: affected[8],
-        adminActions: affected[9],
-        supportRequestsLinked: affected[10],
-      },
+      sampleImpact: affected,
     };
   }
 
@@ -5642,10 +5785,15 @@ Please review the project details and respond with your quote or decline the inv
     };
   }
 
-  async hardRemove(id: string) {
+  async hardRemove(id: string, adminId?: string, adminName?: string) {
+    // Capture pre-deletion impact counts for the audit log
+    const preDeleteImpact = await this.getProjectDeletionImpact([id]);
+
     const project = await this.prisma.project.findUnique({
       where: { id },
       select: {
+        id: true,
+        projectName: true,
         notes: true,
         photos: {
           select: {
@@ -5655,6 +5803,7 @@ Please review the project details and respond with your quote or decline the inv
         },
         milestones: {
           select: {
+            id: true,
             notes: true,
             photoUrls: true,
           },
@@ -5686,18 +5835,103 @@ Please review the project details and respond with your quote or decline the inv
             },
           },
         },
+        supportRequests: {
+          select: {
+            id: true,
+            body: true,
+            notes: true,
+            replies: true,
+          },
+        },
+        professionals: {
+          select: {
+            id: true,
+            quoteNotes: true,
+            visitNotes: true,
+          },
+        },
+        financialTransactions: {
+          select: {
+            id: true,
+            notes: true,
+          },
+        },
+        procurementEvidence: {
+          select: {
+            id: true,
+            notes: true,
+            invoiceUrls: true,
+            photoUrls: true,
+          },
+        },
+        siteAccessRequests: {
+          select: {
+            id: true,
+            visitDetails: true,
+            reasonDenied: true,
+          },
+        },
+        siteAccessVisits: {
+          select: {
+            id: true,
+            notes: true,
+            responseNotes: true,
+          },
+        },
+        startProposals: {
+          select: {
+            id: true,
+            notes: true,
+            responseNotes: true,
+          },
+        },
+        nextStepActions: {
+          select: {
+            id: true,
+          },
+        },
+        adminActions: {
+          select: {
+            id: true,
+          },
+        },
+        emailTokens: {
+          select: {
+            id: true,
+          },
+        },
+        paymentPlan: {
+          select: {
+            id: true,
+            milestones: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+        aiIntake: {
+          select: {
+            id: true,
+            rawPrompt: true,
+            rawOutput: true,
+            summary: true,
+            scope: true,
+          },
+        },
+        acProjects: {
+          select: {
+            id: true,
+            notes: true,
+            shoppingList: true,
+          },
+        },
       },
     });
 
-    const supportRequests = await this.prisma.supportRequest.findMany({
-      where: { projectId: id },
-      select: {
-        id: true,
-        body: true,
-        notes: true,
-        replies: true,
-      },
-    });
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
 
     const privateThreads = await this.prisma.privateChatThread.findMany({
       where: { projectId: id },
@@ -5712,38 +5946,103 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
-    const assistIds = project?.assistRequests?.map((request) => request.id) || [];
-    const supportIds = supportRequests.map((request) => request.id);
+    const questionnaireInvites = await (this.prisma as any).questionnaireInvite.findMany({
+      where: { projectId: id },
+      select: {
+        id: true,
+        customMessage: true,
+        metadata: true,
+      },
+    });
+
+    const caseWhereOr: Array<Record<string, string>> = [{ projectId: id }];
+    project.assistRequests.forEach((request) => caseWhereOr.push({ assistRequestId: request.id }));
+    project.supportRequests.forEach((request) => caseWhereOr.push({ supportRequestId: request.id }));
+    privateThreads.forEach((thread) => caseWhereOr.push({ privateChatId: thread.id }));
+
+    const cases = await (this.prisma as any).case.findMany({
+      where: {
+        OR: caseWhereOr,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const projectProfessionalIds = project.professionals.map((assignment) => assignment.id);
+    const assistIds = project.assistRequests.map((request) => request.id);
+    const supportIds = project.supportRequests.map((request) => request.id);
     const privateIds = privateThreads.map((thread) => thread.id);
-    const projectThreadIds = project?.chatThread?.id ? [project.chatThread.id] : [];
+    const projectThreadIds = project.chatThread?.id ? [project.chatThread.id] : [];
+    const paymentPlanIds = project.paymentPlan ? [project.paymentPlan.id] : [];
+    const paymentMilestoneIds = project.paymentPlan?.milestones.map((milestone) => milestone.id) || [];
+    const financialTransactionIds = project.financialTransactions.map((transaction) => transaction.id);
+    const milestoneIds = project.milestones.map((milestone) => milestone.id);
+    const siteAccessRequestIds = project.siteAccessRequests.map((request) => request.id);
+    const siteAccessVisitIds = project.siteAccessVisits.map((visit) => visit.id);
+    const startProposalIds = project.startProposals.map((proposal) => proposal.id);
+    const nextStepActionIds = project.nextStepActions.map((action) => action.id);
+    const adminActionIds = project.adminActions.map((action) => action.id);
+    const emailTokenIds = project.emailTokens.map((token) => token.id);
+    const procurementEvidenceIds = project.procurementEvidence.map((evidence) => evidence.id);
+    const questionnaireInviteIds = questionnaireInvites.map((invite: { id: string }) => invite.id);
+    const aiIntakeIds = project.aiIntake?.id ? [project.aiIntake.id] : [];
+    const acProjectIds = project.acProjects.map((acProject) => acProject.id);
+    const caseIds = cases.map((record: { id: string }) => record.id);
 
     const assignmentFilters: Array<{ sourceType: string; sourceId: string }> = [
       { sourceType: 'project', sourceId: id },
+      ...projectThreadIds.map((sourceId) => ({ sourceType: 'project', sourceId })),
       ...assistIds.map((sourceId) => ({ sourceType: 'assist', sourceId })),
       ...supportIds.map((sourceId) => ({ sourceType: 'support', sourceId })),
       ...privateIds.map((sourceId) => ({ sourceType: 'private', sourceId })),
-      ...projectThreadIds.map((sourceId) => ({ sourceType: 'project', sourceId })),
     ];
 
-    const caseWhereOr: Array<Record<string, string>> = [{ projectId: id }];
-    assistIds.forEach((assistRequestId) => caseWhereOr.push({ assistRequestId }));
-    supportIds.forEach((supportRequestId) => caseWhereOr.push({ supportRequestId }));
-    privateIds.forEach((privateChatId) => caseWhereOr.push({ privateChatId }));
+    const activityLogFilters: Array<{ resource: string; resourceId: string }> = [
+      { resource: 'Project', resourceId: id },
+      ...projectProfessionalIds.map((resourceId) => ({ resource: 'ProjectProfessional', resourceId })),
+      ...assistIds.map((resourceId) => ({ resource: 'ProjectAssistRequest', resourceId })),
+      ...projectThreadIds.map((resourceId) => ({ resource: 'ProjectChatThread', resourceId })),
+      ...supportIds.map((resourceId) => ({ resource: 'SupportRequest', resourceId })),
+      ...privateIds.map((resourceId) => ({ resource: 'PrivateChatThread', resourceId })),
+      ...caseIds.map((resourceId) => ({ resource: 'Case', resourceId })),
+      ...financialTransactionIds.map((resourceId) => ({ resource: 'FinancialTransaction', resourceId })),
+      ...paymentPlanIds.map((resourceId) => ({ resource: 'ProjectPaymentPlan', resourceId })),
+      ...paymentMilestoneIds.map((resourceId) => ({ resource: 'PaymentMilestone', resourceId })),
+      ...milestoneIds.map((resourceId) => ({ resource: 'ProjectMilestone', resourceId })),
+      ...siteAccessRequestIds.map((resourceId) => ({ resource: 'SiteAccessRequest', resourceId })),
+      ...siteAccessVisitIds.map((resourceId) => ({ resource: 'SiteAccessVisit', resourceId })),
+      ...startProposalIds.map((resourceId) => ({ resource: 'ProjectStartProposal', resourceId })),
+      ...nextStepActionIds.map((resourceId) => ({ resource: 'NextStepAction', resourceId })),
+      ...adminActionIds.map((resourceId) => ({ resource: 'AdminAction', resourceId })),
+      ...emailTokenIds.map((resourceId) => ({ resource: 'EmailToken', resourceId })),
+      ...procurementEvidenceIds.map((resourceId) => ({ resource: 'MilestoneProcurementEvidence', resourceId })),
+      ...questionnaireInviteIds.map((resourceId) => ({ resource: 'QuestionnaireInvite', resourceId })),
+      ...aiIntakeIds.map((resourceId) => ({ resource: 'AiIntake', resourceId })),
+      ...acProjectIds.map((resourceId) => ({ resource: 'AcProject', resourceId })),
+    ];
 
     const fileCandidates: unknown[] = [
-      project?.notes,
-      ...(project?.photos || []).flatMap((photo) => [photo.url, photo.note]),
-      ...(project?.milestones || []).flatMap((milestone) => [milestone.notes, milestone.photoUrls]),
-      project?.locationDetails?.photoUrls,
-      ...(project?.assistRequests || []).flatMap((request) => [
-        request.notes,
-        request.messages.map((message) => message.content),
-      ]),
-      ...(project?.chatThread?.messages || []).flatMap((message) => [message.content, message.attachments]),
-      ...supportRequests.flatMap((request) => [request.body, request.notes, request.replies]),
-      ...privateThreads.flatMap((thread) =>
-        thread.messages.flatMap((message) => [message.content, message.attachments]),
-      ),
+      project.notes,
+      ...project.photos.flatMap((photo) => [photo.url, photo.note]),
+      ...project.milestones.flatMap((milestone) => [milestone.notes, milestone.photoUrls]),
+      project.locationDetails?.photoUrls,
+      ...project.assistRequests.flatMap((request) => [request.notes, request.messages.map((message) => message.content)]),
+      ...project.chatThread?.messages.flatMap((message) => [message.content, message.attachments]) || [],
+      ...project.supportRequests.flatMap((request) => [request.body, request.notes, request.replies]),
+      ...privateThreads.flatMap((thread) => thread.messages.flatMap((message) => [message.content, message.attachments])),
+      ...project.professionals.flatMap((assignment) => [assignment.quoteNotes, assignment.visitNotes]),
+      ...project.financialTransactions.map((transaction) => transaction.notes),
+      ...project.procurementEvidence.flatMap((evidence) => [evidence.notes, evidence.invoiceUrls, evidence.photoUrls]),
+      ...project.siteAccessRequests.flatMap((request) => [request.visitDetails, request.reasonDenied]),
+      ...project.siteAccessVisits.flatMap((visit) => [visit.notes, visit.responseNotes]),
+      ...project.startProposals.flatMap((proposal) => [proposal.notes, proposal.responseNotes]),
+      ...questionnaireInvites.flatMap((invite: { customMessage?: string | null; metadata?: unknown }) => [invite.customMessage, invite.metadata]),
+      project.aiIntake?.rawPrompt,
+      project.aiIntake?.rawOutput,
+      project.aiIntake?.summary,
+      project.aiIntake?.scope,
+      ...project.acProjects.flatMap((acProject) => [acProject.notes, acProject.shoppingList]),
     ];
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -5763,6 +6062,22 @@ Please review the project details and respond with your quote or decline the inv
         });
       }
 
+      if (questionnaireInviteIds.length > 0) {
+        await (tx as any).questionnaireInvite.deleteMany({
+          where: {
+            id: { in: questionnaireInviteIds },
+          },
+        });
+      }
+
+      if (aiIntakeIds.length > 0) {
+        await (tx as any).aiIntake.deleteMany({
+          where: {
+            id: { in: aiIntakeIds },
+          },
+        });
+      }
+
       if (supportIds.length > 0) {
         await tx.supportRequest.deleteMany({
           where: {
@@ -5772,28 +6087,171 @@ Please review the project details and respond with your quote or decline the inv
       }
 
       if (privateIds.length > 0) {
-        await tx.privateChatThread.deleteMany({
+        await (tx as any).privateChatThread.deleteMany({
           where: {
             id: { in: privateIds },
           },
         });
       }
 
-      await (tx as any).activityLog.deleteMany({
-        where: {
-          resource: 'Project',
-          resourceId: id,
-        },
-      });
+      if (acProjectIds.length > 0) {
+        await tx.acProject.deleteMany({
+          where: {
+            id: { in: acProjectIds },
+          },
+        });
+      }
 
-      return tx.project.delete({
+      if (activityLogFilters.length > 0) {
+        await (tx as any).activityLog.deleteMany({
+          where: {
+            OR: activityLogFilters,
+          },
+        });
+      }
+
+      const deletedProject = await tx.project.delete({
         where: { id },
       });
+
+      const residualCounts = {
+        project: await tx.project.count({ where: { id } }),
+        projectPhotos: await tx.projectPhoto.count({ where: { projectId: id } }),
+        projectProfessionals: await tx.projectProfessional.count({ where: { projectId: id } }),
+        messages: projectProfessionalIds.length
+          ? await tx.message.count({ where: { projectProfessionalId: { in: projectProfessionalIds } } })
+          : 0,
+        paymentRequests: projectProfessionalIds.length
+          ? await tx.paymentRequest.count({ where: { projectProfessionalId: { in: projectProfessionalIds } } })
+          : 0,
+        paymentPlans: await tx.projectPaymentPlan.count({ where: { projectId: id } }),
+        paymentMilestones: paymentPlanIds.length
+          ? await tx.paymentMilestone.count({ where: { paymentPlanId: { in: paymentPlanIds } } })
+          : 0,
+        assistRequests: await tx.projectAssistRequest.count({ where: { projectId: id } }),
+        assistMessages: assistIds.length
+          ? await tx.assistMessage.count({ where: { assistRequestId: { in: assistIds } } })
+          : 0,
+        projectChatThreads: await tx.projectChatThread.count({ where: { projectId: id } }),
+        projectChatMessages: projectThreadIds.length
+          ? await tx.projectChatMessage.count({ where: { threadId: { in: projectThreadIds } } })
+          : 0,
+        privateChatThreads: await (tx as any).privateChatThread.count({ where: { projectId: id } }),
+        privateChatMessages: privateIds.length
+          ? await (tx as any).privateChatMessage.count({ where: { threadId: { in: privateIds } } })
+          : 0,
+        financialTransactions: await tx.financialTransaction.count({ where: { projectId: id } }),
+        escrowLedgers: await tx.escrowLedger.count({ where: { projectId: id } }),
+        procurementEvidence: await tx.milestoneProcurementEvidence.count({ where: { projectId: id } }),
+        siteAccessRequests: await tx.siteAccessRequest.count({ where: { projectId: id } }),
+        siteAccessVisits: await tx.siteAccessVisit.count({ where: { projectId: id } }),
+        projectMilestones: await tx.projectMilestone.count({ where: { projectId: id } }),
+        startProposals: await tx.projectStartProposal.count({ where: { projectId: id } }),
+        nextStepActions: await tx.nextStepAction.count({ where: { projectId: id } }),
+        adminActions: await tx.adminAction.count({ where: { projectId: id } }),
+        emailTokens: await tx.emailToken.count({ where: { projectId: id } }),
+        supportRequests: await tx.supportRequest.count({ where: { projectId: id } }),
+        questionnaireInvites: await (tx as any).questionnaireInvite.count({ where: { projectId: id } }),
+        aiIntakes: await (tx as any).aiIntake.count({ where: { projectId: id } }),
+        siteAccessData: await tx.siteAccessData.count({ where: { projectId: id } }),
+        locationDetails: await tx.projectLocationDetails.count({ where: { projectId: id } }),
+        cases: await (tx as any).case.count({
+          where: {
+            OR: [
+              { projectId: id },
+              ...(assistIds.length ? [{ assistRequestId: { in: assistIds } }] : []),
+              ...(supportIds.length ? [{ supportRequestId: { in: supportIds } }] : []),
+              ...(privateIds.length ? [{ privateChatId: { in: privateIds } }] : []),
+            ],
+          },
+        }),
+        adminMessageAssignments: await tx.adminMessageAssignment.count({
+          where: {
+            OR: assignmentFilters,
+          },
+        }),
+        acProjects: await tx.acProject.count({ where: { linkedProjectId: id } }),
+      };
+
+      const residualEntries = Object.entries(residualCounts).filter(([, count]) => count > 0);
+      if (residualEntries.length > 0) {
+        throw new BadRequestException(
+          `Project delete left residual records: ${residualEntries
+            .map(([key, count]) => `${key}=${count}`)
+            .join(', ')}`,
+        );
+      }
+
+      return deletedProject;
     });
 
+    const filesCleanedUp = this.extractUploadFilepaths(fileCandidates).length;
     await this.deleteProjectFiles(fileCandidates);
 
+    // Write immutable purge audit entry (outside the transaction so it survives)
+    await this.writePurgeAuditEntry({
+      projectId: id,
+      projectName: (project as any).projectName || id,
+      adminId,
+      adminName,
+      impactCounts: preDeleteImpact,
+      filesCleanedUp,
+    });
+
     return result;
+  }
+
+  private async writePurgeAuditEntry(data: {
+    projectId: string;
+    projectName: string;
+    adminId?: string;
+    adminName?: string;
+    impactCounts: Record<string, number>;
+    filesCleanedUp: number;
+  }) {
+    const totalRecords = Object.values(data.impactCounts).reduce((sum, n) => sum + n, 0);
+    try {
+      await this.prisma.activityLog.create({
+        data: {
+          userId: data.adminId || null,
+          actorName: data.adminName || 'Admin',
+          actorType: 'admin',
+          action: 'project_purged',
+          resource: 'PurgeAuditLog',
+          resourceId: data.projectId,
+          details: `Project "${data.projectName}" permanently deleted. ${totalRecords} records purged across ${Object.keys(data.impactCounts).length} tables. ${data.filesCleanedUp} file(s) removed from storage.`,
+          metadata: {
+            projectId: data.projectId,
+            projectName: data.projectName,
+            impact: data.impactCounts,
+            totalRecords,
+            filesCleanedUp: data.filesCleanedUp,
+            purgedAt: new Date().toISOString(),
+          },
+          status: 'danger',
+        },
+      });
+    } catch (err) {
+      // Audit write must not block the response — log and continue
+      console.error('[ProjectsService.writePurgeAuditEntry] Failed to write purge audit log:', (err as any)?.message);
+    }
+  }
+
+  async getPurgeAuditLogs(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [logs, total] = await Promise.all([
+      this.prisma.activityLog.findMany({
+        where: { action: 'project_purged' },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          user: { select: { firstName: true, surname: true, email: true } },
+        },
+      }),
+      this.prisma.activityLog.count({ where: { action: 'project_purged' } }),
+    ]);
+    return { logs, total, page, limit };
   }
 
   private async deleteProjectFiles(values: unknown[]) {
