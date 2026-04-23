@@ -796,6 +796,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         existingProjectDescription = JSON.parse(rawDescription) as {
           title?: string;
           description?: string;
+          projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
           isEmergency?: boolean;
           tradesRequired?: string[];
           location?: CanonicalLocation;
@@ -867,6 +868,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         JSON.stringify({
           title: mergedInitialData.projectName || '',
           description: mergedInitialData.notes || '',
+          projectScale:
+            mergedInitialData.projectScale === 'SCALE_1' ||
+            mergedInitialData.projectScale === 'SCALE_2' ||
+            mergedInitialData.projectScale === 'SCALE_3'
+              ? mergedInitialData.projectScale
+              : undefined,
           isEmergency: Boolean(mergedInitialData.isEmergency),
           profession: mergedInitialData.tradesRequired?.[0],
           location: mergedInitialData.location,
@@ -880,6 +887,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     setProjectDescriptionHandoff({
       title: mergedInitialData.projectName || '',
       description: mergedInitialData.notes || '',
+      projectScale:
+        mergedInitialData.projectScale === 'SCALE_1' ||
+        mergedInitialData.projectScale === 'SCALE_2' ||
+        mergedInitialData.projectScale === 'SCALE_3'
+          ? mergedInitialData.projectScale
+          : undefined,
       isEmergency: Boolean(mergedInitialData.isEmergency),
       profession: mergedInitialData.tradesRequired?.[0],
       location: mergedInitialData.location,

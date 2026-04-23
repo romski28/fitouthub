@@ -17,6 +17,7 @@ export interface ProjectFormData {
   projectName: string;
   clientName: string;
   region: string;
+  projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
   budget?: string | number;
   notes: string;
   selectedService?: string;
@@ -125,6 +126,7 @@ const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectF
   projectName: initialData?.projectName || '',
   clientName: initialData?.clientName || '',
   region: initialData?.region || '',
+  projectScale: initialData?.projectScale,
   budget: initialData?.budget || '',
   notes: initialData?.notes || '',
   selectedService: initialData?.selectedService || '',

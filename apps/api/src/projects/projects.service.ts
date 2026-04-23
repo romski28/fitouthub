@@ -1916,11 +1916,13 @@ Please review the project details and respond with your quote or decline the inv
       normalized.endDate = new Date(normalized.endDate);
     }
 
-    const requestedScale = this.normalizeProjectScale((createProjectDto as any).projectScale);
-    if (requestedScale) {
-      normalized.projectScale = requestedScale;
-      normalized.escrowFundingPolicy = this.escrowPolicyForScale(requestedScale);
-    }
+    const resolvedScale = this.inferProjectScaleFromContext({
+      explicitScale: (createProjectDto as any).projectScale,
+      tradesRequired: Array.isArray(normalized.tradesRequired) ? normalized.tradesRequired : [],
+      isEmergency: Boolean(normalized.isEmergency),
+    });
+    normalized.projectScale = resolvedScale;
+    normalized.escrowFundingPolicy = this.escrowPolicyForScale(resolvedScale);
 
     const createData: any = {
       ...normalized,

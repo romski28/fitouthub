@@ -11,6 +11,7 @@ export interface CreateProjectDraftHandoff {
 export interface ProjectDescriptionHandoff {
   title?: string;
   description?: string;
+  projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
   isEmergency?: boolean;
   profession?: string;
   location?: CanonicalLocation;

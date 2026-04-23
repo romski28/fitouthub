@@ -27,6 +27,7 @@ interface IntentModalProps {
 // Full structured fields from AI response
 interface AiStructured {
   intakeId: string | null;
+  projectScale: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
   title: string | null;
   trades: string[];
   locationPrimary: string | null;
@@ -424,6 +425,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       initialData: {
         projectName: payload.title || aiStructured.title || aiStructured.summary || '',
         notes: combinedNotes || payload.summary || aiStructured.scope || aiStructured.summary || '',
+        projectScale: aiStructured.projectScale || undefined,
         tradesRequired: aiStructured.trades || [],
         region: resolvedRegion,
         location: payload.location,
@@ -446,6 +448,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     const projectDescriptionPayload = {
       title: aiDraft.initialData.projectName || '',
       description: aiDraft.initialData.notes || '',
+      projectScale: aiDraft.initialData.projectScale,
       isEmergency: Boolean(aiDraft.initialData.isEmergency),
       profession: aiDraft.initialData.tradesRequired?.[0],
       location: aiDraft.initialData.location,
@@ -473,6 +476,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     }
     if (aiDraft.initialData.notes) {
       params.set('aiScope', aiDraft.initialData.notes.slice(0, 1800));
+    }
+    if (aiDraft.initialData.projectScale) {
+      params.set('aiScale', aiDraft.initialData.projectScale);
     }
     params.set('aiEmergency', aiDraft.initialData.isEmergency ? '1' : '0');
 
@@ -641,12 +647,18 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         durationMs: number;
         usage?: { totalTokens?: number | null };
         parsedOutput?: {
+          projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
           title?: string | null;
           summary?: string | null;
           scope?: string | null;
           trades?: string[];
           location?: { primary?: string | null; secondary?: string | null; tertiary?: string | null; confidence?: number };
-          project?: { propertyType?: string | null; scopeText?: string | null };
+          project?: {
+            propertyType?: string | null;
+            scopeText?: string | null;
+            projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
+            projectScaleSuggested?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
+          };
           size?: { value?: number | null; unit?: string | null; rawText?: string | null };
           budget?: { currency?: string | null; min?: number | null; max?: number | null; rawText?: string | null; confidence?: number };
           timeline?: { durationText?: string | null; startText?: string | null };
@@ -674,6 +686,15 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       const p = payload.parsedOutput;
       setAiStructured({
         intakeId: payload.intakeId ?? null,
+        projectScale:
+          p?.projectScale === 'SCALE_1' || p?.projectScale === 'SCALE_2' || p?.projectScale === 'SCALE_3'
+            ? p.projectScale
+            : p?.project && typeof p.project === 'object' &&
+                ((p.project as any).projectScale === 'SCALE_1' ||
+                  (p.project as any).projectScale === 'SCALE_2' ||
+                  (p.project as any).projectScale === 'SCALE_3')
+              ? ((p.project as any).projectScale as 'SCALE_1' | 'SCALE_2' | 'SCALE_3')
+              : null,
         title: p?.title ?? null,
         trades: p?.trades ?? [],
         locationPrimary: p?.location?.primary ?? null,

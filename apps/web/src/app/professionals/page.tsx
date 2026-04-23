@@ -70,6 +70,7 @@ function ProfessionalsPageInner() {
   const locationParam = searchParams.get('location') || undefined;
   const aiTitleParam = searchParams.get('aiTitle') || undefined;
   const aiScopeParam = searchParams.get('aiScope') || undefined;
+  const aiScaleParam = searchParams.get('aiScale') || undefined;
   const aiEmergencyParam = searchParams.get('aiEmergency') || undefined;
   const askRegion = searchParams.get('askRegion') === '1';
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
@@ -188,13 +189,18 @@ function ProfessionalsPageInner() {
   const shouldShowRegionNotice = askRegion && !hasDefaultLocation;
 
   const aiPrefill = useMemo<Partial<ProjectFormData>>(() => {
-    if (!aiTitleParam && !aiScopeParam && !aiEmergencyParam) return {};
+    if (!aiTitleParam && !aiScopeParam && !aiScaleParam && !aiEmergencyParam) return {};
+    const normalizedScale =
+      aiScaleParam === 'SCALE_1' || aiScaleParam === 'SCALE_2' || aiScaleParam === 'SCALE_3'
+        ? aiScaleParam
+        : undefined;
     return {
       projectName: aiTitleParam,
       notes: aiScopeParam,
+      projectScale: normalizedScale,
       isEmergency: aiEmergencyParam === '1',
     };
-  }, [aiTitleParam, aiScopeParam, aiEmergencyParam]);
+  }, [aiTitleParam, aiScopeParam, aiScaleParam, aiEmergencyParam]);
 
   const mergedPrefill = useMemo<Partial<ProjectFormData>>(
     () => ({
@@ -210,6 +216,7 @@ function ProfessionalsPageInner() {
       locationParam ||
       aiTitleParam ||
       aiScopeParam ||
+        aiScaleParam ||
       aiEmergencyParam,
   );
 

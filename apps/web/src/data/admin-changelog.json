@@ -1,5 +1,34 @@
 [
   {
+    "id": "2026-04-23-ab14cf2",
+    "date": "2026-04-23T11:41:22+08:00",
+    "title": "feat: create agree-milestone-schedule modal and wire CONFIRM_SCHEDULE action",
+    "summary": "feat: create agree-milestone-schedule modal and wire CONFIRM_SCHEDULE action",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ab14cf2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/components/project-form.tsx",
+      "apps/web/src/components/project-share-modal.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/create-project-handoff.ts",
+      "apps/web/src/lib/draft-storage.ts"
+    ]
+  },
+  {
     "id": "2026-04-23-6ebacf5",
     "date": "2026-04-23T10:40:45+08:00",
     "title": "feat(web): add class badges with roman numerals to project hero",

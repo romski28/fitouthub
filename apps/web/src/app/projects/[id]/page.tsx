@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
@@ -243,6 +244,7 @@ export default function ClientProjectDetailPage() {
   const projectId = params.id as string;
 
   const { isLoggedIn, accessToken, user } = useAuth();
+  const { openLoginModal } = useAuthModalControl();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -271,6 +273,21 @@ export default function ClientProjectDetailPage() {
   // re-fetches, which would unmount ProjectFinancialsCard and wipe OTP modal state.
   const hasLoadedRef = useRef(false);
   const lastSiteAccessRefreshAtRef = useRef(0);
+  const authPromptShownRef = useRef(false);
+
+  const promptLoginInPlace = useCallback(() => {
+    if (authPromptShownRef.current) return;
+    authPromptShownRef.current = true;
+    setError('Session expired. Please log in to continue.');
+    openLoginModal();
+  }, [openLoginModal]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      authPromptShownRef.current = false;
+      setError(null);
+    }
+  }, [isLoggedIn]);
 
   // Schedule & contractor contact editing state
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -575,7 +592,7 @@ export default function ClientProjectDetailPage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          router.push('/');
+          promptLoginInPlace();
           return;
         }
         throw new Error('Failed to fetch project');
@@ -951,7 +968,7 @@ export default function ClientProjectDetailPage() {
 
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.push('/');
+      promptLoginInPlace();
       return;
     }
 
@@ -962,7 +979,7 @@ export default function ClientProjectDetailPage() {
     fetchProject();
     fetchSiteAccessRequests();
     fetchSiteVisits();
-  }, [isLoggedIn, accessToken, projectId, router]);
+  }, [isLoggedIn, accessToken, projectId, promptLoginInPlace]);
 
   useEffect(() => {
     if (!isLoggedIn || !accessToken || !projectId) return;
@@ -1032,7 +1049,7 @@ export default function ClientProjectDetailPage() {
         }
 
         if (res.status === 401) {
-          router.push('/');
+          promptLoginInPlace();
           return;
         }
 
@@ -1202,7 +1219,7 @@ export default function ClientProjectDetailPage() {
       }
 
       if (res.status === 401) {
-        router.push('/');
+        promptLoginInPlace();
         return;
       }
 
@@ -1240,7 +1257,7 @@ export default function ClientProjectDetailPage() {
           },
         );
         if (res.status === 401) {
-          router.push('/');
+          promptLoginInPlace();
           return;
         }
         if (!res.ok) throw new Error('Award failed');
@@ -1290,7 +1307,7 @@ export default function ClientProjectDetailPage() {
           );
         }
         if (res.status === 401) {
-          router.push('/');
+          promptLoginInPlace();
           return;
         }
         if (!res.ok) throw new Error('Action failed');
@@ -1649,7 +1666,7 @@ export default function ClientProjectDetailPage() {
       });
 
       if (res.status === 401) {
-          router.push('/');
+        promptLoginInPlace();
         return;
       }
       if (!res.ok) {

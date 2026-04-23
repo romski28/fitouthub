@@ -40,6 +40,8 @@ type SafetyAssessment = {
   disclaimer: string | null;
 };
 
+type ProjectScale = 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -269,6 +271,7 @@ OUTPUT SCHEMA
   "title": "string|null",
   "summary": "string|null",
   "scope": "string|null",
+  "projectScale": "SCALE_1|SCALE_2|SCALE_3|null",
   "assumptions": ["string"],
   "risks": ["string"],
   "nextQuestions": ["string"],
@@ -377,6 +380,15 @@ OUTPUT SCHEMA
           ? source.disclaimer.trim()
           : 'If there is immediate danger, move to safety and contact emergency services or the relevant utility provider.',
     };
+  }
+
+  private normalizeProjectScale(value: unknown): ProjectScale | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toUpperCase();
+    if (normalized === 'SCALE_1' || normalized === 'SCALE_2' || normalized === 'SCALE_3') {
+      return normalized;
+    }
+    return null;
   }
 
   private extractJsonStringValue(source: string, key: string): string | null {
@@ -564,12 +576,20 @@ OUTPUT SCHEMA
         ? result.followUpQuestions
         : [];
     const safetyAssessment = this.normalizeSafetyAssessment(result.safetyAssessment);
+    const projectScale =
+      this.normalizeProjectScale(result.projectScale) ||
+      this.normalizeProjectScale(project.projectScale) ||
+      this.normalizeProjectScale(project.projectScaleSuggested);
 
     if (!project.scopeText && scope) {
       project.scopeText = scope;
     }
 
     project.safetyAssessment = safetyAssessment;
+    if (projectScale) {
+      project.projectScale = projectScale;
+      project.projectScaleSuggested = projectScale;
+    }
 
     return {
       ...result,
@@ -579,6 +599,7 @@ OUTPUT SCHEMA
       assumptions,
       risks,
       nextQuestions,
+      projectScale,
       followUpQuestions: Array.isArray(result.followUpQuestions)
         ? result.followUpQuestions
         : nextQuestions,

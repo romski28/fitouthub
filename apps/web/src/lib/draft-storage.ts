@@ -4,6 +4,7 @@ type CreateProjectDraftValue = {
   initialData?: {
     projectName?: string;
     notes?: string;
+    projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
     tradesRequired?: string[];
     region?: string;
     location?: {
@@ -63,6 +64,12 @@ const compactCreateProjectDraft = (value: CreateProjectDraftValue): CreateProjec
     initialData: {
       projectName: cropText(initialData.projectName, 180),
       notes: cropText(initialData.notes, 4000),
+      projectScale:
+        initialData.projectScale === 'SCALE_1' ||
+        initialData.projectScale === 'SCALE_2' ||
+        initialData.projectScale === 'SCALE_3'
+          ? initialData.projectScale
+          : undefined,
       tradesRequired: toLimitedStringArray(initialData.tradesRequired, 12, 80),
       region: cropText(initialData.region, 200),
       location: initialData.location
@@ -99,6 +106,12 @@ export const writeCreateProjectDraftSafely = (value: CreateProjectDraftValue): b
       initialData: {
         projectName: cropText(value.initialData?.projectName, 180),
         notes: cropText(value.initialData?.notes, 2500),
+        projectScale:
+          value.initialData?.projectScale === 'SCALE_1' ||
+          value.initialData?.projectScale === 'SCALE_2' ||
+          value.initialData?.projectScale === 'SCALE_3'
+            ? value.initialData.projectScale
+            : undefined,
         tradesRequired: toLimitedStringArray(value.initialData?.tradesRequired, 8, 80),
         location: value.initialData?.location,
         isEmergency: Boolean(value.initialData?.isEmergency),

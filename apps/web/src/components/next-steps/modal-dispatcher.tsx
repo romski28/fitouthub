@@ -10,6 +10,7 @@ import { QuoteActionModal } from './quote-action-modal';
 import { ReviewQuotesModal } from './review-quotes-modal';
 import { ContractActionModal } from './contract-action-modal';
 import { StartDateActionModal } from './start-date-action-modal';
+import { AgreeMilestoneScheduleModal } from './agree-milestone-schedule-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -156,6 +157,16 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'agree-milestone-schedule') {
+    return (
+      <AgreeMilestoneScheduleModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -163,7 +174,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'review-quotes' | 'contract' | 'start-date' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' {
   // Payment-related actions
   if (
     [
@@ -196,8 +207,12 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'rev
     return 'contract';
   }
 
-  if (['CONFIRM_START_DATE', 'CONFIRM_START_DETAILS', 'CONFIRM_SCHEDULE'].includes(actionKey)) {
+  if (['CONFIRM_START_DATE', 'CONFIRM_START_DETAILS'].includes(actionKey)) {
     return 'start-date';
+  }
+
+  if (['CONFIRM_SCHEDULE'].includes(actionKey)) {
+    return 'agree-milestone-schedule';
   }
 
   // Default to general modal

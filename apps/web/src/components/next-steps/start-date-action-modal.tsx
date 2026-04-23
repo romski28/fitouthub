@@ -273,6 +273,19 @@ export function StartDateActionModal({
     }
   }, [router, state.projectDetailsPath, state.projectId, workflowModalNextStep?.tab]);
 
+  const navigateToProjectDetails = useCallback(() => {
+    if (state.projectDetailsPath) {
+      router.push(upsertTab(state.projectDetailsPath, 'schedule'));
+      onClose();
+      return;
+    }
+
+    if (state.projectId) {
+      router.push(`/projects/${state.projectId}?tab=schedule`);
+      onClose();
+    }
+  }, [router, state.projectDetailsPath, state.projectId, onClose]);
+
   const handleSubmitNew = useCallback(async () => {
     if (!projectId || !token) {
       setError('Authentication required');
@@ -466,6 +479,13 @@ export function StartDateActionModal({
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+              <button
+                type="button"
+                onClick={navigateToProjectDetails}
+                className="min-w-[110px] rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-base font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+              >
+                Show details
+              </button>
               <button
                 type="button"
                 onClick={onClose}

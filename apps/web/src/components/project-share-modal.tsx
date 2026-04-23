@@ -55,6 +55,11 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
       return "Service Request";
     })();
 
+    const projectScale =
+      data.projectScale === 'SCALE_1' || data.projectScale === 'SCALE_2' || data.projectScale === 'SCALE_3'
+        ? data.projectScale
+        : undefined;
+
     return {
       payload: {
         projectName: (data.projectName?.trim() || defaultTitle),
@@ -64,6 +69,7 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
         region: locationLabel || "Hong Kong",
         notes: data.notes?.trim() || "",
         photos: photoKeys.length > 0 ? photoKeys.map((url) => ({ url })) : undefined,
+        projectScale,
         status: "pending" as const,
         userId: user?.id,
         professionalIds: invitePros ? professionals.map((p) => p.id) : [],

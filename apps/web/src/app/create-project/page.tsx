@@ -24,6 +24,7 @@ import { getUploadResponseKeys } from '@/lib/media-assets';
 interface ProjectDescriptionData {
   title?: string;
   description: string;
+  projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
   isEmergency?: boolean;
   profession?: string;
   location?: CanonicalLocation;
@@ -41,6 +42,15 @@ interface CreateProjectDraft {
   selectedProfessionals?: Professional[];
   aiIntakeId?: string;
 }
+
+const normalizeProjectScale = (value?: string | null): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null => {
+  if (!value) return null;
+  const normalized = String(value).trim().toUpperCase();
+  if (normalized === 'SCALE_1' || normalized === 'SCALE_2' || normalized === 'SCALE_3') {
+    return normalized;
+  }
+  return null;
+};
 
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
 
@@ -146,6 +156,7 @@ export default function CreateProjectPage() {
           parsedDescriptionForDebug = {
             description: memoryDescription.description || '',
             title: memoryDescription.title,
+            projectScale: normalizeProjectScale(memoryDescription.projectScale) || undefined,
             isEmergency: memoryDescription.isEmergency,
             profession: memoryDescription.profession,
             location: memoryDescription.location,
@@ -246,6 +257,7 @@ export default function CreateProjectPage() {
       photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       userPrompt: descriptionData?.description || null,
       aiIntakeId: aiIntakeId || null,
+      projectScale: normalizeProjectScale(formData.projectScale || descriptionData?.projectScale || null),
       endDate: formData.endDate || null,
       isEmergency: formData.isEmergency ?? false,
     };

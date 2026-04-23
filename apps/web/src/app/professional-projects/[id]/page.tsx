@@ -276,6 +276,21 @@ export default function ProjectDetailPage() {
   const hasLoadedProjectRef = useRef(false);
   const lastProjectFetchAtRef = useRef(0);
   const quoteFormDirtyRef = useRef(false);
+  const authPromptShownRef = useRef(false);
+
+  const promptLoginInPlace = useCallback(() => {
+    if (authPromptShownRef.current) return;
+    authPromptShownRef.current = true;
+    setError('Session expired. Please log in to continue.');
+    openLoginModal();
+  }, [openLoginModal]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      authPromptShownRef.current = false;
+      setError(null);
+    }
+  }, [isLoggedIn]);
 
   const toggleAccordion = (id: string) => {
     setExpandedAccordions((prev) => ({
@@ -386,7 +401,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.push('/');
+      promptLoginInPlace();
       return;
     }
 
@@ -423,7 +438,7 @@ export default function ProjectDetailPage() {
         } else if (res.status === 404) {
           setMessageError('Messaging is not available for this project right now.');
         } else if (res.status === 401) {
-          router.push('/');
+          promptLoginInPlace();
           return;
         }
       } catch (e) {
@@ -434,7 +449,7 @@ export default function ProjectDetailPage() {
     if (accessToken) {
       fetchMessages();
     }
-  }, [isLoggedIn, accessToken, projectProfessionalId, router, fetchProject]);
+  }, [isLoggedIn, accessToken, projectProfessionalId, fetchProject, promptLoginInPlace]);
 
   const reloadPaymentPlan = useCallback(async () => {
     if (!accessToken || !project?.project?.id) {
@@ -1300,7 +1315,7 @@ export default function ProjectDetailPage() {
       } else if (res.status === 404) {
         setMessageError('Messaging endpoint not found. Please refresh after we deploy the update.');
       } else if (res.status === 401) {
-        router.push('/');
+        promptLoginInPlace();
         return;
       } else {
         const data = await res.json().catch(() => ({}));

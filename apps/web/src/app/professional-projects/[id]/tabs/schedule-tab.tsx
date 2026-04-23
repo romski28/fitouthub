@@ -60,6 +60,8 @@ interface ScheduleTabProps {
   tradeId?: string;
   accessToken: string | null;
   onMilestonesUpdate?: () => void;
+  hideStartNegotiationPanel?: boolean;
+  onScheduleConfirmed?: () => void;
 }
 
 export const ScheduleTab: React.FC<ScheduleTabProps> = ({
@@ -72,6 +74,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   tradeId,
   accessToken,
   onMilestonesUpdate,
+  hideStartNegotiationPanel = false,
+  onScheduleConfirmed,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [startProposals, setStartProposals] = useState<StartProposal[]>([]);
@@ -889,6 +893,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           detail: { message: 'Schedule confirmed', type: 'success' },
         }));
       }
+      onScheduleConfirmed?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to confirm schedule');
     } finally {
@@ -912,33 +917,35 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             </div>
           )}
 
-          <StartDateNegotiationPanel
-            proposals={startProposals}
-            proposalLoading={proposalLoading}
-            proposalBusyId={proposalBusyId}
-            updateDateByProposal={updateDateByProposal}
-            updateTimeByProposal={updateTimeByProposal}
-            proposalResponseNotes={proposalResponseNotes}
-            setUpdateDateByProposal={setUpdateDateByProposal}
-            setUpdateTimeByProposal={setUpdateTimeByProposal}
-            setProposalResponseNotes={setProposalResponseNotes}
-            onRespond={handleRespondStartProposal}
-            viewerRole="professional"
-            onSubmitNew={handleSubmitStartProposal}
-            proposalSubmitting={proposalSubmitting}
-            proposalDate={proposalDate}
-            proposalTime={proposalTime}
-            proposalDurationHours={proposalDurationHours}
-            proposalNotes={proposalNotes}
-            prefilledFromQuote={prefilledFromQuote}
-            setProposalDate={setProposalDate}
-            setProposalTime={setProposalTime}
-            setProposalDurationHours={setProposalDurationHours}
-            setProposalNotes={setProposalNotes}
-            setPrefilledFromQuote={setPrefilledFromQuote}
-            setProposalFormInitialized={setProposalFormInitialized}
-            allowDurationEdit={false}
-          />
+          {!hideStartNegotiationPanel ? (
+            <StartDateNegotiationPanel
+              proposals={startProposals}
+              proposalLoading={proposalLoading}
+              proposalBusyId={proposalBusyId}
+              updateDateByProposal={updateDateByProposal}
+              updateTimeByProposal={updateTimeByProposal}
+              proposalResponseNotes={proposalResponseNotes}
+              setUpdateDateByProposal={setUpdateDateByProposal}
+              setUpdateTimeByProposal={setUpdateTimeByProposal}
+              setProposalResponseNotes={setProposalResponseNotes}
+              onRespond={handleRespondStartProposal}
+              viewerRole="professional"
+              onSubmitNew={handleSubmitStartProposal}
+              proposalSubmitting={proposalSubmitting}
+              proposalDate={proposalDate}
+              proposalTime={proposalTime}
+              proposalDurationHours={proposalDurationHours}
+              proposalNotes={proposalNotes}
+              prefilledFromQuote={prefilledFromQuote}
+              setProposalDate={setProposalDate}
+              setProposalTime={setProposalTime}
+              setProposalDurationHours={setProposalDurationHours}
+              setProposalNotes={setProposalNotes}
+              setPrefilledFromQuote={setPrefilledFromQuote}
+              setProposalFormInitialized={setProposalFormInitialized}
+              allowDurationEdit={false}
+            />
+          ) : null}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
