@@ -740,7 +740,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         forceRefresh: true,
       });
       setNextStepMap((prev) => ({ ...prev, [projectId]: refreshed }));
-      router.refresh();
     } catch {
       // Best-effort refresh only.
     }
@@ -816,7 +815,13 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                   )}
                   <div className="grid gap-3">
                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                      <p className="truncate text-sm font-bold text-white">{project.projectName}</p>
+                      <Link
+                        href={`/projects/${project.id}?tab=overview`}
+                        className="truncate text-sm font-bold text-white underline-offset-2 hover:underline"
+                        title="Open project details"
+                      >
+                        {project.projectName}
+                      </Link>
                       <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
                         {quoteOverdue && (
                           <span className="inline-flex items-center rounded-full border border-rose-200/90 bg-rose-500/35 px-2 py-1 text-xs font-semibold text-rose-100 shadow-[0_0_10px_rgba(251,113,133,0.3)]">

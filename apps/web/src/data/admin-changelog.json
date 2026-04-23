@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-23-63d9524",
+    "date": "2026-04-23T10:19:04+08:00",
+    "title": "Improve project navigation and reduce disruptive page refreshes",
+    "summary": "Improve project navigation and reduce disruptive page refreshes",
+    "areas": [
+      "web"
+    ],
+    "commit": "63d9524",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-233dafc",
     "date": "2026-04-23T09:53:14+08:00",
     "title": "Refine pre-work start date and schedule next-step sequencing",

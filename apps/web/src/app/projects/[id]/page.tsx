@@ -578,9 +578,14 @@ export default function ClientProjectDetailPage() {
       setProject(data);
       hasLoadedRef.current = true;
 
-      // Auto-select first professional if available
+      // Preserve current chat target when possible instead of resetting to first professional.
       if (data.professionals && data.professionals.length > 0) {
-        setSelectedProfessional(data.professionals[0]);
+        setSelectedProfessional((prev) => {
+          if (!prev) return data.professionals![0];
+
+          const match = data.professionals!.find((professional) => professional.id === prev.id);
+          return match || data.professionals![0];
+        });
       } else {
         setSelectedProfessional(null);
       }

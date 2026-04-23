@@ -336,7 +336,13 @@ export default function ProfessionalProjectsPage() {
                     )}
                     <div className="grid gap-3">
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                        <p className="truncate text-sm font-bold text-white">{projectProf.project.projectName}</p>
+                        <Link
+                          href={`/professional-projects/${projectProf.id}?tab=overview`}
+                          className="truncate text-sm font-bold text-white underline-offset-2 hover:underline"
+                          title="Open project details"
+                        >
+                          {projectProf.project.projectName}
+                        </Link>
                         <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
                           <ProjectSentimentBadge
                             projectId={projectProf.project.id}

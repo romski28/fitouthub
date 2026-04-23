@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
@@ -304,6 +304,69 @@ export default function ProjectDetailPage() {
     setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
   }, [searchParams, project]);
 
+  const fetchProject = useCallback(async (options?: { force?: boolean }) => {
+    if (!accessToken || !projectProfessionalId) return;
+
+    const now = Date.now();
+    const shouldThrottleBackgroundFetch =
+      !options?.force &&
+      hasLoadedProjectRef.current &&
+      now - lastProjectFetchAtRef.current < 90_000;
+
+    if (shouldThrottleBackgroundFetch) {
+      return;
+    }
+
+    lastProjectFetchAtRef.current = now;
+
+    try {
+      if (!hasLoadedProjectRef.current) {
+        setLoading(true);
+      }
+      const response = await fetchWithRetry(
+        `${API_BASE_URL}/professional/projects/${projectProfessionalId}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          openLoginModal();
+          return;
+        }
+        throw new Error('Failed to fetch project');
+      }
+
+      const data = await response.json();
+      setProject(data);
+      hasLoadedProjectRef.current = true;
+
+      if (data.quoteAmount && !quoteFormDirtyRef.current && !submittingQuote) {
+        setQuoteForm({
+          amount: data.quoteAmount,
+          notes: data.quoteNotes || '',
+          estimatedStartDate: toDateInputValue(data.quoteEstimatedStartAt),
+          estimatedStartTime: toTimeInputValue(data.quoteEstimatedStartAt),
+          estimatedDurationValue:
+            (data.quoteEstimatedDurationUnit === 'days'
+              ? durationMinutesToDaysInput(data.quoteEstimatedDurationMinutes)
+              : durationMinutesToHoursInput(data.quoteEstimatedDurationMinutes)) || '',
+          estimatedDurationUnit: (data.quoteEstimatedDurationUnit as 'hours' | 'days') || 'hours',
+        });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load project';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, openLoginModal, projectProfessionalId, submittingQuote]);
+
   useEffect(() => {
     if (isLoggedIn === false) {
       router.push('/');
@@ -313,67 +376,6 @@ export default function ProjectDetailPage() {
     if (!isLoggedIn || !accessToken || !projectProfessionalId) {
       return;
     }
-
-    const fetchProject = async () => {
-      const now = Date.now();
-      const shouldThrottleBackgroundFetch =
-        hasLoadedProjectRef.current && now - lastProjectFetchAtRef.current < 90_000;
-
-      if (shouldThrottleBackgroundFetch) {
-        return;
-      }
-
-      lastProjectFetchAtRef.current = now;
-
-      try {
-        // Keep the page stable once we have initial data to avoid focus-trigger bounce.
-        if (!hasLoadedProjectRef.current) {
-          setLoading(true);
-        }
-        const response = await fetchWithRetry(
-          `${API_BASE_URL}/professional/projects/${projectProfessionalId}`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            openLoginModal();
-            return;
-          }
-          throw new Error('Failed to fetch project');
-        }
-
-        const data = await response.json();
-        setProject(data);
-        hasLoadedProjectRef.current = true;
-
-        // Pre-fill quote form if quote already exists and user is not actively editing.
-        if (data.quoteAmount && !quoteFormDirtyRef.current && !submittingQuote) {
-          setQuoteForm({
-            amount: data.quoteAmount,
-            notes: data.quoteNotes || '',
-            estimatedStartDate: toDateInputValue(data.quoteEstimatedStartAt),
-            estimatedStartTime: toTimeInputValue(data.quoteEstimatedStartAt),
-            estimatedDurationValue:
-              (data.quoteEstimatedDurationUnit === 'days'
-                ? durationMinutesToDaysInput(data.quoteEstimatedDurationMinutes)
-                : durationMinutesToHoursInput(data.quoteEstimatedDurationMinutes)) || '',
-            estimatedDurationUnit: (data.quoteEstimatedDurationUnit as 'hours' | 'days') || 'hours',
-          });
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load project';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     void fetchProject();
     // Fetch messages and mark client messages as read
@@ -415,9 +417,9 @@ export default function ProjectDetailPage() {
     if (accessToken) {
       fetchMessages();
     }
-  }, [isLoggedIn, accessToken, projectProfessionalId, router, submittingQuote]);
+  }, [isLoggedIn, accessToken, projectProfessionalId, router, fetchProject]);
 
-  const reloadPaymentPlan = async () => {
+  const reloadPaymentPlan = useCallback(async () => {
     if (!accessToken || !project?.project?.id) {
       return;
     }
@@ -442,11 +444,11 @@ export default function ProjectDetailPage() {
     } finally {
       setPaymentPlanLoading(false);
     }
-  };
+  }, [accessToken, project?.project?.id]);
 
   useEffect(() => {
-    reloadPaymentPlan();
-  }, [accessToken, project?.project?.id]);
+    void reloadPaymentPlan();
+  }, [reloadPaymentPlan]);
 
   useEffect(() => {
     if (!paymentPlan?.milestones?.length) {
@@ -1199,8 +1201,7 @@ export default function ProjectDetailPage() {
       setShowAdvanceRequestForm(false);
       setAdvanceRequestForm({ requestType: 'fixed', amount: '', percentage: '', notes: '' });
       
-      // Refresh project data
-      window.location.reload();
+      await Promise.all([fetchProject({ force: true }), reloadPaymentPlan()]);
     } catch (err) {
       console.error('Payment request exception:', err);
       const message = err instanceof Error ? err.message : 'Failed to submit request';
@@ -1249,7 +1250,7 @@ export default function ProjectDetailPage() {
           waitReason: 'The client must deposit funds into escrow before work on this milestone can proceed.',
         },
       });
-      window.location.reload();
+      await Promise.all([fetchProject({ force: true }), reloadPaymentPlan()]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to request milestone funding';
       toast.error(message);
