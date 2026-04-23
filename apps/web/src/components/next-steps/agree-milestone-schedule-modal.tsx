@@ -67,6 +67,9 @@ export function AgreeMilestoneScheduleModal({
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  
+  // Show loading immediately when modal opens
+  const showLoadingInit = isOpen && (isLoading || scheduleLoading || !projectDetails);
 
   const roleUpper = (state.role || '').toUpperCase();
   const isProfessional = roleUpper.includes('PROFESSIONAL');
@@ -189,6 +192,7 @@ export function AgreeMilestoneScheduleModal({
     (isProfessional
       ? 'Review and finalize the milestone schedule before client funding.'
       : 'Review and confirm the milestone schedule before funding escrow.');
+  const imageUrl = state.modalContent?.imageUrl;
 
   return (
     <>
@@ -201,16 +205,31 @@ export function AgreeMilestoneScheduleModal({
         }}
       >
         <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-          {isLoading || scheduleLoading ? (
-            <div className="flex flex-col items-center justify-center px-6 py-14">
+          {/* Loading state - shown immediately */}
+          {showLoadingInit && (
+            <div className="flex flex-col items-center justify-center px-6 py-14 min-h-[400px]">
               <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
-              <p className="text-slate-300">Loading schedule...</p>
+              <p className="text-slate-300">Loading milestone schedule...</p>
             </div>
-          ) : (
+          )}
+          
+          {/* Content state - shown when ready */}
+          {!showLoadingInit && (
             <div className="max-h-[90vh] overflow-y-auto">
-              <div className="border-b border-slate-700 px-6 py-5">
+              {/* Header with optional image */}
+              <div className="border-b border-slate-700 px-6 py-5 space-y-3">
+                {imageUrl && (
+                  <div className="relative h-48 w-full overflow-hidden rounded-lg mb-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl}
+                      alt="Schedule agreement"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
                 <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
-                <p className="mt-1 text-sm text-slate-200">{body}</p>
+                <p className="text-sm text-slate-200">{body}</p>
               </div>
 
               <div className="space-y-4 px-6 py-5">

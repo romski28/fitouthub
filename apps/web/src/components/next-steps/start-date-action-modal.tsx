@@ -71,6 +71,9 @@ export function StartDateActionModal({
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
 
+  // Show loading immediately when modal opens
+  const showLoadingInit = isOpen && (isLoading || (proposalLoading && proposals.length === 0) || !proposalFormInitialized);
+
   const roleUpper = (state.role || '').toUpperCase();
   const isProfessional = roleUpper.includes('PROFESSIONAL');
   const viewerRole = isProfessional ? 'professional' : 'client';
@@ -412,6 +415,7 @@ export function StartDateActionModal({
     (isProfessional
       ? 'Confirm a realistic start date and time for client agreement. Duration is fixed from the agreed quote/proposal.'
       : 'Review and respond to the professional start-date proposal.');
+  const imageUrl = state.modalContent?.imageUrl;
 
   return (
     <>
@@ -424,16 +428,26 @@ export function StartDateActionModal({
         }}
       >
         <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center px-6 py-14">
+        {showLoadingInit ? (
+          <div className="flex flex-col items-center justify-center px-6 py-14 min-h-[400px]">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
-            <p className="text-slate-300">Loading...</p>
+            <p className="text-slate-300">Loading start date options...</p>
           </div>
         ) : (
           <div className="max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-slate-700 px-6 py-5">
+            <div className="border-b border-slate-700 px-6 py-5 space-y-3">
+              {imageUrl && (
+                <div className="relative h-48 w-full overflow-hidden rounded-lg mb-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt="Start date negotiation"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              )}
               <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
-              <p className="mt-1 text-sm text-slate-200">{body}</p>
+              <p className="text-sm text-slate-200">{body}</p>
             </div>
 
             <div className="space-y-4 px-6 py-5">

@@ -14,18 +14,12 @@ import { AgreeMilestoneScheduleModal } from './agree-milestone-schedule-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
-  projectId?: string;
-  userId?: string;
-  role?: string;
   onDetailsNavigate?: (target: string) => void;
 }
 
 export function ModalDispatcher({
-  projectId,
-  userId,
-  role,
   onDetailsNavigate,
-}: ModalDispatcherProps) {
+}: Omit<ModalDispatcherProps, 'projectId' | 'userId' | 'role'>) {
   const { state, closeModal } = useNextStepModal();
   const router = useRouter();
   const fallbackTab = (state.role || '').toUpperCase().includes('PROFESSIONAL')
@@ -88,6 +82,11 @@ export function ModalDispatcher({
 
   // Route to correct modal based on actionKey
   const modalType = getModalType(state.actionKey || '');
+
+  // Defensive routing: log for debugging
+  if (state.isOpen && state.actionKey) {
+    console.debug(`[ModalDispatcher] Opening modal for action: ${state.actionKey} -> type: ${modalType}`);
+  }
 
   // For now, all actions render through GeneralActionModal
   // Future: add PaymentModal, QuoteModal, ContractModal
