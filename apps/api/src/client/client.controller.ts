@@ -186,6 +186,37 @@ export class ClientController {
         data: { status: 'awarded' },
       });
 
+      const otherAssignments = await tx.projectProfessional.findMany({
+        where: {
+          projectId: pp.projectId,
+          id: { not: projectProfessionalId },
+          status: { notIn: ['declined', 'rejected'] },
+        },
+        include: {
+          professional: true,
+        },
+      });
+
+      await tx.projectProfessional.updateMany({
+        where: {
+          projectId: pp.projectId,
+          id: { not: projectProfessionalId },
+          status: { notIn: ['declined', 'rejected'] },
+        },
+        data: { status: 'declined' },
+      });
+
+      await tx.siteAccessRequest.updateMany({
+        where: {
+          projectProfessionalId: { in: otherAssignments.map((assignment: any) => assignment.id) },
+          status: 'pending',
+        },
+        data: {
+          status: 'cancelled',
+          respondedAt: new Date(),
+        },
+      });
+
       await tx.project.update({
         where: { id: pp.projectId },
         data: {
@@ -203,6 +234,20 @@ export class ClientController {
           content: 'We have accepted your quotation.',
         },
       });
+
+      for (const losingAssignment of otherAssignments) {
+        const hadQuoted = Boolean(losingAssignment.quotedAt || losingAssignment.quoteAmount);
+        await tx.message.create({
+          data: {
+            projectProfessionalId: losingAssignment.id,
+            senderType: 'client',
+            senderClientId: userId,
+            content: hadQuoted
+              ? `Thank you for your quote on "${pp.project.projectName}". Another professional was selected for this project. We appreciate your time and hope to work with you in the future.`
+              : `Bidding has concluded for "${pp.project.projectName}". Thank you for your interest in this opportunity. We look forward to working with you in the future.`,
+          },
+        });
+      }
 
       // Create financial transactions for accepted quotation
       const quoteAmount = pp.quoteAmount

@@ -139,7 +139,11 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     setAcceptingId(pp.id);
     setAcceptError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/client/projects/${pp.id}/quote/accept`, {
+      if (!state.projectId) {
+        throw new Error('Project context is missing');
+      }
+
+      const res = await fetch(`${API_BASE_URL}/projects/${state.projectId}/award/${pp.professionalId}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -153,7 +157,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
       setAcceptedName(pp.professional.fullName || pp.professional.businessName || 'the professional');
       // Fetch the real next step — should be REVIEW_CONTRACT / SIGN_CONTRACT now in CONTRACT_PHASE
       try {
-        const action = await fetchPrimaryNextStep(state.projectId!, accessToken, { forceRefresh: true });
+        const action = await fetchPrimaryNextStep(state.projectId, accessToken, { forceRefresh: true });
         if (action) {
           setResolvedNextAction(action);
           setResolvedNextStep({

@@ -4652,6 +4652,17 @@ Please review the project details and respond with your quote or decline the inv
         direct: { status: 'skipped' },
       };
 
+      const hadQuoted = Boolean(pp.quotedAt || pp.quoteAmount);
+      const loserEmailMessage = hadQuoted
+        ? 'Thank you for your time and effort on this project. We hope to work with you on future opportunities.'
+        : 'Bidding has now concluded for this project. Thank you for your interest, and we look forward to working with you in the future.';
+      const loserDirectMessage = hadQuoted
+        ? `Update on "${project.projectName}": another professional was selected this time. Thank you for your quote-we hope to work with you on a future project.`
+        : `Update on "${project.projectName}": bidding has now concluded. Thank you for your interest-we look forward to working with you in the future.`;
+      const loserChatMessage = hadQuoted
+        ? `Thank you for your quote on "${project.projectName}". Another professional was selected for this project. We appreciate your time and hope to work with you in the future.`
+        : `Bidding has concluded for "${project.projectName}". Thank you for your interest in this opportunity. We look forward to working with you in the future.`;
+
       try {
         await this.emailService.sendLoserNotification({
           to: pp.professional.email,
@@ -4660,8 +4671,7 @@ Please review the project details and respond with your quote or decline the inv
             pp.professional.businessName ||
             'Professional',
           projectName: project.projectName,
-          thankYouMessage:
-            'Thank you for your time and effort on this project. We hope to work with you on future opportunities.',
+          thankYouMessage: loserEmailMessage,
         });
         nonWinnerAudit.email.status = 'sent';
       } catch (err) {
@@ -4725,7 +4735,7 @@ Please review the project details and respond with your quote or decline the inv
             phoneNumber: pp.professional.phone,
             channel: directChannel,
             eventType: 'quote_not_awarded',
-            message: `Update on "${project.projectName}": another professional was selected this time. Thank you for your quote—we hope to work with you on a future project.`,
+            message: loserDirectMessage,
           });
 
           if (sendResult.success) {
@@ -4805,7 +4815,7 @@ Please review the project details and respond with your quote or decline the inv
           projectProfessionalId: pp.id,
           senderType: 'client',
           senderClientId: project.clientId,
-          content: `Thank you for your quote on "${project.projectName}". Another professional was selected for this project. We appreciate your time and hope to work with you in the future.`,
+          content: loserChatMessage,
         },
       });
     }

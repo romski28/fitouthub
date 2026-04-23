@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
@@ -29,6 +30,28 @@ export class ProfessionalController {
     private email: EmailService,
     private platformFeeService: PlatformFeeService,
   ) {}
+
+  private readonly visibleProfessionalStatuses = [
+    'pending',
+    'accepted',
+    'quoted',
+    'counter_requested',
+    'awarded',
+    'declined',
+    'rejected',
+  ];
+
+  private readonly activeProfessionalStatuses = [
+    'pending',
+    'accepted',
+    'quoted',
+    'counter_requested',
+    'awarded',
+  ];
+
+  private canAccessFullProject(status?: string | null) {
+    return this.activeProfessionalStatuses.includes(String(status || '').toLowerCase());
+  }
 
   private resolveProfileMediaUrls(professional: any) {
     if (!professional) return professional;
@@ -433,6 +456,7 @@ export class ProfessionalController {
       ).projectProfessional.findMany({
         where: {
           professionalId,
+          status: { in: this.visibleProfessionalStatuses },
           project: {
             status: { not: 'archived' },
           },
@@ -455,6 +479,7 @@ export class ProfessionalController {
       // Attach unread message count per project (client -> professional unread)
       const withUnread = await Promise.all(
         projectProfessionals.map(async (pp: any) => {
+          const isRestricted = !this.canAccessFullProject(pp.status);
           const unreadCount = await (this.prisma as any).message
             .count({
               where: {
@@ -464,7 +489,23 @@ export class ProfessionalController {
               },
             })
             .catch(() => 0);
-          return { ...pp, unreadCount };
+          if (!isRestricted) {
+            return { ...pp, unreadCount, accessRestricted: false };
+          }
+
+          return {
+            ...pp,
+            unreadCount: 0,
+            accessRestricted: true,
+            project: {
+              id: pp.project?.id,
+              projectName: pp.project?.projectName,
+              clientName: '',
+              region: '',
+              budget: undefined,
+              notes: pp.project?.notes,
+            },
+          };
         }),
       );
 
@@ -616,6 +657,7 @@ export class ProfessionalController {
         where: {
           id: projectProfessionalId,
           professionalId,
+          status: { in: this.activeProfessionalStatuses },
           project: {
             status: { not: 'archived' },
           },
@@ -673,6 +715,7 @@ export class ProfessionalController {
         where: {
           id: projectProfessionalId,
           professionalId,
+          status: { in: this.activeProfessionalStatuses },
         },
         include: {
           project: {
@@ -854,6 +897,7 @@ export class ProfessionalController {
         where: {
           id: projectProfessionalId,
           professionalId,
+          status: { in: this.activeProfessionalStatuses },
         },
         include: {
           project: true,
@@ -983,6 +1027,7 @@ export class ProfessionalController {
         where: {
           id: projectProfessionalId,
           professionalId,
+          status: { in: this.activeProfessionalStatuses },
         },
       });
 
@@ -1040,10 +1085,14 @@ export class ProfessionalController {
     const projectProfessional = await (
       this.prisma as any
     ).projectProfessional.findFirst({
-      where: { id: projectProfessionalId, professionalId },
+      where: {
+        id: projectProfessionalId,
+        professionalId,
+        status: { in: this.activeProfessionalStatuses },
+      },
     });
     if (!projectProfessional) {
-      throw new BadRequestException('Project not found');
+      throw new ForbiddenException('Messaging is no longer available for this project');
     }
 
     const messages = await (this.prisma as any).message.findMany({
@@ -1071,10 +1120,14 @@ export class ProfessionalController {
     const projectProfessional = await (
       this.prisma as any
     ).projectProfessional.findFirst({
-      where: { id: projectProfessionalId, professionalId },
+      where: {
+        id: projectProfessionalId,
+        professionalId,
+        status: { in: this.activeProfessionalStatuses },
+      },
     });
     if (!projectProfessional) {
-      throw new BadRequestException('Project not found');
+      throw new ForbiddenException('Messaging is no longer available for this project');
     }
 
     const message = await (this.prisma as any).message.create({
@@ -1100,10 +1153,14 @@ export class ProfessionalController {
     const projectProfessional = await (
       this.prisma as any
     ).projectProfessional.findFirst({
-      where: { id: projectProfessionalId, professionalId },
+      where: {
+        id: projectProfessionalId,
+        professionalId,
+        status: { in: this.activeProfessionalStatuses },
+      },
     });
     if (!projectProfessional) {
-      throw new BadRequestException('Project not found');
+      throw new ForbiddenException('Messaging is no longer available for this project');
     }
 
     await (this.prisma as any).message.updateMany({

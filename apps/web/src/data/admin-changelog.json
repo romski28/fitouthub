@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-23-f6404e7",
+    "date": "2026-04-23T15:54:45+08:00",
+    "title": "fix: revoke non-winner project access while keeping loss history",
+    "summary": "fix: revoke non-winner project access while keeping loss history",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f6404e7",
+    "files": [
+      "apps/api/src/client/client.controller.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-9fe8f00",
     "date": "2026-04-23T14:42:06+08:00",
     "title": "fix: improve modal UX and add comprehensive debugging",

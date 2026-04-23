@@ -28,12 +28,13 @@ interface ProjectProfessional {
   project: {
     id: string;
     projectName: string;
-    clientName: string;
-    region: string;
+    clientName?: string;
+    region?: string;
     budget?: string;
     notes?: string;
   };
   status: string;
+  accessRestricted?: boolean;
   quoteAmount?: string;
   quoteNotes?: string;
   quotedAt?: string;
@@ -67,7 +68,10 @@ export default function ProfessionalProjectsPage() {
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
-  const projectIds = useMemo(() => projects.map((p) => p.project.id), [projects]);
+  const projectIds = useMemo(
+    () => projects.filter((p) => !p.accessRestricted).map((p) => p.project.id),
+    [projects],
+  );
   const projectIdsKey = useMemo(() => projectIds.join('|'), [projectIds]);
   const activityProjectIds = useMemo(() => {
     const ids = new Set<string>();
@@ -320,6 +324,7 @@ export default function ProfessionalProjectsPage() {
                 const actions = nextStepMap[projectProf.project.id] || [];
                 const primaryAction = actions[0] || null;
                 const isStopStatus = ['declined', 'rejected'].includes((projectProf.status || '').toLowerCase());
+                const isRestricted = Boolean(projectProf.accessRestricted);
                 const baseBorder = professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
                 const unreadCount = projectProf.unreadCount ?? 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
@@ -336,13 +341,19 @@ export default function ProfessionalProjectsPage() {
                     )}
                     <div className="grid gap-3">
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                        <Link
-                          href={`/professional-projects/${projectProf.id}?tab=overview`}
-                          className="truncate text-sm font-bold text-white underline-offset-2 hover:underline"
-                          title="Open project details"
-                        >
-                          {projectProf.project.projectName}
-                        </Link>
+                        {isRestricted ? (
+                          <span className="truncate text-sm font-bold text-white">
+                            {projectProf.project.projectName}
+                          </span>
+                        ) : (
+                          <Link
+                            href={`/professional-projects/${projectProf.id}?tab=overview`}
+                            className="truncate text-sm font-bold text-white underline-offset-2 hover:underline"
+                            title="Open project details"
+                          >
+                            {projectProf.project.projectName}
+                          </Link>
+                        )}
                         <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
                           <ProjectSentimentBadge
                             projectId={projectProf.project.id}
@@ -358,21 +369,25 @@ export default function ProfessionalProjectsPage() {
                         {/* Project Details */}
                         <div className="col-span-2 md:col-span-1">
                           <div className="flex items-center gap-2 text-xs text-slate-300">
-                            <span>{projectProf.project.region}</span>
-                            {projectProf.quoteAmount && (
+                            {projectProf.project.region ? <span>{projectProf.project.region}</span> : null}
+                            {!isRestricted && projectProf.quoteAmount && (
                               <>
-                                <span>•</span>
+                                {projectProf.project.region ? <span>•</span> : null}
                                 <span className="font-medium text-white">${Number(projectProf.quoteAmount).toLocaleString()}</span>
                               </>
                             )}
                           </div>
-                          {primaryAction?.description ? (
+                          {isRestricted ? (
+                            <p className="mt-2 text-xs text-slate-300">
+                              {projectProf.project.notes || 'Bidding has concluded for this project.'}
+                            </p>
+                          ) : primaryAction?.description ? (
                             <p className="mt-2 text-xs text-slate-300">{primaryAction.description}</p>
                           ) : null}
                         </div>
 
                         <div className="flex items-center md:justify-end">
-                          {activityProjectIds.has(projectProf.project.id) && (
+                          {!isRestricted && activityProjectIds.has(projectProf.project.id) && (
                             <button
                               type="button"
                               onClick={() => {
@@ -387,7 +402,11 @@ export default function ProfessionalProjectsPage() {
                               View activity
                             </button>
                           )}
-                          {nextStepsLoading && !nextStepMap[projectProf.project.id] ? (
+                          {isRestricted ? (
+                            <span className="rounded-lg border border-rose-300/40 px-4 py-2 text-sm font-semibold text-rose-100">
+                              Bidding closed
+                            </span>
+                          ) : nextStepsLoading && !nextStepMap[projectProf.project.id] ? (
                             <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                           ) : (
                             <>
