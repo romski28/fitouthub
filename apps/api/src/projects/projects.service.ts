@@ -5515,6 +5515,7 @@ Please review the project details and respond with your quote or decline the inv
         projectChatMessages: 0,
         privateChatThreads: 0,
         privateChatMessages: 0,
+        privateContextMessages: 0,
         financialTransactions: 0,
         escrowLedgers: 0,
         procurementEvidence: 0,
@@ -5552,6 +5553,17 @@ Please review the project details and respond with your quote or decline the inv
     const supportIds = supportRequestIds.map((row) => row.id);
     const paymentPlanIdList = paymentPlanIds.map((row) => row.id);
 
+    const privateContextMessages = projectIds.length
+      ? await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+          SELECT COUNT(pcm.id)::bigint as count
+          FROM "PrivateChatMessage" pcm
+          INNER JOIN "PrivateChatThread" pct ON pct.id = pcm."threadId"
+          WHERE pct."projectId" IS NULL
+            AND COALESCE(pcm.context->>'projectId', '') IN (${Prisma.join(projectIds)})
+        `
+      : [{ count: BigInt(0) }];
+    const privateContextMessageCount = Number(privateContextMessages[0]?.count || 0n);
+
     const [
       projectPhotos,
       projectProfessionals,
@@ -5565,6 +5577,7 @@ Please review the project details and respond with your quote or decline the inv
       projectChatMessages,
       privateChatThreads,
       privateChatMessages,
+      privateContextMessageCount,
       financialTransactions,
       escrowLedgers,
       procurementEvidence,
@@ -5648,6 +5661,7 @@ Please review the project details and respond with your quote or decline the inv
       projectChatMessages,
       privateChatThreads,
       privateChatMessages,
+      privateContextMessages: privateContextMessageCount,
       financialTransactions,
       escrowLedgers,
       procurementEvidence,
@@ -5951,6 +5965,18 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    // Some legacy/general FOH threads keep project linkage in message context only.
+    // Remove those project-scoped messages as part of hard delete as well.
+    const privateContextMessages = await this.prisma.$queryRaw<
+      Array<{ id: string; threadId: string; content: string | null; attachments: Prisma.JsonValue | null }>
+    >`
+      SELECT pcm.id, pcm."threadId", pcm.content, pcm.attachments
+      FROM "PrivateChatMessage" pcm
+      INNER JOIN "PrivateChatThread" pct ON pct.id = pcm."threadId"
+      WHERE pct."projectId" IS NULL
+        AND COALESCE(pcm.context->>'projectId', '') = ${id}
+    `;
+
     const questionnaireInvites = await (this.prisma as any).questionnaireInvite.findMany({
       where: { projectId: id },
       select: {
@@ -5978,6 +6004,7 @@ Please review the project details and respond with your quote or decline the inv
     const assistIds = project.assistRequests.map((request) => request.id);
     const supportIds = project.supportRequests.map((request) => request.id);
     const privateIds = privateThreads.map((thread) => thread.id);
+    const privateContextMessageIds = privateContextMessages.map((message) => message.id);
     const projectThreadIds = project.chatThread?.id ? [project.chatThread.id] : [];
     const paymentPlanIds = project.paymentPlan ? [project.paymentPlan.id] : [];
     const paymentMilestoneIds = project.paymentPlan?.milestones.map((milestone) => milestone.id) || [];
@@ -6036,6 +6063,7 @@ Please review the project details and respond with your quote or decline the inv
       ...project.chatThread?.messages.flatMap((message) => [message.content, message.attachments]) || [],
       ...project.supportRequests.flatMap((request) => [request.body, request.notes, request.replies]),
       ...privateThreads.flatMap((thread) => thread.messages.flatMap((message) => [message.content, message.attachments])),
+      ...privateContextMessages.flatMap((message) => [message.content, message.attachments]),
       ...project.professionals.flatMap((assignment) => [assignment.quoteNotes, assignment.visitNotes]),
       ...project.financialTransactions.map((transaction) => transaction.notes),
       ...project.procurementEvidence.flatMap((evidence) => [evidence.notes, evidence.invoiceUrls, evidence.photoUrls]),
@@ -6095,6 +6123,14 @@ Please review the project details and respond with your quote or decline the inv
         await (tx as any).privateChatThread.deleteMany({
           where: {
             id: { in: privateIds },
+          },
+        });
+      }
+
+      if (privateContextMessageIds.length > 0) {
+        await (tx as any).privateChatMessage.deleteMany({
+          where: {
+            id: { in: privateContextMessageIds },
           },
         });
       }

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-23-2909f7c",
+    "date": "2026-04-23T17:18:15+08:00",
+    "title": "fix: purge FOH context-linked private messages during project hard delete",
+    "summary": "fix: purge FOH context-linked private messages during project hard delete",
+    "areas": [
+      "api"
+    ],
+    "commit": "2909f7c",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-23-18e96f5",
     "date": "2026-04-23T17:01:53+08:00",
     "title": "fix: align bulk clean with single-delete workflow",
