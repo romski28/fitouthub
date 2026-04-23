@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-23-9fe8f00",
+    "date": "2026-04-23T14:42:06+08:00",
+    "title": "fix: improve modal UX and add comprehensive debugging",
+    "summary": "fix: improve modal UX and add comprehensive debugging",
+    "areas": [
+      "web"
+    ],
+    "commit": "9fe8f00",
+    "files": [
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-2c4428f",
     "date": "2026-04-23T14:29:14+08:00",
     "title": "refactor: improve next-step modal UX with immediate loading states and image support",

@@ -69,6 +69,8 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
       projectStage?: string,
       onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void,
     ) => {
+      console.debug(`[NextStepModalContext] openModal called for action: ${actionKey}`);
+      
       // Open modal immediately with loading state
       setState({
         isOpen: true,
@@ -84,22 +86,14 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
         onCompleted,
       });
 
-      // Fetch modal content in background
-      try {
-        // This will be called from project details, where project data is already loaded
-        // For now, we'll just mark it as ready. The modal content is already available
-        // from the NextStepAction passed to the modal trigger
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
-      } catch (err) {
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: err instanceof Error ? err.message : 'Failed to open modal',
-        }));
-      }
+      // Modal content is already provided; keep loading state visible for 200ms for smooth UX
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      
+      console.debug(`[NextStepModalContext] Transitioning isLoading from true to false for action: ${actionKey}`);
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+      }));
     },
     []
   );

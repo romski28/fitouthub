@@ -84,6 +84,18 @@ export function StartDateActionModal({
 
   const latestProposal = useMemo(() => proposals[0], [proposals]);
 
+  // Debug logging
+  useEffect(() => {
+    if (isOpen) {
+      console.debug('[StartDateActionModal] Opened', {
+        actionKey: state.actionKey,
+        isLoading,
+        proposalLoading,
+        proposalFormInitialized,
+      });
+    }
+  }, [isOpen, state.actionKey, isLoading, proposalLoading, proposalFormInitialized]);
+
   const applyDefaultSchedule = useCallback((params: {
     scheduledAt?: string | null;
     durationMinutes?: number | null;

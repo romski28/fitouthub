@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { getClientTabForAction } from '@/lib/client-workflow';
@@ -84,9 +84,15 @@ export function ModalDispatcher({
   const modalType = getModalType(state.actionKey || '');
 
   // Defensive routing: log for debugging
-  if (state.isOpen && state.actionKey) {
-    console.debug(`[ModalDispatcher] Opening modal for action: ${state.actionKey} -> type: ${modalType}`);
-  }
+  useEffect(() => {
+    if (state.isOpen && state.actionKey) {
+      console.warn(`[ModalDispatcher] 🚀 OPENING MODAL:
+  - actionKey: "${state.actionKey}"
+  - modalType: "${modalType}"
+  - role: "${state.role}"
+  - projectId: "${state.projectId}"`);
+    }
+  }, [state.isOpen, state.actionKey, modalType, state.role, state.projectId]);
 
   // For now, all actions render through GeneralActionModal
   // Future: add PaymentModal, QuoteModal, ContractModal

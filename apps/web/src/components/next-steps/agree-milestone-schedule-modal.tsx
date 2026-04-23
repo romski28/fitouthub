@@ -78,6 +78,18 @@ export function AgreeMilestoneScheduleModal({
   const projectProfessionalId = extractProjectProfessionalId(state.projectDetailsPath);
   const nextStepCacheScope = `${isProfessional ? 'professional' : 'client'}-schedule-modal:${projectId || 'unknown'}`;
 
+  // Debug logging
+  useEffect(() => {
+    if (isOpen) {
+      console.debug('[AgreeMilestoneScheduleModal] Opened', {
+        actionKey: state.actionKey,
+        isLoading,
+        scheduleLoading,
+        hasProjectDetails: !!projectDetails,
+      });
+    }
+  }, [isOpen, state.actionKey, isLoading, scheduleLoading, projectDetails]);
+
   // Fetch project details to pass to ScheduleTab
   useEffect(() => {
     if (!isOpen || !projectId || !token) return;
