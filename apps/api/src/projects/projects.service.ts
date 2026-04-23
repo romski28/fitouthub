@@ -5604,7 +5604,6 @@ Please review the project details and respond with your quote or decline the inv
       projectChatMessages,
       privateChatThreads,
       privateChatMessages,
-      privateContextMessageCount,
       financialTransactions,
       escrowLedgers,
       procurementEvidence,
