@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-23-3474fce",
+    "date": "2026-04-23T09:29:21+08:00",
+    "title": "Add completion modal to start-date action flow",
+    "summary": "Add completion modal to start-date action flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "3474fce",
+    "files": [
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-e4992a4",
     "date": "2026-04-23T09:16:38+08:00",
     "title": "Align start proposal eligibility with contract workflow stages",

@@ -1,18 +1,37 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
-import { completeNextStep, invalidateNextStepCache } from '@/lib/next-steps';
+import { completeNextStep, fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
 import { StartDateNegotiationPanel, type StartProposalRow } from '@/components/start-date-negotiation-panel';
+import { WorkflowCompletionModal, type WaitingParty, type WorkflowNextStep } from '@/components/workflow-completion-modal';
+import { getClientTabForAction } from '@/lib/client-workflow';
+import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 
 interface StartDateActionModalProps {
   isOpen: boolean;
   isLoading?: boolean;
   onClose: () => void;
 }
+
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
+
+const upsertTab = (path: string, tabValue: string) => {
+  const [pathname, existingQuery = ''] = path.split('?');
+  const query = new URLSearchParams(existingQuery);
+  query.set('tab', tabValue);
+  return `${pathname}?${query.toString()}`;
+};
 
 const extractProjectProfessionalId = (projectDetailsPath?: string): string | undefined => {
   if (!projectDetailsPath) return undefined;
@@ -29,6 +48,7 @@ export function StartDateActionModal({
   isLoading = false,
   onClose,
 }: StartDateActionModalProps) {
+  const router = useRouter();
   const { state } = useNextStepModal();
   const { accessToken: clientAccessToken } = useAuth();
   const { accessToken: professionalAccessToken } = useProfessionalAuth();
@@ -47,6 +67,9 @@ export function StartDateActionModal({
   const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
   const [updateDateByProposal, setUpdateDateByProposal] = useState<Record<string, string>>({});
   const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
 
   const roleUpper = (state.role || '').toUpperCase();
   const isProfessional = roleUpper.includes('PROFESSIONAL');
@@ -200,6 +223,56 @@ export function StartDateActionModal({
     state.onCompleted?.({ projectId, actionKey: state.actionKey });
   }, [nextStepCacheScope, projectId, state, token]);
 
+  const getTabForAction = useCallback((actionKey?: string) => {
+    if (!actionKey) return undefined;
+    return isProfessional
+      ? getProfessionalTabForAction(actionKey)
+      : getClientTabForAction(actionKey);
+  }, [isProfessional]);
+
+  const openWorkflowModal = useCallback(async (completedLabel: string) => {
+    if (!projectId || !token) return;
+
+    try {
+      const next = await fetchPrimaryNextStep(projectId, token, {
+        cacheScope: nextStepCacheScope,
+        forceRefresh: true,
+      });
+
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab: getTabForAction(next.actionKey),
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(null);
+      setWorkflowModalOpen(true);
+    }
+  }, [getTabForAction, nextStepCacheScope, projectId, token]);
+
+  const navigateToNextStepTab = useCallback(() => {
+    const nextTab = workflowModalNextStep?.tab;
+    if (!nextTab) return;
+
+    if (state.projectDetailsPath) {
+      router.push(upsertTab(state.projectDetailsPath, nextTab));
+      return;
+    }
+
+    if (state.projectId) {
+      router.push(`/projects/${state.projectId}?tab=${encodeURIComponent(nextTab)}`);
+    }
+  }, [router, state.projectDetailsPath, state.projectId, workflowModalNextStep?.tab]);
+
   const handleSubmitNew = useCallback(async () => {
     if (!projectId || !token) {
       setError('Authentication required');
@@ -248,12 +321,15 @@ export function StartDateActionModal({
         setProposals((prev) => [data.proposal, ...prev.filter((p) => p.id !== data.proposal.id)]);
       }
       await markStepCompleted();
+      await openWorkflowModal(
+        state.modalContent?.successTitle || 'Start details sent successfully!',
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send start proposal');
     } finally {
       setProposalSubmitting(false);
     }
-  }, [markStepCompleted, projectId, proposalDate, proposalDurationHours, proposalNotes, proposalTime, token]);
+  }, [markStepCompleted, openWorkflowModal, projectId, proposalDate, proposalDurationHours, proposalNotes, proposalTime, state.modalContent?.successTitle, token]);
 
   const handleRespond = useCallback(async (proposalId: string, status: 'accepted' | 'updated') => {
     if (!projectId || !token) {
@@ -314,7 +390,9 @@ export function StartDateActionModal({
     }
   }, [fetchStartProposals, markStepCompleted, projectId, proposalResponseNotes, token, updateDateByProposal, updateTimeByProposal]);
 
-  if (!isOpen) return null;
+  const showMainModal = isOpen && !workflowModalOpen;
+
+  if (!isOpen && !workflowModalOpen) return null;
 
   const title = state.modalContent?.title || (isProfessional ? 'Confirm start date' : 'Review start date');
   const body = state.modalContent?.body ||
@@ -323,15 +401,16 @@ export function StartDateActionModal({
       : 'Review and respond to the professional start-date proposal.');
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all ${
-        isOpen ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
-      }`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+    <>
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center transition-all ${
+          showMainModal ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
+        }`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center px-6 py-14">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
@@ -397,7 +476,25 @@ export function StartDateActionModal({
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        completedDescription={state.modalContent?.successBody || undefined}
+        nextStep={workflowModalNextStep}
+        showConfetti
+        primaryActionLabel="Open next step"
+        onNavigate={workflowModalNextStep?.tab ? () => {
+          navigateToNextStepTab();
+          onClose();
+        } : undefined}
+        onClose={() => {
+          setWorkflowModalOpen(false);
+          onClose();
+        }}
+      />
+    </>
   );
 }
