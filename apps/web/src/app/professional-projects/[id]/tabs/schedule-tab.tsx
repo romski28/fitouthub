@@ -54,6 +54,7 @@ interface ScheduleTabProps {
   projectId: string;
   projectProfessionalId: string;
   projectStatus: string;
+  projectCurrentStage?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
   tradeId?: string;
@@ -65,6 +66,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   projectId,
   projectProfessionalId,
   projectStatus,
+  projectCurrentStage,
   quoteEstimatedStartAt,
   quoteEstimatedDurationMinutes,
   tradeId,
@@ -98,7 +100,20 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [nextStepLoading, setNextStepLoading] = useState(false);
   const [confirmingSchedule, setConfirmingSchedule] = useState(false);
 
-  const isAwarded = projectStatus === 'awarded';
+  const contractWorkflowStages = new Set([
+    'CONTRACT_PHASE',
+    'PRE_WORK',
+    'WORK_IN_PROGRESS',
+    'MILESTONE_PENDING',
+    'PAYMENT_RELEASED',
+    'NEAR_COMPLETION',
+    'FINAL_INSPECTION',
+    'COMPLETE',
+    'WARRANTY_PERIOD',
+    'CLOSED',
+  ]);
+  const normalizedStage = String(projectCurrentStage || '').toUpperCase();
+  const isInContractWorkflow = projectStatus === 'awarded' || contractWorkflowStages.has(normalizedStage);
 
   // Helper to convert date string to ISO-8601 DateTime
   const toISODateTime = (dateStr: string | undefined): string | undefined => {
@@ -202,7 +217,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   }, [fetchMilestones]);
 
   useEffect(() => {
-    if (!projectId || !accessToken || !isAwarded) return;
+    if (!projectId || !accessToken || !isInContractWorkflow) return;
 
     const fetchStartProposals = async () => {
       try {
@@ -233,7 +248,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     };
 
     fetchStartProposals();
-  }, [projectId, accessToken, isAwarded]);
+  }, [projectId, accessToken, isInContractWorkflow]);
 
   const handleSubmitStartProposal = async () => {
     if (!accessToken) {
@@ -380,7 +395,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   };
 
   useEffect(() => {
-    if (!isAwarded || proposalFormInitialized) return;
+    if (!isInContractWorkflow || proposalFormInitialized) return;
 
     if (latestStartProposal?.proposedStartAt) {
       const start = new Date(latestStartProposal.proposedStartAt);
@@ -430,7 +445,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       setProposalFormInitialized(true);
     }
   }, [
-    isAwarded,
+    isInContractWorkflow,
     latestStartProposal,
     proposalFormInitialized,
     quoteEstimatedStartAt,
@@ -832,7 +847,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   };
 
   const fetchNextSteps = React.useCallback(async () => {
-    if (!projectId || !accessToken || !isAwarded) return;
+    if (!projectId || !accessToken || !isInContractWorkflow) return;
     setNextStepLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/projects/${projectId}/next-steps`, {
@@ -849,7 +864,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     } finally {
       setNextStepLoading(false);
     }
-  }, [projectId, accessToken, isAwarded]);
+  }, [projectId, accessToken, isInContractWorkflow]);
 
   useEffect(() => {
     fetchNextSteps();
@@ -883,7 +898,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
   return (
     <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 space-y-6">
-      {!isAwarded ? (
+      {!isInContractWorkflow ? (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/15 p-4">
           <p className="text-sm text-amber-200">
             📅 Schedule details will be available once the project is awarded to you.

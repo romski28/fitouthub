@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-23-7f20ee4",
+    "date": "2026-04-23T10:32:10+08:00",
+    "title": "Refine professional project detail status and hero formatting",
+    "summary": "Refine professional project detail status and hero formatting",
+    "areas": [
+      "web"
+    ],
+    "commit": "7f20ee4",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/project-info-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-63d9524",
     "date": "2026-04-23T10:19:04+08:00",
     "title": "Improve project navigation and reduce disruptive page refreshes",

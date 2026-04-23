@@ -200,6 +200,21 @@ const hasProfessionalContractWorkflow = (project?: ProjectDetail | null) => {
   return contractWorkflowStages.has(currentStage);
 };
 
+const getProfessionalDisplayStatus = (project?: ProjectDetail | null) => {
+  if (!project) return 'pending';
+
+  const rawStatus = String(project.status || '').toLowerCase();
+  const currentStage = String(project.project?.currentStage || '').toUpperCase();
+
+  // Some records still carry quoted/pending while stage already moved to contract/pre-work.
+  // For badge display, prefer the workflow stage signal.
+  if (contractWorkflowStages.has(currentStage) && ['quoted', 'pending', 'accepted', 'counter_requested'].includes(rawStatus)) {
+    return 'awarded';
+  }
+
+  return rawStatus || 'pending';
+};
+
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -1428,6 +1443,7 @@ export default function ProjectDetailPage() {
         balance: awardedAmountValue !== undefined ? awardedAmountValue - totalPaid : undefined,
       }
     : null;
+  const projectDisplayStatus = getProfessionalDisplayStatus(project);
   const assistInitialNotes = buildProfessionalAssistInitialNotes(project.status);
 
   return (
@@ -1439,25 +1455,6 @@ export default function ProjectDetailPage() {
             <Link href="/professional-projects" className="text-sm text-blue-600 hover:underline">
               ← Back to my projects
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                if (project?.project?.id) {
-                  window.dispatchEvent(
-                    new CustomEvent('foh-open-chat', {
-                      detail: {
-                        context: 'project_view',
-                        projectId: project.project.id,
-                        projectName: project.project.projectName,
-                      },
-                    })
-                  );
-                }
-              }}
-              className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
-            >
-              Request PM Support
-            </button>
           </div>
 
           <div className="space-y-0">
@@ -1466,7 +1463,7 @@ export default function ProjectDetailPage() {
               role="professional"
               title={project!.project.projectName}
               region={project!.project.region}
-              status={project!.status}
+              status={projectDisplayStatus}
               projectSentimentKey={project!.project.id}
               projectSentimentScope="professional"
               notes={project!.project.notes || undefined}
@@ -1573,6 +1570,7 @@ export default function ProjectDetailPage() {
               projectId={project.project.id}
               projectProfessionalId={projectProfessionalId}
               projectStatus={project.status}
+              projectCurrentStage={project.project.currentStage}
               quoteEstimatedStartAt={project.quoteEstimatedStartAt}
               quoteEstimatedDurationMinutes={project.quoteEstimatedDurationMinutes}
               tradeId=""

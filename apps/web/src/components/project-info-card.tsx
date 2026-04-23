@@ -36,6 +36,24 @@ const formatDate = (date?: string) => {
   }
 };
 
+const normalizeProfessionalNotes = (value?: string): string[] => {
+  const source = (value || '').trim();
+  if (!source) return [];
+
+  let text = source
+    .replace(/\r\n/g, '\n')
+    .replace(/\s+(Assumptions:)/gi, '\n$1')
+    .replace(/\s+(Q&A:)/gi, '\n$1')
+    .replace(/\s+(Q\d+\s*:)/gi, '\n$1')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+};
+
 export default function ProjectInfoCard({
   role,
   title,
@@ -57,6 +75,7 @@ export default function ProjectInfoCard({
   const withdrawn = status === 'withdrawn';
   const isProfessional = role === 'professional';
   const createdLabel = isProfessional ? 'Invited' : 'Created';
+  const professionalNoteLines = isProfessional ? normalizeProfessionalNotes(notes) : [];
   
   const formatHKD = (amount?: string | number) => {
     if (!amount) return undefined;
@@ -135,11 +154,20 @@ export default function ProjectInfoCard({
             {!isProfessional && (
               <p className={`font-semibold mb-1 ${isProfessional ? 'text-white' : 'text-strong'}`}>Project description</p>
             )}
-            <p className={`${isProfessional ? 'text-slate-200' : 'text-muted'} leading-relaxed`}>
-              {isProfessional
-                ? `${notes} for ${clientName || 'client'}.`
-                : notes}
-            </p>
+            {isProfessional ? (
+              <div className="space-y-1.5">
+                {professionalNoteLines.map((line, index) => (
+                  <p key={`professional-note-line-${index}`} className="text-slate-200 leading-relaxed">
+                    {line}
+                  </p>
+                ))}
+                {professionalNoteLines.length === 0 && notes && (
+                  <p className="text-slate-200 leading-relaxed">{notes}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted leading-relaxed whitespace-pre-line">{notes}</p>
+            )}
             <div className={`flex gap-4 mt-3 pt-2 border-t text-xs ${isProfessional ? 'border-slate-700 text-slate-300' : 'border-border text-muted'}`}>
               <span>{createdLabel}: {formatDate(createdAt)}</span>
               {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
