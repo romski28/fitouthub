@@ -379,6 +379,64 @@ export class NextStepService {
       }
 
       if (role === 'PROFESSIONAL' && clientSigned && professionalSigned) {
+        const acceptedStartProposal = await this.prisma.projectStartProposal.findFirst({
+          where: {
+            projectId,
+            status: 'accepted',
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        const latestStartProposal = await this.prisma.projectStartProposal.findFirst({
+          where: {
+            projectId,
+            status: 'proposed',
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (latestStartProposal) {
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'CONFIRM_START_DATE',
+              'Agree start date',
+              latestStartProposal.proposedByRole === 'client',
+              role,
+              effectiveStage,
+              latestStartProposal.proposedByRole === 'client'
+                ? 'The client proposed an updated start date. Review it and confirm or counter.'
+                : 'Start date proposal sent. Waiting for the client to confirm or update.',
+            ),
+          ];
+
+          return {
+            PRIMARY: availableConfigSteps.map(toApiAction),
+            ELECTIVE: [],
+            status: project.status,
+            stage: effectiveStage,
+          };
+        }
+
+        if (!acceptedStartProposal) {
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'CONFIRM_START_DATE',
+              'Agree start date',
+              true,
+              role,
+              effectiveStage,
+              'Propose and agree the kickoff start date with the client before final schedule sign-off.',
+            ),
+          ];
+
+          return {
+            PRIMARY: availableConfigSteps.map(toApiAction),
+            ELECTIVE: [],
+            status: project.status,
+            stage: effectiveStage,
+          };
+        }
+
         // Check if professional has already confirmed the schedule
         const scheduleActions = await this.prisma.nextStepAction.findMany({
           where: { projectId, userId, projectStage: effectiveStage, actionKey: 'CONFIRM_SCHEDULE' },
@@ -386,16 +444,43 @@ export class NextStepService {
         });
         const scheduleConfirmed = scheduleActions.some((a) => a.userAction === 'COMPLETED');
 
-        if (scheduleConfirmed) {
-          const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
+        const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
 
-          let walletTransferPrerequisite: 'not_required' | 'pending' | 'completed' = 'not_required';
-          if (escrowFunded) {
-            walletTransferPrerequisite = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
+        let walletTransferPrerequisite: 'not_required' | 'pending' | 'completed' = 'not_required';
+        if (escrowFunded) {
+          walletTransferPrerequisite = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
+        }
+
+        const canStartProject = escrowFunded && walletTransferPrerequisite !== 'pending';
+
+        if (!scheduleConfirmed) {
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'CONFIRM_SCHEDULE',
+              'Agree milestone schedule',
+              true,
+              role,
+              effectiveStage,
+              'Start date is agreed. Finalize and agree the detailed milestone schedule.',
+            ),
+          ];
+
+          if (canStartProject) {
+            availableConfigSteps.push({
+              ...createSyntheticPrimaryStep(
+                'START_PROJECT',
+                'Start work on site',
+                true,
+                role,
+                effectiveStage,
+                'Escrow prerequisites are ready. You may begin work on site while finalizing the detailed schedule.',
+              ),
+              isPrimary: false,
+              isElective: true,
+              displayOrder: 2,
+            } as any);
           }
-
-          const canStartProject = escrowFunded && walletTransferPrerequisite !== 'pending';
-
+        } else {
           availableConfigSteps = [
             createSyntheticPrimaryStep(
               canStartProject
@@ -416,17 +501,6 @@ export class NextStepService {
                 : escrowFunded
                   ? 'Escrow is funded. The client is completing the milestone 1 materials wallet process. Submit your materials purchase receipts once you have purchased the required materials, then the client will release the confirmed amount to your withdrawable wallet.'
                   : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',
-            ),
-          ];
-        } else {
-          availableConfigSteps = [
-            createSyntheticPrimaryStep(
-              'CONFIRM_SCHEDULE',
-              'Confirm schedule',
-              true,
-              role,
-              effectiveStage,
-              'Set the start date, build your milestone schedule, then confirm it is ready.',
             ),
           ];
         }

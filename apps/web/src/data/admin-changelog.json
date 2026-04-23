@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-23-233dafc",
+    "date": "2026-04-23T09:53:14+08:00",
+    "title": "Refine pre-work start date and schedule next-step sequencing",
+    "summary": "Refine pre-work start date and schedule next-step sequencing",
+    "areas": [
+      "api"
+    ],
+    "commit": "233dafc",
+    "files": [
+      "apps/api/prisma/MANUAL_UPDATE_START_DATE_SCHEDULE_STEPS.sql",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-23-3474fce",
     "date": "2026-04-23T09:29:21+08:00",
     "title": "Add completion modal to start-date action flow",
