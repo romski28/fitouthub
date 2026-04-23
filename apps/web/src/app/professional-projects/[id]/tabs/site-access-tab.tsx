@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import toast from 'react-hot-toast';
 
@@ -21,6 +21,8 @@ interface SiteAccessStatus {
   visitedAt: string | null;
   reasonDenied: string | null;
   hasAccess: boolean;
+  siteInspectionAvailableOn?: string | null;
+  bookedInspectionTimes?: string[];
   siteAccessData: SiteAccessData | null;
 }
 
@@ -67,6 +69,37 @@ interface SiteAccessTabProps {
   onUpdateVisitResponseNotes: (updates: Record<string, string>) => void;
 }
 
+const INSPECTION_TIME_OPTIONS = Array.from({ length: 11 }, (_, index) => {
+  const hour = 8 + index;
+  return `${String(hour).padStart(2, '0')}:00`;
+});
+
+const formatInspectionDate = (value?: string | null) => {
+  if (!value) return 'Not set';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('en-HK', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
+const formatInspectionDateTime = (value?: string | null) => {
+  if (!value) return 'Not scheduled';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-HK', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
 export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   siteAccessStatus,
   siteAccessLoading,
@@ -98,7 +131,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   onUpdateVisitResponseNotes,
 }) => {
   const acceptedVisit = siteVisits.find((visit) => visit.status === 'accepted');
-  const canRequestSiteAccess = Boolean(siteAccessRequestDate && siteAccessRequestTime);
+  const offeredInspectionDate = siteAccessStatus?.siteInspectionAvailableOn || '';
+  const bookedInspectionTimes = useMemo(
+    () => new Set(siteAccessStatus?.bookedInspectionTimes || []),
+    [siteAccessStatus?.bookedInspectionTimes],
+  );
+  const canRequestSiteAccess = Boolean((offeredInspectionDate || siteAccessRequestDate) && siteAccessRequestTime);
 
   return (
     <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
@@ -129,12 +167,18 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   : siteAccessStatus.requestStatus.replace('_', ' ')}
               </div>
 
+              {offeredInspectionDate && (
+                <div className="rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                  Client inspection date available: <span className="font-semibold">{formatInspectionDate(offeredInspectionDate)}</span>
+                </div>
+              )}
+
               {siteAccessStatus.requestStatus === 'pending' && (
                 <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
                   Awaiting client approval. You can still submit a quote without site access.
                   {siteAccessStatus.visitScheduledAt && (
                     <span className="block mt-1 text-amber-100">
-                      Requested visit: {new Date(siteAccessStatus.visitScheduledAt).toLocaleString()}
+                      Requested visit: {formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}
                     </span>
                   )}
                 </div>
@@ -156,9 +200,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                   Visit approved
                   {siteAccessStatus.visitScheduledAt
-                    ? ` for ${new Date(siteAccessStatus.visitScheduledAt).toLocaleString()}`
+                    ? ` for ${formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}`
                     : siteAccessStatus.visitScheduledFor
-                    ? ` for ${new Date(siteAccessStatus.visitScheduledFor).toLocaleDateString()}`
+                    ? ` for ${formatInspectionDate(siteAccessStatus.visitScheduledFor)}`
                     : '.'}
                 </div>
               )}
@@ -204,33 +248,72 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 <div className="space-y-3 rounded-md border border-slate-700 bg-slate-900/60 p-4">
                   <p className="text-sm font-semibold text-white">Request Site Access</p>
                   <p className="text-xs text-slate-300">
-                    Propose a preferred date and time so the client can accept, update, or decline.
+                    {offeredInspectionDate
+                      ? 'Choose one available inspection slot on the client offered date. Times already selected by other professionals are disabled.'
+                      : 'Propose a preferred date and time so the client can accept, update, or decline.'}
                   </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Date</label>
-                      <input
-                        type="date"
-                        value={siteAccessRequestDate}
-                        onChange={(e) => onUpdateSiteAccessRequestDate(e.target.value)}
-                        className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-                      />
+                  {offeredInspectionDate ? (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="mb-1 text-xs font-semibold text-slate-300">Inspection Date</p>
+                        <div className="rounded-md border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-white">
+                          {formatInspectionDate(offeredInspectionDate)}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-2 text-xs font-semibold text-slate-300">Choose an hourly time</p>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                          {INSPECTION_TIME_OPTIONS.map((timeOption) => {
+                            const isBooked = bookedInspectionTimes.has(timeOption);
+                            const isSelected = siteAccessRequestTime === timeOption;
+                            return (
+                              <button
+                                key={timeOption}
+                                type="button"
+                                onClick={() => onUpdateSiteAccessRequestTime(timeOption)}
+                                disabled={isBooked || siteAccessActionLoading || siteAccessStatus.requestStatus === 'pending'}
+                                className={`rounded-md border px-3 py-2 text-sm font-semibold transition ${
+                                  isSelected
+                                    ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
+                                    : isBooked
+                                    ? 'border-slate-700 bg-slate-900 text-slate-500'
+                                    : 'border-slate-600 bg-slate-900 text-white hover:border-emerald-500 hover:text-emerald-100'
+                                }`}
+                              >
+                                {timeOption}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Time</label>
-                      <input
-                        type="time"
-                        value={siteAccessRequestTime}
-                        onChange={(e) => onUpdateSiteAccessRequestTime(e.target.value)}
-                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-                      />
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Date</label>
+                        <input
+                          type="date"
+                          value={siteAccessRequestDate}
+                          onChange={(e) => onUpdateSiteAccessRequestDate(e.target.value)}
+                          className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Time</label>
+                        <input
+                          type="time"
+                          value={siteAccessRequestTime}
+                          onChange={(e) => onUpdateSiteAccessRequestTime(e.target.value)}
+                          className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <button
                     type="button"
                     onClick={onRequestSiteAccess}
                     disabled={siteAccessActionLoading || siteAccessStatus.requestStatus === 'pending' || !canRequestSiteAccess}
-                    title={!canRequestSiteAccess ? 'Choose both date and time to request site access' : ''}
+                    title={!canRequestSiteAccess ? (offeredInspectionDate ? 'Choose a time to request site access' : 'Choose both date and time to request site access') : ''}
                     className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                   >
                     {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}

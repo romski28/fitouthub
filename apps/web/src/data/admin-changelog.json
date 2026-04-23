@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-23-d827fa1",
+    "date": "2026-04-23T22:40:16+08:00",
+    "title": "Add professional inspection slot booking",
+    "summary": "Add professional inspection slot booking",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "d827fa1",
+    "files": [
+      "apps/api/prisma/ADD_SITE_ACCESS_SLOT_UNIQUE_INDEX.sql",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-d8b2eff",
     "date": "2026-04-23T17:51:34+08:00",
     "title": "fix: correct deletion-impact tuple mapping for private context messages",

@@ -2884,6 +2884,74 @@ Please review the project details and respond with your quote or decline the inv
     return new Date(utcMillis);
   }
 
+  private formatHongKongDateInput(value?: Date | string | null): string | null {
+    if (!value) return null;
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    const shifted = new Date(parsed.getTime() + HK_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000);
+    const year = shifted.getUTCFullYear();
+    const month = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(shifted.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private isValidInspectionHour(value?: string | null): boolean {
+    if (!value) return false;
+    const match = value.match(/^(\d{2}):(\d{2})$/);
+    if (!match) return false;
+    const hour = Number(match[1]);
+    const minute = Number(match[2]);
+    return minute === 0 && hour >= 8 && hour <= 18;
+  }
+
+  private combineHongKongDateAndTimeToUtc(dateValue: string, timeValue: string): Date | null {
+    const dateMatch = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const timeMatch = timeValue.match(/^(\d{2}):(\d{2})$/);
+    if (!dateMatch || !timeMatch) return null;
+
+    const year = Number(dateMatch[1]);
+    const monthIndex = Number(dateMatch[2]) - 1;
+    const day = Number(dateMatch[3]);
+    const hour = Number(timeMatch[1]);
+    const minute = Number(timeMatch[2]);
+
+    const utcMillis = Date.UTC(year, monthIndex, day, hour - HK_TIMEZONE_OFFSET_HOURS, minute, 0, 0);
+    return new Date(utcMillis);
+  }
+
+  private formatHongKongDateTimeLabel(value?: Date | string | null): string {
+    if (!value) return 'unspecified time';
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.getTime())) return 'unspecified time';
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Hong_Kong',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(parsed);
+  }
+
+  private async findConflictingSiteAccessSlot(projectId: string, visitScheduledAt: Date, excludeRequestId?: string) {
+    return this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectId,
+        visitScheduledAt,
+        status: {
+          in: ['pending', 'approved_visit_scheduled'],
+        },
+        ...(excludeRequestId ? { id: { not: excludeRequestId } } : {}),
+      },
+      select: {
+        id: true,
+        professionalId: true,
+        visitScheduledAt: true,
+      },
+    });
+  }
+
   private formatDurationMinutes(durationMinutes: number) {
     if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
       return 'unspecified duration';
@@ -3303,7 +3371,12 @@ Please review the project details and respond with your quote or decline the inv
         },
       });
 
-    if (!projectProfessional) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, siteInspectionAvailableOn: true },
+    });
+
+    if (!projectProfessional || !project) {
       throw new BadRequestException('Professional is not linked to this project');
     }
 
@@ -3331,23 +3404,39 @@ Please review the project details and respond with your quote or decline the inv
       };
     }
 
+    const offeredInspectionDate = this.formatHongKongDateInput(project.siteInspectionAvailableOn);
     const visitDate = body?.visitScheduledFor?.trim();
     const visitTime = body?.visitScheduledAt?.trim();
 
-    if ((visitDate && !visitTime) || (!visitDate && visitTime)) {
+    const requestedDate = offeredInspectionDate || visitDate || '';
+
+    if (!requestedDate || !visitTime) {
       throw new BadRequestException('Both visit date and visit time are required');
+    }
+
+    if (offeredInspectionDate && visitDate && visitDate !== offeredInspectionDate) {
+      throw new BadRequestException('Site inspection must be requested on the client offered date');
+    }
+
+    if (!this.isValidInspectionHour(visitTime)) {
+      throw new BadRequestException('Visit time must be between 08:00 and 18:00 in hourly intervals');
     }
 
     let requestedVisitAt: Date | null = null;
     let requestedVisitFor: Date | null = null;
 
-    if (visitDate && visitTime) {
-      const parsed = new Date(`${visitDate}T${visitTime}`);
-      if (Number.isNaN(parsed.getTime())) {
+    if (requestedDate && visitTime) {
+      const parsed = this.combineHongKongDateAndTimeToUtc(requestedDate, visitTime);
+      const requestedDateUtc = this.parseHongKongDateOnlyToUtc(requestedDate);
+      if (!parsed || !requestedDateUtc || Number.isNaN(parsed.getTime())) {
         throw new BadRequestException('Invalid requested visit date/time');
       }
+      const conflictingSlot = await this.findConflictingSiteAccessSlot(projectId, parsed);
+      if (conflictingSlot) {
+        throw new BadRequestException('That inspection time has already been selected by another professional');
+      }
       requestedVisitAt = parsed;
-      requestedVisitFor = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+      requestedVisitFor = requestedDateUtc;
     }
 
     const request = await this.prisma.siteAccessRequest.create({
@@ -3371,7 +3460,7 @@ Please review the project details and respond with your quote or decline the inv
       null,
       professionalId,
       requestedVisitAt
-        ? `${professionalName} requested site access on ${this.formatDateTime(new Date())} and proposed a visit for ${this.formatDateTime(requestedVisitAt)}.`
+        ? `${professionalName} would like to visit site on ${this.formatHongKongDateTimeLabel(requestedVisitAt)}. Check your address details and accept request.`
         : `${professionalName} requested site access on ${this.formatDateTime(new Date())}.`,
     );
 
@@ -3640,6 +3729,13 @@ Please review the project details and respond with your quote or decline the inv
 
     if (body.status === 'approved_visit_scheduled' && !safeScheduledAt) {
       throw new BadRequestException('A valid visit date/time is required for scheduled visits');
+    }
+
+    if (body.status === 'approved_visit_scheduled' && safeScheduledAt) {
+      const conflictingSlot = await this.findConflictingSiteAccessSlot(request.projectId, safeScheduledAt, requestId);
+      if (conflictingSlot) {
+        throw new BadRequestException('That inspection time has already been selected by another professional');
+      }
     }
 
     const approved = await this.prisma.siteAccessRequest.update({
@@ -4108,6 +4204,42 @@ Please review the project details and respond with your quote or decline the inv
         })
       : null;
 
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { siteInspectionAvailableOn: true },
+    });
+
+    const siteInspectionAvailableOn = this.formatHongKongDateInput(project?.siteInspectionAvailableOn || null);
+    const offeredStartUtc = siteInspectionAvailableOn ? this.parseHongKongDateOnlyToUtc(siteInspectionAvailableOn) : null;
+    const offeredEndUtc = offeredStartUtc
+      ? new Date(offeredStartUtc.getTime() + 24 * 60 * 60 * 1000)
+      : null;
+
+    const bookedInspectionTimes = offeredStartUtc && offeredEndUtc
+      ? (await this.prisma.siteAccessRequest.findMany({
+          where: {
+            projectId,
+            status: {
+              in: ['pending', 'approved_visit_scheduled'],
+            },
+            visitScheduledAt: {
+              gte: offeredStartUtc,
+              lt: offeredEndUtc,
+            },
+          },
+          select: {
+            visitScheduledAt: true,
+          },
+          orderBy: {
+            visitScheduledAt: 'asc',
+          },
+        }))
+          .map((row) => {
+            const shifted = new Date(row.visitScheduledAt!.getTime() + HK_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000);
+            return `${String(shifted.getUTCHours()).padStart(2, '0')}:${String(shifted.getUTCMinutes()).padStart(2, '0')}`;
+          })
+      : [];
+
     return {
       success: true,
       requestId: latestAccessRequest?.id || null,
@@ -4117,6 +4249,8 @@ Please review the project details and respond with your quote or decline the inv
       visitedAt: latestAccessRequest?.visitedAt || null,
       reasonDenied: latestAccessRequest?.reasonDenied || null,
       hasAccess,
+      siteInspectionAvailableOn,
+      bookedInspectionTimes,
       siteAccessData,
     };
   }

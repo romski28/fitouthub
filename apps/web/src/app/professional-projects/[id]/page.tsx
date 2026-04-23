@@ -124,6 +124,8 @@ interface SiteAccessStatus {
   visitedAt: string | null;
   reasonDenied: string | null;
   hasAccess: boolean;
+  siteInspectionAvailableOn?: string | null;
+  bookedInspectionTimes?: string[];
   siteAccessData: SiteAccessData | null;
 }
 
@@ -227,7 +229,7 @@ export default function ProjectDetailPage() {
   const { openLoginModal } = useAuthModalControl();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [submittingQuote, setSubmittingQuote] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
     amount: '',
@@ -241,7 +243,7 @@ export default function ProjectDetailPage() {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
-  const [showAdvanceRequestForm, setShowAdvanceRequestForm] = useState(false);
+  const [, setShowAdvanceRequestForm] = useState(false);
   const [advanceRequestForm, setAdvanceRequestForm] = useState({
     requestType: 'fixed' as 'fixed' | 'percentage',
     amount: '',
@@ -441,7 +443,7 @@ export default function ProjectDetailPage() {
           promptLoginInPlace();
           return;
         }
-      } catch (e) {
+      } catch {
         setMessageError('Failed to load messages. Please try again later.');
       }
     };
@@ -585,8 +587,14 @@ export default function ProjectDetailPage() {
   const handleRequestSiteAccess = async () => {
     if (!accessToken || !project?.project?.id) return;
 
-    if (!siteAccessRequestDate || !siteAccessRequestTime) {
-      setSiteAccessError('Please choose a preferred site access date and time');
+    const requestedDate = siteAccessStatus?.siteInspectionAvailableOn || siteAccessRequestDate;
+
+    if (!requestedDate || !siteAccessRequestTime) {
+      setSiteAccessError(
+        siteAccessStatus?.siteInspectionAvailableOn
+          ? 'Please choose a preferred site access time'
+          : 'Please choose a preferred site access date and time',
+      );
       return;
     }
 
@@ -603,7 +611,7 @@ export default function ProjectDetailPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            visitScheduledFor: siteAccessRequestDate,
+            visitScheduledFor: requestedDate,
             visitScheduledAt: siteAccessRequestTime,
           }),
         },
@@ -634,6 +642,13 @@ export default function ProjectDetailPage() {
         visitedAt: prev?.visitedAt || null,
         reasonDenied: prev?.reasonDenied || null,
         hasAccess: prev?.hasAccess || false,
+        siteInspectionAvailableOn: prev?.siteInspectionAvailableOn || null,
+        bookedInspectionTimes: Array.from(
+          new Set([
+            ...(prev?.bookedInspectionTimes || []),
+            siteAccessRequestTime,
+          ].filter(Boolean)),
+        ).sort(),
         siteAccessData: prev?.siteAccessData || null,
       }));
       setSiteAccessRequestDate('');
@@ -1071,7 +1086,7 @@ export default function ProjectDetailPage() {
   const handleReject = async () => {
     const confirmToastId = 'decline-project-confirm';
     const confirmed = await new Promise<boolean>((resolve) => {
-      toast((t) => (
+      toast(() => (
         <div className="space-y-3">
           <p className="font-medium text-slate-900">Decline this project?</p>
           <p className="text-sm text-slate-600">This action cannot be undone.</p>
