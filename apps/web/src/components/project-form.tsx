@@ -576,7 +576,7 @@ export function ProjectForm({
               type="button"
               onClick={onCancel}
               disabled={isSubmitting || isReadOnly}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
+              className="w-full rounded-lg border border-slate-200 px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
             >
               Cancel
             </button>
@@ -586,7 +586,7 @@ export function ProjectForm({
               type="button"
               onClick={handleAssistClick}
               disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
-              className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50"
+              className="w-full rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-center text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50"
             >
               Ask for advice
             </button>
@@ -1257,10 +1257,10 @@ export function ProjectForm({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting || isReadOnly}
-            className={`w-full rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
+            className={`w-full rounded-lg px-6 py-2.5 text-center font-semibold transition disabled:opacity-50 ${
               mode === 'create'
                 ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
             Cancel
@@ -1271,10 +1271,10 @@ export function ProjectForm({
             type="button"
             onClick={handleAssistClick}
             disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
-            className={`w-full rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
+            className={`w-full rounded-lg px-6 py-2.5 text-center font-semibold transition disabled:opacity-50 ${
               mode === 'create'
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                : 'border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
             }`}
           >
             Ask for advice

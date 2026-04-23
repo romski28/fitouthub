@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-23-0f24301",
+    "date": "2026-04-23T17:43:17+08:00",
+    "title": "style: align cancel/help buttons with submit button centering and lighter borders",
+    "summary": "style: align cancel/help buttons with submit button centering and lighter borders",
+    "areas": [
+      "web"
+    ],
+    "commit": "0f24301",
+    "files": [
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-89b5de1",
     "date": "2026-04-23T17:35:38+08:00",
     "title": "feat: add site inspection date field with HK-local to UTC storage",
