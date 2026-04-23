@@ -259,6 +259,7 @@ export default function CreateProjectPage() {
       aiIntakeId: aiIntakeId || null,
       projectScale: normalizeProjectScale(formData.projectScale || descriptionData?.projectScale || null),
       endDate: formData.endDate || null,
+      siteInspectionAvailableOn: formData.siteInspectionAvailableOn || null,
       isEmergency: formData.isEmergency ?? false,
     };
   };

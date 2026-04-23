@@ -43,6 +43,8 @@ interface NotificationAuditEvent {
   recipients: NotificationAuditRecipient[];
 }
 
+const HK_TIMEZONE_OFFSET_HOURS = 8;
+
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -1907,14 +1909,11 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     // Transform userId into user relation for Prisma
-    // Normalize date fields if provided
+    // Normalize date fields. Date-only inputs are treated as Hong Kong local date and stored in UTC.
     const normalized: any = { ...projectData };
-    if (typeof normalized.startDate === 'string' && normalized.startDate) {
-      normalized.startDate = new Date(normalized.startDate);
-    }
-    if (typeof normalized.endDate === 'string' && normalized.endDate) {
-      normalized.endDate = new Date(normalized.endDate);
-    }
+    normalized.startDate = this.normalizeDateInput(normalized.startDate);
+    normalized.endDate = this.normalizeDateInput(normalized.endDate);
+    normalized.siteInspectionAvailableOn = this.normalizeDateInput(normalized.siteInspectionAvailableOn);
 
     const resolvedScale = this.inferProjectScaleFromContext({
       explicitScale: (createProjectDto as any).projectScale,
@@ -2855,6 +2854,34 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     return project;
+  }
+
+  private normalizeDateInput(value: unknown): Date | undefined {
+    if (typeof value !== 'string' || !value.trim()) {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    const hkDateOnly = this.parseHongKongDateOnlyToUtc(trimmed);
+    if (hkDateOnly) {
+      return hkDateOnly;
+    }
+
+    const parsed = new Date(trimmed);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  }
+
+  private parseHongKongDateOnlyToUtc(value: string): Date | null {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+
+    const year = Number(match[1]);
+    const monthIndex = Number(match[2]) - 1;
+    const day = Number(match[3]);
+
+    // Interpret entered date as 00:00 in Hong Kong (UTC+8), then store UTC instant.
+    const utcMillis = Date.UTC(year, monthIndex, day, -HK_TIMEZONE_OFFSET_HOURS, 0, 0, 0);
+    return new Date(utcMillis);
   }
 
   private formatDurationMinutes(durationMinutes: number) {

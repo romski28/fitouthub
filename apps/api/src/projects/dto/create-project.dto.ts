@@ -12,6 +12,7 @@ export class CreateProjectDto {
   tradesRequired?: string[];
   startDate?: string; // ISO date string
   endDate?: string; // ISO date string
+  siteInspectionAvailableOn?: string; // ISO date string (entered as HK local date)
   isEmergency?: boolean;
   onlySelectedProfessionalsCanBid?: boolean;
   photos?: Array<{ url: string; note?: string }>;

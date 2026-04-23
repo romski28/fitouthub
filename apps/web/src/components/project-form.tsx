@@ -28,6 +28,7 @@ export interface ProjectFormData {
   isEmergency?: boolean;
   onlySelectedProfessionalsCanBid?: boolean;
   endDate?: string; // ISO date string (YYYY-MM-DD)
+  siteInspectionAvailableOn?: string; // ISO date string (YYYY-MM-DD)
   aiFrom?: {
     assumptions?: string[];
     risks?: string[];
@@ -137,6 +138,7 @@ const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectF
   isEmergency: initialData?.isEmergency ?? inferEmergencyFromSafety(initialData),
   onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
   endDate: initialData?.endDate || '',
+  siteInspectionAvailableOn: initialData?.siteInspectionAvailableOn || '',
   aiFrom: initialData?.aiFrom,
 });
 
@@ -560,13 +562,21 @@ export function ProjectForm({
         )}
 
         {/* Buttons */}
-        <div className="flex gap-3 pt-2">
+        <div
+          className={`grid gap-3 pt-2 ${
+            onCancel && onAssistRequest && !isReadOnly
+              ? 'grid-cols-3'
+              : onCancel || (onAssistRequest && !isReadOnly)
+                ? 'grid-cols-2'
+                : 'grid-cols-1'
+          }`}
+        >
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
               disabled={isSubmitting || isReadOnly}
-              className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
             >
               Cancel
             </button>
@@ -576,7 +586,7 @@ export function ProjectForm({
               type="button"
               onClick={handleAssistClick}
               disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
-              className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50"
+              className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50"
             >
               Ask for advice
             </button>
@@ -585,7 +595,7 @@ export function ProjectForm({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
+              className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
             >
               {isSubmitting ? `${submitLabel || 'Creating'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
             </button>
@@ -982,31 +992,59 @@ export function ProjectForm({
       {/* Timescale */}
       {isConfirmationView ? (
         !formData.isEmergency ? (
-          <div className="grid gap-1">
-            <label className={`text-sm font-medium ${
-              mode === 'create' ? 'text-white' : 'text-slate-800'
-            }`}>
-              <span className="inline-flex items-center gap-1.5">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                I need this completed by
-              </span>
-            </label>
-            <input
-              type="date"
-              value={formData.endDate || ''}
-              onChange={(e) => handleChange('endDate', e.target.value)}
-              disabled={isReadOnly || isSubmitting}
-              className={`rounded-md border px-3 py-2 text-sm ${
-                mode === 'create'
-                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                  : 'border-slate-300'
-              }`}
-            />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1">
+              <label className={`text-sm font-medium ${
+                mode === 'create' ? 'text-white' : 'text-slate-800'
+              }`}>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  I need this completed by
+                </span>
+              </label>
+              <input
+                type="date"
+                value={formData.endDate || ''}
+                onChange={(e) => handleChange('endDate', e.target.value)}
+                disabled={isReadOnly || isSubmitting}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  mode === 'create'
+                    ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
+                    : 'border-slate-300'
+                }`}
+              />
+            </div>
+            <div className="grid gap-1">
+              <label className={`text-sm font-medium ${
+                mode === 'create' ? 'text-white' : 'text-slate-800'
+              }`}>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  I can allow site inspection on
+                </span>
+              </label>
+              <input
+                type="date"
+                value={formData.siteInspectionAvailableOn || ''}
+                onChange={(e) => handleChange('siteInspectionAvailableOn', e.target.value)}
+                disabled={isReadOnly || isSubmitting}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  mode === 'create'
+                    ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
+                    : 'border-slate-300'
+                }`}
+              />
+            </div>
           </div>
         ) : (
           <div className={`rounded-md border px-3 py-2 text-sm ${
@@ -1053,31 +1091,59 @@ export function ProjectForm({
               </label>
             </div>
           </div>
-          <div className="grid gap-1">
-            <label className={`text-sm font-medium ${
-              mode === 'create' ? 'text-white' : 'text-slate-800'
-            }`}>
-              <span className="inline-flex items-center gap-1.5">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                I need this completed by
-              </span>
-            </label>
-            <input
-              type="date"
-              value={formData.endDate || ''}
-              onChange={(e) => handleChange('endDate', e.target.value)}
-              disabled={isReadOnly || isSubmitting}
-              className={`rounded-md border px-3 py-2 text-sm ${
-                mode === 'create'
-                  ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                  : 'border-slate-300'
-              }`}
-            />
+          <div className="grid gap-3">
+            <div className="grid gap-1">
+              <label className={`text-sm font-medium ${
+                mode === 'create' ? 'text-white' : 'text-slate-800'
+              }`}>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  I need this completed by
+                </span>
+              </label>
+              <input
+                type="date"
+                value={formData.endDate || ''}
+                onChange={(e) => handleChange('endDate', e.target.value)}
+                disabled={isReadOnly || isSubmitting}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  mode === 'create'
+                    ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
+                    : 'border-slate-300'
+                }`}
+              />
+            </div>
+            <div className="grid gap-1">
+              <label className={`text-sm font-medium ${
+                mode === 'create' ? 'text-white' : 'text-slate-800'
+              }`}>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  I can allow site inspection on
+                </span>
+              </label>
+              <input
+                type="date"
+                value={formData.siteInspectionAvailableOn || ''}
+                onChange={(e) => handleChange('siteInspectionAvailableOn', e.target.value)}
+                disabled={isReadOnly || isSubmitting}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  mode === 'create'
+                    ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
+                    : 'border-slate-300'
+                }`}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -1177,13 +1243,21 @@ export function ProjectForm({
       )}
 
       {/* Buttons */}
-      <div className="flex gap-3 pt-4">
+      <div
+        className={`grid gap-3 pt-4 ${
+          onCancel && onAssistRequest && !isReadOnly
+            ? 'grid-cols-3'
+            : onCancel || (onAssistRequest && !isReadOnly)
+              ? 'grid-cols-2'
+              : 'grid-cols-1'
+        }`}
+      >
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isSubmitting || isReadOnly}
-            className={`flex-1 rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
+            className={`w-full rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
               mode === 'create'
                 ? 'bg-red-600 text-white hover:bg-red-700'
                 : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
@@ -1197,7 +1271,7 @@ export function ProjectForm({
             type="button"
             onClick={handleAssistClick}
             disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
-            className={`flex-1 rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
+            className={`w-full rounded-lg px-6 py-2.5 font-semibold transition disabled:opacity-50 ${
               mode === 'create'
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
@@ -1210,7 +1284,7 @@ export function ProjectForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`flex-1 rounded-lg py-2.5 font-semibold text-white transition disabled:opacity-50 ${
+            className={`w-full rounded-lg py-2.5 font-semibold text-white transition disabled:opacity-50 ${
               mode === 'create'
                 ? 'bg-emerald-600 hover:bg-emerald-700'
                 : 'bg-blue-600 hover:bg-blue-700'

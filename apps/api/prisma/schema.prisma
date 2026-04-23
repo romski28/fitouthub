@@ -400,6 +400,7 @@ model Project {
   region                       String
   startDate                    DateTime?
   endDate                      DateTime?
+  siteInspectionAvailableOn    DateTime?
   isEmergency                  Boolean                 @default(false)
   onlySelectedProfessionalsCanBid Boolean              @default(true)
   contractorContactName        String?

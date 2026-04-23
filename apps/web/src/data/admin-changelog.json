@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-04-23-89b5de1",
+    "date": "2026-04-23T17:35:38+08:00",
+    "title": "feat: add site inspection date field with HK-local to UTC storage",
+    "summary": "feat: add site inspection date field with HK-local to UTC storage",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "89b5de1",
+    "files": [
+      "apps/api/prisma/ADD_PROJECT_SITE_INSPECTION_DATE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/dto/create-project.dto.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx",
+      "apps/web/src/components/project-request-modal.tsx",
+      "apps/web/src/components/project-share-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-2909f7c",
     "date": "2026-04-23T17:18:15+08:00",
     "title": "fix: purge FOH context-linked private messages during project hard delete",

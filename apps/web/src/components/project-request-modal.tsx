@@ -69,6 +69,8 @@ export function ProjectRequestModal({ isOpen, onClose, professional }: ProjectRe
       contractorName: displayName,
       region: locationLabel || "Hong Kong",
       notes: formData.notes?.trim() || "",
+      endDate: formData.endDate || null,
+      siteInspectionAvailableOn: formData.siteInspectionAvailableOn || null,
       photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : undefined,
       status: "pending" as const,
       userId: user?.id,

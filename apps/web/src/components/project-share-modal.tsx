@@ -68,6 +68,8 @@ export function ProjectShareModal({ isOpen, onClose, professionals, projectId, i
         contractorName: "",
         region: locationLabel || "Hong Kong",
         notes: data.notes?.trim() || "",
+        endDate: data.endDate || null,
+        siteInspectionAvailableOn: data.siteInspectionAvailableOn || null,
         photos: photoKeys.length > 0 ? photoKeys.map((url) => ({ url })) : undefined,
         projectScale,
         status: "pending" as const,
