@@ -39,6 +39,22 @@ const formatCompletionDate = (value?: string | null) => {
   }).format(date);
 };
 
+const parseCompletionDeadline = (value?: string | null) => {
+  if (!value) return null;
+
+  const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1]);
+    const month = Number(dateOnlyMatch[2]) - 1;
+    const day = Number(dateOnlyMatch[3]);
+    return new Date(year, month, day, 23, 59, 59, 999);
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
 function inferProjectProfessionalId(path?: string): string | null {
   if (!path) return null;
   const [pathname] = path.split('?');
@@ -67,6 +83,7 @@ export function QuoteActionModal({
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [requestedCompletionBy, setRequestedCompletionBy] = useState<string | null>(null);
+  const [requestedCompletionDeadline, setRequestedCompletionDeadline] = useState<Date | null>(null);
 
   const projectProfessionalId = useMemo(
     () => inferProjectProfessionalId(state.projectDetailsPath),
@@ -91,6 +108,7 @@ export function QuoteActionModal({
       setError(null);
       setShowDetails(false);
       setRequestedCompletionBy(null);
+      setRequestedCompletionDeadline(null);
     }
   }, [isOpen]);
 
@@ -109,6 +127,7 @@ export function QuoteActionModal({
         const detail = await response.json();
         const endDateRaw = detail?.project?.endDate || detail?.endDate || null;
         setRequestedCompletionBy(formatCompletionDate(endDateRaw));
+        setRequestedCompletionDeadline(parseCompletionDeadline(endDateRaw));
       } catch {
         // Keep this best-effort only; quote flow must remain available.
       }
@@ -239,6 +258,31 @@ export function QuoteActionModal({
     requiresAction: true,
   };
 
+  const exceedsClientFinishDate = useMemo(() => {
+    if (!requestedCompletionDeadline) return false;
+    if (!estimatedStartDate || !estimatedStartHour || !estimatedStartMinute || !estimatedDurationValue) return false;
+
+    const durationValue = Number(estimatedDurationValue);
+    if (!Number.isFinite(durationValue) || durationValue <= 0) return false;
+
+    const startAt = new Date(`${estimatedStartDate}T${estimatedStartHour}:${estimatedStartMinute}`);
+    if (Number.isNaN(startAt.getTime())) return false;
+
+    const durationMinutes = estimatedDurationUnit === 'days'
+      ? Math.round(durationValue * 24 * 60)
+      : Math.round(durationValue * 60);
+
+    const projectedEndAt = new Date(startAt.getTime() + durationMinutes * 60 * 1000);
+    return projectedEndAt.getTime() > requestedCompletionDeadline.getTime();
+  }, [
+    estimatedDurationUnit,
+    estimatedDurationValue,
+    estimatedStartDate,
+    estimatedStartHour,
+    estimatedStartMinute,
+    requestedCompletionDeadline,
+  ]);
+
   if (showSuccess) {
     return (
       <WorkflowCompletionModal
@@ -313,12 +357,6 @@ export function QuoteActionModal({
                 </div>
 
                 <div className="grid flex-1 gap-4 overflow-y-auto px-6 py-5">
-                  {requestedCompletionBy ? (
-                    <div className="rounded-lg border border-sky-500/35 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
-                      Client requested completion by: <span className="font-semibold">{requestedCompletionBy}</span>
-                    </div>
-                  ) : null}
-
                   <label className="block">
                     <span className="mb-1 block text-sm font-semibold text-slate-200">Quote amount (HKD)</span>
                     <input
@@ -332,6 +370,18 @@ export function QuoteActionModal({
                       disabled={submitting}
                     />
                   </label>
+
+                  {requestedCompletionBy ? (
+                    <div className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-sm text-slate-200">
+                      Client requested completion by: <span className="font-semibold text-white">{requestedCompletionBy}</span>
+                    </div>
+                  ) : null}
+
+                  {exceedsClientFinishDate ? (
+                    <div className="rounded-lg border border-amber-500/60 bg-amber-500/20 px-3 py-2 text-sm font-semibold text-amber-100 animate-[pulse_0.7s_ease-in-out_3]">
+                      Your project break the clients finish date.
+                    </div>
+                  ) : null}
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <label className="block">

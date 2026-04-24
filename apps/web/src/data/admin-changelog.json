@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-24-8035101",
+    "date": "2026-04-24T09:47:47+08:00",
+    "title": "Add quote modal completion-date warning",
+    "summary": "Add quote modal completion-date warning",
+    "areas": [
+      "web"
+    ],
+    "commit": "8035101",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-4c316c0",
     "date": "2026-04-24T09:35:29+08:00",
     "title": "Show completion date in quote modal",
