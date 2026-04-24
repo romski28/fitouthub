@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-24-8ea546d",
+    "date": "2026-04-24T10:27:06+08:00",
+    "title": "fix: resolve TypeScript type error in quote modal fee preview",
+    "summary": "fix: resolve TypeScript type error in quote modal fee preview",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ea546d",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-f207955",
     "date": "2026-04-24T10:16:15+08:00",
     "title": "feat: add live Mimo fee % preview in quote modal",

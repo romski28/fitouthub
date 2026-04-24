@@ -91,9 +91,9 @@ export function QuoteActionModal({
   const [showDetails, setShowDetails] = useState(false);
   const [requestedCompletionBy, setRequestedCompletionBy] = useState<string | null>(null);
   const [requestedCompletionDeadline, setRequestedCompletionDeadline] = useState<Date | null>(null);
-  const [platformFeePercent, setPlatformFeePercent] = useState<number | null>(null);
-  const [platformFeeAmount, setPlatformFeeAmount] = useState<number | null>(null);
-  const [grossAmount, setGrossAmount] = useState<number | null>(null);
+  const [platformFeePercent, setPlatformFeePercent] = useState<number | undefined>();
+  const [platformFeeAmount, setPlatformFeeAmount] = useState<number | undefined>();
+  const [grossAmount, setGrossAmount] = useState<number | undefined>();
   const [loadingFeePreview, setLoadingFeePreview] = useState(false);
 
   const projectProfessionalId = useMemo(
@@ -120,9 +120,9 @@ export function QuoteActionModal({
       setShowDetails(false);
       setRequestedCompletionBy(null);
       setRequestedCompletionDeadline(null);
-      setPlatformFeePercent(null);
-      setPlatformFeeAmount(null);
-      setGrossAmount(null);
+      setPlatformFeePercent(undefined);
+      setPlatformFeeAmount(undefined);
+      setGrossAmount(undefined);
       setLoadingFeePreview(false);
     }
   }, [isOpen]);
@@ -153,17 +153,17 @@ export function QuoteActionModal({
 
   useEffect(() => {
     if (!isOpen || !accessToken || !projectProfessionalId || !amount) {
-      setPlatformFeePercent(null);
-      setPlatformFeeAmount(null);
-      setGrossAmount(null);
+      setPlatformFeePercent(undefined);
+      setPlatformFeeAmount(undefined);
+      setGrossAmount(undefined);
       return;
     }
 
     const numericAmount = parseFloat(amount);
     if (Number.isNaN(numericAmount) || numericAmount <= 0) {
-      setPlatformFeePercent(null);
-      setPlatformFeeAmount(null);
-      setGrossAmount(null);
+      setPlatformFeePercent(undefined);
+      setPlatformFeeAmount(undefined);
+      setGrossAmount(undefined);
       return;
     }
 
@@ -190,15 +190,15 @@ export function QuoteActionModal({
           setGrossAmount(data.grossAmount);
         } else {
           // Silently fail; fee preview is best-effort
-          setPlatformFeePercent(null);
-          setPlatformFeeAmount(null);
-          setGrossAmount(null);
+          setPlatformFeePercent(undefined);
+          setPlatformFeeAmount(undefined);
+          setGrossAmount(undefined);
         }
       } catch {
         // Silently fail; fee preview is best-effort
-        setPlatformFeePercent(null);
-        setPlatformFeeAmount(null);
-        setGrossAmount(null);
+        setPlatformFeePercent(undefined);
+        setPlatformFeeAmount(undefined);
+        setGrossAmount(undefined);
       } finally {
         setLoadingFeePreview(false);
       }
@@ -447,14 +447,14 @@ export function QuoteActionModal({
                       <span className="mb-1 block text-sm font-semibold text-slate-200">Mimo fee</span>
                       <input
                         type="text"
-                        value={loadingFeePreview ? '...' : platformFeePercent !== null ? `${platformFeePercent.toFixed(1)}%` : '—'}
+                        value={loadingFeePreview ? '...' : platformFeePercent !== undefined ? `${platformFeePercent.toFixed(1)}%` : '—'}
                         disabled
                         className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-slate-300 text-center outline-none"
                       />
                     </label>
                   </div>
 
-                  {amount && platformFeePercent !== null && grossAmount !== null && (
+                  {amount && platformFeePercent !== undefined && grossAmount !== undefined && (
                     <div className="rounded-lg border border-slate-600 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
                       <p>Your quote: {formatHKD(amount)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
                     </div>
