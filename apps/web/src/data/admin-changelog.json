@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-24-2f4eab2",
+    "date": "2026-04-24T10:40:33+08:00",
+    "title": "feat: streamline quote review UI and class-based bidder actions",
+    "summary": "feat: streamline quote review UI and class-based bidder actions",
+    "areas": [
+      "web"
+    ],
+    "commit": "2f4eab2",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-8ea546d",
     "date": "2026-04-24T10:27:06+08:00",
     "title": "fix: resolve TypeScript type error in quote modal fee preview",

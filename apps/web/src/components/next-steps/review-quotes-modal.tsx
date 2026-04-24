@@ -19,7 +19,6 @@ interface QuotedProfessional {
   professionalId: string;
   status: string;
   quoteAmount?: string | number;
-  quoteBaseAmount?: string | number;
   quoteNotes?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
@@ -285,16 +284,6 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                   {title}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="ml-4 rounded-lg p-2 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
             </div>
 
             <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
@@ -329,9 +318,6 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               const startDate = formatShortDate(pp.quoteEstimatedStartAt);
               const duration = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
               const isAccepting = acceptingId === pp.id;
-              const grossNum = getNumeric(pp.quoteAmount);
-              const baseNum = getNumeric(pp.quoteBaseAmount);
-              const hasFee = Number.isFinite(baseNum) && Number.isFinite(grossNum) && baseNum !== grossNum;
 
               return (
                 <div
@@ -372,11 +358,6 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                       >
                         {formatHKD(pp.quoteAmount)}
                       </span>
-                      {hasFee && (
-                        <p className="text-[11px] text-slate-400 mt-1">
-                          Base {formatHKD(pp.quoteBaseAmount)} + platform fee
-                        </p>
-                      )}
                     </div>
                   </div>
 

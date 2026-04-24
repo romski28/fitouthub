@@ -243,6 +243,9 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   const awardedProfessional = professionals.find((p) => p.status === 'awarded');
   const declinedProfessionals = professionals.filter((p) => p.status === 'declined');
   const isClass3Project = String(project?.projectScale || '').toUpperCase() === 'SCALE_3';
+  const isClass1Or2Project = ['SCALE_1', 'SCALE_2'].includes(
+    String(project?.projectScale || '').toUpperCase(),
+  );
   const pendingAccessByProfessionalId = new Map(
     siteAccessRequests
       .filter((request) => request.status === 'pending' && request.professional?.id)
@@ -497,7 +500,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     )}
 
                     {pp.quoteAmount && (
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className={`grid gap-2 ${isClass1Or2Project ? 'grid-cols-3' : 'grid-cols-4'}`}>
                         <button
                           type="button"
                           onClick={() => onOpenChat?.(pp)}
@@ -507,20 +510,22 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                           <span aria-hidden="true">💬</span>
                           <span className="hidden sm:inline ml-1">Chat</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRequestBetter(pp)}
-                          disabled={actionBusy === `request-better-${pp.id}`}
-                          className="inline-flex w-full items-center justify-center rounded-md border border-amber-500 px-2 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/10 disabled:opacity-50 transition"
-                          aria-label="Improve offer"
-                        >
-                          {actionBusy === `request-better-${pp.id}` ? '…' : (
-                            <>
-                              <span aria-hidden="true">↺</span>
-                              <span className="hidden sm:inline ml-1">Improve offer</span>
-                            </>
-                          )}
-                        </button>
+                        {!isClass1Or2Project && (
+                          <button
+                            type="button"
+                            onClick={() => handleRequestBetter(pp)}
+                            disabled={actionBusy === `request-better-${pp.id}`}
+                            className="inline-flex w-full items-center justify-center rounded-md border border-amber-500 px-2 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/10 disabled:opacity-50 transition"
+                            aria-label="Improve offer"
+                          >
+                            {actionBusy === `request-better-${pp.id}` ? '…' : (
+                              <>
+                                <span aria-hidden="true">↺</span>
+                                <span className="hidden sm:inline ml-1">Improve offer</span>
+                              </>
+                            )}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleAwarded(pp)}
