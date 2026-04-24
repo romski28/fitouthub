@@ -690,6 +690,54 @@ export class ProfessionalController {
     }
   }
 
+  @Post('projects/:projectProfessionalId/quote-preview')
+  @UseGuards(AuthGuard('jwt-professional'))
+  @HttpCode(HttpStatus.OK)
+  async previewQuoteFee(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+    @Body() body: { quoteAmount: number | string },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    const quoteAmount = parseFloat(String(body?.quoteAmount));
+
+    if (isNaN(quoteAmount) || quoteAmount < 0) {
+      throw new BadRequestException('Invalid quote amount');
+    }
+
+    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+      where: {
+        id: projectProfessionalId,
+        professionalId,
+        status: { in: this.activeProfessionalStatuses },
+      },
+      include: {
+        project: {
+          select: {
+            clientId: true,
+          },
+        },
+      },
+    });
+
+    if (!projectProfessional) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const feeBreakdown = await this.platformFeeService.calculateGrossPrice(
+      quoteAmount,
+      professionalId,
+      projectProfessional.project?.clientId,
+    );
+
+    return {
+      baseAmount: feeBreakdown.baseAmount,
+      platformFeePercent: feeBreakdown.effectivePercent,
+      platformFeeAmount: feeBreakdown.platformFeeAmount,
+      grossAmount: feeBreakdown.grossAmount,
+    };
+  }
+
   @Post('projects/:projectProfessionalId/quote')
   @UseGuards(AuthGuard('jwt-professional'))
   @HttpCode(HttpStatus.OK)

@@ -55,6 +55,13 @@ const parseCompletionDeadline = (value?: string | null) => {
   return parsed;
 };
 
+const formatHKD = (value?: number | string): string => {
+  if (value === null || value === undefined) return '—';
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (Number.isNaN(num)) return '—';
+  return `HK$${num.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
+
 function inferProjectProfessionalId(path?: string): string | null {
   if (!path) return null;
   const [pathname] = path.split('?');
@@ -84,6 +91,10 @@ export function QuoteActionModal({
   const [showDetails, setShowDetails] = useState(false);
   const [requestedCompletionBy, setRequestedCompletionBy] = useState<string | null>(null);
   const [requestedCompletionDeadline, setRequestedCompletionDeadline] = useState<Date | null>(null);
+  const [platformFeePercent, setPlatformFeePercent] = useState<number | null>(null);
+  const [platformFeeAmount, setPlatformFeeAmount] = useState<number | null>(null);
+  const [grossAmount, setGrossAmount] = useState<number | null>(null);
+  const [loadingFeePreview, setLoadingFeePreview] = useState(false);
 
   const projectProfessionalId = useMemo(
     () => inferProjectProfessionalId(state.projectDetailsPath),
@@ -109,6 +120,10 @@ export function QuoteActionModal({
       setShowDetails(false);
       setRequestedCompletionBy(null);
       setRequestedCompletionDeadline(null);
+      setPlatformFeePercent(null);
+      setPlatformFeeAmount(null);
+      setGrossAmount(null);
+      setLoadingFeePreview(false);
     }
   }, [isOpen]);
 
@@ -135,6 +150,62 @@ export function QuoteActionModal({
 
     void loadRequestedCompletionBy();
   }, [accessToken, isOpen, projectProfessionalId]);
+
+  useEffect(() => {
+    if (!isOpen || !accessToken || !projectProfessionalId || !amount) {
+      setPlatformFeePercent(null);
+      setPlatformFeeAmount(null);
+      setGrossAmount(null);
+      return;
+    }
+
+    const numericAmount = parseFloat(amount);
+    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+      setPlatformFeePercent(null);
+      setPlatformFeeAmount(null);
+      setGrossAmount(null);
+      return;
+    }
+
+    // Debounce the preview call
+    const timeoutId = setTimeout(async () => {
+      setLoadingFeePreview(true);
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/professional/projects/${projectProfessionalId}/quote-preview`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quoteAmount: numericAmount }),
+          },
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setPlatformFeePercent(data.platformFeePercent);
+          setPlatformFeeAmount(data.platformFeeAmount);
+          setGrossAmount(data.grossAmount);
+        } else {
+          // Silently fail; fee preview is best-effort
+          setPlatformFeePercent(null);
+          setPlatformFeeAmount(null);
+          setGrossAmount(null);
+        }
+      } catch {
+        // Silently fail; fee preview is best-effort
+        setPlatformFeePercent(null);
+        setPlatformFeeAmount(null);
+        setGrossAmount(null);
+      } finally {
+        setLoadingFeePreview(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [amount, accessToken, isOpen, projectProfessionalId]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -357,19 +428,37 @@ export function QuoteActionModal({
                 </div>
 
                 <div className="grid flex-1 gap-4 overflow-y-auto px-6 py-5">
-                  <label className="block">
-                    <span className="mb-1 block text-sm font-semibold text-slate-200">Quote amount (HKD)</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                      placeholder="e.g. 125000"
-                      disabled={submitting}
-                    />
-                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <label className="col-span-2 block">
+                      <span className="mb-1 block text-sm font-semibold text-slate-200">Quote amount (HKD)</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                        placeholder="e.g. 125000"
+                        disabled={submitting}
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-semibold text-slate-200">Mimo fee</span>
+                      <input
+                        type="text"
+                        value={loadingFeePreview ? '...' : platformFeePercent !== null ? `${platformFeePercent.toFixed(1)}%` : '—'}
+                        disabled
+                        className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-slate-300 text-center outline-none"
+                      />
+                    </label>
+                  </div>
+
+                  {amount && platformFeePercent !== null && grossAmount !== null && (
+                    <div className="rounded-lg border border-slate-600 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
+                      <p>Your quote: {formatHKD(amount)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
+                    </div>
+                  )}
 
                   {requestedCompletionBy ? (
                     <div className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-sm text-slate-200">

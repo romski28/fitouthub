@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-24-f207955",
+    "date": "2026-04-24T10:16:15+08:00",
+    "title": "feat: add live Mimo fee % preview in quote modal",
+    "summary": "feat: add live Mimo fee % preview in quote modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f207955",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-8035101",
     "date": "2026-04-24T09:47:47+08:00",
     "title": "Add quote modal completion-date warning",
