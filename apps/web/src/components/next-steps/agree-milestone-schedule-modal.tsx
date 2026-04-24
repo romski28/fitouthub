@@ -225,7 +225,7 @@ export function AgreeMilestoneScheduleModal({
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div className="w-full max-w-4xl [perspective:1600px]">
+        <div className="w-full max-w-4xl max-h-[80vh] [perspective:1600px]">
           {/* Loading state - shown immediately */}
           {showLoadingInit && (
             <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
@@ -238,11 +238,11 @@ export function AgreeMilestoneScheduleModal({
           
           {/* Content state - shown when ready */}
           {!showLoadingInit && (
-            <div className="relative min-h-[420px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-              <div className="absolute inset-0 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
-                <div className="max-h-[90vh] overflow-y-auto">
+            <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+              <div className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+                <div className="flex max-h-[80vh] flex-col">
                   {/* Header with optional image */}
-                  <div className="relative border-b border-slate-700 px-6 py-5 space-y-3">
+                  <div className="relative shrink-0 border-b border-slate-700 px-6 py-5 space-y-3">
                     {hasDetails && (
                       <button
                         type="button"
@@ -267,7 +267,7 @@ export function AgreeMilestoneScheduleModal({
                     <p className="text-sm text-slate-200">{body}</p>
                   </div>
 
-                  <div className="space-y-4 px-6 py-5">
+                  <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
                     {error ? (
                       <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
                         {error}
@@ -291,7 +291,7 @@ export function AgreeMilestoneScheduleModal({
                     )}
                   </div>
 
-                  <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+                  <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
                     <button
                       type="button"
                       onClick={onClose}
@@ -303,7 +303,7 @@ export function AgreeMilestoneScheduleModal({
                 </div>
               </div>
 
-              <div className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
+              <div className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
@@ -313,7 +313,7 @@ export function AgreeMilestoneScheduleModal({
                   x
                 </button>
 
-                <div className="px-6 pb-6 pt-12 text-left">
+                <div className="flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
                   <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
                   <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>

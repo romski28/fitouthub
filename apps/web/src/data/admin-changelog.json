@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-24-bddf189",
+    "date": "2026-04-24T09:21:49+08:00",
+    "title": "Cap next-step modal heights and scroll content",
+    "summary": "Cap next-step modal heights and scroll content",
+    "areas": [
+      "web"
+    ],
+    "commit": "bddf189",
+    "files": [
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx",
+      "apps/web/src/components/next-steps/contract-action-modal.tsx",
+      "apps/web/src/components/next-steps/general-action-modal.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-f9f4d73",
     "date": "2026-04-24T08:58:21+08:00",
     "title": "Add details flip to specialized next-step modals",

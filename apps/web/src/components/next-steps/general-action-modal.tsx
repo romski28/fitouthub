@@ -110,7 +110,7 @@ export function GeneralActionModal({
         if (e.target === e.currentTarget) handleModalClose();
       }}
     >
-      <div className="w-full max-w-md [perspective:1600px]">
+      <div className="w-full max-w-md max-h-[80vh] [perspective:1600px]">
         {isLoading ? (
           <div className="relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
             <div className="flex flex-col items-center justify-center px-6 py-14">
@@ -119,9 +119,9 @@ export function GeneralActionModal({
             </div>
           </div>
         ) : (
-          <div className="relative min-h-[420px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+          <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
             <div
-              className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+              className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
               aria-hidden={showDetails}
             >
               {hasDetails && (
@@ -135,7 +135,7 @@ export function GeneralActionModal({
                 </button>
               )}
 
-              <div className="px-6 pb-5 pt-10 text-center">
+              <div className="flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
                 <div className="mb-4 flex justify-center">
                   <img
                     src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
@@ -192,7 +192,7 @@ export function GeneralActionModal({
             </div>
 
             <div
-              className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+              className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
               style={{ transform: 'rotateY(180deg)' }}
               aria-hidden={!showDetails}
             >
@@ -205,7 +205,7 @@ export function GeneralActionModal({
                 ×
               </button>
 
-              <div className="px-6 pb-6 pt-12 text-left">
+              <div className="flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
                 <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
                 <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>

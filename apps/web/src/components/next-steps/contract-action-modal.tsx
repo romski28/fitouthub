@@ -268,7 +268,7 @@ export function ContractActionModal({
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div className="w-full max-w-2xl [perspective:1600px]">
+        <div className="w-full max-w-2xl max-h-[80vh] [perspective:1600px]">
           {isLoading ? (
             <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
               <div className="flex flex-col items-center justify-center px-6 py-14">
@@ -277,10 +277,10 @@ export function ContractActionModal({
               </div>
             </div>
           ) : (
-            <div className="relative min-h-[420px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-              <div className="absolute inset-0 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
-                <div className="max-h-[90vh] overflow-y-auto">
-                  <div className="relative border-b border-slate-700 px-6 py-5">
+            <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+              <div className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+                <div className="flex max-h-[80vh] flex-col">
+                  <div className="relative shrink-0 border-b border-slate-700 px-6 py-5">
                     {hasDetails && (
                       <button
                         type="button"
@@ -304,7 +304,7 @@ export function ContractActionModal({
                     </div>
                   </div>
 
-                  <div className="grid gap-4 px-6 py-5">
+                  <div className="grid flex-1 gap-4 overflow-y-auto px-6 py-5">
                     {contractLoading ? (
                       <div className="flex items-center gap-2 text-sm text-slate-300">
                         <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
@@ -350,7 +350,7 @@ export function ContractActionModal({
                     ) : null}
                   </div>
 
-                  <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+                  <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
                     <button
                       type="button"
                       onClick={navigateToContractTab}
@@ -371,7 +371,7 @@ export function ContractActionModal({
                 </div>
               </div>
 
-              <div className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
+              <div className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
@@ -381,7 +381,7 @@ export function ContractActionModal({
                   x
                 </button>
 
-                <div className="px-6 pb-6 pt-12 text-left">
+                <div className="flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
                   <h3 className="mt-3 text-2xl font-bold text-emerald-300">{agreementTitle || 'Step details'}</h3>
                   <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
