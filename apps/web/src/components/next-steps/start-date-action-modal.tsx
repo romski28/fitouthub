@@ -70,6 +70,7 @@ export function StartDateActionModal({
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Show loading immediately when modal opens
   const showLoadingInit = isOpen && (isLoading || (proposalLoading && proposals.length === 0) || !proposalFormInitialized);
@@ -165,6 +166,7 @@ export function StartDateActionModal({
     setProposalResponseNotes({});
     setUpdateDateByProposal({});
     setUpdateTimeByProposal({});
+    setShowDetails(false);
   }, [isOpen, projectId]);
 
   useEffect(() => {
@@ -427,7 +429,9 @@ export function StartDateActionModal({
     (isProfessional
       ? 'Confirm a realistic start date and time for client agreement. Duration is fixed from the agreed quote/proposal.'
       : 'Review and respond to the professional start-date proposal.');
+  const detailsBody = state.modalContent?.detailsBody;
   const imageUrl = state.modalContent?.imageUrl;
+  const hasDetails = Boolean(detailsBody);
 
   return (
     <>
@@ -439,86 +443,129 @@ export function StartDateActionModal({
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+        <div className="w-full max-w-4xl [perspective:1600px]">
         {showLoadingInit ? (
-          <div className="flex flex-col items-center justify-center px-6 py-14 min-h-[400px]">
-            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
-            <p className="text-slate-300">Loading start date options...</p>
+          <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+            <div className="flex flex-col items-center justify-center px-6 py-14 min-h-[400px]">
+              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
+              <p className="text-slate-300">Loading start date options...</p>
+            </div>
           </div>
         ) : (
-          <div className="max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-slate-700 px-6 py-5 space-y-3">
-              {imageUrl && (
-                <div className="relative h-48 w-full overflow-hidden rounded-lg mb-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imageUrl}
-                    alt="Start date negotiation"
-                    className="h-full w-full object-cover"
+          <div className="relative min-h-[420px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+            <div className="absolute inset-0 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+              <div className="max-h-[90vh] overflow-y-auto">
+                <div className="relative border-b border-slate-700 px-6 py-5 space-y-3">
+                  {hasDetails && (
+                    <button
+                      type="button"
+                      onClick={() => setShowDetails(true)}
+                      className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                      aria-label="Show details"
+                    >
+                      i
+                    </button>
+                  )}
+                  {imageUrl && (
+                    <div className="relative h-48 w-full overflow-hidden rounded-lg mb-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageUrl}
+                        alt="Start date negotiation"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
+                  <p className="text-sm text-slate-200">{body}</p>
+                </div>
+
+                <div className="space-y-4 px-6 py-5">
+                  {error ? (
+                    <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                      {error}
+                    </div>
+                  ) : null}
+
+                  {!projectProfessionalId && isProfessional ? (
+                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                      Project context is missing. Open the project details page and try again.
+                    </div>
+                  ) : null}
+
+                  <StartDateNegotiationPanel
+                    proposals={proposals}
+                    proposalLoading={proposalLoading}
+                    proposalBusyId={proposalBusyId}
+                    viewerRole={viewerRole}
+                    updateDateByProposal={updateDateByProposal}
+                    updateTimeByProposal={updateTimeByProposal}
+                    proposalResponseNotes={proposalResponseNotes}
+                    setUpdateDateByProposal={setUpdateDateByProposal}
+                    setUpdateTimeByProposal={setUpdateTimeByProposal}
+                    setProposalResponseNotes={setProposalResponseNotes}
+                    onRespond={handleRespond}
+                    onSubmitNew={isProfessional ? handleSubmitNew : undefined}
+                    proposalSubmitting={proposalSubmitting}
+                    proposalDate={proposalDate}
+                    proposalTime={proposalTime}
+                    proposalDurationHours={proposalDurationHours}
+                    proposalNotes={proposalNotes}
+                    prefilledFromQuote={prefilledFromQuote}
+                    setProposalDate={setProposalDate}
+                    setProposalTime={setProposalTime}
+                    setProposalDurationHours={setProposalDurationHours}
+                    setProposalNotes={setProposalNotes}
+                    setPrefilledFromQuote={setPrefilledFromQuote}
+                    setProposalFormInitialized={setProposalFormInitialized}
+                    allowDurationEdit={false}
                   />
                 </div>
-              )}
-              <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
-              <p className="text-sm text-slate-200">{body}</p>
+
+                <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+                  <button
+                    type="button"
+                    onClick={navigateToProjectDetails}
+                    className="min-w-[110px] rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-base font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                  >
+                    Open schedule tab
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-4 px-6 py-5">
-              {error ? (
-                <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
-                  {error}
-                </div>
-              ) : null}
-
-              {!projectProfessionalId && isProfessional ? (
-                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-                  Project context is missing. Open the project details page and try again.
-                </div>
-              ) : null}
-
-              <StartDateNegotiationPanel
-                proposals={proposals}
-                proposalLoading={proposalLoading}
-                proposalBusyId={proposalBusyId}
-                viewerRole={viewerRole}
-                updateDateByProposal={updateDateByProposal}
-                updateTimeByProposal={updateTimeByProposal}
-                proposalResponseNotes={proposalResponseNotes}
-                setUpdateDateByProposal={setUpdateDateByProposal}
-                setUpdateTimeByProposal={setUpdateTimeByProposal}
-                setProposalResponseNotes={setProposalResponseNotes}
-                onRespond={handleRespond}
-                onSubmitNew={isProfessional ? handleSubmitNew : undefined}
-                proposalSubmitting={proposalSubmitting}
-                proposalDate={proposalDate}
-                proposalTime={proposalTime}
-                proposalDurationHours={proposalDurationHours}
-                proposalNotes={proposalNotes}
-                prefilledFromQuote={prefilledFromQuote}
-                setProposalDate={setProposalDate}
-                setProposalTime={setProposalTime}
-                setProposalDurationHours={setProposalDurationHours}
-                setProposalNotes={setProposalNotes}
-                setPrefilledFromQuote={setPrefilledFromQuote}
-                setProposalFormInitialized={setProposalFormInitialized}
-                allowDurationEdit={false}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+            <div className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
               <button
                 type="button"
-                onClick={navigateToProjectDetails}
-                className="min-w-[110px] rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-base font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                onClick={() => setShowDetails(false)}
+                className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+                aria-label="Hide details"
               >
-                Show details
+                x
               </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
-              >
-                Close
-              </button>
+
+              <div className="px-6 pb-6 pt-12 text-left">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
+                <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
+                <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+              </div>
+
+              <div className="mt-auto border-t border-slate-700 px-5 py-4">
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(false)}
+                  className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                >
+                  Back to schedule action
+                </button>
+              </div>
             </div>
           </div>
         )}

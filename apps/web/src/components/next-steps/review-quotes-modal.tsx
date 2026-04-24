@@ -88,6 +88,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [acceptedName, setAcceptedName] = useState('');
   const [resolvedNextStep, setResolvedNextStep] = useState<WorkflowNextStep | null>(null);
   const [resolvedNextAction, setResolvedNextAction] = useState<NextStepAction | null>(null);
@@ -121,6 +122,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   useEffect(() => {
     if (isOpen) {
       setShowSuccess(false);
+      setShowDetails(false);
       setAcceptError(null);
       setResolvedNextAction(null);
       hasNotifiedCompletionRef.current = false;
@@ -256,31 +258,46 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const fastestId = [...withDuration].sort(
     (a, b) => (a.quoteEstimatedDurationMinutes ?? 0) - (b.quoteEstimatedDurationMinutes ?? 0),
   )[0]?.id;
+  const detailsBody = state.modalContent?.detailsBody;
+  const hasDetails = Boolean(detailsBody);
+  const title = state.modalContent?.title || 'Review Quotes';
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-t-2xl sm:rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl flex flex-col max-h-[92dvh]">
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-700 shrink-0">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400 mb-0.5">Quotes received</p>
-            <h2 className="text-lg font-bold text-white leading-tight">
-              {state.modalContent?.title || 'Review Quotes'}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="ml-4 rounded-lg p-2 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+      <div className="relative z-10 w-full max-w-lg [perspective:1600px]">
+        <div className="relative min-h-[420px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+          <div className="absolute inset-0 flex flex-col max-h-[92dvh] overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+            <div className="relative flex items-center justify-between border-b border-slate-700 px-5 pb-4 pt-5 shrink-0">
+              {hasDetails && (
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(true)}
+                  className="absolute right-16 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                  aria-label="Show details"
+                >
+                  i
+                </button>
+              )}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400 mb-0.5">Quotes received</p>
+                <h2 className="text-lg font-bold text-white leading-tight">
+                  {title}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="ml-4 rounded-lg p-2 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
           {fetching && (
             <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -418,16 +435,45 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               {acceptError}
             </div>
           )}
-        </div>
+            </div>
 
-        <div className="px-5 py-4 border-t border-slate-700 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full rounded-lg py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/60 transition-colors"
-          >
-            Close
-          </button>
+            <div className="px-5 py-4 border-t border-slate-700 shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full rounded-lg py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/60 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
+          <div className="absolute inset-0 flex flex-col overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
+            <button
+              type="button"
+              onClick={() => setShowDetails(false)}
+              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+              aria-label="Hide details"
+            >
+              x
+            </button>
+
+            <div className="px-6 pb-6 pt-12 text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
+              <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
+              <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+            </div>
+
+            <div className="mt-auto border-t border-slate-700 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setShowDetails(false)}
+                className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+              >
+                Back to quotes
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

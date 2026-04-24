@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-24-f9f4d73",
+    "date": "2026-04-24T08:58:21+08:00",
+    "title": "Add details flip to specialized next-step modals",
+    "summary": "Add details flip to specialized next-step modals",
+    "areas": [
+      "web"
+    ],
+    "commit": "f9f4d73",
+    "files": [
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx",
+      "apps/web/src/components/next-steps/contract-action-modal.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx",
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-23-5c0be28",
     "date": "2026-04-23T23:10:57+08:00",
     "title": "Add details flip support to quote modal",
