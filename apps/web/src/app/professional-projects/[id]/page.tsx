@@ -842,13 +842,8 @@ export default function ProjectDetailPage() {
       return;
     }
 
-    // Convert duration to minutes based on unit
-    let quoteEstimatedDurationMinutes: number;
-    if (quoteForm.estimatedDurationUnit === 'days') {
-      quoteEstimatedDurationMinutes = Math.round(durationValue * 24 * 60);
-    } else {
-      quoteEstimatedDurationMinutes = Math.round(durationValue * 60);
-    }
+    // API normalizes this value using the provided unit.
+    const quoteEstimatedDurationMinutes = durationValue;
 
     setSubmittingQuote(true);
     setError(null);

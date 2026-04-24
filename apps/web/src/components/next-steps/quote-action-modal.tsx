@@ -265,16 +265,12 @@ export function QuoteActionModal({
     }
 
     const quoteEstimatedStartAt = new Date(`${estimatedStartDate}T${estimatedStartHour}:${estimatedStartMinute}`).toISOString();
-    const quoteEstimatedDurationMinutes =
-      estimatedDurationUnit === 'days'
-        ? Math.round(durationValue * 24 * 60)
-        : Math.round(durationValue * 60);
-
     const payload = {
       quoteAmount: numericAmount,
       quoteNotes: notes,
       quoteEstimatedStartAt,
-      quoteEstimatedDurationMinutes,
+      // API normalizes this value using the provided unit.
+      quoteEstimatedDurationMinutes: durationValue,
       quoteEstimatedDurationUnit: estimatedDurationUnit,
     };
 

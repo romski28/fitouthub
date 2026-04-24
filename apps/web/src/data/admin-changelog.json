@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-24-2a63d7d",
+    "date": "2026-04-24T11:05:03+08:00",
+    "title": "fix: correct quote duration double-conversion bug",
+    "summary": "fix: correct quote duration double-conversion bug",
+    "areas": [
+      "web"
+    ],
+    "commit": "2a63d7d",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-2f4eab2",
     "date": "2026-04-24T10:40:33+08:00",
     "title": "feat: streamline quote review UI and class-based bidder actions",
