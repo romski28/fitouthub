@@ -28,6 +28,17 @@ const tomorrowAtNine = () => {
   return date;
 };
 
+const formatCompletionDate = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat('en-HK', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+};
+
 function inferProjectProfessionalId(path?: string): string | null {
   if (!path) return null;
   const [pathname] = path.split('?');
@@ -55,6 +66,7 @@ export function QuoteActionModal({
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [requestedCompletionBy, setRequestedCompletionBy] = useState<string | null>(null);
 
   const projectProfessionalId = useMemo(
     () => inferProjectProfessionalId(state.projectDetailsPath),
@@ -78,8 +90,32 @@ export function QuoteActionModal({
       setShowSuccess(false);
       setError(null);
       setShowDetails(false);
+      setRequestedCompletionBy(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !accessToken || !projectProfessionalId) return;
+
+    const loadRequestedCompletionBy = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/professional/projects/${projectProfessionalId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) return;
+        const detail = await response.json();
+        const endDateRaw = detail?.project?.endDate || detail?.endDate || null;
+        setRequestedCompletionBy(formatCompletionDate(endDateRaw));
+      } catch {
+        // Keep this best-effort only; quote flow must remain available.
+      }
+    };
+
+    void loadRequestedCompletionBy();
+  }, [accessToken, isOpen, projectProfessionalId]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -277,6 +313,12 @@ export function QuoteActionModal({
                 </div>
 
                 <div className="grid flex-1 gap-4 overflow-y-auto px-6 py-5">
+                  {requestedCompletionBy ? (
+                    <div className="rounded-lg border border-sky-500/35 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                      Client requested completion by: <span className="font-semibold">{requestedCompletionBy}</span>
+                    </div>
+                  ) : null}
+
                   <label className="block">
                     <span className="mb-1 block text-sm font-semibold text-slate-200">Quote amount (HKD)</span>
                     <input
@@ -316,16 +358,17 @@ export function QuoteActionModal({
                             <option key={h} value={h}>{h}</option>
                           ))}
                         </select>
+                        <span className="text-slate-300">:</span>
                         <select
                           value={estimatedStartMinute}
                           onChange={(e) => setEstimatedStartMinute(e.target.value)}
                           className="w-24 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
                           disabled={submitting}
                         >
-                          <option value="00">:00</option>
-                          <option value="15">:15</option>
-                          <option value="30">:30</option>
-                          <option value="45">:45</option>
+                          <option value="00">00</option>
+                          <option value="15">15</option>
+                          <option value="30">30</option>
+                          <option value="45">45</option>
                         </select>
                       </div>
                     </label>

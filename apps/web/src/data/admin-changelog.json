@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-24-4c316c0",
+    "date": "2026-04-24T09:35:29+08:00",
+    "title": "Show completion date in quote modal",
+    "summary": "Show completion date in quote modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "4c316c0",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-bddf189",
     "date": "2026-04-24T09:21:49+08:00",
     "title": "Cap next-step modal heights and scroll content",
