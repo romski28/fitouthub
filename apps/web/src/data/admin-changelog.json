@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-04-24-2f578fc",
+    "date": "2026-04-24T15:23:44+08:00",
+    "title": "feat: standardize next-step modal scrollbar and lock background scroll",
+    "summary": "feat: standardize next-step modal scrollbar and lock background scroll",
+    "areas": [
+      "web"
+    ],
+    "commit": "2f578fc",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx",
+      "apps/web/src/components/next-steps/contract-action-modal.tsx",
+      "apps/web/src/components/next-steps/general-action-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx",
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-a958714",
     "date": "2026-04-24T11:20:58+08:00",
     "title": "feat: improve review-quotes modal height, info button alignment, and scrollbar styling",

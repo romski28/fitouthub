@@ -423,7 +423,7 @@ export function QuoteActionModal({
                   </div>
                 </div>
 
-                <div className="grid flex-1 gap-4 overflow-y-auto px-6 py-5">
+                <div className="next-step-scrollbar grid flex-1 gap-4 overflow-y-auto px-6 py-5">
                   <div className="grid grid-cols-3 gap-3">
                     <label className="col-span-2 block">
                       <span className="mb-1 block text-sm font-semibold text-slate-200">Quote amount (HKD)</span>
@@ -595,7 +595,7 @@ export function QuoteActionModal({
                 x
               </button>
 
-              <div className="flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
+              <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
                 <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
                 <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>

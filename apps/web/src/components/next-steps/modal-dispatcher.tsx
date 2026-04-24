@@ -94,6 +94,26 @@ export function ModalDispatcher({
     }
   }, [state.isOpen, state.actionKey, modalType, state.role, state.projectId]);
 
+  // Keep page scroll locked while any next-step modal is open.
+  useEffect(() => {
+    if (!state.isOpen) return;
+
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const previousPaddingRight = body.style.paddingRight;
+    const scrollbarCompensation = window.innerWidth - document.documentElement.clientWidth;
+
+    body.style.overflow = 'hidden';
+    if (scrollbarCompensation > 0) {
+      body.style.paddingRight = `${scrollbarCompensation}px`;
+    }
+
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPaddingRight;
+    };
+  }, [state.isOpen]);
+
   // For now, all actions render through GeneralActionModal
   // Future: add PaymentModal, QuoteModal, ContractModal
   if (modalType === 'general') {

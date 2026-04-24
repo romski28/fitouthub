@@ -267,7 +267,7 @@ export function AgreeMilestoneScheduleModal({
                     <p className="text-sm text-slate-200">{body}</p>
                   </div>
 
-                  <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                  <div className="next-step-scrollbar flex-1 space-y-4 overflow-y-auto px-6 py-5">
                     {error ? (
                       <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
                         {error}
@@ -313,7 +313,7 @@ export function AgreeMilestoneScheduleModal({
                   x
                 </button>
 
-                <div className="flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
+                <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
                   <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
                   <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>

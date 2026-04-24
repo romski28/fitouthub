@@ -286,7 +286,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               </div>
             </div>
 
-            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600/60 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400/70">
+            <div className="next-step-scrollbar overflow-y-auto flex-1 px-5 py-4 space-y-3">
           {fetching && (
             <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -439,7 +439,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               x
             </button>
 
-            <div className="px-6 pb-6 pt-12 text-left">
+            <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
               <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
               <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>

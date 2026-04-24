@@ -127,6 +127,36 @@ body {
   padding-right: 2.5rem;
 }
 
+.next-step-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.9) transparent;
+  padding-right: 0.25rem;
+  margin-right: -0.25rem;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.next-step-scrollbar::-webkit-scrollbar {
+  width: 0.625rem;
+}
+
+.next-step-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.next-step-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.next-step-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 1);
+  background-clip: content-box;
+}
+
 .browse-page-shell {
   min-height: 100%;
   background:

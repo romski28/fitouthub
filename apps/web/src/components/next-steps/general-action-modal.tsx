@@ -135,7 +135,7 @@ export function GeneralActionModal({
                 </button>
               )}
 
-              <div className="flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
+              <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
                 <div className="mb-4 flex justify-center">
                   <img
                     src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
@@ -205,7 +205,7 @@ export function GeneralActionModal({
                 ×
               </button>
 
-              <div className="flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
+              <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
                 <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
                 <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
