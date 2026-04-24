@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-24-a958714",
+    "date": "2026-04-24T11:20:58+08:00",
+    "title": "feat: improve review-quotes modal height, info button alignment, and scrollbar styling",
+    "summary": "feat: improve review-quotes modal height, info button alignment, and scrollbar styling",
+    "areas": [
+      "web"
+    ],
+    "commit": "a958714",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-2a63d7d",
     "date": "2026-04-24T11:05:03+08:00",
     "title": "fix: correct quote duration double-conversion bug",

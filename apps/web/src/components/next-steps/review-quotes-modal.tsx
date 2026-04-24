@@ -265,14 +265,14 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg [perspective:1600px]">
-        <div className="relative min-h-[420px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-          <div className="absolute inset-0 flex flex-col max-h-[92dvh] overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+        <div className="relative min-h-[420px] h-[80dvh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+          <div className="absolute inset-0 flex flex-col h-full overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
             <div className="relative flex items-center justify-between border-b border-slate-700 px-5 pb-4 pt-5 shrink-0">
               {hasDetails && (
                 <button
                   type="button"
                   onClick={() => setShowDetails(true)}
-                  className="absolute right-16 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                  className="absolute right-5 top-5 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
                   aria-label="Show details"
                 >
                   i
@@ -286,7 +286,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               </div>
             </div>
 
-            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600/60 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400/70">
           {fetching && (
             <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
