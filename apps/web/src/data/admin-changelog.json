@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-27-cf4fe88",
+    "date": "2026-04-27T01:17:22+08:00",
+    "title": "feat: show workflow celebration modal after escrow payment success",
+    "summary": "feat: show workflow celebration modal after escrow payment success",
+    "areas": [
+      "web"
+    ],
+    "commit": "cf4fe88",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-26-3947949",
     "date": "2026-04-26T22:35:52+08:00",
     "title": "fix: parse financial transactions response correctly in deposit escrow modal",

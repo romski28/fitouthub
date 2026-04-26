@@ -7,11 +7,14 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
+import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { getClientTabForAction } from '@/lib/client-workflow';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import ProjectChat from '@/components/project-chat';
 import ChatImageUploader from '@/components/chat-image-uploader';
 import { useFundsSecured } from '@/hooks/use-funds-secured';
+import { WorkflowCompletionModal, type WorkflowNextStep, type WaitingParty } from '@/components/workflow-completion-modal';
 import { ProjectImagesCard } from '@/components/project-images-card';
 import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
@@ -209,6 +212,14 @@ const formatHKD = (value?: number | string) => {
   return `HK$ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
 
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
+
 const hasQuoteOverdueBlocker = (project: ProjectDetail | null): boolean => {
   if (!project?.professionals || project.professionals.length === 0) return false;
 
@@ -376,6 +387,10 @@ export default function ClientProjectDetailPage() {
     'awarded-details': false,
   });
   const [openMaterialsWalletOnLoad, setOpenMaterialsWalletOnLoad] = useState(false);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const [workflowModalNextActionKey, setWorkflowModalNextActionKey] = useState<string | null>(null);
 
   const toggleAccordion = (id: string) => {
     setExpandedAccordions((prev) => ({
@@ -383,6 +398,41 @@ export default function ClientProjectDetailPage() {
       [id]: !prev[id],
     }));
   };
+
+  const openPaymentWorkflowModal = useCallback(
+    async (completedLabel: string) => {
+      if (!accessToken || !projectId) {
+        return;
+      }
+
+      try {
+        const next = await fetchPrimaryNextStep(projectId, accessToken, {
+          cacheScope: `client-project-payment-modal:${projectId}`,
+          forceRefresh: true,
+        });
+
+        const tab = next?.actionKey ? getClientTabForAction(next.actionKey) : undefined;
+        setWorkflowModalCompletedLabel(completedLabel);
+        setWorkflowModalNextActionKey(next?.actionKey || null);
+        setWorkflowModalNextStep(
+          next
+            ? {
+                actionLabel: next.actionLabel,
+                description: next.description,
+                requiresAction: Boolean(next.requiresAction),
+                tab,
+                waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+              }
+            : null,
+        );
+        setWorkflowModalOpen(true);
+      } catch {
+        // Fallback keeps UX intact even if next-step endpoint is temporarily unavailable.
+        toast.success(completedLabel);
+      }
+    },
+    [accessToken, projectId],
+  );
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
@@ -475,7 +525,9 @@ export default function ClientProjectDetailPage() {
     if (!paymentStatus) return;
 
     if (paymentStatus === 'success') {
-      toast.success('Escrow payment received. Confirmation is now being processed.');
+      if (!accessToken) return;
+      void openPaymentWorkflowModal('Escrow funded successfully!');
+      setActiveTab('financials');
     } else if (paymentStatus === 'cancelled') {
       toast.error('Payment was cancelled. You can retry when ready.');
     }
@@ -484,7 +536,7 @@ export default function ClientProjectDetailPage() {
     url.searchParams.delete('payment');
     const query = url.searchParams.toString();
     window.history.replaceState({}, '', `${url.pathname}${query ? `?${query}` : ''}${url.hash}`);
-  }, [searchParams]);
+  }, [accessToken, openPaymentWorkflowModal, searchParams]);
 
   const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
     const text = await response.text();
@@ -2471,6 +2523,28 @@ export default function ClientProjectDetailPage() {
           </div>
         </div>
       )}
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        showConfetti
+        primaryActionLabel="Open next step"
+        onNavigate={
+          workflowModalNextStep?.tab
+            ? () => {
+                setActiveTab(workflowModalNextStep.tab as string);
+                if (workflowModalNextActionKey === 'AUTHORIZE_MATERIALS_WALLET') {
+                  setOpenMaterialsWalletOnLoad(true);
+                }
+              }
+            : undefined
+        }
+        onClose={() => {
+          setWorkflowModalOpen(false);
+          setWorkflowModalNextActionKey(null);
+        }}
+      />
 
       <AssistRequestModal
         isOpen={assistOpen}
