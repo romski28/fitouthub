@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-26-82b08c4",
+    "date": "2026-04-26T13:55:50+08:00",
+    "title": "feat: celebrate agreed start date and surface next-step modal",
+    "summary": "feat: celebrate agreed start date and surface next-step modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "82b08c4",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/next-steps/start-date-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-26-541af32",
     "date": "2026-04-26T13:46:21+08:00",
     "title": "feat: unify start-date response UX across client and professional flows",

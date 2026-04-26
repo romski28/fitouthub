@@ -238,11 +238,10 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
 
       invalidateNextStepCache(projectId);
       await fetchStartProposals();
-      await openWorkflowModal(
-        status === 'accepted'
-          ? 'Start date confirmed.'
-          : 'Updated start date sent to professional.',
-      );
+
+      if (status === 'accepted') {
+        await openWorkflowModal('Start date agreed!');
+      }
 
       if (status === 'updated') {
         setProposalResponseNotes((prev) => ({ ...prev, [proposalId]: '' }));
@@ -586,6 +585,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
         isOpen={workflowModalOpen}
         completedLabel={workflowModalCompletedLabel}
         nextStep={workflowModalNextStep}
+        showConfetti
         onNavigate={
           workflowModalNextStep?.tab
             ? () => onNavigateTab?.(workflowModalNextStep.tab as string)

@@ -5,6 +5,9 @@ import { MilestoneEditor } from '@/components/milestone-editor';
 import { API_BASE_URL } from '@/config/api';
 import { Pencil, Trash2, GripVertical } from 'lucide-react';
 import { StartDateNegotiationPanel } from '@/components/start-date-negotiation-panel';
+import { fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
+import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
+import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 
 interface Milestone {
   id: string;
@@ -64,6 +67,14 @@ interface ScheduleTabProps {
   onScheduleConfirmed?: () => void;
 }
 
+const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
+  if (!actionKey) return undefined;
+  if (actionKey.includes('WAIT_FOR_PROFESSIONAL')) return 'professional';
+  if (actionKey.includes('WAIT_FOR_CLIENT')) return 'client';
+  if (actionKey.includes('WAIT_FOR_PLATFORM') || actionKey.includes('VERIFY')) return 'platform';
+  return undefined;
+};
+
 export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   projectId,
   projectProfessionalId,
@@ -103,6 +114,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [scheduleNextStep, setScheduleNextStep] = useState<{ actionKey: string; actionLabel: string; description?: string } | null>(null);
   const [nextStepLoading, setNextStepLoading] = useState(false);
   const [confirmingSchedule, setConfirmingSchedule] = useState(false);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
 
   const contractWorkflowStages = new Set([
     'CONTRACT_PHASE',
@@ -118,6 +132,34 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   ]);
   const normalizedStage = String(projectCurrentStage || '').toUpperCase();
   const isInContractWorkflow = projectStatus === 'awarded' || contractWorkflowStages.has(normalizedStage);
+
+  const openWorkflowModal = async (completedLabel: string) => {
+    if (!accessToken) return;
+
+    try {
+      const next = await fetchPrimaryNextStep(projectId, accessToken, {
+        cacheScope: `professional-schedule-modal:${projectId}`,
+        forceRefresh: true,
+      });
+
+      const tab = next?.actionKey ? getProfessionalTabForAction(next.actionKey) : undefined;
+      setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextStep(
+        next
+          ? {
+              actionLabel: next.actionLabel,
+              description: next.description,
+              requiresAction: Boolean(next.requiresAction),
+              tab,
+              waitingFor: !next.requiresAction ? inferWaitingParty(next.actionKey) : undefined,
+            }
+          : null,
+      );
+      setWorkflowModalOpen(true);
+    } catch {
+      // Non-blocking: agreement action has already succeeded.
+    }
+  };
 
   // Helper to convert date string to ISO-8601 DateTime
   const toISODateTime = (dateStr: string | undefined): string | undefined => {
@@ -369,6 +411,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         throw new Error(data.message || 'Failed to respond to client update');
       }
 
+      invalidateNextStepCache(projectId);
+
       await (async () => {
         const refreshResponse = await fetch(`${API_BASE_URL}/projects/${projectId}/start-proposals`, {
           headers: {
@@ -389,6 +433,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             type: 'success',
           }
         }));
+      }
+
+      if (status === 'accepted') {
+        await openWorkflowModal('Start date agreed!');
       }
     } catch (err) {
       console.error('Error responding to start proposal:', err);
@@ -1182,6 +1230,14 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           </div>
         </div>
       )}
+
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        completedLabel={workflowModalCompletedLabel}
+        nextStep={workflowModalNextStep}
+        showConfetti
+        onClose={() => setWorkflowModalOpen(false)}
+      />
     </div>
   );
 };

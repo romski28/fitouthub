@@ -413,12 +413,28 @@ export function StartDateActionModal({
 
       await fetchStartProposals();
       await markStepCompleted();
+
+      if (status === 'accepted') {
+        await openWorkflowModal(
+          state.modalContent?.successTitle || 'Start date agreed!',
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to respond to proposal');
     } finally {
       setProposalBusyId(null);
     }
-  }, [fetchStartProposals, markStepCompleted, projectId, proposalResponseNotes, token, updateDateByProposal, updateTimeByProposal]);
+  }, [
+    fetchStartProposals,
+    markStepCompleted,
+    openWorkflowModal,
+    projectId,
+    proposalResponseNotes,
+    state.modalContent?.successTitle,
+    token,
+    updateDateByProposal,
+    updateTimeByProposal,
+  ]);
 
   const showMainModal = isOpen && !workflowModalOpen;
 
