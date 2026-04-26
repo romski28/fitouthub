@@ -11,6 +11,7 @@ import { ReviewQuotesModal } from './review-quotes-modal';
 import { ContractActionModal } from './contract-action-modal';
 import { StartDateActionModal } from './start-date-action-modal';
 import { AgreeMilestoneScheduleModal } from './agree-milestone-schedule-modal';
+import { DepositEscrowModal } from './deposit-escrow-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -192,6 +193,16 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'deposit-escrow') {
+    return (
+      <DepositEscrowModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -199,15 +210,14 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' {
-  // Payment-related actions
-  if (
-    [
-      'DEPOSIT_ESCROW_FUNDS',
-      'APPROVE_MILESTONE',
-      'AUTHORIZE_MATERIALS_WALLET',
-    ].includes(actionKey)
-  ) {
+function getModalType(actionKey: string): 'general' | 'payment' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' {
+  // Escrow deposit — has its own OTP flow
+  if (actionKey === 'DEPOSIT_ESCROW_FUNDS') {
+    return 'deposit-escrow';
+  }
+
+  // Other payment-related actions
+  if (['APPROVE_MILESTONE', 'AUTHORIZE_MATERIALS_WALLET'].includes(actionKey)) {
     return 'payment';
   }
 

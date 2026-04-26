@@ -67,16 +67,16 @@ export const clientTimelineSteps: ClientTimelineStep[] = [
     actionKeys: ['REVIEW_CONTRACT', 'SIGN_CONTRACT'],
   },
   {
-    id: 'escrow-funding',
-    title: 'Escrow Funding',
-    description: 'Deposit funds to escrow before work starts.',
-    actionKeys: ['DEPOSIT_ESCROW_FUNDS'],
-  },
-  {
     id: 'pre-work',
     title: 'Pre-work Setup',
-    description: 'Confirm start details before works begin.',
-    actionKeys: ['CONFIRM_START_DETAILS'],
+    description: 'Agree start date and milestone setup before escrow funding.',
+    actionKeys: ['CONFIRM_START_DATE', 'CONFIRM_START_DETAILS', 'CONFIRM_SCHEDULE'],
+  },
+  {
+    id: 'escrow-funding',
+    title: 'Escrow Funding',
+    description: 'Deposit funds to escrow once pre-work setup is agreed.',
+    actionKeys: ['DEPOSIT_ESCROW_FUNDS'],
   },
   {
     id: 'work-progress',
