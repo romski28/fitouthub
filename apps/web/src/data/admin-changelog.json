@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-04-26-d017b8a",
+    "date": "2026-04-26T12:59:04+08:00",
+    "title": "fix: separate next-step actors for professionals and harden role resolution",
+    "summary": "fix: separate next-step actors for professionals and harden role resolution",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "d017b8a",
+    "files": [
+      "apps/api/prisma/MANUAL_SQL_NEXT_STEP_ACTION_DUAL_ACTOR.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/next-steps/contract-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-24-2f578fc",
     "date": "2026-04-24T15:23:44+08:00",
     "title": "feat: standardize next-step modal scrollbar and lock background scroll",

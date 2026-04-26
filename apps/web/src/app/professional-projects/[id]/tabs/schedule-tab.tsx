@@ -861,7 +861,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       if (!res.ok) return;
       const data = await res.json();
       const primary: Array<{ actionKey: string; actionLabel: string; description?: string }> = data.PRIMARY ?? [];
-      const followUp = primary.find((s) => s.actionKey === 'START_PROJECT' || s.actionKey === 'WAIT_FOR_CLIENT_FUNDS');
+      const followUp = primary.find(
+        (s) =>
+          s.actionKey === 'START_PROJECT' ||
+          s.actionKey === 'WAIT_FOR_CLIENT_FUNDS' ||
+          s.actionKey === 'WAIT_FOR_MATERIALS_PROCESS',
+      );
       setScheduleNextStep(followUp ?? null);
     } catch {
       // silently ignore — schedule confirmation state is nice-to-have

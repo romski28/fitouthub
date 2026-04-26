@@ -300,6 +300,7 @@ model Professional {
   startProposals          ProjectStartProposal[]
   notificationLogs        NotificationLog[]
   notificationPreferences NotificationPreference?
+  nextStepActions         NextStepAction[]
   agreedToTermsAt                DateTime?
   agreedToTermsVersion            String?                 @default("1.0")
   agreedToSecurityStatementAt     DateTime?
@@ -1525,7 +1526,8 @@ model NextStepConfig {
 model NextStepAction {
   id               String   @id @default(cuid())
   projectId        String
-  userId           String
+  userId           String?
+  professionalId   String?
   actionKey        String
   projectStage     ProjectStage
   userAction       String   // 'COMPLETED', 'SKIPPED', 'DEFERRED', 'ALTERNATIVE'
@@ -1534,10 +1536,12 @@ model NextStepAction {
   createdAt        DateTime @default(now())
 
   project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  professional     Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([userId])
+  @@index([professionalId])
   @@index([actionKey])
   @@index([projectStage])
 }

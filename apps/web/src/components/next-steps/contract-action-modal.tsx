@@ -407,7 +407,7 @@ export function ContractActionModal({
         completedLabel={workflowModalCompletedLabel}
         nextStep={workflowModalNextStep}
         showConfetti
-        primaryActionLabel="Open next step"
+        primaryActionLabel={workflowModalNextStep?.actionLabel ?? 'Open project'}
         onNavigate={workflowModalNextStep?.tab ? () => {
           navigateToNextStepTab();
           onClose();

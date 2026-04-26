@@ -186,11 +186,25 @@ export class NextStepService {
           },
         ],
       },
+      select: {
+        status: true,
+        professionalId: true,
+        professional: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     });
 
     if (!isClient && !isProfessional && role !== 'ADMIN') {
       throw new Error('User does not have access to this project');
     }
+
+    const actionActorWhere =
+      role === 'PROFESSIONAL'
+        ? { professionalId: isProfessional?.professionalId || userId }
+        : { userId };
 
     const awardedButPreContractStages: ProjectStage[] = [
       ProjectStage.CREATED,
@@ -439,7 +453,12 @@ export class NextStepService {
 
         // Check if professional has already confirmed the schedule
         const scheduleActions = await this.prisma.nextStepAction.findMany({
-          where: { projectId, userId, projectStage: effectiveStage, actionKey: 'CONFIRM_SCHEDULE' },
+          where: {
+            projectId,
+            actionKey: 'CONFIRM_SCHEDULE',
+            projectStage: effectiveStage,
+            ...actionActorWhere,
+          },
           select: { userAction: true },
         });
         const scheduleConfirmed = scheduleActions.some((a) => a.userAction === 'COMPLETED');
@@ -726,8 +745,8 @@ export class NextStepService {
     const userActions = await this.prisma.nextStepAction.findMany({
       where: {
         projectId,
-        userId,
         projectStage: effectiveStage,
+        ...actionActorWhere,
       },
       select: { actionKey: true, userAction: true },
     });
@@ -779,7 +798,10 @@ export class NextStepService {
     actionKey: string,
     userAction: 'COMPLETED' | 'SKIPPED' | 'DEFERRED' | 'ALTERNATIVE',
     metadata?: Record<string, any>,
+    role?: string,
   ) {
+    const normalizedRole = (role || '').toUpperCase();
+
     // Get project stage
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -794,7 +816,9 @@ export class NextStepService {
     const action = await this.prisma.nextStepAction.create({
       data: {
         projectId,
-        userId,
+        ...(normalizedRole === 'PROFESSIONAL'
+          ? { professionalId: userId }
+          : { userId }),
         actionKey,
         projectStage: project.currentStage,
         userAction,
@@ -809,11 +833,14 @@ export class NextStepService {
   /**
    * Get user's action history for a project
    */
-  async getUserActionHistory(projectId: string, userId: string) {
+  async getUserActionHistory(projectId: string, userId: string, role?: string) {
+    const normalizedRole = (role || '').toUpperCase();
     return this.prisma.nextStepAction.findMany({
       where: {
         projectId,
-        userId,
+        ...(normalizedRole === 'PROFESSIONAL'
+          ? { professionalId: userId }
+          : { userId }),
       },
       orderBy: { createdAt: 'desc' },
     });

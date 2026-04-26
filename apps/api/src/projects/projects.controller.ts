@@ -1043,8 +1043,28 @@ export class ProjectsController {
   async getNextSteps(@Param('projectId') projectId: string, @Request() req: any) {
     try {
       const userId = req.user?.id || req.user?.sub;
-      const isProfessional = req.user?.isProfessional;
-      const role = req.user?.role === 'admin' ? 'ADMIN' : isProfessional ? 'PROFESSIONAL' : 'CLIENT';
+      if (!userId) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      const tokenRole = String(req.user?.role || '').toLowerCase();
+      const looksProfessionalFromToken = Boolean(req.user?.isProfessional || tokenRole === 'professional');
+      const isProfessionalOnProject = Boolean(
+        await this.prisma.projectProfessional.findFirst({
+          where: {
+            projectId,
+            professionalId: userId,
+          },
+          select: { id: true },
+        }),
+      );
+
+      const role =
+        tokenRole === 'admin'
+          ? 'ADMIN'
+          : looksProfessionalFromToken || isProfessionalOnProject
+            ? 'PROFESSIONAL'
+            : 'CLIENT';
 
       const nextSteps = await this.nextStepService.getNextSteps(projectId, userId, role);
       return nextSteps;
@@ -1067,6 +1087,28 @@ export class ProjectsController {
   ) {
     try {
       const userId = req.user?.id || req.user?.sub;
+      if (!userId) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      const tokenRole = String(req.user?.role || '').toLowerCase();
+      const looksProfessionalFromToken = Boolean(req.user?.isProfessional || tokenRole === 'professional');
+      const isProfessionalOnProject = Boolean(
+        await this.prisma.projectProfessional.findFirst({
+          where: {
+            projectId,
+            professionalId: userId,
+          },
+          select: { id: true },
+        }),
+      );
+
+      const role =
+        tokenRole === 'admin'
+          ? 'ADMIN'
+          : looksProfessionalFromToken || isProfessionalOnProject
+            ? 'PROFESSIONAL'
+            : 'CLIENT';
       const validActions = ['COMPLETED', 'SKIPPED', 'DEFERRED', 'ALTERNATIVE'];
 
       if (!validActions.includes(body.userAction)) {
@@ -1079,6 +1121,7 @@ export class ProjectsController {
         actionKey,
         body.userAction as any,
         body.metadata,
+        role,
       );
 
       return { success: true, action };
@@ -1096,7 +1139,29 @@ export class ProjectsController {
   async getNextStepHistory(@Param('projectId') projectId: string, @Request() req: any) {
     try {
       const userId = req.user?.id || req.user?.sub;
-      const history = await this.nextStepService.getUserActionHistory(projectId, userId);
+      if (!userId) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      const tokenRole = String(req.user?.role || '').toLowerCase();
+      const looksProfessionalFromToken = Boolean(req.user?.isProfessional || tokenRole === 'professional');
+      const isProfessionalOnProject = Boolean(
+        await this.prisma.projectProfessional.findFirst({
+          where: {
+            projectId,
+            professionalId: userId,
+          },
+          select: { id: true },
+        }),
+      );
+
+      const role =
+        tokenRole === 'admin'
+          ? 'ADMIN'
+          : looksProfessionalFromToken || isProfessionalOnProject
+            ? 'PROFESSIONAL'
+            : 'CLIENT';
+      const history = await this.nextStepService.getUserActionHistory(projectId, userId, role);
       return { history };
     } catch (error: any) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
