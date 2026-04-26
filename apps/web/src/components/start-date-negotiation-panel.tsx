@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Shared start-date negotiation panel
@@ -65,6 +65,24 @@ const fmtDuration = (minutes?: number) => {
   return `${h % 1 === 0 ? h.toFixed(0) : h.toFixed(1)} hr${h === 1 ? '' : 's'}`;
 };
 
+const fmtOfferDate = (dateStr?: string) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'long',
+  });
+};
+
+const fmtOfferTime = (dateStr?: string) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
 const statusBadge = (status: string) => {
   if (status === 'accepted') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
   if (status === 'proposed') return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
@@ -120,6 +138,28 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
     '[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert';
 
   const activeProposalId = openProposal?.id ?? '';
+  const proposedByName =
+    openProposal?.professional?.businessName ||
+    openProposal?.professional?.fullName ||
+    otherPartyLabel;
+
+  useEffect(() => {
+    if (!openProposal || !activeProposalId || !isMyTurn) return;
+
+    const proposedAt = new Date(openProposal.proposedStartAt);
+    if (Number.isNaN(proposedAt.getTime())) return;
+
+    const pad = (value: number) => String(value).padStart(2, '0');
+    const defaultDate = `${proposedAt.getFullYear()}-${pad(proposedAt.getMonth() + 1)}-${pad(proposedAt.getDate())}`;
+    const defaultTime = `${pad(proposedAt.getHours())}:${pad(proposedAt.getMinutes())}`;
+
+    setUpdateDateByProposal((prev) =>
+      prev[activeProposalId] ? prev : { ...prev, [activeProposalId]: defaultDate },
+    );
+    setUpdateTimeByProposal((prev) =>
+      prev[activeProposalId] ? prev : { ...prev, [activeProposalId]: defaultTime },
+    );
+  }, [activeProposalId, isMyTurn, openProposal, setUpdateDateByProposal, setUpdateTimeByProposal]);
 
   const allShown = isAgreed ? proposals : proposals.slice(0, 8);
 
@@ -209,7 +249,65 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
               )}
 
               {/* Counter form – shown when it's this viewer's turn to respond */}
-              {isMyTurn && openProposal && (
+              {isMyTurn && openProposal && viewerRole === 'client' && (
+                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-4">
+                  <div className="flex flex-col gap-3 rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-slate-100">
+                      <span className="font-semibold text-white">{proposedByName}</span> wants to start on site{' '}
+                      <span className="font-semibold text-white">{fmtOfferDate(openProposal.proposedStartAt)}</span> at{' '}
+                      <span className="font-semibold text-white">{fmtOfferTime(openProposal.proposedStartAt)}</span>.
+                    </p>
+                    <button
+                      onClick={() => onRespond(activeProposalId, 'accepted')}
+                      disabled={proposalBusyId === activeProposalId}
+                      className="shrink-0 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {proposalBusyId === activeProposalId ? 'Saving…' : 'OK'}
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-300">That does not work for me, can we try...</p>
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <label className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Updated start date</span>
+                        <input type="date" value={updateDateByProposal[activeProposalId] || ''} onChange={(e) => setUpdateDateByProposal((prev) => ({ ...prev, [activeProposalId]: e.target.value }))} className={inputClass} />
+                      </label>
+                      <label className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Updated start time</span>
+                        <input type="time" value={updateTimeByProposal[activeProposalId] || ''} onChange={(e) => setUpdateTimeByProposal((prev) => ({ ...prev, [activeProposalId]: e.target.value }))} className={inputClass} />
+                      </label>
+                      <div className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Duration</span>
+                        <input
+                          type="text"
+                          value={fmtDuration(openProposal.durationMinutes)}
+                          disabled
+                          readOnly
+                          className={`${inputClass} cursor-not-allowed opacity-80`}
+                        />
+                      </div>
+                    </div>
+                    <label className="block text-sm text-slate-200">
+                      <span className="mb-1 block text-xs">Note (optional)</span>
+                      <textarea
+                        value={proposalResponseNotes[activeProposalId] || ''}
+                        onChange={(e) => setProposalResponseNotes((prev) => ({ ...prev, [activeProposalId]: e.target.value }))}
+                        placeholder="Any message to the professional"
+                        rows={3}
+                        className={`${inputClass} min-h-[92px] resize-y`}
+                      />
+                    </label>
+                    <div className="flex justify-end">
+                      <button onClick={() => onRespond(activeProposalId, 'updated')} disabled={proposalBusyId === activeProposalId} className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60">
+                        {proposalBusyId === activeProposalId ? 'Saving…' : 'Send Update'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isMyTurn && openProposal && viewerRole === 'professional' && (
                 <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-3">
                   <p className="text-xs text-slate-300">
                     {otherPartyLabel} proposed <span className="font-semibold text-white">{fmtDT(openProposal.proposedStartAt)}</span>{' '}
