@@ -18,6 +18,13 @@ interface EscrowTx {
   status: string;
 }
 
+interface FinancialTransaction {
+  id: string;
+  type: string;
+  status: string;
+  amount: number | string;
+}
+
 export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: DepositEscrowModalProps) {
   const { state } = useNextStepModal();
   const { accessToken } = useAuth();
@@ -57,13 +64,12 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
     })
       .then(async (res) => {
         if (!res.ok) throw new Error('Failed to load financial data');
-        return res.json() as Promise<{
-          transactions?: Array<{ id: string; type: string; status: string; amount: number | string }>;
-        }>;
+        return res.json() as Promise<FinancialTransaction[] | { transactions?: FinancialTransaction[] }>;
       })
       .then((data) => {
+        const transactions = Array.isArray(data) ? data : data.transactions || [];
         const tx =
-          data.transactions?.find(
+          transactions.find(
             (t) => t.type === 'escrow_deposit_request' && t.status.replace(/\s+/g, '_') === 'pending',
           ) ?? null;
         if (!tx) {
