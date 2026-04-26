@@ -423,6 +423,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
             setProposalResponseNotes={setProposalResponseNotes}
             onRespond={handleRespondStartProposal}
             viewerRole="client"
+            allowDurationEdit={false}
           />
 
           {loading ? (

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-26-541af32",
+    "date": "2026-04-26T13:46:21+08:00",
+    "title": "feat: unify start-date response UX across client and professional flows",
+    "summary": "feat: unify start-date response UX across client and professional flows",
+    "areas": [
+      "web"
+    ],
+    "commit": "541af32",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/start-date-negotiation-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-04-26-d0d2959",
     "date": "2026-04-26T13:29:50+08:00",
     "title": "feat: improve client start-date response layout and prefill latest offer",

@@ -130,18 +130,15 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
   const otherPartyLabel = viewerRole === 'client' ? 'Professional' : 'Client';
   const myPartyLabel = viewerRole === 'client' ? 'Client' : 'Professional';
 
-  const inputRowClass =
-    'grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
-
   const inputClass =
     'w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white ' +
     '[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert';
 
   const activeProposalId = openProposal?.id ?? '';
   const proposedByName =
-    openProposal?.professional?.businessName ||
-    openProposal?.professional?.fullName ||
-    otherPartyLabel;
+    openProposal?.proposedByRole === 'professional'
+      ? openProposal?.professional?.businessName || openProposal?.professional?.fullName || otherPartyLabel
+      : otherPartyLabel;
 
   useEffect(() => {
     if (!openProposal || !activeProposalId || !isMyTurn) return;
@@ -308,33 +305,64 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
               )}
 
               {isMyTurn && openProposal && viewerRole === 'professional' && (
-                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-3">
-                  <p className="text-xs text-slate-300">
-                    {otherPartyLabel} proposed <span className="font-semibold text-white">{fmtDT(openProposal.proposedStartAt)}</span>{' '}
-                    ({fmtDuration(openProposal.durationMinutes)}).{openProposal.notes ? ` Notes: "${openProposal.notes}"` : ''}{' '}
-                    Accept it or send back an updated date.
-                  </p>
-                  <div className={inputRowClass}>
-                    <label className="text-sm text-slate-200">
-                      <span className="mb-1 block text-xs">Updated start date</span>
-                      <input type="date" value={updateDateByProposal[activeProposalId] || ''} onChange={(e) => setUpdateDateByProposal((prev) => ({ ...prev, [activeProposalId]: e.target.value }))} className={inputClass} />
-                    </label>
-                    <label className="text-sm text-slate-200">
-                      <span className="mb-1 block text-xs">Updated start time</span>
-                      <input type="time" value={updateTimeByProposal[activeProposalId] || ''} onChange={(e) => setUpdateTimeByProposal((prev) => ({ ...prev, [activeProposalId]: e.target.value }))} className={inputClass} />
-                    </label>
-                    <label className="col-span-1 sm:col-span-2 text-sm text-slate-200">
-                      <span className="mb-1 block text-xs">Note (optional)</span>
-                      <input type="text" value={proposalResponseNotes[activeProposalId] || ''} onChange={(e) => setProposalResponseNotes((prev) => ({ ...prev, [activeProposalId]: e.target.value }))} placeholder="Any message to the other party" className={inputClass} />
-                    </label>
+                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-4">
+                  <div className="flex flex-col gap-3 rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm text-slate-100">
+                        <span className="font-semibold text-white">{proposedByName}</span> wants to start on site{' '}
+                        <span className="font-semibold text-white">{fmtOfferDate(openProposal.proposedStartAt)}</span> at{' '}
+                        <span className="font-semibold text-white">{fmtOfferTime(openProposal.proposedStartAt)}</span>.
+                      </p>
+                      {openProposal.notes ? (
+                        <p className="text-xs text-slate-300">Note: {openProposal.notes}</p>
+                      ) : null}
+                    </div>
+                    <button
+                      onClick={() => onRespond(activeProposalId, 'accepted')}
+                      disabled={proposalBusyId === activeProposalId}
+                      className="shrink-0 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {proposalBusyId === activeProposalId ? 'Saving…' : 'OK'}
+                    </button>
                   </div>
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <button onClick={() => onRespond(activeProposalId, 'accepted')} disabled={proposalBusyId === activeProposalId} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
-                      {proposalBusyId === activeProposalId ? 'Saving…' : 'Accept'}
-                    </button>
-                    <button onClick={() => onRespond(activeProposalId, 'updated')} disabled={proposalBusyId === activeProposalId} className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60">
-                      {proposalBusyId === activeProposalId ? 'Saving…' : 'Send Update'}
-                    </button>
+
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-300">That does not work for me, can we try...</p>
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <label className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Updated start date</span>
+                        <input type="date" value={updateDateByProposal[activeProposalId] || ''} onChange={(e) => setUpdateDateByProposal((prev) => ({ ...prev, [activeProposalId]: e.target.value }))} className={inputClass} />
+                      </label>
+                      <label className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Updated start time</span>
+                        <input type="time" value={updateTimeByProposal[activeProposalId] || ''} onChange={(e) => setUpdateTimeByProposal((prev) => ({ ...prev, [activeProposalId]: e.target.value }))} className={inputClass} />
+                      </label>
+                      <div className="text-sm text-slate-200">
+                        <span className="mb-1 block text-xs">Duration</span>
+                        <input
+                          type="text"
+                          value={fmtDuration(openProposal.durationMinutes)}
+                          disabled
+                          readOnly
+                          className={`${inputClass} cursor-not-allowed opacity-80`}
+                        />
+                      </div>
+                    </div>
+                    <label className="block text-sm text-slate-200">
+                      <span className="mb-1 block text-xs">Note (optional)</span>
+                      <textarea
+                        value={proposalResponseNotes[activeProposalId] || ''}
+                        onChange={(e) => setProposalResponseNotes((prev) => ({ ...prev, [activeProposalId]: e.target.value }))}
+                        placeholder="Any message to the client"
+                        rows={3}
+                        className={`${inputClass} min-h-[92px] resize-y`}
+                      />
+                    </label>
+                    <div className="flex justify-end">
+                      <button onClick={() => onRespond(activeProposalId, 'updated')} disabled={proposalBusyId === activeProposalId} className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60">
+                        {proposalBusyId === activeProposalId ? 'Saving…' : 'Send Update'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
