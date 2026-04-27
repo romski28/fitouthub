@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-27-87415d5",
+    "date": "2026-04-27T16:52:16+08:00",
+    "title": "fix: use project.startDate as fallback for agreed start date",
+    "summary": "fix: use project.startDate as fallback for agreed start date",
+    "areas": [
+      "api"
+    ],
+    "commit": "87415d5",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-f3f996b",
     "date": "2026-04-27T16:36:31+08:00",
     "title": "fix: resolve render build break in next-step service",

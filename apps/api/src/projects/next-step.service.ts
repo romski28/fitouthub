@@ -156,6 +156,7 @@ export class NextStepService {
         clientSignedAt: true,
         professionalSignedAt: true,
         escrowHeld: true,
+        startDate: true,
         _count: {
           select: {
             professionals: true,
@@ -413,7 +414,11 @@ export class NextStepService {
           orderBy: { createdAt: 'desc' },
         });
 
-        if (latestStartProposal) {
+        // Treat project.startDate being set as equivalent to an accepted proposal
+        // (covers legacy projects that agreed the date before the proposal system existed)
+        const startDateAgreed = Boolean(acceptedStartProposal) || Boolean(project.startDate);
+
+        if (latestStartProposal && !startDateAgreed) {
           availableConfigSteps = [
             createSyntheticPrimaryStep(
               'CONFIRM_START_DATE',
@@ -435,7 +440,7 @@ export class NextStepService {
           };
         }
 
-        if (!acceptedStartProposal) {
+        if (!startDateAgreed) {
           availableConfigSteps = [
             createSyntheticPrimaryStep(
               'CONFIRM_START_DATE',
