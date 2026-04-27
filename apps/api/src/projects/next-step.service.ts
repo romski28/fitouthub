@@ -605,31 +605,6 @@ export class NextStepService {
               availableConfigSteps.push({
                 id: 'synthetic-MAKE_MILESTONE_1_CLAIM',
                 createdAt: new Date(),
-
-          // If start date already accepted and escrow is funded, skip passive "Confirm start details"
-          const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
-          if (
-            !pendingPaymentRequest &&
-            acceptedStartProposal &&
-            !latestStartProposal &&
-            escrowFunded &&
-            availableConfigSteps.length === 0
-          ) {
-            // Start date agreed and escrow funded → show passive wait action
-            availableConfigSteps = [
-              {
-                actionKey: 'WAIT_FOR_PROJECT_START',
-                actionLabel: 'Awaiting project start',
-                description: 'Start date is confirmed and funds are in escrow. Waiting for the professional to begin work on site.',
-                isPrimary: true,
-                isElective: false,
-                requiresAction: false,
-                estimatedDurationMinutes: 0,
-                displayOrder: 1,
-              } as any,
-            ];
-          }
-
                 updatedAt: new Date(),
                 role,
                 projectStage: effectiveStage,

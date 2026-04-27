@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-27-f3f996b",
+    "date": "2026-04-27T16:36:31+08:00",
+    "title": "fix: resolve render build break in next-step service",
+    "summary": "fix: resolve render build break in next-step service",
+    "areas": [
+      "api"
+    ],
+    "commit": "f3f996b",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-11ea5ab",
     "date": "2026-04-27T16:12:14+08:00",
     "title": "chore: trigger vercel redeploy",
