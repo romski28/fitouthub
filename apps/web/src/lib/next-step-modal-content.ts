@@ -52,6 +52,21 @@ const FALLBACK_MODAL_CONTENT: Record<string, NextStepModalContent> = {
     secondaryActionType: 'close_modal',
     detailsTarget: '{"tab":"financials"}',
   },
+  RESPOND_TO_MATERIALS_QUESTIONS: {
+    title: 'Respond to materials claim questions',
+    body: 'The client has questions about your materials claim. Reply in the claim thread so they can authorize the transfer.',
+    detailsBody:
+      'Open Financials, then open the pending claim and use the scoped claim conversation to answer questions. Keep all clarifications in that thread for audit history.',
+    successTitle: 'Great, keep the conversation going',
+    successBody: 'Your response has been sent in the claim thread.',
+    successNextStepBody: 'The client can authorize transfer once questions are resolved.',
+    primaryButtonLabel: 'Open financials',
+    secondaryButtonLabel: 'Later',
+    primaryActionType: 'navigate_tab',
+    primaryActionTarget: '{"tab":"financials"}',
+    secondaryActionType: 'close_modal',
+    detailsTarget: '{"tab":"financials"}',
+  },
 };
 
 export function resolveNextStepModalContent(

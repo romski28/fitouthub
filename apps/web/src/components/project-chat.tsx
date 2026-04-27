@@ -9,6 +9,8 @@ interface ChatMessage {
   id: string;
   senderType: 'client' | 'professional' | 'foh';
   senderName?: string;
+  threadScope?: string;
+  threadScopeId?: string;
   content: string;
   attachments?: { url: string; filename: string }[];
   createdAt: string;
@@ -18,10 +20,19 @@ interface ProjectChatProps {
   projectId: string;
   accessToken: string;
   currentUserRole: 'client' | 'professional' | 'admin';
+  threadScope?: string;
+  threadScopeId?: string;
   className?: string;
 }
 
-export default function ProjectChat({ projectId, accessToken, currentUserRole, className = '' }: ProjectChatProps) {
+export default function ProjectChat({
+  projectId,
+  accessToken,
+  currentUserRole,
+  threadScope,
+  threadScopeId,
+  className = '',
+}: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [pendingAttachments, setPendingAttachments] = useState<{ url: string; filename: string }[]>([]);
@@ -42,7 +53,13 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${API_BASE_URL}/projects/${projectId}/chat`, {
+        const chatUrl = new URL(`${API_BASE_URL}/projects/${projectId}/chat`);
+        if (threadScope && threadScopeId) {
+          chatUrl.searchParams.set('threadScope', threadScope);
+          chatUrl.searchParams.set('threadScopeId', threadScopeId);
+        }
+
+        const res = await fetch(chatUrl.toString(), {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -77,7 +94,7 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
     if (projectId && accessToken) {
       fetchMessages();
     }
-  }, [projectId, accessToken]);
+  }, [projectId, accessToken, threadScope, threadScopeId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -100,6 +117,8 @@ export default function ProjectChat({ projectId, accessToken, currentUserRole, c
         body: JSON.stringify({ 
           content: newMessage.trim(),
           attachments: pendingAttachments,
+          threadScope,
+          threadScopeId,
         }),
       });
 

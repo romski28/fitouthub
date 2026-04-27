@@ -833,7 +833,10 @@ export class ChatService {
   /**
    * Get or create a project chat thread
    */
-  async getOrCreateProjectThread(projectId: string): Promise<ProjectChatThreadDto> {
+  async getOrCreateProjectThread(
+    projectId: string,
+    options?: { threadScope?: string | null; threadScopeId?: string | null },
+  ): Promise<ProjectChatThreadDto> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: { id: true, status: true },
@@ -865,7 +868,20 @@ export class ChatService {
       });
     }
 
-    return this.mapProjectThreadDto(thread);
+    const scope = String(options?.threadScope || '').trim().toLowerCase() || null;
+    const scopeId = String(options?.threadScopeId || '').trim() || null;
+    const scopedMessages =
+      scope && scopeId
+        ? thread.messages.filter((message: any) =>
+            String(message.threadScope || '').toLowerCase() === scope &&
+            String(message.threadScopeId || '') === scopeId,
+          )
+        : thread.messages;
+
+    return this.mapProjectThreadDto({
+      ...thread,
+      messages: scopedMessages,
+    });
   }
 
   /**
@@ -897,6 +913,7 @@ export class ChatService {
     senderProId: string | null,
     content: string,
     attachments?: any[],
+    options?: { threadScope?: string | null; threadScopeId?: string | null },
   ): Promise<ProjectChatMessageDto> {
     const thread = await this.prisma.projectChatThread.findUnique({
       where: { id: threadId },
@@ -906,12 +923,17 @@ export class ChatService {
       throw new NotFoundException('Project chat thread not found');
     }
 
+    const scope = String(options?.threadScope || '').trim().toLowerCase() || null;
+    const scopeId = String(options?.threadScopeId || '').trim() || null;
+
     const message = await this.prisma.projectChatMessage.create({
       data: {
         threadId,
         senderType,
         senderUserId,
         senderProId,
+        threadScope: scope,
+        threadScopeId: scopeId,
         content,
         attachments: attachments || [],
       },
@@ -1019,6 +1041,8 @@ export class ChatService {
       senderType: message.senderType,
       senderUserId: message.senderUserId,
       senderProId: message.senderProId,
+      threadScope: message.threadScope || undefined,
+      threadScopeId: message.threadScopeId || undefined,
       content: message.content,
       attachments: message.attachments || [],
       createdAt: message.createdAt.toISOString(),

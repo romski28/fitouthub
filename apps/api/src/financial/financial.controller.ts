@@ -436,6 +436,7 @@ export class FinancialController {
       claimedAmount: number;
       invoiceUrls?: string[];
       photoUrls?: string[];
+      openingMessage?: string;
       notes?: string;
     },
     @Request() req: any,
@@ -453,6 +454,7 @@ export class FinancialController {
       claimedAmount: Number(body?.claimedAmount || 0),
       invoiceUrls: Array.isArray(body?.invoiceUrls) ? body.invoiceUrls : [],
       photoUrls: Array.isArray(body?.photoUrls) ? body.photoUrls : [],
+      openingMessage: body?.openingMessage,
       notes: body?.notes,
     });
   }

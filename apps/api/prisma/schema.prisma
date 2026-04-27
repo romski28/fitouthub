@@ -634,8 +634,13 @@ model MilestoneProcurementEvidence {
   approvedAmount          Decimal? @db.Decimal(12, 2)
   invoiceUrls             String[] @default([])
   photoUrls               String[] @default([])
+  openingMessage          String?
   notes                   String?
   status                  String   @default("pending") // pending | approved | rejected
+  deadlineAt              DateTime?
+  finalizedAt             DateTime?
+  clientQuestionedAt      DateTime?
+  professionalRespondedAt DateTime?
   reviewedBy              String?
   reviewedByRole          String?
   reviewedAt              DateTime?
@@ -652,6 +657,7 @@ model MilestoneProcurementEvidence {
   @@index([paymentMilestoneId])
   @@index([projectProfessionalId])
   @@index([status])
+  @@index([status, deadlineAt])
 }
 
 model ProjectStartProposal {
@@ -1167,6 +1173,8 @@ model ProjectChatMessage {
   senderType     String // 'client' | 'professional' | 'foh'
   senderUserId   String?
   senderProId    String?
+  threadScope    String?
+  threadScopeId  String?
   content        String
   attachments    Json?             @default("[]")
   createdAt      DateTime          @default(now())
@@ -1176,6 +1184,7 @@ model ProjectChatMessage {
   thread         ProjectChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
+  @@index([threadId, threadScope, threadScopeId])
   @@index([senderType])
   @@index([createdAt])
 }

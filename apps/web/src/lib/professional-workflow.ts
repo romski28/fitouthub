@@ -13,6 +13,7 @@ export const professionalActionTabMap: Record<string, string> = {
   START_PROJECT: 'schedule',
   WAIT_FOR_CLIENT_FUNDS: 'schedule',
   WAIT_FOR_MATERIALS_PROCESS: 'schedule',
+  RESPOND_TO_MATERIALS_QUESTIONS: 'financials',
   REQUEST_FINAL_WALKTHROUGH: 'schedule',
   ADDRESS_FINAL_ITEMS: 'schedule',
   PROVIDE_WARRANTY_DETAILS: 'schedule',

@@ -1,5 +1,8 @@
 export class CreateProjectChatMessageDto {
   content: string;
+  attachments?: any[];
+  threadScope?: string;
+  threadScopeId?: string;
 }
 
 export class ProjectChatMessageDto {
@@ -8,6 +11,8 @@ export class ProjectChatMessageDto {
   senderType: 'client' | 'professional' | 'foh';
   senderUserId?: string;
   senderProId?: string;
+  threadScope?: string;
+  threadScopeId?: string;
   content: string;
   attachments?: any[];
   createdAt: string;

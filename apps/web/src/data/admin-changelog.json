@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-04-27-8e3ffc9",
+    "date": "2026-04-27T15:28:51+08:00",
+    "title": "feat: implement materials claim workflow with scoped claim chat",
+    "summary": "feat: implement materials claim workflow with scoped claim chat",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "8e3ffc9",
+    "files": [
+      "apps/api/prisma/MANUAL_ADD_PROJECT_CHAT_SCOPE_FOR_CLAIMS.sql",
+      "apps/api/prisma/MANUAL_EXTEND_MILESTONE_PROCUREMENT_CLAIMS_PHASE2.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/chat/chat.service.ts",
+      "apps/api/src/chat/dto/project-chat.dto.ts",
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/materials-claim-thread-panel.tsx",
+      "apps/web/src/components/project-chat.tsx",
+      "apps/web/src/components/project-financials-card.tsx",
+      "apps/web/src/lib/next-step-modal-content.ts",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-e868439",
     "date": "2026-04-27T14:18:06+08:00",
     "title": "fix: enforce class-based schedule agreement before escrow",

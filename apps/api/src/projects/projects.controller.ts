@@ -969,8 +969,15 @@ export class ProjectsController {
    */
   @Get(':projectId/chat')
   @UseGuards(CombinedAuthGuard)
-  async getProjectChat(@Param('projectId') projectId: string) {
-    return this.chatService.getOrCreateProjectThread(projectId);
+  async getProjectChat(
+    @Param('projectId') projectId: string,
+    @Query('threadScope') threadScope?: string,
+    @Query('threadScopeId') threadScopeId?: string,
+  ) {
+    return this.chatService.getOrCreateProjectThread(projectId, {
+      threadScope: threadScope || null,
+      threadScopeId: threadScopeId || null,
+    });
   }
 
   /**
@@ -979,8 +986,14 @@ export class ProjectsController {
    */
   @Post(':projectId/chat')
   @UseGuards(CombinedAuthGuard)
-  async createProjectChat(@Param('projectId') projectId: string) {
-    return this.chatService.getOrCreateProjectThread(projectId);
+  async createProjectChat(
+    @Param('projectId') projectId: string,
+    @Body() body?: { threadScope?: string; threadScopeId?: string },
+  ) {
+    return this.chatService.getOrCreateProjectThread(projectId, {
+      threadScope: body?.threadScope || null,
+      threadScopeId: body?.threadScopeId || null,
+    });
   }
 
   /**
@@ -991,7 +1004,13 @@ export class ProjectsController {
   @UseGuards(CombinedAuthGuard)
   async addProjectMessage(
     @Param('projectId') projectId: string,
-    @Body() body: { content: string; attachments?: any[] },
+    @Body()
+    body: {
+      content: string;
+      attachments?: any[];
+      threadScope?: string;
+      threadScopeId?: string;
+    },
     @Request() req: any,
   ) {
     if (!body.content?.trim() && (!body.attachments || body.attachments.length === 0)) {
@@ -1010,7 +1029,30 @@ export class ProjectsController {
       req.user.isProfessional ? req.user.id : null,
       body.content || '',
       body.attachments,
+      {
+        threadScope: body.threadScope || null,
+        threadScopeId: body.threadScopeId || null,
+      },
     );
+
+    if (
+      String(body.threadScope || '').toLowerCase() === 'claim' &&
+      String(body.threadScopeId || '').trim()
+    ) {
+      const evidenceId = String(body.threadScopeId).trim();
+      const updateData = req.user.isProfessional
+        ? { professionalRespondedAt: new Date() }
+        : { clientQuestionedAt: new Date() };
+
+      try {
+        await (this.prisma as any).milestoneProcurementEvidence.update({
+          where: { id: evidenceId },
+          data: updateData,
+        });
+      } catch {
+        // Non-blocking; chat message should still succeed even if claim timestamp update fails.
+      }
+    }
 
     return { message };
   }

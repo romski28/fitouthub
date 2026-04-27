@@ -530,15 +530,44 @@ export class NextStepService {
             ),
           ];
         } else {
+          let hasPendingMaterialsClaim = false;
+          if (escrowFunded && ['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
+            const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
+              where: { projectId },
+              select: {
+                milestones: {
+                  where: { sequence: 1 },
+                  select: { id: true },
+                  take: 1,
+                },
+              },
+            });
+            const firstMilestoneId = paymentPlan?.milestones?.[0]?.id;
+            if (firstMilestoneId) {
+              hasPendingMaterialsClaim =
+                (await (this.prisma as any).milestoneProcurementEvidence.count({
+                  where: {
+                    projectId,
+                    paymentMilestoneId: firstMilestoneId,
+                    status: 'pending',
+                  },
+                })) > 0;
+            }
+          }
+
           availableConfigSteps = [
             createSyntheticPrimaryStep(
               canStartProject
                 ? 'START_PROJECT'
+                : hasPendingMaterialsClaim
+                  ? 'RESPOND_TO_MATERIALS_QUESTIONS'
                 : escrowFunded
                   ? 'WAIT_FOR_MATERIALS_PROCESS'
                   : 'WAIT_FOR_CLIENT_FUNDS',
               canStartProject
                 ? 'Start the project'
+                : hasPendingMaterialsClaim
+                  ? 'Respond to client questions on materials claim'
                 : escrowFunded
                   ? 'Wait for milestone 1 materials process'
                   : 'Wait for client funds',
@@ -547,6 +576,8 @@ export class NextStepService {
               effectiveStage,
               canStartProject
                 ? 'Escrow is funded. You are ready to begin work on site.'
+                : hasPendingMaterialsClaim
+                  ? 'Your materials claim is under client review. Respond to any questions in the claim thread so authorization can proceed.'
                 : escrowFunded
                   ? 'Escrow is funded. The client is completing the milestone 1 materials wallet process. Submit your materials purchase receipts once you have purchased the required materials, then the client will release the confirmed amount to your withdrawable wallet.'
                   : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',

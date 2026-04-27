@@ -3,6 +3,7 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
+import MaterialsClaimThreadPanel from '@/components/materials-claim-thread-panel';
 
 interface PaymentRequest {
   id: string;
@@ -34,8 +35,10 @@ interface MilestoneProcurementEvidence {
   id: string;
   claimedAmount: number | string;
   approvedAmount?: number | string | null;
+  openingMessage?: string | null;
   notes?: string | null;
   status: string;
+  deadlineAt?: string | null;
   createdAt: string;
 }
 
@@ -187,8 +190,11 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   const [materialsInvoiceUrls, setMaterialsInvoiceUrls] = React.useState('');
   const [materialsPhotoUrls, setMaterialsPhotoUrls] = React.useState('');
   const [materialsNotes, setMaterialsNotes] = React.useState('');
+  const [materialsOpeningMessage, setMaterialsOpeningMessage] = React.useState('');
   const [walletTransferLoading, setWalletTransferLoading] = React.useState(false);
   const [walletTransferAmount, setWalletTransferAmount] = React.useState('');
+  const [activeClaimThreadId, setActiveClaimThreadId] = React.useState<string | null>(null);
+  const claimModalTarget = typeof document !== 'undefined' ? document.body : null;
   const isAwarded = projectStatus === 'awarded';
   const totalPending = paymentRequests
     .filter((p) => p.status === 'pending')
@@ -431,6 +437,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             claimedAmount,
             invoiceUrls: materialsInvoiceUrls.split(',').map((entry) => entry.trim()).filter(Boolean),
             photoUrls: materialsPhotoUrls.split(',').map((entry) => entry.trim()).filter(Boolean),
+            openingMessage: materialsOpeningMessage || undefined,
             notes: materialsNotes || undefined,
           }),
         },
@@ -445,6 +452,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       setMaterialsClaimAmount('');
       setMaterialsInvoiceUrls('');
       setMaterialsPhotoUrls('');
+      setMaterialsOpeningMessage('');
       setMaterialsNotes('');
       await fetchMaterialsEvidence();
       await fetchProjectFinancialSummary();
@@ -1112,6 +1120,13 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   />
                   <input
                     type="text"
+                    value={materialsOpeningMessage}
+                    onChange={(event) => setMaterialsOpeningMessage(event.target.value)}
+                    placeholder="Opening message for client"
+                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
+                  />
+                  <input
+                    type="text"
                     value={materialsNotes}
                     onChange={(event) => setMaterialsNotes(event.target.value)}
                     placeholder="Notes"
@@ -1151,7 +1166,17 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         </div>
                         <p className="text-[11px] text-slate-400">
                           Submitted {new Date(evidence.createdAt).toLocaleDateString('en-HK')}
+                          {evidence.deadlineAt ? ` · Deadline ${new Date(evidence.deadlineAt).toLocaleDateString('en-HK')}` : ''}
                         </p>
+                        {String(evidence.status || '').toLowerCase() === 'pending' && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveClaimThreadId(evidence.id)}
+                            className="rounded bg-indigo-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700"
+                          >
+                            Respond to questions
+                          </button>
+                        )}
                         {evidence.notes && <p className="text-xs text-slate-300">{evidence.notes}</p>}
                       </div>
                     ))}
@@ -1196,6 +1221,38 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {claimModalTarget && activeClaimThreadId && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Respond to claim questions">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+            <div className="flex items-start justify-between border-b border-slate-700 px-4 py-3">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Respond to Questions</h3>
+                <p className="text-xs text-slate-300">Claim thread: {activeClaimThreadId}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveClaimThreadId(null)}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-4">
+              <MaterialsClaimThreadPanel
+                projectId={projectId || ''}
+                accessToken={accessToken || ''}
+                claimId={activeClaimThreadId}
+                role="professional"
+                title="Claim Conversation"
+                subtitle="Reply to client questions in this scoped claim thread."
+                placeholder="Respond to client question..."
+                sendLabel="Send Response"
+              />
+            </div>
+          </div>
         </div>
       )}
 

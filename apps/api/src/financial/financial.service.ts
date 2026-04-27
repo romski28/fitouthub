@@ -463,6 +463,26 @@ export class FinancialService {
     };
   }
 
+  private async expireOverdueMilestoneProcurementEvidence(projectId: string, milestoneId: string) {
+    try {
+      await (this.prisma as any).milestoneProcurementEvidence.updateMany({
+        where: {
+          projectId,
+          paymentMilestoneId: milestoneId,
+          status: 'pending',
+          deadlineAt: { lt: new Date() },
+        },
+        data: {
+          status: 'expired',
+          finalizedAt: new Date(),
+          reviewNotes: 'Claim expired after 7-day review window',
+        },
+      });
+    } catch (error) {
+      this.rethrowProcurementEvidenceTableError(error);
+    }
+  }
+
   private hashOtpCode(code: string) {
     return createHash('sha256').update(code).digest('hex');
   }
@@ -2476,9 +2496,10 @@ export class FinancialService {
     claimedAmount: number;
     invoiceUrls?: string[];
     photoUrls?: string[];
+    openingMessage?: string;
     notes?: string;
   }) {
-    const { paymentPlan, milestone, projectProfessional } =
+    const { paymentPlan, milestone, project, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
 
     if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
@@ -2503,6 +2524,43 @@ export class FinancialService {
 
     const invoiceUrls = (input.invoiceUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
     const photoUrls = (input.photoUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
+    if (invoiceUrls.length + photoUrls.length < 1) {
+      throw new BadRequestException('At least one invoice or photo file is required');
+    }
+
+    const capAgg = await this.prisma.financialTransaction.aggregate({
+      where: {
+        projectId: input.projectId,
+        type: 'milestone_foh_allocation_cap',
+        status: 'confirmed',
+        notes: { contains: milestone.id },
+      },
+      _sum: { amount: true },
+    });
+    const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
+    if (capTotal <= 0) {
+      throw new BadRequestException('Materials wallet cap is not authorized yet for this milestone');
+    }
+    if (claimedAmount > capTotal) {
+      throw new BadRequestException('Claimed amount cannot exceed the authorized milestone 1 cap');
+    }
+
+    if (input.actorRole === 'professional') {
+      const professionalClaimCount = await (this.prisma as any).milestoneProcurementEvidence.count({
+        where: {
+          projectId: input.projectId,
+          paymentMilestoneId: milestone.id,
+          projectProfessionalId: projectProfessional?.id || null,
+        },
+      });
+
+      if (professionalClaimCount > 0) {
+        throw new BadRequestException('This milestone currently allows only one claim submission');
+      }
+    }
+
+    const openingMessage = String(input.openingMessage || '').trim() || null;
+    const deadlineAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     let evidence;
     try {
@@ -2516,12 +2574,49 @@ export class FinancialService {
           claimedAmount: new Decimal(claimedAmount.toFixed(2)),
           invoiceUrls,
           photoUrls,
+          openingMessage,
           notes: input.notes?.trim() || null,
           status: 'pending',
+          deadlineAt,
         },
       });
     } catch (error) {
       this.rethrowProcurementEvidenceTableError(error);
+    }
+
+    try {
+      const thread = await this.chatService.getOrCreateProjectThread(input.projectId);
+      const threadId = (thread as any).id || (thread as any).threadId;
+      const formatter = new Intl.NumberFormat('en-HK', {
+        style: 'currency',
+        currency: 'HKD',
+        minimumFractionDigits: 0,
+      });
+      const fileCount = invoiceUrls.length + photoUrls.length;
+
+      await this.chatService.addProjectMessage(
+        threadId,
+        'foh',
+        null,
+        null,
+        `Materials claim submitted for ${formatter.format(claimedAmount)} with ${fileCount} attachment(s). Review deadline: ${deadlineAt.toLocaleString('en-HK')}.`,
+        [],
+        { threadScope: 'claim', threadScopeId: String(evidence.id) },
+      );
+
+      if (openingMessage) {
+        await this.chatService.addProjectMessage(
+          threadId,
+          input.actorRole === 'admin' ? 'foh' : 'professional',
+          null,
+          input.actorRole === 'professional' ? input.actorId : null,
+          openingMessage,
+          [],
+          { threadScope: 'claim', threadScopeId: String(evidence.id) },
+        );
+      }
+    } catch (chatError) {
+      console.warn('[FinancialService] Failed to create scoped claim chat messages:', chatError);
     }
 
     return {
@@ -2532,6 +2627,7 @@ export class FinancialService {
 
   async getMilestoneProcurementEvidence(projectId: string, milestoneId: string) {
     await this.getMilestoneProcurementContext(projectId, milestoneId);
+    await this.expireOverdueMilestoneProcurementEvidence(projectId, milestoneId);
     try {
       return await (this.prisma as any).milestoneProcurementEvidence.findMany({
         where: {
@@ -2561,6 +2657,7 @@ export class FinancialService {
   }) {
     const { paymentPlan, milestone, project, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
+    await this.expireOverdueMilestoneProcurementEvidence(input.projectId, milestone.id);
 
     if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
       throw new BadRequestException('Procurement evidence review is only for Class 1 and 2 projects');
@@ -2587,6 +2684,9 @@ export class FinancialService {
 
     if (!evidence) {
       throw new NotFoundException('Procurement evidence not found');
+    }
+    if (evidence.deadlineAt && new Date(evidence.deadlineAt).getTime() < Date.now()) {
+      throw new BadRequestException('This claim has expired and can no longer be reviewed');
     }
     if (String(evidence.status || '').toLowerCase() !== 'pending') {
       throw new BadRequestException('This evidence has already been reviewed');
@@ -2660,6 +2760,7 @@ export class FinancialService {
             reviewedAt: new Date(),
             reviewNotes: input.reviewNotes?.trim() || null,
             titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
+            finalizedAt: new Date(),
           },
         });
       } catch (error) {
@@ -2715,6 +2816,26 @@ export class FinancialService {
           titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
         },
       });
+    }
+
+    try {
+      const thread = await this.chatService.getOrCreateProjectThread(input.projectId);
+      const threadId = (thread as any).id || (thread as any).threadId;
+      const summaryText =
+        input.decision === 'approved'
+          ? `Claim approved. Authorized amount: HKD ${requestedApproved.toFixed(2)}.`
+          : 'Claim rejected by client/admin.';
+      await this.chatService.addProjectMessage(
+        threadId,
+        'foh',
+        null,
+        null,
+        summaryText,
+        [],
+        { threadScope: 'claim', threadScopeId: String(evidence.id) },
+      );
+    } catch (chatError) {
+      console.warn('[FinancialService] Failed to post claim review summary message:', chatError);
     }
 
     return {
