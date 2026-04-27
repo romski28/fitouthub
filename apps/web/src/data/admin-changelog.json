@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-27-cf11e24",
+    "date": "2026-04-27T17:05:53+08:00",
+    "title": "fix: add PRE_WORK stage dynamic next-step handler",
+    "summary": "fix: add PRE_WORK stage dynamic next-step handler",
+    "areas": [
+      "api"
+    ],
+    "commit": "cf11e24",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-87415d5",
     "date": "2026-04-27T16:52:16+08:00",
     "title": "fix: use project.startDate as fallback for agreed start date",

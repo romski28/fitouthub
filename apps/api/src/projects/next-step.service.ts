@@ -895,6 +895,167 @@ export class NextStepService {
       }
     }
 
+    // ── PRE_WORK stage: dynamic overrides (mirrors post-contract logic) ──────────────────────────
+    // The DB seed always emits CONFIRM_START_DATE / CONFIRM_START_DETAILS for PRE_WORK, but by
+    // the time we reach this stage both parties have signed and the start date may already be set.
+    if (effectiveStage === ProjectStage.PRE_WORK && project.status === 'awarded') {
+      const preWorkNormalizedScale = String(project.projectScale || '').toUpperCase();
+
+      const preWorkAccepted = await this.prisma.projectStartProposal.findFirst({
+        where: { projectId, status: 'accepted' },
+        orderBy: { createdAt: 'desc' },
+      });
+      const preWorkProposed = await this.prisma.projectStartProposal.findFirst({
+        where: { projectId, status: 'proposed' },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const preWorkStartDateAgreed = Boolean(preWorkAccepted) || Boolean(project.startDate);
+
+      if (role === 'PROFESSIONAL') {
+        if (preWorkProposed && !preWorkStartDateAgreed) {
+          // Still negotiating start date
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'CONFIRM_START_DATE',
+              'Agree start date',
+              preWorkProposed.proposedByRole === 'client',
+              role,
+              effectiveStage,
+              preWorkProposed.proposedByRole === 'client'
+                ? 'The client proposed an updated start date. Review it and confirm or counter.'
+                : 'Start date proposal sent. Waiting for the client to confirm or update.',
+            ),
+          ];
+        } else if (!preWorkStartDateAgreed) {
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'CONFIRM_START_DATE',
+              'Agree start date',
+              true,
+              role,
+              effectiveStage,
+              'Propose and agree the kickoff start date with the client before final schedule sign-off.',
+            ),
+          ];
+        } else {
+          // Start date agreed — check schedule + escrow and show correct action(s)
+          const requiresClientSched = ['SCALE_2', 'SCALE_3'].includes(preWorkNormalizedScale);
+          const clientActorIdPreWork = (project as any).clientId || project.userId;
+
+          const schedActionsPreWork = await this.prisma.nextStepAction.findMany({
+            where: { projectId, actionKey: 'CONFIRM_SCHEDULE', projectStage: effectiveStage, ...actionActorWhere },
+            select: { userAction: true },
+          });
+          const schedConfirmedPreWork = schedActionsPreWork.some((a) => a.userAction === 'COMPLETED');
+
+          let clientSchedConfirmedPreWork = false;
+          if (requiresClientSched && clientActorIdPreWork) {
+            const csa = await this.prisma.nextStepAction.findFirst({
+              where: { projectId, userId: clientActorIdPreWork, actionKey: 'CONFIRM_SCHEDULE', userAction: 'COMPLETED', projectStage: effectiveStage },
+              select: { id: true },
+            });
+            clientSchedConfirmedPreWork = Boolean(csa);
+          }
+
+          const escrowPreWork = Number(project.escrowHeld ?? 0) > 0;
+          let walletPreWork: 'not_required' | 'pending' | 'completed' = 'not_required';
+          if (escrowPreWork) walletPreWork = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
+          const canStartPreWork = escrowPreWork && walletPreWork !== 'pending';
+
+          if (!schedConfirmedPreWork) {
+            availableConfigSteps = [
+              createSyntheticPrimaryStep('CONFIRM_SCHEDULE', 'Agree milestone schedule', true, role, effectiveStage,
+                'Start date is agreed. Finalize and agree the detailed milestone schedule.'),
+            ];
+            if (canStartPreWork && !requiresClientSched) {
+              availableConfigSteps.push({ ...createSyntheticPrimaryStep('START_PROJECT', 'Start work on site', true, role, effectiveStage,
+                'Escrow prerequisites are ready. You may begin work on site while finalizing the schedule.'),
+                isPrimary: false, isElective: true, displayOrder: 2 } as any);
+            }
+          } else if (requiresClientSched && !clientSchedConfirmedPreWork) {
+            availableConfigSteps = [
+              createSyntheticPrimaryStep('WAIT_FOR_CLIENT_FUNDS', 'Wait for client schedule agreement', false, role, effectiveStage,
+                'You shared the milestone schedule. Waiting for the client to review and confirm it.'),
+            ];
+          } else {
+            // Schedule confirmed — check for pending materials claim
+            let hasPendingClaimPreWork = false;
+            if (escrowPreWork && ['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
+              const pp = await this.prisma.projectPaymentPlan.findUnique({
+                where: { projectId }, select: { milestones: { where: { sequence: 1 }, select: { id: true }, take: 1 } },
+              });
+              const m1 = pp?.milestones?.[0]?.id;
+              if (m1) hasPendingClaimPreWork = (await (this.prisma as any).milestoneProcurementEvidence.count({ where: { projectId, paymentMilestoneId: m1, status: 'pending' } })) > 0;
+            }
+
+            if (canStartPreWork && !hasPendingClaimPreWork) {
+              availableConfigSteps = [
+                createSyntheticPrimaryStep('START_PROJECT', 'Start project on site', true, role, effectiveStage,
+                  'Escrow is funded and schedule confirmed. You may begin work on site.'),
+              ];
+              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
+                availableConfigSteps.push({
+                  id: 'synthetic-MAKE_MILESTONE_1_CLAIM', createdAt: new Date(), updatedAt: new Date(), role,
+                  projectStage: effectiveStage, actionKey: 'MAKE_MILESTONE_1_CLAIM',
+                  actionLabel: 'Submit materials claim',
+                  description: 'Submit purchase receipts and claimed amount for milestone 1 materials.',
+                  isPrimary: true, isElective: false, requiresAction: true, estimatedDurationMinutes: 10, displayOrder: 2,
+                } as any);
+              }
+            } else if (hasPendingClaimPreWork) {
+              availableConfigSteps = [
+                createSyntheticPrimaryStep('RESPOND_TO_MATERIALS_QUESTIONS', 'Respond to client questions on materials claim', true, role, effectiveStage,
+                  'Your materials claim is under client review. Respond to any questions in the claim thread.'),
+              ];
+            } else {
+              availableConfigSteps = [
+                createSyntheticPrimaryStep(
+                  escrowPreWork ? 'WAIT_FOR_MATERIALS_PROCESS' : 'WAIT_FOR_CLIENT_FUNDS',
+                  escrowPreWork ? 'Wait for milestone 1 materials process' : 'Wait for client funds',
+                  false, role, effectiveStage,
+                  escrowPreWork
+                    ? 'Escrow is funded. The client is completing the milestone 1 materials wallet process.'
+                    : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',
+                ),
+              ];
+            }
+          }
+        }
+      }
+
+      if (role === 'CLIENT') {
+        if (!preWorkProposed && preWorkStartDateAgreed) {
+          // Start date is agreed — don't show CONFIRM_START_DETAILS; show escrow/materials action instead
+          const escrowClientPreWork = Number(project.escrowHeld ?? 0) > 0;
+          if (!escrowClientPreWork) {
+            // Still waiting for escrow — check schedule confirmation gate
+            const requiresProfSchedFirst = ['SCALE_2', 'SCALE_3'].includes(preWorkNormalizedScale);
+            if (requiresProfSchedFirst) {
+              const profSchedDone = await this.prisma.nextStepAction.findFirst({
+                where: { projectId, professionalId: project.awardedProjectProfessionalId || undefined, actionKey: 'CONFIRM_SCHEDULE', userAction: 'COMPLETED', projectStage: effectiveStage },
+                select: { id: true },
+              });
+              if (!profSchedDone) {
+                availableConfigSteps = [{
+                  actionKey: 'WAIT_FOR_CLIENT_FUNDS', actionLabel: 'Wait for professional schedule',
+                  description: 'The professional is preparing the milestone schedule. Review in the schedule tab while waiting.',
+                  isPrimary: true, isElective: false, requiresAction: false, estimatedDurationMinutes: 2, displayOrder: 1,
+                } as any];
+              }
+            }
+            // If schedule confirmed or not required, escrow step will be handled by the existing CLIENT block below
+          } else {
+            // Escrow funded — show passive wait or materials actions (handled by existing CLIENT block below)
+            // Just clear any CONFIRM_START_DETAILS that seeded config might set
+            availableConfigSteps = availableConfigSteps.filter((s) => s.actionKey !== 'CONFIRM_START_DETAILS');
+          }
+        }
+        // If preWorkProposed and !preWorkStartDateAgreed → keep seed CONFIRM_START_DETAILS (fall through)
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────────────────────────
+
     // Check if any of these actions have already been completed
     const userActions = await this.prisma.nextStepAction.findMany({
       where: {
