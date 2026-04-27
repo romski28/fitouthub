@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-04-27-11ea5ab",
+    "date": "2026-04-27T16:12:14+08:00",
+    "title": "chore: trigger vercel redeploy",
+    "summary": "chore: trigger vercel redeploy",
+    "areas": [],
+    "commit": "11ea5ab",
+    "files": []
+  },
+  {
     "id": "2026-04-27-aa668bb",
     "date": "2026-04-27T16:07:05+08:00",
     "title": "fix: support multiple next-step actions and fix start date flow",
