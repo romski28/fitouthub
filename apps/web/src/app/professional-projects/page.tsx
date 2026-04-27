@@ -20,6 +20,7 @@ import {
   type NextStepAction,
 } from '@/lib/next-steps';
 import { getProfessionalShowMeHref } from '@/lib/professional-workflow';
+import { resolveNextStepModalContent } from '@/lib/next-step-modal-content';
 import type { UpdatesSummary } from '@/lib/updates-cache';
 
 interface ProjectProfessional {
@@ -122,13 +123,22 @@ export default function ProfessionalProjectsPage() {
 
       router.prefetch(getProfessionalShowMeHref(projectProfessionalId, action.actionKey));
 
+      const resolvedModalContent = resolveNextStepModalContent(action.actionKey, modalContent);
+      const hasModalContent = Object.keys(resolvedModalContent).length > 0;
+
+      // Passive waiting steps should still do something useful if no modal payload is available.
+      if (!hasModalContent && !action.requiresAction) {
+        router.push(getProfessionalShowMeHref(projectProfessionalId, action.actionKey));
+        return;
+      }
+
       await openModal(
         action.actionKey,
         projectId,
         projectOverviewPath,
         professional.id,
         'PROFESSIONAL',
-        modalContent,
+        resolvedModalContent,
         undefined,
         async () => {
           try {

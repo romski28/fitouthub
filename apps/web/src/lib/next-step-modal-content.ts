@@ -67,6 +67,18 @@ const FALLBACK_MODAL_CONTENT: Record<string, NextStepModalContent> = {
     secondaryActionType: 'close_modal',
     detailsTarget: '{"tab":"financials"}',
   },
+  WAIT_FOR_MATERIALS_PROCESS: {
+    title: 'Milestone 1 materials process in progress',
+    body: 'You are waiting for the client to complete the milestone 1 materials wallet step.',
+    detailsBody:
+      'Open Financials to monitor status. Once the client completes the transfer, you can submit receipts and claimed amounts for review.',
+    primaryButtonLabel: 'Open financials',
+    secondaryButtonLabel: 'Later',
+    primaryActionType: 'navigate_tab',
+    primaryActionTarget: '{"tab":"financials"}',
+    secondaryActionType: 'close_modal',
+    detailsTarget: '{"tab":"financials"}',
+  },
 };
 
 export function resolveNextStepModalContent(

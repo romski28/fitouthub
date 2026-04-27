@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-27-30ca499",
+    "date": "2026-04-27T22:20:02+08:00",
+    "title": "fix(web): prevent dead next-step button for wait materials process",
+    "summary": "fix(web): prevent dead next-step button for wait materials process",
+    "areas": [
+      "web"
+    ],
+    "commit": "30ca499",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/lib/next-step-modal-content.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-949c129",
     "date": "2026-04-27T17:21:12+08:00",
     "title": "fix: honor contract-phase schedule confirmation in PRE_WORK",
