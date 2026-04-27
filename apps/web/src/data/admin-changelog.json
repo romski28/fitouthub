@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-27-949c129",
+    "date": "2026-04-27T17:21:12+08:00",
+    "title": "fix: honor contract-phase schedule confirmation in PRE_WORK",
+    "summary": "fix: honor contract-phase schedule confirmation in PRE_WORK",
+    "areas": [
+      "api"
+    ],
+    "commit": "949c129",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-cf11e24",
     "date": "2026-04-27T17:05:53+08:00",
     "title": "fix: add PRE_WORK stage dynamic next-step handler",

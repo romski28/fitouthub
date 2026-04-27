@@ -944,7 +944,12 @@ export class NextStepService {
           const clientActorIdPreWork = (project as any).clientId || project.userId;
 
           const schedActionsPreWork = await this.prisma.nextStepAction.findMany({
-            where: { projectId, actionKey: 'CONFIRM_SCHEDULE', projectStage: effectiveStage, ...actionActorWhere },
+            where: {
+              projectId,
+              actionKey: 'CONFIRM_SCHEDULE',
+              projectStage: { in: [ProjectStage.CONTRACT_PHASE, ProjectStage.PRE_WORK] },
+              ...actionActorWhere,
+            },
             select: { userAction: true },
           });
           const schedConfirmedPreWork = schedActionsPreWork.some((a) => a.userAction === 'COMPLETED');
@@ -952,7 +957,13 @@ export class NextStepService {
           let clientSchedConfirmedPreWork = false;
           if (requiresClientSched && clientActorIdPreWork) {
             const csa = await this.prisma.nextStepAction.findFirst({
-              where: { projectId, userId: clientActorIdPreWork, actionKey: 'CONFIRM_SCHEDULE', userAction: 'COMPLETED', projectStage: effectiveStage },
+              where: {
+                projectId,
+                userId: clientActorIdPreWork,
+                actionKey: 'CONFIRM_SCHEDULE',
+                userAction: 'COMPLETED',
+                projectStage: { in: [ProjectStage.CONTRACT_PHASE, ProjectStage.PRE_WORK] },
+              },
               select: { id: true },
             });
             clientSchedConfirmedPreWork = Boolean(csa);
@@ -1033,7 +1044,13 @@ export class NextStepService {
             const requiresProfSchedFirst = ['SCALE_2', 'SCALE_3'].includes(preWorkNormalizedScale);
             if (requiresProfSchedFirst) {
               const profSchedDone = await this.prisma.nextStepAction.findFirst({
-                where: { projectId, professionalId: project.awardedProjectProfessionalId || undefined, actionKey: 'CONFIRM_SCHEDULE', userAction: 'COMPLETED', projectStage: effectiveStage },
+                where: {
+                  projectId,
+                  professionalId: project.awardedProjectProfessionalId || undefined,
+                  actionKey: 'CONFIRM_SCHEDULE',
+                  userAction: 'COMPLETED',
+                  projectStage: { in: [ProjectStage.CONTRACT_PHASE, ProjectStage.PRE_WORK] },
+                },
                 select: { id: true },
               });
               if (!profSchedDone) {
