@@ -33,6 +33,7 @@ SET
   "modalPrimaryButtonLabel" = COALESCE(NULLIF("modalPrimaryButtonLabel", ''), 'Transfer now'),
   "modalSecondaryButtonLabel" = COALESCE(NULLIF("modalSecondaryButtonLabel", ''), 'Cancel'),
   "modalPrimaryActionType" = 'confirm_transfer',
+  "modalPrimaryActionTarget" = '{"kind":"authorize_milestone_cap","sourceWallet":"client_escrow","destinationWallet":"professional_materials_holding","amountMode":"milestone_amount","milestoneSequence":1}',
   "modalSecondaryActionType" = 'close_modal',
   "updatedAt" = NOW()
 WHERE "role" = 'CLIENT'
@@ -90,23 +91,69 @@ SET
   "displayOrder" = EXCLUDED."displayOrder",
   "updatedAt" = NOW();
 
--- 3) Keep REVIEW_MATERIALS_PURCHASE modal metadata explicit for client review path
-UPDATE "NextStepConfig"
+-- 3) Upsert REVIEW_MATERIALS_PURCHASE row for client review path (fires during CONTRACT_PHASE)
+-- This is a runtime-generated step (no DB source) — the row provides modal content fallback.
+INSERT INTO "NextStepConfig"
+  (
+    "id", "projectStage", "role", "actionKey", "actionLabel", "description",
+    "modalTitle", "modalBody", "modalDetailsBody", "modalSuccessTitle", "modalSuccessBody",
+    "modalSuccessNextStepBody",
+    "modalPrimaryButtonLabel", "modalSecondaryButtonLabel",
+    "modalPrimaryActionType", "modalSecondaryActionType", "detailsTarget",
+    "isPrimary", "isElective", "requiresAction", "displayOrder", "createdAt", "updatedAt"
+  )
+VALUES
+  (
+    gen_random_uuid()::text,
+    'CONTRACT_PHASE',
+    'CLIENT',
+    'REVIEW_MATERIALS_PURCHASE',
+    'Review materials purchase receipts',
+    'The professional has submitted purchase receipts. Review and approve to release the confirmed amount to their withdrawable wallet.',
+    'Review materials purchase receipts',
+    'The professional has submitted purchase evidence. Review and approve the confirmed amount — any unspent balance will be returned to your escrow.',
+    'Carefully review each receipt. Only approve amounts that match actual project materials. Unspent funds will be automatically returned to your escrow wallet.',
+    'Purchase receipts approved!',
+    'The confirmed amount has been released to the professional''s withdrawable wallet.',
+    'What''s next? The professional can now withdraw the approved amount. Any unspent balance has been returned to your escrow.',
+    'Review now',
+    'Later',
+    'navigate_tab',
+    'close_modal',
+    '{"tab":"financials"}',
+    true,
+    false,
+    true,
+    1,
+    NOW(),
+    NOW()
+  )
+ON CONFLICT ("projectStage", "role", "actionKey") DO UPDATE
 SET
-  "modalTitle" = COALESCE(NULLIF("modalTitle", ''), 'Review materials purchase receipts'),
-  "modalBody" = COALESCE(NULLIF("modalBody", ''), 'Review submitted purchase evidence and approve the amount to release to the professional withdrawable wallet.'),
-  "modalPrimaryButtonLabel" = COALESCE(NULLIF("modalPrimaryButtonLabel", ''), 'Review now'),
-  "modalPrimaryActionType" = COALESCE(NULLIF("modalPrimaryActionType", ''), 'navigate_tab'),
-  "detailsTarget" = COALESCE(NULLIF("detailsTarget", ''), '{"tab":"financials"}'),
-  "updatedAt" = NOW()
-WHERE "role" = 'CLIENT'
-  AND "actionKey" = 'REVIEW_MATERIALS_PURCHASE';
+  "actionLabel" = EXCLUDED."actionLabel",
+  "description" = EXCLUDED."description",
+  "modalTitle" = EXCLUDED."modalTitle",
+  "modalBody" = EXCLUDED."modalBody",
+  "modalDetailsBody" = EXCLUDED."modalDetailsBody",
+  "modalSuccessTitle" = EXCLUDED."modalSuccessTitle",
+  "modalSuccessBody" = EXCLUDED."modalSuccessBody",
+  "modalSuccessNextStepBody" = EXCLUDED."modalSuccessNextStepBody",
+  "modalPrimaryButtonLabel" = EXCLUDED."modalPrimaryButtonLabel",
+  "modalSecondaryButtonLabel" = EXCLUDED."modalSecondaryButtonLabel",
+  "modalPrimaryActionType" = EXCLUDED."modalPrimaryActionType",
+  "modalSecondaryActionType" = EXCLUDED."modalSecondaryActionType",
+  "detailsTarget" = EXCLUDED."detailsTarget",
+  "isPrimary" = EXCLUDED."isPrimary",
+  "isElective" = EXCLUDED."isElective",
+  "requiresAction" = EXCLUDED."requiresAction",
+  "displayOrder" = EXCLUDED."displayOrder",
+  "updatedAt" = NOW();
 
 COMMIT;
 
 -- Verification
 -- SELECT "projectStage", "role", "actionKey", "actionLabel",
---        "modalPrimaryButtonLabel", "modalPrimaryActionType", "detailsTarget"
+--        "modalPrimaryButtonLabel", "modalPrimaryActionType", "modalPrimaryActionTarget", "detailsTarget"
 -- FROM "NextStepConfig"
 -- WHERE "role" = 'CLIENT'
 --   AND "actionKey" IN ('AUTHORIZE_MATERIALS_WALLET', 'REVIEW_MATERIALS_PURCHASE')

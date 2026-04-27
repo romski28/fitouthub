@@ -17,6 +17,41 @@ const FALLBACK_MODAL_CONTENT: Record<string, NextStepModalContent> = {
     primaryActionType: 'confirm_transfer',
     secondaryActionType: 'close_modal',
   },
+  // Runtime-generated step (no DB row at a fixed stage). Fallback ensures the modal
+  // shows content regardless of which project stage triggers the payment request.
+  REVIEW_PAYMENT_REQUEST: {
+    title: 'Review payment request',
+    body: 'The professional has submitted a payment request. Review the details and approve or reject.',
+    detailsBody:
+      'Check the request against the agreed payment schedule and milestone evidence before approving. Rejecting will notify the professional to resubmit.',
+    successTitle: 'Payment request reviewed',
+    successBody: 'Your decision has been submitted.',
+    successNextStepBody: 'The professional will be notified of your decision.',
+    primaryButtonLabel: 'Go to financials',
+    secondaryButtonLabel: 'Later',
+    primaryActionType: 'navigate_tab',
+    primaryActionTarget: '{"tab":"financials"}',
+    secondaryActionType: 'close_modal',
+    detailsTarget: '{"tab":"financials"}',
+  },
+  // Runtime-generated step (fires during CONTRACT_PHASE after professional submits receipts).
+  // A DB row is also inserted by MANUAL_UPDATE_NEXT_STEP_WALLET_TRANSFER_MODAL.sql but this
+  // client-side fallback guards against any stage mismatch in the server lookup.
+  REVIEW_MATERIALS_PURCHASE: {
+    title: 'Review materials purchase receipts',
+    body: 'The professional has submitted purchase evidence. Review and approve the confirmed amount — any unspent balance will be returned to your escrow.',
+    detailsBody:
+      'Carefully review each receipt. Only approve amounts that match actual project materials. Unspent funds are automatically returned to your escrow wallet.',
+    successTitle: 'Purchase receipts approved!',
+    successBody: 'The confirmed amount has been released to the professional\'s withdrawable wallet.',
+    successNextStepBody: 'Any unspent balance has been returned to your escrow.',
+    primaryButtonLabel: 'Review now',
+    secondaryButtonLabel: 'Later',
+    primaryActionType: 'navigate_tab',
+    primaryActionTarget: '{"tab":"financials"}',
+    secondaryActionType: 'close_modal',
+    detailsTarget: '{"tab":"financials"}',
+  },
 };
 
 export function resolveNextStepModalContent(

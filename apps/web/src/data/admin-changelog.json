@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-27-26af978",
+    "date": "2026-04-27T13:12:50+08:00",
+    "title": "fix: alignment audit — REVIEW_MATERIALS_PURCHASE upsert, REVIEW_PAYMENT_REQUEST fallback, explicit wallet transfer target",
+    "summary": "fix: alignment audit — REVIEW_MATERIALS_PURCHASE upsert, REVIEW_PAYMENT_REQUEST fallback, explicit wallet transfer target",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "26af978",
+    "files": [
+      "apps/api/prisma/MANUAL_UPDATE_NEXT_STEP_WALLET_TRANSFER_MODAL.sql",
+      "apps/web/src/lib/next-step-modal-content.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-dd6e210",
     "date": "2026-04-27T12:18:29+08:00",
     "title": "feat: simplify wallet transfer modal config and align next-step SQL stage",
