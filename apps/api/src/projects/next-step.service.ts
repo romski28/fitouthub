@@ -583,6 +583,79 @@ export class NextStepService {
                   : 'Schedule confirmed. Waiting for client to fund escrow before work can begin.',
             ),
           ];
+          // If all prerequisites met (schedule confirmed + escrow funded + no pending claim):
+          // Show both START_PROJECT and MAKE_MILESTONE_1_CLAIM as independent actions
+          if (canStartProject && !hasPendingMaterialsClaim) {
+            availableConfigSteps = [];
+
+            // Primary action 1: Start the project on site
+            availableConfigSteps.push(
+              createSyntheticPrimaryStep(
+                'START_PROJECT',
+                'Start project on site',
+                true,
+                role,
+                effectiveStage,
+                'Escrow is funded and schedule confirmed. You may begin work on site and proceed with milestone 1.',
+              ),
+            );
+
+            // Primary action 2: Make milestone 1 claim (if applicable)
+            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
+              availableConfigSteps.push({
+                id: 'synthetic-MAKE_MILESTONE_1_CLAIM',
+                createdAt: new Date(),
+
+          // If start date already accepted and escrow is funded, skip passive "Confirm start details"
+          const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
+          if (
+            !pendingPaymentRequest &&
+            acceptedStartProposal &&
+            !latestStartProposal &&
+            escrowFunded &&
+            availableConfigSteps.length === 0
+          ) {
+            // Start date agreed and escrow funded → show passive wait action
+            availableConfigSteps = [
+              {
+                actionKey: 'WAIT_FOR_PROJECT_START',
+                actionLabel: 'Awaiting project start',
+                description: 'Start date is confirmed and funds are in escrow. Waiting for the professional to begin work on site.',
+                isPrimary: true,
+                isElective: false,
+                requiresAction: false,
+                estimatedDurationMinutes: 0,
+                displayOrder: 1,
+              } as any,
+            ];
+          }
+
+                updatedAt: new Date(),
+                role,
+                projectStage: effectiveStage,
+                actionKey: 'MAKE_MILESTONE_1_CLAIM',
+                actionLabel: 'Submit materials claim',
+                description: 'Submit purchase receipts and claimed amount for milestone 1 materials.',
+                isPrimary: true,
+                isElective: false,
+                requiresAction: true,
+                estimatedDurationMinutes: 10,
+                displayOrder: 2,
+              } as any);
+            }
+          } else if (hasPendingMaterialsClaim) {
+            // If pending claim exists, show respond action (primary focus)
+            availableConfigSteps = [
+              createSyntheticPrimaryStep(
+                'RESPOND_TO_MATERIALS_QUESTIONS',
+                'Respond to client questions on materials claim',
+                true,
+                role,
+                effectiveStage,
+                'Your materials claim is under client review. Respond to any questions in the claim thread so authorization can proceed.',
+              ),
+            ];
+          }
         }
       }
     }

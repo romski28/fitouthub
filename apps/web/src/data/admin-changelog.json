@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-27-aa668bb",
+    "date": "2026-04-27T16:07:05+08:00",
+    "title": "fix: support multiple next-step actions and fix start date flow",
+    "summary": "fix: support multiple next-step actions and fix start date flow",
+    "areas": [
+      "api"
+    ],
+    "commit": "aa668bb",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-8e3ffc9",
     "date": "2026-04-27T15:28:51+08:00",
     "title": "feat: implement materials claim workflow with scoped claim chat",
