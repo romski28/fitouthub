@@ -77,6 +77,12 @@ export function AgreeMilestoneScheduleModal({
   const token = isProfessional ? professionalAccessToken : clientAccessToken;
   const projectId = state.projectId;
   const projectProfessionalId = extractProjectProfessionalId(state.projectDetailsPath);
+  const awardedProjectProfessionalId =
+    typeof projectDetails?.awardedProjectProfessionalId === 'string'
+      ? projectDetails.awardedProjectProfessionalId
+      : undefined;
+  const resolvedProjectProfessionalId =
+    projectProfessionalId || awardedProjectProfessionalId || '';
   const nextStepCacheScope = `${isProfessional ? 'professional' : 'client'}-schedule-modal:${projectId || 'unknown'}`;
 
   // Debug logging
@@ -278,10 +284,14 @@ export function AgreeMilestoneScheduleModal({
                       <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
                         Project details unavailable. Please try again.
                       </div>
+                    ) : !resolvedProjectProfessionalId ? (
+                      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                        Project schedule thread is not ready yet. Please refresh and try again.
+                      </div>
                     ) : (
                       <ScheduleTab
                         projectId={projectId || ''}
-                        projectProfessionalId={projectProfessionalId || ''}
+                        projectProfessionalId={resolvedProjectProfessionalId}
                         projectStatus={projectDetails?.status || ''}
                         projectCurrentStage={projectDetails?.currentStage || ''}
                         accessToken={token}

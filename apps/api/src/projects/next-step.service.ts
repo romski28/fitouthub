@@ -393,6 +393,10 @@ export class NextStepService {
       }
 
       if (role === 'PROFESSIONAL' && clientSigned && professionalSigned) {
+        const normalizedScale = String(project.projectScale || '').toUpperCase();
+        const requiresClientScheduleAgreement = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
+        const clientActorId = (project as any).clientId || project.userId;
+
         const acceptedStartProposal = await this.prisma.projectStartProposal.findFirst({
           where: {
             projectId,
@@ -463,6 +467,21 @@ export class NextStepService {
         });
         const scheduleConfirmed = scheduleActions.some((a) => a.userAction === 'COMPLETED');
 
+        let clientScheduleConfirmed = false;
+        if (requiresClientScheduleAgreement && clientActorId) {
+          const clientScheduleAction = await this.prisma.nextStepAction.findFirst({
+            where: {
+              projectId,
+              userId: clientActorId,
+              actionKey: 'CONFIRM_SCHEDULE',
+              userAction: 'COMPLETED',
+              projectStage: effectiveStage,
+            },
+            select: { id: true },
+          });
+          clientScheduleConfirmed = Boolean(clientScheduleAction);
+        }
+
         const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
 
         let walletTransferPrerequisite: 'not_required' | 'pending' | 'completed' = 'not_required';
@@ -484,7 +503,7 @@ export class NextStepService {
             ),
           ];
 
-          if (canStartProject) {
+          if (canStartProject && !requiresClientScheduleAgreement) {
             availableConfigSteps.push({
               ...createSyntheticPrimaryStep(
                 'START_PROJECT',
@@ -499,6 +518,17 @@ export class NextStepService {
               displayOrder: 2,
             } as any);
           }
+        } else if (requiresClientScheduleAgreement && !clientScheduleConfirmed) {
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'WAIT_FOR_CLIENT_FUNDS',
+              'Wait for client schedule agreement',
+              false,
+              role,
+              effectiveStage,
+              'You shared the milestone schedule. Waiting for the client to review and confirm it before escrow funding can proceed.',
+            ),
+          ];
         } else {
           availableConfigSteps = [
             createSyntheticPrimaryStep(
@@ -601,9 +631,43 @@ export class NextStepService {
       // Only offer escrow deposit AFTER both parties have signed the contract.
       // Until then, the standard CONTRACT_PHASE step (sign contract) should show.
       if (!pendingPaymentRequest && contractFullySigned && !latestStartProposal) {
-        const isScale3Project = project.projectScale === 'SCALE_3';
+        const normalizedScale = String(project.projectScale || '').toUpperCase();
+        const requiresProfessionalScheduleFirst = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
 
-        if (isScale3Project && acceptedStartProposal) {
+        if (acceptedStartProposal) {
+          const professionalScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
+            where: {
+              projectId,
+              professionalId: project.awardedProjectProfessionalId || undefined,
+              actionKey: 'CONFIRM_SCHEDULE',
+              userAction: 'COMPLETED',
+              projectStage: effectiveStage,
+            },
+            select: { id: true },
+          });
+
+          if (requiresProfessionalScheduleFirst && !professionalScheduleConfirmed) {
+            availableConfigSteps = [
+              {
+                actionKey: 'WAIT_FOR_CLIENT_FUNDS',
+                actionLabel: 'Wait for professional schedule',
+                description:
+                  'The professional is preparing the milestone schedule. You can review details in the schedule tab while waiting for their confirmation.',
+                isPrimary: true,
+                isElective: false,
+                requiresAction: false,
+                estimatedDurationMinutes: 2,
+                displayOrder: 1,
+              } as any,
+            ];
+            return {
+              PRIMARY: availableConfigSteps.map(toApiAction),
+              ELECTIVE: [],
+              status: project.status,
+              stage: effectiveStage,
+            };
+          }
+
           const clientScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
             where: {
               projectId,
@@ -612,15 +676,21 @@ export class NextStepService {
               userAction: 'COMPLETED',
               projectStage: effectiveStage,
             },
+            select: { id: true },
           });
 
           if (!clientScheduleConfirmed) {
             availableConfigSteps = [
               {
                 actionKey: 'CONFIRM_SCHEDULE',
-                actionLabel: 'Agree milestone schedule',
+                actionLabel:
+                  normalizedScale === 'SCALE_1'
+                    ? 'Review project timeline end date'
+                    : 'Agree milestone schedule',
                 description:
-                  'Start date is agreed. Please review and confirm the milestone schedule before funding escrow.',
+                  normalizedScale === 'SCALE_1'
+                    ? 'Start date is agreed. Review the calculated project end date/time and confirm the timeline before funding escrow.'
+                    : 'Start date is agreed. Please review and confirm the milestone schedule before funding escrow.',
                 isPrimary: true,
                 isElective: false,
                 requiresAction: true,

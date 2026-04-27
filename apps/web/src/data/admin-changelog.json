@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-27-e868439",
+    "date": "2026-04-27T14:18:06+08:00",
+    "title": "fix: enforce class-based schedule agreement before escrow",
+    "summary": "fix: enforce class-based schedule agreement before escrow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e868439",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx",
+      "apps/web/src/lib/client-workflow.ts",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-26af978",
     "date": "2026-04-27T13:12:50+08:00",
     "title": "fix: alignment audit — REVIEW_MATERIALS_PURCHASE upsert, REVIEW_PAYMENT_REQUEST fallback, explicit wallet transfer target",
