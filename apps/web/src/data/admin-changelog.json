@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-27-de0fc83",
+    "date": "2026-04-27T12:12:59+08:00",
+    "title": "feat: unify next-step wallet transfers with shared modal",
+    "summary": "feat: unify next-step wallet transfers with shared modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "de0fc83",
+    "files": [
+      "apps/api/prisma/MANUAL_UPDATE_NEXT_STEP_WALLET_TRANSFER_MODAL.sql",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/wallet-transfer-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-27-24d1d81",
     "date": "2026-04-27T11:37:11+08:00",
     "title": "feat: add professional materials wallet transfer UI and financial action key routing",
