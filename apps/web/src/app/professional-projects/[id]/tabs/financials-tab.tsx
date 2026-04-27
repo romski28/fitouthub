@@ -187,6 +187,8 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   const [materialsInvoiceUrls, setMaterialsInvoiceUrls] = React.useState('');
   const [materialsPhotoUrls, setMaterialsPhotoUrls] = React.useState('');
   const [materialsNotes, setMaterialsNotes] = React.useState('');
+  const [walletTransferLoading, setWalletTransferLoading] = React.useState(false);
+  const [walletTransferAmount, setWalletTransferAmount] = React.useState('');
   const isAwarded = projectStatus === 'awarded';
   const totalPending = paymentRequests
     .filter((p) => p.status === 'pending')
@@ -289,6 +291,12 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   }, [projectFinancialSummary?.transactions, firstPaymentMilestone]);
 
   const canSubmitMaterialsClaim = isMaterialsWorkflowProject && isEscrowReady;
+
+  const totalApprovedAmount = React.useMemo(
+    () => materialsEvidence.reduce((sum, e) => sum + (String(e.status) === 'approved' ? Number(e.approvedAmount ?? 0) : 0), 0),
+    [materialsEvidence],
+  );
+  const canTransferWallet = isMaterialsWorkflowProject && isEscrowReady && totalApprovedAmount > 0 && walletTransferStatus !== 'completed';
   const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
 
   const paymentMilestonesByProjectMilestoneId = new Map(
@@ -444,6 +452,38 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       toast.error(err instanceof Error ? err.message : 'Failed to submit materials claim');
     } finally {
       setMaterialsBusy(null);
+    }
+  };
+
+  const handleWalletTransfer = async () => {
+    if (!accessToken || !projectId || !projectProfessionalId) return;
+    const amount = walletTransferAmount !== '' ? Number(walletTransferAmount) : totalApprovedAmount;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Enter a valid transfer amount');
+      return;
+    }
+    try {
+      setWalletTransferLoading(true);
+      const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/professional-wallet/transfer`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ projectProfessionalId, amount }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { message?: string }).message || 'Failed to transfer funds');
+      }
+      toast.success('Funds transferred to drawable wallet');
+      setWalletTransferAmount('');
+      await fetchProjectFinancialSummary();
+      await fetchMaterialsEvidence();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to transfer funds');
+    } finally {
+      setWalletTransferLoading(false);
     }
   };
 
@@ -1118,6 +1158,42 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   </div>
                 )}
               </div>
+
+              {canTransferWallet && (
+                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Transfer Approved Materials Funds</h4>
+                    <p className="text-xs text-emerald-100 mt-1">
+                      The client has approved your materials claim. Transfer the approved amount to your drawable wallet.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="flex-1 min-w-[140px]">
+                      <label className="block text-xs font-semibold text-white mb-1">Amount to transfer</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={walletTransferAmount !== '' ? walletTransferAmount : String(totalApprovedAmount)}
+                        onChange={(e) => setWalletTransferAmount(e.target.value)}
+                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
+                        data-testid="wallet-transfer-amount"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleWalletTransfer}
+                      disabled={walletTransferLoading}
+                      className="rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {walletTransferLoading ? 'Transferring...' : 'Transfer to Drawable Wallet'}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-emerald-200">
+                    Approved total: {formatHKD(totalApprovedAmount)}. The server will validate your requested amount against the available balance.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

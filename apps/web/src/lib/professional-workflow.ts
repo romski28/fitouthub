@@ -14,6 +14,9 @@ export const professionalActionTabMap: Record<string, string> = {
   ADDRESS_FINAL_ITEMS: 'schedule',
   PROVIDE_WARRANTY_DETAILS: 'schedule',
   RESPOND_TO_DISPUTE: 'chat',
+  AWAIT_MILESTONE_APPROVAL: 'financials',
+  PROCEED_TO_NEXT_PHASE: 'financials',
+  SUBMIT_PAYMENT_REQUEST: 'financials',
 };
 
 export function getProfessionalTabForAction(actionKey?: string): string | undefined {

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-27-24d1d81",
+    "date": "2026-04-27T11:37:11+08:00",
+    "title": "feat: add professional materials wallet transfer UI and financial action key routing",
+    "summary": "feat: add professional materials wallet transfer UI and financial action key routing",
+    "areas": [
+      "web"
+    ],
+    "commit": "24d1d81",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.materials.test.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-cf4fe88",
     "date": "2026-04-27T01:17:22+08:00",
     "title": "feat: show workflow celebration modal after escrow payment success",
