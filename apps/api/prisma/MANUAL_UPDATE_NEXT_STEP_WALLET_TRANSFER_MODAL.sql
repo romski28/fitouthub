@@ -38,7 +38,7 @@ SET
 WHERE "role" = 'CLIENT'
   AND "actionKey" = 'AUTHORIZE_MATERIALS_WALLET';
 
--- 2) Backfill a canonical PRE_WORK row if missing (kept idempotent)
+-- 2) Backfill a canonical CONTRACT_PHASE row if missing (kept idempotent)
 INSERT INTO "NextStepConfig"
   (
     "id", "projectStage", "role", "actionKey", "actionLabel", "description",
@@ -50,7 +50,7 @@ INSERT INTO "NextStepConfig"
 VALUES
   (
     gen_random_uuid()::text,
-    'PRE_WORK',
+    'CONTRACT_PHASE',
     'CLIENT',
     'AUTHORIZE_MATERIALS_WALLET',
     'Transfer materials funds to professional wallet',

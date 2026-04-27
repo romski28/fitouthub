@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-27-dd6e210",
+    "date": "2026-04-27T12:18:29+08:00",
+    "title": "feat: simplify wallet transfer modal config and align next-step SQL stage",
+    "summary": "feat: simplify wallet transfer modal config and align next-step SQL stage",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "dd6e210",
+    "files": [
+      "apps/api/prisma/MANUAL_UPDATE_NEXT_STEP_WALLET_TRANSFER_MODAL.sql",
+      "apps/web/src/app/admin/next-steps/page.tsx"
+    ]
+  },
+  {
     "id": "2026-04-27-de0fc83",
     "date": "2026-04-27T12:12:59+08:00",
     "title": "feat: unify next-step wallet transfers with shared modal",

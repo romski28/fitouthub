@@ -66,6 +66,65 @@ const STAGES = [
   'CLOSED',
 ] as const;
 
+const ACTION_TYPE_OPTIONS = ['confirm_transfer', 'navigate_tab', 'show_details', 'close_modal', 'noop'] as const;
+
+const WALLET_TRANSFER_TARGET_TEMPLATES = [
+  {
+    label: 'Client escrow -> Professional materials holding (Milestone 1)',
+    value: JSON.stringify(
+      {
+        kind: 'authorize_milestone_cap',
+        sourceWallet: 'client_escrow',
+        destinationWallet: 'professional_materials_holding',
+        amountMode: 'milestone_amount',
+        milestoneSequence: 1,
+      },
+      null,
+      2,
+    ),
+  },
+  {
+    label: 'Professional holding -> Client escrow (custom endpoint)',
+    value: JSON.stringify(
+      {
+        kind: 'api_transfer',
+        sourceWallet: 'professional_materials_holding',
+        destinationWallet: 'client_escrow',
+        amountMode: 'fixed',
+        fixedAmount: 0,
+        endpoint: '/financial/project/{projectId}/wallet-transfers/reverse',
+        method: 'POST',
+        body: {
+          amount: '{amount}',
+          milestoneId: '{milestoneId}',
+        },
+      },
+      null,
+      2,
+    ),
+  },
+  {
+    label: 'Professional holding -> Professional transfer-ready (custom endpoint)',
+    value: JSON.stringify(
+      {
+        kind: 'api_transfer',
+        sourceWallet: 'professional_materials_holding',
+        destinationWallet: 'professional_transfer_ready',
+        amountMode: 'fixed',
+        fixedAmount: 0,
+        endpoint: '/financial/project/{projectId}/professional-wallet/transfer',
+        method: 'POST',
+        body: {
+          projectProfessionalId: '{projectProfessionalId}',
+          amount: '{amount}',
+        },
+      },
+      null,
+      2,
+    ),
+  },
+] as const;
+
 function toDraft(row: NextStepConfigRow | null): ModalContentDraft {
   return {
     modalTitle: row?.modalTitle || '',
@@ -99,6 +158,7 @@ export default function AdminNextStepContentPage() {
 
   const [selectedId, setSelectedId] = useState('');
   const [draft, setDraft] = useState<ModalContentDraft>(toDraft(null));
+  const [walletTemplateSelection, setWalletTemplateSelection] = useState('');
 
   useEffect(() => {
     if (user && user.role !== 'admin') {
@@ -270,6 +330,46 @@ export default function AdminNextStepContentPage() {
                   </p>
                 </div>
 
+                {selectedRow.actionKey.includes('WALLET') && (
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Wallet Transfer Helpers</p>
+                    <div className="grid gap-2 md:grid-cols-[minmax(0,1fr),auto]">
+                      <select
+                        value={walletTemplateSelection}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setWalletTemplateSelection(value);
+                          if (!value) return;
+                          setDraft((prev) => ({
+                            ...prev,
+                            modalPrimaryActionType: 'confirm_transfer',
+                            modalPrimaryActionTarget: value,
+                          }));
+                        }}
+                        className="rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="">Apply wallet transfer target template...</option>
+                        {WALLET_TRANSFER_TARGET_TEMPLATES.map((template) => (
+                          <option key={template.label} value={template.value}>{template.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setDraft((prev) => ({
+                          ...prev,
+                          modalPrimaryActionType: 'confirm_transfer',
+                        }))}
+                        className="rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                      >
+                        Set action to confirm_transfer
+                      </button>
+                    </div>
+                    <p className="text-xs text-blue-700">
+                      Use JSON target for reusable wallet flows. Supported placeholders: <code>{'{projectId}'}</code>, <code>{'{milestoneId}'}</code>, <code>{'{amount}'}</code>, <code>{'{projectProfessionalId}'}</code>.
+                    </p>
+                  </div>
+                )}
+
                 {([
                   ['modalTitle', 'Modal title'],
                   ['modalBody', 'Modal body'],
@@ -287,12 +387,23 @@ export default function AdminNextStepContentPage() {
                 ] as Array<[keyof ModalContentDraft, string]>).map(([key, label]) => (
                   <div key={key}>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-                    {key.includes('Body') ? (
+                    {(key === 'modalPrimaryActionType' || key === 'modalSecondaryActionType') ? (
+                      <select
+                        value={draft[key]}
+                        onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      >
+                        <option value="">(empty)</option>
+                        {ACTION_TYPE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : key.includes('Body') || key === 'modalPrimaryActionTarget' || key === 'modalSecondaryActionTarget' ? (
                       <textarea
                         value={draft[key]}
                         onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
-                        rows={3}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        rows={key.includes('ActionTarget') ? 5 : 3}
+                        className={`w-full rounded-lg border border-slate-300 px-3 py-2 text-sm ${key.includes('ActionTarget') ? 'font-mono' : ''}`}
                       />
                     ) : (
                       <input
