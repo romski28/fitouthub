@@ -32,6 +32,18 @@ type PaymentPlan = {
   milestones: PaymentMilestone[];
 };
 
+type FinancialSummaryTransaction = {
+  id: string;
+  type: string;
+  status: string;
+  amount?: number | string | null;
+  notes?: string | null;
+};
+
+type ProjectFinancialSummary = {
+  transactions?: FinancialSummaryTransaction[];
+};
+
 interface MaterialsClaimReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -101,6 +113,7 @@ export default function MaterialsClaimReviewModal({
 }: MaterialsClaimReviewModalProps) {
   const [loading, setLoading] = React.useState(false);
   const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan | null>(null);
+  const [summary, setSummary] = React.useState<ProjectFinancialSummary | null>(null);
   const [evidence, setEvidence] = React.useState<ProcurementEvidence | null>(null);
   const [authorising, setAuthorising] = React.useState(false);
   const [approvedAmount, setApprovedAmount] = React.useState('');
@@ -122,6 +135,21 @@ export default function MaterialsClaimReviewModal({
       minimumFractionDigits: 0,
     }).format(typeof value === 'string' ? parseFloat(value || '0') : value);
 
+  const parseMilestoneMetadataFromNotes = (notes?: string | null): { paymentMilestoneId?: string } | null => {
+    if (!notes || typeof notes !== 'string') return null;
+    const marker = '__FOH_MILESTONE__';
+    const index = notes.indexOf(marker);
+    if (index < 0) return null;
+    const payload = notes.slice(index + marker.length).trim();
+    if (!payload) return null;
+    try {
+      const parsed = JSON.parse(payload);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
   React.useEffect(() => {
     if (!isOpen || !projectId || !accessToken) return;
 
@@ -134,6 +162,16 @@ export default function MaterialsClaimReviewModal({
         if (!planRes.ok) throw new Error('Failed to load payment plan');
         const plan: PaymentPlan = await planRes.json();
         setPaymentPlan(plan);
+
+        const summaryRes = await fetch(`${API_BASE_URL}/financial/project/${projectId}/summary`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (summaryRes.ok) {
+          const summaryData: ProjectFinancialSummary = await summaryRes.json();
+          setSummary(summaryData);
+        } else {
+          setSummary(null);
+        }
 
         const m1 = plan.milestones?.find((m) => Number(m.sequence) === 1);
         if (!m1) throw new Error('Milestone 1 not found');
@@ -171,6 +209,24 @@ export default function MaterialsClaimReviewModal({
     () => paymentPlan?.milestones?.find((m) => Number(m.sequence) === 1) || null,
     [paymentPlan],
   );
+
+  const milestoneCapAmount = React.useMemo(() => {
+    if (!firstMilestone) return 0;
+    const txs = Array.isArray(summary?.transactions) ? summary.transactions : [];
+
+    let capAuthorized = 0;
+    for (const tx of txs) {
+      const meta = parseMilestoneMetadataFromNotes(tx.notes);
+      if (!meta?.paymentMilestoneId || meta.paymentMilestoneId !== firstMilestone.id) continue;
+      const amount = Number(tx.amount || 0);
+      if (!Number.isFinite(amount) || amount <= 0) continue;
+      if (tx.type === 'milestone_foh_allocation_cap' && String(tx.status || '').toLowerCase() === 'confirmed') {
+        capAuthorized += amount;
+      }
+    }
+
+    return Math.max(capAuthorized, 0);
+  }, [firstMilestone, summary?.transactions]);
 
   const handleAuthoriseTransfer = async () => {
     if (!evidence || !firstMilestone || !projectId || !accessToken) return;
@@ -255,6 +311,16 @@ export default function MaterialsClaimReviewModal({
           style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
         >
           <div className="col-start-1 row-start-1 flex max-h-[88vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]">
+            <button
+              type="button"
+              onClick={() => setShowDetails(true)}
+              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+              aria-label="Show details"
+              title="More info"
+            >
+              i
+            </button>
+
             <div className="border-b border-slate-700 px-5 py-4">
               <div>
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -278,7 +344,9 @@ export default function MaterialsClaimReviewModal({
                     <div className="rounded-lg border border-slate-700 bg-slate-800/60 p-4 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Claimed amount</span>
-                        <span className="text-lg font-bold text-white">{formatHKD(evidence.claimedAmount)}</span>
+                          <span className="text-lg font-bold text-white">
+                            {formatHKD(evidence.claimedAmount)} / {formatHKD(milestoneCapAmount)}
+                          </span>
                       </div>
                       {evidence.deadlineAt && (
                         <div className="flex items-center justify-between text-xs text-slate-400">
@@ -323,7 +391,6 @@ export default function MaterialsClaimReviewModal({
                                   <img src={url} alt={`Receipt ${index + 1}`} className="h-full w-full object-cover" />
                                 </button>
                                 <div className="min-w-0 text-[11px] text-slate-300">
-                                  <p className="truncate"><span className="text-slate-400">File:</span> {file}</p>
                                   <p><span className="text-slate-400">Value:</span> {meta.valueText || 'Not itemised'}</p>
                                   <p className="truncate"><span className="text-slate-400">Note:</span> {meta.noteText || 'No per-item note provided'}</p>
                                 </div>
@@ -353,8 +420,8 @@ export default function MaterialsClaimReviewModal({
 
             {evidence && (
               <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                  <label className="flex items-center gap-2 text-xs text-cyan-100">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+                  <label className="flex items-center gap-2 text-xs text-cyan-100 sm:col-start-1 sm:row-start-1">
                     <input
                       type="checkbox"
                       checked={titleTransferAcknowledged}
@@ -363,35 +430,48 @@ export default function MaterialsClaimReviewModal({
                     Confirm title transfer acknowledgement
                   </label>
 
+                  <div className="hidden sm:block sm:col-start-2 sm:row-start-1" />
+
+                  <div className="text-xs font-semibold text-slate-300 sm:col-start-3 sm:row-start-1 sm:self-center">
+                    Settlement decision
+                  </div>
+
+                  <div className="hidden sm:block sm:col-start-4 sm:row-start-1" />
+                  <div className="hidden sm:block sm:col-start-5 sm:row-start-1" />
+
                   <button
                     type="button"
                     onClick={() => setShowDetails(true)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-300/60 bg-blue-500/20 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                    className="inline-flex h-8 w-8 items-center justify-center justify-self-start rounded-full border border-blue-300/60 bg-blue-500/20 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/35 sm:col-start-1 sm:row-start-2 sm:justify-self-center"
                     aria-label="Show details"
                     title="More info"
                   >
                     i
                   </button>
 
-                  <div className="min-w-0 sm:w-56">
-                    <label className="mb-1 block text-xs font-semibold text-slate-300">Settlement decision</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={approvedAmount}
-                      onChange={(event) => setApprovedAmount(event.target.value)}
-                      placeholder="Value to authorise"
-                      className="w-full rounded-md border border-cyan-300/30 bg-slate-900 px-3 py-2 text-sm text-white"
-                    />
+                  <div className="hidden sm:block sm:col-start-2 sm:row-start-2" />
+
+                  <div className="sm:col-start-3 sm:row-start-2">
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={approvedAmount}
+                        onChange={(event) => setApprovedAmount(event.target.value)}
+                        placeholder="0.00"
+                        className="w-full rounded-md border border-cyan-300/30 bg-slate-900 py-2 pl-12 pr-3 text-right text-sm text-white"
+                      />
+                    </div>
                   </div>
 
-                  <div className="sm:ml-auto">
+                  <div className="sm:col-start-4 sm:row-start-2 sm:self-end">
                     <button
                       type="button"
                       onClick={handleAuthoriseTransfer}
                       disabled={authorising || !titleTransferAcknowledged}
-                      className="rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                      className="w-full rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
                       {authorising ? 'Processing...' : 'Authorise transfer'}
                     </button>
@@ -400,7 +480,7 @@ export default function MaterialsClaimReviewModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+                    className="w-full rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 sm:col-start-5 sm:row-start-2"
                   >
                     Close
                   </button>
