@@ -412,50 +412,32 @@ export default function MaterialsClaimReviewModal({
 
             {evidence && (
               <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5 sm:items-end">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="shrink-0 text-xs font-semibold text-slate-300">Settlement decision</span>
+                  <div className="relative min-w-[120px] flex-1">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={approvedAmount}
+                      onChange={(event) => setApprovedAmount(event.target.value)}
+                      placeholder="0.00"
+                      className="h-9 w-full rounded-md border border-cyan-300/30 bg-slate-900 pl-12 pr-3 text-right text-sm text-white"
+                    />
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setShowDetails(true)}
-                    className="inline-flex h-8 w-8 items-center justify-center justify-self-start rounded-full border border-blue-300/60 bg-blue-500/20 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/35 sm:col-start-1 sm:justify-self-center"
-                    aria-label="Show details"
-                    title="More info"
+                    onClick={handleAuthoriseTransfer}
+                    disabled={authorising}
+                    className="h-9 shrink-0 rounded-md bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                   >
-                    i
+                    {authorising ? 'Processing...' : 'Authorise transfer'}
                   </button>
-
-                  <div className="hidden sm:block sm:col-start-2" />
-
-                  <div className="sm:col-start-3">
-                    <label className="mb-1 block text-right text-xs font-semibold text-slate-300">Settlement decision</label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={approvedAmount}
-                        onChange={(event) => setApprovedAmount(event.target.value)}
-                        placeholder="0.00"
-                        className="w-full rounded-md border border-cyan-300/30 bg-slate-900 py-2 pl-12 pr-3 text-right text-sm text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-start-4">
-                    <button
-                      type="button"
-                      onClick={handleAuthoriseTransfer}
-                      disabled={authorising}
-                      className="w-full rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      {authorising ? 'Processing...' : 'Authorise transfer'}
-                    </button>
-                  </div>
-
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-full rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 sm:col-start-5"
+                    className="h-9 shrink-0 rounded border border-slate-600 px-3 text-xs text-slate-200 hover:bg-slate-800"
                   >
                     Close
                   </button>
