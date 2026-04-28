@@ -464,7 +464,7 @@ export function RespondMaterialsClaimModal({
                         note: '',
                         value: '',
                         uploading: false,
-                        kind: 'photo',
+                        kind: 'photo' as const,
                       })),
                     ]);
                   }}

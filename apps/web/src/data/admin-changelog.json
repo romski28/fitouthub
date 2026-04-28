@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-1423f45",
+    "date": "2026-04-28T21:59:06+08:00",
+    "title": "Fix UploadRow kind typing for chat image uploads",
+    "summary": "Fix UploadRow kind typing for chat image uploads",
+    "areas": [
+      "web"
+    ],
+    "commit": "1423f45",
+    "files": [
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-ea63a68",
     "date": "2026-04-28T21:53:47+08:00",
     "title": "Fix: Use correct openModal signature with all required arguments",
