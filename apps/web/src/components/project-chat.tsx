@@ -25,6 +25,7 @@ interface ProjectChatProps {
   sendButtonLabel?: string;
   messagePlaceholder?: string;
   className?: string;
+  onMessageSent?: () => void;
 }
 
 export default function ProjectChat({
@@ -36,6 +37,7 @@ export default function ProjectChat({
   sendButtonLabel = 'Send',
   messagePlaceholder = 'Type a message to the project team...',
   className = '',
+  onMessageSent,
 }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -134,6 +136,11 @@ export default function ProjectChat({
       setMessages((prev) => [...prev, data.message]);
       setNewMessage('');
       setPendingAttachments([]);
+      
+      // Fire onMessageSent callback if provided
+      if (onMessageSent) {
+        onMessageSent();
+      }
     } catch (err) {
       console.error('Error sending message:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');

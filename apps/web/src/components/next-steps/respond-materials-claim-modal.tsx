@@ -110,7 +110,7 @@ export function RespondMaterialsClaimModal({
   isLoading = false,
   onClose,
 }: RespondMaterialsClaimModalProps) {
-  const { state } = useNextStepModal();
+  const { state, openModal } = useNextStepModal();
   const { accessToken } = useProfessionalAuth();
 
   const [pageLoading, setPageLoading] = React.useState(false);
@@ -120,6 +120,34 @@ export function RespondMaterialsClaimModal({
   const [savingClaim, setSavingClaim] = React.useState(false);
   // Track original rows so we can detect edits and compute a diff
   const originalRowsRef = React.useRef<UploadRow[]>([]);
+
+  const handleClarificationShared = React.useCallback(async () => {
+    // Show celebration modal
+    if (openModal) {
+      openModal({
+        actionKey: 'WAIT_FOR_CLIENT_RESPONSE',
+        modalContent: {
+          title: 'Clarification shared!',
+          body: 'Your response has been sent to the client. They will review your clarification and update the authorisation once satisfied.',
+          imageUrl: undefined,
+          primaryButtonLabel: 'Wait for client response',
+          secondaryButtonLabel: undefined,
+          primaryActionType: 'close_modal',
+        },
+      });
+    }
+
+    // Escalate next-step for this project
+    if (state.projectId && accessToken) {
+      try {
+        await fetch(`${API_BASE_URL}/projects/${state.projectId}/next-steps/escalate`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'materials_clarification_shared' }),
+        }).catch(() => {}); // best-effort
+      } catch {}
+    }
+  }, [openModal, state.projectId, accessToken]);
 
   const formatHKD = (value: number | string) =>
     new Intl.NumberFormat('en-HK', {
@@ -485,6 +513,7 @@ export function RespondMaterialsClaimModal({
                     sendButtonLabel="Share clarification"
                     messagePlaceholder="Share clarification on receipts, values, or notes..."
                     className="min-h-0 min-w-0"
+                    onMessageSent={handleClarificationShared}
                   />
                 </div>
               )}

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-28-ac3c821",
+    "date": "2026-04-28T21:51:34+08:00",
+    "title": "Add celebration modal and escalation after 'Share clarification'",
+    "summary": "Add celebration modal and escalation after 'Share clarification'",
+    "areas": [
+      "web"
+    ],
+    "commit": "ac3c821",
+    "files": [
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-c82225f",
     "date": "2026-04-28T21:46:16+08:00",
     "title": "Milestone 1 materials claim workflow: thumbnails, cap enforcement, upload UI",
