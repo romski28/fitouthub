@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-00142b1",
+    "date": "2026-04-28T16:13:27+08:00",
+    "title": "chore(web): commit remaining materials claim table changes",
+    "summary": "chore(web): commit remaining materials claim table changes",
+    "areas": [
+      "web"
+    ],
+    "commit": "00142b1",
+    "files": [
+      "apps/web/src/components/materials-claim-items-table.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-3eeb15d",
     "date": "2026-04-28T16:09:25+08:00",
     "title": "refactor: replace general notes with pre-hydrated opening message + clear button",

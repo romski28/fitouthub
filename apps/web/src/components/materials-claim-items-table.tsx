@@ -29,9 +29,7 @@ export default function MaterialsClaimItemsTable({
   formatHKD,
 }: MaterialsClaimItemsTableProps) {
   const isOverMaximum = totalClaimed > maxClaimableAmount;
-  const totalLabel = isOverMaximum
-    ? `Total claimed (Maximum payment of ${formatHKD(maxClaimableAmount)} will be requested)`
-    : 'Total claimed';
+  const totalLabel = 'Total claimed';
 
   return (
     <div className="rounded-md border border-slate-700 overflow-hidden">
@@ -106,7 +104,7 @@ export default function MaterialsClaimItemsTable({
 
       {rows.length > 0 && isOverMaximum && (
         <div className="border-t border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-          Claimed total exceeds available materials cap balance. Submission will be limited to the remaining maximum.
+          Claimed total exceeds available materials cap balance. Submission will be limited to {formatHKD(maxClaimableAmount)}.
         </div>
       )}
     </div>
