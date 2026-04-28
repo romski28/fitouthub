@@ -77,13 +77,9 @@ export function ReviewMaterialsClaimModal({
     const load = async () => {
       setPageLoading(true);
       try {
-        const [planRes, evidenceRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/projects/${state.projectId}/payment-plan`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          // fetch payment plan first to get milestone id — handled sequentially below
-        ]);
-
+        const planRes = await fetch(`${API_BASE_URL}/projects/${state.projectId}/payment-plan`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
         if (!planRes.ok) throw new Error('Failed to load payment plan');
         const plan: PaymentPlan = await planRes.json();
         setPaymentPlan(plan);

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-df1c04d",
+    "date": "2026-04-28T15:55:40+08:00",
+    "title": "fix: review materials claim modal — sequential fetch instead of Promise.all",
+    "summary": "fix: review materials claim modal — sequential fetch instead of Promise.all",
+    "areas": [
+      "web"
+    ],
+    "commit": "df1c04d",
+    "files": [
+      "apps/web/src/components/next-steps/review-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-6728ba8",
     "date": "2026-04-28T15:52:21+08:00",
     "title": "feat: scoped claim chat workflow — client review modal, professional respond modal, message endpoint, DB config for REVIEW_MATERIALS_PURCHASE",
