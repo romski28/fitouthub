@@ -106,7 +106,7 @@ export default function MaterialsClaimReviewModal({
   const [approvedAmount, setApprovedAmount] = React.useState('');
   const [titleTransferAcknowledged, setTitleTransferAcknowledged] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
-  const [previewIndex, setPreviewIndex] = React.useState(0);
+  const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
 
   const allUrls = React.useMemo(
     () => [...(evidence?.invoiceUrls ?? []), ...(evidence?.photoUrls ?? [])],
@@ -114,10 +114,6 @@ export default function MaterialsClaimReviewModal({
   );
 
   const itemNoteMap = React.useMemo(() => parseItemNotes(evidence?.notes), [evidence?.notes]);
-
-  const selectedUrl = allUrls[previewIndex] || allUrls[0] || null;
-  const selectedFilename = selectedUrl ? filenameFromUrl(selectedUrl) : '';
-  const selectedItemMeta = itemNoteMap[selectedFilename] || {};
 
   const formatHKD = (value: number | string) =>
     new Intl.NumberFormat('en-HK', {
@@ -160,7 +156,7 @@ export default function MaterialsClaimReviewModal({
         setEvidence(target || null);
         setApprovedAmount(target ? String(target.claimedAmount) : '');
         setTitleTransferAcknowledged(false);
-        setPreviewIndex(0);
+        setLightboxUrl(null);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Failed to load claim data');
       } finally {
@@ -259,27 +255,11 @@ export default function MaterialsClaimReviewModal({
           style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
         >
           <div className="col-start-1 row-start-1 flex max-h-[88vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]">
-            <button
-              type="button"
-              onClick={() => setShowDetails(true)}
-              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
-              aria-label="Show details"
-            >
-              i
-            </button>
-
-            <div className="flex items-start justify-between border-b border-slate-700 px-5 py-4">
-              <div className="pr-10">
+            <div className="border-b border-slate-700 px-5 py-4">
+              <div>
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
                 <p className="mt-0.5 text-xs text-slate-300">{body}</p>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
-              >
-                Close
-              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
@@ -325,43 +305,31 @@ export default function MaterialsClaimReviewModal({
                           Receipts &amp; photos ({allUrls.length})
                         </p>
 
-                        {selectedUrl && (
-                          <div className="rounded-md border border-slate-700 bg-slate-900/70 p-2">
-                            <img
-                              src={selectedUrl}
-                              alt={selectedFilename || 'Claim evidence'}
-                              className="h-64 w-full rounded object-contain bg-black/20"
-                            />
-                            <div className="mt-2 space-y-1 text-[11px] text-slate-300">
-                              <p className="truncate"><span className="text-slate-400">File:</span> {selectedFilename}</p>
-                              <p>
-                                <span className="text-slate-400">Value:</span>{' '}
-                                {selectedItemMeta.valueText || 'Not itemised'}
-                              </p>
-                              <p className="break-words">
-                                <span className="text-slate-400">Note:</span>{' '}
-                                {selectedItemMeta.noteText || 'No per-item note provided'}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-2">
-                          {allUrls.map((url, index) => (
-                            <button
-                              key={`${url}-${index}`}
-                              type="button"
-                              onClick={() => setPreviewIndex(index)}
-                              className={`relative block h-16 w-16 overflow-hidden rounded border transition ${
-                                index === previewIndex
-                                  ? 'border-cyan-400 ring-1 ring-cyan-400/70'
-                                  : 'border-slate-600 hover:border-cyan-400'
-                              }`}
-                              title={filenameFromUrl(url)}
-                            >
-                              <img src={url} alt={`Receipt ${index + 1}`} className="h-full w-full object-cover" />
-                            </button>
-                          ))}
+                        <div className="max-h-[28vh] space-y-2 overflow-y-auto pr-1">
+                          {allUrls.map((url, index) => {
+                            const file = filenameFromUrl(url);
+                            const meta = itemNoteMap[file] || {};
+                            return (
+                              <div
+                                key={`${url}-${index}`}
+                                className="flex items-center gap-3 rounded-md border border-slate-700 bg-slate-900/70 p-2"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => setLightboxUrl(url)}
+                                  className="relative block h-14 w-14 shrink-0 overflow-hidden rounded border border-slate-600 transition hover:border-cyan-400"
+                                  title={`Open ${file}`}
+                                >
+                                  <img src={url} alt={`Receipt ${index + 1}`} className="h-full w-full object-cover" />
+                                </button>
+                                <div className="min-w-0 text-[11px] text-slate-300">
+                                  <p className="truncate"><span className="text-slate-400">File:</span> {file}</p>
+                                  <p><span className="text-slate-400">Value:</span> {meta.valueText || 'Not itemised'}</p>
+                                  <p className="truncate"><span className="text-slate-400">Note:</span> {meta.noteText || 'No per-item note provided'}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -385,7 +353,26 @@ export default function MaterialsClaimReviewModal({
 
             {evidence && (
               <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                  <label className="flex items-center gap-2 text-xs text-cyan-100">
+                    <input
+                      type="checkbox"
+                      checked={titleTransferAcknowledged}
+                      onChange={(event) => setTitleTransferAcknowledged(event.target.checked)}
+                    />
+                    Confirm title transfer acknowledgement
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowDetails(true)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-300/60 bg-blue-500/20 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                    aria-label="Show details"
+                    title="More info"
+                  >
+                    i
+                  </button>
+
                   <div className="min-w-0 sm:w-56">
                     <label className="mb-1 block text-xs font-semibold text-slate-300">Settlement decision</label>
                     <input
@@ -399,16 +386,7 @@ export default function MaterialsClaimReviewModal({
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-xs text-cyan-100 sm:mt-6">
-                    <input
-                      type="checkbox"
-                      checked={titleTransferAcknowledged}
-                      onChange={(event) => setTitleTransferAcknowledged(event.target.checked)}
-                    />
-                    Confirm title transfer acknowledgement
-                  </label>
-
-                  <div className="sm:ml-auto sm:mt-6">
+                  <div className="sm:ml-auto">
                     <button
                       type="button"
                       onClick={handleAuthoriseTransfer}
@@ -418,7 +396,27 @@ export default function MaterialsClaimReviewModal({
                       {authorising ? 'Processing...' : 'Authorise transfer'}
                     </button>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+                  >
+                    Close
+                  </button>
                 </div>
+              </div>
+            )}
+
+            {!evidence && !loading && (
+              <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4 text-right">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+                >
+                  Close
+                </button>
               </div>
             )}
           </div>
@@ -455,6 +453,21 @@ export default function MaterialsClaimReviewModal({
           </div>
         </div>
       </div>
+
+      {lightboxUrl && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/85 p-4">
+          <div className="relative w-full max-w-5xl rounded-xl border border-slate-700 bg-slate-950 p-2">
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              className="absolute right-3 top-3 z-10 rounded border border-slate-500 bg-slate-900/90 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-slate-800"
+            >
+              Close
+            </button>
+            <img src={lightboxUrl} alt="Claim evidence" className="max-h-[80vh] w-full rounded object-contain" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

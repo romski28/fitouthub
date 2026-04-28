@@ -82,6 +82,16 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
       minimumFractionDigits: 0,
     }).format(typeof value === 'string' ? parseFloat(value || '0') : value);
 
+  const filenameFromUrl = (url: string) => {
+    try {
+      const clean = url.split('?')[0] || url;
+      const segments = clean.split('/');
+      return decodeURIComponent(segments[segments.length - 1] || url);
+    } catch {
+      return url;
+    }
+  };
+
   const parseMilestoneMetadataFromNotes = (notes?: string | null): { paymentMilestoneId?: string } | null => {
     if (!notes || typeof notes !== 'string') return null;
     const marker = '__FOH_MILESTONE__';
@@ -262,7 +272,15 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
       return;
     }
 
-    const itemNotes = readyRows.map((r) => `${r.filename}${r.note ? `: ${r.note}` : ''}`).join(' | ');
+    const itemNotes = readyRows
+      .map((r) => {
+        const value = parseFloat(r.value);
+        const normalizedValue = Number.isFinite(value) && value > 0 ? value.toFixed(2) : r.value;
+        const note = r.note.trim();
+        const persistedFilename = filenameFromUrl(r.url) || r.filename;
+        return `${persistedFilename} (HKD ${normalizedValue})${note ? `: ${note}` : ':'}`;
+      })
+      .join(' | ');
 
     try {
       setSubmitting(true);
