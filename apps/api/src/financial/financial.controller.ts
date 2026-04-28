@@ -459,6 +459,30 @@ export class FinancialController {
     });
   }
 
+  @Post('project/:projectId/milestones/:milestoneId/procurement-evidence/:evidenceId/message')
+  @UseGuards(CombinedAuthGuard)
+  async addProcurementEvidenceMessage(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Param('evidenceId') evidenceId: string,
+    @Body() body: { content: string; attachments?: { url: string; filename: string }[] },
+    @Request() req: any,
+  ) {
+    const content = String(body?.content || '').trim();
+    if (!content) throw new BadRequestException('Message content is required');
+    const actorRole: 'client' | 'professional' | 'admin' =
+      req.user?.role === 'admin' ? 'admin' : req.user?.isProfessional ? 'professional' : 'client';
+    return this.financialService.addProcurementEvidenceMessage({
+      projectId,
+      milestoneId,
+      evidenceId,
+      actorId: req.user.id,
+      actorRole,
+      content,
+      attachments: Array.isArray(body?.attachments) ? body.attachments : [],
+    });
+  }
+
   @Post('project/:projectId/milestones/:milestoneId/procurement-evidence/:evidenceId/review')
   @UseGuards(CombinedAuthGuard)
   async reviewMilestoneProcurementEvidence(

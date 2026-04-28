@@ -235,7 +235,7 @@ VALUES
     'The client has reviewed your purchase receipts and has questions. Reply in the claim thread to continue. Once they are satisfied, the confirmed amount will be released to your withdrawable wallet.',
     'View claim thread',
     'Later',
-    'navigate_tab',
+    'open_custom_modal',
     'close_modal',
     '{"tab":"financials"}',
     true,
@@ -300,7 +300,7 @@ VALUES
     'The client has reviewed your purchase receipts and has questions. Reply in the claim thread to continue. Once they are satisfied, the confirmed amount will be released to your withdrawable wallet.',
     'View claim thread',
     'Later',
-    'navigate_tab',
+    'open_custom_modal',
     'close_modal',
     '{"tab":"financials"}',
     true,
@@ -327,6 +327,162 @@ SET
   "displayOrder"             = EXCLUDED."displayOrder",
   "updatedAt"                = NOW();
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PART 6 — NextStepConfig: REVIEW_MATERIALS_PURCHASE (CONTRACT_PHASE, CLIENT)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Shown to the client after a pending procurement-evidence row exists.
+-- The dispatcher routes this to the review-materials-claim custom modal.
+
+INSERT INTO "NextStepConfig"
+  (
+    "id",
+    "projectStage",
+    "role",
+    "actionKey",
+    "actionLabel",
+    "description",
+    "modalTitle",
+    "modalBody",
+    "modalDetailsBody",
+    "modalSuccessTitle",
+    "modalSuccessBody",
+    "modalSuccessNextStepBody",
+    "modalPrimaryButtonLabel",
+    "modalSecondaryButtonLabel",
+    "modalPrimaryActionType",
+    "modalSecondaryActionType",
+    "detailsTarget",
+    "isPrimary",
+    "isElective",
+    "requiresAction",
+    "displayOrder",
+    "createdAt",
+    "updatedAt"
+  )
+VALUES
+  (
+    gen_random_uuid()::text,
+    'CONTRACT_PHASE',
+    'CLIENT',
+    'REVIEW_MATERIALS_PURCHASE',
+    'Review materials claim',
+    'The professional has submitted purchase receipts for milestone 1 materials. Review the receipts and authorise payment or request confirmation.',
+    'Milestone 1 — Review materials claim',
+    'Check each receipt, review the total amount claimed, and either authorise payment or ask the professional for clarification.',
+    'Once you authorise, the confirmed amount is transferred to the professional''s withdrawable wallet. Any unspent cap balance is returned to your escrow.',
+    'Materials claim reviewed!',
+    'Your decision has been recorded. You will be notified of any updates.',
+    'What''s next? If you authorised, the professional will receive the funds shortly. If you requested confirmation, keep an eye on the claim thread.',
+    'Review claim',
+    'Later',
+    'open_custom_modal',
+    'close_modal',
+    '{"tab":"financials"}',
+    true,
+    false,
+    true,
+    1,
+    NOW(),
+    NOW()
+  )
+ON CONFLICT ("projectStage", "role", "actionKey") DO UPDATE
+SET
+  "actionLabel"              = EXCLUDED."actionLabel",
+  "description"              = EXCLUDED."description",
+  "modalTitle"               = EXCLUDED."modalTitle",
+  "modalBody"                = EXCLUDED."modalBody",
+  "modalDetailsBody"         = EXCLUDED."modalDetailsBody",
+  "modalSuccessTitle"        = EXCLUDED."modalSuccessTitle",
+  "modalSuccessBody"         = EXCLUDED."modalSuccessBody",
+  "modalSuccessNextStepBody" = EXCLUDED."modalSuccessNextStepBody",
+  "modalPrimaryButtonLabel"  = EXCLUDED."modalPrimaryButtonLabel",
+  "modalSecondaryButtonLabel"= EXCLUDED."modalSecondaryButtonLabel",
+  "modalPrimaryActionType"   = EXCLUDED."modalPrimaryActionType",
+  "modalSecondaryActionType" = EXCLUDED."modalSecondaryActionType",
+  "detailsTarget"            = EXCLUDED."detailsTarget",
+  "isPrimary"                = EXCLUDED."isPrimary",
+  "isElective"               = EXCLUDED."isElective",
+  "requiresAction"           = EXCLUDED."requiresAction",
+  "displayOrder"             = EXCLUDED."displayOrder",
+  "updatedAt"                = NOW();
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PART 7 — NextStepConfig: REVIEW_MATERIALS_PURCHASE (PRE_WORK, CLIENT)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+INSERT INTO "NextStepConfig"
+  (
+    "id",
+    "projectStage",
+    "role",
+    "actionKey",
+    "actionLabel",
+    "description",
+    "modalTitle",
+    "modalBody",
+    "modalDetailsBody",
+    "modalSuccessTitle",
+    "modalSuccessBody",
+    "modalSuccessNextStepBody",
+    "modalPrimaryButtonLabel",
+    "modalSecondaryButtonLabel",
+    "modalPrimaryActionType",
+    "modalSecondaryActionType",
+    "detailsTarget",
+    "isPrimary",
+    "isElective",
+    "requiresAction",
+    "displayOrder",
+    "createdAt",
+    "updatedAt"
+  )
+VALUES
+  (
+    gen_random_uuid()::text,
+    'PRE_WORK',
+    'CLIENT',
+    'REVIEW_MATERIALS_PURCHASE',
+    'Review materials claim',
+    'The professional has submitted purchase receipts for milestone 1 materials. Review the receipts and authorise payment or request confirmation.',
+    'Milestone 1 — Review materials claim',
+    'Check each receipt, review the total amount claimed, and either authorise payment or ask the professional for clarification.',
+    'Once you authorise, the confirmed amount is transferred to the professional''s withdrawable wallet. Any unspent cap balance is returned to your escrow.',
+    'Materials claim reviewed!',
+    'Your decision has been recorded. You will be notified of any updates.',
+    'What''s next? If you authorised, the professional will receive the funds shortly. If you requested confirmation, keep an eye on the claim thread.',
+    'Review claim',
+    'Later',
+    'open_custom_modal',
+    'close_modal',
+    '{"tab":"financials"}',
+    true,
+    false,
+    true,
+    1,
+    NOW(),
+    NOW()
+  )
+ON CONFLICT ("projectStage", "role", "actionKey") DO UPDATE
+SET
+  "actionLabel"              = EXCLUDED."actionLabel",
+  "description"              = EXCLUDED."description",
+  "modalTitle"               = EXCLUDED."modalTitle",
+  "modalBody"                = EXCLUDED."modalBody",
+  "modalDetailsBody"         = EXCLUDED."modalDetailsBody",
+  "modalSuccessTitle"        = EXCLUDED."modalSuccessTitle",
+  "modalSuccessBody"         = EXCLUDED."modalSuccessBody",
+  "modalSuccessNextStepBody" = EXCLUDED."modalSuccessNextStepBody",
+  "modalPrimaryButtonLabel"  = EXCLUDED."modalPrimaryButtonLabel",
+  "modalSecondaryButtonLabel"= EXCLUDED."modalSecondaryButtonLabel",
+  "modalPrimaryActionType"   = EXCLUDED."modalPrimaryActionType",
+  "modalSecondaryActionType" = EXCLUDED."modalSecondaryActionType",
+  "detailsTarget"            = EXCLUDED."detailsTarget",
+  "isPrimary"                = EXCLUDED."isPrimary",
+  "isElective"               = EXCLUDED."isElective",
+  "requiresAction"           = EXCLUDED."requiresAction",
+  "displayOrder"             = EXCLUDED."displayOrder",
+  "updatedAt"                = NOW();
+
 COMMIT;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -336,8 +492,12 @@ COMMIT;
 --        "modalTitle", "modalPrimaryButtonLabel", "modalPrimaryActionType",
 --        "detailsTarget", "isPrimary", "displayOrder"
 -- FROM "NextStepConfig"
--- WHERE "role" = 'PROFESSIONAL'
---   AND "actionKey" IN ('MAKE_MILESTONE_1_CLAIM', 'RESPOND_TO_MATERIALS_QUESTIONS')
+-- WHERE "actionKey" IN (
+--   'MAKE_MILESTONE_1_CLAIM',
+--   'RESPOND_TO_MATERIALS_QUESTIONS',
+--   'REVIEW_MATERIALS_PURCHASE'
+-- )
+-- ORDER BY "role", "projectStage", "actionKey";
 -- ORDER BY "projectStage", "displayOrder";
 
 -- SELECT "id", "status", "createdAt", "deadlineAt", "openingMessage"

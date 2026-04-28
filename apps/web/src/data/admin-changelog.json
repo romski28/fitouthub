@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-04-28-6728ba8",
+    "date": "2026-04-28T15:52:21+08:00",
+    "title": "feat: scoped claim chat workflow — client review modal, professional respond modal, message endpoint, DB config for REVIEW_MATERIALS_PURCHASE",
+    "summary": "feat: scoped claim chat workflow — client review modal, professional respond modal, message endpoint, DB config for REVIEW_MATERIALS_PURCHASE",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6728ba8",
+    "files": [
+      "apps/api/prisma/MANUAL_CONFIGURE_MAKE_MILESTONE_1_CLAIM.sql",
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx",
+      "apps/web/src/components/next-steps/review-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-892dad2",
     "date": "2026-04-28T15:26:59+08:00",
     "title": "feat(db): add NextStepConfig rows + Phase 2 schema patch for MAKE_MILESTONE_1_CLAIM",

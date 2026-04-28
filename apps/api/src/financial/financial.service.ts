@@ -2644,6 +2644,61 @@ export class FinancialService {
     }
   }
 
+  async addProcurementEvidenceMessage(input: {
+    projectId: string;
+    milestoneId: string;
+    evidenceId: string;
+    actorId: string;
+    actorRole: 'client' | 'professional' | 'admin';
+    content: string;
+    attachments?: { url: string; filename: string }[];
+  }) {
+    // Validate evidence exists and belongs to this project/milestone
+    let evidence: any;
+    try {
+      evidence = await (this.prisma as any).milestoneProcurementEvidence.findFirst({
+        where: { id: input.evidenceId, projectId: input.projectId, paymentMilestoneId: input.milestoneId },
+      });
+    } catch (err) {
+      this.rethrowProcurementEvidenceTableError(err);
+    }
+    if (!evidence) throw new NotFoundException('Procurement evidence not found');
+    if (String(evidence.status || '').toLowerCase() !== 'pending') {
+      throw new BadRequestException('This claim is no longer open for messages');
+    }
+
+    // Post to scoped project chat
+    const thread = await this.chatService.getOrCreateProjectThread(input.projectId);
+    const threadId = (thread as any).id || (thread as any).threadId;
+    const message = await this.chatService.addProjectMessage(
+      threadId,
+      input.actorRole === 'admin' ? 'foh' : input.actorRole,
+      input.actorRole !== 'professional' ? input.actorId : null,
+      input.actorRole === 'professional' ? input.actorId : null,
+      input.content,
+      input.attachments || [],
+      { threadScope: 'claim', threadScopeId: input.evidenceId },
+    );
+
+    // Timestamp the evidence row
+    const now = new Date();
+    const timestampPatch: Record<string, Date> =
+      input.actorRole === 'client' || input.actorRole === 'admin'
+        ? { clientQuestionedAt: now }
+        : { professionalRespondedAt: now };
+
+    try {
+      await (this.prisma as any).milestoneProcurementEvidence.update({
+        where: { id: input.evidenceId },
+        data: timestampPatch,
+      });
+    } catch {
+      // timestamp patch is best-effort; don't fail the whole operation
+    }
+
+    return { success: true, message };
+  }
+
   async reviewMilestoneProcurementEvidence(input: {
     projectId: string;
     milestoneId: string;

@@ -14,6 +14,8 @@ import { AgreeMilestoneScheduleModal } from './agree-milestone-schedule-modal';
 import { DepositEscrowModal } from './deposit-escrow-modal';
 import { WalletTransferModal } from './wallet-transfer-modal';
 import { MaterialsClaimModal } from './materials-claim-modal';
+import { ReviewMaterialsClaimModal } from './review-materials-claim-modal';
+import { RespondMaterialsClaimModal } from './respond-materials-claim-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -225,6 +227,26 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'review-materials-claim') {
+    return (
+      <ReviewMaterialsClaimModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
+  if (modalType === 'respond-materials-claim') {
+    return (
+      <RespondMaterialsClaimModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -232,7 +254,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' {
   // Escrow deposit — has its own OTP flow
   if (actionKey === 'DEPOSIT_ESCROW_FUNDS') {
     return 'deposit-escrow';
@@ -278,6 +300,14 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (['MAKE_MILESTONE_1_CLAIM'].includes(actionKey)) {
     return 'materials-claim';
+  }
+
+  if (['REVIEW_MATERIALS_PURCHASE'].includes(actionKey)) {
+    return 'review-materials-claim';
+  }
+
+  if (['RESPOND_TO_MATERIALS_QUESTIONS'].includes(actionKey)) {
+    return 'respond-materials-claim';
   }
 
   // Default to general modal
