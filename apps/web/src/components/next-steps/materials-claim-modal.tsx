@@ -65,8 +65,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
 
   const [uploadRows, setUploadRows] = React.useState<UploadRow[]>([]);
   const [uploadingFiles, setUploadingFiles] = React.useState(false);
-  const [materialsNotes, setMaterialsNotes] = React.useState('');
-  const [materialsOpeningMessage, setMaterialsOpeningMessage] = React.useState('');
+    const [materialsOpeningMessage, setMaterialsOpeningMessage] = React.useState('Milestone 1 payment request');
   const [submitting, setSubmitting] = React.useState(false);
   const [skipping, setSkipping] = React.useState(false);
 
@@ -260,7 +259,6 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
     }
 
     const itemNotes = readyRows.map((r) => `${r.filename}${r.note ? `: ${r.note}` : ''}`).join(' | ');
-    const fullNotes = [itemNotes, materialsNotes].filter(Boolean).join('\n\n');
 
     try {
       setSubmitting(true);
@@ -273,7 +271,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
             claimedAmount,
             invoiceUrls: readyRows.map((r) => r.url),
             openingMessage: materialsOpeningMessage || undefined,
-            notes: fullNotes || undefined,
+            notes: itemNotes || undefined,
           }),
         },
       );
@@ -399,12 +397,23 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1">General notes (optional)</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-white">Opening message</label>
+                      {materialsOpeningMessage && (
+                        <button
+                          type="button"
+                          onClick={() => setMaterialsOpeningMessage('')}
+                          className="text-[10px] text-slate-400 hover:text-slate-200 transition"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                     <textarea
-                      value={materialsNotes}
-                      onChange={(e) => setMaterialsNotes(e.target.value)}
+                      value={materialsOpeningMessage}
+                      onChange={(e) => setMaterialsOpeningMessage(e.target.value)}
                       rows={2}
-                      placeholder="Optional context for the client about this materials claim"
+                      placeholder="Opening message to send with this claim (e.g., 'Milestone 1 payment request')"
                       className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500"
                     />
                   </div>

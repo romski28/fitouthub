@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-3eeb15d",
+    "date": "2026-04-28T16:09:25+08:00",
+    "title": "refactor: replace general notes with pre-hydrated opening message + clear button",
+    "summary": "refactor: replace general notes with pre-hydrated opening message + clear button",
+    "areas": [
+      "web"
+    ],
+    "commit": "3eeb15d",
+    "files": [
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-df1c04d",
     "date": "2026-04-28T15:55:40+08:00",
     "title": "fix: review materials claim modal — sequential fetch instead of Promise.all",
