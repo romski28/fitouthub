@@ -332,7 +332,7 @@ export default function MaterialsClaimReviewModal({
                 </div>
               ) : (
                 <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="space-y-3 min-h-0">
+                  <div className="space-y-3 min-h-0 min-w-0">
                     <div className="rounded-lg border border-slate-700 bg-slate-800/60 p-4 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Claimed amount</span>
@@ -394,7 +394,7 @@ export default function MaterialsClaimReviewModal({
                     )}
                   </div>
 
-                  <div className="min-h-0">
+                  <div className="min-h-0 min-w-0">
                     <ProjectChat
                       projectId={projectId}
                       accessToken={accessToken}
@@ -403,7 +403,7 @@ export default function MaterialsClaimReviewModal({
                       threadScopeId={evidence.id}
                       sendButtonLabel="Request clarification"
                       messagePlaceholder="Ask for clarification on receipts, amounts, or notes..."
-                      className="min-h-0"
+                      className="min-h-0 min-w-0"
                     />
                   </div>
                 </div>

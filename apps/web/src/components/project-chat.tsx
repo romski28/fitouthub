@@ -156,7 +156,7 @@ export default function ProjectChat({
   };
 
   return (
-    <div className={`flex flex-col bg-slate-900/60 rounded-lg border border-slate-700 shadow-sm ${className}`}>
+    <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-slate-700 bg-slate-900/60 shadow-sm ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
         <div className="flex items-center justify-between">
@@ -172,7 +172,7 @@ export default function ProjectChat({
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[500px]">
+      <div ref={messagesContainerRef} className="min-w-0 space-y-3 overflow-x-hidden overflow-y-auto p-4 min-h-[300px] max-h-[500px]">
         {loading ? (
           <div className="text-center text-slate-400 text-sm py-8">Loading chat...</div>
         ) : error ? (
@@ -188,9 +188,9 @@ export default function ProjectChat({
             const isFoh = msg.senderType === 'foh';
             
             return (
-              <div key={msg.id} className={`flex ${isCurrent ? 'justify-end' : 'justify-start'}`}>
+              <div key={msg.id} className={`flex min-w-0 ${isCurrent ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[75%] rounded-lg px-4 py-2 text-sm ${
+                  className={`min-w-0 max-w-[75%] rounded-lg px-4 py-2 text-sm ${
                     isCurrent
                       ? 'bg-emerald-600 text-white'
                       : isFoh
@@ -205,9 +205,7 @@ export default function ProjectChat({
                   )}
                   
                   {/* Message content */}
-                  {msg.content && (
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
-                  )}
+                  {msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>}
                   
                   {/* Image attachments */}
                   {msg.attachments && msg.attachments.length > 0 && (
@@ -285,19 +283,19 @@ export default function ProjectChat({
           </div>
         )}
         
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={messagePlaceholder}
             disabled={sending || loading}
-            className="flex-1 px-3 py-2 border border-slate-600 bg-slate-800 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-900"
+            className="min-w-0 flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-900"
           />
           <button
             type="submit"
             disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending || loading}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-700 disabled:cursor-not-allowed transition"
+            className="w-full shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-700 sm:w-auto"
           >
             {sending ? 'Sending...' : sendButtonLabel}
           </button>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-28-f4c062e",
+    "date": "2026-04-28T20:50:59+08:00",
+    "title": "fix(claims): prevent chat-driven mobile horizontal overflow",
+    "summary": "fix(claims): prevent chat-driven mobile horizontal overflow",
+    "areas": [
+      "web"
+    ],
+    "commit": "f4c062e",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-0b8c5ff",
     "date": "2026-04-28T20:42:13+08:00",
     "title": "fix(claims): improve mobile modal sizing and transfer row layout",
