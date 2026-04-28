@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-28-892dad2",
+    "date": "2026-04-28T15:26:59+08:00",
+    "title": "feat(db): add NextStepConfig rows + Phase 2 schema patch for MAKE_MILESTONE_1_CLAIM",
+    "summary": "feat(db): add NextStepConfig rows + Phase 2 schema patch for MAKE_MILESTONE_1_CLAIM",
+    "areas": [
+      "api"
+    ],
+    "commit": "892dad2",
+    "files": [
+      "apps/api/prisma/MANUAL_CONFIGURE_MAKE_MILESTONE_1_CLAIM.sql",
+      "apps/api/src/scripts/seed-next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-28-d7261d2",
     "date": "2026-04-28T15:22:18+08:00",
     "title": "feat(web): add dedicated MAKE_MILESTONE_1_CLAIM modal and dispatcher routing",
