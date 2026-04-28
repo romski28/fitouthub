@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-28-8ef47a4",
+    "date": "2026-04-28T13:24:05+08:00",
+    "title": "fix(web): show parallel professional next steps for start + materials claim",
+    "summary": "fix(web): show parallel professional next steps for start + materials claim",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ef47a4",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/lib/next-step-modal-content.ts",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-28-9b73331",
     "date": "2026-04-28T12:56:19+08:00",
     "title": "fix: unlock professional after wallet transfer (milestone_foh_allocation_cap)",

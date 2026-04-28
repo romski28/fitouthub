@@ -11,6 +11,7 @@ export const professionalActionTabMap: Record<string, string> = {
   CONFIRM_START_DATE: 'schedule',
   CONFIRM_SCHEDULE: 'schedule',
   START_PROJECT: 'schedule',
+  MAKE_MILESTONE_1_CLAIM: 'financials',
   WAIT_FOR_CLIENT_FUNDS: 'schedule',
   WAIT_FOR_MATERIALS_PROCESS: 'schedule',
   RESPOND_TO_MATERIALS_QUESTIONS: 'financials',

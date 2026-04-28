@@ -67,6 +67,30 @@ const FALLBACK_MODAL_CONTENT: Record<string, NextStepModalContent> = {
     secondaryActionType: 'close_modal',
     detailsTarget: '{"tab":"financials"}',
   },
+  START_PROJECT: {
+    title: 'Start project on site',
+    body: 'All core prerequisites are complete. You can begin work on site now.',
+    detailsBody:
+      'Open Schedule to confirm kickoff sequencing and team readiness before starting on-site work.',
+    primaryButtonLabel: 'Open schedule',
+    secondaryButtonLabel: 'Later',
+    primaryActionType: 'navigate_tab',
+    primaryActionTarget: '{"tab":"schedule"}',
+    secondaryActionType: 'close_modal',
+    detailsTarget: '{"tab":"schedule"}',
+  },
+  MAKE_MILESTONE_1_CLAIM: {
+    title: 'Submit milestone 1 materials claim',
+    body: 'Upload purchase receipts and submit your claimed milestone 1 materials amount for client review.',
+    detailsBody:
+      'Open Financials, add receipts/photos, and submit the claim. The client can approve the confirmed amount to your withdrawable wallet.',
+    primaryButtonLabel: 'Open financials',
+    secondaryButtonLabel: 'Later',
+    primaryActionType: 'navigate_tab',
+    primaryActionTarget: '{"tab":"financials"}',
+    secondaryActionType: 'close_modal',
+    detailsTarget: '{"tab":"financials"}',
+  },
   WAIT_FOR_MATERIALS_PROCESS: {
     title: 'Milestone 1 materials process in progress',
     body: 'You are waiting for the client to complete the milestone 1 materials wallet step.',

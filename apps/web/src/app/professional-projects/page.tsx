@@ -332,7 +332,8 @@ export default function ProfessionalProjectsPage() {
             <div className="space-y-2">
               {dashboardProjects.map((projectProf) => {
                 const actions = nextStepMap[projectProf.project.id] || [];
-                const primaryAction = actions[0] || null;
+                const primaryActions = actions.filter((action) => action.isPrimary);
+                const primaryAction = primaryActions[0] || null;
                 const isStopStatus = ['declined', 'rejected'].includes((projectProf.status || '').toLowerCase());
                 const isRestricted = Boolean(projectProf.accessRestricted);
                 const baseBorder = professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
@@ -420,20 +421,25 @@ export default function ProfessionalProjectsPage() {
                             <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                           ) : (
                             <>
-                              {primaryAction ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void openProfessionalNextStepModal(
-                                      primaryAction,
-                                      projectProf.project.id,
-                                      projectProf.id,
-                                    )
-                                  }
-                                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-                                >
-                                  {primaryAction.actionLabel}
-                                </button>
+                              {primaryActions.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {primaryActions.slice(0, 2).map((action) => (
+                                    <button
+                                      key={`${projectProf.project.id}-${action.actionKey}`}
+                                      type="button"
+                                      onClick={() =>
+                                        void openProfessionalNextStepModal(
+                                          action,
+                                          projectProf.project.id,
+                                          projectProf.id,
+                                        )
+                                      }
+                                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                                    >
+                                      {action.actionLabel}
+                                    </button>
+                                  ))}
+                                </div>
                               ) : (
                                 <Link
                                   href={primaryActionHref}
