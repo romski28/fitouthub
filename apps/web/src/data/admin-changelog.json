@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-0b8c5ff",
+    "date": "2026-04-28T20:42:13+08:00",
+    "title": "fix(claims): improve mobile modal sizing and transfer row layout",
+    "summary": "fix(claims): improve mobile modal sizing and transfer row layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "0b8c5ff",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-3e8e3b6",
     "date": "2026-04-28T20:10:05+08:00",
     "title": "fix(claims): simplify review modal footer to single row, uniform height",

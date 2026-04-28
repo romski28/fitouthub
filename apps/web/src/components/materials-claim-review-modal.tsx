@@ -290,19 +290,19 @@ export default function MaterialsClaimReviewModal({
 
   return (
     <div
-      className={`fixed inset-0 z-[110] flex items-center justify-center p-4 transition-all ${
+      className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-2 sm:items-center sm:p-4 transition-all ${
         isOpen ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
       }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-6xl max-h-[88vh] [perspective:1600px]">
+      <div className="my-2 w-full max-w-6xl sm:my-0 [perspective:1600px]">
         <div
-          className="relative grid max-h-[88vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+          className="relative grid sm:max-h-[88vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out"
           style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
         >
-          <div className="col-start-1 row-start-1 flex max-h-[88vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]">
+          <div className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]">
             <button
               type="button"
               onClick={() => setShowDetails(true)}
@@ -320,7 +320,7 @@ export default function MaterialsClaimReviewModal({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-visible p-4 sm:overflow-y-auto">
               {loading ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
@@ -412,9 +412,11 @@ export default function MaterialsClaimReviewModal({
 
             {evidence && (
               <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="shrink-0 text-xs font-semibold text-slate-300">Settlement decision</span>
-                  <div className="relative min-w-[120px] flex-1">
+                <div className="flex w-full flex-wrap items-center justify-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 text-xs font-semibold text-slate-300">Amount to transfer</span>
+                  </div>
+                  <div className="relative w-full max-w-[13rem] min-w-[11rem]">
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
                     <input
                       type="number"
@@ -459,7 +461,7 @@ export default function MaterialsClaimReviewModal({
           </div>
 
           <div
-            className="col-start-1 row-start-1 flex max-h-[88vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+            className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]"
             style={{ transform: 'rotateY(180deg)' }}
             aria-hidden={!showDetails}
           >
@@ -472,7 +474,7 @@ export default function MaterialsClaimReviewModal({
               ×
             </button>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
+            <div className="flex-1 overflow-y-visible px-6 pb-6 pt-12 text-left sm:overflow-y-auto">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
               <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title}</h3>
               <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
