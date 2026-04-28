@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-9b73331",
+    "date": "2026-04-28T12:56:19+08:00",
+    "title": "fix: unlock professional after wallet transfer (milestone_foh_allocation_cap)",
+    "summary": "fix: unlock professional after wallet transfer (milestone_foh_allocation_cap)",
+    "areas": [
+      "api"
+    ],
+    "commit": "9b73331",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-27-30ca499",
     "date": "2026-04-27T22:20:02+08:00",
     "title": "fix(web): prevent dead next-step button for wait materials process",

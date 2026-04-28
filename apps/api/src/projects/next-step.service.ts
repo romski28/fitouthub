@@ -112,22 +112,21 @@ export class NextStepService {
       return 'not_required';
     }
 
-    // For SCALE_1/2 the full prerequisite chain is:
-    //   1. Client authorizes the milestone 1 cap (AUTHORIZE_MATERIALS_WALLET client step)
-    //   2. Professional submits materials purchase evidence
-    //   3. Client approves the evidence → proven amount moves to withdrawable wallet
-    // The professional is always gated (pending) until step 3 is confirmed.
-    // This is intentional: for all other scales 'not_required' is returned above.
-    const approvedCount = await this.prisma.financialTransaction.count({
+    // The professional is unblocked as soon as the client authorizes the milestone 1
+    // cap allocation (milestone_foh_allocation_cap). That is the "wallet transfer" event.
+    // After that, the professional can submit evidence and start work.
+    // Checking for milestone_procurement_approved (the final approval) would create a
+    // deadlock: the professional can't submit evidence if they're still gated.
+    const capCount = await this.prisma.financialTransaction.count({
       where: {
         projectId,
-        type: 'milestone_procurement_approved',
+        type: 'milestone_foh_allocation_cap',
         status: 'confirmed',
         notes: { contains: firstMilestoneId },
       },
     });
 
-    return approvedCount > 0 ? 'completed' : 'pending';
+    return capCount > 0 ? 'completed' : 'pending';
   }
 
   /**
