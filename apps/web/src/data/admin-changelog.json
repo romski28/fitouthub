@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-28-b162fbb",
+    "date": "2026-04-28T15:06:09+08:00",
+    "title": "feat(web): improve materials claim UX and extract shared table",
+    "summary": "feat(web): improve materials claim UX and extract shared table",
+    "areas": [
+      "web"
+    ],
+    "commit": "b162fbb",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/materials-claim-items-table.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-a74be5b",
     "date": "2026-04-28T14:35:44+08:00",
     "title": "feat: materials purchase claim panel for Scale 1/2 with file upload, skip workflow and backend skip endpoint",

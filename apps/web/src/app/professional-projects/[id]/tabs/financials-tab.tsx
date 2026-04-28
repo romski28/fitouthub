@@ -4,6 +4,7 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
 import MaterialsClaimThreadPanel from '@/components/materials-claim-thread-panel';
+import MaterialsClaimItemsTable from '@/components/materials-claim-items-table';
 
 interface PaymentRequest {
   id: string;
@@ -22,6 +23,7 @@ interface FinancialSummaryTransaction {
   id: string;
   type: string;
   status: string;
+  amount?: number | string | null;
   notes?: string | null;
   createdAt: string;
 }
@@ -310,6 +312,37 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     const v = parseFloat(row.value);
     return sum + (Number.isFinite(v) && v > 0 ? v : 0);
   }, 0);
+  const maxClaimableAmount = React.useMemo(() => {
+    if (!firstPaymentMilestone) return 0;
+    const firstMilestoneId = firstPaymentMilestone.id;
+    const txs = Array.isArray(projectFinancialSummary?.transactions)
+      ? projectFinancialSummary.transactions
+      : [];
+
+    let capAuthorized = 0;
+    let alreadyApproved = 0;
+    let alreadyReturned = 0;
+
+    for (const tx of txs) {
+      const meta = parseMilestoneMetadataFromNotes(tx.notes);
+      if (!meta?.paymentMilestoneId || meta.paymentMilestoneId !== firstMilestoneId) continue;
+      const amount = Number((tx as any).amount || 0);
+      if (!Number.isFinite(amount) || amount <= 0) continue;
+
+      if (tx.type === 'milestone_foh_allocation_cap' && String(tx.status || '').toLowerCase() === 'confirmed') {
+        capAuthorized += amount;
+      }
+      if (tx.type === 'milestone_procurement_approved' && String(tx.status || '').toLowerCase() === 'confirmed') {
+        alreadyApproved += amount;
+      }
+      if (tx.type === 'milestone_cap_remainder_return' && String(tx.status || '').toLowerCase() === 'confirmed') {
+        alreadyReturned += amount;
+      }
+    }
+
+    return Math.max(capAuthorized - alreadyApproved - alreadyReturned, 0);
+  }, [firstPaymentMilestone, projectFinancialSummary?.transactions]);
+  const isClaimOverMaximum = materialsClaimTotal > maxClaimableAmount;
   const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
 
   const paymentMilestonesByProjectMilestoneId = new Map(
@@ -482,6 +515,10 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       return;
     }
     const claimedAmount = readyRows.reduce((sum, r) => sum + parseFloat(r.value), 0);
+    if (claimedAmount > maxClaimableAmount) {
+      toast.error(`Claim exceeds available maximum (${formatHKD(maxClaimableAmount)})`);
+      return;
+    }
     const itemNotes = readyRows.map((r) => `${r.filename}${r.note ? ': ' + r.note : ''}`).join(' | ');
     const fullNotes = [itemNotes, materialsNotes].filter(Boolean).join('\n\n');
     try {
@@ -1203,72 +1240,19 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   </div>
 
                   {uploadRows.length > 0 && (
-                    <div className="rounded-md border border-slate-700 overflow-hidden">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="border-b border-slate-700 bg-slate-900/80">
-                            <th className="px-3 py-2 text-left font-semibold text-slate-300">File</th>
-                            <th className="px-3 py-2 text-left font-semibold text-slate-300">Note</th>
-                            <th className="px-3 py-2 text-left font-semibold text-slate-300 w-28">Value (HKD)</th>
-                            <th className="px-2 py-2 w-8" />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {uploadRows.map((row) => (
-                            <tr key={row.id} className="border-b border-slate-800 bg-slate-900/40">
-                              <td className="px-3 py-2 text-slate-200">
-                                {row.uploading ? (
-                                  <span className="text-slate-400 italic">Uploading {row.filename}…</span>
-                                ) : row.url === 'error' ? (
-                                  <span className="text-rose-400">{row.filename} (failed)</span>
-                                ) : (
-                                  <span className="truncate max-w-[120px] block">{row.filename}</span>
-                                )}
-                              </td>
-                              <td className="px-3 py-2">
-                                <input
-                                  type="text"
-                                  value={row.note}
-                                  onChange={(e) => setUploadRows((prev) => prev.map((r) => r.id === row.id ? { ...r, note: e.target.value } : r))}
-                                  placeholder="Short description"
-                                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white placeholder-slate-500"
-                                  disabled={row.uploading}
-                                />
-                              </td>
-                              <td className="px-3 py-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={row.value}
-                                  onChange={(e) => setUploadRows((prev) => prev.map((r) => r.id === row.id ? { ...r, value: e.target.value } : r))}
-                                  placeholder="0.00"
-                                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white placeholder-slate-500"
-                                  disabled={row.uploading}
-                                />
-                              </td>
-                              <td className="px-2 py-2 text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => setUploadRows((prev) => prev.filter((r) => r.id !== row.id))}
-                                  className="text-slate-400 hover:text-rose-400 transition"
-                                  aria-label="Remove"
-                                >
-                                  ×
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                          {uploadRows.length > 0 && (
-                            <tr className="border-t border-slate-700 bg-slate-900/80">
-                              <td colSpan={2} className="px-3 py-2 text-right text-xs font-semibold text-slate-300">Total claimed</td>
-                              <td className="px-3 py-2 text-xs font-bold text-white">{formatHKD(materialsClaimTotal)}</td>
-                              <td />
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                    <MaterialsClaimItemsTable
+                      rows={uploadRows}
+                      totalClaimed={materialsClaimTotal}
+                      maxClaimableAmount={maxClaimableAmount}
+                      onNoteChange={(rowId, value) =>
+                        setUploadRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, note: value } : r)))
+                      }
+                      onValueChange={(rowId, value) =>
+                        setUploadRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, value } : r)))
+                      }
+                      onRemove={(rowId) => setUploadRows((prev) => prev.filter((r) => r.id !== rowId))}
+                      formatHKD={formatHKD}
+                    />
                   )}
 
                   <div>
@@ -1282,23 +1266,30 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                     />
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={handleSubmitMaterialsClaim}
-                      disabled={!canSubmitMaterialsClaim || materialsBusy === 'submit' || uploadRows.filter((r) => !r.uploading && r.url && r.url !== 'error').length === 0}
-                      className="rounded-md bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 transition"
-                    >
-                      {materialsBusy === 'submit' ? 'Submitting…' : 'Submit for payment'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSkipMaterialsClaim}
-                      disabled={!canSubmitMaterialsClaim || skipping}
-                      className="rounded-md border border-slate-500 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition"
-                    >
-                      {skipping ? 'Processing…' : 'Skip until final payment'}
-                    </button>
+                  <div className="flex w-full justify-end pt-1">
+                    <div className="grid w-full max-w-lg grid-cols-1 gap-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={handleSubmitMaterialsClaim}
+                        disabled={
+                          !canSubmitMaterialsClaim ||
+                          materialsBusy === 'submit' ||
+                          uploadRows.filter((r) => !r.uploading && r.url && r.url !== 'error').length === 0 ||
+                          isClaimOverMaximum
+                        }
+                        className="w-full rounded-md bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 transition"
+                      >
+                        {materialsBusy === 'submit' ? 'Submitting…' : 'Submit for payment'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSkipMaterialsClaim}
+                        disabled={!canSubmitMaterialsClaim || skipping}
+                        className="w-full rounded-md border border-slate-500 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition"
+                      >
+                        {skipping ? 'Processing…' : 'Skip until final payment'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
