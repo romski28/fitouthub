@@ -123,10 +123,14 @@ export function RespondMaterialsClaimModal({
 
   const handleClarificationShared = React.useCallback(async () => {
     // Show celebration modal
-    if (openModal) {
-      openModal({
-        actionKey: 'WAIT_FOR_CLIENT_RESPONSE',
-        modalContent: {
+    if (openModal && state.projectId && state.userId && state.role) {
+      await openModal(
+        'WAIT_FOR_CLIENT_RESPONSE',
+        state.projectId,
+        state.projectDetailsPath,
+        state.userId,
+        state.role,
+        {
           title: 'Clarification shared!',
           body: 'Your response has been sent to the client. They will review your clarification and update the authorisation once satisfied.',
           imageUrl: undefined,
@@ -134,7 +138,8 @@ export function RespondMaterialsClaimModal({
           secondaryButtonLabel: undefined,
           primaryActionType: 'close_modal',
         },
-      });
+        state.projectStage
+      );
     }
 
     // Escalate next-step for this project
@@ -147,7 +152,7 @@ export function RespondMaterialsClaimModal({
         }).catch(() => {}); // best-effort
       } catch {}
     }
-  }, [openModal, state.projectId, accessToken]);
+  }, [openModal, state.projectId, state.userId, state.role, state.projectDetailsPath, state.projectStage, accessToken]);
 
   const formatHKD = (value: number | string) =>
     new Intl.NumberFormat('en-HK', {

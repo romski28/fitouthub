@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-ea63a68",
+    "date": "2026-04-28T21:53:47+08:00",
+    "title": "Fix: Use correct openModal signature with all required arguments",
+    "summary": "Fix: Use correct openModal signature with all required arguments",
+    "areas": [
+      "web"
+    ],
+    "commit": "ea63a68",
+    "files": [
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-ac3c821",
     "date": "2026-04-28T21:51:34+08:00",
     "title": "Add celebration modal and escalation after 'Share clarification'",
