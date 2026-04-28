@@ -461,6 +461,41 @@ export class FinancialController {
     });
   }
 
+  @Patch('project/:projectId/milestones/:milestoneId/procurement-evidence/:evidenceId')
+  @UseGuards(CombinedAuthGuard)
+  async updateMilestoneProcurementEvidence(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Param('evidenceId') evidenceId: string,
+    @Body()
+    body: {
+      claimedAmount: number;
+      invoiceUrls?: string[];
+      photoUrls?: string[];
+      openingMessage?: string;
+      notes?: string;
+    },
+    @Request() req: any,
+  ) {
+    const actorRole: 'professional' | 'admin' = req.user?.role === 'admin' ? 'admin' : 'professional';
+    if (!req.user?.isProfessional && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only professionals or admins can update procurement evidence');
+    }
+
+    return this.financialService.updateMilestoneProcurementEvidence({
+      projectId,
+      milestoneId,
+      evidenceId,
+      actorId: req.user.id,
+      actorRole,
+      claimedAmount: Number(body?.claimedAmount || 0),
+      invoiceUrls: Array.isArray(body?.invoiceUrls) ? body.invoiceUrls : [],
+      photoUrls: Array.isArray(body?.photoUrls) ? body.photoUrls : [],
+      openingMessage: body?.openingMessage,
+      notes: body?.notes,
+    });
+  }
+
   @Post('project/:projectId/milestones/:milestoneId/procurement-evidence/:evidenceId/message')
   @UseGuards(CombinedAuthGuard)
   async addProcurementEvidenceMessage(

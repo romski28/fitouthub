@@ -2646,6 +2646,115 @@ export class FinancialService {
     }
   }
 
+  async updateMilestoneProcurementEvidence(input: {
+    projectId: string;
+    milestoneId: string;
+    evidenceId: string;
+    actorId: string;
+    actorRole: 'professional' | 'admin';
+    claimedAmount: number;
+    invoiceUrls?: string[];
+    photoUrls?: string[];
+    openingMessage?: string;
+    notes?: string;
+  }) {
+    const { paymentPlan, milestone, projectProfessional } =
+      await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
+
+    if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
+      throw new BadRequestException('Procurement evidence workflow is only for Class 1 and 2 projects');
+    }
+    if (Number(milestone.sequence) !== 1) {
+      throw new BadRequestException('Only milestone 1 accepts procurement evidence');
+    }
+
+    if (
+      input.actorRole === 'professional' &&
+      projectProfessional?.professionalId &&
+      projectProfessional.professionalId !== input.actorId
+    ) {
+      throw new ForbiddenException('You can only update evidence for your awarded project');
+    }
+
+    const claimedAmount = Number(input.claimedAmount || 0);
+    if (!Number.isFinite(claimedAmount) || claimedAmount <= 0) {
+      throw new BadRequestException('claimedAmount must be greater than 0');
+    }
+
+    const invoiceUrls = (input.invoiceUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
+    const photoUrls = (input.photoUrls || []).map((v) => String(v || '').trim()).filter(Boolean);
+    if (invoiceUrls.length + photoUrls.length < 1) {
+      throw new BadRequestException('At least one invoice or photo file is required');
+    }
+
+    const capAgg = await this.prisma.financialTransaction.aggregate({
+      where: {
+        projectId: input.projectId,
+        type: 'milestone_foh_allocation_cap',
+        status: 'confirmed',
+        notes: { contains: milestone.id },
+      },
+      _sum: { amount: true },
+    });
+    const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
+    if (capTotal <= 0) {
+      throw new BadRequestException('Materials wallet cap is not authorized yet for this milestone');
+    }
+    if (claimedAmount > capTotal) {
+      throw new BadRequestException('Claimed amount cannot exceed the authorized milestone 1 cap');
+    }
+
+    let existingEvidence: any;
+    try {
+      existingEvidence = await (this.prisma as any).milestoneProcurementEvidence.findFirst({
+        where: {
+          id: input.evidenceId,
+          projectId: input.projectId,
+          paymentMilestoneId: milestone.id,
+        },
+      });
+    } catch (error) {
+      this.rethrowProcurementEvidenceTableError(error);
+    }
+    if (!existingEvidence) {
+      throw new NotFoundException('Procurement evidence not found');
+    }
+    if (String(existingEvidence.status || '').toLowerCase() !== 'pending') {
+      throw new BadRequestException('Only pending procurement evidence can be edited');
+    }
+
+    if (
+      input.actorRole === 'professional' &&
+      projectProfessional?.id &&
+      existingEvidence.projectProfessionalId &&
+      existingEvidence.projectProfessionalId !== projectProfessional.id
+    ) {
+      throw new ForbiddenException('You can only update your own procurement evidence');
+    }
+
+    let updatedEvidence;
+    try {
+      updatedEvidence = await (this.prisma as any).milestoneProcurementEvidence.update({
+        where: { id: input.evidenceId },
+        data: {
+          claimedAmount: new Decimal(claimedAmount.toFixed(2)),
+          invoiceUrls,
+          photoUrls,
+          openingMessage: String(input.openingMessage || '').trim() || null,
+          notes: input.notes?.trim() || null,
+          professionalRespondedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      this.rethrowProcurementEvidenceTableError(error);
+    }
+
+    return {
+      success: true,
+      evidence: updatedEvidence,
+    };
+  }
+
   async addProcurementEvidenceMessage(input: {
     projectId: string;
     milestoneId: string;

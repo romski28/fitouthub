@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-28-804502f",
+    "date": "2026-04-28T21:02:21+08:00",
+    "title": "feat(claims): professional split view with editable pending claim",
+    "summary": "feat(claims): professional split view with editable pending claim",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "804502f",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-f4c062e",
     "date": "2026-04-28T20:50:59+08:00",
     "title": "fix(claims): prevent chat-driven mobile horizontal overflow",
