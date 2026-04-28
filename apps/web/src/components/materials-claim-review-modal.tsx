@@ -117,7 +117,6 @@ export default function MaterialsClaimReviewModal({
   const [evidence, setEvidence] = React.useState<ProcurementEvidence | null>(null);
   const [authorising, setAuthorising] = React.useState(false);
   const [approvedAmount, setApprovedAmount] = React.useState('');
-  const [titleTransferAcknowledged, setTitleTransferAcknowledged] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
   const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
 
@@ -193,7 +192,6 @@ export default function MaterialsClaimReviewModal({
 
         setEvidence(target || null);
         setApprovedAmount(target ? String(target.claimedAmount) : '');
-        setTitleTransferAcknowledged(false);
         setLightboxUrl(null);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Failed to load claim data');
@@ -231,11 +229,6 @@ export default function MaterialsClaimReviewModal({
   const handleAuthoriseTransfer = async () => {
     if (!evidence || !firstMilestone || !projectId || !accessToken) return;
 
-    if (!titleTransferAcknowledged) {
-      toast.error('Please confirm title transfer acknowledgement before authorising');
-      return;
-    }
-
     const approved = Number(approvedAmount || 0);
     if (!Number.isFinite(approved) || approved <= 0) {
       toast.error('Enter a valid value to authorise');
@@ -266,7 +259,6 @@ export default function MaterialsClaimReviewModal({
           body: JSON.stringify({
             decision: 'approved',
             approvedAmount: approved,
-            titleTransferAcknowledged,
           }),
         },
       );
@@ -420,38 +412,21 @@ export default function MaterialsClaimReviewModal({
 
             {evidence && (
               <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
-                  <label className="flex items-center gap-2 text-xs text-cyan-100 sm:col-start-1 sm:row-start-1">
-                    <input
-                      type="checkbox"
-                      checked={titleTransferAcknowledged}
-                      onChange={(event) => setTitleTransferAcknowledged(event.target.checked)}
-                    />
-                    Confirm title transfer acknowledgement
-                  </label>
-
-                  <div className="hidden sm:block sm:col-start-2 sm:row-start-1" />
-
-                  <div className="text-xs font-semibold text-slate-300 sm:col-start-3 sm:row-start-1 sm:self-center">
-                    Settlement decision
-                  </div>
-
-                  <div className="hidden sm:block sm:col-start-4 sm:row-start-1" />
-                  <div className="hidden sm:block sm:col-start-5 sm:row-start-1" />
-
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5 sm:items-end">
                   <button
                     type="button"
                     onClick={() => setShowDetails(true)}
-                    className="inline-flex h-8 w-8 items-center justify-center justify-self-start rounded-full border border-blue-300/60 bg-blue-500/20 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/35 sm:col-start-1 sm:row-start-2 sm:justify-self-center"
+                    className="inline-flex h-8 w-8 items-center justify-center justify-self-start rounded-full border border-blue-300/60 bg-blue-500/20 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/35 sm:col-start-1 sm:justify-self-center"
                     aria-label="Show details"
                     title="More info"
                   >
                     i
                   </button>
 
-                  <div className="hidden sm:block sm:col-start-2 sm:row-start-2" />
+                  <div className="hidden sm:block sm:col-start-2" />
 
-                  <div className="sm:col-start-3 sm:row-start-2">
+                  <div className="sm:col-start-3">
+                    <label className="mb-1 block text-right text-xs font-semibold text-slate-300">Settlement decision</label>
                     <div className="relative">
                       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
                       <input
@@ -466,11 +441,11 @@ export default function MaterialsClaimReviewModal({
                     </div>
                   </div>
 
-                  <div className="sm:col-start-4 sm:row-start-2 sm:self-end">
+                  <div className="sm:col-start-4">
                     <button
                       type="button"
                       onClick={handleAuthoriseTransfer}
-                      disabled={authorising || !titleTransferAcknowledged}
+                      disabled={authorising}
                       className="w-full rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
                       {authorising ? 'Processing...' : 'Authorise transfer'}
@@ -480,7 +455,7 @@ export default function MaterialsClaimReviewModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-full rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 sm:col-start-5 sm:row-start-2"
+                    className="w-full rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 sm:col-start-5"
                   >
                     Close
                   </button>

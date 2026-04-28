@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-28-4a780aa",
+    "date": "2026-04-28T18:04:40+08:00",
+    "title": "feat(claims): move title transfer acknowledgement to submit flow",
+    "summary": "feat(claims): move title transfer acknowledgement to submit flow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "4a780aa",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/materials-claim-review-modal.tsx",
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-884bf42",
     "date": "2026-04-28T17:50:40+08:00",
     "title": "feat(web): polish materials review modal layout and cap display",

@@ -69,6 +69,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
   const [uploadRows, setUploadRows] = React.useState<UploadRow[]>([]);
   const [uploadingFiles, setUploadingFiles] = React.useState(false);
   const [materialsOpeningMessage, setMaterialsOpeningMessage] = React.useState('Milestone 1 payment request');
+  const [titleTransferAcknowledged, setTitleTransferAcknowledged] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [skipping, setSkipping] = React.useState(false);
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
@@ -271,6 +272,10 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
       toast.error(`Claim exceeds available maximum (${formatHKD(maxClaimableAmount)})`);
       return;
     }
+    if (!titleTransferAcknowledged) {
+      toast.error('Please confirm title transfer acknowledgement before submitting');
+      return;
+    }
 
     const itemNotes = readyRows
       .map((r) => {
@@ -294,6 +299,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
             invoiceUrls: readyRows.map((r) => r.url),
             openingMessage: materialsOpeningMessage || undefined,
             notes: itemNotes || undefined,
+            titleTransferAcknowledged,
           }),
         },
       );
@@ -445,12 +451,21 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                     />
                   </div>
 
+                  <label className="flex items-center gap-2 text-xs text-cyan-100">
+                    <input
+                      type="checkbox"
+                      checked={titleTransferAcknowledged}
+                      onChange={(event) => setTitleTransferAcknowledged(event.target.checked)}
+                    />
+                    Confirm title transfer acknowledgement
+                  </label>
+
                   <div className="flex w-full justify-end pt-1">
                     <div className="grid w-full max-w-lg grid-cols-1 gap-2 sm:grid-cols-2">
                       <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={submitting || readyRows.length === 0 || isClaimOverMaximum}
+                        disabled={submitting || readyRows.length === 0 || isClaimOverMaximum || !titleTransferAcknowledged}
                         className="w-full rounded-md bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 transition"
                       >
                         {submitting ? 'Submitting...' : 'Submit for payment'}

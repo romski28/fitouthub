@@ -438,6 +438,7 @@ export class FinancialController {
       photoUrls?: string[];
       openingMessage?: string;
       notes?: string;
+      titleTransferAcknowledged?: boolean;
     },
     @Request() req: any,
   ) {
@@ -456,6 +457,7 @@ export class FinancialController {
       photoUrls: Array.isArray(body?.photoUrls) ? body.photoUrls : [],
       openingMessage: body?.openingMessage,
       notes: body?.notes,
+      titleTransferAcknowledged: Boolean(body?.titleTransferAcknowledged),
     });
   }
 

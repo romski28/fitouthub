@@ -2498,6 +2498,7 @@ export class FinancialService {
     photoUrls?: string[];
     openingMessage?: string;
     notes?: string;
+    titleTransferAcknowledged?: boolean;
   }) {
     const { paymentPlan, milestone, project, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
@@ -2576,6 +2577,7 @@ export class FinancialService {
           photoUrls,
           openingMessage,
           notes: input.notes?.trim() || null,
+          titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
           status: 'pending',
           deadlineAt,
         },
@@ -2814,7 +2816,10 @@ export class FinancialService {
             reviewedByRole: input.actorRole,
             reviewedAt: new Date(),
             reviewNotes: input.reviewNotes?.trim() || null,
-            titleTransferAcknowledged: Boolean(input.titleTransferAcknowledged),
+            titleTransferAcknowledged:
+              typeof input.titleTransferAcknowledged === 'boolean'
+                ? input.titleTransferAcknowledged
+                : Boolean(evidence.titleTransferAcknowledged),
             finalizedAt: new Date(),
           },
         });
