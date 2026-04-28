@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-c4e5338",
+    "date": "2026-04-28T22:08:54+08:00",
+    "title": "Fix missing NestJS Patch import in financial controller",
+    "summary": "Fix missing NestJS Patch import in financial controller",
+    "areas": [
+      "api"
+    ],
+    "commit": "c4e5338",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts"
+    ]
+  },
+  {
     "id": "2026-04-28-1423f45",
     "date": "2026-04-28T21:59:06+08:00",
     "title": "Fix UploadRow kind typing for chat image uploads",

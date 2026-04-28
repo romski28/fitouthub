@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, Query, UseGuards, Request, BadRequestException, Headers, Req, HttpException, HttpStatus, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Param, Body, Query, UseGuards, Request, BadRequestException, Headers, Req, HttpException, HttpStatus, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { CreateFinancialTransactionDto, UpdateFinancialTransactionDto } from './financial.service';
 import { FinancialService } from './financial.service';
