@@ -92,7 +92,7 @@ export class NextStepService {
 
   private async getProfessionalWalletTransferPrerequisiteStatus(
     projectId: string,
-  ): Promise<'not_required' | 'pending' | 'completed'> {
+  ): Promise<'not_required' | 'pending' | 'completed' | 'skipped'> {
     const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
       where: { projectId },
       select: {
@@ -112,21 +112,20 @@ export class NextStepService {
       return 'not_required';
     }
 
-    // The professional is unblocked as soon as the client authorizes the milestone 1
-    // cap allocation (milestone_foh_allocation_cap). That is the "wallet transfer" event.
-    // After that, the professional can submit evidence and start work.
-    // Checking for milestone_procurement_approved (the final approval) would create a
-    // deadlock: the professional can't submit evidence if they're still gated.
-    const capCount = await this.prisma.financialTransaction.count({
-      where: {
-        projectId,
-        type: 'milestone_foh_allocation_cap',
-        status: 'confirmed',
-        notes: { contains: firstMilestoneId },
-      },
-    });
+    // Check cap authorization and whether the cap was subsequently returned (skip).
+    const [capCount, returnCount] = await this.prisma.$transaction([
+      this.prisma.financialTransaction.count({
+        where: { projectId, type: 'milestone_foh_allocation_cap', status: 'confirmed', notes: { contains: firstMilestoneId } },
+      }),
+      this.prisma.financialTransaction.count({
+        where: { projectId, type: 'milestone_cap_remainder_return', status: 'confirmed', notes: { contains: firstMilestoneId } },
+      }),
+    ]);
 
-    return capCount > 0 ? 'completed' : 'pending';
+    if (capCount === 0) return 'pending';
+    // Cap has been returned → professional skipped the materials workflow.
+    if (returnCount > 0) return 'skipped';
+    return 'completed';
   }
 
   /**
@@ -488,7 +487,7 @@ export class NextStepService {
 
         const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
 
-        let walletTransferPrerequisite: 'not_required' | 'pending' | 'completed' = 'not_required';
+        let walletTransferPrerequisite: 'not_required' | 'pending' | 'completed' | 'skipped' = 'not_required';
         if (escrowFunded) {
           walletTransferPrerequisite = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
         }
@@ -604,8 +603,8 @@ export class NextStepService {
               ),
             );
 
-            // Primary action 2: Make milestone 1 claim (if applicable)
-            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
+            // Primary action 2: Make milestone 1 claim (if applicable and not already skipped)
+            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && walletTransferPrerequisite !== 'skipped') {
               availableConfigSteps.push({
                 id: 'synthetic-MAKE_MILESTONE_1_CLAIM',
                 createdAt: new Date(),
@@ -969,7 +968,7 @@ export class NextStepService {
           }
 
           const escrowPreWork = Number(project.escrowHeld ?? 0) > 0;
-          let walletPreWork: 'not_required' | 'pending' | 'completed' = 'not_required';
+          let walletPreWork: 'not_required' | 'pending' | 'completed' | 'skipped' = 'not_required';
           if (escrowPreWork) walletPreWork = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
           const canStartPreWork = escrowPreWork && walletPreWork !== 'pending';
 
@@ -1004,7 +1003,8 @@ export class NextStepService {
                 createSyntheticPrimaryStep('START_PROJECT', 'Start project on site', true, role, effectiveStage,
                   'Escrow is funded and schedule confirmed. You may begin work on site.'),
               ];
-              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
+              // Show MAKE_MILESTONE_1_CLAIM only if the professional hasn't already skipped the materials workflow
+              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && walletPreWork !== 'skipped') {
                 availableConfigSteps.push({
                   id: 'synthetic-MAKE_MILESTONE_1_CLAIM', createdAt: new Date(), updatedAt: new Date(), role,
                   projectStage: effectiveStage, actionKey: 'MAKE_MILESTONE_1_CLAIM',

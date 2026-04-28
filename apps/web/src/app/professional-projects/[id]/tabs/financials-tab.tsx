@@ -186,11 +186,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   const [materialsEvidence, setMaterialsEvidence] = React.useState<MilestoneProcurementEvidence[]>([]);
   const [materialsLoading, setMaterialsLoading] = React.useState(false);
   const [materialsBusy, setMaterialsBusy] = React.useState<string | null>(null);
-  const [materialsClaimAmount, setMaterialsClaimAmount] = React.useState('');
-  const [materialsInvoiceUrls, setMaterialsInvoiceUrls] = React.useState('');
-  const [materialsPhotoUrls, setMaterialsPhotoUrls] = React.useState('');
   const [materialsNotes, setMaterialsNotes] = React.useState('');
   const [materialsOpeningMessage, setMaterialsOpeningMessage] = React.useState('');
+  const [uploadRows, setUploadRows] = React.useState<Array<{
+    id: string; filename: string; url: string; note: string; value: string; uploading: boolean;
+  }>>([]);
+  const [uploadingFiles, setUploadingFiles] = React.useState(false);
+  const [skipping, setSkipping] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [walletTransferLoading, setWalletTransferLoading] = React.useState(false);
   const [walletTransferAmount, setWalletTransferAmount] = React.useState('');
   const [activeClaimThreadId, setActiveClaimThreadId] = React.useState<string | null>(null);
@@ -303,6 +306,10 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     [materialsEvidence],
   );
   const canTransferWallet = isMaterialsWorkflowProject && isEscrowReady && totalApprovedAmount > 0 && walletTransferStatus !== 'completed';
+  const materialsClaimTotal = uploadRows.reduce((sum, row) => {
+    const v = parseFloat(row.value);
+    return sum + (Number.isFinite(v) && v > 0 ? v : 0);
+  }, 0);
   const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
 
   const paymentMilestonesByProjectMilestoneId = new Map(
@@ -414,52 +421,127 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     }
   }, [accessToken, projectId, firstPaymentMilestone, isMaterialsWorkflowProject]);
 
-  const handleSubmitMaterialsClaim = async () => {
-    if (!accessToken || !projectId || !firstPaymentMilestone) return;
-
-    const claimedAmount = Number(materialsClaimAmount || 0);
-    if (!Number.isFinite(claimedAmount) || claimedAmount <= 0) {
-      toast.error('Enter a valid claimed amount');
+  const handleAddFiles = async (fileList: FileList | null) => {
+    if (!fileList || !accessToken) return;
+    const files = Array.from(fileList);
+    const oversized = files.filter((f) => f.size > 1 * 1024 * 1024);
+    if (oversized.length > 0) {
+      toast.error(`Files must be under 1 MB: ${oversized.map((f) => f.name).join(', ')}`);
       return;
     }
+    const time = Date.now();
+    const newRows = files.map((f, i) => ({
+      id: `${time}-${i}`,
+      filename: f.name,
+      url: '',
+      note: '',
+      value: '',
+      uploading: true,
+    }));
+    setUploadRows((prev) => [...prev, ...newRows]);
+    setUploadingFiles(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const rowId = newRows[i].id;
+        const formData = new FormData();
+        formData.append('files', file);
+        try {
+          const res = await fetch(`${API_BASE_URL}/uploads`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: formData,
+          });
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          const url: string = data.urls?.[0] || data.files?.[0]?.url || '';
+          setUploadRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, url, uploading: false } : r)));
+        } catch {
+          setUploadRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, uploading: false, url: 'error' } : r)));
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      }
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
 
+  const handleSubmitMaterialsClaim = async () => {
+    if (!accessToken || !projectId || !firstPaymentMilestone) return;
+    const readyRows = uploadRows.filter((r) => !r.uploading && r.url && r.url !== 'error');
+    if (readyRows.length === 0) {
+      toast.error('Upload at least one receipt or invoice photo');
+      return;
+    }
+    const invalidValues = readyRows.filter((r) => {
+      const v = parseFloat(r.value);
+      return !Number.isFinite(v) || v <= 0;
+    });
+    if (invalidValues.length > 0) {
+      toast.error('All items must have a value greater than zero');
+      return;
+    }
+    const claimedAmount = readyRows.reduce((sum, r) => sum + parseFloat(r.value), 0);
+    const itemNotes = readyRows.map((r) => `${r.filename}${r.note ? ': ' + r.note : ''}`).join(' | ');
+    const fullNotes = [itemNotes, materialsNotes].filter(Boolean).join('\n\n');
     try {
       setMaterialsBusy('submit');
       const response = await fetch(
         `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstPaymentMilestone.id}/procurement-evidence`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             claimedAmount,
-            invoiceUrls: materialsInvoiceUrls.split(',').map((entry) => entry.trim()).filter(Boolean),
-            photoUrls: materialsPhotoUrls.split(',').map((entry) => entry.trim()).filter(Boolean),
+            invoiceUrls: readyRows.map((r) => r.url),
             openingMessage: materialsOpeningMessage || undefined,
-            notes: materialsNotes || undefined,
+            notes: fullNotes || undefined,
           }),
         },
       );
-
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error((data as { message?: string }).message || 'Failed to submit materials claim');
       }
-
-      toast.success('Materials claim submitted');
-      setMaterialsClaimAmount('');
-      setMaterialsInvoiceUrls('');
-      setMaterialsPhotoUrls('');
-      setMaterialsOpeningMessage('');
+      toast.success('Materials claim submitted for client review');
+      setUploadRows([]);
       setMaterialsNotes('');
+      setMaterialsOpeningMessage('');
       await fetchMaterialsEvidence();
       await fetchProjectFinancialSummary();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit materials claim');
     } finally {
       setMaterialsBusy(null);
+    }
+  };
+
+  const handleSkipMaterialsClaim = async () => {
+    if (!accessToken || !projectId || !firstPaymentMilestone) return;
+    if (!confirm('Skip until final payment? The wallet transfer will be reversed and all allocated funds returned to the client. This cannot be undone.')) return;
+    try {
+      setSkipping(true);
+      const res = await fetch(
+        `${API_BASE_URL}/financial/project/${projectId}/milestones/${firstPaymentMilestone.id}/professional-skip-materials`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: 'Professional skipped milestone 1 materials claim' }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { message?: string }).message || 'Failed to skip materials claim');
+      }
+      toast.success('Materials claim skipped. Funds returned to client wallet.');
+      setUploadRows([]);
+      setMaterialsNotes('');
+      await fetchMaterialsEvidence();
+      await fetchProjectFinancialSummary();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to skip materials claim');
+    } finally {
+      setSkipping(false);
     }
   };
 
@@ -985,6 +1067,8 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             </div>
           )}
 
+          {/* Payment milestone request — hidden for Scale 1/2 which use the materials purchase workflow */}
+          {!isMaterialsWorkflowProject && (
           <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-4 space-y-3">
             <div>
               <h4 className="font-semibold text-white">Request Payment Against a Milestone</h4>
@@ -1076,72 +1160,148 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               />
             </div>
           </div>
+          )}
 
           {isMaterialsWorkflowProject && (
-            <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-4 space-y-3">
+            <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-4 space-y-4">
               <div>
-                <h4 className="font-semibold text-white">Project Materials Purchase</h4>
+                <h4 className="font-semibold text-white">Milestone 1 payment – Materials Purchase</h4>
                 <p className="text-xs text-cyan-100 mt-1">
-                  Submit materials claims for milestone 1 once escrow funding is ready. Client/admin review and settlement happen on their side.
+                  Upload receipts and photos for materials purchased. Set a value per item, then submit for client review.
                 </p>
               </div>
 
               {!isEscrowReady && (
                 <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                  Escrow funding is still pending, so materials claims are locked.
+                  Escrow funding is still pending. Materials claims unlock after the client funds escrow.
                 </div>
               )}
 
-              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Submit Materials Claim</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={materialsClaimAmount}
-                    onChange={(event) => setMaterialsClaimAmount(event.target.value)}
-                    placeholder="Claimed amount"
-                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
-                  />
-                  <input
-                    type="text"
-                    value={materialsInvoiceUrls}
-                    onChange={(event) => setMaterialsInvoiceUrls(event.target.value)}
-                    placeholder="Invoice URLs (comma separated)"
-                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
-                  />
-                  <input
-                    type="text"
-                    value={materialsPhotoUrls}
-                    onChange={(event) => setMaterialsPhotoUrls(event.target.value)}
-                    placeholder="Photo URLs (comma separated)"
-                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
-                  />
-                  <input
-                    type="text"
-                    value={materialsOpeningMessage}
-                    onChange={(event) => setMaterialsOpeningMessage(event.target.value)}
-                    placeholder="Opening message for client"
-                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
-                  />
-                  <input
-                    type="text"
-                    value={materialsNotes}
-                    onChange={(event) => setMaterialsNotes(event.target.value)}
-                    placeholder="Notes"
-                    className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white"
-                  />
+              {isEscrowReady && materialsEvidence.filter((e) => e.status !== 'rejected').length === 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Items to claim</p>
+                    <div className="text-right">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => { void handleAddFiles(e.target.files); e.currentTarget.value = ''; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingFiles}
+                        className="rounded-md border border-cyan-500/40 bg-cyan-600/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-600/30 disabled:opacity-50 transition"
+                      >
+                        {uploadingFiles ? 'Uploading…' : '+ Add photos / receipts'}
+                      </button>
+                      <p className="text-[10px] text-slate-400 mt-0.5">Images only · max 1 MB each</p>
+                    </div>
+                  </div>
+
+                  {uploadRows.length > 0 && (
+                    <div className="rounded-md border border-slate-700 overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-700 bg-slate-900/80">
+                            <th className="px-3 py-2 text-left font-semibold text-slate-300">File</th>
+                            <th className="px-3 py-2 text-left font-semibold text-slate-300">Note</th>
+                            <th className="px-3 py-2 text-left font-semibold text-slate-300 w-28">Value (HKD)</th>
+                            <th className="px-2 py-2 w-8" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {uploadRows.map((row) => (
+                            <tr key={row.id} className="border-b border-slate-800 bg-slate-900/40">
+                              <td className="px-3 py-2 text-slate-200">
+                                {row.uploading ? (
+                                  <span className="text-slate-400 italic">Uploading {row.filename}…</span>
+                                ) : row.url === 'error' ? (
+                                  <span className="text-rose-400">{row.filename} (failed)</span>
+                                ) : (
+                                  <span className="truncate max-w-[120px] block">{row.filename}</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="text"
+                                  value={row.note}
+                                  onChange={(e) => setUploadRows((prev) => prev.map((r) => r.id === row.id ? { ...r, note: e.target.value } : r))}
+                                  placeholder="Short description"
+                                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white placeholder-slate-500"
+                                  disabled={row.uploading}
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={row.value}
+                                  onChange={(e) => setUploadRows((prev) => prev.map((r) => r.id === row.id ? { ...r, value: e.target.value } : r))}
+                                  placeholder="0.00"
+                                  className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-white placeholder-slate-500"
+                                  disabled={row.uploading}
+                                />
+                              </td>
+                              <td className="px-2 py-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setUploadRows((prev) => prev.filter((r) => r.id !== row.id))}
+                                  className="text-slate-400 hover:text-rose-400 transition"
+                                  aria-label="Remove"
+                                >
+                                  ×
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {uploadRows.length > 0 && (
+                            <tr className="border-t border-slate-700 bg-slate-900/80">
+                              <td colSpan={2} className="px-3 py-2 text-right text-xs font-semibold text-slate-300">Total claimed</td>
+                              <td className="px-3 py-2 text-xs font-bold text-white">{formatHKD(materialsClaimTotal)}</td>
+                              <td />
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-semibold text-white mb-1">General notes (optional)</label>
+                    <textarea
+                      value={materialsNotes}
+                      onChange={(e) => setMaterialsNotes(e.target.value)}
+                      rows={2}
+                      placeholder="Optional context for the client about this materials claim"
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleSubmitMaterialsClaim}
+                      disabled={!canSubmitMaterialsClaim || materialsBusy === 'submit' || uploadRows.filter((r) => !r.uploading && r.url && r.url !== 'error').length === 0}
+                      className="rounded-md bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 transition"
+                    >
+                      {materialsBusy === 'submit' ? 'Submitting…' : 'Submit for payment'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSkipMaterialsClaim}
+                      disabled={!canSubmitMaterialsClaim || skipping}
+                      className="rounded-md border border-slate-500 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition"
+                    >
+                      {skipping ? 'Processing…' : 'Skip until final payment'}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleSubmitMaterialsClaim}
-                  disabled={!canSubmitMaterialsClaim || materialsBusy === 'submit'}
-                  className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
-                >
-                  {materialsBusy === 'submit' ? 'Submitting...' : 'Submit claim'}
-                </button>
-              </div>
+              )}
 
               <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-2">
                 <div className="flex items-center justify-between">

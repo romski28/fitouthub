@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-28-a74be5b",
+    "date": "2026-04-28T14:35:44+08:00",
+    "title": "feat: materials purchase claim panel for Scale 1/2 with file upload, skip workflow and backend skip endpoint",
+    "summary": "feat: materials purchase claim panel for Scale 1/2 with file upload, skip workflow and backend skip endpoint",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a74be5b",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-8ef47a4",
     "date": "2026-04-28T13:24:05+08:00",
     "title": "fix(web): show parallel professional next steps for start + materials claim",

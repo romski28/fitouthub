@@ -492,6 +492,25 @@ export class FinancialController {
     });
   }
 
+  @Post('project/:projectId/milestones/:milestoneId/professional-skip-materials')
+  @UseGuards(CombinedAuthGuard)
+  async professionalSkipMaterialsClaim(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body() body: { notes?: string },
+    @Request() req: any,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new ForbiddenException('Only professionals can skip a materials claim');
+    }
+    return this.financialService.professionalSkipMaterialsClaim({
+      projectId,
+      milestoneId,
+      professionalId: req.user.id,
+      notes: body?.notes,
+    });
+  }
+
   @Post('project/:projectId/milestones/:milestoneId/return-foh-cap-remainder')
   @UseGuards(CombinedAuthGuard)
   async returnMilestoneFohCapRemainder(

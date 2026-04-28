@@ -2956,6 +2956,101 @@ export class FinancialService {
     };
   }
 
+  /**
+   * Professional-initiated skip: return the full unspent milestone 1 FoH cap to the client.
+   * Called when the professional chooses "Skip until final payment" from the financials tab.
+   */
+  async professionalSkipMaterialsClaim(input: {
+    projectId: string;
+    milestoneId: string;
+    professionalId: string;
+    notes?: string;
+  }) {
+    const { paymentPlan, milestone, projectProfessional } =
+      await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
+
+    if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
+      throw new BadRequestException('Materials claim skip applies only to Class 1 and 2 projects');
+    }
+    if (Number(milestone.sequence) !== 1) {
+      throw new BadRequestException('Only milestone 1 supports materials claim skip');
+    }
+    if (
+      projectProfessional?.professionalId &&
+      projectProfessional.professionalId !== input.professionalId
+    ) {
+      throw new ForbiddenException('You are not the awarded professional for this project');
+    }
+
+    const [capAgg, approvedAgg, returnedAgg] = await this.retryWithBackoff(() =>
+      this.prisma.$transaction([
+        this.prisma.financialTransaction.aggregate({
+          where: { projectId: input.projectId, type: 'milestone_foh_allocation_cap', status: 'confirmed', notes: { contains: milestone.id } },
+          _sum: { amount: true },
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: { projectId: input.projectId, type: 'milestone_procurement_approved', status: 'confirmed', notes: { contains: milestone.id } },
+          _sum: { amount: true },
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: { projectId: input.projectId, type: 'milestone_cap_remainder_return', status: 'confirmed', notes: { contains: milestone.id } },
+          _sum: { amount: true },
+        }),
+      ]),
+    );
+
+    const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
+    const approvedTotal = this.toAmount(approvedAgg?._sum?.amount || 0);
+    const returnedTotal = this.toAmount(returnedAgg?._sum?.amount || 0);
+    const remainder = Math.max(capTotal - approvedTotal - returnedTotal, 0);
+
+    if (remainder <= 0) {
+      throw new BadRequestException(
+        'No remaining cap to return — materials claim may already have been processed or skipped',
+      );
+    }
+
+    const transaction = await this.prisma.financialTransaction.create({
+      data: {
+        projectId: input.projectId,
+        projectProfessionalId: projectProfessional?.id || null,
+        type: 'milestone_cap_remainder_return',
+        description: `Professional skipped milestone ${milestone.sequence} materials claim — cap returned to client`,
+        amount: new Decimal(remainder.toFixed(2)),
+        status: 'confirmed',
+        requestedBy: input.professionalId,
+        requestedByRole: 'professional',
+        actionBy: input.professionalId,
+        actionByRole: 'professional',
+        actionAt: new Date(),
+        actionComplete: true,
+        notes: [
+          input.notes?.trim() || null,
+          this.serializeMilestoneMetadata({
+            paymentMilestoneId: milestone.id,
+            paymentPlanId: paymentPlan.id,
+            milestoneSequence: milestone.sequence,
+            milestoneTitle: milestone.title,
+            context: 'cap_remainder_returned_by_professional',
+          }),
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      },
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId: transaction.id,
+      action: 'milestone_foh_cap_skipped_by_professional',
+      actorId: input.professionalId,
+      actorRole: 'professional',
+      details: 'Professional skipped materials claim — cap returned to client escrow pool',
+      metadata: { projectId: input.projectId, milestoneId: milestone.id, amount: remainder },
+    });
+
+    return { success: true, returnedAmount: remainder, transactionId: transaction.id };
+  }
+
   async getProjectWalletSummary(projectId: string, projectProfessionalId?: string | null) {
     const [project, paymentPlan, transactions] = await this.retryWithBackoff(() =>
       this.prisma.$transaction([
