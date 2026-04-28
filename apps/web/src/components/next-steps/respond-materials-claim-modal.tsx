@@ -7,6 +7,7 @@ import { useNextStepModal } from '@/context/next-step-modal-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import ProjectChat from '@/components/project-chat';
 import MaterialsClaimItemsTable from '@/components/materials-claim-items-table';
+import ChatImageUploader from '@/components/chat-image-uploader';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -140,6 +141,36 @@ export function RespondMaterialsClaimModal({
       }, 0),
     [uploadRows],
   );
+
+  // Calculate max claimable amount (cap) for milestone 1
+  const [maxClaimableAmount, setMaxClaimableAmount] = React.useState<number>(0);
+  React.useEffect(() => {
+    if (!firstMilestone || !state.projectId || !accessToken) return;
+    const fetchCap = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/financial/project/${state.projectId}/summary`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        // Find cap for milestone 1
+        let cap = 0;
+        if (Array.isArray(data?.transactions)) {
+          for (const tx of data.transactions) {
+            if (
+              tx.type === 'milestone_foh_allocation_cap' &&
+              String(tx.status || '').toLowerCase() === 'confirmed' &&
+              tx.notes && tx.notes.includes(firstMilestone.id)
+            ) {
+              cap += Number(tx.amount || 0);
+            }
+          }
+        }
+        setMaxClaimableAmount(cap);
+      } catch {}
+    };
+    fetchCap();
+  }, [firstMilestone, state.projectId, accessToken]);
 
   // ── Load data ─────────────────────────────────────────────────────────────
 
@@ -386,11 +417,35 @@ export function RespondMaterialsClaimModal({
                 )}
               </div>
 
+
+              {/* Add new image/receipt button */}
+              <div className="mb-2">
+                <ChatImageUploader
+                  onImagesUploaded={(images) => {
+                    setUploadRows((prev) => [
+                      ...prev,
+                      ...images.map((img, i) => ({
+                        id: `upload-${Date.now()}-${i}`,
+                        filename: img.filename,
+                        url: img.url,
+                        note: '',
+                        value: '',
+                        uploading: false,
+                        kind: 'photo',
+                      })),
+                    ]);
+                  }}
+                  maxImages={5}
+                  disabled={savingClaim}
+                  projectId={state.projectId}
+                />
+              </div>
+
               {uploadRows.length > 0 ? (
                 <MaterialsClaimItemsTable
                   rows={uploadRows}
                   totalClaimed={totalClaimed}
-                  maxClaimableAmount={Number.MAX_SAFE_INTEGER}
+                  maxClaimableAmount={maxClaimableAmount}
                   onNoteChange={(rowId, value) =>
                     setUploadRows((prev) => prev.map((row) => (row.id === rowId ? { ...row, note: value } : row)))
                   }

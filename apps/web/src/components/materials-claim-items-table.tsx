@@ -36,7 +36,7 @@ export default function MaterialsClaimItemsTable({
       <table className="min-w-[480px] w-full text-xs">
         <thead>
           <tr className="border-b border-slate-700 bg-slate-900/80">
-            <th className="px-3 py-2 text-left font-semibold text-slate-300">File</th>
+            <th className="px-3 py-2 text-left font-semibold text-slate-300">Image</th>
             <th className="px-3 py-2 text-left font-semibold text-slate-300">Note</th>
             <th className="px-3 py-2 text-left font-semibold text-slate-300 w-28">Value (HKD)</th>
             <th className="px-2 py-2 w-8" />
@@ -45,13 +45,22 @@ export default function MaterialsClaimItemsTable({
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} className="border-b border-slate-800 bg-slate-900/40">
-              <td className="px-3 py-2 text-slate-200">
+              <td className="px-3 py-2 text-slate-200 w-20 min-w-[5rem]">
                 {row.uploading ? (
-                  <span className="text-slate-400 italic">Uploading {row.filename}...</span>
+                  <span className="text-slate-400 italic">Uploading...</span>
                 ) : row.url === 'error' ? (
-                  <span className="text-rose-400">{row.filename} (failed)</span>
+                  <img src="/assets/brokenimge.png" alt="Upload failed" className="w-12 h-12 object-cover rounded border border-rose-400 bg-slate-800" />
                 ) : (
-                  <span className="truncate max-w-[120px] block">{row.filename}</span>
+                  <img
+                    src={row.url}
+                    alt="Receipt or photo"
+                    className="w-12 h-12 object-cover rounded border border-slate-600 bg-slate-800"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = '/assets/brokenimge.png';
+                    }}
+                  />
                 )}
               </td>
               <td className="px-3 py-2">

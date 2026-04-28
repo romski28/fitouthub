@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-28-c82225f",
+    "date": "2026-04-28T21:46:16+08:00",
+    "title": "Milestone 1 materials claim workflow: thumbnails, cap enforcement, upload UI",
+    "summary": "Milestone 1 materials claim workflow: thumbnails, cap enforcement, upload UI",
+    "areas": [
+      "web"
+    ],
+    "commit": "c82225f",
+    "files": [
+      "apps/web/public/assets/brokenimge.png",
+      "apps/web/public/assets/brokenimge.webp",
+      "apps/web/public/assets/images/broken-image-icon_268104-8936.avif",
+      "apps/web/public/assets/images/brokenimage.png",
+      "apps/web/src/components/materials-claim-items-table.tsx",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-1eb9084",
     "date": "2026-04-28T21:19:25+08:00",
     "title": "fix(mobile): wrap next-step buttons, fix claim summary value, post edit diff to chat",
