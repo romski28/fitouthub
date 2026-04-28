@@ -117,6 +117,8 @@ export function RespondMaterialsClaimModal({
   const [evidence, setEvidence] = React.useState<ProcurementEvidence | null>(null);
   const [uploadRows, setUploadRows] = React.useState<UploadRow[]>([]);
   const [savingClaim, setSavingClaim] = React.useState(false);
+  // Track original rows so we can detect edits and compute a diff
+  const originalRowsRef = React.useRef<UploadRow[]>([]);
 
   const formatHKD = (value: number | string) =>
     new Intl.NumberFormat('en-HK', {
@@ -208,7 +210,9 @@ export function RespondMaterialsClaimModal({
       };
     });
 
-    setUploadRows([...invoiceRows, ...photoRows]);
+    const rows = [...invoiceRows, ...photoRows];
+    setUploadRows(rows);
+    originalRowsRef.current = rows;
   }, [evidence]);
 
   const handleSaveClaimUpdates = async () => {
@@ -266,6 +270,49 @@ export function RespondMaterialsClaimModal({
         setEvidence(payload.evidence as ProcurementEvidence);
       }
       toast.success('Claim details updated');
+
+      // Post a diff message to the claim chat if any values changed
+      const orig = originalRowsRef.current;
+      const diffLines: string[] = [];
+      for (const row of uploadRows) {
+        const origRow = orig.find((r) => r.url === row.url);
+        if (!origRow) {
+          diffLines.push(`• Added: ${row.filename} — HKD ${row.value || '0'}${row.note ? ` (${row.note})` : ''}`);
+        } else {
+          const origVal = parseFloat(origRow.value || '0');
+          const newVal = parseFloat(row.value || '0');
+          const origNote = origRow.note.trim();
+          const newNote = row.note.trim();
+          if (Math.abs(origVal - newVal) > 0.001 || origNote !== newNote) {
+            const valChange = Math.abs(origVal - newVal) > 0.001
+              ? ` value HKD ${origVal.toFixed(2)} → HKD ${newVal.toFixed(2)}`
+              : '';
+            const noteChange = origNote !== newNote
+              ? ` note "${origNote || '(none)'}" → "${newNote || '(none)'}"`
+              : '';
+            diffLines.push(`• Updated ${row.filename}:${valChange}${noteChange}`);
+          }
+        }
+      }
+      for (const origRow of orig) {
+        if (!uploadRows.find((r) => r.url === origRow.url)) {
+          diffLines.push(`• Removed: ${origRow.filename}`);
+        }
+      }
+
+      if (diffLines.length > 0 && state.projectId && evidence) {
+        const diffMessage = `Claim updated:\n${diffLines.join('\n')}`;
+        await fetch(`${API_BASE_URL}/projects/${state.projectId}/chat/messages`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: diffMessage,
+            threadScope: 'claim',
+            threadScopeId: evidence.id,
+          }),
+        }).catch(() => {}); // best-effort
+        originalRowsRef.current = uploadRows;
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save claim updates');
     } finally {
@@ -316,7 +363,12 @@ export function RespondMaterialsClaimModal({
               <div className="rounded-lg border border-slate-700 bg-slate-800/60 p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Your claim</span>
-                  <span className="text-lg font-bold text-white">{formatHKD(totalClaimed || evidence.claimedAmount)}</span>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-white">{formatHKD(evidence.claimedAmount)}</span>
+                    {totalClaimed > 0 && Math.abs(totalClaimed - Number(evidence.claimedAmount)) > 0.5 && (
+                      <p className="text-[11px] text-amber-300 mt-0.5">Edited: {formatHKD(totalClaimed)}</p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-slate-400">
                   <span>Submitted {new Date(evidence.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>

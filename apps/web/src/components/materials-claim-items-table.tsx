@@ -32,8 +32,8 @@ export default function MaterialsClaimItemsTable({
   const totalLabel = 'Total claimed';
 
   return (
-    <div className="rounded-md border border-slate-700 overflow-hidden">
-      <table className="w-full text-xs">
+    <div className="rounded-md border border-slate-700 overflow-hidden overflow-x-auto">
+      <table className="min-w-[480px] w-full text-xs">
         <thead>
           <tr className="border-b border-slate-700 bg-slate-900/80">
             <th className="px-3 py-2 text-left font-semibold text-slate-300">File</th>

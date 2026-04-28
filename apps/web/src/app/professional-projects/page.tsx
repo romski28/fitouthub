@@ -397,7 +397,7 @@ export default function ProfessionalProjectsPage() {
                           ) : null}
                         </div>
 
-                        <div className="flex items-center md:justify-end">
+                        <div className="col-span-2 flex flex-wrap items-center gap-2 md:col-span-1 md:justify-end">
                           {!isRestricted && activityProjectIds.has(projectProf.project.id) && (
                             <button
                               type="button"
@@ -408,7 +408,7 @@ export default function ProfessionalProjectsPage() {
                                   );
                                 }
                               }}
-                              className="mr-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition whitespace-nowrap"
+                              className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition text-center"
                             >
                               View activity
                             </button>
@@ -434,7 +434,7 @@ export default function ProfessionalProjectsPage() {
                                           projectProf.id,
                                         )
                                       }
-                                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
                                     >
                                       {action.actionLabel}
                                     </button>
@@ -443,7 +443,7 @@ export default function ProfessionalProjectsPage() {
                               ) : (
                                 <Link
                                   href={primaryActionHref}
-                                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
                                 >
                                   Open project
                                 </Link>

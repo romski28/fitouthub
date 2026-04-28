@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-28-1eb9084",
+    "date": "2026-04-28T21:19:25+08:00",
+    "title": "fix(mobile): wrap next-step buttons, fix claim summary value, post edit diff to chat",
+    "summary": "fix(mobile): wrap next-step buttons, fix claim summary value, post edit diff to chat",
+    "areas": [
+      "web"
+    ],
+    "commit": "1eb9084",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/materials-claim-items-table.tsx",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-804502f",
     "date": "2026-04-28T21:02:21+08:00",
     "title": "feat(claims): professional split view with editable pending claim",

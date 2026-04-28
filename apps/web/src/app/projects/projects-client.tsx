@@ -203,8 +203,8 @@ function NextStepModalButton({
       title={disabled ? disabledTitle : undefined}
       className={
         variant === 'primary'
-          ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:hover:bg-slate-600 disabled:text-slate-200 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap disabled:cursor-not-allowed'
-          : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:border-slate-500 disabled:text-slate-300 disabled:hover:bg-transparent transition whitespace-nowrap disabled:cursor-not-allowed'
+          ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:hover:bg-slate-600 disabled:text-slate-200 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
+          : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:border-slate-500 disabled:text-slate-300 disabled:hover:bg-transparent transition text-center leading-tight disabled:cursor-not-allowed'
       }
     >
       {labelOverride || action.actionLabel}
@@ -860,7 +860,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         ) : primaryAction?.description ? <p className="mt-2 text-xs text-slate-300">{primaryAction.description}</p> : null}
                       </div>
 
-                      <div className="flex items-center gap-2 md:justify-end">
+                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
                         {activityProjectIds.has(project.id) && (
                           <button
                             type="button"
@@ -871,7 +871,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                                 );
                               }
                             }}
-                            className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition whitespace-nowrap"
+                            className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition text-center"
                           >
                             View activity
                           </button>
@@ -893,7 +893,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                             ) : (
                               <Link
                                 href={primaryActionHref}
-                                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+                                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
                               >
                                 Open project
                               </Link>
@@ -904,7 +904,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           <button
                             type="button"
                             onClick={() => setEditing(project)}
-                            className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition whitespace-nowrap"
+                            className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition text-center leading-tight"
                           >
                             {t('edit')}
                           </button>
