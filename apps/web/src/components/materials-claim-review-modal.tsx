@@ -320,7 +320,7 @@ export default function MaterialsClaimReviewModal({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-visible p-4 sm:overflow-y-auto">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-4">
               {loading ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
@@ -331,8 +331,8 @@ export default function MaterialsClaimReviewModal({
                   No pending materials claim found for this project.
                 </div>
               ) : (
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="space-y-3 min-h-0 min-w-0">
+                <div className="flex-1 min-h-0 grid gap-4 lg:grid-cols-2 lg:items-stretch">
+                  <div className="space-y-3 min-h-0 min-w-0 lg:overflow-y-auto">
                     <div className="rounded-lg border border-slate-700 bg-slate-800/60 p-4 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Claimed amount</span>
@@ -394,7 +394,7 @@ export default function MaterialsClaimReviewModal({
                     )}
                   </div>
 
-                  <div className="min-h-0 min-w-0">
+                  <div className="flex flex-col min-h-0 h-full">
                     <ProjectChat
                       projectId={projectId}
                       accessToken={accessToken}
@@ -403,7 +403,8 @@ export default function MaterialsClaimReviewModal({
                       threadScopeId={evidence.id}
                       sendButtonLabel="Request clarification"
                       messagePlaceholder="Ask for clarification on receipts, amounts, or notes..."
-                      className="min-h-0 min-w-0"
+                      className="flex-1 min-h-0"
+                      fillHeight
                     />
                   </div>
                 </div>

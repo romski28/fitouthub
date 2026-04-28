@@ -26,6 +26,9 @@ interface ProjectChatProps {
   messagePlaceholder?: string;
   className?: string;
   onMessageSent?: () => void;
+  /** When true, the messages area grows to fill the parent height instead of capping at 500px.
+   *  Requires the parent to have a defined height (e.g. h-full + flex-col on the ancestor). */
+  fillHeight?: boolean;
 }
 
 export default function ProjectChat({
@@ -38,6 +41,7 @@ export default function ProjectChat({
   messagePlaceholder = 'Type a message to the project team...',
   className = '',
   onMessageSent,
+  fillHeight = false,
 }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -163,7 +167,7 @@ export default function ProjectChat({
   };
 
   return (
-    <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-slate-700 bg-slate-900/60 shadow-sm ${className}`}>
+    <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-slate-700 bg-slate-900/60 shadow-sm${fillHeight ? ' flex flex-col' : ''} ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
         <div className="flex items-center justify-between">
@@ -179,7 +183,7 @@ export default function ProjectChat({
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="min-w-0 space-y-3 overflow-x-hidden overflow-y-auto p-4 min-h-[300px] max-h-[500px]">
+      <div ref={messagesContainerRef} className={`min-w-0 space-y-3 overflow-x-hidden overflow-y-auto p-4 ${fillHeight ? 'flex-1 min-h-0' : 'min-h-[300px] max-h-[500px]'}`}>
         {loading ? (
           <div className="text-center text-slate-400 text-sm py-8">Loading chat...</div>
         ) : error ? (

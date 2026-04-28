@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-28-bb5e01f",
+    "date": "2026-04-28T22:26:31+08:00",
+    "title": "Limit chat height to parent in 2-column modal layout",
+    "summary": "Limit chat height to parent in 2-column modal layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "bb5e01f",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-d602225",
     "date": "2026-04-28T22:18:32+08:00",
     "title": "Cap claimed amount to milestone 1 cap on save with toast warning",
