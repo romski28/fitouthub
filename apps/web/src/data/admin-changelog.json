@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-28-ccdd49b",
+    "date": "2026-04-28T16:58:32+08:00",
+    "title": "fix(web): require title transfer acknowledgement before authorising transfer",
+    "summary": "fix(web): require title transfer acknowledgement before authorising transfer",
+    "areas": [
+      "web"
+    ],
+    "commit": "ccdd49b",
+    "files": [
+      "apps/web/src/components/next-steps/review-materials-claim-modal.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-f549760",
     "date": "2026-04-28T16:31:10+08:00",
     "title": "feat(web): use reusable completion modal after materials claim submit with amber wait state",

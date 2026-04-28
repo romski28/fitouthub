@@ -57,6 +57,7 @@ export function ReviewMaterialsClaimModal({
   const [chatMessage, setChatMessage] = React.useState('');
   const [sendingQuestion, setSendingQuestion] = React.useState(false);
   const [chatRefreshKey, setChatRefreshKey] = React.useState(0);
+  const [titleTransferAcknowledged, setTitleTransferAcknowledged] = React.useState(false);
 
   const formatHKD = (value: number | string) =>
     new Intl.NumberFormat('en-HK', {
@@ -108,6 +109,10 @@ export function ReviewMaterialsClaimModal({
 
   const handleAuthorise = async () => {
     if (!evidence || !firstMilestone || !state.projectId || !accessToken) return;
+    if (!titleTransferAcknowledged) {
+      toast.error('Please confirm title transfer acknowledgement before authorising');
+      return;
+    }
     if (!confirm(`Authorise this claim for ${formatHKD(evidence.claimedAmount)}? The amount will be transferred to the professional's withdrawable wallet and any residual returned to your escrow.`)) return;
 
     setAuthorising(true);
@@ -120,7 +125,7 @@ export function ReviewMaterialsClaimModal({
           body: JSON.stringify({
             decision: 'approved',
             approvedAmount: Number(evidence.claimedAmount),
-            titleTransferAcknowledged: true,
+            titleTransferAcknowledged,
           }),
         },
       );
@@ -298,11 +303,20 @@ export function ReviewMaterialsClaimModal({
                   />
                 </div>
 
+                <label className="flex items-center gap-2 text-xs text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={titleTransferAcknowledged}
+                    onChange={(e) => setTitleTransferAcknowledged(e.target.checked)}
+                  />
+                  Confirm title transfer acknowledgement for the purchased items
+                </label>
+
                 <div className="flex w-full gap-2">
                   <button
                     type="button"
                     onClick={handleAuthorise}
-                    disabled={authorising || sendingQuestion}
+                    disabled={authorising || sendingQuestion || !titleTransferAcknowledged}
                     className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                   >
                     {authorising ? 'Authorising…' : `Authorise ${formatHKD(evidence.claimedAmount)}`}
