@@ -23,6 +23,7 @@ interface WorkflowCompletionModalProps {
   secondaryActionLabel?: string;
   showConfetti?: boolean;
   showPrimaryActionOverride?: boolean;
+  highlightWaitingAsAmber?: boolean;
   onNavigate?: () => void;     // called when the user clicks the CTA
   onAdditionalAction?: () => void;
   onClose: () => void;
@@ -44,6 +45,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   secondaryActionLabel = 'Close',
   showConfetti = false,
   showPrimaryActionOverride,
+  highlightWaitingAsAmber = false,
   onNavigate,
   onAdditionalAction,
   onClose,
@@ -69,6 +71,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   if (!isOpen) return null;
 
   const canActNow = nextStep?.requiresAction === true;
+  const emphasizeAmber = canActNow || highlightWaitingAsAmber;
   const showPrimaryAction = (showPrimaryActionOverride ?? canActNow) && Boolean(onNavigate);
   const waitingFor = nextStep?.waitingFor;
 
@@ -99,11 +102,11 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
             </p>
 
             <div className={`rounded-lg border px-4 py-3 space-y-1 ${
-              canActNow
+              emphasizeAmber
                 ? 'border-amber-500/40 bg-amber-500/10'
                 : 'border-slate-600 bg-slate-800/60'
             }`}>
-              <p className={`text-sm font-semibold ${canActNow ? 'text-amber-200' : 'text-slate-200'}`}>
+              <p className={`text-sm font-semibold ${emphasizeAmber ? 'text-amber-200' : 'text-slate-200'}`}>
                 {nextStep.actionLabel}
               </p>
               {nextStep.description && (
@@ -114,9 +117,13 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
             </div>
 
             {!canActNow && waitingFor && (
-              <div className="flex items-start gap-2 rounded-lg border border-sky-700/40 bg-sky-900/20 px-3 py-2.5">
-                <span className="text-sky-400 text-sm mt-0.5">⏳</span>
-                <p className="text-xs text-sky-300">{waitingCopy[waitingFor]}</p>
+              <div className={`flex items-start gap-2 rounded-lg px-3 py-2.5 ${
+                highlightWaitingAsAmber
+                  ? 'border border-amber-700/40 bg-amber-900/20'
+                  : 'border border-sky-700/40 bg-sky-900/20'
+              }`}>
+                <span className={`text-sm mt-0.5 ${highlightWaitingAsAmber ? 'text-amber-400' : 'text-sky-400'}`}>⏳</span>
+                <p className={`text-xs ${highlightWaitingAsAmber ? 'text-amber-300' : 'text-sky-300'}`}>{waitingCopy[waitingFor]}</p>
               </div>
             )}
           </div>

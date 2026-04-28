@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-28-f549760",
+    "date": "2026-04-28T16:31:10+08:00",
+    "title": "feat(web): use reusable completion modal after materials claim submit with amber wait state",
+    "summary": "feat(web): use reusable completion modal after materials claim submit with amber wait state",
+    "areas": [
+      "web"
+    ],
+    "commit": "f549760",
+    "files": [
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx",
+      "apps/web/src/components/workflow-completion-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-00142b1",
     "date": "2026-04-28T16:13:27+08:00",
     "title": "chore(web): commit remaining materials claim table changes",

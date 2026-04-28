@@ -2,10 +2,12 @@
 
 import React from 'react';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import MaterialsClaimItemsTable from '@/components/materials-claim-items-table';
+import { WorkflowCompletionModal, type WorkflowNextStep } from '@/components/workflow-completion-modal';
 
 type UploadRow = {
   id: string;
@@ -57,6 +59,7 @@ interface MaterialsClaimModalProps {
 export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: MaterialsClaimModalProps) {
   const { state } = useNextStepModal();
   const { accessToken } = useProfessionalAuth();
+  const router = useRouter();
 
   const [pageLoading, setPageLoading] = React.useState(false);
   const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan | null>(null);
@@ -65,9 +68,10 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
 
   const [uploadRows, setUploadRows] = React.useState<UploadRow[]>([]);
   const [uploadingFiles, setUploadingFiles] = React.useState(false);
-    const [materialsOpeningMessage, setMaterialsOpeningMessage] = React.useState('Milestone 1 payment request');
+  const [materialsOpeningMessage, setMaterialsOpeningMessage] = React.useState('Milestone 1 payment request');
   const [submitting, setSubmitting] = React.useState(false);
   const [skipping, setSkipping] = React.useState(false);
+  const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -282,7 +286,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
 
       toast.success('Materials claim submitted for client review');
       state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
-      onClose();
+      setWorkflowModalOpen(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit materials claim');
     } finally {
@@ -320,8 +324,24 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
   if (!isOpen) return null;
 
   const showSubmissionForm = materialsEvidence.filter((e) => e.status !== 'rejected').length === 0;
+  const showMainModal = isOpen && !workflowModalOpen;
+  const workflowNextStep: WorkflowNextStep = {
+    actionLabel: 'Wait for client reply',
+    description:
+      'Your milestone 1 claim is now pending client review. You can continue with other project tasks while the client reviews receipts and confirms the amount.',
+    requiresAction: false,
+    waitingFor: 'client',
+    tab: 'overview',
+  };
+
+  const handleCloseAll = () => {
+    setWorkflowModalOpen(false);
+    onClose();
+  };
 
   return (
+    <>
+    {showMainModal && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}>
@@ -386,19 +406,8 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1">Opening message (optional)</label>
-                    <input
-                      type="text"
-                      value={materialsOpeningMessage}
-                      onChange={(e) => setMaterialsOpeningMessage(e.target.value)}
-                      placeholder="Any context before client reviews"
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500"
-                    />
-                  </div>
-
-                  <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-white">Opening message</label>
+                      <label className="block text-xs font-semibold text-white">Opening message (optional)</label>
                       {materialsOpeningMessage && (
                         <button
                           type="button"
@@ -451,5 +460,25 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
         )}
       </div>
     </div>
+    )}
+
+    <WorkflowCompletionModal
+      isOpen={workflowModalOpen}
+      completedLabel={state.modalContent?.successTitle || 'Materials claim submitted!'}
+      completedDescription={
+        state.modalContent?.successBody ||
+        'Your claim is now in the project claim thread and has been sent to the client for review.'
+      }
+      nextStep={workflowNextStep}
+      primaryActionLabel="Return to project list"
+      secondaryActionLabel="Close"
+      showConfetti
+      highlightWaitingAsAmber
+      onNavigate={() => {
+        router.push('/professional-projects');
+      }}
+      onClose={handleCloseAll}
+    />
+    </>
   );
 }
