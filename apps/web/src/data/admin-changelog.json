@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-28-d7261d2",
+    "date": "2026-04-28T15:22:18+08:00",
+    "title": "feat(web): add dedicated MAKE_MILESTONE_1_CLAIM modal and dispatcher routing",
+    "summary": "feat(web): add dedicated MAKE_MILESTONE_1_CLAIM modal and dispatcher routing",
+    "areas": [
+      "web"
+    ],
+    "commit": "d7261d2",
+    "files": [
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-b162fbb",
     "date": "2026-04-28T15:06:09+08:00",
     "title": "feat(web): improve materials claim UX and extract shared table",
