@@ -22,6 +22,8 @@ interface ProjectChatProps {
   currentUserRole: 'client' | 'professional' | 'admin';
   threadScope?: string;
   threadScopeId?: string;
+  sendButtonLabel?: string;
+  messagePlaceholder?: string;
   className?: string;
 }
 
@@ -31,6 +33,8 @@ export default function ProjectChat({
   currentUserRole,
   threadScope,
   threadScopeId,
+  sendButtonLabel = 'Send',
+  messagePlaceholder = 'Type a message to the project team...',
   className = '',
 }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -286,7 +290,7 @@ export default function ProjectChat({
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message to the project team..."
+            placeholder={messagePlaceholder}
             disabled={sending || loading}
             className="flex-1 px-3 py-2 border border-slate-600 bg-slate-800 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-900"
           />
@@ -295,7 +299,7 @@ export default function ProjectChat({
             disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending || loading}
             className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-700 disabled:cursor-not-allowed transition"
           >
-            {sending ? 'Sending...' : 'Send'}
+            {sending ? 'Sending...' : sendButtonLabel}
           </button>
         </div>
       </form>

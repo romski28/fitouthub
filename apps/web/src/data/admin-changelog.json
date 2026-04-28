@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-28-83be7ba",
+    "date": "2026-04-28T17:09:49+08:00",
+    "title": "feat(web): unify client materials review into single modal for list and financials",
+    "summary": "feat(web): unify client materials review into single modal for list and financials",
+    "areas": [
+      "web"
+    ],
+    "commit": "83be7ba",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx",
+      "apps/web/src/components/next-steps/review-materials-claim-modal.tsx",
+      "apps/web/src/components/project-chat.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-ccdd49b",
     "date": "2026-04-28T16:58:32+08:00",
     "title": "fix(web): require title transfer acknowledgement before authorising transfer",

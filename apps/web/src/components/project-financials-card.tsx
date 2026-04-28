@@ -6,7 +6,7 @@ import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import StatusPill, { statusToneFromStatus } from './status-pill';
-import MaterialsClaimThreadPanel from './materials-claim-thread-panel';
+import MaterialsClaimReviewModal from './materials-claim-review-modal';
 import { useAuth } from '@/context/auth-context';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
 import {
@@ -1049,6 +1049,8 @@ export default function ProjectFinancialsCard({
   const closeClaimReviewModal = () => {
     setShowClaimReviewModal(false);
   };
+
+  const reviewMaterialsModalContent = resolveNextStepModalContent('REVIEW_MATERIALS_PURCHASE');
 
   const handleApproveAndSettleProcurement = async () => {
     if (!firstMilestone || !selectedProcurementEvidence) return;
@@ -2612,97 +2614,18 @@ export default function ProjectFinancialsCard({
           modalPortalTarget,
         )}
 
-      {modalPortalTarget && showClaimReviewModal && selectedProcurementEvidence && createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Review materials claim">
-          <div className="w-full max-w-3xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
-            <div className="flex items-start justify-between border-b border-slate-700 px-4 py-3">
-              <div>
-                <h3 className="text-lg font-semibold text-white">Review Materials Claim</h3>
-                <p className="text-xs text-slate-300">
-                  Claim ID: {selectedProcurementEvidence.id}
-                  {selectedProcurementEvidence.deadlineAt
-                    ? ` · Deadline ${new Date(selectedProcurementEvidence.deadlineAt).toLocaleString('en-HK')}`
-                    : ''}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeClaimReviewModal}
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="grid gap-4 p-4 lg:grid-cols-2">
-              <div className="space-y-3">
-                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 text-xs text-slate-200">
-                  <p>Claimed amount: <span className="font-semibold text-white">{formatHKD(selectedProcurementEvidence.claimedAmount)}</span></p>
-                  {selectedProcurementEvidence.openingMessage && (
-                    <p className="mt-2 text-slate-300">Opening note: {selectedProcurementEvidence.openingMessage}</p>
-                  )}
-                  {selectedProcurementEvidence.notes && (
-                    <p className="mt-2 text-slate-300">Notes: {selectedProcurementEvidence.notes}</p>
-                  )}
-                </div>
-
-                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Settlement Decision</p>
-                  <div className="mt-2 space-y-2">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={authorizedProcurementAmount}
-                      onChange={(event) => setAuthorizedProcurementAmount(event.target.value)}
-                      placeholder="Value to authorise"
-                      className="w-full rounded-md border border-cyan-300/30 bg-slate-900 px-3 py-2 text-sm text-white"
-                    />
-                    <label className="flex items-center gap-2 text-xs text-cyan-100">
-                      <input
-                        type="checkbox"
-                        checked={titleTransferAcknowledged}
-                        onChange={(event) => setTitleTransferAcknowledged(event.target.checked)}
-                      />
-                      Confirm title transfer acknowledgement
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleApproveAndSettleProcurement}
-                        disabled={procurementBusy === `settle-${selectedProcurementEvidence.id}`}
-                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {procurementBusy === `settle-${selectedProcurementEvidence.id}` ? 'Processing...' : 'Authorize Transfer'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRejectProcurementEvidence(selectedProcurementEvidence)}
-                        disabled={procurementBusy === `reject-${selectedProcurementEvidence.id}`}
-                        className="rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                      >
-                        {procurementBusy === `reject-${selectedProcurementEvidence.id}` ? 'Rejecting...' : 'Reject Claim'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <MaterialsClaimThreadPanel
-                projectId={projectId}
-                accessToken={accessToken}
-                claimId={selectedProcurementEvidence.id}
-                role={resolvedRole}
-                title="Claim Chat"
-                subtitle="Ask clarifying questions here. All messages are attached to this claim."
-                placeholder="Ask a question before authorising..."
-                sendLabel="Ask Question"
-              />
-            </div>
-          </div>
-        </div>,
-        modalPortalTarget,
-      )}
+      <MaterialsClaimReviewModal
+        isOpen={showClaimReviewModal && Boolean(selectedProcurementEvidence)}
+        onClose={closeClaimReviewModal}
+        projectId={projectId}
+        accessToken={accessToken}
+        currentUserRole={resolvedRole === 'admin' ? 'admin' : 'client'}
+        selectedEvidenceId={selectedProcurementEvidence?.id || null}
+        modalContent={reviewMaterialsModalContent}
+        onCompleted={() => {
+          void Promise.all([fetchProcurementEvidence(), reloadPaymentPlan()]);
+        }}
+      />
 
 
       {/* Transaction Detail Modal */}
