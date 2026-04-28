@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-28-d602225",
+    "date": "2026-04-28T22:18:32+08:00",
+    "title": "Cap claimed amount to milestone 1 cap on save with toast warning",
+    "summary": "Cap claimed amount to milestone 1 cap on save with toast warning",
+    "areas": [
+      "web"
+    ],
+    "commit": "d602225",
+    "files": [
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-c4e5338",
     "date": "2026-04-28T22:08:54+08:00",
     "title": "Fix missing NestJS Patch import in financial controller",

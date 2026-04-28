@@ -295,7 +295,16 @@ export function RespondMaterialsClaimModal({
       return;
     }
 
-    const claimedAmount = uploadRows.reduce((sum, row) => sum + parseFloat(row.value), 0);
+    const rawTotal = uploadRows.reduce((sum, row) => sum + parseFloat(row.value), 0);
+    const isCapped = maxClaimableAmount > 0 && rawTotal > maxClaimableAmount;
+    if (isCapped) {
+      toast('Claimed amount cannot exceed the authorised milestone 1 cap. The submitted amount has been capped.', {
+        icon: '⚠️',
+        style: { background: '#92400e', color: '#fef3c7' },
+        duration: 5000,
+      });
+    }
+    const claimedAmount = isCapped ? maxClaimableAmount : rawTotal;
     const itemNotes = uploadRows
       .map((row) => {
         const value = parseFloat(row.value);
