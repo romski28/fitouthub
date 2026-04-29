@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-08ff22f",
+    "date": "2026-04-29T11:29:34+08:00",
+    "title": "Match MAKE_MILESTONE_1_CLAIM modal mobile sizing to respond modal",
+    "summary": "Match MAKE_MILESTONE_1_CLAIM modal mobile sizing to respond modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "08ff22f",
+    "files": [
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-313d21e",
     "date": "2026-04-29T09:57:47+08:00",
     "title": "Revert \"Apply mobile-safe sizing to materials-claim-modal\"",
