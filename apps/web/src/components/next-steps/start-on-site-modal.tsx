@@ -402,43 +402,45 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md max-h-[80vh] mx-4 rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden">
-        <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
-          <div className="mb-4 flex justify-center">
-            <img
-              src={modalImage}
-              alt="Step illustration"
-              className="h-20 w-20 rounded-full border border-white/20 object-cover"
-            />
+        <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-4">
+              <img
+                src={modalImage}
+                alt="Step illustration"
+                className="h-20 w-20 rounded-full border border-white/20 object-cover"
+              />
+            </div>
+
+            <h2 className="text-2xl font-bold text-emerald-300">{modalTitle}</h2>
+            <p className="mt-3 text-base leading-relaxed text-slate-100">{modalBody}</p>
+
+            <div className="mt-5 w-full">
+              {scannerError ? (
+                <div className="w-full rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-sm text-rose-200 text-center">
+                  {scannerError}
+                </div>
+              ) : confirming ? (
+                <div className="flex flex-col items-center gap-3 py-6">
+                  <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-slate-300">Confirming...</p>
+                </div>
+              ) : (
+                <div className="w-fit mx-auto rounded-xl overflow-hidden bg-black border border-slate-700" style={{ minHeight: 280 }}>
+                  {/* html5-qrcode mounts its video into this div */}
+                  <div id={scannerDivId} className="w-full" />
+                </div>
+              )}
+            </div>
+
+            <p className="mt-4 text-sm text-slate-300">
+              Point your camera at the QR code shown on the professional&apos;s screen.
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              If camera access is blocked, allow permission and reopen this step.
+            </p>
           </div>
-
-          <h2 className="text-2xl font-bold text-emerald-300">{modalTitle}</h2>
-          <p className="mt-3 text-base leading-relaxed text-slate-100">{modalBody}</p>
-
-          <p className="mt-4 text-sm text-slate-300">
-            Point your camera at the QR code shown on the professional&apos;s screen.
-          </p>
-
-          <div className="mt-5">
-            {scannerError ? (
-              <div className="w-full rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-sm text-rose-200 text-center">
-                {scannerError}
-              </div>
-            ) : confirming ? (
-              <div className="flex flex-col items-center gap-3 py-6">
-                <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-slate-300">Confirming...</p>
-              </div>
-            ) : (
-              <div className="w-full rounded-xl overflow-hidden bg-black border border-slate-700" style={{ minHeight: 280 }}>
-                {/* html5-qrcode mounts its video into this div */}
-                <div id={scannerDivId} className="w-full" />
-              </div>
-            )}
-          </div>
-
-          <p className="mt-4 text-xs text-slate-400">
-            If camera access is blocked, allow permission and reopen this step.
-          </p>
         </div>
 
         <div className="mt-auto flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
