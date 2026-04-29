@@ -7,6 +7,7 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
+import { resolveNextStepModalContent } from '@/lib/next-step-modal-content';
 
 interface StartOnSiteModalProps {
   isOpen: boolean;
@@ -25,7 +26,6 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
 
   // ── Professional state ────────────────────────────────────────────────
   const [qrToken, setQrToken] = useState<string | null>(null);
-  const [qrExpiresAt, setQrExpiresAt] = useState<Date | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
   const [generatingQr, setGeneratingQr] = useState(false);
 
@@ -38,6 +38,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
   // ── Shared ────────────────────────────────────────────────────────────
   const [completionOpen, setCompletionOpen] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modalContent = resolveNextStepModalContent(state.actionKey || '', state.modalContent);
 
   // ── Generate QR (professional) ────────────────────────────────────────
   const generateQr = useCallback(async () => {
@@ -57,7 +58,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
       }
       const { token, expiresAt } = await res.json();
       setQrToken(token);
-      setQrExpiresAt(new Date(expiresAt));
+      void expiresAt;
       setSecondsLeft(QR_EXPIRY_MINUTES * 60);
     } catch (e: any) {
       toast.error(e.message || 'Could not generate QR code');
@@ -66,6 +67,21 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
     }
   }, [state.projectId, accessToken]);
 
+  // Professional UX: open directly to QR screen and generate token immediately.
+  useEffect(() => {
+    if (!isOpen || !isProfessional || !state.projectId || !accessToken) return;
+    if (qrToken || generatingQr) return;
+    void generateQr();
+  }, [
+    isOpen,
+    isProfessional,
+    state.projectId,
+    accessToken,
+    qrToken,
+    generatingQr,
+    generateQr,
+  ]);
+
   // Countdown timer for QR expiry
   useEffect(() => {
     if (!qrToken || !isOpen) return;
@@ -73,7 +89,6 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           setQrToken(null);
-          setQrExpiresAt(null);
           return 0;
         }
         return prev - 1;
@@ -198,7 +213,6 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
   useEffect(() => {
     if (!isOpen) {
       setQrToken(null);
-      setQrExpiresAt(null);
       setSecondsLeft(0);
       setScannerError(null);
       setConfirming(false);
@@ -207,6 +221,12 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
 
   const formatTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+  const modalTitle = modalContent.title || 'Start project on site';
+  const modalBody =
+    modalContent.body ||
+    'Show this QR code to your client. They will scan it to confirm both parties are on site.';
+  const modalImage = modalContent.imageUrl || '/assets/images/chatbot-avatar-icon.webp';
 
   if (!isOpen) return null;
 
@@ -236,67 +256,68 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
   if (isProfessional) {
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 flex flex-col items-center gap-5">
-          <h2 className="text-xl font-semibold text-gray-900 text-center">Start project on site</h2>
-          <p className="text-sm text-gray-500 text-center">
-            Show this QR code to your client. They will scan it to confirm you are both on site.
-          </p>
+        <div className="w-full max-w-md max-h-[80vh] mx-4 rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden">
+          <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
+            <div className="mb-4 flex justify-center">
+              <img
+                src={modalImage}
+                alt="Step illustration"
+                className="h-20 w-20 rounded-full border border-white/20 object-cover"
+              />
+            </div>
 
-          {!qrToken ? (
+            <h2 className="text-2xl font-bold text-emerald-300">{modalTitle}</h2>
+            <p className="mt-3 text-base leading-relaxed text-slate-100">{modalBody}</p>
+
+            <div className="mt-6 flex flex-col items-center gap-4">
+              {!qrToken ? (
+                <div className="flex flex-col items-center gap-3 py-6">
+                  <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-slate-300">Generating QR code...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-xl bg-white p-3">
+                    <QRCodeSVG value={qrToken} size={220} />
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs text-slate-400">Expires in</span>
+                    <span
+                      className={`text-2xl font-mono font-bold tabular-nums ${
+                        secondsLeft < 60 ? 'text-rose-400' : 'text-emerald-300'
+                      }`}
+                    >
+                      {formatTime(secondsLeft)}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-400">
+                    Ask the client to open their &ldquo;Start project on site&rdquo; step and scan this code.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-auto flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
             <button
               onClick={generateQr}
               disabled={generatingQr}
-              className="w-full py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 transition"
+              className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:opacity-50"
             >
-              {generatingQr ? 'Generating…' : 'Generate QR Code'}
+              Regenerate
             </button>
-          ) : (
-            <>
-              <div className="border-4 border-indigo-100 rounded-xl p-3">
-                <QRCodeSVG value={qrToken} size={220} />
-              </div>
-
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xs text-gray-400">Expires in</span>
-                <span
-                  className={`text-2xl font-mono font-bold tabular-nums ${
-                    secondsLeft < 60 ? 'text-red-500' : 'text-indigo-600'
-                  }`}
-                >
-                  {formatTime(secondsLeft)}
-                </span>
-              </div>
-
-              <p className="text-xs text-gray-400 text-center">
-                Ask the client to open their &ldquo;Start project on site&rdquo; step and scan this code.
-              </p>
-
-              <div className="flex gap-3 w-full">
-                <button
-                  onClick={generateQr}
-                  disabled={generatingQr}
-                  className="flex-1 py-2 rounded-lg border border-indigo-300 text-indigo-600 text-sm font-medium hover:bg-indigo-50 disabled:opacity-50 transition"
-                >
-                  Regenerate
-                </button>
-                <button
-                  onClick={onClose}
-                  className="flex-1 py-2 rounded-lg border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition"
-                >
-                  Close
-                </button>
-              </div>
-            </>
-          )}
-
-          {!qrToken && (
-            <button onClick={onClose} className="text-xs text-gray-400 hover:text-gray-600 transition">
-              Cancel
+            <button
+              onClick={onClose}
+              className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700"
+            >
+              Close
             </button>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -305,42 +326,58 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
   // ─── Client: scan QR ─────────────────────────────────────────────────
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 flex flex-col items-center gap-5">
-        <h2 className="text-xl font-semibold text-gray-900 text-center">Start project on site</h2>
-        <p className="text-sm text-gray-500 text-center">
-          Point your camera at the QR code shown on the professional&rsquo;s screen.
-        </p>
-
-        {scannerError ? (
-          <div className="w-full rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700 text-center">
-            {scannerError}
+      <div className="w-full max-w-md max-h-[80vh] mx-4 rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden">
+        <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
+          <div className="mb-4 flex justify-center">
+            <img
+              src={modalImage}
+              alt="Step illustration"
+              className="h-20 w-20 rounded-full border border-white/20 object-cover"
+            />
           </div>
-        ) : confirming ? (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Confirming…</p>
-          </div>
-        ) : (
-          <div className="w-full rounded-xl overflow-hidden bg-black" style={{ minHeight: 280 }}>
-            {/* html5-qrcode mounts its video into this div */}
-            <div id={scannerDivId} className="w-full" />
-          </div>
-        )}
 
-        <p className="text-xs text-gray-400 text-center">
-          The professional should open their &ldquo;Start project on site&rdquo; step to display the QR code.
-        </p>
+          <h2 className="text-2xl font-bold text-emerald-300">{modalTitle}</h2>
+          <p className="mt-3 text-base leading-relaxed text-slate-100">{modalBody}</p>
 
-        <button
-          onClick={onClose}
-          disabled={confirming}
-          className="w-full py-2 rounded-lg border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
-        >
-          Cancel
-        </button>
+          <p className="mt-4 text-sm text-slate-300">
+            Point your camera at the QR code shown on the professional&apos;s screen.
+          </p>
+
+          <div className="mt-5">
+            {scannerError ? (
+              <div className="w-full rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-sm text-rose-200 text-center">
+                {scannerError}
+              </div>
+            ) : confirming ? (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-slate-300">Confirming...</p>
+              </div>
+            ) : (
+              <div className="w-full rounded-xl overflow-hidden bg-black border border-slate-700" style={{ minHeight: 280 }}>
+                {/* html5-qrcode mounts its video into this div */}
+                <div id={scannerDivId} className="w-full" />
+              </div>
+            )}
+          </div>
+
+          <p className="mt-4 text-xs text-slate-400">
+            If camera access is blocked, allow permission and reopen this step.
+          </p>
+        </div>
+
+        <div className="mt-auto flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
+          <button
+            onClick={onClose}
+            disabled={confirming}
+            className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
