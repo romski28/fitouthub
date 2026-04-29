@@ -131,7 +131,7 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.9) transparent;
   padding-right: 0.25rem;
-  margin-right: -0.25rem;
+  margin-right: 0.625rem;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;

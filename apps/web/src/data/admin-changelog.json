@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-f7b8054",
+    "date": "2026-04-29T23:53:49+08:00",
+    "title": "style: inset next-step modal scrollbar by its own width from edge",
+    "summary": "style: inset next-step modal scrollbar by its own width from edge",
+    "areas": [
+      "web"
+    ],
+    "commit": "f7b8054",
+    "files": [
+      "apps/web/src/app/globals.css"
+    ]
+  },
+  {
     "id": "2026-04-29-1e30836",
     "date": "2026-04-29T23:48:23+08:00",
     "title": "perf: open professional next-step modal immediately without prefetch wait",
