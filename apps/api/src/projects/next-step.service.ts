@@ -534,6 +534,7 @@ export class NextStepService {
           ];
         } else {
           let hasPendingMaterialsClaim = false;
+          let procurementApproved = false;
           if (escrowFunded && ['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
             const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
               where: { projectId },
@@ -547,14 +548,25 @@ export class NextStepService {
             });
             const firstMilestoneId = paymentPlan?.milestones?.[0]?.id;
             if (firstMilestoneId) {
-              hasPendingMaterialsClaim =
-                (await (this.prisma as any).milestoneProcurementEvidence.count({
+              const [pendingCount, approvedCount] = await this.prisma.$transaction([
+                (this.prisma as any).milestoneProcurementEvidence.count({
                   where: {
                     projectId,
                     paymentMilestoneId: firstMilestoneId,
                     status: 'pending',
                   },
-                })) > 0;
+                }),
+                this.prisma.financialTransaction.count({
+                  where: {
+                    projectId,
+                    type: 'milestone_procurement_approved',
+                    status: 'confirmed',
+                    notes: { contains: firstMilestoneId },
+                  },
+                }),
+              ]);
+              hasPendingMaterialsClaim = pendingCount > 0;
+              procurementApproved = approvedCount > 0;
             }
           }
 
@@ -603,8 +615,8 @@ export class NextStepService {
               ),
             );
 
-            // Primary action 2: Make milestone 1 claim (if applicable and not already skipped)
-            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && walletTransferPrerequisite !== 'skipped') {
+            // Primary action 2: Make milestone 1 claim (if applicable, not skipped, and not yet approved)
+            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && walletTransferPrerequisite !== 'skipped' && !procurementApproved) {
               availableConfigSteps.push({
                 id: 'synthetic-MAKE_MILESTONE_1_CLAIM',
                 createdAt: new Date(),
@@ -988,14 +1000,24 @@ export class NextStepService {
                 'You shared the milestone schedule. Waiting for the client to review and confirm it.'),
             ];
           } else {
-            // Schedule confirmed — check for pending materials claim
+            // Schedule confirmed — check for pending materials claim and whether procurement is already approved
             let hasPendingClaimPreWork = false;
+            let procurementApprovedPreWork = false;
             if (escrowPreWork && ['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
               const pp = await this.prisma.projectPaymentPlan.findUnique({
                 where: { projectId }, select: { milestones: { where: { sequence: 1 }, select: { id: true }, take: 1 } },
               });
               const m1 = pp?.milestones?.[0]?.id;
-              if (m1) hasPendingClaimPreWork = (await (this.prisma as any).milestoneProcurementEvidence.count({ where: { projectId, paymentMilestoneId: m1, status: 'pending' } })) > 0;
+              if (m1) {
+                const [pendingCountPw, approvedCountPw] = await this.prisma.$transaction([
+                  (this.prisma as any).milestoneProcurementEvidence.count({ where: { projectId, paymentMilestoneId: m1, status: 'pending' } }),
+                  this.prisma.financialTransaction.count({
+                    where: { projectId, type: 'milestone_procurement_approved', status: 'confirmed', notes: { contains: m1 } },
+                  }),
+                ]);
+                hasPendingClaimPreWork = pendingCountPw > 0;
+                procurementApprovedPreWork = approvedCountPw > 0;
+              }
             }
 
             if (canStartPreWork && !hasPendingClaimPreWork) {
@@ -1003,8 +1025,8 @@ export class NextStepService {
                 createSyntheticPrimaryStep('START_PROJECT', 'Start project on site', true, role, effectiveStage,
                   'Escrow is funded and schedule confirmed. You may begin work on site.'),
               ];
-              // Show MAKE_MILESTONE_1_CLAIM only if the professional hasn't already skipped the materials workflow
-              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && walletPreWork !== 'skipped') {
+              // Show MAKE_MILESTONE_1_CLAIM only if not skipped and procurement not yet approved
+              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && walletPreWork !== 'skipped' && !procurementApprovedPreWork) {
                 availableConfigSteps.push({
                   id: 'synthetic-MAKE_MILESTONE_1_CLAIM', createdAt: new Date(), updatedAt: new Date(), role,
                   projectStage: effectiveStage, actionKey: 'MAKE_MILESTONE_1_CLAIM',

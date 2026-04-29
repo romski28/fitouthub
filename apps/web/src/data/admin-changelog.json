@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-29-4afe7a8",
+    "date": "2026-04-29T16:17:51+08:00",
+    "title": "feat: gate milestone 1 claim steps after procurement approved + client celebration modal",
+    "summary": "feat: gate milestone 1 claim steps after procurement approved + client celebration modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "4afe7a8",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/materials-claim-review-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-08ff22f",
     "date": "2026-04-29T11:29:34+08:00",
     "title": "Match MAKE_MILESTONE_1_CLAIM modal mobile sizing to respond modal",

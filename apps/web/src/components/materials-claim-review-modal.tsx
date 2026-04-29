@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
 import ProjectChat from '@/components/project-chat';
+import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
 
 interface ClaimModalContent {
   title?: string;
@@ -115,8 +117,10 @@ export default function MaterialsClaimReviewModal({
   const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan | null>(null);
   const [summary, setSummary] = React.useState<ProjectFinancialSummary | null>(null);
   const [evidence, setEvidence] = React.useState<ProcurementEvidence | null>(null);
+  const router = useRouter();
   const [authorising, setAuthorising] = React.useState(false);
   const [approvedAmount, setApprovedAmount] = React.useState('');
+  const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
   const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
 
@@ -269,8 +273,7 @@ export default function MaterialsClaimReviewModal({
       }
 
       toast.success('Transfer authorised successfully');
-      onCompleted?.();
-      onClose();
+      setWorkflowModalOpen(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to authorise transfer');
     } finally {
@@ -289,6 +292,7 @@ export default function MaterialsClaimReviewModal({
     'Review each receipt and claim details before authorising. Use the claim thread for clarifications so all context is retained in one place.';
 
   return (
+    <>
     <div
       className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-2 sm:items-center sm:p-4 transition-all ${
         isOpen ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
@@ -415,20 +419,20 @@ export default function MaterialsClaimReviewModal({
               <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4">
                 <div className="flex w-full flex-wrap items-center justify-end gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="shrink-0 text-xs font-semibold text-slate-300">Amount to transfer</span>
-                  </div>
-                  <div className="relative w-full max-w-[13rem] min-w-[11rem]">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={approvedAmount}
-                      onChange={(event) => setApprovedAmount(event.target.value)}
-                      placeholder="0.00"
-                      className="h-9 w-full rounded-md border border-cyan-300/30 bg-slate-900 pl-12 pr-3 text-right text-sm text-white"
-                    />
-                  </div>
+                      <span className="shrink-0 text-xs font-semibold text-slate-300">Amount to transfer</span>
+                    </div>
+                    <div className="relative w-full max-w-[13rem] min-w-[11rem]">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={approvedAmount}
+                        onChange={(event) => setApprovedAmount(event.target.value)}
+                        placeholder="0.00"
+                        className="h-9 w-full rounded-md border border-cyan-300/30 bg-slate-900 pl-12 pr-3 text-right text-sm text-white"
+                      />
+                    </div>
                   <button
                     type="button"
                     onClick={handleAuthoriseTransfer}
@@ -509,5 +513,24 @@ export default function MaterialsClaimReviewModal({
         </div>
       )}
     </div>
-  );
-}
+
+    <WorkflowCompletionModal
+      isOpen={workflowModalOpen}
+      completedLabel={modalContent?.title ? `${modalContent.title} — approved!` : 'Materials claim approved!'}
+        nextStep={null}
+      completedDescription="The approved amount has been moved to the professional's withdrawable wallet. Any unspent balance has been returned to your escrow."
+      primaryActionLabel="Return to projects"
+      secondaryActionLabel="Close"
+      showConfetti
+      onNavigate={() => {
+        router.push('/projects');
+      }}
+      onClose={() => {
+        setWorkflowModalOpen(false);
+        onCompleted?.();
+        onClose();
+      }}
+    />
+    </>
+    );
+  }
