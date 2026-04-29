@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-6fd9788",
+    "date": "2026-04-29T09:55:22+08:00",
+    "title": "Apply mobile-safe sizing to materials-claim-modal",
+    "summary": "Apply mobile-safe sizing to materials-claim-modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "6fd9788",
+    "files": [
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-28-bb5e01f",
     "date": "2026-04-28T22:26:31+08:00",
     "title": "Limit chat height to parent in 2-column modal layout",
