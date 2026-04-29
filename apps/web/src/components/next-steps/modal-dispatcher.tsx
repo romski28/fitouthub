@@ -310,6 +310,7 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'respond-materials-claim';
   }
 
+  // START_PROJECT_ON_SITE — falls through to general modal (QR modal to be built next sprint)
   // Default to general modal
   return 'general';
 }

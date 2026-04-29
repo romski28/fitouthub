@@ -486,6 +486,107 @@ SET
 COMMIT;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- PART 8 — NextStepConfig: START_PROJECT_ON_SITE (CONTRACT_PHASE, CLIENT)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Surfaced once the professional wallet transfer is done (capCount > 0).
+-- Parallel to REVIEW_MATERIALS_PURCHASE when a pending claim exists.
+-- Provides the entry point for the on-site QR start exchange.
+
+BEGIN;
+
+INSERT INTO "NextStepConfig"
+  (
+    "id", "projectStage", "role", "actionKey", "actionLabel", "description",
+    "modalTitle", "modalBody", "modalDetailsBody",
+    "modalPrimaryButtonLabel", "modalSecondaryButtonLabel",
+    "modalPrimaryActionType", "modalSecondaryActionType",
+    "detailsTarget", "isPrimary", "isElective", "requiresAction",
+    "displayOrder", "createdAt", "updatedAt"
+  )
+VALUES
+  (
+    gen_random_uuid()::text,
+    'CONTRACT_PHASE', 'CLIENT', 'START_PROJECT_ON_SITE',
+    'Start project on site',
+    'Begin work on site with the professional. Use this action to confirm the project has officially started.',
+    'Start project on site',
+    'Confirm that you and the professional are on site together and ready to begin work. This records the official project start.',
+    'Once you start the project on site, the professional can begin physical work. Keep the claim review separate — you can review receipts independently.',
+    'Confirm start on site',
+    'Not yet',
+    'open_custom_modal', 'close_modal',
+    '{"tab":"overview"}',
+    true, false, true, 2,
+    NOW(), NOW()
+  )
+ON CONFLICT ("projectStage", "role", "actionKey") DO UPDATE
+SET
+  "actionLabel"              = EXCLUDED."actionLabel",
+  "description"              = EXCLUDED."description",
+  "modalTitle"               = EXCLUDED."modalTitle",
+  "modalBody"                = EXCLUDED."modalBody",
+  "modalDetailsBody"         = EXCLUDED."modalDetailsBody",
+  "modalPrimaryButtonLabel"  = EXCLUDED."modalPrimaryButtonLabel",
+  "modalSecondaryButtonLabel"= EXCLUDED."modalSecondaryButtonLabel",
+  "modalPrimaryActionType"   = EXCLUDED."modalPrimaryActionType",
+  "modalSecondaryActionType" = EXCLUDED."modalSecondaryActionType",
+  "detailsTarget"            = EXCLUDED."detailsTarget",
+  "isPrimary"                = EXCLUDED."isPrimary",
+  "isElective"               = EXCLUDED."isElective",
+  "requiresAction"           = EXCLUDED."requiresAction",
+  "displayOrder"             = EXCLUDED."displayOrder",
+  "updatedAt"                = NOW();
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PART 9 — NextStepConfig: START_PROJECT_ON_SITE (PRE_WORK, CLIENT)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+INSERT INTO "NextStepConfig"
+  (
+    "id", "projectStage", "role", "actionKey", "actionLabel", "description",
+    "modalTitle", "modalBody", "modalDetailsBody",
+    "modalPrimaryButtonLabel", "modalSecondaryButtonLabel",
+    "modalPrimaryActionType", "modalSecondaryActionType",
+    "detailsTarget", "isPrimary", "isElective", "requiresAction",
+    "displayOrder", "createdAt", "updatedAt"
+  )
+VALUES
+  (
+    gen_random_uuid()::text,
+    'PRE_WORK', 'CLIENT', 'START_PROJECT_ON_SITE',
+    'Start project on site',
+    'Begin work on site with the professional. Use this action to confirm the project has officially started.',
+    'Start project on site',
+    'Confirm that you and the professional are on site together and ready to begin work. This records the official project start.',
+    'Once you start the project on site, the professional can begin physical work. Keep the claim review separate — you can review receipts independently.',
+    'Confirm start on site',
+    'Not yet',
+    'open_custom_modal', 'close_modal',
+    '{"tab":"overview"}',
+    true, false, true, 2,
+    NOW(), NOW()
+  )
+ON CONFLICT ("projectStage", "role", "actionKey") DO UPDATE
+SET
+  "actionLabel"              = EXCLUDED."actionLabel",
+  "description"              = EXCLUDED."description",
+  "modalTitle"               = EXCLUDED."modalTitle",
+  "modalBody"                = EXCLUDED."modalBody",
+  "modalDetailsBody"         = EXCLUDED."modalDetailsBody",
+  "modalPrimaryButtonLabel"  = EXCLUDED."modalPrimaryButtonLabel",
+  "modalSecondaryButtonLabel"= EXCLUDED."modalSecondaryButtonLabel",
+  "modalPrimaryActionType"   = EXCLUDED."modalPrimaryActionType",
+  "modalSecondaryActionType" = EXCLUDED."modalSecondaryActionType",
+  "detailsTarget"            = EXCLUDED."detailsTarget",
+  "isPrimary"                = EXCLUDED."isPrimary",
+  "isElective"               = EXCLUDED."isElective",
+  "requiresAction"           = EXCLUDED."requiresAction",
+  "displayOrder"             = EXCLUDED."displayOrder",
+  "updatedAt"                = NOW();
+
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Verification queries (uncomment to run after applying)
 -- ─────────────────────────────────────────────────────────────────────────────
 -- SELECT "projectStage", "role", "actionKey", "actionLabel",

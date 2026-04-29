@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-29-88402ea",
+    "date": "2026-04-29T21:12:22+08:00",
+    "title": "fix: gate stale REVIEW_MATERIALS_PURCHASE + add START_PROJECT_ON_SITE for client",
+    "summary": "fix: gate stale REVIEW_MATERIALS_PURCHASE + add START_PROJECT_ON_SITE for client",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "88402ea",
+    "files": [
+      "apps/api/prisma/MANUAL_CONFIGURE_MAKE_MILESTONE_1_CLAIM.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-4afe7a8",
     "date": "2026-04-29T16:17:51+08:00",
     "title": "feat: gate milestone 1 claim steps after procurement approved + client celebration modal",

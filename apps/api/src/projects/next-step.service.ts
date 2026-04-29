@@ -850,23 +850,42 @@ export class NextStepService {
             });
             const m1Id = procPlan?.milestones?.[0]?.id;
             if (m1Id) {
-              const [capCount, pendingEvidenceCount] = await this.prisma.$transaction([
-                this.prisma.financialTransaction.count({
-                  where: {
-                    projectId,
-                    type: 'milestone_foh_allocation_cap',
-                    status: 'confirmed',
-                    notes: { contains: m1Id },
-                  },
-                }),
-                (this.prisma as any).milestoneProcurementEvidence.count({
-                  where: {
-                    projectId,
-                    paymentMilestoneId: m1Id,
-                    status: 'pending',
-                  },
-                }),
-              ]);
+              const [capCount, pendingEvidenceCount, procurementApprovedCount, capReturnedCount] =
+                await this.prisma.$transaction([
+                  this.prisma.financialTransaction.count({
+                    where: {
+                      projectId,
+                      type: 'milestone_foh_allocation_cap',
+                      status: 'confirmed',
+                      notes: { contains: m1Id },
+                    },
+                  }),
+                  (this.prisma as any).milestoneProcurementEvidence.count({
+                    where: {
+                      projectId,
+                      paymentMilestoneId: m1Id,
+                      status: 'pending',
+                    },
+                  }),
+                  this.prisma.financialTransaction.count({
+                    where: {
+                      projectId,
+                      type: 'milestone_procurement_approved',
+                      status: 'confirmed',
+                      notes: { contains: m1Id },
+                    },
+                  }),
+                  this.prisma.financialTransaction.count({
+                    where: {
+                      projectId,
+                      type: 'milestone_cap_remainder_return',
+                      status: 'confirmed',
+                      notes: { contains: m1Id },
+                    },
+                  }),
+                ]);
+
+              const materialsClaimDone = procurementApprovedCount > 0 || capReturnedCount > 0;
 
               if (capCount === 0) {
                 // Step A: client confirms the nominal wallet allocation (no proof needed).
@@ -883,14 +902,56 @@ export class NextStepService {
                     displayOrder: 1,
                   } as any,
                 ];
+              } else if (materialsClaimDone) {
+                // Claim approved or cap returned — materials workflow complete. Only show start on site.
+                availableConfigSteps = [
+                  {
+                    actionKey: 'START_PROJECT_ON_SITE',
+                    actionLabel: 'Start project on site',
+                    description:
+                      'Materials claim is settled. You are ready to begin work on site with the professional.',
+                    isPrimary: true,
+                    isElective: false,
+                    requiresAction: true,
+                    estimatedDurationMinutes: 5,
+                    displayOrder: 1,
+                  } as any,
+                ];
               } else if (pendingEvidenceCount > 0) {
-                // Step B: professional has submitted receipts, client reviews.
+                // Step B: professional has submitted receipts, client reviews — show both review and start on site.
                 availableConfigSteps = [
                   {
                     actionKey: 'REVIEW_MATERIALS_PURCHASE',
                     actionLabel: 'Review materials purchase receipts',
                     description:
                       'The professional has submitted purchase receipts. Review and approve to move the confirmed amount to their withdrawable wallet. Any unspent balance will be returned to your escrow.',
+                    isPrimary: true,
+                    isElective: false,
+                    requiresAction: true,
+                    estimatedDurationMinutes: 5,
+                    displayOrder: 1,
+                  } as any,
+                  {
+                    actionKey: 'START_PROJECT_ON_SITE',
+                    actionLabel: 'Start project on site',
+                    description:
+                      'You can also start work on site with the professional independently of the materials receipt review.',
+                    isPrimary: true,
+                    isElective: false,
+                    requiresAction: true,
+                    estimatedDurationMinutes: 5,
+                    displayOrder: 2,
+                  } as any,
+                ];
+              } else {
+                // Wallet transferred but professional hasn't submitted claim yet.
+                // Show START_PROJECT_ON_SITE so the on-site QR exchange can happen in parallel.
+                availableConfigSteps = [
+                  {
+                    actionKey: 'START_PROJECT_ON_SITE',
+                    actionLabel: 'Start project on site',
+                    description:
+                      "Funds are in the professional's project wallet. Start the project on site while waiting for them to submit their materials purchase receipts.",
                     isPrimary: true,
                     isElective: false,
                     requiresAction: true,
