@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-5827105",
+    "date": "2026-04-29T23:39:25+08:00",
+    "title": "perf: remove post-open QR delay and render QR component eagerly",
+    "summary": "perf: remove post-open QR delay and render QR component eagerly",
+    "areas": [
+      "web"
+    ],
+    "commit": "5827105",
+    "files": [
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-bf93654",
     "date": "2026-04-29T23:32:48+08:00",
     "title": "fix: satisfy QRCodeSVG value type in start on-site modal",
