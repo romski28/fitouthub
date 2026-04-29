@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-87a2389",
+    "date": "2026-04-29T23:26:12+08:00",
+    "title": "perf: improve professional modal perceived load with post-open QR prep",
+    "summary": "perf: improve professional modal perceived load with post-open QR prep",
+    "areas": [
+      "web"
+    ],
+    "commit": "87a2389",
+    "files": [
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-d8c9b8e",
     "date": "2026-04-29T23:18:31+08:00",
     "title": "fix: use professional auth token and restore symmetric modal padding",
