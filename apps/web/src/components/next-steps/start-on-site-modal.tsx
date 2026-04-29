@@ -309,7 +309,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                 <button
                   type="button"
                   onClick={() => setShowDetails(true)}
-                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                  className="absolute right-[1.625rem] top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
                   aria-label="Show details"
                 >
                   i
@@ -396,7 +396,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
               <button
                 type="button"
                 onClick={() => setShowDetails(false)}
-                className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+                className="absolute right-[1.625rem] top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
                 aria-label="Hide details"
               >
                 ×
