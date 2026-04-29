@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
 import { resolveNextStepModalContent } from '@/lib/next-step-modal-content';
@@ -21,9 +22,11 @@ const QR_GENERATE_TIMEOUT_MS = 15000;
 
 export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
   const { state } = useNextStepModal();
-  const { accessToken } = useAuth();
+  const { accessToken: clientAccessToken } = useAuth();
+  const { accessToken: professionalAccessToken } = useProfessionalAuth();
 
   const isProfessional = (state.role || '').toUpperCase().includes('PROFESSIONAL');
+  const accessToken = isProfessional ? professionalAccessToken : clientAccessToken;
 
   // ── Professional state ────────────────────────────────────────────────
   const [qrToken, setQrToken] = useState<string | null>(null);
@@ -310,7 +313,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                 </button>
               )}
 
-              <div className="next-step-scrollbar !mr-0 !pr-0 flex-1 overflow-y-auto px-6 pb-5 pt-10">
+              <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
                 <div className="flex flex-col items-center text-center">
                 <div className="mb-4">
                   <img
