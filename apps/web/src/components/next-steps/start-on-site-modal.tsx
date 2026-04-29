@@ -17,6 +17,7 @@ interface StartOnSiteModalProps {
 
 const POLL_INTERVAL_MS = 5000; // check every 5 s whether the site is started
 const QR_EXPIRY_MINUTES = 15;
+const QR_GENERATE_TIMEOUT_MS = 15000;
 
 export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
   const { state } = useNextStepModal();
@@ -46,30 +47,48 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
 
   // ── Generate QR (professional) ────────────────────────────────────────
   const generateQr = useCallback(async () => {
-    if (!state.projectId || !accessToken) return;
+    if (!state.projectId) {
+      setQrError('Project context is missing. Please close and reopen this step.');
+      return;
+    }
+    if (!accessToken) {
+      setQrError('Session not ready. Please wait a moment and try again.');
+      return;
+    }
     setGeneratingQr(true);
     setQrError(null);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), QR_GENERATE_TIMEOUT_MS);
     try {
       const res = await fetch(
         `${API_BASE_URL}/projects/${state.projectId}/site-start/generate`,
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}` },
+          signal: controller.signal,
         },
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to generate QR');
+        const fallbackText = typeof err === 'string' ? err : '';
+        throw new Error(err.message || fallbackText || `Failed to generate QR (${res.status})`);
       }
       const { token, expiresAt } = await res.json();
+      if (!token) {
+        throw new Error('QR token was not returned by the server');
+      }
       setQrToken(token);
       void expiresAt;
       setSecondsLeft(QR_EXPIRY_MINUTES * 60);
     } catch (e: any) {
-      const message = e.message || 'Could not generate QR code';
+      const isAbortError = e?.name === 'AbortError';
+      const message = isAbortError
+        ? 'QR generation timed out. Please try Regenerate.'
+        : e.message || 'Could not generate QR code';
       setQrError(message);
       toast.error(message);
     } finally {
+      clearTimeout(timeoutId);
       setGeneratingQr(false);
     }
   }, [state.projectId, accessToken]);
@@ -291,7 +310,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                 </button>
               )}
 
-              <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10">
+              <div className="next-step-scrollbar !mr-0 !pr-0 flex-1 overflow-y-auto px-6 pb-5 pt-10">
                 <div className="flex flex-col items-center text-center">
                 <div className="mb-4">
                   <img
@@ -311,10 +330,14 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                     </div>
                   ) : null}
 
-                  {!qrToken ? (
+                  {!qrToken && generatingQr ? (
                     <div className="flex flex-col items-center gap-3 py-6">
                       <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm text-slate-300">Generating QR code...</p>
+                    </div>
+                  ) : !qrToken ? (
+                    <div className="w-full rounded-xl border border-slate-600 bg-slate-800/50 px-4 py-5 text-sm text-slate-300 text-center">
+                      Tap <span className="font-semibold text-slate-100">Regenerate</span> to generate a fresh QR code.
                     </div>
                   ) : (
                     <>

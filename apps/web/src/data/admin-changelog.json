@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-9339422",
+    "date": "2026-04-29T23:11:31+08:00",
+    "title": "fix: correct QR loading state and remove right shift in professional modal",
+    "summary": "fix: correct QR loading state and remove right shift in professional modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "9339422",
+    "files": [
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-898b744",
     "date": "2026-04-29T23:04:40+08:00",
     "title": "fix: center professional modal content with flex column wrapper",
