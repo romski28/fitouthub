@@ -433,55 +433,111 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md max-h-[80vh] mx-4 rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden">
-        <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10">
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4">
-              <img
-                src={modalImage}
-                alt="Step illustration"
-                className="h-20 w-20 rounded-full border border-white/20 object-cover"
-              />
-            </div>
-
-            <h2 className="text-2xl font-bold text-emerald-300">{modalTitle}</h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-100">{modalBody}</p>
-
-            <div className="mt-5 w-full">
-              {scannerError ? (
-                <div className="w-full rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-sm text-rose-200 text-center">
-                  {scannerError}
-                </div>
-              ) : confirming ? (
-                <div className="flex flex-col items-center gap-3 py-6">
-                  <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-slate-300">Confirming...</p>
-                </div>
-              ) : (
-                <div className="w-fit mx-auto rounded-xl overflow-hidden bg-black border border-slate-700" style={{ minHeight: 280 }}>
-                  {/* html5-qrcode mounts its video into this div */}
-                  <div id={scannerDivId} className="w-full" />
-                </div>
-              )}
-            </div>
-
-            <p className="mt-4 text-sm text-slate-300">
-              Point your camera at the QR code shown on the professional&apos;s screen.
-            </p>
-
-            <p className="mt-2 text-xs text-slate-400">
-              If camera access is blocked, allow permission and reopen this step.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-auto flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
-          <button
-            onClick={onClose}
-            disabled={confirming}
-            className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+        <div
+          className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+          style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+        >
+          {/* ── Front face ── */}
+          <div
+            className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden [backface-visibility:hidden]"
+            aria-hidden={showDetails}
           >
-            Close
-          </button>
+            {hasDetails && (
+              <button
+                type="button"
+                onClick={() => setShowDetails(true)}
+                className="absolute right-[1.625rem] top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                aria-label="Show details"
+              >
+                i
+              </button>
+            )}
+
+            <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10">
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4">
+                  <img
+                    src={modalImage}
+                    alt="Step illustration"
+                    className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                  />
+                </div>
+
+                <h2 className="text-2xl font-bold text-emerald-300">{modalTitle}</h2>
+                <p className="mt-3 text-base leading-relaxed text-slate-100">{modalBody}</p>
+
+                <div className="mt-5 w-full">
+                  {scannerError ? (
+                    <div className="w-full rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-sm text-rose-200 text-center">
+                      {scannerError}
+                    </div>
+                  ) : confirming ? (
+                    <div className="flex flex-col items-center gap-3 py-6">
+                      <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm text-slate-300">Confirming...</p>
+                    </div>
+                  ) : (
+                    <div className="w-full rounded-xl overflow-hidden bg-black border border-slate-700" style={{ minHeight: 280 }}>
+                      {/* html5-qrcode mounts its video into this div */}
+                      <div id={scannerDivId} style={{ width: '100%' }} />
+                    </div>
+                  )}
+                </div>
+
+                <p className="mt-4 text-sm text-slate-300">
+                  Point your camera at the QR code shown on the professional&apos;s screen.
+                </p>
+
+                <p className="mt-2 text-xs text-slate-400">
+                  If camera access is blocked, allow permission and reopen this step.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-auto flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
+              <button
+                onClick={onClose}
+                disabled={confirming}
+                className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
+          {/* ── Back face (details) ── */}
+          <div
+            className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden [backface-visibility:hidden]"
+            style={{ transform: 'rotateY(180deg)' }}
+            aria-hidden={!showDetails}
+          >
+            <button
+              type="button"
+              onClick={() => setShowDetails(false)}
+              className="absolute right-[1.625rem] top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+              aria-label="Hide details"
+            >
+              ×
+            </button>
+
+            <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
+              <h3 className="mt-3 text-2xl font-bold text-emerald-300">{modalTitle}</h3>
+              <p className="mt-5 text-sm leading-relaxed text-white">
+                {modalContent.detailsBody || 'No additional details available for this step.'}
+              </p>
+            </div>
+
+            <div className="mt-auto border-t border-slate-700 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setShowDetails(false)}
+                className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+              >
+                Back to action
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
