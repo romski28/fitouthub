@@ -1485,4 +1485,64 @@ export class ProjectsController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
+
+  // ─── On-site QR start ──────────────────────────────────────────────────
+
+  @Post(':id/site-start/generate')
+  @UseGuards(CombinedAuthGuard)
+  async generateSiteStartToken(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can generate the site start QR', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalUserId = req.user?.id || req.user?.sub;
+    if (!professionalUserId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      return await this.projectsService.generateSiteStartToken(projectId, professionalUserId);
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Post(':id/site-start/confirm')
+  @UseGuards(CombinedAuthGuard)
+  async confirmSiteStart(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: { token: string },
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only the client can confirm on-site presence', HttpStatus.FORBIDDEN);
+    }
+
+    const clientUserId = req.user?.id || req.user?.sub;
+    if (!clientUserId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (!body?.token) {
+      throw new HttpException('token is required', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      const result = await this.projectsService.confirmSiteStart(projectId, clientUserId, body.token);
+
+      // Transition stage to WORK_IN_PROGRESS (handles PRE_WORK and CONTRACT_PHASE)
+      try {
+        await this.projectStageService.transitionStage(projectId, 'WORK_IN_PROGRESS' as any);
+      } catch {
+        // Stage transition failure is non-fatal — site start is still recorded
+      }
+
+      return result;
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
 }

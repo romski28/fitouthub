@@ -450,6 +450,9 @@ model Project {
   supportRequests              SupportRequest[]
   paymentPlan                  ProjectPaymentPlan?
   acProjects                   AcProject[]
+  // On-site start confirmation
+  siteStartedAt                DateTime?
+  siteStartConfirmedById       String?             // userId of the client who confirmed the QR scan
 }
 
 model AcProject {

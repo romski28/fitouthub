@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-04-29-7d3284e",
+    "date": "2026-04-29T21:58:47+08:00",
+    "title": "feat: QR code on-site project start system",
+    "summary": "feat: QR code on-site project start system",
+    "areas": [
+      "api",
+      "web",
+      "infra"
+    ],
+    "commit": "7d3284e",
+    "files": [
+      "apps/api/prisma/MANUAL_ADD_SITE_START.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/package.json",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx",
+      "pnpm-lock.yaml"
+    ]
+  },
+  {
     "id": "2026-04-29-88402ea",
     "date": "2026-04-29T21:12:22+08:00",
     "title": "fix: gate stale REVIEW_MATERIALS_PURCHASE + add START_PROJECT_ON_SITE for client",

@@ -155,6 +155,7 @@ export class NextStepService {
         professionalSignedAt: true,
         escrowHeld: true,
         startDate: true,
+        siteStartedAt: true,
         _count: {
           select: {
             professionals: true,
@@ -392,6 +393,23 @@ export class NextStepService {
       }
 
       if (role === 'PROFESSIONAL' && clientSigned && professionalSigned) {
+        // If site has already been started on-site, show a non-actionable status step
+        if (project.siteStartedAt) {
+          return {
+            PRIMARY: [toApiAction(createSyntheticPrimaryStep(
+              'SITE_STARTED',
+              'Project started on site',
+              false,
+              role,
+              effectiveStage,
+              `On-site start confirmed on ${new Date(project.siteStartedAt).toLocaleDateString('en-HK')}.`,
+            ))],
+            ELECTIVE: [],
+            status: project.status,
+            stage: effectiveStage,
+          };
+        }
+
         const normalizedScale = String(project.projectScale || '').toUpperCase();
         const requiresClientScheduleAgreement = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
         const clientActorId = (project as any).clientId || project.userId;
@@ -835,6 +853,21 @@ export class NextStepService {
         // These steps are only for milestone 1. Subsequent milestones use the normal
         // professional payment-request flow.
         const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
+        if (project.siteStartedAt) {
+          return {
+            PRIMARY: [toApiAction(createSyntheticPrimaryStep(
+              'SITE_STARTED',
+              'Project started on site',
+              false,
+              role,
+              effectiveStage,
+              `On-site start confirmed on ${new Date(project.siteStartedAt).toLocaleDateString('en-HK')}.`,
+            ))],
+            ELECTIVE: [],
+            status: project.status,
+            stage: effectiveStage,
+          };
+        }
         if (escrowNowFunded && !pendingEscrowRequest) {
           const projectScale = String(project.projectScale || '').toUpperCase();
           if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {

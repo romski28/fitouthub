@@ -8,6 +8,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { resolve } from 'path';
 import { promises as fs } from 'fs';
+import * as jwt from 'jsonwebtoken';
 import { createId } from '@paralleldrive/cuid2';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client';
@@ -6514,4 +6515,115 @@ Please review the project details and respond with your quote or decline the inv
   }
 
   // Removed payInvoice flow; payments are handled via escrow and payment requests
+
+  // ─── On-site QR start ────────────────────────────────────────────────────
+
+  /**
+   * Professional generates a short-lived signed token for the client to scan.
+   * Token encodes { projectId, generatedByUserId, purpose: 'site_start' } and
+   * expires in 15 minutes.
+   */
+  async generateSiteStartToken(
+    projectId: string,
+    professionalUserId: string,
+  ): Promise<{ token: string; expiresAt: string }> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        siteStartedAt: true,
+        awardedProjectProfessional: {
+          select: { professional: { select: { userId: true } } },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    if (project.siteStartedAt) {
+      throw new BadRequestException('Project has already been started on site');
+    }
+
+    // Verify the caller is the awarded professional
+    const awardedUserId = (project.awardedProjectProfessional as any)?.professional?.userId;
+    if (awardedUserId && awardedUserId !== professionalUserId) {
+      throw new BadRequestException('Only the awarded professional can generate the site start QR');
+    }
+
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    const expiresInSeconds = 15 * 60; // 15 minutes
+    const payload = {
+      projectId,
+      generatedByUserId: professionalUserId,
+      purpose: 'site_start',
+    };
+
+    const token = jwt.sign(payload, secret, { expiresIn: expiresInSeconds });
+    const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
+
+    return { token, expiresAt };
+  }
+
+  /**
+   * Client scans the QR and calls this to confirm on-site presence.
+   * Validates the token, sets siteStartedAt, and returns info for stage transition.
+   * Stage transition (PRE_WORK / CONTRACT_PHASE → WORK_IN_PROGRESS) is handled by the controller.
+   */
+  async confirmSiteStart(
+    projectId: string,
+    clientUserId: string,
+    token: string,
+  ): Promise<{ siteStartedAt: Date; previousStage: string }> {
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+
+    let decoded: { projectId: string; generatedByUserId: string; purpose: string };
+    try {
+      decoded = jwt.verify(token, secret) as typeof decoded;
+    } catch {
+      throw new BadRequestException('QR code is invalid or has expired. Ask the professional to regenerate it.');
+    }
+
+    if (decoded.purpose !== 'site_start') {
+      throw new BadRequestException('Invalid QR code');
+    }
+
+    if (decoded.projectId !== projectId) {
+      throw new BadRequestException('QR code does not match this project');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        userId: true,
+        siteStartedAt: true,
+        currentStage: true,
+      },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    if (project.userId !== clientUserId) {
+      throw new BadRequestException('Only the project client can confirm on-site presence');
+    }
+
+    if (project.siteStartedAt) {
+      throw new BadRequestException('Project has already been started on site');
+    }
+
+    const now = new Date();
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        siteStartedAt: now,
+        siteStartConfirmedById: clientUserId,
+      },
+    });
+
+    return { siteStartedAt: now, previousStage: project.currentStage };
+  }
 }
