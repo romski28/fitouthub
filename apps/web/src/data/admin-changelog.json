@@ -1,15 +1,16 @@
 [
   {
-    "id": "2026-04-29-6fd9788",
-    "date": "2026-04-29T09:55:22+08:00",
-    "title": "Apply mobile-safe sizing to materials-claim-modal",
-    "summary": "Apply mobile-safe sizing to materials-claim-modal",
+    "id": "2026-04-29-313d21e",
+    "date": "2026-04-29T09:57:47+08:00",
+    "title": "Revert \"Apply mobile-safe sizing to materials-claim-modal\"",
+    "summary": "Revert \"Apply mobile-safe sizing to materials-claim-modal\"",
     "areas": [
       "web"
     ],
-    "commit": "6fd9788",
+    "commit": "313d21e",
     "files": [
-      "apps/web/src/components/next-steps/materials-claim-modal.tsx"
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx",
+      "apps/web/src/data/admin-changelog.json"
     ]
   },
   {

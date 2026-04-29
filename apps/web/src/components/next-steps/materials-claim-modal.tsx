@@ -366,11 +366,10 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
   return (
     <>
     {showMainModal && (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-2 backdrop-blur-sm sm:items-center sm:p-4" onClick={(e) => {
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}>
-      <div className="my-2 w-full max-w-3xl sm:my-0">
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[88vh]">
+      <div className="w-full max-w-3xl rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         {(isLoading || pageLoading) ? (
           <div className="px-6 py-12 text-center">
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
@@ -386,7 +385,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
               <button type="button" onClick={onClose} className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800">Close</button>
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+            <div className="space-y-4 px-5 py-4 max-h-[75vh] overflow-y-auto">
               {!isMaterialsWorkflowProject && (
                 <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                   This project scale does not use the milestone 1 materials claim flow.
@@ -492,7 +491,6 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
             </div>
           </>
         )}
-      </div>
       </div>
     </div>
     )}
