@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-bf93654",
+    "date": "2026-04-29T23:32:48+08:00",
+    "title": "fix: satisfy QRCodeSVG value type in start on-site modal",
+    "summary": "fix: satisfy QRCodeSVG value type in start on-site modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "bf93654",
+    "files": [
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-87a2389",
     "date": "2026-04-29T23:26:12+08:00",
     "title": "perf: improve professional modal perceived load with post-open QR prep",

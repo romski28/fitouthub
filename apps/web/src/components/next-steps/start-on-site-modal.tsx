@@ -369,7 +369,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                   ) : (
                     <>
                       <div className="w-fit mx-auto rounded-xl bg-white p-3">
-                        <QRCodeSVG value={qrToken} size={220} />
+                        <QRCodeSVG value={qrToken!} size={220} />
                       </div>
 
                       <div className="flex flex-col items-center gap-1">
