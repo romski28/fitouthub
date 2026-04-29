@@ -183,7 +183,8 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText: string) => {
-            // Only process once
+            // Null the ref immediately so the cleanup effect doesn't double-stop
+            scannerRef.current = null;
             scanner.stop().catch(() => {});
             confirmSiteStart(decodedText);
           },
