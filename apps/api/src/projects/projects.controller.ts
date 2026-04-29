@@ -1494,7 +1494,11 @@ export class ProjectsController {
     @Param('id') projectId: string,
     @Request() req: any,
   ) {
-    if (!req.user?.isProfessional) {
+    const isProfessional =
+      Boolean(req.user?.isProfessional) ||
+      String(req.user?.role || '').toLowerCase() === 'professional';
+
+    if (!isProfessional) {
       throw new HttpException('Only professionals can generate the site start QR', HttpStatus.FORBIDDEN);
     }
 
@@ -1517,7 +1521,11 @@ export class ProjectsController {
     @Request() req: any,
     @Body() body: { token: string },
   ) {
-    if (req.user?.isProfessional) {
+    const isProfessional =
+      Boolean(req.user?.isProfessional) ||
+      String(req.user?.role || '').toLowerCase() === 'professional';
+
+    if (isProfessional) {
       throw new HttpException('Only the client can confirm on-site presence', HttpStatus.FORBIDDEN);
     }
 

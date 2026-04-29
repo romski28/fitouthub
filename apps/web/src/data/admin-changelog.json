@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-29-5f7fac0",
+    "date": "2026-04-29T22:30:54+08:00",
+    "title": "fix: restore info flipper and stabilize QR generation",
+    "summary": "fix: restore info flipper and stabilize QR generation",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5f7fac0",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-e0293f4",
     "date": "2026-04-29T22:13:57+08:00",
     "title": "fix: align client QR scanner modal with next-step template",
