@@ -13,7 +13,6 @@ import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { useRoleGuard } from '@/hooks/use-role-guard';
 import { fetchWithRetry } from '@/lib/http';
 import {
-  NextStepAuthError,
   completeNextStep,
   fetchPrimaryNextSteps,
   fetchPrimaryNextStep,
@@ -97,29 +96,7 @@ export default function ProfessionalProjectsPage() {
     async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
       if (!professional?.id || !accessToken) return;
       const projectOverviewPath = `/professional-projects/${projectProfessionalId}?tab=overview`;
-      let modalContent = action.modalContent;
-
-      // If modal content is missing, re-fetch next steps bypassing cache to avoid stale UI state.
-      if (!modalContent) {
-        try {
-          const refreshedActions = await fetchPrimaryNextSteps(projectId, accessToken, {
-            cacheScope: nextStepCacheScope,
-            forceRefresh: true,
-            maxAgeMs: 0,
-          });
-
-          const refreshedAction = refreshedActions.find(
-            (candidate) => candidate.actionKey === action.actionKey,
-          );
-          if (refreshedAction?.modalContent) {
-            modalContent = refreshedAction.modalContent;
-          }
-        } catch (error) {
-          if (!(error instanceof NextStepAuthError)) {
-            console.warn('[professional-projects] Failed to refresh next-step modal content', error);
-          }
-        }
-      }
+      const modalContent = action.modalContent;
 
       router.prefetch(getProfessionalShowMeHref(projectProfessionalId, action.actionKey));
 

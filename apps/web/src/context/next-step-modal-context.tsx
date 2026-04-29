@@ -86,9 +86,6 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
         onCompleted,
       });
 
-      // Modal content is already provided; keep loading state visible for 200ms for smooth UX
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      
       console.debug(`[NextStepModalContext] Transitioning isLoading from true to false for action: ${actionKey}`);
       setState((prev) => ({
         ...prev,

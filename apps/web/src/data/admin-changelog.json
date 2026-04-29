@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-04-29-1e30836",
+    "date": "2026-04-29T23:48:23+08:00",
+    "title": "perf: open professional next-step modal immediately without prefetch wait",
+    "summary": "perf: open professional next-step modal immediately without prefetch wait",
+    "areas": [
+      "web"
+    ],
+    "commit": "1e30836",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-5827105",
     "date": "2026-04-29T23:39:25+08:00",
     "title": "perf: remove post-open QR delay and render QR component eagerly",
