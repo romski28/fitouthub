@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-29-898b744",
+    "date": "2026-04-29T23:04:40+08:00",
+    "title": "fix: center professional modal content with flex column wrapper",
+    "summary": "fix: center professional modal content with flex column wrapper",
+    "areas": [
+      "web"
+    ],
+    "commit": "898b744",
+    "files": [
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-29-2e7e3fb",
     "date": "2026-04-29T22:43:19+08:00",
     "title": "fix: center client scanner modal and move instruction text below scanner",

@@ -291,8 +291,9 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                 </button>
               )}
 
-              <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
-                <div className="mb-4 flex justify-center">
+              <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10">
+                <div className="flex flex-col items-center text-center">
+                <div className="mb-4">
                   <img
                     src={modalImage}
                     alt="Step illustration"
@@ -338,6 +339,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                     </>
                   )}
                 </div>
+              </div>
               </div>
 
               <div className="mt-auto flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
