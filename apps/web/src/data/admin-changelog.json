@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-04-30-2bde458",
+    "date": "2026-04-30T15:17:27+08:00",
+    "title": "feat: surface unviewed progress reports as next steps for client/professional",
+    "summary": "feat: surface unviewed progress reports as next steps for client/professional",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "2bde458",
+    "files": [
+      "MANUAL_ADD_PROGRESS_REPORT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/progress-reports/progress-reports.controller.ts",
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-30-7ebd674",
     "date": "2026-04-30T12:39:37+08:00",
     "title": "db: add REVIEW_PROGRESS row for MILESTONE_PENDING client step with modal content",

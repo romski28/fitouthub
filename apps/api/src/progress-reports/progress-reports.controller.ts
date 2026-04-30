@@ -45,4 +45,16 @@ export class ProgressReportsController {
     if (!requesterId) throw new BadRequestException('Missing user id in token');
     return this.service.getReportsByProject(projectId, requesterId, requesterRole);
   }
+
+  /**
+   * POST /progress-reports/:id/viewed
+   * Marks a progress report as viewed by the current user.
+   */
+  @Post(':id/viewed')
+  @UseGuards(CombinedAuthGuard)
+  async markViewed(@Req() req: any, @Param('id') id: string) {
+    const userId: string = req.user?.id || req.user?.sub;
+    if (!userId) throw new BadRequestException('Missing user id in token');
+    return this.service.markReportViewed(id, userId);
+  }
 }

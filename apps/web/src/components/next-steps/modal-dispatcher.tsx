@@ -337,7 +337,7 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'respond-materials-claim';
   }
 
-  if (['SUBMIT_PROGRESS_UPDATE', 'SUBMIT_CLIENT_PROGRESS_UPDATE', 'REVIEW_PROGRESS'].includes(actionKey)) {
+  if (['REVIEW_PROGRESS_UPDATE', 'REVIEW_CLIENT_PROGRESS_UPDATE', 'SUBMIT_PROGRESS_UPDATE', 'SUBMIT_CLIENT_PROGRESS_UPDATE', 'REVIEW_PROGRESS'].includes(actionKey)) {
     return 'progress-report';
   }
 

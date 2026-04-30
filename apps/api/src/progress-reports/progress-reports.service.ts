@@ -142,4 +142,13 @@ export class ProgressReportsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async markReportViewed(progressReportId: string, userId: string) {
+    // Upsert to avoid duplicates
+    return this.prisma.progressReportView.upsert({
+      where: { progressReportId_userId: { progressReportId, userId } },
+      update: { viewedAt: new Date() },
+      create: { progressReportId, userId, viewedAt: new Date() },
+    });
+  }
 }

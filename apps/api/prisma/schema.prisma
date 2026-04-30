@@ -55,7 +55,7 @@ enum ProjectStage {
   NEAR_COMPLETION
   FINAL_INSPECTION
   COMPLETE
-  WARRANTY_PERIOD      // Warranty/defect reporting phase
+  warranty_period      // Warranty/defect reporting phase
   CLOSED
   // Exceptional states (can occur at any point)
   PAUSED
