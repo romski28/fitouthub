@@ -250,6 +250,11 @@ VALUES
    'Approve or request correction for milestone.',
    true, false, true, 1, NOW(), NOW()),
 
+  (gen_random_uuid()::text, 'MILESTONE_PENDING', 'CLIENT',
+   'REVIEW_PROGRESS', 'Review work progress',
+   'Review the latest updates and evidence before approving the milestone.',
+   true, false, true, 2, NOW(), NOW()),
+
   (gen_random_uuid()::text, 'MILESTONE_PENDING', 'PROFESSIONAL',
    'AWAIT_MILESTONE_APPROVAL', 'Wait for milestone approval',
    'Await client review.',

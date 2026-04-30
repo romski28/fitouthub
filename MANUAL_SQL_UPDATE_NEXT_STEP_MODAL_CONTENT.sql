@@ -396,6 +396,32 @@ UPDATE "NextStepConfig" SET
   "modalSecondaryActionType" = 'close_modal'
 WHERE "projectStage" = 'MILESTONE_PENDING' AND "role" = 'PROFESSIONAL' AND "actionKey" = 'AWAIT_MILESTONE_APPROVAL' AND "modalTitle" IS NULL;
 
+-- Insert REVIEW_PROGRESS row for MILESTONE_PENDING (companion to APPROVE_MILESTONE so client can review evidence first)
+INSERT INTO "NextStepConfig"
+  ("id","projectStage","role","actionKey","actionLabel","description",
+   "isPrimary","isElective","requiresAction","displayOrder","createdAt","updatedAt")
+VALUES
+  (gen_random_uuid()::text, 'MILESTONE_PENDING', 'CLIENT',
+   'REVIEW_PROGRESS', 'Review work progress',
+   'Review the latest updates and evidence before approving the milestone.',
+   true, false, true, 2, NOW(), NOW())
+ON CONFLICT ("projectStage","role","actionKey") DO NOTHING;
+
+UPDATE "NextStepConfig" SET
+  "modalTitle" = 'Review work progress',
+  "modalBody" = 'Before approving the milestone, review the latest progress updates, photos, and evidence submitted by the professional. Make sure the work meets the agreed scope and standards.',
+  "modalDetailsBody" = 'Check progress photos, status notes, and any submitted documentation. You can approve the milestone once you are satisfied the work is complete and correct.',
+  "modalSuccessTitle" = 'Progress reviewed',
+  "modalSuccessBody" = 'You have reviewed the latest work progress.',
+  "modalSuccessNextStepBody" = 'When satisfied with the evidence, proceed to approve the milestone to release payment to the professional.',
+  "modalPrimaryButtonLabel" = 'View progress',
+  "modalSecondaryButtonLabel" = 'Later',
+  "modalPrimaryActionType" = 'navigate_tab',
+  "modalSecondaryActionType" = 'close_modal',
+  "detailsTarget" = '{"tab":"progress"}',
+  "updatedAt" = NOW()
+WHERE "projectStage" = 'MILESTONE_PENDING' AND "role" = 'CLIENT' AND "actionKey" = 'REVIEW_PROGRESS' AND "modalTitle" IS NULL;
+
 -- PAYMENT_RELEASED stage
 UPDATE "NextStepConfig" SET
   "modalTitle" = 'Confirm next phase',

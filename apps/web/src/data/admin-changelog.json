@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-04-30-7ebd674",
+    "date": "2026-04-30T12:39:37+08:00",
+    "title": "db: add REVIEW_PROGRESS row for MILESTONE_PENDING client step with modal content",
+    "summary": "db: add REVIEW_PROGRESS row for MILESTONE_PENDING client step with modal content",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "7ebd674",
+    "files": [
+      "MANUAL_SQL_UPDATE_NEXT_STEP_MODAL_CONTENT.sql",
+      "apps/api/prisma/SEED_NEXT_STEP_CONFIG.sql"
+    ]
+  },
+  {
     "id": "2026-04-30-a34510f",
     "date": "2026-04-30T12:33:08+08:00",
     "title": "feat: keep SITE_STARTED as fallback and surface dual client actions",
