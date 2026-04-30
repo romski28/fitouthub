@@ -786,7 +786,6 @@ export class NextStepService {
               userId,
               actionKey: 'CONFIRM_SCHEDULE',
               userAction: 'COMPLETED',
-              projectStage: effectiveStage,
             },
             select: { id: true },
           });

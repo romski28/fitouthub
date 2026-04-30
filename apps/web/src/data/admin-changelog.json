@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-a85dcf3",
+    "date": "2026-04-30T11:58:00+08:00",
+    "title": "fix: client next step stuck on CONFIRM_SCHEDULE after advancing to WORK_IN_PROGRESS",
+    "summary": "fix: client next step stuck on CONFIRM_SCHEDULE after advancing to WORK_IN_PROGRESS",
+    "areas": [
+      "api"
+    ],
+    "commit": "a85dcf3",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-30-8170c35",
     "date": "2026-04-30T11:29:32+08:00",
     "title": "fix: ensure ProjectPhoto table exists in progress-report manual migration",
