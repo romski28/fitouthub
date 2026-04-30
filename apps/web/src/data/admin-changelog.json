@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-f5dc031",
+    "date": "2026-04-30T09:34:00+08:00",
+    "title": "feat: route client REVIEW_PROGRESS to progress report modal",
+    "summary": "feat: route client REVIEW_PROGRESS to progress report modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "f5dc031",
+    "files": [
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-04-30-c2f24ec",
     "date": "2026-04-30T09:26:21+08:00",
     "title": "style: progress report modal default no-milestone and reposition selector",
