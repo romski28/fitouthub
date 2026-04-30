@@ -123,9 +123,8 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
         if (milestonesRes.ok) {
           const data = (await milestonesRes.json()) as WorkMilestone[];
           setMilestones(Array.isArray(data) ? data : []);
-          // Pre-select first uncompleted milestone
-          const first = data.find((m) => m.status !== 'completed');
-          setSelectedMilestoneId(first?.id ?? data[0]?.id ?? '');
+          // Default to no milestone selected on modal open
+          setSelectedMilestoneId('');
         }
         if (paymentPlanRes.ok) {
           setPaymentPlan((await paymentPlanRes.json()) as PaymentPlan);
@@ -144,6 +143,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
     if (!isOpen) {
       setPhotoRows([]);
       setNarrativeSummary('');
+      setSelectedMilestoneId('');
       setUploadingFiles(false);
       setSubmitting(null);
       setWorkflowModalOpen(false);
@@ -263,7 +263,6 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
   const showMainModal = isOpen && !workflowModalOpen;
   const readyRows = photoRows.filter((r) => !r.uploading && r.url && r.url !== 'error');
   const canSubmit = readyRows.length > 0 && !submitting;
-  const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
 
   return (
     <>
@@ -301,61 +300,6 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                 </div>
               ) : (
                 <div className="next-step-scrollbar flex-1 space-y-5 overflow-y-auto px-5 py-5">
-                  {/* Milestone selector */}
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
-                      Select Milestone
-                    </label>
-                    <select
-                      value={selectedMilestoneId}
-                      onChange={(e) => setSelectedMilestoneId(e.target.value)}
-                      className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
-                    >
-                      <option value="">— No milestone selected —</option>
-                      {milestones.map((m) => {
-                        const isCompleted = m.status === 'completed';
-                        return (
-                          <option key={m.id} value={m.id} disabled={isCompleted}>
-                            {m.sequence}. {m.title}
-                            {isCompleted ? ' ✓ completed' : m.signOffRequested ? ' · sign-off pending' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-
-                  {/* Linked payment milestone info */}
-                  {linkedPaymentMilestone && (
-                    <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
-                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-300">
-                        Payment milestone linked
-                      </p>
-                      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-                        <span className="text-white">
-                          <span className="text-slate-400">Amount: </span>
-                          <strong>{formatHKD(linkedPaymentMilestone.amount)}</strong>
-                        </span>
-                        {linkedPaymentMilestone.plannedDueAt && (
-                          <span className="text-white">
-                            <span className="text-slate-400">Due: </span>
-                            <strong>{formatDate(linkedPaymentMilestone.plannedDueAt)}</strong>
-                          </span>
-                        )}
-                        <span className="text-white capitalize">
-                          <span className="text-slate-400">Status: </span>
-                          <strong>{linkedPaymentMilestone.status.replace(/_/g, ' ')}</strong>
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* No linked payment milestone info */}
-                  {selectedMilestoneId && !linkedPaymentMilestone && (
-                    <div className="rounded-md border border-slate-600/40 bg-slate-800/40 px-3 py-2 text-xs text-slate-400">
-                      No payment milestone linked to this work milestone.
-                    </div>
-                  )}
-
                   {/* Photo upload section */}
                   <div>
                     <div className="mb-2 flex items-center justify-between">
@@ -456,6 +400,61 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                     )}
                   </div>
 
+                  {/* Milestone selector */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
+                      Select Milestone
+                    </label>
+                    <select
+                      value={selectedMilestoneId}
+                      onChange={(e) => setSelectedMilestoneId(e.target.value)}
+                      className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                    >
+                      <option value="">— No milestone selected —</option>
+                      {milestones.map((m) => {
+                        const isCompleted = m.status === 'completed';
+                        return (
+                          <option key={m.id} value={m.id} disabled={isCompleted}>
+                            {m.sequence}. {m.title}
+                            {isCompleted ? ' ✓ completed' : m.signOffRequested ? ' · sign-off pending' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Linked payment milestone info */}
+                  {linkedPaymentMilestone && (
+                    <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        Payment milestone linked
+                      </p>
+                      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                        <span className="text-white">
+                          <span className="text-slate-400">Amount: </span>
+                          <strong>{formatHKD(linkedPaymentMilestone.amount)}</strong>
+                        </span>
+                        {linkedPaymentMilestone.plannedDueAt && (
+                          <span className="text-white">
+                            <span className="text-slate-400">Due: </span>
+                            <strong>{formatDate(linkedPaymentMilestone.plannedDueAt)}</strong>
+                          </span>
+                        )}
+                        <span className="text-white capitalize">
+                          <span className="text-slate-400">Status: </span>
+                          <strong>{linkedPaymentMilestone.status.replace(/_/g, ' ')}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No linked payment milestone info */}
+                  {selectedMilestoneId && !linkedPaymentMilestone && (
+                    <div className="rounded-md border border-slate-600/40 bg-slate-800/40 px-3 py-2 text-xs text-slate-400">
+                      No payment milestone linked to this work milestone.
+                    </div>
+                  )}
+
                   {/* Narrative summary */}
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
@@ -492,14 +491,14 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                       onClick={() => void handleSubmit(true)}
                       disabled={!canSubmit || !selectedMilestoneId}
                       title={!selectedMilestoneId ? 'Select a milestone to request sign-off' : undefined}
-                      className="rounded-md border border-amber-500/50 bg-amber-500/10 px-5 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50 transition sm:order-1"
+                      className="rounded-md bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition sm:order-1"
                     >
                       {submitting === 'signoff' ? 'Requesting...' : 'Milestone Sign-off'}
                     </button>
                   </div>
                   {!selectedMilestoneId && (
                     <p className="mt-2 text-right text-[10px] text-slate-500">
-                      Select a milestone above to enable sign-off request
+                      Select a milestone to enable sign-off request
                     </p>
                   )}
                 </div>

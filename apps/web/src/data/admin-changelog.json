@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-c2f24ec",
+    "date": "2026-04-30T09:26:21+08:00",
+    "title": "style: progress report modal default no-milestone and reposition selector",
+    "summary": "style: progress report modal default no-milestone and reposition selector",
+    "areas": [
+      "web"
+    ],
+    "commit": "c2f24ec",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-30-99fbe32",
     "date": "2026-04-30T09:08:38+08:00",
     "title": "feat: progress report modal — photo upload, milestone picker, share + sign-off",
