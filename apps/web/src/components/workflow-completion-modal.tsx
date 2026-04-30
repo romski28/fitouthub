@@ -13,6 +13,8 @@ export interface WorkflowNextStep {
   waitingFor?: WaitingParty; // shown when requiresAction === false
 }
 
+export type CelebrationVariant = 'confetti' | 'sparkle-ring';
+
 interface WorkflowCompletionModalProps {
   isOpen: boolean;
   completedLabel: string;      // "Start date agreed!"
@@ -22,6 +24,7 @@ interface WorkflowCompletionModalProps {
   additionalActionLabel?: string;
   secondaryActionLabel?: string;
   showConfetti?: boolean;
+  celebrationVariant?: CelebrationVariant;
   showPrimaryActionOverride?: boolean;
   highlightWaitingAsAmber?: boolean;
   onNavigate?: () => void;     // called when the user clicks the CTA
@@ -44,6 +47,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   additionalActionLabel,
   secondaryActionLabel = 'Close',
   showConfetti = false,
+  celebrationVariant = 'confetti',
   showPrimaryActionOverride,
   highlightWaitingAsAmber = false,
   onNavigate,
@@ -51,22 +55,32 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   onClose,
 }) => {
   const hasFiredConfettiRef = React.useRef(false);
+  const [showSparkleBurst, setShowSparkleBurst] = React.useState(false);
 
   React.useEffect(() => {
     if (!isOpen) {
       hasFiredConfettiRef.current = false;
+      setShowSparkleBurst(false);
       return;
     }
 
     if (!showConfetti || hasFiredConfettiRef.current) return;
     hasFiredConfettiRef.current = true;
 
+    if (celebrationVariant === 'sparkle-ring') {
+      setShowSparkleBurst(true);
+      const timer = window.setTimeout(() => {
+        setShowSparkleBurst(false);
+      }, 950);
+      return () => window.clearTimeout(timer);
+    }
+
     confetti({
       particleCount: 110,
       spread: 80,
       origin: { y: 0.65 },
     });
-  }, [isOpen, showConfetti]);
+  }, [isOpen, showConfetti, celebrationVariant]);
 
   if (!isOpen) return null;
 
@@ -82,6 +96,23 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
       aria-modal="true"
       aria-label={completedLabel}
     >
+      {showSparkleBurst && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="relative h-44 w-44">
+            <div className="absolute inset-0 rounded-full border-4 border-cyan-300/70 animate-ping" />
+            <div className="absolute inset-5 rounded-full border-2 border-emerald-300/70 animate-pulse" />
+            <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-yellow-200 text-lg">✦</div>
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 text-cyan-200 text-sm animate-pulse">✧</div>
+            <div className="absolute right-2 top-7 text-emerald-200 text-sm animate-pulse">✦</div>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 text-cyan-100 text-sm animate-pulse">✧</div>
+            <div className="absolute bottom-2 right-7 text-emerald-200 text-sm animate-pulse">✦</div>
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-cyan-200 text-sm animate-pulse">✧</div>
+            <div className="absolute bottom-2 left-7 text-emerald-200 text-sm animate-pulse">✦</div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 text-cyan-100 text-sm animate-pulse">✧</div>
+            <div className="absolute left-2 top-7 text-emerald-200 text-sm animate-pulse">✦</div>
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         {/* Success header */}
         <div className="flex items-start gap-3 rounded-t-2xl bg-emerald-900/40 border-b border-emerald-700/40 px-5 py-4">

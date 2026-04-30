@@ -665,6 +665,7 @@ export class ProfessionalController {
         include: {
           project: {
             include: {
+              photos: true,
               aiIntake: {
                 select: {
                   id: true,

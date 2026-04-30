@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-04-30-70b0fcd",
+    "date": "2026-04-30T10:32:32+08:00",
+    "title": "feat: add sparkle-ring progress celebration and professional media tab",
+    "summary": "feat: add sparkle-ring progress celebration and professional media tab",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "70b0fcd",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx",
+      "apps/web/src/components/workflow-completion-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-30-dad6929",
     "date": "2026-04-30T09:51:43+08:00",
     "title": "feat: route progress report messages to scoped progress chat streams",

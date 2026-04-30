@@ -18,7 +18,10 @@ import { FinancialsTab } from './tabs/financials-tab';
 import { ScheduleTab } from './tabs/schedule-tab';
 import { ChatTab } from './tabs/chat-tab';
 import { AcPlansTab } from './tabs/ac-plans-tab';
+import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
+
+const TabPanel: React.FC<{ tab: string; children: React.ReactNode }> = ({ children }) => <>{children}</>;
 
 interface ProjectDetail {
   id: string;
@@ -35,6 +38,12 @@ interface ProjectDetail {
     isEmergency?: boolean;
     budget?: string;
     notes?: string;
+    photos?: {
+      id: string;
+      url: string;
+      note?: string | null;
+      createdAt?: string;
+    }[];
   };
   status: string;
   quoteAmount?: string;
@@ -328,6 +337,7 @@ export default function ProjectDetailPage() {
 
     const inContractWorkflow = hasProfessionalContractWorkflow(project);
     const allowedTabs = new Set(['overview', 'financials', 'chat', 'ac-plans']);
+    allowedTabs.add('media');
     if (inContractWorkflow) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
@@ -1339,6 +1349,31 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleSaveImageNote = async (photoId: string, note: string) => {
+    if (!accessToken || !project?.project?.id) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${project.project.id}/photos/${photoId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ note }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update photo note');
+      }
+
+      await fetchProject({ force: true });
+      toast.success('Photo note updated!');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update photo note';
+      toast.error(message);
+    }
+  };
+
   useEffect(() => {
     const projectId = project?.project?.id;
     const projectName = project?.project?.projectName?.trim();
@@ -1527,6 +1562,7 @@ export default function ProjectDetailPage() {
                   // Always show financials and chat
                   tabsArray.push({ id: 'financials', label: 'Financials', icon: '💳' });
                   tabsArray.push({ id: 'ac-plans', label: 'AC Plans', icon: '❄️' });
+                  tabsArray.push({ id: 'media', label: 'Media', icon: '🖼️' });
                   tabsArray.push({ id: 'chat', label: 'Chat', icon: '💬' });
                   
                   return tabsArray;
@@ -1657,6 +1693,16 @@ export default function ProjectDetailPage() {
               projectId={project.project.id}
               accessToken={accessToken || null}
             />
+
+            <TabPanel tab="media">
+              <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+                <MediaTab
+                  photos={project.project.photos || []}
+                  onPhotoNoteUpdate={handleSaveImageNote}
+                  isLoading={loading}
+                />
+              </div>
+            </TabPanel>
 
             <ChatTab
               tab="chat"

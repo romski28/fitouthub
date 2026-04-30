@@ -95,8 +95,10 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
   const [submitting, setSubmitting] = React.useState<'share' | 'signoff' | null>(null);
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowNextStep, setWorkflowNextStep] = React.useState<WorkflowNextStep | null>(null);
+  const [showShareCelebration, setShowShareCelebration] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const celebrationTimerRef = React.useRef<number | null>(null);
 
   // ── Derived: linked payment milestone ──────────────────────────────────
   const linkedPaymentMilestone = React.useMemo<PaymentMilestone | null>(() => {
@@ -141,6 +143,10 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
   // Reset form when modal closes
   React.useEffect(() => {
     if (!isOpen) {
+      if (celebrationTimerRef.current) {
+        window.clearTimeout(celebrationTimerRef.current);
+        celebrationTimerRef.current = null;
+      }
       setPhotoRows([]);
       setNarrativeSummary('');
       setSelectedMilestoneId('');
@@ -148,6 +154,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
       setSubmitting(null);
       setWorkflowModalOpen(false);
       setWorkflowNextStep(null);
+      setShowShareCelebration(false);
     }
   }, [isOpen]);
 
@@ -249,7 +256,16 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
         });
       }
 
-      setWorkflowModalOpen(true);
+      if (signOffRequested) {
+        setWorkflowModalOpen(true);
+      } else {
+        setShowShareCelebration(true);
+        celebrationTimerRef.current = window.setTimeout(() => {
+          setShowShareCelebration(false);
+          setWorkflowModalOpen(true);
+          celebrationTimerRef.current = null;
+        }, 900);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit progress report');
     } finally {
@@ -266,6 +282,24 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
 
   return (
     <>
+      {showShareCelebration && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 backdrop-blur-[1px]">
+          <div className="relative h-48 w-48">
+            <div className="absolute inset-0 rounded-full border-4 border-cyan-300/70 animate-ping" />
+            <div className="absolute inset-6 rounded-full border-2 border-emerald-300/70 animate-pulse" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-yellow-200">✦</div>
+            <div className="absolute left-1/2 top-1 -translate-x-1/2 text-sm text-cyan-200 animate-pulse">✧</div>
+            <div className="absolute right-3 top-8 text-sm text-emerald-200 animate-pulse">✦</div>
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 text-sm text-cyan-100 animate-pulse">✧</div>
+            <div className="absolute bottom-3 right-8 text-sm text-emerald-200 animate-pulse">✦</div>
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-sm text-cyan-200 animate-pulse">✧</div>
+            <div className="absolute bottom-3 left-8 text-sm text-emerald-200 animate-pulse">✦</div>
+            <div className="absolute left-1 top-1/2 -translate-y-1/2 text-sm text-cyan-100 animate-pulse">✧</div>
+            <div className="absolute left-3 top-8 text-sm text-emerald-200 animate-pulse">✦</div>
+          </div>
+        </div>
+      )}
+
       {showMainModal && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-2 backdrop-blur-sm sm:items-center sm:p-4"
