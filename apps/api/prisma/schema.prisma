@@ -428,6 +428,7 @@ model Project {
   aiIntake                     AiIntake?
   siteAccessRequests           SiteAccessRequest[]
   siteAccessVisits             SiteAccessVisit[]
+  progressReports              ProgressReport[]
   startProposals               ProjectStartProposal[]
   siteAccessData               SiteAccessData?
   locationDetails              ProjectLocationDetails?
@@ -753,6 +754,11 @@ model ProjectMilestone {
   description           String?
   photoUrls             String[] @default([])
   notes                 String?
+  signOffRequested      Boolean  @default(false)
+  signOffRequestedAt    DateTime?
+  signOffStatus         String?  // pending | approved | rejected
+  signOffApprovedAt     DateTime?
+  signOffRejectedAt     DateTime?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -767,6 +773,27 @@ model ProjectMilestone {
   @@index([status])
   @@index([plannedStartDate])
   @@unique([projectId, isFinancial, sequence])
+}
+
+model ProgressReport {
+  id                    String   @id @default(cuid())
+  projectId             String
+  projectProfessionalId String?
+  submittedById         String
+  submittedByRole       String   @default("professional")
+  milestoneId           String?  // ProjectMilestone.id
+  photoEntries          Json     @default("[]")
+  narrativeSummary      String?
+  signOffRequested      Boolean  @default(false)
+  signOffStatus         String?  // pending | approved | rejected
+  chatMessageId         String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  project               Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([milestoneId])
 }
 
 model ProfessionalReport {

@@ -39,6 +39,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { AcProjectsModule } from './ac-projects/ac-projects.module';
+import { ProgressReportsModule } from './progress-reports/progress-reports.module';
 import { PlatformFeeService } from './common/platform-fee.service';
 
 @Module({
@@ -64,6 +65,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     SupportRequestsModule,
     AiModule,
     AcProjectsModule,
+    ProgressReportsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },

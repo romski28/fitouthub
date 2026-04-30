@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-04-30-99fbe32",
+    "date": "2026-04-30T09:08:38+08:00",
+    "title": "feat: progress report modal — photo upload, milestone picker, share + sign-off",
+    "summary": "feat: progress report modal — photo upload, milestone picker, share + sign-off",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "99fbe32",
+    "files": [
+      "apps/api/prisma/MANUAL_ADD_PROGRESS_REPORT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/progress-reports/progress-reports.controller.ts",
+      "apps/api/src/progress-reports/progress-reports.dto.ts",
+      "apps/api/src/progress-reports/progress-reports.module.ts",
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-30-5f748cd",
     "date": "2026-04-30T00:07:00+08:00",
     "title": "fix: null scanner ref before stop to prevent double-stop crash on completion",

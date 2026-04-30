@@ -17,6 +17,7 @@ import { MaterialsClaimModal } from './materials-claim-modal';
 import { ReviewMaterialsClaimModal } from './review-materials-claim-modal';
 import { RespondMaterialsClaimModal } from './respond-materials-claim-modal';
 import { StartOnSiteModal } from './start-on-site-modal';
+import { ProgressReportModal } from './progress-report-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -258,6 +259,16 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'progress-report') {
+    return (
+      <ProgressReportModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -265,7 +276,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' {
   // On-site QR start — both professional (START_PROJECT) and client (START_PROJECT_ON_SITE)
   if (['START_PROJECT', 'START_PROJECT_ON_SITE'].includes(actionKey)) {
     return 'start-on-site';
@@ -324,6 +335,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (['RESPOND_TO_MATERIALS_QUESTIONS'].includes(actionKey)) {
     return 'respond-materials-claim';
+  }
+
+  if (['SUBMIT_PROGRESS_UPDATE', 'SUBMIT_CLIENT_PROGRESS_UPDATE'].includes(actionKey)) {
+    return 'progress-report';
   }
 
   // Default to general modal
