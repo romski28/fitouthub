@@ -19,6 +19,8 @@ export type CelebrationVariant =
   | 'check-wave'
   | 'prism-burst';
 
+type CelebrationMode = CelebrationVariant | 'random';
+
 interface WorkflowCompletionModalProps {
   isOpen: boolean;
   completedLabel: string;      // "Start date agreed!"
@@ -28,7 +30,7 @@ interface WorkflowCompletionModalProps {
   additionalActionLabel?: string;
   secondaryActionLabel?: string;
   showConfetti?: boolean;
-  celebrationVariant?: CelebrationVariant;
+  celebrationVariant?: CelebrationMode;
   showPrimaryActionOverride?: boolean;
   highlightWaitingAsAmber?: boolean;
   onNavigate?: () => void;     // called when the user clicks the CTA
@@ -42,6 +44,25 @@ const waitingCopy: Record<WaitingParty, string> = {
   platform: 'Fitout Hub has been notified and will process this shortly.',
 };
 
+const weightedCelebrations: Array<{ variant: CelebrationVariant; weight: number }> = [
+  { variant: 'confetti', weight: 35 },
+  { variant: 'sparkle-ring', weight: 25 },
+  { variant: 'check-wave', weight: 20 },
+  { variant: 'prism-burst', weight: 20 },
+];
+
+const pickWeightedCelebration = (): CelebrationVariant => {
+  const totalWeight = weightedCelebrations.reduce((sum, entry) => sum + entry.weight, 0);
+  let roll = Math.random() * totalWeight;
+
+  for (const entry of weightedCelebrations) {
+    roll -= entry.weight;
+    if (roll <= 0) return entry.variant;
+  }
+
+  return 'confetti';
+};
+
 export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = ({
   isOpen,
   completedLabel,
@@ -51,7 +72,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   additionalActionLabel,
   secondaryActionLabel = 'Close',
   showConfetti = false,
-  celebrationVariant = 'confetti',
+  celebrationVariant = 'random',
   showPrimaryActionOverride,
   highlightWaitingAsAmber = false,
   onNavigate,
@@ -59,11 +80,13 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   onClose,
 }) => {
   const hasFiredConfettiRef = React.useRef(false);
+  const selectedCelebrationRef = React.useRef<CelebrationVariant | null>(null);
   const [overlayCelebration, setOverlayCelebration] = React.useState<Exclude<CelebrationVariant, 'confetti'> | null>(null);
 
   React.useEffect(() => {
     if (!isOpen) {
       hasFiredConfettiRef.current = false;
+      selectedCelebrationRef.current = null;
       setOverlayCelebration(null);
       return;
     }
@@ -71,11 +94,18 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
     if (!showConfetti || hasFiredConfettiRef.current) return;
     hasFiredConfettiRef.current = true;
 
-    if (celebrationVariant !== 'confetti') {
-      setOverlayCelebration(celebrationVariant);
+    if (!selectedCelebrationRef.current) {
+      selectedCelebrationRef.current =
+        celebrationVariant === 'random' ? pickWeightedCelebration() : celebrationVariant;
+    }
+
+    const resolvedVariant = selectedCelebrationRef.current;
+
+    if (resolvedVariant !== 'confetti') {
+      setOverlayCelebration(resolvedVariant);
       const timer = window.setTimeout(() => {
         setOverlayCelebration(null);
-      }, celebrationVariant === 'check-wave' ? 850 : 1000);
+      }, resolvedVariant === 'check-wave' ? 850 : 1000);
       return () => window.clearTimeout(timer);
     }
 
