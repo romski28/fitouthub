@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-1012d91",
+    "date": "2026-04-30T15:57:34+08:00",
+    "title": "chore: nudge Vercel deployment (touch file)",
+    "summary": "chore: nudge Vercel deployment (touch file)",
+    "areas": [
+      "web"
+    ],
+    "commit": "1012d91",
+    "files": [
+      "apps/web/src/nudge-vercel.ts"
+    ]
+  },
+  {
     "id": "2026-04-30-2bde458",
     "date": "2026-04-30T15:17:27+08:00",
     "title": "feat: surface unviewed progress reports as next steps for client/professional",
