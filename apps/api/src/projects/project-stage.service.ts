@@ -102,10 +102,10 @@ export class ProjectStageService {
     // CLOSED is terminal - no transitions out
     if (
       from === ProjectStage.CLOSED ||
-      (from === ProjectStage.WARRANTY_PERIOD && to !== ProjectStage.CLOSED)
+      (from === ProjectStage.warranty_period && to !== ProjectStage.CLOSED)
     ) {
       // Only allow WARRANTY_PERIOD -> CLOSED
-      if (from === ProjectStage.WARRANTY_PERIOD && to === ProjectStage.CLOSED) {
+      if (from === ProjectStage.warranty_period && to === ProjectStage.CLOSED) {
         return true;
       }
       throw new Error(
@@ -137,7 +137,7 @@ export class ProjectStageService {
       ProjectStage.NEAR_COMPLETION,
       ProjectStage.FINAL_INSPECTION,
       ProjectStage.COMPLETE,
-      ProjectStage.WARRANTY_PERIOD,
+      ProjectStage.warranty_period,
       ProjectStage.CLOSED,
     ];
 

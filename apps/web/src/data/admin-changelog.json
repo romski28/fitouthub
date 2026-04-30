@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-30-b2a2a88",
+    "date": "2026-04-30T16:39:37+08:00",
+    "title": "fix(api): resolve render build errors for progress views and warranty stage enum",
+    "summary": "fix(api): resolve render build errors for progress views and warranty stage enum",
+    "areas": [
+      "api"
+    ],
+    "commit": "b2a2a88",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/api/src/projects/contract.service.ts",
+      "apps/api/src/projects/project-stage.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-30-8bc8cf0",
     "date": "2026-04-30T16:27:42+08:00",
     "title": "fix: thread progressReportId through next-step modal state",

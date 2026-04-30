@@ -85,8 +85,8 @@ const nextStepSeeds: NextStepSeed[] = [
   { projectStage: ProjectStage.COMPLETE, role: 'CLIENT', actionKey: 'ENTER_WARRANTY_PERIOD', actionLabel: 'Enter warranty period', description: 'Project completed; monitor warranty period.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.COMPLETE, role: 'PROFESSIONAL', actionKey: 'PROVIDE_WARRANTY_DETAILS', actionLabel: 'Provide warranty details', description: 'Share warranty terms and support contacts.', isPrimary: true, displayOrder: 1 },
 
-  { projectStage: ProjectStage.WARRANTY_PERIOD, role: 'CLIENT', actionKey: 'REPORT_DEFECT', actionLabel: 'Report a defect', description: 'Report any defect covered under warranty.', isPrimary: true, displayOrder: 1 },
-  { projectStage: ProjectStage.WARRANTY_PERIOD, role: 'PROFESSIONAL', actionKey: 'VIEW_DEFECT', actionLabel: 'View defect', description: 'Review and respond to reported defects.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.warranty_period, role: 'CLIENT', actionKey: 'REPORT_DEFECT', actionLabel: 'Report a defect', description: 'Report any defect covered under warranty.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.warranty_period, role: 'PROFESSIONAL', actionKey: 'VIEW_DEFECT', actionLabel: 'View defect', description: 'Review and respond to reported defects.', isPrimary: true, displayOrder: 1 },
 
   { projectStage: ProjectStage.PAUSED, role: 'CLIENT', actionKey: 'RESUME_PROJECT', actionLabel: 'Resume project', description: 'Resume project when ready.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.PAUSED, role: 'PROFESSIONAL', actionKey: 'CONFIRM_RESUME_PLAN', actionLabel: 'Confirm resume plan', description: 'Confirm timeline for project resumption.', isPrimary: true, displayOrder: 1 },
@@ -106,7 +106,7 @@ const adminTemplateSeeds: AdminTemplateSeed[] = [
   { projectStage: ProjectStage.MILESTONE_PENDING, actionType: AdminActionType.VERIFY_ESCROW_RECEIPT, description: 'Verify escrow receipt before milestone payment approval.', triggerCondition: 'ESCROW_REQUIRED', isPriority: true, displayOrder: 1 },
   { projectStage: ProjectStage.PAYMENT_RELEASED, actionType: AdminActionType.APPROVE_PAYMENT_RELEASE, description: 'Audit and approve payment release records.', triggerCondition: 'ALWAYS', isPriority: true, displayOrder: 1 },
   { projectStage: ProjectStage.WORK_IN_PROGRESS, actionType: AdminActionType.APPROVE_CHANGE_ORDER, description: 'Approve material scope/cost change orders.', triggerCondition: 'CHANGE_ORDER_REQUESTED', displayOrder: 1 },
-  { projectStage: ProjectStage.WARRANTY_PERIOD, actionType: AdminActionType.FLAG_QUALITY_ISSUE, description: 'Track warranty defect and quality issue remediation.', triggerCondition: 'DEFECT_REPORTED', displayOrder: 1 },
+  { projectStage: ProjectStage.warranty_period, actionType: AdminActionType.FLAG_QUALITY_ISSUE, description: 'Track warranty defect and quality issue remediation.', triggerCondition: 'DEFECT_REPORTED', displayOrder: 1 },
   { projectStage: ProjectStage.DISPUTED, actionType: AdminActionType.INVESTIGATE_COMPLAINT, description: 'Investigate complaint submissions.', triggerCondition: 'ALWAYS', isPriority: true, displayOrder: 1 },
   { projectStage: ProjectStage.DISPUTED, actionType: AdminActionType.RESOLVE_DISPUTE, description: 'Resolve dispute and define outcome path.', triggerCondition: 'ALWAYS', isPriority: true, displayOrder: 2 },
 ];

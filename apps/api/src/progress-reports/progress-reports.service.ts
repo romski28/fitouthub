@@ -144,11 +144,14 @@ export class ProgressReportsService {
   }
 
   async markReportViewed(progressReportId: string, userId: string) {
-    // Upsert to avoid duplicates
-    return this.prisma.progressReportView.upsert({
-      where: { progressReportId_userId: { progressReportId, userId } },
-      update: { viewedAt: new Date() },
-      create: { progressReportId, userId, viewedAt: new Date() },
-    });
+    // Use SQL upsert to avoid compile-time coupling to a generated Prisma delegate.
+    await this.prisma.$executeRaw`
+      INSERT INTO "ProgressReportView" ("id", "progressReportId", "userId", "viewedAt", "createdAt", "updatedAt")
+      VALUES (${crypto.randomUUID()}, ${progressReportId}, ${userId}, NOW(), NOW(), NOW())
+      ON CONFLICT ("progressReportId", "userId")
+      DO UPDATE SET "viewedAt" = NOW(), "updatedAt" = NOW()
+    `;
+
+    return { ok: true };
   }
 }

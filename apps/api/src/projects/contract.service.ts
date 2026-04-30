@@ -414,6 +414,8 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
   }
 
   private isContractPhase(stage: string): boolean {
+    const normalizedStage = String(stage || '').toUpperCase();
+
     return [
       'CONTRACT_PHASE',
       'PRE_WORK',
@@ -425,7 +427,7 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
       'COMPLETE',
       'WARRANTY_PERIOD',
       'CLOSED',
-    ].includes(stage);
+    ].includes(normalizedStage);
   }
 
   private canUserSign(
