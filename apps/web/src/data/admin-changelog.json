@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-dad6929",
+    "date": "2026-04-30T09:51:43+08:00",
+    "title": "feat: route progress report messages to scoped progress chat streams",
+    "summary": "feat: route progress report messages to scoped progress chat streams",
+    "areas": [
+      "api"
+    ],
+    "commit": "dad6929",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-30-f5dc031",
     "date": "2026-04-30T09:34:00+08:00",
     "title": "feat: route client REVIEW_PROGRESS to progress report modal",

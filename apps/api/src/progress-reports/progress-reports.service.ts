@@ -85,6 +85,8 @@ export class ProgressReportsService {
     const threadId = (thread as any).id || (thread as any).threadId;
 
     const attachments = validPhotos.map((p) => ({ url: p.url }));
+    const progressThreadScope = 'progress';
+    const progressThreadScopeId = milestoneId || 'general';
 
     let chatContent = narrativeSummary?.trim() || 'Progress update shared.';
     if (signOffRequested && milestoneId) {
@@ -102,6 +104,10 @@ export class ProgressReportsService {
       senderProId,
       chatContent,
       attachments,
+      {
+        threadScope: progressThreadScope,
+        threadScopeId: progressThreadScopeId,
+      },
     );
 
     // Store chat message ID on the report
