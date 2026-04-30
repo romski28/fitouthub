@@ -9,6 +9,7 @@ import type { NextStepModalContent } from '@/context/next-step-modal-context';
 interface UseNextStepModalTriggerOptions {
   actionKey: string;
   projectId: string;
+  progressReportId?: string;
   projectDetailsPath?: string;
   prefetchPath?: string;
   modalContent?: NextStepModalContent;
@@ -47,8 +48,9 @@ export function useNextStepModalTrigger(options: UseNextStepModalTriggerOptions)
       options.modalContent,
       options.projectStage,
       options.onCompleted,
+      options.progressReportId,
     );
-  }, [openModal, router, userId, userRole, options.actionKey, options.prefetchPath, options.projectDetailsPath, options.projectId, options.modalContent, options.projectStage, options.onCompleted]);
+  }, [openModal, router, userId, userRole, options.actionKey, options.prefetchPath, options.projectDetailsPath, options.projectId, options.progressReportId, options.modalContent, options.projectStage, options.onCompleted]);
 }
 
 /**

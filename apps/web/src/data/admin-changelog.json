@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-04-30-8bc8cf0",
+    "date": "2026-04-30T16:27:42+08:00",
+    "title": "fix: thread progressReportId through next-step modal state",
+    "summary": "fix: thread progressReportId through next-step modal state",
+    "areas": [
+      "web"
+    ],
+    "commit": "8bc8cf0",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx",
+      "apps/web/src/hooks/use-next-step-modal-trigger.ts",
+      "apps/web/src/lib/next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-04-30-db92162",
     "date": "2026-04-30T16:16:24+08:00",
     "title": "fix: move useEffect inside ProgressReportModal to fix compile error",

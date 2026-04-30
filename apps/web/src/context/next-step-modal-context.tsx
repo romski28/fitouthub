@@ -24,6 +24,7 @@ export interface NextStepModalState {
   isLoading: boolean;
   actionKey?: string;
   projectId?: string;
+  progressReportId?: string;
   projectDetailsPath?: string;
   userId?: string;
   role?: string;
@@ -44,6 +45,7 @@ interface NextStepModalContextType {
     modalContent?: NextStepModalContent,
     projectStage?: string,
     onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void,
+    progressReportId?: string,
   ) => Promise<void>;
   closeModal: () => void;
   updateModalContent: (content: NextStepModalContent) => void;
@@ -68,6 +70,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
       modalContent?: NextStepModalContent,
       projectStage?: string,
       onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void,
+      progressReportId?: string,
     ) => {
       console.debug(`[NextStepModalContext] openModal called for action: ${actionKey}`);
       
@@ -77,6 +80,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
         isLoading: true,
         actionKey,
         projectId,
+        progressReportId,
         projectDetailsPath,
         userId,
         role,
@@ -101,6 +105,7 @@ export function NextStepModalProvider({ children }: { children: ReactNode }) {
       isLoading: false,
       actionKey: undefined,
       projectId: undefined,
+      progressReportId: undefined,
       projectDetailsPath: undefined,
       userId: undefined,
       role: undefined,

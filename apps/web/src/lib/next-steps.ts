@@ -5,6 +5,7 @@ export type NextStepAction = {
   actionKey: string;
   actionLabel: string;
   description?: string;
+  progressReportId?: string;
   modalContent?: {
     title?: string;
     body?: string;

@@ -204,6 +204,7 @@ function NextStepModalButton({
   const openModal = useNextStepModalTrigger({
     actionKey: action.actionKey,
     projectId,
+    progressReportId: action.progressReportId,
     projectDetailsPath: `/projects/${projectId}?tab=overview`,
     prefetchPath: getClientShowMeHref(projectId, action.actionKey),
     modalContent,

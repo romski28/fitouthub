@@ -273,6 +273,18 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
     }
   };
 
+  // Mark as viewed when opened for review (REVIEW_PROGRESS_UPDATE or REVIEW_CLIENT_PROGRESS_UPDATE)
+  React.useEffect(() => {
+    if (!isOpen || !state.actionKey || !state.projectId || !accessToken) return;
+    if (!['REVIEW_PROGRESS_UPDATE', 'REVIEW_CLIENT_PROGRESS_UPDATE'].includes(state.actionKey)) return;
+    const reportId = state.progressReportId;
+    if (!reportId) return;
+    fetch(`${API_BASE_URL}/progress-reports/${reportId}/viewed`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }).catch(() => {});
+  }, [isOpen, state.actionKey, state.projectId, accessToken, state.progressReportId]);
+
   // ── Guard ────────────────────────────────────────────────────────────────
   if (!isOpen) return null;
 
@@ -559,17 +571,4 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
       )}
     </>
   );
-
-  // Mark as viewed when opened for review (REVIEW_PROGRESS_UPDATE or REVIEW_CLIENT_PROGRESS_UPDATE)
-  React.useEffect(() => {
-    if (!isOpen || !state.actionKey || !state.projectId || !accessToken) return;
-    if (!['REVIEW_PROGRESS_UPDATE', 'REVIEW_CLIENT_PROGRESS_UPDATE'].includes(state.actionKey)) return;
-    // Assume state.progressReportId is set by modal trigger (or fetch the latest unviewed report)
-    const reportId = state.progressReportId;
-    if (!reportId) return;
-    fetch(`${API_BASE_URL}/progress-reports/${reportId}/viewed`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }).catch(() => {});
-  }, [isOpen, state.actionKey, state.projectId, accessToken, state.progressReportId]);
 }

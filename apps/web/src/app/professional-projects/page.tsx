@@ -128,6 +128,7 @@ export default function ProfessionalProjectsPage() {
             console.warn('[professional-projects] Failed to refresh next-step actions after modal completion', refreshError);
           }
         },
+        action.progressReportId,
       );
     },
     [accessToken, nextStepCacheScope, openModal, professional?.id, router],
