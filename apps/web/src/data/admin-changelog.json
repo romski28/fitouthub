@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-0adbf38",
+    "date": "2026-04-30T10:38:21+08:00",
+    "title": "feat: add check-wave and prism-burst celebration variants",
+    "summary": "feat: add check-wave and prism-burst celebration variants",
+    "areas": [
+      "web"
+    ],
+    "commit": "0adbf38",
+    "files": [
+      "apps/web/src/components/workflow-completion-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-30-70b0fcd",
     "date": "2026-04-30T10:32:32+08:00",
     "title": "feat: add sparkle-ring progress celebration and professional media tab",

@@ -13,7 +13,11 @@ export interface WorkflowNextStep {
   waitingFor?: WaitingParty; // shown when requiresAction === false
 }
 
-export type CelebrationVariant = 'confetti' | 'sparkle-ring';
+export type CelebrationVariant =
+  | 'confetti'
+  | 'sparkle-ring'
+  | 'check-wave'
+  | 'prism-burst';
 
 interface WorkflowCompletionModalProps {
   isOpen: boolean;
@@ -55,23 +59,23 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   onClose,
 }) => {
   const hasFiredConfettiRef = React.useRef(false);
-  const [showSparkleBurst, setShowSparkleBurst] = React.useState(false);
+  const [overlayCelebration, setOverlayCelebration] = React.useState<Exclude<CelebrationVariant, 'confetti'> | null>(null);
 
   React.useEffect(() => {
     if (!isOpen) {
       hasFiredConfettiRef.current = false;
-      setShowSparkleBurst(false);
+      setOverlayCelebration(null);
       return;
     }
 
     if (!showConfetti || hasFiredConfettiRef.current) return;
     hasFiredConfettiRef.current = true;
 
-    if (celebrationVariant === 'sparkle-ring') {
-      setShowSparkleBurst(true);
+    if (celebrationVariant !== 'confetti') {
+      setOverlayCelebration(celebrationVariant);
       const timer = window.setTimeout(() => {
-        setShowSparkleBurst(false);
-      }, 950);
+        setOverlayCelebration(null);
+      }, celebrationVariant === 'check-wave' ? 850 : 1000);
       return () => window.clearTimeout(timer);
     }
 
@@ -96,7 +100,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
       aria-modal="true"
       aria-label={completedLabel}
     >
-      {showSparkleBurst && (
+      {overlayCelebration === 'sparkle-ring' && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="relative h-44 w-44">
             <div className="absolute inset-0 rounded-full border-4 border-cyan-300/70 animate-ping" />
@@ -110,6 +114,33 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
             <div className="absolute bottom-2 left-7 text-emerald-200 text-sm animate-pulse">✦</div>
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-cyan-100 text-sm animate-pulse">✧</div>
             <div className="absolute left-2 top-7 text-emerald-200 text-sm animate-pulse">✦</div>
+          </div>
+        </div>
+      )}
+      {overlayCelebration === 'check-wave' && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="relative h-44 w-44">
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-300/60 animate-ping" />
+            <div className="absolute inset-4 rounded-full border-2 border-emerald-200/80 animate-pulse" />
+            <div className="absolute inset-10 rounded-full border border-cyan-200/80 animate-pulse" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/85 px-3 py-1 text-white text-xl shadow-lg">
+              ✓
+            </div>
+          </div>
+        </div>
+      )}
+      {overlayCelebration === 'prism-burst' && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="relative h-48 w-48">
+            <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-cyan-200/90 animate-pulse" />
+            <div className="absolute left-1/2 top-2 h-3 w-3 -translate-x-1/2 rotate-12 rounded-sm bg-emerald-200/80 animate-pulse" />
+            <div className="absolute right-6 top-8 h-3 w-3 rotate-45 rounded-sm bg-cyan-200/80 animate-pulse" />
+            <div className="absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 rotate-12 rounded-sm bg-teal-200/80 animate-pulse" />
+            <div className="absolute bottom-6 right-8 h-3 w-3 rotate-45 rounded-sm bg-emerald-200/80 animate-pulse" />
+            <div className="absolute bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-12 rounded-sm bg-cyan-200/80 animate-pulse" />
+            <div className="absolute bottom-6 left-8 h-3 w-3 rotate-45 rounded-sm bg-teal-200/80 animate-pulse" />
+            <div className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 rotate-12 rounded-sm bg-emerald-200/80 animate-pulse" />
+            <div className="absolute left-6 top-8 h-3 w-3 rotate-45 rounded-sm bg-cyan-200/80 animate-pulse" />
           </div>
         </div>
       )}
