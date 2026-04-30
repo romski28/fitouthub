@@ -852,21 +852,6 @@ export class NextStepService {
         // These steps are only for milestone 1. Subsequent milestones use the normal
         // professional payment-request flow.
         const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
-        if (project.siteStartedAt) {
-          return {
-            PRIMARY: [toApiAction(createSyntheticPrimaryStep(
-              'SITE_STARTED',
-              'Project started on site',
-              false,
-              role,
-              effectiveStage,
-              `On-site start confirmed on ${new Date(project.siteStartedAt).toLocaleDateString('en-HK')}.`,
-            ))],
-            ELECTIVE: [],
-            status: project.status,
-            stage: effectiveStage,
-          };
-        }
         if (escrowNowFunded && !pendingEscrowRequest) {
           const projectScale = String(project.projectScale || '').toUpperCase();
           if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {
@@ -1187,6 +1172,29 @@ export class NextStepService {
     }
     // ────────────────────────────────────────────────────────────────────────────────────────────
 
+    if (role === 'CLIENT' && effectiveStage === ProjectStage.MILESTONE_PENDING) {
+      const hasApproveMilestone = availableConfigSteps.some(
+        (step) => step.actionKey === 'APPROVE_MILESTONE',
+      );
+      const hasReviewProgress = availableConfigSteps.some(
+        (step) => step.actionKey === 'REVIEW_PROGRESS',
+      );
+
+      if (hasApproveMilestone && !hasReviewProgress) {
+        availableConfigSteps.push({
+          ...createSyntheticPrimaryStep(
+            'REVIEW_PROGRESS',
+            'Review work progress',
+            true,
+            role,
+            effectiveStage,
+            'Review the latest updates and progress evidence before approving the milestone.',
+          ),
+          displayOrder: 2,
+        } as any);
+      }
+    }
+
     // Check if any of these actions have already been completed
     const userActions = await this.prisma.nextStepAction.findMany({
       where: {
@@ -1216,6 +1224,22 @@ export class NextStepService {
     const elective = availableSteps
       .filter((s) => s.isElective)
       .map(toApiAction);
+
+    // Keep SITE_STARTED as a fallback status for client only when there are no active actions.
+    if (role === 'CLIENT' && project.siteStartedAt && primary.length === 0 && elective.length === 0) {
+      primary.push(
+        toApiAction(
+          createSyntheticPrimaryStep(
+            'SITE_STARTED',
+            'Project started on site',
+            false,
+            role,
+            effectiveStage,
+            `On-site start confirmed on ${new Date(project.siteStartedAt).toLocaleDateString('en-HK')}. Work is in progress and no action is required right now.`,
+          ),
+        ),
+      );
+    }
 
     return {
       PRIMARY: primary,

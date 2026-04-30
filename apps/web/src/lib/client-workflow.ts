@@ -23,6 +23,7 @@ export const clientActionTabMap: Record<string, string> = {
   CONFIRM_START_DETAILS: 'schedule',
   WAIT_FOR_CLIENT_FUNDS: 'schedule',
   REVIEW_PROGRESS: 'schedule',
+  SITE_STARTED: 'schedule',
   APPROVE_MILESTONE: 'schedule',
   CONFIRM_NEXT_PHASE: 'schedule',
   SCHEDULE_FINAL_INSPECTION: 'schedule',

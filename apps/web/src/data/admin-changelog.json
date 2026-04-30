@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-04-30-a34510f",
+    "date": "2026-04-30T12:33:08+08:00",
+    "title": "feat: keep SITE_STARTED as fallback and surface dual client actions",
+    "summary": "feat: keep SITE_STARTED as fallback and surface dual client actions",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a34510f",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/lib/client-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-04-30-a85dcf3",
     "date": "2026-04-30T11:58:00+08:00",
     "title": "fix: client next step stuck on CONFIRM_SCHEDULE after advancing to WORK_IN_PROGRESS",

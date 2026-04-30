@@ -180,18 +180,33 @@ function NextStepModalButton({
 }: {
   action: NextStepAction;
   projectId: string;
-  variant: 'primary' | 'secondary';
+  variant: 'primary' | 'secondary' | 'status';
   disabled?: boolean;
   labelOverride?: string;
   disabledTitle?: string;
   onCompleted?: (payload?: { projectId?: string; actionKey?: string }) => void;
 }) {
+  const modalContent =
+    action.modalContent ||
+    (action.actionKey === 'SITE_STARTED'
+      ? {
+          title: 'Project started on site',
+          body:
+            action.description ||
+            'Work is in progress. No action is required from you right now.',
+          detailsBody:
+            'The project has already started on site. You can review updates in the project tabs and wait for the next required action.',
+          primaryButtonLabel: 'Got it',
+          primaryActionType: 'close_modal',
+        }
+      : undefined);
+
   const openModal = useNextStepModalTrigger({
     actionKey: action.actionKey,
     projectId,
     projectDetailsPath: `/projects/${projectId}?tab=overview`,
     prefetchPath: getClientShowMeHref(projectId, action.actionKey),
-    modalContent: action.modalContent,
+    modalContent,
     onCompleted,
   });
 
@@ -204,6 +219,8 @@ function NextStepModalButton({
       className={
         variant === 'primary'
           ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:hover:bg-slate-600 disabled:text-slate-200 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
+          : variant === 'status'
+            ? 'rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500 disabled:hover:bg-amber-500 text-slate-950 px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
           : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:border-slate-500 disabled:text-slate-300 disabled:hover:bg-transparent transition text-center leading-tight disabled:cursor-not-allowed'
       }
     >
@@ -789,13 +806,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           <div className="space-y-2">
             {dashboardProjects.map((project) => {
               const actions = nextStepMap[project.id] || [];
-              const primaryAction = actions[0] || null;
+              const primaryActions = actions.filter((action) => action.isPrimary).slice(0, 2);
+              const primaryAction = primaryActions[0] || null;
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
-              const shouldWaitForQuotes = Boolean(
-                primaryAction &&
-                quotedCount === 0 &&
-                /review\s+quotes?/i.test(primaryAction.actionLabel || ''),
-              );
               const assistInfo = assistMap[project.id];
               const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
               const quoteOverdue = isQuoteOverdueForProject(project);
@@ -880,16 +893,30 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                         ) : (
                           <>
-                            {primaryAction ? (
-                              <NextStepModalButton
-                                action={primaryAction}
-                                projectId={project.id}
-                                variant="primary"
-                                disabled={shouldWaitForQuotes}
-                                labelOverride={shouldWaitForQuotes ? 'Wait for quotes' : undefined}
-                                disabledTitle={shouldWaitForQuotes ? 'This step unlocks once at least one quote is received.' : undefined}
-                                onCompleted={() => refreshProjectNextStep(project.id)}
-                              />
+                            {primaryActions.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {primaryActions.map((action) => {
+                                  const shouldWaitForQuotes =
+                                    quotedCount === 0 && /review\s+quotes?/i.test(action.actionLabel || '');
+
+                                  return (
+                                    <NextStepModalButton
+                                      key={`${project.id}-${action.actionKey}`}
+                                      action={action}
+                                      projectId={project.id}
+                                      variant={action.actionKey === 'SITE_STARTED' ? 'status' : 'primary'}
+                                      disabled={shouldWaitForQuotes}
+                                      labelOverride={shouldWaitForQuotes ? 'Wait for quotes' : undefined}
+                                      disabledTitle={
+                                        shouldWaitForQuotes
+                                          ? 'This step unlocks once at least one quote is received.'
+                                          : undefined
+                                      }
+                                      onCompleted={() => refreshProjectNextStep(project.id)}
+                                    />
+                                  );
+                                })}
+                              </div>
                             ) : (
                               <Link
                                 href={primaryActionHref}
