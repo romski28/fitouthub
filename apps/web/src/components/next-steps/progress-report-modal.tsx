@@ -559,9 +559,8 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
       )}
     </>
   );
-}
 
-// Mark as viewed when opened for review (REVIEW_PROGRESS_UPDATE or REVIEW_CLIENT_PROGRESS_UPDATE)
+  // Mark as viewed when opened for review (REVIEW_PROGRESS_UPDATE or REVIEW_CLIENT_PROGRESS_UPDATE)
   React.useEffect(() => {
     if (!isOpen || !state.actionKey || !state.projectId || !accessToken) return;
     if (!['REVIEW_PROGRESS_UPDATE', 'REVIEW_CLIENT_PROGRESS_UPDATE'].includes(state.actionKey)) return;
@@ -573,3 +572,4 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
       headers: { Authorization: `Bearer ${accessToken}` },
     }).catch(() => {});
   }, [isOpen, state.actionKey, state.projectId, accessToken, state.progressReportId]);
+}
