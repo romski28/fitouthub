@@ -2,6 +2,7 @@
 -- MANUAL_ADD_PROGRESS_REPORT.sql
 -- Adds progress report fields to ProjectMilestone and creates
 -- the ProgressReport table for in-progress reporting + sign-off.
+-- Also ensures ProjectPhoto exists for Media tab rendering.
 -- Safe to re-run (idempotent via IF NOT EXISTS / DO NOTHING).
 -- Run once against production DB after deploying the API.
 -- ============================================================
@@ -39,5 +40,21 @@ CREATE TABLE IF NOT EXISTS "ProgressReport" (
 
 CREATE INDEX IF NOT EXISTS "ProgressReport_projectId_idx"   ON "ProgressReport"("projectId");
 CREATE INDEX IF NOT EXISTS "ProgressReport_milestoneId_idx" ON "ProgressReport"("milestoneId");
+
+-- Ensure ProjectPhoto table exists for project media/gallery surfaces
+CREATE TABLE IF NOT EXISTS "ProjectPhoto" (
+  "id"        TEXT         NOT NULL,
+  "projectId" TEXT         NOT NULL,
+  "url"       TEXT         NOT NULL,
+  "note"      TEXT,
+  "createdAt" TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  "updatedAt" TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT "ProjectPhoto_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "ProjectPhoto_projectId_fkey"
+    FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "ProjectPhoto_projectId_idx" ON "ProjectPhoto"("projectId");
 
 COMMIT;

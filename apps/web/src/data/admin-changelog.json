@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-8170c35",
+    "date": "2026-04-30T11:29:32+08:00",
+    "title": "fix: ensure ProjectPhoto table exists in progress-report manual migration",
+    "summary": "fix: ensure ProjectPhoto table exists in progress-report manual migration",
+    "areas": [
+      "api"
+    ],
+    "commit": "8170c35",
+    "files": [
+      "apps/api/prisma/MANUAL_ADD_PROGRESS_REPORT.sql"
+    ]
+  },
+  {
     "id": "2026-04-30-4127334",
     "date": "2026-04-30T11:05:54+08:00",
     "title": "feat: enable weighted random celebration variants by default",
