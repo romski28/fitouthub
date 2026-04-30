@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-04-30-437f399",
+    "date": "2026-04-30T17:02:15+08:00",
+    "title": "fix: suppress START_PROJECT_ON_SITE next step after site has been started",
+    "summary": "fix: suppress START_PROJECT_ON_SITE next step after site has been started",
+    "areas": [
+      "api"
+    ],
+    "commit": "437f399",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-04-30-b2a2a88",
     "date": "2026-04-30T16:39:37+08:00",
     "title": "fix(api): resolve render build errors for progress views and warranty stage enum",

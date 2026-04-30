@@ -981,6 +981,11 @@ export class NextStepService {
           }
         }
       }
+
+      // Filter out START_PROJECT_ON_SITE if site has already been started (client scanned QR)
+      if (project.siteStartedAt) {
+        availableConfigSteps = availableConfigSteps.filter((s) => s.actionKey !== 'START_PROJECT_ON_SITE');
+      }
     }
 
     // ── PRE_WORK stage: dynamic overrides (mirrors post-contract logic) ──────────────────────────
