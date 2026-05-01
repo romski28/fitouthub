@@ -639,6 +639,15 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
   const isProfessional = (state.role || '').toUpperCase().includes('PROFESSIONAL');
   const isClient = !isProfessional;
   const accessToken = isProfessional ? professionalToken : clientToken;
+  const [stableAccessToken, setStableAccessToken] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (accessToken) {
+      setStableAccessToken(accessToken);
+    }
+  }, [accessToken]);
+
+  const effectiveAccessToken = accessToken || stableAccessToken;
 
   const isReviewMode = ['REVIEW_PROGRESS', 'REVIEW_PROGRESS_UPDATE', 'REVIEW_CLIENT_PROGRESS_UPDATE'].includes(
     state.actionKey || '',
@@ -662,19 +671,19 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
 
   // Fetch on open
   React.useEffect(() => {
-    if (!isOpen || !state.projectId || !accessToken) return;
+    if (!isOpen || !state.projectId || !effectiveAccessToken) return;
     const load = async () => {
       setPageLoading(true);
       try {
         const [reportsRes, milestonesRes, paymentPlanRes] = await Promise.all([
           fetch(`${API_BASE_URL}/progress-reports/project/${state.projectId}`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
+            headers: { Authorization: `Bearer ${effectiveAccessToken}` },
           }),
           fetch(`${API_BASE_URL}/milestones/project/${state.projectId}`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
+            headers: { Authorization: `Bearer ${effectiveAccessToken}` },
           }),
           fetch(`${API_BASE_URL}/projects/${state.projectId}/payment-plan`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
+            headers: { Authorization: `Bearer ${effectiveAccessToken}` },
           }),
         ]);
         if (reportsRes.ok) {
@@ -693,7 +702,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
       }
     };
     void load();
-  }, [isOpen, state.projectId, accessToken]);
+  }, [isOpen, state.projectId, effectiveAccessToken]);
 
   // Auto-mode after load
   React.useEffect(() => {
@@ -704,12 +713,12 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
 
   // Mark viewed
   React.useEffect(() => {
-    if (!isOpen || !state.progressReportId || !accessToken) return;
+    if (!isOpen || !state.progressReportId || !effectiveAccessToken) return;
     fetch(`${API_BASE_URL}/progress-reports/${state.progressReportId}/viewed`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${effectiveAccessToken}` },
     }).catch(() => {});
-  }, [isOpen, state.progressReportId, accessToken]);
+  }, [isOpen, state.progressReportId, effectiveAccessToken]);
 
   // Scroll to bottom when thread renders
   React.useEffect(() => {
@@ -733,20 +742,21 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
       setShowShareCelebration(false);
       setComposeScopeId('general');
       setComposeChatRefreshKey(0);
+      setStableAccessToken(null);
       setDecidingId(null);
       setMode(isClient || isReviewMode ? 'thread' : 'compose');
     }
   }, [isOpen, isClient, isReviewMode]);
 
   const refreshReports = React.useCallback(() => {
-    if (!state.projectId || !accessToken) return;
+    if (!state.projectId || !effectiveAccessToken) return;
     fetch(`${API_BASE_URL}/progress-reports/project/${state.projectId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${effectiveAccessToken}` },
     })
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setReports(data); })
       .catch(() => {});
-  }, [state.projectId, accessToken]);
+  }, [state.projectId, effectiveAccessToken]);
 
   const handleSubmitSuccess = React.useCallback(
     (signOffRequested: boolean, milestoneTitle?: string) => {
@@ -786,12 +796,12 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
 
   const handleSignOffDecision = React.useCallback(
     async (reportId: string, decision: 'approved' | 'rejected', note?: string) => {
-      if (!accessToken) return;
+      if (!effectiveAccessToken) return;
       setDecidingId(reportId);
       try {
         const res = await fetch(`${API_BASE_URL}/progress-reports/${reportId}/sign-off`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${effectiveAccessToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ decision, rejectionNote: note }),
         });
         if (!res.ok) {
@@ -807,7 +817,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
         setDecidingId(null);
       }
     },
-    [accessToken, state, refreshReports],
+    [effectiveAccessToken, state, refreshReports],
   );
 
   if (!isOpen) return null;
@@ -894,14 +904,14 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5 space-y-4">
                   <ComposeForm
                     projectId={state.projectId!}
-                    accessToken={accessToken!}
+                    accessToken={effectiveAccessToken!}
                     milestones={milestones}
                     paymentPlan={paymentPlan}
                     onSubmitSuccess={handleSubmitSuccess}
                     onScopeChange={setComposeScopeId}
                   />
 
-                  {state.projectId && accessToken && (
+                  {state.projectId && effectiveAccessToken && (
                     <div className="rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
                       <div className="px-3 pt-2 pb-0.5 border-b border-slate-700">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
@@ -910,7 +920,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                       </div>
                       <ProjectChat
                         projectId={state.projectId}
-                        accessToken={accessToken}
+                        accessToken={effectiveAccessToken}
                         currentUserRole={isProfessional ? 'professional' : 'client'}
                         threadScope="progress"
                         threadScopeId={composeScopeId}
@@ -968,7 +978,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                   </div>
 
                   {/* Scoped reply chat */}
-                  {state.projectId && accessToken && (
+                  {state.projectId && effectiveAccessToken && (
                     <div className="border-t border-slate-700 shrink-0">
                       <div className="px-3 pt-2 pb-0.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
@@ -977,7 +987,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                       </div>
                       <ProjectChat
                         projectId={state.projectId}
-                        accessToken={accessToken}
+                        accessToken={effectiveAccessToken}
                         currentUserRole={isProfessional ? 'professional' : 'client'}
                         threadScope="progress"
                         threadScopeId="general"
