@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ChatService } from '../chat/chat.service';
 import { CreateProgressReportDto, PhotoEntryDto } from './progress-reports.dto';
@@ -119,6 +119,27 @@ export class ProgressReportsService {
     return { ...report, chatMessageId: message.id };
   }
 
+  private async enrichReports(reports: any[]): Promise<any[]> {
+    if (reports.length === 0) return [];
+    // Collect unique submitter IDs — could be clients (User) or professionals (Professional)
+    const userIds = [...new Set(reports.filter((r) => r.submittedByRole === 'client').map((r) => r.submittedById))];
+    const proIds = [...new Set(reports.filter((r) => r.submittedByRole !== 'client').map((r) => r.submittedById))];
+    const [users, pros] = await Promise.all([
+      userIds.length > 0
+        ? this.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, surname: true } })
+        : [],
+      proIds.length > 0
+        ? this.prisma.professional.findMany({ where: { id: { in: proIds } }, select: { id: true, businessName: true, firstName: true, lastName: true } })
+        : [],
+    ]);
+    const userMap = new Map(users.map((u) => [u.id, `${u.firstName} ${u.surname}`.trim()]));
+    const proMap = new Map(pros.map((p) => [p.id, p.businessName || `${p.firstName} ${p.lastName}`.trim()]));
+    return reports.map((r) => ({
+      ...r,
+      submitterName: r.submittedByRole === 'client' ? (userMap.get(r.submittedById) ?? 'Client') : (proMap.get(r.submittedById) ?? 'Professional'),
+    }));
+  }
+
   async getReportsByProject(projectId: string, requesterId: string, requesterRole: string) {
     // Both parties on the project can view reports
     const project = await this.prisma.project.findUnique({
@@ -137,10 +158,93 @@ export class ProgressReportsService {
       throw new ForbiddenException('You do not have access to this project');
     }
 
-    return this.prisma.progressReport.findMany({
+    const reports = await this.prisma.progressReport.findMany({
       where: { projectId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
+    return this.enrichReports(reports);
+  }
+
+  async getReportById(id: string, requesterId: string, requesterRole: string) {
+    const report = await this.prisma.progressReport.findUnique({ where: { id } });
+    if (!report) throw new NotFoundException('Progress report not found');
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: report.projectId },
+      include: { professionals: { where: { status: 'accepted' } } },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const isClient = requesterRole === 'client' && project.userId === requesterId;
+    const isProfessional =
+      requesterRole === 'professional' &&
+      project.professionals.some((pp) => pp.professionalId === requesterId);
+    const isAdmin = requesterRole === 'admin';
+
+    if (!isClient && !isProfessional && !isAdmin) {
+      throw new ForbiddenException('You do not have access to this project');
+    }
+
+    const [enriched] = await this.enrichReports([report]);
+    return enriched;
+  }
+
+  async approveSignOff(id: string, requesterId: string, requesterRole: string, decision: 'approved' | 'rejected', rejectionNote?: string) {
+    const report = await this.prisma.progressReport.findUnique({ where: { id } });
+    if (!report) throw new NotFoundException('Progress report not found');
+    if (!report.signOffRequested || report.signOffStatus !== 'pending') {
+      throw new BadRequestException('No pending sign-off on this report');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: report.projectId },
+      include: { professionals: { where: { status: 'accepted' } } },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    // Only the client (project owner) can approve/reject sign-offs
+    if (requesterRole !== 'client' || project.userId !== requesterId) {
+      throw new ForbiddenException('Only the project client may approve or reject sign-offs');
+    }
+
+    const now = new Date();
+    const updated = await (this.prisma.progressReport as any).update({
+      where: { id },
+      data: {
+        signOffStatus: decision,
+        signOffApprovedAt: decision === 'approved' ? now : undefined,
+        signOffRejectedAt: decision === 'rejected' ? now : undefined,
+      },
+    });
+
+    // If milestone linked, update its status too
+    if (report.milestoneId && decision === 'approved') {
+      await this.prisma.projectMilestone.update({
+        where: { id: report.milestoneId },
+        data: { signOffStatus: 'approved', signOffApprovedAt: now },
+      });
+    } else if (report.milestoneId && decision === 'rejected') {
+      await this.prisma.projectMilestone.update({
+        where: { id: report.milestoneId },
+        data: { signOffStatus: 'rejected', signOffRejectedAt: now, signOffRequested: false },
+      });
+    }
+
+    // Post a system message in the progress thread
+    const thread = await this.chatService.getOrCreateProjectThread(report.projectId);
+    const threadId = (thread as any).id || (thread as any).threadId;
+    const decisionText = decision === 'approved' ? '✅ Milestone sign-off approved.' : `❌ Milestone sign-off rejected.${rejectionNote ? ` Reason: ${rejectionNote}` : ''}`;
+    await this.chatService.addProjectMessage(
+      threadId,
+      'client',
+      requesterId,
+      null,
+      decisionText,
+      [],
+      { threadScope: 'progress', threadScopeId: report.milestoneId || 'general' },
+    );
+
+    return updated;
   }
 
   async markReportViewed(progressReportId: string, userId: string) {

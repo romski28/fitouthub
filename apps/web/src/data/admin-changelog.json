@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-01-7bef68a",
+    "date": "2026-05-01T13:03:56+08:00",
+    "title": "feat: WhatsApp-style progress thread with inline photos and sign-off cards",
+    "summary": "feat: WhatsApp-style progress thread with inline photos and sign-off cards",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7bef68a",
+    "files": [
+      "apps/api/prisma/migrations/manual_progress_report_signoff_dates.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/progress-reports/progress-reports.controller.ts",
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-04-30-437f399",
     "date": "2026-04-30T17:02:15+08:00",
     "title": "fix: suppress START_PROJECT_ON_SITE next step after site has been started",

@@ -47,6 +47,34 @@ export class ProgressReportsController {
   }
 
   /**
+   * GET /progress-reports/:id
+   * Returns a single progress report (both parties can view).
+   */
+  @Get(':id')
+  @UseGuards(CombinedAuthGuard)
+  async getById(@Param('id') id: string, @Req() req: any) {
+    const requesterId: string = req.user?.id || req.user?.sub;
+    const requesterRole: string = req.user?.role || 'professional';
+    if (!requesterId) throw new BadRequestException('Missing user id in token');
+    return this.service.getReportById(id, requesterId, requesterRole);
+  }
+
+  /**
+   * POST /progress-reports/:id/sign-off
+   * Client approves or rejects a milestone sign-off request.
+   * Body: { decision: 'approved' | 'rejected', rejectionNote?: string }
+   */
+  @Post(':id/sign-off')
+  @UseGuards(CombinedAuthGuard)
+  async signOff(@Param('id') id: string, @Req() req: any, @Body() body: { decision: 'approved' | 'rejected'; rejectionNote?: string }) {
+    const requesterId: string = req.user?.id || req.user?.sub;
+    const requesterRole: string = req.user?.role || 'client';
+    if (!requesterId) throw new BadRequestException('Missing user id in token');
+    if (!['approved', 'rejected'].includes(body.decision)) throw new BadRequestException('decision must be approved or rejected');
+    return this.service.approveSignOff(id, requesterId, requesterRole, body.decision, body.rejectionNote);
+  }
+
+  /**
    * POST /progress-reports/:id/viewed
    * Marks a progress report as viewed by the current user.
    */

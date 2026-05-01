@@ -786,6 +786,8 @@ model ProgressReport {
   narrativeSummary      String?
   signOffRequested      Boolean  @default(false)
   signOffStatus         String?  // pending | approved | rejected
+  signOffApprovedAt     DateTime?
+  signOffRejectedAt     DateTime?
   chatMessageId         String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
