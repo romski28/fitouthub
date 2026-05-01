@@ -264,6 +264,7 @@ export default function ProjectChat({
             maxImages={3}
             disabled={sending || loading}
             projectId={projectId}
+            accessToken={accessToken}
           />
         </div>
 

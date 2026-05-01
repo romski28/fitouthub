@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-01-8442231",
+    "date": "2026-05-01T17:56:33+08:00",
+    "title": "fix(web): authorize chat image uploads with bearer token",
+    "summary": "fix(web): authorize chat image uploads with bearer token",
+    "areas": [
+      "web"
+    ],
+    "commit": "8442231",
+    "files": [
+      "apps/web/src/components/chat-image-uploader.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-01-8a41627",
     "date": "2026-05-01T17:44:46+08:00",
     "title": "fix(web): prevent compose chat unmount on modal loading flicker",

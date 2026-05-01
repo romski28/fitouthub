@@ -8,6 +8,7 @@ interface ChatImageUploaderProps {
   maxImages?: number;
   disabled?: boolean;
   projectId?: string;
+  accessToken?: string;
 }
 
 export default function ChatImageUploader({
@@ -15,6 +16,7 @@ export default function ChatImageUploader({
   maxImages = 3,
   disabled = false,
   projectId,
+  accessToken,
 }: ChatImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +70,7 @@ export default function ChatImageUploader({
 
       const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
         method: 'POST',
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
         body: formData,
       });
 
