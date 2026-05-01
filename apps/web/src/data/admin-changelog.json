@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-01-5d72774",
+    "date": "2026-05-01T13:24:20+08:00",
+    "title": "fix(api): keep progress reports working before signoff-date migration",
+    "summary": "fix(api): keep progress reports working before signoff-date migration",
+    "areas": [
+      "api"
+    ],
+    "commit": "5d72774",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-01-27e594c",
     "date": "2026-05-01T13:10:18+08:00",
     "title": "fix: correct Professional field names in enrichReports (fullName, not firstName/lastName)",

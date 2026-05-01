@@ -5,6 +5,22 @@ import { CreateProgressReportDto, PhotoEntryDto } from './progress-reports.dto';
 
 export { CreateProgressReportDto, PhotoEntryDto };
 
+const progressReportStableSelect = {
+  id: true,
+  projectId: true,
+  projectProfessionalId: true,
+  submittedById: true,
+  submittedByRole: true,
+  milestoneId: true,
+  photoEntries: true,
+  narrativeSummary: true,
+  signOffRequested: true,
+  signOffStatus: true,
+  chatMessageId: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 @Injectable()
 export class ProgressReportsService {
   constructor(
@@ -54,6 +70,7 @@ export class ProgressReportsService {
         signOffRequested,
         signOffStatus: signOffRequested ? 'pending' : null,
       },
+      select: progressReportStableSelect,
     });
 
     // Create ProjectPhoto records so images appear in the image tab
@@ -161,12 +178,16 @@ export class ProgressReportsService {
     const reports = await this.prisma.progressReport.findMany({
       where: { projectId },
       orderBy: { createdAt: 'asc' },
+      select: progressReportStableSelect,
     });
     return this.enrichReports(reports);
   }
 
   async getReportById(id: string, requesterId: string, requesterRole: string) {
-    const report = await this.prisma.progressReport.findUnique({ where: { id } });
+    const report = await this.prisma.progressReport.findUnique({
+      where: { id },
+      select: progressReportStableSelect,
+    });
     if (!report) throw new NotFoundException('Progress report not found');
 
     const project = await this.prisma.project.findUnique({
@@ -190,7 +211,10 @@ export class ProgressReportsService {
   }
 
   async approveSignOff(id: string, requesterId: string, requesterRole: string, decision: 'approved' | 'rejected', rejectionNote?: string) {
-    const report = await this.prisma.progressReport.findUnique({ where: { id } });
+    const report = await this.prisma.progressReport.findUnique({
+      where: { id },
+      select: progressReportStableSelect,
+    });
     if (!report) throw new NotFoundException('Progress report not found');
     if (!report.signOffRequested || report.signOffStatus !== 'pending') {
       throw new BadRequestException('No pending sign-off on this report');
@@ -208,14 +232,29 @@ export class ProgressReportsService {
     }
 
     const now = new Date();
-    const updated = await (this.prisma.progressReport as any).update({
-      where: { id },
-      data: {
-        signOffStatus: decision,
-        signOffApprovedAt: decision === 'approved' ? now : undefined,
-        signOffRejectedAt: decision === 'rejected' ? now : undefined,
-      },
-    });
+    let updated: any;
+    try {
+      updated = await (this.prisma.progressReport as any).update({
+        where: { id },
+        data: {
+          signOffStatus: decision,
+          signOffRequested: false,
+          signOffApprovedAt: decision === 'approved' ? now : undefined,
+          signOffRejectedAt: decision === 'rejected' ? now : undefined,
+        },
+        select: progressReportStableSelect,
+      });
+    } catch {
+      // Backward compatibility: live DB may not yet have signOffApprovedAt/signOffRejectedAt.
+      updated = await this.prisma.progressReport.update({
+        where: { id },
+        data: {
+          signOffStatus: decision,
+          signOffRequested: false,
+        },
+        select: progressReportStableSelect,
+      });
+    }
 
     // If milestone linked, update its status too
     if (report.milestoneId && decision === 'approved') {
