@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-01-5eab520",
+    "date": "2026-05-01T21:44:02+08:00",
+    "title": "fix(web): avoid repeated progress modal reloads while open",
+    "summary": "fix(web): avoid repeated progress modal reloads while open",
+    "areas": [
+      "web"
+    ],
+    "commit": "5eab520",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-01-8442231",
     "date": "2026-05-01T17:56:33+08:00",
     "title": "fix(web): authorize chat image uploads with bearer token",

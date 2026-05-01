@@ -669,10 +669,16 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const [composeChatRefreshKey, setComposeChatRefreshKey] = React.useState(0);
   const celebrationTimerRef = React.useRef<number | null>(null);
   const threadBottomRef = React.useRef<HTMLDivElement>(null);
+  const initialLoadKeyRef = React.useRef<string | null>(null);
 
   // Fetch on open
   React.useEffect(() => {
     if (!isOpen || !state.projectId || !effectiveAccessToken) return;
+
+    const loadKey = `${state.projectId}:${state.actionKey || ''}:${state.progressReportId || ''}`;
+    if (initialLoadKeyRef.current === loadKey) return;
+    initialLoadKeyRef.current = loadKey;
+
     const load = async () => {
       setPageLoading(true);
       try {
@@ -703,7 +709,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
       }
     };
     void load();
-  }, [isOpen, state.projectId, effectiveAccessToken]);
+  }, [isOpen, state.projectId, state.actionKey, state.progressReportId, effectiveAccessToken]);
 
   // Auto-mode after load
   React.useEffect(() => {
@@ -743,6 +749,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
       setShowShareCelebration(false);
       setComposeScopeId('general');
       setComposeChatRefreshKey(0);
+      initialLoadKeyRef.current = null;
       setStableAccessToken(null);
       setDecidingId(null);
       setMode(isClient || isReviewMode ? 'thread' : 'compose');
