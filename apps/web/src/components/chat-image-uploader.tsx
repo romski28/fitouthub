@@ -147,6 +147,7 @@ export default function ChatImageUploader({
                   className="w-20 h-20 object-cover rounded border border-slate-200"
                 />
                 <button
+                  type="button"
                   onClick={() => removePreview(i)}
                   disabled={uploading}
                   className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm hover:bg-red-600 shadow-md disabled:opacity-50"
@@ -163,6 +164,7 @@ export default function ChatImageUploader({
           {/* Action buttons */}
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={handleUpload}
               disabled={uploading || disabled}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
@@ -180,6 +182,7 @@ export default function ChatImageUploader({
               )}
             </button>
             <button
+              type="button"
               onClick={clearAll}
               disabled={uploading}
               className="px-3 py-2 text-slate-600 hover:text-slate-800 text-sm disabled:opacity-50"

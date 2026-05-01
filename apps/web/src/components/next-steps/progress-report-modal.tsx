@@ -909,12 +909,12 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                         </p>
                       </div>
                       <ProjectChat
-                        key={`${composeScopeId}-${composeChatRefreshKey}`}
                         projectId={state.projectId}
                         accessToken={accessToken}
                         currentUserRole={isProfessional ? 'professional' : 'client'}
                         threadScope="progress"
                         threadScopeId={composeScopeId}
+                        refreshToken={composeChatRefreshKey}
                         sendButtonLabel="Send"
                         messagePlaceholder="Comment or ask a question about this update…"
                         fillHeight={false}

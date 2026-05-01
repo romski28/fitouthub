@@ -29,6 +29,8 @@ interface ProjectChatProps {
   /** When true, the messages area grows to fill the parent height instead of capping at 500px.
    *  Requires the parent to have a defined height (e.g. h-full + flex-col on the ancestor). */
   fillHeight?: boolean;
+  /** Increment to force a message list refetch without remounting the chat component. */
+  refreshToken?: number;
 }
 
 export default function ProjectChat({
@@ -42,6 +44,7 @@ export default function ProjectChat({
   className = '',
   onMessageSent,
   fillHeight = false,
+  refreshToken = 0,
 }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -104,7 +107,7 @@ export default function ProjectChat({
     if (projectId && accessToken) {
       fetchMessages();
     }
-  }, [projectId, accessToken, threadScope, threadScopeId]);
+  }, [projectId, accessToken, threadScope, threadScopeId, refreshToken]);
 
   useEffect(() => {
     scrollToBottom();

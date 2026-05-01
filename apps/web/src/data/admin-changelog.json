@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-01-8ff13f7",
+    "date": "2026-05-01T17:19:23+08:00",
+    "title": "fix(web): stop progress chat image picker resets in modal",
+    "summary": "fix(web): stop progress chat image picker resets in modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ff13f7",
+    "files": [
+      "apps/web/src/components/chat-image-uploader.tsx",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-01-7f8af36",
     "date": "2026-05-01T17:03:22+08:00",
     "title": "feat(web): add scoped progress chat to submit update modal",
