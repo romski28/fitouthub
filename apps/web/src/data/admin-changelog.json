@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-01-7f8af36",
+    "date": "2026-05-01T17:03:22+08:00",
+    "title": "feat(web): add scoped progress chat to submit update modal",
+    "summary": "feat(web): add scoped progress chat to submit update modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "7f8af36",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-01-5d72774",
     "date": "2026-05-01T13:24:20+08:00",
     "title": "fix(api): keep progress reports working before signoff-date migration",

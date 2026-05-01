@@ -348,9 +348,17 @@ interface ComposeFormProps {
   milestones: WorkMilestone[];
   paymentPlan: PaymentPlan | null;
   onSubmitSuccess: (signOffRequested: boolean, milestoneTitle?: string) => void;
+  onScopeChange: (scopeId: string) => void;
 }
 
-function ComposeForm({ projectId, accessToken, milestones, paymentPlan, onSubmitSuccess }: ComposeFormProps) {
+function ComposeForm({
+  projectId,
+  accessToken,
+  milestones,
+  paymentPlan,
+  onSubmitSuccess,
+  onScopeChange,
+}: ComposeFormProps) {
   const [photoRows, setPhotoRows] = React.useState<PhotoRow[]>([]);
   const [uploadingFiles, setUploadingFiles] = React.useState(false);
   const [narrativeSummary, setNarrativeSummary] = React.useState('');
@@ -362,6 +370,10 @@ function ComposeForm({ projectId, accessToken, milestones, paymentPlan, onSubmit
     if (!selectedMilestoneId || !paymentPlan?.milestones) return null;
     return paymentPlan.milestones.find((pm) => pm.projectMilestoneId === selectedMilestoneId) ?? null;
   }, [selectedMilestoneId, paymentPlan?.milestones]);
+
+  React.useEffect(() => {
+    onScopeChange(selectedMilestoneId || 'general');
+  }, [selectedMilestoneId, onScopeChange]);
 
   const handleAddFiles = async (fileList: FileList | null) => {
     if (!fileList || !accessToken) return;
@@ -643,6 +655,8 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowNextStep, setWorkflowNextStep] = React.useState<WorkflowNextStep | null>(null);
   const [showShareCelebration, setShowShareCelebration] = React.useState(false);
+  const [composeScopeId, setComposeScopeId] = React.useState<string>('general');
+  const [composeChatRefreshKey, setComposeChatRefreshKey] = React.useState(0);
   const celebrationTimerRef = React.useRef<number | null>(null);
   const threadBottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -717,6 +731,8 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
       setWorkflowModalOpen(false);
       setWorkflowNextStep(null);
       setShowShareCelebration(false);
+      setComposeScopeId('general');
+      setComposeChatRefreshKey(0);
       setDecidingId(null);
       setMode(isClient || isReviewMode ? 'thread' : 'compose');
     }
@@ -735,31 +751,34 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
   const handleSubmitSuccess = React.useCallback(
     (signOffRequested: boolean, milestoneTitle?: string) => {
       state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
+      setComposeChatRefreshKey((k) => k + 1);
+      setMode('thread');
+
+      // Keep user in modal context to see the scoped thread update immediately.
       if (signOffRequested) {
         toast.success('Milestone sign-off requested — client has been notified');
-        setWorkflowNextStep({
-          actionLabel: 'Wait for client sign-off',
-          description: `Your sign-off request for "${milestoneTitle ?? 'the milestone'}" has been sent to the client for approval.`,
-          requiresAction: false,
-          waitingFor: 'client',
-          tab: 'schedule',
-        });
-        setWorkflowModalOpen(true);
       } else {
         toast.success('Progress update shared');
-        setWorkflowNextStep({
-          actionLabel: 'Continue working',
-          description: 'Your progress update and photos have been shared.',
-          requiresAction: false,
-          tab: 'schedule',
-        });
-        setShowShareCelebration(true);
-        celebrationTimerRef.current = window.setTimeout(() => {
-          setShowShareCelebration(false);
-          setWorkflowModalOpen(true);
-          celebrationTimerRef.current = null;
-        }, 900);
       }
+
+      // Preserve next-step metadata for future usage, but do not auto-interrupt compose flow.
+      setWorkflowNextStep(
+        signOffRequested
+          ? {
+              actionLabel: 'Wait for client sign-off',
+              description: `Your sign-off request for "${milestoneTitle ?? 'the milestone'}" has been sent to the client for approval.`,
+              requiresAction: false,
+              waitingFor: 'client',
+              tab: 'schedule',
+            }
+          : {
+              actionLabel: 'Continue working',
+              description: 'Your progress update and photos have been shared.',
+              requiresAction: false,
+              tab: 'schedule',
+            },
+      );
+
       refreshReports();
     },
     [state, refreshReports],
@@ -872,14 +891,37 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
                   <p className="text-slate-300">Loading…</p>
                 </div>
               ) : mode === 'compose' ? (
-                <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5">
+                <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5 space-y-4">
                   <ComposeForm
                     projectId={state.projectId!}
                     accessToken={accessToken!}
                     milestones={milestones}
                     paymentPlan={paymentPlan}
                     onSubmitSuccess={handleSubmitSuccess}
+                    onScopeChange={setComposeScopeId}
                   />
+
+                  {state.projectId && accessToken && (
+                    <div className="rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
+                      <div className="px-3 pt-2 pb-0.5 border-b border-slate-700">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                          Scoped Progress Chat
+                        </p>
+                      </div>
+                      <ProjectChat
+                        key={`${composeScopeId}-${composeChatRefreshKey}`}
+                        projectId={state.projectId}
+                        accessToken={accessToken}
+                        currentUserRole={isProfessional ? 'professional' : 'client'}
+                        threadScope="progress"
+                        threadScopeId={composeScopeId}
+                        sendButtonLabel="Send"
+                        messagePlaceholder="Comment or ask a question about this update…"
+                        fillHeight={false}
+                        className="border-0 rounded-none bg-transparent shadow-none"
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Thread mode */
