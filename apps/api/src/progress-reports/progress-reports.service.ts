@@ -127,13 +127,13 @@ export class ProgressReportsService {
     const [users, pros] = await Promise.all([
       userIds.length > 0
         ? this.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, surname: true } })
-        : [],
+        : Promise.resolve([]),
       proIds.length > 0
-        ? this.prisma.professional.findMany({ where: { id: { in: proIds } }, select: { id: true, businessName: true, firstName: true, lastName: true } })
-        : [],
+        ? this.prisma.professional.findMany({ where: { id: { in: proIds } }, select: { id: true, businessName: true, fullName: true } })
+        : Promise.resolve([]),
     ]);
-    const userMap = new Map(users.map((u) => [u.id, `${u.firstName} ${u.surname}`.trim()]));
-    const proMap = new Map(pros.map((p) => [p.id, p.businessName || `${p.firstName} ${p.lastName}`.trim()]));
+    const userMap = new Map<string, string>(users.map((u) => [u.id, `${u.firstName} ${u.surname}`.trim()] as [string, string]));
+    const proMap = new Map<string, string>(pros.map((p) => [p.id, p.businessName || p.fullName || ''] as [string, string]));
     return reports.map((r) => ({
       ...r,
       submitterName: r.submittedByRole === 'client' ? (userMap.get(r.submittedById) ?? 'Client') : (proMap.get(r.submittedById) ?? 'Professional'),

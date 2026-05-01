@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-01-27e594c",
+    "date": "2026-05-01T13:10:18+08:00",
+    "title": "fix: correct Professional field names in enrichReports (fullName, not firstName/lastName)",
+    "summary": "fix: correct Professional field names in enrichReports (fullName, not firstName/lastName)",
+    "areas": [
+      "api"
+    ],
+    "commit": "27e594c",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-01-7bef68a",
     "date": "2026-05-01T13:03:56+08:00",
     "title": "feat: WhatsApp-style progress thread with inline photos and sign-off cards",
