@@ -631,7 +631,8 @@ interface ProgressReportModalProps {
   onClose: () => void;
 }
 
-export function ProgressReportModal({ isOpen, isLoading = false, onClose }: ProgressReportModalProps) {
+export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onClose }: ProgressReportModalProps) {
+  void _isLoading;
   const { state } = useNextStepModal();
   const { accessToken: professionalToken } = useProfessionalAuth();
   const { accessToken: clientToken } = useAuth();
@@ -895,7 +896,7 @@ export function ProgressReportModal({ isOpen, isLoading = false, onClose }: Prog
               </div>
 
               {/* Body */}
-              {isLoading || pageLoading ? (
+              {pageLoading ? (
                 <div className="px-6 py-12 text-center">
                   <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
                   <p className="text-slate-300">Loading…</p>
