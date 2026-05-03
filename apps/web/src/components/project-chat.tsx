@@ -63,6 +63,7 @@ export default function ProjectChat({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialAnchorMessageId, setInitialAnchorMessageId] = useState<string | null>(null);
+  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const didInitialPositionRef = useRef(false);
   const previousMessageCountRef = useRef(0);
@@ -104,6 +105,7 @@ export default function ProjectChat({
         didInitialPositionRef.current = false;
         previousMessageCountRef.current = 0;
         setInitialAnchorMessageId(null);
+        setFirstUnreadMessageId(null);
         const chatUrl = new URL(`${API_BASE_URL}/projects/${projectId}/chat`);
         if (threadScope && threadScopeId) {
           chatUrl.searchParams.set('threadScope', threadScope);
@@ -141,6 +143,7 @@ export default function ProjectChat({
             );
             if (serverReadIndex >= 0 && serverReadIndex < fetchedMessages.length - 1) {
               setInitialAnchorMessageId(fetchedMessages[serverReadIndex].id);
+              setFirstUnreadMessageId(fetchedMessages[serverReadIndex + 1].id);
             } else {
               setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
             }
@@ -151,7 +154,13 @@ export default function ProjectChat({
 
             if (firstUnreadIndex > 0) {
               setInitialAnchorMessageId(fetchedMessages[firstUnreadIndex - 1].id);
+              setFirstUnreadMessageId(fetchedMessages[firstUnreadIndex].id);
+            } else if (firstUnreadIndex === 0) {
+              // All currently loaded messages are unread: anchor to the first unread
+              setInitialAnchorMessageId(fetchedMessages[0].id);
+              setFirstUnreadMessageId(fetchedMessages[0].id);
             } else {
+              // No unread messages found from local marker
               setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
             }
           } else {
@@ -337,45 +346,57 @@ export default function ProjectChat({
             const isFoh = msg.senderType === 'foh';
             
             return (
-              <div id={`project-chat-message-${msg.id}`} key={msg.id} className={`flex min-w-0 ${isCurrent ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`min-w-0 max-w-[75%] rounded-lg px-4 py-2 text-sm ${
-                    isCurrent
-                      ? 'bg-emerald-600 text-white'
-                      : isFoh
-                      ? 'bg-emerald-500/15 text-white border border-emerald-500/40'
-                      : 'bg-slate-800 text-white border border-slate-700'
-                  }`}
-                >
-                  {!isCurrent && (
-                    <div className={`text-xs font-semibold mb-1 ${isFoh ? 'text-emerald-300' : 'text-slate-300'}`}>
-                      {getSenderLabel(msg)}
+              <div key={msg.id}>
+                {firstUnreadMessageId === msg.id && (
+                  <div className="my-2 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-amber-500/40" />
+                    <span className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
+                      New messages
+                    </span>
+                    <div className="h-px flex-1 bg-amber-500/40" />
+                  </div>
+                )}
+
+                <div id={`project-chat-message-${msg.id}`} className={`flex min-w-0 ${isCurrent ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`min-w-0 max-w-[75%] rounded-lg px-4 py-2 text-sm ${
+                      isCurrent
+                        ? 'bg-emerald-600 text-white'
+                        : isFoh
+                        ? 'bg-emerald-500/15 text-white border border-emerald-500/40'
+                        : 'bg-slate-800 text-white border border-slate-700'
+                    }`}
+                  >
+                    {!isCurrent && (
+                      <div className={`text-xs font-semibold mb-1 ${isFoh ? 'text-emerald-300' : 'text-slate-300'}`}>
+                        {getSenderLabel(msg)}
+                      </div>
+                    )}
+
+                    {/* Message content */}
+                    {msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>}
+
+                    {/* Image attachments */}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className={`${msg.content ? 'mt-2' : ''} space-y-2`}>
+                        {msg.attachments.map((att, i) => (
+                          <ChatImageAttachment 
+                            key={i} 
+                            url={att.url} 
+                            filename={att.filename}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    <div className={`text-xs mt-1 ${isCurrent ? 'text-emerald-100' : 'text-slate-400'}`}>
+                      {new Date(msg.createdAt).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </div>
-                  )}
-                  
-                  {/* Message content */}
-                  {msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>}
-                  
-                  {/* Image attachments */}
-                  {msg.attachments && msg.attachments.length > 0 && (
-                    <div className={`${msg.content ? 'mt-2' : ''} space-y-2`}>
-                      {msg.attachments.map((att, i) => (
-                        <ChatImageAttachment 
-                          key={i} 
-                          url={att.url} 
-                          filename={att.filename}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className={`text-xs mt-1 ${isCurrent ? 'text-emerald-100' : 'text-slate-400'}`}>
-                    {new Date(msg.createdAt).toLocaleString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
                   </div>
                 </div>
               </div>

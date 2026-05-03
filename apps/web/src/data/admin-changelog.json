@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-03-330afb2",
+    "date": "2026-05-03T22:55:31+08:00",
+    "title": "fix: project chat unread anchor and divider",
+    "summary": "fix: project chat unread anchor and divider",
+    "areas": [
+      "web"
+    ],
+    "commit": "330afb2",
+    "files": [
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-9fb0d5a",
     "date": "2026-05-03T22:11:22+08:00",
     "title": "chore: trigger Vercel redeploy",
