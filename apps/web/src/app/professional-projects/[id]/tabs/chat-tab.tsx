@@ -17,6 +17,7 @@ interface ChatTabProps {
   clientName?: string;
   accessToken?: string;
   messages?: Message[];
+  directFirstUnreadMessageId?: string | null;
   newMessage?: string;
   onNewMessageChange?: (value: string) => void;
   onSendMessage?: () => void;
@@ -30,6 +31,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   clientName,
   accessToken,
   messages = [],
+  directFirstUnreadMessageId = null,
   newMessage = '',
   onNewMessageChange = () => undefined,
   onSendMessage = () => undefined,
@@ -122,25 +124,35 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   </div>
                 ) : (
                   messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.senderType === 'professional' ? 'justify-end' : 'justify-start'}`}
-                    >
+                    <div key={msg.id}>
+                      {directFirstUnreadMessageId === msg.id && (
+                        <div className="my-2 flex items-center gap-3">
+                          <div className="h-px flex-1 bg-amber-500/40" />
+                          <span className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
+                            New messages
+                          </span>
+                          <div className="h-px flex-1 bg-amber-500/40" />
+                        </div>
+                      )}
                       <div
-                        className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                          msg.senderType === 'professional'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-800 border border-slate-700 text-slate-100'
-                        }`}
+                        className={`flex ${msg.senderType === 'professional' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p>{msg.content}</p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            msg.senderType === 'professional' ? 'text-emerald-100' : 'text-slate-400'
+                        <div
+                          className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                            msg.senderType === 'professional'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-800 border border-slate-700 text-slate-100'
                           }`}
                         >
-                          {new Date(msg.createdAt).toLocaleString()}
-                        </p>
+                          <p>{msg.content}</p>
+                          <p
+                            className={`text-xs mt-1 ${
+                              msg.senderType === 'professional' ? 'text-emerald-100' : 'text-slate-400'
+                            }`}
+                          >
+                            {new Date(msg.createdAt).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))

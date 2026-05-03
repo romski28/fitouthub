@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-04-0486c14",
+    "date": "2026-05-04T00:05:33+08:00",
+    "title": "feat: phase 3.7 unread marker divider in professional direct chat",
+    "summary": "feat: phase 3.7 unread marker divider in professional direct chat",
+    "areas": [
+      "web"
+    ],
+    "commit": "0486c14",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/chat-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-508b99b",
     "date": "2026-05-03T23:34:21+08:00",
     "title": "feat: phase 3 unify unread markers in assist and private chat",

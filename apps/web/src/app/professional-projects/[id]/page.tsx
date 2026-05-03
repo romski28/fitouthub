@@ -249,6 +249,7 @@ export default function ProjectDetailPage() {
     estimatedDurationUnit: 'hours' as 'hours' | 'days',
   });
   const [messages, setMessages] = useState<Message[]>([]);
+  const [directFirstUnreadMessageId, setDirectFirstUnreadMessageId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
@@ -425,6 +426,16 @@ export default function ProjectDetailPage() {
     // Fetch messages and mark client messages as read
     const fetchMessages = async () => {
       try {
+        // Fetch read marker first so we can show the "New messages" divider
+        const markerRes = await fetch(
+          `${API_BASE_URL}/updates/messages/read-marker?chatType=project-professional&threadId=${projectProfessionalId}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        ).catch(() => null);
+        if (markerRes?.ok) {
+          const marker = await markerRes.json();
+          setDirectFirstUnreadMessageId(marker.firstUnreadMessageId ?? null);
+        }
+
         const res = await fetch(
           `${API_BASE_URL}/professional/projects/${projectProfessionalId}/messages`,
           {
@@ -1711,6 +1722,7 @@ export default function ProjectDetailPage() {
               clientName={project.project.clientName}
               accessToken={accessToken || undefined}
               messages={messages}
+              directFirstUnreadMessageId={directFirstUnreadMessageId}
               newMessage={newMessage}
               onNewMessageChange={setNewMessage}
               onSendMessage={() => handleSendMessage()}
