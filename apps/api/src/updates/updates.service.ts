@@ -1590,207 +1590,214 @@ export class UpdatesService {
 
     if (role === 'client') {
       // 1. ProjectProfessional messages (Message model)
-      const unreadProfessionalMessages = await this.prisma.message.groupBy({
-        by: ['projectProfessionalId'],
+      const projectProfessionalThreads = await this.prisma.projectProfessional.findMany({
         where: {
-          readByClientAt: null,
-          senderType: 'professional',
+          project: {
+            OR: [{ userId }, { clientId: userId }],
+            status: { not: 'archived' },
+          },
         },
-        _count: {
+        select: {
           id: true,
+          project: {
+            select: { id: true, projectName: true },
+          },
+          professional: {
+            select: { businessName: true, fullName: true },
+          },
+          messages: {
+            where: { senderType: 'professional' },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderType: true,
+            },
+          },
         },
       });
 
-      for (const group of unreadProfessionalMessages) {
-        const latestMessage = await this.prisma.message.findFirst({
-          where: {
-            projectProfessionalId: group.projectProfessionalId,
-            readByClientAt: null,
-            senderType: 'professional',
-          },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            projectProfessional: {
-              include: {
-                project: {
-                  select: { id: true, projectName: true, userId: true, clientName: true },
-                },
-                professional: {
-                  select: { id: true, businessName: true, fullName: true },
-                },
-              },
-            },
-          },
+      for (const thread of projectProfessionalThreads) {
+        const latestMessage = thread.messages[0];
+        if (!latestMessage) continue;
+
+        const marker = await this.getMessageGroupReadMarker(userId, role, {
+          chatType: 'project-professional',
+          threadId: thread.id,
         });
 
-        if (latestMessage && latestMessage.projectProfessional.project.userId === userId) {
-          groups.push({
-            projectId: latestMessage.projectProfessional.project.id,
-            projectName: latestMessage.projectProfessional.project.projectName,
-            unreadCount: group._count.id,
-            latestMessage: {
-              id: latestMessage.id,
-              content: latestMessage.content,
-              createdAt: latestMessage.createdAt,
-              senderType: latestMessage.senderType,
-              senderName:
-                latestMessage.senderType === 'professional'
-                  ? (latestMessage.projectProfessional?.professional?.businessName ||
-                     latestMessage.projectProfessional?.professional?.fullName ||
-                     'Professional')
-                  : latestMessage.senderType === 'client'
-                  ? 'Client'
-                  : 'Sender',
-            },
-            chatType: 'project-professional',
-            threadId: group.projectProfessionalId,
-          });
-        }
+        if (marker.unreadCount <= 0) continue;
+
+        groups.push({
+          projectId: thread.project.id,
+          projectName: thread.project.projectName,
+          unreadCount: marker.unreadCount,
+          latestMessage: {
+            id: latestMessage.id,
+            content: latestMessage.content,
+            createdAt: latestMessage.createdAt,
+            senderType: latestMessage.senderType,
+            senderName: thread.professional.businessName || thread.professional.fullName || 'Professional',
+          },
+          chatType: 'project-professional',
+          threadId: thread.id,
+        });
       }
 
       // 2. ProjectChatMessages (general project chat)
-      const unreadProjectChat = await this.prisma.$queryRaw<
-        Array<{
-          threadId: string;
-          unreadCount: bigint;
-          projectId: string;
-          projectName: string;
-        }>
-      >`
-        SELECT 
-          pcm."threadId",
-          COUNT(pcm.id)::bigint as "unreadCount",
-          pct."projectId",
-          p."projectName"
-        FROM "ProjectChatMessage" pcm
-        INNER JOIN "ProjectChatThread" pct ON pct.id = pcm."threadId"
-        INNER JOIN "Project" p ON p.id = pct."projectId"
-        WHERE pcm."readByClientAt" IS NULL
-          AND pcm."senderType" != 'client'
-          AND p."userId" = ${userId}
-          AND p.status != 'archived'
-        GROUP BY pcm."threadId", pct."projectId", p."projectName"
-      `;
-
-      for (const group of unreadProjectChat) {
-        const latestMessage = await this.prisma.projectChatMessage.findFirst({
-          where: {
-            threadId: group.threadId,
-            readByClientAt: null,
-            senderType: { not: 'client' },
+      const projectChatThreads = await this.prisma.projectChatThread.findMany({
+        where: {
+          project: {
+            OR: [{ userId }, { clientId: userId }],
+            status: { not: 'archived' },
           },
-          orderBy: { createdAt: 'desc' },
+        },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: { projectName: true },
+          },
+          messages: {
+            where: { senderType: { not: 'client' } },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderType: true,
+            },
+          },
+        },
+      });
+
+      for (const thread of projectChatThreads) {
+        const latestMessage = thread.messages[0];
+        if (!latestMessage) continue;
+
+        const marker = await this.getMessageGroupReadMarker(userId, role, {
+          chatType: 'project-general',
+          threadId: thread.id,
         });
 
-        if (latestMessage) {
-          groups.push({
-            projectId: group.projectId,
-            projectName: group.projectName,
-            unreadCount: Number(group.unreadCount),
-            latestMessage: {
-              id: latestMessage.id,
-              content: latestMessage.content,
-              createdAt: latestMessage.createdAt,
-              senderType: latestMessage.senderType,
-              senderName:
-                latestMessage.senderType === 'professional'
-                  ? 'Professional'
-                  : latestMessage.senderType === 'client'
-                  ? 'Client'
-                  : 'Project Team',
-            },
-            chatType: 'project-general',
-            threadId: group.threadId,
-          });
-        }
+        if (marker.unreadCount <= 0) continue;
+
+        groups.push({
+          projectId: thread.projectId,
+          projectName: thread.project.projectName,
+          unreadCount: marker.unreadCount,
+          latestMessage: {
+            id: latestMessage.id,
+            content: latestMessage.content,
+            createdAt: latestMessage.createdAt,
+            senderType: latestMessage.senderType,
+            senderName:
+              latestMessage.senderType === 'professional'
+                ? 'Professional'
+                : latestMessage.senderType === 'client'
+                ? 'Client'
+                : 'Project Team',
+          },
+          chatType: 'project-general',
+          threadId: thread.id,
+        });
       }
 
       // 3. AssistMessages (client support)
-      const unreadAssistMessages = await this.prisma.$queryRaw<
-        Array<{
-          assistRequestId: string;
-          unreadCount: bigint;
-          projectId: string;
-          projectName: string;
-        }>
-      >`
-        SELECT 
-          am."assistRequestId",
-          COUNT(am.id)::bigint as "unreadCount",
-          ar."projectId",
-          p."projectName"
-        FROM "AssistMessage" am
-        INNER JOIN "ProjectAssistRequest" ar ON ar.id = am."assistRequestId"
-        INNER JOIN "Project" p ON p.id = ar."projectId"
-        WHERE am."readByClientAt" IS NULL
-          AND am."senderType" = 'foh'
-          AND p."userId" = ${userId}
-          AND p.status != 'archived'
-        GROUP BY am."assistRequestId", ar."projectId", p."projectName"
-      `;
-
-      for (const group of unreadAssistMessages) {
-        const latestMessage = await this.prisma.assistMessage.findFirst({
-          where: {
-            assistRequestId: group.assistRequestId,
-            readByClientAt: null,
-            senderType: 'foh',
+      const assistThreads = await this.prisma.projectAssistRequest.findMany({
+        where: {
+          project: {
+            OR: [{ userId }, { clientId: userId }],
+            status: { not: 'archived' },
           },
-          orderBy: { createdAt: 'desc' },
+        },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: { projectName: true },
+          },
+          messages: {
+            where: { senderType: 'foh' },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderType: true,
+            },
+          },
+        },
+      });
+
+      for (const thread of assistThreads) {
+        const latestMessage = thread.messages[0];
+        if (!latestMessage) continue;
+
+        const marker = await this.getMessageGroupReadMarker(userId, role, {
+          chatType: 'assist',
+          threadId: thread.id,
         });
 
-        if (latestMessage) {
-          groups.push({
-            projectId: group.projectId,
-            projectName: group.projectName,
-            unreadCount: Number(group.unreadCount),
-            latestMessage: {
-              id: latestMessage.id,
-              content: latestMessage.content,
-              createdAt: latestMessage.createdAt,
-              senderType: latestMessage.senderType,
-              senderName:
-                latestMessage.senderType === 'foh'
-                  ? 'FOH Support'
-                  : latestMessage.senderType === 'client'
-                  ? 'Client'
-                  : 'Sender',
-            },
-            chatType: 'assist',
-            threadId: group.assistRequestId,
-          });
-        }
+        if (marker.unreadCount <= 0) continue;
+
+        groups.push({
+          projectId: thread.projectId,
+          projectName: thread.project.projectName,
+          unreadCount: marker.unreadCount,
+          latestMessage: {
+            id: latestMessage.id,
+            content: latestMessage.content,
+            createdAt: latestMessage.createdAt,
+            senderType: latestMessage.senderType,
+            senderName:
+              latestMessage.senderType === 'foh'
+                ? 'FOH Support'
+                : latestMessage.senderType === 'client'
+                ? 'Client'
+                : 'Sender',
+          },
+          chatType: 'assist',
+          threadId: thread.id,
+        });
       }
 
       // 4. Private FOH support thread (general — no project)
       const privateChatThread = await this.prisma.privateChatThread.findFirst({
         where: { userId: userId, projectId: null },
+        select: {
+          id: true,
+          messages: {
+            where: { senderType: 'foh' },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderType: true,
+            },
+          },
+        },
       });
 
       if (privateChatThread) {
-        const unreadPrivateCount = await this.prisma.privateChatMessage.count({
-          where: {
+        const latestMessage = privateChatThread.messages[0];
+        if (latestMessage) {
+          const marker = await this.getMessageGroupReadMarker(userId, role, {
+            chatType: 'private-foh',
             threadId: privateChatThread.id,
-            readByUserAt: null,
-            senderType: 'foh',
-          },
-        });
-
-        if (unreadPrivateCount > 0) {
-          const latestMessage = await this.prisma.privateChatMessage.findFirst({
-            where: {
-              threadId: privateChatThread.id,
-              readByUserAt: null,
-              senderType: 'foh',
-            },
-            orderBy: { createdAt: 'desc' },
           });
 
-          if (latestMessage) {
+          if (marker.unreadCount > 0) {
             groups.push({
               projectId: 'private-support',
               projectName: 'FOH Support',
-              unreadCount: unreadPrivateCount,
+              unreadCount: marker.unreadCount,
               latestMessage: {
                 id: latestMessage.id,
                 content: latestMessage.content,
@@ -1825,159 +1832,154 @@ export class UpdatesService {
       }
 
       // 1. ProjectProfessional messages (Message model)
-      const unreadClientMessages = await this.prisma.$queryRaw<
-        Array<{
-          projectProfessionalId: string;
-          unreadCount: bigint;
-          projectId: string;
-          projectName: string;
-        }>
-      >`
-        SELECT 
-          m."projectProfessionalId",
-          COUNT(m.id)::bigint as "unreadCount",
-          p.id as "projectId",
-          p."projectName"
-        FROM "Message" m
-        INNER JOIN "ProjectProfessional" pp ON pp.id = m."projectProfessionalId"
-        INNER JOIN "Project" p ON p.id = pp."projectId"
-        WHERE m."readByProfessionalAt" IS NULL
-          AND m."senderType" = 'client'
-          AND pp."professionalId" = ${professional.id}
-          AND p.status != 'archived'
-        GROUP BY m."projectProfessionalId", p.id, p."projectName"
-      `;
-
-      for (const group of unreadClientMessages) {
-        const latestMessage = await this.prisma.message.findFirst({
-          where: {
-            projectProfessionalId: group.projectProfessionalId,
-            readByProfessionalAt: null,
-            senderType: 'client',
+      const projectProfessionalThreads = await this.prisma.projectProfessional.findMany({
+        where: {
+          professionalId: professional.id,
+          project: { status: { not: 'archived' } },
+        },
+        select: {
+          id: true,
+          project: {
+            select: { id: true, projectName: true, clientName: true },
           },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            projectProfessional: {
-              include: {
-                project: {
-                  select: { clientName: true },
-                },
-              },
+          messages: {
+            where: { senderType: 'client' },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderType: true,
             },
           },
+        },
+      });
+
+      for (const thread of projectProfessionalThreads) {
+        const latestMessage = thread.messages[0];
+        if (!latestMessage) continue;
+
+        const marker = await this.getMessageGroupReadMarker(userId, role, {
+          chatType: 'project-professional',
+          threadId: thread.id,
         });
 
-        if (latestMessage) {
-          groups.push({
-            projectId: group.projectId,
-            projectName: group.projectName,
-            unreadCount: Number(group.unreadCount),
-            latestMessage: {
-              id: latestMessage.id,
-              content: latestMessage.content,
-              createdAt: latestMessage.createdAt,
-              senderType: latestMessage.senderType,
-              senderName:
-                latestMessage.senderType === 'client'
-                  ? (latestMessage.projectProfessional?.project?.clientName || 'Client')
-                  : latestMessage.senderType === 'professional'
-                  ? 'Professional'
-                  : 'Sender',
-            },
-            chatType: 'project-professional',
-            threadId: group.projectProfessionalId,
-          });
-        }
+        if (marker.unreadCount <= 0) continue;
+
+        groups.push({
+          projectId: thread.project.id,
+          projectName: thread.project.projectName,
+          unreadCount: marker.unreadCount,
+          latestMessage: {
+            id: latestMessage.id,
+            content: latestMessage.content,
+            createdAt: latestMessage.createdAt,
+            senderType: latestMessage.senderType,
+            senderName: thread.project.clientName || 'Client',
+          },
+          chatType: 'project-professional',
+          threadId: thread.id,
+        });
       }
 
       // 2. ProjectChatMessages (general project chat) - professionals in awarded projects
-      const unreadProjectChat = await this.prisma.$queryRaw<
-        Array<{
-          threadId: string;
-          unreadCount: bigint;
-          projectId: string;
-          projectName: string;
-        }>
-      >`
-        SELECT 
-          pcm."threadId",
-          COUNT(pcm.id)::bigint as "unreadCount",
-          pct."projectId",
-          p."projectName"
-        FROM "ProjectChatMessage" pcm
-        INNER JOIN "ProjectChatThread" pct ON pct.id = pcm."threadId"
-        INNER JOIN "Project" p ON p.id = pct."projectId"
-        INNER JOIN "ProjectProfessional" pp ON pp."projectId" = p.id
-        WHERE pcm."readByProAt" IS NULL
-          AND pcm."senderType" != 'professional'
-          AND pp."professionalId" = ${professional.id}
-          AND pp.status = 'awarded'
-          AND p.status != 'archived'
-        GROUP BY pcm."threadId", pct."projectId", p."projectName"
-      `;
-
-      for (const group of unreadProjectChat) {
-        const latestMessage = await this.prisma.projectChatMessage.findFirst({
-          where: {
-            threadId: group.threadId,
-            readByProAt: null,
-            senderType: { not: 'professional' },
+      const projectChatThreads = await this.prisma.projectChatThread.findMany({
+        where: {
+          project: {
+            status: { not: 'archived' },
+            professionals: {
+              some: {
+                professionalId: professional.id,
+                status: 'awarded',
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' },
+        },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: { projectName: true },
+          },
+          messages: {
+            where: { senderType: { not: 'professional' } },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderType: true,
+            },
+          },
+        },
+      });
+
+      for (const thread of projectChatThreads) {
+        const latestMessage = thread.messages[0];
+        if (!latestMessage) continue;
+
+        const marker = await this.getMessageGroupReadMarker(userId, role, {
+          chatType: 'project-general',
+          threadId: thread.id,
         });
 
-        if (latestMessage) {
-          groups.push({
-            projectId: group.projectId,
-            projectName: group.projectName,
-            unreadCount: Number(group.unreadCount),
-            latestMessage: {
-              id: latestMessage.id,
-              content: latestMessage.content,
-              createdAt: latestMessage.createdAt,
-              senderType: latestMessage.senderType,
-              senderName:
-                latestMessage.senderType === 'professional'
-                  ? 'Professional'
-                  : latestMessage.senderType === 'client'
-                  ? 'Client'
-                  : 'Project Team',
-            },
-            chatType: 'project-general',
-            threadId: group.threadId,
-          });
-        }
+        if (marker.unreadCount <= 0) continue;
+
+        groups.push({
+          projectId: thread.projectId,
+          projectName: thread.project.projectName,
+          unreadCount: marker.unreadCount,
+          latestMessage: {
+            id: latestMessage.id,
+            content: latestMessage.content,
+            createdAt: latestMessage.createdAt,
+            senderType: latestMessage.senderType,
+            senderName:
+              latestMessage.senderType === 'professional'
+                ? 'Professional'
+                : latestMessage.senderType === 'client'
+                ? 'Client'
+                : 'Project Team',
+          },
+          chatType: 'project-general',
+          threadId: thread.id,
+        });
       }
 
       // 3. Private FOH support thread (general — no project)
       const privateChatThread = await this.prisma.privateChatThread.findFirst({
         where: { professionalId: professional.id, projectId: null },
+        select: {
+          id: true,
+          messages: {
+            where: { senderType: 'foh' },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderType: true,
+            },
+          },
+        },
       });
 
       if (privateChatThread) {
-        const unreadPrivateCount = await this.prisma.privateChatMessage.count({
-          where: {
+        const latestMessage = privateChatThread.messages[0];
+        if (latestMessage) {
+          const marker = await this.getMessageGroupReadMarker(userId, role, {
+            chatType: 'private-foh',
             threadId: privateChatThread.id,
-            readByProAt: null,
-            senderType: 'foh',
-          },
-        });
-
-        if (unreadPrivateCount > 0) {
-          const latestMessage = await this.prisma.privateChatMessage.findFirst({
-            where: {
-              threadId: privateChatThread.id,
-              readByProAt: null,
-              senderType: 'foh',
-            },
-            orderBy: { createdAt: 'desc' },
           });
 
-          if (latestMessage) {
+          if (marker.unreadCount > 0) {
             groups.push({
               projectId: 'private-support',
               projectName: 'FOH Support',
-              unreadCount: unreadPrivateCount,
+              unreadCount: marker.unreadCount,
               latestMessage: {
                 id: latestMessage.id,
                 content: latestMessage.content,
