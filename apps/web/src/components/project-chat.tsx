@@ -1,20 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
+import { useConversation, type ConversationMessage as ChatMessage } from '@/hooks/use-conversation';
 import ChatImageAttachment from './chat-image-attachment';
 import ChatImageUploader from './chat-image-uploader';
-
-interface ChatMessage {
-  id: string;
-  senderType: 'client' | 'professional' | 'foh';
-  senderName?: string;
-  threadScope?: string;
-  threadScopeId?: string;
-  content: string;
-  attachments?: { url: string; filename: string }[];
-  createdAt: string;
-}
 
 interface ProjectChatProps {
   projectId: string;
@@ -55,191 +45,39 @@ export default function ProjectChat({
   headerSubtitle = 'Client, awarded professionals & Fitout Hub',
   showPresenceIndicator = true,
 }: ProjectChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [initialAnchorMessageId, setInitialAnchorMessageId] = useState<string | null>(null);
-  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const didInitialPositionRef = useRef(false);
   const previousMessageCountRef = useRef(0);
 
-  const getReadMarkerStorageKey = () => {
-    const scope = threadScope || 'all';
-    const scopeId = threadScopeId || 'all';
-    return `project-chat:last-viewed:${projectId}:${scope}:${scopeId}`;
-  };
+  const {
+    messages,
+    loading,
+    error,
+    firstUnreadMessageId,
+    initialAnchorMessageId,
+    sending,
+    sendError,
+    sendMessage: conversationSend,
+  } = useConversation({
+    chatType: 'project-general',
+    threadId: projectId,
+    threadScope,
+    threadScopeId,
+    accessToken,
+    refreshToken,
+    onMessageSent,
+  });
 
-  const persistReadMarker = (timestamp: string) => {
-    try {
-      window.localStorage.setItem(getReadMarkerStorageKey(), timestamp);
-    } catch {
-      // ignore storage failures (private browsing / quota)
-    }
-  };
-
-  const getStoredReadMarker = () => {
-    try {
-      return window.localStorage.getItem(getReadMarkerStorageKey());
-    } catch {
-      return null;
-    }
-  };
-
-  const scrollToBottom = () => {
+  useEffect(() => {
     const container = messagesContainerRef.current;
-    if (container) {
+    if (!container || messages.length === 0) return;
+
+    const scrollToBottom = () => {
       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-    }
-  };
-
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        didInitialPositionRef.current = false;
-        previousMessageCountRef.current = 0;
-        setInitialAnchorMessageId(null);
-        setFirstUnreadMessageId(null);
-        const chatUrl = new URL(`${API_BASE_URL}/projects/${projectId}/chat`);
-        if (threadScope && threadScopeId) {
-          chatUrl.searchParams.set('threadScope', threadScope);
-          chatUrl.searchParams.set('threadScopeId', threadScopeId);
-        }
-
-        const res = await fetch(chatUrl.toString(), {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (res.status === 404) {
-          // No chat thread yet - will be created on first message
-          setMessages([]);
-          return;
-        }
-
-        if (!res.ok) {
-          throw new Error('Failed to load project chat');
-        }
-
-        const data = await res.json();
-        const fetchedMessages = data.messages || [];
-        const threadId: string | null = data.threadId || data.id || null;
-
-        // Prefer centralized read-marker endpoint; fall back to chat payload and localStorage timestamp
-        let serverLastReadId: string | null = data.lastReadMessageId ?? null;
-        let serverFirstUnreadId: string | null = data.firstUnreadMessageId ?? null;
-
-        if (threadId) {
-          try {
-            const markerUrl = new URL(`${API_BASE_URL}/updates/messages/read-marker`);
-            markerUrl.searchParams.set('chatType', 'project-general');
-            markerUrl.searchParams.set('threadId', threadId);
-            if (threadScope && threadScopeId) {
-              markerUrl.searchParams.set('threadScope', threadScope);
-              markerUrl.searchParams.set('threadScopeId', threadScopeId);
-            }
-
-            const markerRes = await fetch(markerUrl.toString(), {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            });
-
-            if (markerRes.ok) {
-              const markerData = await markerRes.json();
-              serverLastReadId = markerData.lastReadMessageId ?? serverLastReadId;
-              serverFirstUnreadId = markerData.firstUnreadMessageId ?? serverFirstUnreadId;
-            }
-          } catch {
-            // Non-blocking: keep fallback markers
-          }
-        }
-
-        const lastReadMarker = getStoredReadMarker();
-
-        if (fetchedMessages.length > 0) {
-          if (serverFirstUnreadId) {
-            const unreadIndex = fetchedMessages.findIndex(
-              (m: ChatMessage) => m.id === serverFirstUnreadId,
-            );
-            if (unreadIndex >= 0) {
-              setInitialAnchorMessageId(fetchedMessages[unreadIndex].id);
-              setFirstUnreadMessageId(fetchedMessages[unreadIndex].id);
-            } else {
-              setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
-            }
-          } else if (serverLastReadId) {
-            // Anchor at the server-known last-read message (unread starts just after)
-            const serverReadIndex = fetchedMessages.findIndex(
-              (m: ChatMessage) => m.id === serverLastReadId,
-            );
-            if (serverReadIndex >= 0 && serverReadIndex < fetchedMessages.length - 1) {
-              setInitialAnchorMessageId(fetchedMessages[serverReadIndex + 1].id);
-              setFirstUnreadMessageId(fetchedMessages[serverReadIndex + 1].id);
-            } else {
-              setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
-            }
-          } else if (lastReadMarker) {
-            const firstUnreadIndex = fetchedMessages.findIndex(
-              (msg: ChatMessage) => new Date(msg.createdAt).getTime() > new Date(lastReadMarker).getTime(),
-            );
-
-            if (firstUnreadIndex > 0) {
-              setInitialAnchorMessageId(fetchedMessages[firstUnreadIndex].id);
-              setFirstUnreadMessageId(fetchedMessages[firstUnreadIndex].id);
-            } else if (firstUnreadIndex === 0) {
-              // All currently loaded messages are unread: anchor to the first unread
-              setInitialAnchorMessageId(fetchedMessages[0].id);
-              setFirstUnreadMessageId(fetchedMessages[0].id);
-            } else {
-              // No unread messages found from local marker
-              setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
-            }
-          } else {
-            setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
-          }
-        }
-
-        setMessages(fetchedMessages);
-        
-        // Mark as read — pass the newest message ID so the server can track the exact watermark
-        const newestMessage = fetchedMessages[fetchedMessages.length - 1];
-        if (newestMessage) {
-          await fetch(`${API_BASE_URL}/projects/${projectId}/chat/read`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ lastMessageId: newestMessage.id }),
-          });
-
-          if (newestMessage.createdAt) {
-            persistReadMarker(newestMessage.createdAt);
-          }
-        }
-      } catch (err) {
-        console.error('Error loading project chat:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load chat');
-      } finally {
-        setLoading(false);
-      }
     };
-
-    if (projectId && accessToken) {
-      fetchMessages();
-    }
-  }, [projectId, accessToken, threadScope, threadScopeId, refreshToken]);
-
-  useEffect(() => {
-    if (!messagesContainerRef.current || messages.length === 0) return;
 
     if (!didInitialPositionRef.current) {
       if (initialAnchorMessageId) {
@@ -268,9 +106,6 @@ export default function ProjectChat({
     e.preventDefault();
     if ((!newMessage.trim() && pendingFiles.length === 0) || sending) return;
 
-    setSending(true);
-    setError(null);
-
     try {
       // Upload any pending files first
       let attachments: { url: string; filename: string }[] = [];
@@ -297,42 +132,12 @@ export default function ProjectChat({
         }));
       }
 
-      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/chat/messages`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          content: newMessage.trim(),
-          attachments,
-          threadScope,
-          threadScopeId,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await res.json();
-      setMessages((prev) => [...prev, data.message]);
-      if (data?.message?.createdAt) {
-        persistReadMarker(data.message.createdAt);
-      }
+      await conversationSend(newMessage, attachments);
       setNewMessage('');
       setPendingFiles([]);
       setUploaderClearKey((k) => k + 1);
-      
-      // Fire onMessageSent callback if provided
-      if (onMessageSent) {
-        onMessageSent();
-      }
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setSending(false);
+    } catch {
+      // sendError is surfaced via hook
     }
   };
 
@@ -447,9 +252,9 @@ export default function ProjectChat({
 
       {/* Input */}
       <form onSubmit={handleSend} className="border-t border-slate-700 p-4">
-        {error && (
+        {sendError && (
           <div className="mb-2 text-xs text-rose-200 bg-rose-500/15 border border-rose-500/40 rounded px-2 py-1">
-            {error}
+            {sendError}
           </div>
         )}
         

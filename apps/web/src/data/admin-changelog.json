@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-04-83235f8",
+    "date": "2026-05-04T00:24:11+08:00",
+    "title": "feat: phase 4 useConversation hook, remove localStorage read-state from project-chat",
+    "summary": "feat: phase 4 useConversation hook, remove localStorage read-state from project-chat",
+    "areas": [
+      "web"
+    ],
+    "commit": "83235f8",
+    "files": [
+      "apps/web/src/components/project-chat.tsx",
+      "apps/web/src/hooks/use-conversation.ts"
+    ]
+  },
+  {
     "id": "2026-05-04-0486c14",
     "date": "2026-05-04T00:05:33+08:00",
     "title": "feat: phase 3.7 unread marker divider in professional direct chat",
