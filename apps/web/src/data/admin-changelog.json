@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-03-508b99b",
+    "date": "2026-05-03T23:34:21+08:00",
+    "title": "feat: phase 3 unify unread markers in assist and private chat",
+    "summary": "feat: phase 3 unify unread markers in assist and private chat",
+    "areas": [
+      "web"
+    ],
+    "commit": "508b99b",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-8ce4126",
     "date": "2026-05-03T23:26:16+08:00",
     "title": "feat: phase 3 frontend uses centralized read-marker",

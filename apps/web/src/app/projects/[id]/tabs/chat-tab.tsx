@@ -47,6 +47,7 @@ interface ChatTabProps {
   onSelectAssistThread?: (assistRequestId: string) => void;
   // Team chat
   messages: Message[];
+  privateFirstUnreadMessageId?: string | null;
   newMessage: string;
   onNewMessageChange: (msg: string) => void;
   onSendMessage: () => void;
@@ -58,6 +59,7 @@ interface ChatTabProps {
   uploaderClearKey?: number;
   // Fitout Hub Assistance
   assistMessages: Message[];
+  assistFirstUnreadMessageId?: string | null;
   assistNewMessage: string;
   onAssistNewMessageChange: (msg: string) => void;
   onSendAssistMessage: () => void;
@@ -84,6 +86,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   assistThreads = [],
   onSelectAssistThread = () => undefined,
   messages,
+  privateFirstUnreadMessageId = null,
   newMessage,
   onNewMessageChange,
   onSendMessage,
@@ -94,6 +97,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   onPendingFilesChange,
   uploaderClearKey = 0,
   assistMessages,
+  assistFirstUnreadMessageId = null,
   assistNewMessage,
   onAssistNewMessageChange,
   onSendAssistMessage,
@@ -244,21 +248,32 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                     </div>
                   ) : (
                     assistMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
-                      >
+                      <div key={msg.id}>
+                        {assistFirstUnreadMessageId === msg.id && (
+                          <div className="my-2 flex items-center gap-3">
+                            <div className="h-px flex-1 bg-amber-500/40" />
+                            <span className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
+                              New messages
+                            </span>
+                            <div className="h-px flex-1 bg-amber-500/40" />
+                          </div>
+                        )}
+
                         <div
-                          className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                            msg.senderType === 'client'
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-slate-900 border border-slate-700 text-white'
-                          }`}
+                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
                         >
-                          <p>{msg.content}</p>
-                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-emerald-100' : 'text-slate-400'}`}>
-                            {new Date(msg.createdAt).toLocaleString()}
-                          </p>
+                          <div
+                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                              msg.senderType === 'client'
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-slate-900 border border-slate-700 text-white'
+                            }`}
+                          >
+                            <p>{msg.content}</p>
+                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-emerald-100' : 'text-slate-400'}`}>
+                              {new Date(msg.createdAt).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -333,41 +348,52 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                     </div>
                   ) : (
                     messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
-                      >
+                      <div key={msg.id}>
+                        {privateFirstUnreadMessageId === msg.id && (
+                          <div className="my-2 flex items-center gap-3">
+                            <div className="h-px flex-1 bg-amber-500/40" />
+                            <span className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
+                              New messages
+                            </span>
+                            <div className="h-px flex-1 bg-amber-500/40" />
+                          </div>
+                        )}
+
                         <div
-                          className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                            msg.senderType === 'client'
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-slate-900 border border-slate-700 text-white'
-                          }`}
+                          className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
                         >
-                          {msg.content && <p>{msg.content}</p>}
-                          {msg.attachments && msg.attachments.length > 0 && (
-                            <div className={`${msg.content ? 'mt-2' : ''} flex flex-wrap gap-2`}>
-                              {msg.attachments.map((att, i) => (
-                                <a
-                                  key={i}
-                                  href={att.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-block"
-                                >
-                                  <img
-                                    src={att.url}
-                                    alt={att.filename}
-                                    className="w-24 h-24 rounded border border-slate-600 hover:opacity-80 transition object-cover"
-                                    title={att.filename}
-                                  />
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                          <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-emerald-100' : 'text-slate-400'}`}>
-                            {new Date(msg.createdAt).toLocaleString()}
-                          </p>
+                          <div
+                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                              msg.senderType === 'client'
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-slate-900 border border-slate-700 text-white'
+                            }`}
+                          >
+                            {msg.content && <p>{msg.content}</p>}
+                            {msg.attachments && msg.attachments.length > 0 && (
+                              <div className={`${msg.content ? 'mt-2' : ''} flex flex-wrap gap-2`}>
+                                {msg.attachments.map((att, i) => (
+                                  <a
+                                    key={i}
+                                    href={att.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block"
+                                  >
+                                    <img
+                                      src={att.url}
+                                      alt={att.filename}
+                                      className="w-24 h-24 rounded border border-slate-600 hover:opacity-80 transition object-cover"
+                                      title={att.filename}
+                                    />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                            <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-emerald-100' : 'text-slate-400'}`}>
+                              {new Date(msg.createdAt).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))

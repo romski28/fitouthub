@@ -266,6 +266,7 @@ export default function ClientProjectDetailPage() {
   // Messaging state
   const [selectedProfessional, setSelectedProfessional] = useState<ProjectProfessional | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [privateFirstUnreadMessageId, setPrivateFirstUnreadMessageId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
@@ -321,6 +322,7 @@ export default function ClientProjectDetailPage() {
   const [assistClosureDueAt, setAssistClosureDueAt] = useState<string | null>(null);
   const [assistResolvedAt, setAssistResolvedAt] = useState<string | null>(null);
   const [assistMessages, setAssistMessages] = useState<Message[]>([]);
+  const [assistFirstUnreadMessageId, setAssistFirstUnreadMessageId] = useState<string | null>(null);
   const [assistHasMore, setAssistHasMore] = useState(false);
   const [assistLoadingOlder, setAssistLoadingOlder] = useState(false);
   const [assistLoading, setAssistLoading] = useState(false);
@@ -549,6 +551,32 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const fetchMessageReadMarker = async (
+    chatType: 'project-professional' | 'project-general' | 'assist' | 'private-foh',
+    threadId: string,
+  ): Promise<{ firstUnreadMessageId: string | null; lastReadMessageId: string | null } | null> => {
+    if (!accessToken) return null;
+
+    try {
+      const markerUrl = new URL(`${API_BASE_URL}/updates/messages/read-marker`);
+      markerUrl.searchParams.set('chatType', chatType);
+      markerUrl.searchParams.set('threadId', threadId);
+
+      const markerRes = await fetch(markerUrl.toString(), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!markerRes.ok) return null;
+
+      const marker = await markerRes.json();
+      return {
+        firstUnreadMessageId: marker.firstUnreadMessageId ?? null,
+        lastReadMessageId: marker.lastReadMessageId ?? null,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   const fetchAssistThreadsForProject = async (): Promise<AssistThreadSummary[]> => {
     if (!accessToken || !projectId) return [];
 
@@ -598,6 +626,12 @@ export default function ClientProjectDetailPage() {
     }));
 
     setAssistHasMore(Array.isArray(payload) ? false : Boolean(payload?.hasMore));
+
+    if (!appendOlder) {
+      const marker = await fetchMessageReadMarker('assist', requestId);
+      setAssistFirstUnreadMessageId(marker?.firstUnreadMessageId ?? null);
+    }
+
     if (appendOlder) {
       setAssistMessages((prev) => {
         const incoming = mapped.filter((message) => !prev.some((existing) => existing.id === message.id));
@@ -1088,6 +1122,7 @@ export default function ClientProjectDetailPage() {
       try {
         setLoadingMessages(true);
         setMessageError(null);
+        setPrivateFirstUnreadMessageId(null);
         const res = await fetch(
           `${API_BASE_URL}/client/projects/${selectedProfessional.id}/messages`,
           {
@@ -1115,6 +1150,9 @@ export default function ClientProjectDetailPage() {
           throw new Error('Empty response from server');
         }
         setMessages(data.messages || []);
+
+        const marker = await fetchMessageReadMarker('project-professional', selectedProfessional.id);
+        setPrivateFirstUnreadMessageId(marker?.firstUnreadMessageId ?? null);
 
         // Mark messages as read
         await fetch(
@@ -2243,6 +2281,7 @@ export default function ClientProjectDetailPage() {
                 }))}
               onSelectAssistThread={handleSelectAssistThread}
               messages={messages}
+              privateFirstUnreadMessageId={privateFirstUnreadMessageId}
               newMessage={newMessage}
               onNewMessageChange={setNewMessage}
               onSendMessage={handleSendMessage}
@@ -2253,6 +2292,7 @@ export default function ClientProjectDetailPage() {
               onPendingFilesChange={setPendingFiles}
               uploaderClearKey={uploaderClearKey}
               assistMessages={assistMessages}
+              assistFirstUnreadMessageId={assistFirstUnreadMessageId}
               assistNewMessage={assistNewMessage}
               onAssistNewMessageChange={setAssistNewMessage}
               onSendAssistMessage={handleSendAssistMessage}
