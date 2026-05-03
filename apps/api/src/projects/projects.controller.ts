@@ -991,15 +991,45 @@ export class ProjectsController {
       !!req?.user?.isProfessional ||
       String(req?.user?.role || '').toLowerCase() === 'professional';
 
+    const normalizedScope = String(threadScope || '').trim().toLowerCase() || null;
+    const normalizedScopeId = String(threadScopeId || '').trim() || null;
+
+    const scopeWhere =
+      normalizedScope && normalizedScopeId
+        ? { threadScope: normalizedScope, threadScopeId: normalizedScopeId }
+        : {};
+
     const lastRead = await this.prisma.projectChatMessage.findFirst({
       where: isProfessional
-        ? { threadId: thread.id, readByProAt: { not: null } }
-        : { threadId: thread.id, readByClientAt: { not: null } },
+        ? { threadId: thread.id, readByProAt: { not: null }, ...scopeWhere }
+        : { threadId: thread.id, readByClientAt: { not: null }, ...scopeWhere },
       orderBy: isProfessional ? { readByProAt: 'desc' } : { readByClientAt: 'desc' },
       select: { id: true },
     });
 
-    return { ...thread, lastReadMessageId: lastRead?.id ?? null };
+    const firstUnread = await this.prisma.projectChatMessage.findFirst({
+      where: isProfessional
+        ? {
+            threadId: thread.id,
+            senderType: { not: 'professional' },
+            readByProAt: null,
+            ...scopeWhere,
+          }
+        : {
+            threadId: thread.id,
+            senderType: { not: 'client' },
+            readByClientAt: null,
+            ...scopeWhere,
+          },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    });
+
+    return {
+      ...thread,
+      lastReadMessageId: lastRead?.id ?? null,
+      firstUnreadMessageId: firstUnread?.id ?? null,
+    };
   }
 
   /**

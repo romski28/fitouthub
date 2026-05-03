@@ -133,16 +133,27 @@ export default function ProjectChat({
 
         // Prefer server-provided read cursor; fall back to localStorage timestamp
         const serverLastReadId: string | null = data.lastReadMessageId ?? null;
+        const serverFirstUnreadId: string | null = data.firstUnreadMessageId ?? null;
         const lastReadMarker = getStoredReadMarker();
 
         if (fetchedMessages.length > 0) {
-          if (serverLastReadId) {
+          if (serverFirstUnreadId) {
+            const unreadIndex = fetchedMessages.findIndex(
+              (m: ChatMessage) => m.id === serverFirstUnreadId,
+            );
+            if (unreadIndex >= 0) {
+              setInitialAnchorMessageId(fetchedMessages[unreadIndex].id);
+              setFirstUnreadMessageId(fetchedMessages[unreadIndex].id);
+            } else {
+              setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
+            }
+          } else if (serverLastReadId) {
             // Anchor at the server-known last-read message (unread starts just after)
             const serverReadIndex = fetchedMessages.findIndex(
               (m: ChatMessage) => m.id === serverLastReadId,
             );
             if (serverReadIndex >= 0 && serverReadIndex < fetchedMessages.length - 1) {
-              setInitialAnchorMessageId(fetchedMessages[serverReadIndex].id);
+              setInitialAnchorMessageId(fetchedMessages[serverReadIndex + 1].id);
               setFirstUnreadMessageId(fetchedMessages[serverReadIndex + 1].id);
             } else {
               setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
@@ -153,7 +164,7 @@ export default function ProjectChat({
             );
 
             if (firstUnreadIndex > 0) {
-              setInitialAnchorMessageId(fetchedMessages[firstUnreadIndex - 1].id);
+              setInitialAnchorMessageId(fetchedMessages[firstUnreadIndex].id);
               setFirstUnreadMessageId(fetchedMessages[firstUnreadIndex].id);
             } else if (firstUnreadIndex === 0) {
               // All currently loaded messages are unread: anchor to the first unread
@@ -204,9 +215,10 @@ export default function ProjectChat({
 
     if (!didInitialPositionRef.current) {
       if (initialAnchorMessageId) {
-        const anchorEl = document.getElementById(`project-chat-message-${initialAnchorMessageId}`);
+        const dividerEl = document.getElementById(`project-chat-divider-${initialAnchorMessageId}`);
+        const anchorEl = dividerEl || document.getElementById(`project-chat-message-${initialAnchorMessageId}`);
         if (anchorEl) {
-          anchorEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+          anchorEl.scrollIntoView({ behavior: 'auto', block: firstUnreadMessageId ? 'start' : 'center' });
         } else {
           scrollToBottom();
         }
@@ -222,7 +234,7 @@ export default function ProjectChat({
       scrollToBottom();
     }
     previousMessageCountRef.current = messages.length;
-  }, [messages, initialAnchorMessageId]);
+  }, [messages, initialAnchorMessageId, firstUnreadMessageId]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -348,7 +360,7 @@ export default function ProjectChat({
             return (
               <div key={msg.id}>
                 {firstUnreadMessageId === msg.id && (
-                  <div className="my-2 flex items-center gap-3">
+                  <div id={`project-chat-divider-${msg.id}`} className="my-2 flex items-center gap-3">
                     <div className="h-px flex-1 bg-amber-500/40" />
                     <span className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
                       New messages

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-03-c67abf5",
+    "date": "2026-05-03T23:06:42+08:00",
+    "title": "feat: phase 3 chat compatibility unread anchors",
+    "summary": "feat: phase 3 chat compatibility unread anchors",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "c67abf5",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-330afb2",
     "date": "2026-05-03T22:55:31+08:00",
     "title": "fix: project chat unread anchor and divider",
