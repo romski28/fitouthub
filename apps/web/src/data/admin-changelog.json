@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-03-8ce4126",
+    "date": "2026-05-03T23:26:16+08:00",
+    "title": "feat: phase 3 frontend uses centralized read-marker",
+    "summary": "feat: phase 3 frontend uses centralized read-marker",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ce4126",
+    "files": [
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-53bb675",
     "date": "2026-05-03T23:17:33+08:00",
     "title": "feat: phase 3 centralized read-marker compatibility endpoint",

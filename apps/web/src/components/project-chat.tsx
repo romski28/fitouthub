@@ -130,10 +130,38 @@ export default function ProjectChat({
 
         const data = await res.json();
         const fetchedMessages = data.messages || [];
+        const threadId: string | null = data.threadId || data.id || null;
 
-        // Prefer server-provided read cursor; fall back to localStorage timestamp
-        const serverLastReadId: string | null = data.lastReadMessageId ?? null;
-        const serverFirstUnreadId: string | null = data.firstUnreadMessageId ?? null;
+        // Prefer centralized read-marker endpoint; fall back to chat payload and localStorage timestamp
+        let serverLastReadId: string | null = data.lastReadMessageId ?? null;
+        let serverFirstUnreadId: string | null = data.firstUnreadMessageId ?? null;
+
+        if (threadId) {
+          try {
+            const markerUrl = new URL(`${API_BASE_URL}/updates/messages/read-marker`);
+            markerUrl.searchParams.set('chatType', 'project-general');
+            markerUrl.searchParams.set('threadId', threadId);
+            if (threadScope && threadScopeId) {
+              markerUrl.searchParams.set('threadScope', threadScope);
+              markerUrl.searchParams.set('threadScopeId', threadScopeId);
+            }
+
+            const markerRes = await fetch(markerUrl.toString(), {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            });
+
+            if (markerRes.ok) {
+              const markerData = await markerRes.json();
+              serverLastReadId = markerData.lastReadMessageId ?? serverLastReadId;
+              serverFirstUnreadId = markerData.firstUnreadMessageId ?? serverFirstUnreadId;
+            }
+          } catch {
+            // Non-blocking: keep fallback markers
+          }
+        }
+
         const lastReadMarker = getStoredReadMarker();
 
         if (fetchedMessages.length > 0) {
