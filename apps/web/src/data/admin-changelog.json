@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-03-874efef",
+    "date": "2026-05-03T12:03:11+08:00",
+    "title": "feat(progress): wire modal copy + info flip and require milestone summary",
+    "summary": "feat(progress): wire modal copy + info flip and require milestone summary",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "874efef",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.dto.ts",
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-72a93d3",
     "date": "2026-05-03T11:41:41+08:00",
     "title": "feat(progress): milestone-first sign-off flow in share modal",

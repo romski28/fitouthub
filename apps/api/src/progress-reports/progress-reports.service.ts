@@ -33,7 +33,15 @@ export class ProgressReportsService {
     submittedByRole: 'professional' | 'client',
     dto: CreateProgressReportDto,
   ) {
-    const { projectId, milestoneId, photoEntries, narrativeSummary, signOffRequested } = dto;
+    const {
+      projectId,
+      milestoneId,
+      paymentMilestoneId,
+      paymentMilestoneStatus,
+      photoEntries,
+      narrativeSummary,
+      signOffRequested,
+    } = dto;
 
     if (!projectId) throw new BadRequestException('projectId is required');
     if (!Array.isArray(photoEntries)) {
@@ -41,6 +49,9 @@ export class ProgressReportsService {
     }
     if (signOffRequested && !milestoneId) {
       throw new BadRequestException('milestoneId is required when requesting sign-off');
+    }
+    if (signOffRequested && !narrativeSummary?.trim()) {
+      throw new BadRequestException('Milestone summary is required when requesting sign-off');
     }
     if (!signOffRequested && photoEntries.length === 0) {
       throw new BadRequestException('At least one photo is required');
@@ -61,6 +72,22 @@ export class ProgressReportsService {
         where: { id: milestoneId, projectId },
       });
       if (!milestone) throw new BadRequestException('Milestone not found on this project');
+    }
+
+    if (paymentMilestoneId) {
+      const paymentMilestone = await this.prisma.paymentMilestone.findFirst({
+        where: {
+          id: paymentMilestoneId,
+          projectMilestoneId: milestoneId,
+          paymentPlan: { projectId },
+        },
+      });
+      if (!paymentMilestone) {
+        throw new BadRequestException('Linked payment milestone is invalid for this project milestone');
+      }
+      if (paymentMilestoneStatus && paymentMilestone.status !== paymentMilestoneStatus) {
+        throw new BadRequestException('Linked payment milestone status does not match current status');
+      }
     }
 
     // Persist report

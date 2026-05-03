@@ -89,6 +89,16 @@ const formatTime = (dateStr: string) => {
   }
 };
 
+const PROGRESS_MODAL_COPY_ROOT = {
+  threadTitle: 'Progress Updates',
+  composeTitle: 'Share Progress',
+  threadBody: 'Project updates, photos and milestone sign-offs',
+  composeBody: 'Select a milestone, add summary notes, and submit for sign-off',
+  detailsBody:
+    'Use milestone sign-off to formally submit completed work for client review. Images and discussion now run through the scoped progress chat so context is preserved in one thread.',
+  detailsBackLabel: 'Back to progress',
+};
+
 // ---------------------------------------------------------------------------
 // Inline photo grid — WhatsApp-style
 // ---------------------------------------------------------------------------
@@ -371,6 +381,10 @@ function ComposeForm({
       toast.error('Select a milestone to submit for sign-off');
       return;
     }
+    if (!narrativeSummary.trim()) {
+      toast.error('Milestone summary is required for sign-off');
+      return;
+    }
     if (selectedMilestone.status === 'completed') {
       toast.error('This milestone is already completed and cannot be submitted again');
       return;
@@ -384,6 +398,8 @@ function ComposeForm({
         body: JSON.stringify({
           projectId,
           milestoneId: selectedMilestoneId,
+          paymentMilestoneId: linkedPaymentMilestone?.id,
+          paymentMilestoneStatus: linkedPaymentMilestone?.status,
           photoEntries: [],
           narrativeSummary: narrativeSummary.trim() || undefined,
           signOffRequested: true,
@@ -401,7 +417,7 @@ function ComposeForm({
     }
   };
 
-  const canSubmit = Boolean(selectedMilestoneId) && !submitting;
+  const canSubmit = Boolean(selectedMilestoneId) && Boolean(narrativeSummary.trim()) && !submitting;
 
   return (
     <div className="flex flex-col gap-5">
@@ -464,7 +480,7 @@ function ComposeForm({
       {selectedMilestoneId && (
       <div>
         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
-          Milestone summary <span className="font-normal normal-case text-slate-400">(optional)</span>
+          Milestone summary <span className="font-normal normal-case text-rose-300">(required)</span>
         </label>
         <textarea
           value={narrativeSummary}
@@ -541,6 +557,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowNextStep, setWorkflowNextStep] = React.useState<WorkflowNextStep | null>(null);
   const [showShareCelebration, setShowShareCelebration] = React.useState(false);
+  const [showDetails, setShowDetails] = React.useState(false);
   const [composeScopeId, setComposeScopeId] = React.useState<string>('general');
   const [composeChatRefreshKey, setComposeChatRefreshKey] = React.useState(0);
   const celebrationTimerRef = React.useRef<number | null>(null);
@@ -623,6 +640,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
       setWorkflowModalOpen(false);
       setWorkflowNextStep(null);
       setShowShareCelebration(false);
+      setShowDetails(false);
       setComposeScopeId('general');
       setComposeChatRefreshKey(0);
       initialLoadKeyRef.current = null;
@@ -708,6 +726,14 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const showMainModal = isOpen && !workflowModalOpen;
   const milestoneMap = new Map(milestones.map((m) => [m.id, m]));
   const hasReports = reports.length > 0;
+  const frontTitle =
+    state.modalContent?.title ||
+    (mode === 'thread' ? PROGRESS_MODAL_COPY_ROOT.threadTitle : PROGRESS_MODAL_COPY_ROOT.composeTitle);
+  const frontBody =
+    state.modalContent?.body ||
+    (mode === 'thread' ? PROGRESS_MODAL_COPY_ROOT.threadBody : PROGRESS_MODAL_COPY_ROOT.composeBody);
+  const detailsBody = state.modalContent?.detailsBody || PROGRESS_MODAL_COPY_ROOT.detailsBody;
+  const hasDetails = Boolean(detailsBody);
 
   return (
     <>
@@ -734,156 +760,192 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
           className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-2 backdrop-blur-sm sm:items-center sm:p-4"
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <div className="my-2 w-full max-w-3xl sm:my-0">
-            <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[92vh]">
+          <div className="my-2 w-full max-w-3xl [perspective:1600px] sm:my-0">
+            <div
+              className="relative grid [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+              style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+            >
+              <div
+                className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:max-h-[92vh]"
+                aria-hidden={showDetails}
+              >
 
-              {/* Header */}
-              <div className="flex items-start justify-between border-b border-slate-700 px-5 py-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-white">
-                    {mode === 'thread' ? 'Progress Updates' : 'Share Progress'}
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-300">
-                    {mode === 'thread'
-                      ? 'Project updates, photos and milestone sign-offs'
-                      : 'Select a milestone, add summary notes, and submit for sign-off'}
-                  </p>
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-slate-700 px-5 py-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{frontTitle}</h3>
+                    <p className="mt-1 text-xs text-slate-300">{frontBody}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isProfessional && hasReports && (
+                      <button
+                        type="button"
+                        onClick={() => setMode((m) => (m === 'thread' ? 'compose' : 'thread'))}
+                        className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 transition"
+                      >
+                        {mode === 'thread' ? '+ New update' : 'View thread'}
+                      </button>
+                    )}
+                    {isProfessional && !hasReports && mode === 'thread' && (
+                      <button
+                        type="button"
+                        onClick={() => setMode('compose')}
+                        className="rounded border border-cyan-600 px-2 py-1 text-xs text-cyan-300 hover:bg-cyan-600/20 transition"
+                      >
+                        + Post first update
+                      </button>
+                    )}
+                    {hasDetails && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDetails(true)}
+                        className="h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                        aria-label="Show details"
+                      >
+                        i
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {isProfessional && hasReports && (
-                    <button
-                      type="button"
-                      onClick={() => setMode((m) => (m === 'thread' ? 'compose' : 'thread'))}
-                      className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 transition"
-                    >
-                      {mode === 'thread' ? '+ New update' : 'View thread'}
-                    </button>
-                  )}
-                  {isProfessional && !hasReports && mode === 'thread' && (
-                    <button
-                      type="button"
-                      onClick={() => setMode('compose')}
-                      className="rounded border border-cyan-600 px-2 py-1 text-xs text-cyan-300 hover:bg-cyan-600/20 transition"
-                    >
-                      + Post first update
-                    </button>
-                  )}
+
+                {/* Body */}
+                {pageLoading ? (
+                  <div className="px-6 py-12 text-center">
+                    <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
+                    <p className="text-slate-300">Loading…</p>
+                  </div>
+                ) : mode === 'compose' ? (
+                  <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5 space-y-4">
+                    <ComposeForm
+                      projectId={state.projectId!}
+                      accessToken={effectiveAccessToken!}
+                      milestones={milestones}
+                      paymentPlan={paymentPlan}
+                      onSubmitSuccess={handleSubmitSuccess}
+                      onScopeChange={setComposeScopeId}
+                    />
+
+                    {state.projectId && effectiveAccessToken && (
+                      <div className="rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
+                        <div className="px-3 pt-2 pb-0.5 border-b border-slate-700">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            Scoped Progress Chat
+                          </p>
+                        </div>
+                        <ProjectChat
+                          projectId={state.projectId}
+                          accessToken={effectiveAccessToken}
+                          currentUserRole={isProfessional ? 'professional' : 'client'}
+                          threadScope="progress"
+                          threadScopeId={composeScopeId}
+                          refreshToken={composeChatRefreshKey}
+                          sendButtonLabel="Send"
+                          messagePlaceholder="Comment or ask a question about this update…"
+                          fillHeight={false}
+                          className="border-0 rounded-none bg-transparent shadow-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Thread mode */
+                  <div className="flex flex-col flex-1 min-h-0" style={{ maxHeight: 'calc(92vh - 80px)' }}>
+                    {/* Report bubbles */}
+                    <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                      {reports.length === 0 ? (
+                        <div className="py-12 text-center">
+                          <p className="text-slate-400 text-sm">No progress updates yet.</p>
+                          {isProfessional && (
+                            <button
+                              type="button"
+                              onClick={() => setMode('compose')}
+                              className="mt-3 rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 transition"
+                            >
+                              Post first update
+                            </button>
+                          )}
+                          {isClient && (
+                            <p className="mt-1 text-xs text-slate-500">
+                              The professional will share photos and updates here as work progresses.
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        reports.map((report) => {
+                          const isSelf = isProfessional
+                            ? report.submittedByRole === 'professional'
+                            : report.submittedByRole === 'client';
+                          return (
+                            <ReportBubble
+                              key={report.id}
+                              report={report}
+                              isSelf={isSelf}
+                              milestone={report.milestoneId ? milestoneMap.get(report.milestoneId) : null}
+                              isClient={isClient}
+                              onDecision={handleSignOffDecision}
+                              decidingId={decidingId}
+                            />
+                          );
+                        })
+                      )}
+                      <div ref={threadBottomRef} />
+                    </div>
+
+                    {/* Scoped reply chat */}
+                    {state.projectId && effectiveAccessToken && (
+                      <div className="border-t border-slate-700 shrink-0">
+                        <div className="px-3 pt-2 pb-0.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            Reply to project team
+                          </p>
+                        </div>
+                        <ProjectChat
+                          projectId={state.projectId}
+                          accessToken={effectiveAccessToken}
+                          currentUserRole={isProfessional ? 'professional' : 'client'}
+                          threadScope="progress"
+                          threadScopeId="general"
+                          sendButtonLabel="Send"
+                          messagePlaceholder="Comment or ask a question about this update…"
+                          fillHeight={false}
+                          className="border-0 rounded-none bg-transparent shadow-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="col-start-1 row-start-1 flex max-h-[92vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+                style={{ transform: 'rotateY(180deg)' }}
+                aria-hidden={!showDetails}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(false)}
+                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+                  aria-label="Hide details"
+                >
+                  x
+                </button>
+
+                <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
+                  <h3 className="mt-3 text-2xl font-bold text-emerald-300">{frontTitle || 'Step details'}</h3>
+                  <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+                </div>
+
+                <div className="mt-auto border-t border-slate-700 px-5 py-4">
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                    onClick={() => setShowDetails(false)}
+                    className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
                   >
-                    Close
+                    {PROGRESS_MODAL_COPY_ROOT.detailsBackLabel}
                   </button>
                 </div>
               </div>
-
-              {/* Body */}
-              {pageLoading ? (
-                <div className="px-6 py-12 text-center">
-                  <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
-                  <p className="text-slate-300">Loading…</p>
-                </div>
-              ) : mode === 'compose' ? (
-                <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5 space-y-4">
-                  <ComposeForm
-                    projectId={state.projectId!}
-                    accessToken={effectiveAccessToken!}
-                    milestones={milestones}
-                    paymentPlan={paymentPlan}
-                    onSubmitSuccess={handleSubmitSuccess}
-                    onScopeChange={setComposeScopeId}
-                  />
-
-                  {state.projectId && effectiveAccessToken && (
-                    <div className="rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
-                      <div className="px-3 pt-2 pb-0.5 border-b border-slate-700">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                          Scoped Progress Chat
-                        </p>
-                      </div>
-                      <ProjectChat
-                        projectId={state.projectId}
-                        accessToken={effectiveAccessToken}
-                        currentUserRole={isProfessional ? 'professional' : 'client'}
-                        threadScope="progress"
-                        threadScopeId={composeScopeId}
-                        refreshToken={composeChatRefreshKey}
-                        sendButtonLabel="Send"
-                        messagePlaceholder="Comment or ask a question about this update…"
-                        fillHeight={false}
-                        className="border-0 rounded-none bg-transparent shadow-none"
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* Thread mode */
-                <div className="flex flex-col flex-1 min-h-0" style={{ maxHeight: 'calc(92vh - 80px)' }}>
-                  {/* Report bubbles */}
-                  <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 py-4 space-y-4">
-                    {reports.length === 0 ? (
-                      <div className="py-12 text-center">
-                        <p className="text-slate-400 text-sm">No progress updates yet.</p>
-                        {isProfessional && (
-                          <button
-                            type="button"
-                            onClick={() => setMode('compose')}
-                            className="mt-3 rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 transition"
-                          >
-                            Post first update
-                          </button>
-                        )}
-                        {isClient && (
-                          <p className="mt-1 text-xs text-slate-500">
-                            The professional will share photos and updates here as work progresses.
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      reports.map((report) => {
-                        const isSelf = isProfessional
-                          ? report.submittedByRole === 'professional'
-                          : report.submittedByRole === 'client';
-                        return (
-                          <ReportBubble
-                            key={report.id}
-                            report={report}
-                            isSelf={isSelf}
-                            milestone={report.milestoneId ? milestoneMap.get(report.milestoneId) : null}
-                            isClient={isClient}
-                            onDecision={handleSignOffDecision}
-                            decidingId={decidingId}
-                          />
-                        );
-                      })
-                    )}
-                    <div ref={threadBottomRef} />
-                  </div>
-
-                  {/* Scoped reply chat */}
-                  {state.projectId && effectiveAccessToken && (
-                    <div className="border-t border-slate-700 shrink-0">
-                      <div className="px-3 pt-2 pb-0.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                          Reply to project team
-                        </p>
-                      </div>
-                      <ProjectChat
-                        projectId={state.projectId}
-                        accessToken={effectiveAccessToken}
-                        currentUserRole={isProfessional ? 'professional' : 'client'}
-                        threadScope="progress"
-                        threadScopeId="general"
-                        sendButtonLabel="Send"
-                        messagePlaceholder="Comment or ask a question about this update…"
-                        fillHeight={false}
-                        className="border-0 rounded-none bg-transparent shadow-none"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>

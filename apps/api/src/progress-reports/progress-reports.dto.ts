@@ -6,6 +6,8 @@ export class PhotoEntryDto {
 export class CreateProgressReportDto {
   projectId: string;
   milestoneId?: string;
+  paymentMilestoneId?: string;
+  paymentMilestoneStatus?: string;
   photoEntries: PhotoEntryDto[];
   narrativeSummary?: string;
   signOffRequested: boolean;
