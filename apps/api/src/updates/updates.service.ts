@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { ConversationContainerType, ConversationChannelKey, ConversationActorType } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { ConversationService } from '../conversation/conversation.service';
 
 export interface FinancialActionItem {
   id: string;
@@ -143,7 +145,10 @@ export class UpdatesService {
     process.env.UPDATES_SUMMARY_CACHE_TTL_MS || '15000',
   );
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private conversationService: ConversationService,
+  ) {}
 
   private normalizeSeverity(value: unknown): string {
     if (typeof value !== 'string') return '';
@@ -1435,6 +1440,26 @@ export class UpdatesService {
   }
 
   /**
+   * Fire-and-forget write to ConversationReadState.
+   * Non-blocking — legacy mark-read already succeeded before this is called.
+   */
+  private writeReadState(
+    containerType: ConversationContainerType,
+    containerId: string,
+    channelKey: ConversationChannelKey,
+    scopeKey: string,
+    actorType: ConversationActorType,
+    actorId: string,
+  ) {
+    this.conversationService
+      .resolveOrCreate(containerType, containerId, channelKey, scopeKey)
+      .then((conv) => this.conversationService.markRead(conv.id, actorType, actorId))
+      .catch((err) =>
+        this.logger.warn(`[writeReadState] Non-blocking failure: ${err?.message}`),
+      );
+  }
+
+  /**
    * Get financial transactions requiring action from the user
    * Simplified: Use actionBy, actionByRole, and actionComplete fields
    */
@@ -2117,6 +2142,13 @@ export class UpdatesService {
           },
           data: { readByClientAt: new Date() },
         });
+
+        // Write to canonical ConversationReadState (non-blocking)
+        this.writeReadState(
+          ConversationContainerType.projectProfessional, threadId,
+          ConversationChannelKey.bidding, 'general',
+          ConversationActorType.user, userId,
+        );
       } else if (role === 'professional') {
         if (projectProfessional.professionalId !== professional!.id) {
           throw new BadRequestException('Not authorized');
@@ -2130,6 +2162,13 @@ export class UpdatesService {
           },
           data: { readByProfessionalAt: new Date() },
         });
+
+        // Write to canonical ConversationReadState (non-blocking)
+        this.writeReadState(
+          ConversationContainerType.projectProfessional, threadId,
+          ConversationChannelKey.bidding, 'general',
+          ConversationActorType.professional, professional!.id,
+        );
       }
     } else if (chatType === 'project-general') {
       const thread = await this.prisma.projectChatThread.findUnique({
@@ -2154,6 +2193,13 @@ export class UpdatesService {
           },
           data: { readByClientAt: new Date() },
         });
+
+        // Write to canonical ConversationReadState (non-blocking)
+        this.writeReadState(
+          ConversationContainerType.project, thread.projectId,
+          ConversationChannelKey.team, 'general',
+          ConversationActorType.user, userId,
+        );
       } else if (role === 'professional') {
         const awarded = await this.prisma.projectProfessional.findFirst({
           where: {
@@ -2175,6 +2221,13 @@ export class UpdatesService {
           },
           data: { readByProAt: new Date() },
         });
+
+        // Write to canonical ConversationReadState (non-blocking)
+        this.writeReadState(
+          ConversationContainerType.project, thread.projectId,
+          ConversationChannelKey.team, 'general',
+          ConversationActorType.professional, professional!.id,
+        );
       }
     } else if (chatType === 'assist') {
       const assistRequest = await this.prisma.projectAssistRequest.findUnique({
@@ -2201,6 +2254,13 @@ export class UpdatesService {
         },
         data: { readByClientAt: new Date() },
       });
+
+      // Write to canonical ConversationReadState (non-blocking)
+      this.writeReadState(
+        ConversationContainerType.project, assistRequest.projectId,
+        ConversationChannelKey.support, `assist:${threadId}`,
+        ConversationActorType.user, userId,
+      );
     } else if (chatType === 'private-foh') {
       if (role === 'client') {
         const thread = await this.prisma.privateChatThread.findFirst({
@@ -2219,6 +2279,13 @@ export class UpdatesService {
           },
           data: { readByUserAt: new Date() },
         });
+
+        // Write to canonical ConversationReadState (non-blocking)
+        this.writeReadState(
+          ConversationContainerType.fohSupport, userId,
+          ConversationChannelKey.support, 'general',
+          ConversationActorType.user, userId,
+        );
       } else if (role === 'professional') {
         const thread = await this.prisma.privateChatThread.findFirst({
           where: { id: threadId, professionalId: professional!.id },
@@ -2236,6 +2303,13 @@ export class UpdatesService {
           },
           data: { readByProAt: new Date() },
         });
+
+        // Write to canonical ConversationReadState (non-blocking)
+        this.writeReadState(
+          ConversationContainerType.fohSupport, professional!.id,
+          ConversationChannelKey.support, 'general',
+          ConversationActorType.professional, professional!.id,
+        );
       }
     } else {
       throw new BadRequestException('Invalid chat type');

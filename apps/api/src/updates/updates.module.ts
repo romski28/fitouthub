@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { UpdatesController } from './updates.controller';
 import { UpdatesService } from './updates.service';
 import { PrismaService } from '../prisma.service';
+import { ConversationModule } from '../conversation/conversation.module';
 
 @Module({
+  imports: [ConversationModule],
   controllers: [UpdatesController],
   providers: [UpdatesService, PrismaService],
   exports: [UpdatesService],

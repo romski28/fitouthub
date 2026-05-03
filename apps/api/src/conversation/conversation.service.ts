@@ -130,49 +130,55 @@ export class ConversationService {
    * Upsert the read watermark for an actor in a conversation.
    * Only advances forward — ignores the update if the supplied message is
    * older than the current watermark.
+   * If lastReadMessageId is omitted, records a timestamp-only watermark
+   * (useful before any ConversationMessages exist for this conversation).
    */
   async markRead(
     conversationId: string,
     actorType: ConversationActorType,
     actorId: string,
-    lastReadMessageId: string,
+    lastReadMessageId?: string,
   ) {
-    const msg = await this.prisma.conversationMessage.findFirst({
-      where: { id: lastReadMessageId, conversationId },
-      select: { id: true, createdAt: true },
-    });
-    if (!msg) throw new NotFoundException('Message not found in conversation');
+    const now = new Date();
 
-    const existing = await this.prisma.conversationReadState.findUnique({
-      where: {
-        conversationId_actorType_actorId: { conversationId, actorType, actorId },
-      },
-      include: { lastReadMessage: { select: { createdAt: true } } },
-    });
+    if (lastReadMessageId) {
+      const msg = await this.prisma.conversationMessage.findFirst({
+        where: { id: lastReadMessageId, conversationId },
+        select: { id: true, createdAt: true },
+      });
+      if (!msg) throw new NotFoundException('Message not found in conversation');
 
-    // Do not move the watermark backwards
-    if (
-      existing?.lastReadMessage &&
-      existing.lastReadMessage.createdAt >= msg.createdAt
-    ) {
-      return existing;
+      const existing = await this.prisma.conversationReadState.findUnique({
+        where: {
+          conversationId_actorType_actorId: { conversationId, actorType, actorId },
+        },
+        include: { lastReadMessage: { select: { createdAt: true } } },
+      });
+
+      // Do not move the watermark backwards
+      if (
+        existing?.lastReadMessage &&
+        existing.lastReadMessage.createdAt >= msg.createdAt
+      ) {
+        return existing;
+      }
+
+      return this.prisma.conversationReadState.upsert({
+        where: {
+          conversationId_actorType_actorId: { conversationId, actorType, actorId },
+        },
+        create: { conversationId, actorType, actorId, lastReadMessageId, lastReadAt: now },
+        update: { lastReadMessageId, lastReadAt: now },
+      });
     }
 
+    // Timestamp-only watermark (no message ID)
     return this.prisma.conversationReadState.upsert({
       where: {
         conversationId_actorType_actorId: { conversationId, actorType, actorId },
       },
-      create: {
-        conversationId,
-        actorType,
-        actorId,
-        lastReadMessageId,
-        lastReadAt: new Date(),
-      },
-      update: {
-        lastReadMessageId,
-        lastReadAt: new Date(),
-      },
+      create: { conversationId, actorType, actorId, lastReadAt: now },
+      update: { lastReadAt: now },
     });
   }
 
@@ -193,7 +199,11 @@ export class ConversationService {
       include: { lastReadMessage: { select: { createdAt: true } } },
     });
 
-    const afterDate = readState?.lastReadMessage?.createdAt ?? new Date(0);
+    // Prefer message-level cursor; fall back to timestamp watermark; default to epoch
+    const afterDate =
+      readState?.lastReadMessage?.createdAt ??
+      readState?.lastReadAt ??
+      new Date(0);
 
     const count = await this.prisma.conversationMessage.count({
       where: {

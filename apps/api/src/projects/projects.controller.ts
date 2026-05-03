@@ -37,6 +37,8 @@ import { ProjectStageService } from './project-stage.service';
 import { ContractService } from './contract.service';
 import { RecordNextStepActionDto, TransitionProjectStageDto, PauseProjectDto, ResumeProjectDto, DisputeProjectDto } from './dto/next-step.dto';
 import { CreateAdminActionDto, UpdateAdminActionDto, AssignAdminActionDto, CompleteAdminActionDto } from './dto/admin-action.dto';
+import { ConversationService } from '../conversation/conversation.service';
+import { ConversationContainerType, ConversationChannelKey, ConversationActorType } from '@prisma/client';
 
 @Controller('projects')
 export class ProjectsController {
@@ -48,6 +50,7 @@ export class ProjectsController {
     private readonly adminActionService: AdminActionService,
     private readonly projectStageService: ProjectStageService,
     private readonly contractService: ContractService,
+    private readonly conversationService: ConversationService,
   ) {}
 
   private requireAdmin(req: any): string {
@@ -973,11 +976,30 @@ export class ProjectsController {
     @Param('projectId') projectId: string,
     @Query('threadScope') threadScope?: string,
     @Query('threadScopeId') threadScopeId?: string,
+    @Request() req?: any,
   ) {
-    return this.chatService.getOrCreateProjectThread(projectId, {
+    const thread = await this.chatService.getOrCreateProjectThread(projectId, {
       threadScope: threadScope || null,
       threadScopeId: threadScopeId || null,
     });
+
+    // Augment with last-read cursor for the requesting actor
+    const actorId = req?.user?.id || req?.user?.sub;
+    if (!actorId) return thread;
+
+    const isProfessional =
+      !!req?.user?.isProfessional ||
+      String(req?.user?.role || '').toLowerCase() === 'professional';
+
+    const lastRead = await this.prisma.projectChatMessage.findFirst({
+      where: isProfessional
+        ? { threadId: thread.id, readByProAt: { not: null } }
+        : { threadId: thread.id, readByClientAt: { not: null } },
+      orderBy: isProfessional ? { readByProAt: 'desc' } : { readByClientAt: 'desc' },
+      select: { id: true },
+    });
+
+    return { ...thread, lastReadMessageId: lastRead?.id ?? null };
   }
 
   /**
@@ -1063,12 +1085,49 @@ export class ProjectsController {
    */
   @Post(':projectId/chat/read')
   @UseGuards(CombinedAuthGuard)
-  async markProjectChatAsRead(@Param('projectId') projectId: string) {
+  async markProjectChatAsRead(
+    @Param('projectId') projectId: string,
+    @Body() body: { lastMessageId?: string } | undefined,
+    @Request() req: any,
+  ) {
+    const actorId = req?.user?.id || req?.user?.sub;
+    if (!actorId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+
+    const isProfessional =
+      !!req.user?.isProfessional ||
+      String(req.user?.role || '').toLowerCase() === 'professional';
+
     // Get the thread
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    const now = new Date();
 
-    // In a full implementation, we'd track read status per user
-    // For now, just return success
+    // Mark legacy ProjectChatMessage records as read
+    if (isProfessional) {
+      await this.prisma.projectChatMessage.updateMany({
+        where: { threadId: thread.id, senderType: { not: 'professional' }, readByProAt: null },
+        data: { readByProAt: now },
+      });
+    } else {
+      await this.prisma.projectChatMessage.updateMany({
+        where: { threadId: thread.id, senderType: { not: 'client' }, readByClientAt: null },
+        data: { readByClientAt: now },
+      });
+    }
+
+    // Write to canonical ConversationReadState (non-blocking)
+    try {
+      const actorType: ConversationActorType = isProfessional ? ConversationActorType.professional : ConversationActorType.user;
+      const conversation = await this.conversationService.resolveOrCreate(
+        ConversationContainerType.project,
+        projectId,
+        ConversationChannelKey.team,
+        'general',
+      );
+      await this.conversationService.markRead(conversation.id, actorType, actorId, body?.lastMessageId);
+    } catch {
+      // Non-blocking — legacy mark-read already succeeded
+    }
+
     return { success: true };
   }
 

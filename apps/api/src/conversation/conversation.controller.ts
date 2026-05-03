@@ -100,11 +100,11 @@ export class ConversationController {
     body: {
       actorType: string;
       actorId: string;
-      lastReadMessageId: string;
+      lastReadMessageId?: string;
     },
   ) {
-    if (!body.actorType || !body.actorId || !body.lastReadMessageId) {
-      throw new BadRequestException('actorType, actorId and lastReadMessageId are required');
+    if (!body.actorType || !body.actorId) {
+      throw new BadRequestException('actorType and actorId are required');
     }
     return this.svc.markRead(
       id,

@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-03-ea8d9dd",
+    "date": "2026-05-03T22:06:45+08:00",
+    "title": "feat: Phase 2 mark-read real everywhere",
+    "summary": "feat: Phase 2 mark-read real everywhere",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ea8d9dd",
+    "files": [
+      "apps/api/src/conversation/conversation.controller.ts",
+      "apps/api/src/conversation/conversation.service.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/updates/updates.module.ts",
+      "apps/api/src/updates/updates.service.ts",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-72411a8",
     "date": "2026-05-03T21:48:34+08:00",
     "title": "feat: Phase 1 unified conversation schema + service",

@@ -128,10 +128,23 @@ export default function ProjectChat({
 
         const data = await res.json();
         const fetchedMessages = data.messages || [];
+
+        // Prefer server-provided read cursor; fall back to localStorage timestamp
+        const serverLastReadId: string | null = data.lastReadMessageId ?? null;
         const lastReadMarker = getStoredReadMarker();
 
         if (fetchedMessages.length > 0) {
-          if (lastReadMarker) {
+          if (serverLastReadId) {
+            // Anchor at the server-known last-read message (unread starts just after)
+            const serverReadIndex = fetchedMessages.findIndex(
+              (m: ChatMessage) => m.id === serverLastReadId,
+            );
+            if (serverReadIndex >= 0 && serverReadIndex < fetchedMessages.length - 1) {
+              setInitialAnchorMessageId(fetchedMessages[serverReadIndex].id);
+            } else {
+              setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
+            }
+          } else if (lastReadMarker) {
             const firstUnreadIndex = fetchedMessages.findIndex(
               (msg: ChatMessage) => new Date(msg.createdAt).getTime() > new Date(lastReadMarker).getTime(),
             );
@@ -148,15 +161,21 @@ export default function ProjectChat({
 
         setMessages(fetchedMessages);
         
-        // Mark as read
-        await fetch(`${API_BASE_URL}/projects/${projectId}/chat/read`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
+        // Mark as read — pass the newest message ID so the server can track the exact watermark
         const newestMessage = fetchedMessages[fetchedMessages.length - 1];
-        if (newestMessage?.createdAt) {
-          persistReadMarker(newestMessage.createdAt);
+        if (newestMessage) {
+          await fetch(`${API_BASE_URL}/projects/${projectId}/chat/read`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ lastMessageId: newestMessage.id }),
+          });
+
+          if (newestMessage.createdAt) {
+            persistReadMarker(newestMessage.createdAt);
+          }
         }
       } catch (err) {
         console.error('Error loading project chat:', err);
