@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-03-b032009",
+    "date": "2026-05-03T18:10:38+08:00",
+    "title": "feat(progress-ui): convert progress modal shell to sheet/drawer",
+    "summary": "feat(progress-ui): convert progress modal shell to sheet/drawer",
+    "areas": [
+      "web"
+    ],
+    "commit": "b032009",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-e93538d",
     "date": "2026-05-03T17:28:37+08:00",
     "title": "feat(finance): trigger payment_request on milestone sign-off",

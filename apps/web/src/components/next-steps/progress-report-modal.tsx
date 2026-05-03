@@ -734,6 +734,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
     (mode === 'thread' ? PROGRESS_MODAL_COPY_ROOT.threadBody : PROGRESS_MODAL_COPY_ROOT.composeBody);
   const detailsBody = state.modalContent?.detailsBody || PROGRESS_MODAL_COPY_ROOT.detailsBody;
   const hasDetails = Boolean(detailsBody);
+  const panelBodyMaxHeight = 'calc(100dvh - 84px)';
 
   return (
     <>
@@ -757,18 +758,21 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
 
       {showMainModal && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-2 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 backdrop-blur-sm sm:items-stretch sm:justify-end sm:p-0"
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <div className="my-2 w-full max-w-3xl [perspective:1600px] sm:my-0">
+          <div className="w-full max-w-3xl [perspective:1600px] sm:my-0 sm:h-full sm:max-w-none sm:w-[min(92vw,56rem)]">
             <div
               className="relative grid [transform-style:preserve-3d] transition-transform duration-500 ease-out"
               style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
               <div
-                className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:max-h-[92vh]"
+                className="col-start-1 row-start-1 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-full sm:max-h-none sm:rounded-none sm:rounded-l-2xl"
                 aria-hidden={showDetails}
               >
+                <div className="flex justify-center py-2 sm:hidden">
+                  <div className="h-1.5 w-12 rounded-full bg-slate-500/60" />
+                </div>
 
                 {/* Header */}
                 <div className="flex items-start justify-between border-b border-slate-700 px-5 py-4">
@@ -849,7 +853,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                   </div>
                 ) : (
                   /* Thread mode */
-                  <div className="flex flex-col flex-1 min-h-0" style={{ maxHeight: 'calc(92vh - 80px)' }}>
+                  <div className="flex flex-col flex-1 min-h-0" style={{ maxHeight: panelBodyMaxHeight }}>
                     {/* Report bubbles */}
                     <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 py-4 space-y-4">
                       {reports.length === 0 ? (
@@ -917,7 +921,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
               </div>
 
               <div
-                className="col-start-1 row-start-1 flex max-h-[92vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+                className="col-start-1 row-start-1 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-full sm:max-h-none sm:rounded-none sm:rounded-l-2xl"
                 style={{ transform: 'rotateY(180deg)' }}
                 aria-hidden={!showDetails}
               >
