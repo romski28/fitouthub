@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-05-03-72411a8",
+    "date": "2026-05-03T21:48:34+08:00",
+    "title": "feat: Phase 1 unified conversation schema + service",
+    "summary": "feat: Phase 1 unified conversation schema + service",
+    "areas": [
+      "api"
+    ],
+    "commit": "72411a8",
+    "files": [
+      "apps/api/prisma/migrations/phase1_unified_conversation_schema.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/conversation/conversation.controller.ts",
+      "apps/api/src/conversation/conversation.module.ts",
+      "apps/api/src/conversation/conversation.service.ts",
+      "apps/api/src/conversation/dto/conversation.dto.ts",
+      "apps/api/src/realtime/realtime.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-03-1d0fcc4",
     "date": "2026-05-03T20:29:47+08:00",
     "title": "style(project-lists): widen client and professional list containers",

@@ -90,4 +90,9 @@ export class RealtimeService {
 
     admins.forEach((admin) => this.emitToAdmin(admin.id, event));
   }
+
+  /** Emit to any arbitrary channel (e.g. `conversation:{id}`). */
+  emitToChannel(channel: string, event: RealtimeEvent) {
+    this.publish(channel, event);
+  }
 }

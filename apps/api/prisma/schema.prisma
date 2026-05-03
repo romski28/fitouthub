@@ -1869,3 +1869,109 @@ model CaseNote {
   @@index([caseId])
   @@index([adminId])
 }
+
+// ============================================================
+// Unified Conversation Model (Phase 1)
+// All chat surfaces converge here. Existing tables stay alive
+// until each surface is migrated in later phases.
+// ============================================================
+
+enum ConversationContainerType {
+  project              // project-level team channel
+  projectProfessional  // bidding / per-professional channel
+  fohSupport           // FOH ↔ client/professional support
+  anonymous            // anonymous pre-login FOH chat
+}
+
+enum ConversationChannelKey {
+  team     // project team chat
+  bidding  // bidding / quote messages
+  support  // FOH support
+}
+
+enum ConversationActorType {
+  user
+  professional
+  foh
+  system
+}
+
+model Conversation {
+  id            String                    @id @default(cuid())
+  containerType ConversationContainerType
+  containerId   String
+  channelKey    ConversationChannelKey
+  // e.g. 'general' | 'progress' | 'milestone:{id}' | 'assist:{id}'
+  // Non-nullable with default so @@unique works correctly in PostgreSQL
+  scopeKey      String                    @default("general")
+  status        String                    @default("open") // open | in_progress | closed
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  participants  ConversationParticipant[]
+  messages      ConversationMessage[]
+  readStates    ConversationReadState[]
+
+  @@unique([containerType, containerId, channelKey, scopeKey])
+  @@index([containerType, containerId])
+  @@index([channelKey])
+  @@index([updatedAt])
+}
+
+model ConversationParticipant {
+  id             String               @id @default(cuid())
+  conversationId String
+  actorType      ConversationActorType
+  actorId        String
+  // client | professional | foh | admin
+  role           String
+  joinedAt       DateTime             @default(now())
+  leftAt         DateTime?
+  createdAt      DateTime             @default(now())
+
+  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, actorType, actorId])
+  @@index([conversationId])
+  @@index([actorType, actorId])
+}
+
+model ConversationMessage {
+  id             String               @id @default(cuid())
+  conversationId String
+  senderType     ConversationActorType
+  senderActorId  String
+  content        String
+  // [{ url: string; filename: string; mimeType?: string }] — R2 refs only, no blobs
+  attachments    Json                 @default("[]")
+  metadata       Json?                // structured system events or rich payloads
+  deletedAt      DateTime?            // soft-delete; content should be scrubbed on deletion
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  readMarkers    ConversationReadState[] @relation("ReadStateLastMessage")
+
+  @@index([conversationId])
+  @@index([conversationId, createdAt])
+  @@index([senderType, senderActorId])
+  @@index([createdAt])
+}
+
+model ConversationReadState {
+  id                String               @id @default(cuid())
+  conversationId    String
+  actorType         ConversationActorType
+  actorId           String
+  lastReadMessageId String?
+  lastReadAt        DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  conversation      Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  lastReadMessage   ConversationMessage? @relation("ReadStateLastMessage", fields: [lastReadMessageId], references: [id], onDelete: SetNull)
+
+  @@unique([conversationId, actorType, actorId])
+  @@index([conversationId])
+  @@index([actorType, actorId])
+}
