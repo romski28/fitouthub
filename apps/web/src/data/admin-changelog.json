@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-03-31382b1",
+    "date": "2026-05-03T19:01:19+08:00",
+    "title": "fix(progress-ui): add grow reveal and handle-close sheet",
+    "summary": "fix(progress-ui): add grow reveal and handle-close sheet",
+    "areas": [
+      "web"
+    ],
+    "commit": "31382b1",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-d087fed",
     "date": "2026-05-03T18:50:10+08:00",
     "title": "fix(progress-ui): restore desktop chat scroll and improve drawer motion",
