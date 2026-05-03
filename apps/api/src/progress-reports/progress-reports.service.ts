@@ -36,7 +36,13 @@ export class ProgressReportsService {
     const { projectId, milestoneId, photoEntries, narrativeSummary, signOffRequested } = dto;
 
     if (!projectId) throw new BadRequestException('projectId is required');
-    if (!Array.isArray(photoEntries) || photoEntries.length === 0) {
+    if (!Array.isArray(photoEntries)) {
+      throw new BadRequestException('photoEntries must be an array');
+    }
+    if (signOffRequested && !milestoneId) {
+      throw new BadRequestException('milestoneId is required when requesting sign-off');
+    }
+    if (!signOffRequested && photoEntries.length === 0) {
       throw new BadRequestException('At least one photo is required');
     }
 

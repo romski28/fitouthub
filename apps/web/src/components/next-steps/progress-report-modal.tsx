@@ -14,13 +14,6 @@ import ProjectChat from '@/components/project-chat';
 // Types
 // ---------------------------------------------------------------------------
 
-type PhotoRow = {
-  id: string;
-  url: string;
-  note: string;
-  uploading: boolean;
-};
-
 type WorkMilestone = {
   id: string;
   sequence: number;
@@ -359,12 +352,9 @@ function ComposeForm({
   onSubmitSuccess,
   onScopeChange,
 }: ComposeFormProps) {
-  const [photoRows, setPhotoRows] = React.useState<PhotoRow[]>([]);
-  const [uploadingFiles, setUploadingFiles] = React.useState(false);
   const [narrativeSummary, setNarrativeSummary] = React.useState('');
   const [selectedMilestoneId, setSelectedMilestoneId] = React.useState<string>('');
-  const [submitting, setSubmitting] = React.useState<'share' | 'signoff' | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [submitting, setSubmitting] = React.useState<'signoff' | null>(null);
 
   const linkedPaymentMilestone = React.useMemo<PaymentMilestone | null>(() => {
     if (!selectedMilestoneId || !paymentPlan?.milestones) return null;
@@ -375,69 +365,35 @@ function ComposeForm({
     onScopeChange(selectedMilestoneId || 'general');
   }, [selectedMilestoneId, onScopeChange]);
 
-  const handleAddFiles = async (fileList: FileList | null) => {
-    if (!fileList || !accessToken) return;
-    const files = Array.from(fileList);
-    const oversized = files.filter((f) => f.size > 5 * 1024 * 1024);
-    if (oversized.length > 0) {
-      toast.error(`Files must be under 5 MB: ${oversized.map((f) => f.name).join(', ')}`);
+  const handleSubmit = async () => {
+    const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
+    if (!selectedMilestoneId || !selectedMilestone) {
+      toast.error('Select a milestone to submit for sign-off');
       return;
     }
-    const time = Date.now();
-    const rows: PhotoRow[] = files.map((f, i) => ({ id: `${time}-${i}`, url: '', note: '', uploading: true }));
-    setPhotoRows((prev) => [...prev, ...rows]);
-    setUploadingFiles(true);
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const rowId = rows[i].id;
-        const formData = new FormData();
-        formData.append('files', file);
-        try {
-          const res = await fetch(`${API_BASE_URL}/uploads`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${accessToken}` },
-            body: formData,
-          });
-          if (!res.ok) throw new Error('Upload failed');
-          const data = await res.json();
-          const url: string = data.urls?.[0] || data.files?.[0]?.url || '';
-          setPhotoRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, url, uploading: false } : r)));
-        } catch {
-          setPhotoRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, url: 'error', uploading: false } : r)));
-          toast.error(`Failed to upload ${file.name}`);
-        }
-      }
-    } finally {
-      setUploadingFiles(false);
+    if (selectedMilestone.status === 'completed') {
+      toast.error('This milestone is already completed and cannot be submitted again');
+      return;
     }
-  };
 
-  const handleSubmit = async (signOffRequested: boolean) => {
-    const readyRows = photoRows.filter((r) => !r.uploading && r.url && r.url !== 'error');
-    if (readyRows.length === 0) {
-      toast.error('Upload at least one photo before sharing');
-      return;
-    }
-    setSubmitting(signOffRequested ? 'signoff' : 'share');
+    setSubmitting('signoff');
     try {
       const res = await fetch(`${API_BASE_URL}/progress-reports`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          milestoneId: selectedMilestoneId || undefined,
-          photoEntries: readyRows.map((r) => ({ url: r.url, note: r.note.trim() })),
+          milestoneId: selectedMilestoneId,
+          photoEntries: [],
           narrativeSummary: narrativeSummary.trim() || undefined,
-          signOffRequested,
+          signOffRequested: true,
         }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { message?: string }).message || 'Failed to submit progress report');
       }
-      const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
-      onSubmitSuccess(signOffRequested, selectedMilestone?.title);
+      onSubmitSuccess(true, selectedMilestone.title);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit progress report');
     } finally {
@@ -445,87 +401,10 @@ function ComposeForm({
     }
   };
 
-  const readyRows = photoRows.filter((r) => !r.uploading && r.url && r.url !== 'error');
-  const canSubmit = readyRows.length > 0 && !submitting;
+  const canSubmit = Boolean(selectedMilestoneId) && !submitting;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Photos */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">
-            Photos
-            {readyRows.length > 0 && (
-              <span className="ml-2 font-normal normal-case text-slate-400">({readyRows.length} uploaded)</span>
-            )}
-          </p>
-          <div className="text-right">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => { void handleAddFiles(e.target.files); e.currentTarget.value = ''; }}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingFiles}
-              className="rounded-md border border-cyan-500/40 bg-cyan-600/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-600/30 disabled:opacity-50 transition"
-            >
-              {uploadingFiles ? 'Uploading…' : '+ Add photos'}
-            </button>
-            <p className="mt-0.5 text-[10px] text-slate-400">Images only · max 5 MB each</p>
-          </div>
-        </div>
-
-        {photoRows.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-600 bg-slate-800/40 py-8 text-center">
-            <p className="text-sm text-slate-500">No photos added yet</p>
-            <p className="mt-1 text-xs text-slate-600">Tap &quot;+ Add photos&quot; to attach progress images</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {photoRows.map((row) => (
-              <div key={row.id} className="flex gap-3 rounded-lg border border-slate-700 bg-slate-800/60 p-3">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-slate-600 bg-slate-700">
-                  {row.uploading ? (
-                    <div className="flex h-full items-center justify-center">
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-500 border-t-cyan-400" />
-                    </div>
-                  ) : row.url === 'error' ? (
-                    <div className="flex h-full items-center justify-center">
-                      <span className="text-[10px] text-red-400">Error</span>
-                    </div>
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={row.url} alt="Progress photo" className="h-full w-full object-cover" />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-2">
-                  <textarea
-                    value={row.note}
-                    onChange={(e) =>
-                      setPhotoRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, note: e.target.value } : r)))
-                    }
-                    rows={3}
-                    placeholder="Describe this photo (optional)…"
-                    className="w-full flex-1 resize-none rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPhotoRows((prev) => prev.filter((r) => r.id !== row.id))}
-                    className="self-end text-[10px] text-slate-500 hover:text-red-400 transition"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Milestone */}
       <div>
@@ -548,9 +427,12 @@ function ComposeForm({
             );
           })}
         </select>
+        <p className="mt-1.5 text-[11px] text-slate-500">
+          Completed milestones are marked and disabled so they cannot be submitted again.
+        </p>
       </div>
 
-      {linkedPaymentMilestone && (
+      {selectedMilestoneId && linkedPaymentMilestone && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-300">Payment milestone linked</p>
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
@@ -578,37 +460,31 @@ function ComposeForm({
         </div>
       )}
 
-      {/* Summary */}
+      {/* Milestone summary */}
+      {selectedMilestoneId && (
       <div>
         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
-          Progress summary <span className="font-normal normal-case text-slate-400">(optional)</span>
+          Milestone summary <span className="font-normal normal-case text-slate-400">(optional)</span>
         </label>
         <textarea
           value={narrativeSummary}
           onChange={(e) => setNarrativeSummary(e.target.value)}
           rows={3}
-          placeholder="Describe the work completed, any issues, or notes for the client…"
+          placeholder="Describe this milestone completion for client review…"
           className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
         />
       </div>
+      )}
 
       {/* Actions */}
       <div className="border-t border-slate-700 pt-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
-            onClick={() => void handleSubmit(false)}
+            onClick={() => void handleSubmit()}
             disabled={!canSubmit}
-            className="rounded-md bg-cyan-600 px-5 py-2 text-sm font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 transition sm:order-2"
-          >
-            {submitting === 'share' ? 'Sharing…' : 'Share Progress'}
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleSubmit(true)}
-            disabled={!canSubmit || !selectedMilestoneId}
             title={!selectedMilestoneId ? 'Select a milestone to request sign-off' : undefined}
-            className="rounded-md bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition sm:order-1"
+            className="rounded-md bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition"
           >
             {submitting === 'signoff' ? 'Requesting…' : 'Milestone Sign-off'}
           </button>
@@ -791,7 +667,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
             }
           : {
               actionLabel: 'Continue working',
-              description: 'Your progress update and photos have been shared.',
+              description: 'Your progress update has been shared.',
               requiresAction: false,
               tab: 'schedule',
             },
@@ -870,7 +746,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                   <p className="mt-1 text-xs text-slate-300">
                     {mode === 'thread'
                       ? 'Project updates, photos and milestone sign-offs'
-                      : 'Upload photos and share updates with the client'}
+                      : 'Select a milestone, add summary notes, and submit for sign-off'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

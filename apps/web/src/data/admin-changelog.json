@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-03-72a93d3",
+    "date": "2026-05-03T11:41:41+08:00",
+    "title": "feat(progress): milestone-first sign-off flow in share modal",
+    "summary": "feat(progress): milestone-first sign-off flow in share modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "72a93d3",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-c311d2a",
     "date": "2026-05-03T11:16:16+08:00",
     "title": "feat(web): 2-step chat image upload — select then send, no separate Upload step",
