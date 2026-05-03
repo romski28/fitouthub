@@ -62,7 +62,32 @@ export default function ProjectChat({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialAnchorMessageId, setInitialAnchorMessageId] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const didInitialPositionRef = useRef(false);
+  const previousMessageCountRef = useRef(0);
+
+  const getReadMarkerStorageKey = () => {
+    const scope = threadScope || 'all';
+    const scopeId = threadScopeId || 'all';
+    return `project-chat:last-viewed:${projectId}:${scope}:${scopeId}`;
+  };
+
+  const persistReadMarker = (timestamp: string) => {
+    try {
+      window.localStorage.setItem(getReadMarkerStorageKey(), timestamp);
+    } catch {
+      // ignore storage failures (private browsing / quota)
+    }
+  };
+
+  const getStoredReadMarker = () => {
+    try {
+      return window.localStorage.getItem(getReadMarkerStorageKey());
+    } catch {
+      return null;
+    }
+  };
 
   const scrollToBottom = () => {
     const container = messagesContainerRef.current;
@@ -76,6 +101,9 @@ export default function ProjectChat({
       try {
         setLoading(true);
         setError(null);
+        didInitialPositionRef.current = false;
+        previousMessageCountRef.current = 0;
+        setInitialAnchorMessageId(null);
         const chatUrl = new URL(`${API_BASE_URL}/projects/${projectId}/chat`);
         if (threadScope && threadScopeId) {
           chatUrl.searchParams.set('threadScope', threadScope);
@@ -99,13 +127,37 @@ export default function ProjectChat({
         }
 
         const data = await res.json();
-        setMessages(data.messages || []);
+        const fetchedMessages = data.messages || [];
+        const lastReadMarker = getStoredReadMarker();
+
+        if (fetchedMessages.length > 0) {
+          if (lastReadMarker) {
+            const firstUnreadIndex = fetchedMessages.findIndex(
+              (msg: ChatMessage) => new Date(msg.createdAt).getTime() > new Date(lastReadMarker).getTime(),
+            );
+
+            if (firstUnreadIndex > 0) {
+              setInitialAnchorMessageId(fetchedMessages[firstUnreadIndex - 1].id);
+            } else {
+              setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
+            }
+          } else {
+            setInitialAnchorMessageId(fetchedMessages[fetchedMessages.length - 1].id);
+          }
+        }
+
+        setMessages(fetchedMessages);
         
         // Mark as read
         await fetch(`${API_BASE_URL}/projects/${projectId}/chat/read`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}` },
         });
+
+        const newestMessage = fetchedMessages[fetchedMessages.length - 1];
+        if (newestMessage?.createdAt) {
+          persistReadMarker(newestMessage.createdAt);
+        }
       } catch (err) {
         console.error('Error loading project chat:', err);
         setError(err instanceof Error ? err.message : 'Failed to load chat');
@@ -120,8 +172,29 @@ export default function ProjectChat({
   }, [projectId, accessToken, threadScope, threadScopeId, refreshToken]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!messagesContainerRef.current || messages.length === 0) return;
+
+    if (!didInitialPositionRef.current) {
+      if (initialAnchorMessageId) {
+        const anchorEl = document.getElementById(`project-chat-message-${initialAnchorMessageId}`);
+        if (anchorEl) {
+          anchorEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+        } else {
+          scrollToBottom();
+        }
+      } else {
+        scrollToBottom();
+      }
+      didInitialPositionRef.current = true;
+      previousMessageCountRef.current = messages.length;
+      return;
+    }
+
+    if (messages.length > previousMessageCountRef.current) {
+      scrollToBottom();
+    }
+    previousMessageCountRef.current = messages.length;
+  }, [messages, initialAnchorMessageId]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,6 +249,9 @@ export default function ProjectChat({
 
       const data = await res.json();
       setMessages((prev) => [...prev, data.message]);
+      if (data?.message?.createdAt) {
+        persistReadMarker(data.message.createdAt);
+      }
       setNewMessage('');
       setPendingFiles([]);
       setUploaderClearKey((k) => k + 1);
@@ -206,7 +282,7 @@ export default function ProjectChat({
   };
 
   return (
-    <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-slate-700 bg-slate-900/60 shadow-sm${fillHeight ? ' flex flex-col' : ''} ${className}`}>
+    <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-slate-700 bg-slate-900/60 shadow-sm${fillHeight ? ' flex h-full min-h-0 flex-col' : ''} ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
         <div className="flex items-center justify-between">
@@ -242,7 +318,7 @@ export default function ProjectChat({
             const isFoh = msg.senderType === 'foh';
             
             return (
-              <div key={msg.id} className={`flex min-w-0 ${isCurrent ? 'justify-end' : 'justify-start'}`}>
+              <div id={`project-chat-message-${msg.id}`} key={msg.id} className={`flex min-w-0 ${isCurrent ? 'justify-end' : 'justify-start'}`}>
                 <div
                   className={`min-w-0 max-w-[75%] rounded-lg px-4 py-2 text-sm ${
                     isCurrent

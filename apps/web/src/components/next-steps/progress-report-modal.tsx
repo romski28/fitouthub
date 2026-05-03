@@ -780,7 +780,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
         >
           <div
             className={`w-full max-w-3xl [perspective:1600px] transition-transform duration-300 ease-out sm:my-0 sm:h-full sm:max-w-none sm:w-[min(92vw,56rem)] ${
-              isAnimatingIn ? 'translate-y-0 sm:translate-x-0' : 'translate-y-12 sm:translate-x-14 sm:translate-y-0'
+              isAnimatingIn ? 'translate-y-0 scale-100 sm:translate-x-0 sm:scale-100' : 'translate-y-16 scale-[0.98] sm:translate-x-40 sm:translate-y-0 sm:scale-95'
             }`}
           >
             <div
@@ -788,11 +788,20 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
               style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
               <div
-                className="col-start-1 row-start-1 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-full sm:max-h-none sm:rounded-none sm:rounded-l-2xl"
+                className="col-start-1 row-start-1 flex h-[calc(100dvh-1rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-full sm:rounded-none sm:rounded-l-2xl"
                 aria-hidden={showDetails}
               >
-                <div className="flex justify-center py-2 sm:hidden">
+                <div className="flex items-center justify-between px-3 py-2 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-md border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                    aria-label="Close updates"
+                  >
+                    Close
+                  </button>
                   <div className="h-1.5 w-12 rounded-full bg-slate-500/60" />
+                  <div className="w-[52px]" />
                 </div>
 
                 {/* Header */}
@@ -840,8 +849,8 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                     <p className="text-slate-300">Loading…</p>
                   </div>
                 ) : mode === 'compose' ? (
-                  <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5">
-                    <div className="flex min-h-0 flex-col gap-4 pb-1">
+                  <div className="next-step-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
+                    <div className="flex min-h-0 flex-col gap-4 pb-8">
                     {state.projectId && effectiveAccessToken && (
                       <div className="h-[70dvh] max-h-[70dvh] min-h-[20rem] rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
                         <ProjectChat
@@ -873,7 +882,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                   </div>
                 ) : (
                   /* Thread mode */
-                  <div className="flex flex-col flex-1 min-h-0" style={{ maxHeight: panelBodyMaxHeight }}>
+                  <div className="flex min-h-0 flex-1 flex-col" style={{ maxHeight: panelBodyMaxHeight }}>
                     {/* Report bubbles */}
                     <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 py-4 space-y-4">
                       {reports.length === 0 ? (
@@ -939,7 +948,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
               </div>
 
               <div
-                className="col-start-1 row-start-1 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-full sm:max-h-none sm:rounded-none sm:rounded-l-2xl"
+                className="col-start-1 row-start-1 flex h-[calc(100dvh-1rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-full sm:rounded-none sm:rounded-l-2xl"
                 style={{ transform: 'rotateY(180deg)' }}
                 aria-hidden={!showDetails}
               >

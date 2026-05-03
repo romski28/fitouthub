@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-03-d087fed",
+    "date": "2026-05-03T18:50:10+08:00",
+    "title": "fix(progress-ui): restore desktop chat scroll and improve drawer motion",
+    "summary": "fix(progress-ui): restore desktop chat scroll and improve drawer motion",
+    "areas": [
+      "web"
+    ],
+    "commit": "d087fed",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-f5840ab",
     "date": "2026-05-03T18:31:44+08:00",
     "title": "fix(progress-ui): restore sheet scroll and streamline chat header",
