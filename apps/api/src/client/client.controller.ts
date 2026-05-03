@@ -12,12 +12,16 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
+import { UpdatesService } from '../updates/updates.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ProjectStage } from '@prisma/client';
 
 @Controller('client')
 export class ClientController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private updatesService: UpdatesService,
+  ) {}
 
   @Get('projects/:projectProfessionalId/messages')
   @UseGuards(AuthGuard('jwt'))
@@ -79,22 +83,10 @@ export class ClientController {
     @Param('projectProfessionalId') projectProfessionalId: string,
   ) {
     const userId = req.user.id || req.user.sub;
-    const pp = await (this.prisma as any).projectProfessional.findFirst({
-      where: {
-        id: projectProfessionalId,
-        OR: [{ project: { userId } }, { project: { clientId: userId } }],
-      },
+    return this.updatesService.markMessageGroupAsRead(userId, 'client', {
+      chatType: 'project-professional',
+      threadId: projectProfessionalId,
     });
-    if (!pp) throw new BadRequestException('Project not found');
-    await (this.prisma as any).message.updateMany({
-      where: {
-        projectProfessionalId,
-        senderType: 'professional',
-        readByClientAt: null,
-      },
-      data: { readByClientAt: new Date() },
-    });
-    return { success: true };
   }
 
   @Get('messages/unread-count')

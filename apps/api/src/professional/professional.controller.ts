@@ -18,6 +18,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { PlatformFeeService } from '../common/platform-fee.service';
+import { UpdatesService } from '../updates/updates.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
 import { buildPublicAssetUrl } from '../storage/media-assets.util';
@@ -29,6 +30,7 @@ export class ProfessionalController {
     private prisma: PrismaService,
     private email: EmailService,
     private platformFeeService: PlatformFeeService,
+    private updatesService: UpdatesService,
   ) {}
 
   private readonly visibleProfessionalStatuses = [
@@ -1199,28 +1201,10 @@ export class ProfessionalController {
     @Param('projectProfessionalId') projectProfessionalId: string,
   ) {
     const professionalId = req.user.id || req.user.sub;
-    const projectProfessional = await (
-      this.prisma as any
-    ).projectProfessional.findFirst({
-      where: {
-        id: projectProfessionalId,
-        professionalId,
-        status: { in: this.activeProfessionalStatuses },
-      },
+    return this.updatesService.markMessageGroupAsRead(professionalId, 'professional', {
+      chatType: 'project-professional',
+      threadId: projectProfessionalId,
     });
-    if (!projectProfessional) {
-      throw new ForbiddenException('Messaging is no longer available for this project');
-    }
-
-    await (this.prisma as any).message.updateMany({
-      where: {
-        projectProfessionalId,
-        senderType: 'client',
-        readByProfessionalAt: null,
-      },
-      data: { readByProfessionalAt: new Date() },
-    });
-    return { success: true };
   }
 
   // Request advance payment for upfront costs

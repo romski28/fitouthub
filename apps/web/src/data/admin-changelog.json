@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-03-d10802e",
+    "date": "2026-05-03T23:15:04+08:00",
+    "title": "feat: phase 3 legacy mark-read compatibility routing",
+    "summary": "feat: phase 3 legacy mark-read compatibility routing",
+    "areas": [
+      "api"
+    ],
+    "commit": "d10802e",
+    "files": [
+      "apps/api/src/client/client.controller.ts",
+      "apps/api/src/client/client.module.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/professional/professional.module.ts",
+      "apps/api/src/projects/projects.controller.ts"
+    ]
+  },
+  {
     "id": "2026-05-03-c67abf5",
     "date": "2026-05-03T23:06:42+08:00",
     "title": "feat: phase 3 chat compatibility unread anchors",

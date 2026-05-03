@@ -38,6 +38,7 @@ import { ContractService } from './contract.service';
 import { RecordNextStepActionDto, TransitionProjectStageDto, PauseProjectDto, ResumeProjectDto, DisputeProjectDto } from './dto/next-step.dto';
 import { CreateAdminActionDto, UpdateAdminActionDto, AssignAdminActionDto, CompleteAdminActionDto } from './dto/admin-action.dto';
 import { ConversationService } from '../conversation/conversation.service';
+import { UpdatesService } from '../updates/updates.service';
 import { ConversationContainerType, ConversationChannelKey, ConversationActorType } from '@prisma/client';
 
 @Controller('projects')
@@ -51,6 +52,7 @@ export class ProjectsController {
     private readonly projectStageService: ProjectStageService,
     private readonly contractService: ContractService,
     private readonly conversationService: ConversationService,
+    private readonly updatesService: UpdatesService,
   ) {}
 
   private requireAdmin(req: any): string {
@@ -1129,20 +1131,13 @@ export class ProjectsController {
 
     // Get the thread
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
-    const now = new Date();
 
-    // Mark legacy ProjectChatMessage records as read
-    if (isProfessional) {
-      await this.prisma.projectChatMessage.updateMany({
-        where: { threadId: thread.id, senderType: { not: 'professional' }, readByProAt: null },
-        data: { readByProAt: now },
-      });
-    } else {
-      await this.prisma.projectChatMessage.updateMany({
-        where: { threadId: thread.id, senderType: { not: 'client' }, readByClientAt: null },
-        data: { readByClientAt: now },
-      });
-    }
+    // Route legacy mark-read through compatibility layer
+    await this.updatesService.markMessageGroupAsRead(
+      actorId,
+      isProfessional ? 'professional' : 'client',
+      { chatType: 'project-general', threadId: thread.id },
+    );
 
     // Write to canonical ConversationReadState (non-blocking)
     try {
