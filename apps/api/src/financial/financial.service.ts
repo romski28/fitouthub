@@ -3418,4 +3418,158 @@ export class FinancialService {
       milestoneBreakdown,
     };
   }
+
+  /**
+   * Called by ProgressReportsService when a professional submits a milestone sign-off
+   * with a linked paymentMilestoneId.
+   *
+   * Moves the PaymentMilestone to `release_requested`, creates a `payment_request`
+   * FinancialTransaction for the client to approve, and sends relevant notifications.
+   *
+   * Downstream: client approves via existing /financial/:id/approve endpoint →
+   * release_payment transaction queued for admin → admin releases → milestone `released`.
+   */
+  async notifySignOffForPaymentMilestone(input: {
+    paymentMilestoneId: string;
+    progressReportId: string;
+    narrativeSummary: string;
+    submittedById: string;
+  }) {
+    const { paymentMilestoneId, progressReportId, narrativeSummary, submittedById } = input;
+
+    const milestone = await (this.prisma as any).paymentMilestone.findUnique({
+      where: { id: paymentMilestoneId },
+      include: {
+        paymentPlan: {
+          include: {
+            project: {
+              include: {
+                professionals: { where: { status: 'accepted' }, take: 1 },
+                user: { select: { id: true, mobile: true, firstName: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!milestone) {
+      console.warn(`[FinancialService.notifySignOff] PaymentMilestone not found: ${paymentMilestoneId}`);
+      return null;
+    }
+
+    const eligibleStatuses = ['escrow_funded', 'scheduled'];
+    if (!eligibleStatuses.includes(milestone.status)) {
+      console.warn(
+        `[FinancialService.notifySignOff] Milestone ${paymentMilestoneId} in status '${milestone.status}' — skipping release_requested transition`,
+      );
+      return null;
+    }
+
+    const project = milestone.paymentPlan?.project;
+    const projectId = project?.id;
+    const projectProfessional = project?.professionals?.[0];
+    const projectProfessionalId = projectProfessional?.id ?? null;
+    const client = project?.user;
+    const clientId = project?.userId || project?.clientId || null;
+
+    if (!projectId) {
+      console.warn(`[FinancialService.notifySignOff] Could not resolve projectId for milestone ${paymentMilestoneId}`);
+      return null;
+    }
+
+    const now = new Date();
+
+    // Transition milestone to release_requested
+    await (this.prisma as any).paymentMilestone.update({
+      where: { id: paymentMilestoneId },
+      data: {
+        status: 'release_requested',
+        releaseRequestedAt: now,
+      },
+    });
+
+    // Build notes with milestone metadata so finance service can parse it later
+    const milestoneMetaNotes = this.serializeMilestoneMetadata({
+      paymentMilestoneId,
+      paymentPlanId: milestone.paymentPlanId,
+      milestoneSequence: milestone.sequence,
+      milestoneTitle: milestone.title,
+      progressReportId,
+    });
+
+    // Create a payment_request transaction for the client to approve
+    const transaction = await this.prisma.financialTransaction.create({
+      data: {
+        projectId,
+        projectProfessionalId,
+        type: 'payment_request',
+        description: `Milestone sign-off: ${milestone.title}`,
+        amount: milestone.amount,
+        status: 'pending',
+        requestedBy: submittedById,
+        requestedByRole: 'professional',
+        actionBy: clientId ?? undefined,
+        actionByRole: 'client',
+        actionComplete: false,
+        notes: this.appendNote(
+          `Milestone sign-off requested. ${narrativeSummary}`.trim(),
+          milestoneMetaNotes,
+        ),
+      },
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId: transaction.id,
+      action: 'milestone_sign_off_requested',
+      actorId: submittedById,
+      actorRole: 'professional',
+      details: `Professional requested sign-off for milestone "${milestone.title}"`,
+      metadata: {
+        paymentMilestoneId,
+        progressReportId,
+        milestoneTitle: milestone.title,
+        amount: milestone.amount?.toString?.() || String(milestone.amount),
+      },
+    });
+
+    // Notify client and admins
+    try {
+      const formatter = new Intl.NumberFormat('en-HK', {
+        style: 'currency',
+        currency: 'HKD',
+        minimumFractionDigits: 0,
+      });
+      const formattedAmount = formatter.format(Number(milestone.amount));
+      const projectName = project?.projectName || 'Project';
+
+      if (client?.mobile && clientId) {
+        await this.notificationService.send({
+          userId: clientId,
+          phoneNumber: client.mobile,
+          eventType: 'payment_request_created',
+          message: `Your contractor has submitted milestone sign-off for "${milestone.title}" (${formattedAmount}) on "${projectName}". Please review and approve payment release.`,
+        });
+      }
+
+      const admins = await this.prisma.user.findMany({
+        where: { role: 'admin', mobile: { not: null } },
+        select: { id: true, mobile: true },
+      });
+
+      for (const admin of admins) {
+        if (!admin.mobile) continue;
+        await this.notificationService.send({
+          userId: admin.id,
+          phoneNumber: admin.mobile,
+          eventType: 'payment_release_required',
+          message: `Milestone sign-off submitted for "${milestone.title}" (${formattedAmount}) on "${projectName}". Awaiting client approval.`,
+        });
+      }
+    } catch (notificationError) {
+      console.warn('[FinancialService.notifySignOff] Notification error:', notificationError);
+    }
+
+    return { transaction, paymentMilestoneId, newStatus: 'release_requested' };
+  }
 }

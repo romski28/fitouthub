@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ChatService } from '../chat/chat.service';
+import { FinancialService } from '../financial/financial.service';
 import { CreateProgressReportDto, PhotoEntryDto } from './progress-reports.dto';
 
 export { CreateProgressReportDto, PhotoEntryDto };
@@ -26,6 +27,7 @@ export class ProgressReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly chatService: ChatService,
+    private readonly financialService: FinancialService,
   ) {}
 
   async createReport(
@@ -128,6 +130,19 @@ export class ProgressReportsService {
           signOffStatus: 'pending',
         },
       });
+
+      // Trigger finance automation: move PaymentMilestone to release_requested
+      // and create a payment_request transaction for the client to approve.
+      if (paymentMilestoneId) {
+        await this.financialService.notifySignOffForPaymentMilestone({
+          paymentMilestoneId,
+          progressReportId: report.id,
+          narrativeSummary: narrativeSummary?.trim() || '',
+          submittedById,
+        }).catch((err) => {
+          console.error('[ProgressReportsService] Finance sign-off notification failed:', err);
+        });
+      }
     }
 
     // Post to project chat thread
