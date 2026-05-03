@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-03-0a53d8a",
+    "date": "2026-05-03T19:13:04+08:00",
+    "title": "fix(progress-ui): animate dismiss and enlarge sheet handle hit area",
+    "summary": "fix(progress-ui): animate dismiss and enlarge sheet handle hit area",
+    "areas": [
+      "web"
+    ],
+    "commit": "0a53d8a",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-31382b1",
     "date": "2026-05-03T19:01:19+08:00",
     "title": "fix(progress-ui): add grow reveal and handle-close sheet",

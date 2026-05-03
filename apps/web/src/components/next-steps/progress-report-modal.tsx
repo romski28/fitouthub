@@ -555,12 +555,30 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const [composeChatRefreshKey, setComposeChatRefreshKey] = React.useState(0);
   const [shouldRender, setShouldRender] = React.useState(isOpen);
   const [isAnimatingIn, setIsAnimatingIn] = React.useState(false);
+  const [isClosing, setIsClosing] = React.useState(false);
   const celebrationTimerRef = React.useRef<number | null>(null);
+  const closeTimerRef = React.useRef<number | null>(null);
   const threadBottomRef = React.useRef<HTMLDivElement>(null);
   const initialLoadKeyRef = React.useRef<string | null>(null);
 
+  const requestClose = React.useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setIsAnimatingIn(false);
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    closeTimerRef.current = window.setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+      closeTimerRef.current = null;
+    }, 220);
+  }, [isClosing, onClose]);
+
   React.useEffect(() => {
     if (isOpen) {
+      setIsClosing(false);
       setShouldRender(true);
       const frameId = window.requestAnimationFrame(() => {
         setIsAnimatingIn(true);
@@ -579,6 +597,15 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
       window.clearTimeout(timeoutId);
     };
   }, [isOpen]);
+
+  React.useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch on open
   React.useEffect(() => {
@@ -776,7 +803,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
           className={`fixed inset-0 z-50 flex items-end justify-center p-2 backdrop-blur-sm transition-opacity duration-200 sm:items-stretch sm:justify-end sm:p-0 ${
             isAnimatingIn ? 'bg-black/60 opacity-100' : 'bg-black/0 opacity-0'
           }`}
-          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) requestClose();
+          }}
         >
           <div
             className={`w-full max-w-3xl [perspective:1600px] transition-transform duration-300 ease-out sm:my-0 sm:h-full sm:max-w-none sm:w-[min(92vw,56rem)] ${
@@ -794,12 +823,12 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                 <div className="flex items-center justify-center px-3 py-2 sm:hidden">
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="inline-flex items-center justify-center"
+                    onClick={requestClose}
+                    className="inline-flex h-10 w-full max-w-[9rem] items-center justify-center"
                     aria-label="Close updates"
                     title="Close"
                   >
-                    <span className="h-1.5 w-12 rounded-full bg-slate-500/60" />
+                    <span className="h-1.5 w-16 rounded-full bg-slate-500/60" />
                   </button>
                 </div>
 
