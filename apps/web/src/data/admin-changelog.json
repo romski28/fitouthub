@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-03-1d0fcc4",
+    "date": "2026-05-03T20:29:47+08:00",
+    "title": "style(project-lists): widen client and professional list containers",
+    "summary": "style(project-lists): widen client and professional list containers",
+    "areas": [
+      "web"
+    ],
+    "commit": "1d0fcc4",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/main-wrapper.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-0a53d8a",
     "date": "2026-05-03T19:13:04+08:00",
     "title": "fix(progress-ui): animate dismiss and enlarge sheet handle hit area",

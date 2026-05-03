@@ -6,10 +6,15 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminPath = pathname?.startsWith('/admin');
   const isHomePath = pathname === '/';
+  const isProjectsListPath = pathname === '/projects' || pathname === '/professional-projects';
 
   // Admin pages manage their own layout completely
   if (isAdminPath) {
     return <>{children}</>;
+  }
+
+  if (isProjectsListPath) {
+    return <main className="w-full px-0 py-6">{children}</main>;
   }
 
   // Regular pages get standard padding and max-width

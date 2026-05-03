@@ -764,7 +764,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   };
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-7xl space-y-5 px-3 sm:px-6 lg:px-8">
       {/* Recent Activity (secondary) */}
       <div id="recent-activity" className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Recent Activity</p>
