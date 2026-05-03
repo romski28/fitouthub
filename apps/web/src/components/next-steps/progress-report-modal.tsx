@@ -351,7 +351,6 @@ interface ComposeFormProps {
   milestones: WorkMilestone[];
   paymentPlan: PaymentPlan | null;
   onSubmitSuccess: (signOffRequested: boolean, milestoneTitle?: string) => void;
-  onScopeChange: (scopeId: string) => void;
 }
 
 function ComposeForm({
@@ -360,7 +359,6 @@ function ComposeForm({
   milestones,
   paymentPlan,
   onSubmitSuccess,
-  onScopeChange,
 }: ComposeFormProps) {
   const [narrativeSummary, setNarrativeSummary] = React.useState('');
   const [selectedMilestoneId, setSelectedMilestoneId] = React.useState<string>('');
@@ -370,10 +368,6 @@ function ComposeForm({
     if (!selectedMilestoneId || !paymentPlan?.milestones) return null;
     return paymentPlan.milestones.find((pm) => pm.projectMilestoneId === selectedMilestoneId) ?? null;
   }, [selectedMilestoneId, paymentPlan?.milestones]);
-
-  React.useEffect(() => {
-    onScopeChange(selectedMilestoneId || 'general');
-  }, [selectedMilestoneId, onScopeChange]);
 
   const handleSubmit = async () => {
     const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
@@ -425,7 +419,7 @@ function ComposeForm({
       {/* Milestone */}
       <div>
         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
-          Select Milestone
+          Select Milestone For Approval
         </label>
         <select
           value={selectedMilestoneId}
@@ -558,7 +552,6 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const [workflowNextStep, setWorkflowNextStep] = React.useState<WorkflowNextStep | null>(null);
   const [showShareCelebration, setShowShareCelebration] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
-  const [composeScopeId, setComposeScopeId] = React.useState<string>('general');
   const [composeChatRefreshKey, setComposeChatRefreshKey] = React.useState(0);
   const celebrationTimerRef = React.useRef<number | null>(null);
   const threadBottomRef = React.useRef<HTMLDivElement>(null);
@@ -641,7 +634,6 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
       setWorkflowNextStep(null);
       setShowShareCelebration(false);
       setShowDetails(false);
-      setComposeScopeId('general');
       setComposeChatRefreshKey(0);
       initialLoadKeyRef.current = null;
       setStableAccessToken(null);
@@ -819,21 +811,13 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                     <p className="text-slate-300">Loading…</p>
                   </div>
                 ) : mode === 'compose' ? (
-                  <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5 space-y-4">
-                    <ComposeForm
-                      projectId={state.projectId!}
-                      accessToken={effectiveAccessToken!}
-                      milestones={milestones}
-                      paymentPlan={paymentPlan}
-                      onSubmitSuccess={handleSubmitSuccess}
-                      onScopeChange={setComposeScopeId}
-                    />
-
+                  <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5">
+                    <div className="flex min-h-0 flex-col gap-4" style={{ minHeight: panelBodyMaxHeight }}>
                     {state.projectId && effectiveAccessToken && (
-                      <div className="rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
+                      <div className="rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden" style={{ maxHeight: '80dvh' }}>
                         <div className="px-3 pt-2 pb-0.5 border-b border-slate-700">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                            Scoped Progress Chat
+                            Project Updates Chat
                           </p>
                         </div>
                         <ProjectChat
@@ -841,15 +825,24 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                           accessToken={effectiveAccessToken}
                           currentUserRole={isProfessional ? 'professional' : 'client'}
                           threadScope="progress"
-                          threadScopeId={composeScopeId}
+                          threadScopeId="general"
                           refreshToken={composeChatRefreshKey}
                           sendButtonLabel="Send"
                           messagePlaceholder="Comment or ask a question about this update…"
-                          fillHeight={false}
+                          fillHeight={true}
                           className="border-0 rounded-none bg-transparent shadow-none"
                         />
                       </div>
                     )}
+
+                    <ComposeForm
+                      projectId={state.projectId!}
+                      accessToken={effectiveAccessToken!}
+                      milestones={milestones}
+                      paymentPlan={paymentPlan}
+                      onSubmitSuccess={handleSubmitSuccess}
+                    />
+                    </div>
                   </div>
                 ) : (
                   /* Thread mode */

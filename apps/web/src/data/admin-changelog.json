@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-03-a4128cd",
+    "date": "2026-05-03T18:22:31+08:00",
+    "title": "fix(progress-ui): reorder compose flow and keep chat project-scoped",
+    "summary": "fix(progress-ui): reorder compose flow and keep chat project-scoped",
+    "areas": [
+      "web"
+    ],
+    "commit": "a4128cd",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-03-b032009",
     "date": "2026-05-03T18:10:38+08:00",
     "title": "feat(progress-ui): convert progress modal shell to sheet/drawer",
