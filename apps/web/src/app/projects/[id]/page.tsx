@@ -267,7 +267,8 @@ export default function ClientProjectDetailPage() {
   const [selectedProfessional, setSelectedProfessional] = useState<ProjectProfessional | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [pendingAttachments, setPendingAttachments] = useState<{ url: string; filename: string }[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploaderClearKey, setUploaderClearKey] = useState(0);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
@@ -1245,11 +1246,37 @@ export default function ClientProjectDetailPage() {
   };
 
   const handleSendMessage = async () => {
-    if ((!newMessage.trim() && pendingAttachments.length === 0) || !selectedProfessional || !accessToken) return;
+    if ((!newMessage.trim() && pendingFiles.length === 0) || !selectedProfessional || !accessToken) return;
 
     try {
       setSending(true);
       setMessageError(null);
+
+      // Upload any pending files before posting the message
+      let attachments: { url: string; filename: string }[] = [];
+      if (pendingFiles.length > 0) {
+        const formData = new FormData();
+        pendingFiles.forEach((file) => formData.append('files', file));
+        formData.append('projectId', projectId);
+
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const text = await uploadRes.text();
+          throw new Error(text || 'Image upload failed');
+        }
+
+        const uploadData = await uploadRes.json();
+        attachments = uploadData.urls.map((url: string, i: number) => ({
+          url,
+          filename: pendingFiles[i].name,
+        }));
+      }
+
       const res = await fetch(
         `${API_BASE_URL}/client/projects/${selectedProfessional.id}/messages`,
         {
@@ -1260,7 +1287,7 @@ export default function ClientProjectDetailPage() {
           },
           body: JSON.stringify({ 
             content: newMessage.trim(),
-            attachments: pendingAttachments,
+            attachments,
           }),
         },
       );
@@ -1282,7 +1309,8 @@ export default function ClientProjectDetailPage() {
       const data = await res.json();
       setMessages((prev) => [...prev, data.message]);
       setNewMessage('');
-      setPendingAttachments([]);
+      setPendingFiles([]);
+      setUploaderClearKey((k) => k + 1);
     } catch (err) {
       console.error('Error sending message:', err);
       setMessageError('Failed to send message');
@@ -2221,8 +2249,9 @@ export default function ClientProjectDetailPage() {
               loadingMessages={loadingMessages}
               sending={sending}
               messageError={messageError}
-              pendingAttachments={pendingAttachments}
-              onPendingAttachmentsChange={setPendingAttachments}
+              pendingFiles={pendingFiles}
+              onPendingFilesChange={setPendingFiles}
+              uploaderClearKey={uploaderClearKey}
               assistMessages={assistMessages}
               assistNewMessage={assistNewMessage}
               onAssistNewMessageChange={setAssistNewMessage}

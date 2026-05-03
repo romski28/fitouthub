@@ -131,7 +131,8 @@ export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [pendingAttachments, setPendingAttachments] = useState<{ url: string; filename: string }[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploaderClearKey, setUploaderClearKey] = useState(0);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -696,11 +697,39 @@ export default function FloatingChat() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!message.trim() && pendingAttachments.length === 0) || !threadId || sending) return;
-    const sent = await doSend(message.trim(), pendingAttachments);
+    if ((!message.trim() && pendingFiles.length === 0) || !threadId || sending) return;
+
+    // Upload any pending files before sending
+    let attachmentsToSend: { url: string; filename: string }[] = [];
+    if (pendingFiles.length > 0 && accessToken) {
+      try {
+        const formData = new FormData();
+        pendingFiles.forEach((file) => formData.append('files', file));
+        if (chatContext.projectId) formData.append('projectId', chatContext.projectId);
+
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formData,
+        });
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          attachmentsToSend = uploadData.urls.map((url: string, i: number) => ({
+            url,
+            filename: pendingFiles[i].name,
+          }));
+        }
+      } catch (e) {
+        console.warn('[FloatingChat] Image upload failed:', e);
+      }
+    }
+
+    const sent = await doSend(message.trim(), attachmentsToSend);
     if (sent) {
       setMessage('');
-      setPendingAttachments([]);
+      setPendingFiles([]);
+      setUploaderClearKey((k) => k + 1);
     }
   };
 
@@ -814,44 +843,15 @@ export default function FloatingChat() {
 
           {/* Input */}
           <form onSubmit={handleSend} className="border-t border-slate-200 p-4">
-            {/* Image uploader */}
+            {/* Image uploader — files are uploaded on send */}
             <div className="mb-3">
               <ChatImageUploader
-                onImagesUploaded={(images) => setPendingAttachments((prev) => [...prev, ...images])}
+                onFilesSelected={setPendingFiles}
                 maxImages={3}
                 disabled={sending || loading || !threadId}
+                clearKey={uploaderClearKey}
               />
             </div>
-
-            {/* Show pending attachments */}
-            {pendingAttachments.length > 0 && (
-              <div className="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="text-xs text-slate-600 mb-2 font-medium">
-                  {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {pendingAttachments.map((att, i) => (
-                    <div key={i} className="relative group">
-                      <img 
-                        src={att.url} 
-                        alt={att.filename} 
-                        className="w-16 h-16 object-cover rounded border border-slate-300"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs hover:bg-red-600 shadow-md"
-                      >
-                        ×
-                      </button>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 truncate opacity-0 group-hover:opacity-100 transition">
-                        {att.filename}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
             
             {/* Quick-action shortcuts */}
             {isLoggedIn && (
@@ -886,7 +886,7 @@ export default function FloatingChat() {
               />
               <button
                 type="submit"
-                disabled={(!message.trim() && pendingAttachments.length === 0) || sending || loading || !threadId}
+                disabled={(!message.trim() && pendingFiles.length === 0) || sending || loading || !threadId}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
               >
                 {sending ? '...' : 'Send'}

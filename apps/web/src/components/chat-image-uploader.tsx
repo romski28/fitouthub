@@ -1,46 +1,50 @@
 'use client';
 
-import { useState } from 'react';
-import { API_BASE_URL } from '@/config/api';
+import { useState, useEffect } from 'react';
 
 interface ChatImageUploaderProps {
-  onImagesUploaded: (images: { url: string; filename: string }[]) => void;
+  onFilesSelected: (files: File[]) => void;
   maxImages?: number;
   disabled?: boolean;
-  projectId?: string;
-  accessToken?: string;
+  /** Increment this value to programmatically clear the uploader (e.g. after a successful send). */
+  clearKey?: number;
 }
 
 export default function ChatImageUploader({
-  onImagesUploaded,
+  onFilesSelected,
   maxImages = 3,
   disabled = false,
-  projectId,
-  accessToken,
+  clearKey = 0,
 }: ChatImageUploaderProps) {
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewFiles, setPreviewFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  // Clear when parent signals success via clearKey increment
+  useEffect(() => {
+    if (clearKey > 0) {
+      setPreviewUrls((prev) => { prev.forEach(u => URL.revokeObjectURL(u)); return []; });
+      setPreviewFiles([]);
+      setError(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearKey]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Validate
     if (files.length > maxImages) {
       setError(`Maximum ${maxImages} image${maxImages > 1 ? 's' : ''} allowed`);
       return;
     }
 
-    // Check file sizes (10MB limit per file)
     const oversized = files.filter(f => f.size > 10 * 1024 * 1024);
     if (oversized.length > 0) {
       setError(`File too large: ${oversized[0].name} (max 10MB)`);
       return;
     }
 
-    // Check file types
     const invalidTypes = files.filter(f => !f.type.startsWith('image/'));
     if (invalidTypes.length > 0) {
       setError(`Invalid file type: ${invalidTypes[0].name} (images only)`);
@@ -48,75 +52,41 @@ export default function ChatImageUploader({
     }
 
     setError(null);
-    setPreviewFiles(files);
-    
-    // Create preview URLs
+
+    // Revoke any existing preview URLs before replacing
+    previewUrls.forEach(u => URL.revokeObjectURL(u));
+
     const urls = files.map(f => URL.createObjectURL(f));
+    setPreviewFiles(files);
     setPreviewUrls(urls);
-  };
+    onFilesSelected(files);
 
-  const handleUpload = async () => {
-    if (previewFiles.length === 0) return;
-
-    setUploading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      previewFiles.forEach((file) => formData.append('files', file));
-      if (projectId) {
-        formData.append('projectId', projectId);
-      }
-
-      const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
-        method: 'POST',
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || 'Upload failed');
-      }
-
-      const data = await res.json();
-      const images = data.urls.map((url: string, i: number) => ({
-        url,
-        filename: previewFiles[i].name,
-      }));
-
-      onImagesUploaded(images);
-      
-      // Clean up
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
-      setPreviewFiles([]);
-      setPreviewUrls([]);
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    // Reset the input so the same file can be re-selected after clearing
+    e.target.value = '';
   };
 
   const removePreview = (index: number) => {
     URL.revokeObjectURL(previewUrls[index]);
-    setPreviewFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    const newFiles = previewFiles.filter((_, i) => i !== index);
+    const newUrls = previewUrls.filter((_, i) => i !== index);
+    setPreviewFiles(newFiles);
+    setPreviewUrls(newUrls);
+    onFilesSelected(newFiles);
   };
 
   const clearAll = () => {
-    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    previewUrls.forEach(u => URL.revokeObjectURL(u));
     setPreviewFiles([]);
     setPreviewUrls([]);
     setError(null);
+    onFilesSelected([]);
   };
 
   return (
     <div className="space-y-2">
-      {/* File input button */}
+      {/* File input trigger */}
       <div className="flex items-center gap-2">
-        <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+        <label className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium transition shadow-sm ${disabled ? 'bg-slate-600 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -126,79 +96,56 @@ export default function ChatImageUploader({
             multiple
             accept="image/*"
             onChange={handleFileSelect}
-            disabled={disabled || uploading}
+            disabled={disabled}
             className="hidden"
           />
         </label>
 
         {previewFiles.length > 0 && (
-          <span className="text-xs text-slate-600 ml-2">
-            {previewFiles.length} image{previewFiles.length > 1 ? 's' : ''} selected
+          <span className="text-xs text-slate-400 ml-1">
+            {previewFiles.length} image{previewFiles.length > 1 ? 's' : ''} attached — will send with message
           </span>
         )}
       </div>
 
-      {/* Preview images */}
+      {/* Previews */}
       {previewFiles.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {previewFiles.map((file, i) => (
-              <div key={i} className="relative group">
-                <img
-                  src={previewUrls[i]}
-                  alt={file.name}
-                  className="w-20 h-20 object-cover rounded border border-slate-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePreview(i)}
-                  disabled={uploading}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm hover:bg-red-600 shadow-md disabled:opacity-50"
-                >
-                  ×
-                </button>
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition">
-                  {file.name}
-                </div>
+        <div className="flex flex-wrap items-start gap-2">
+          {previewFiles.map((file, i) => (
+            <div key={i} className="relative group">
+              <img
+                src={previewUrls[i]}
+                alt={file.name}
+                className="w-20 h-20 object-cover rounded border border-slate-600"
+              />
+              <button
+                type="button"
+                onClick={() => removePreview(i)}
+                disabled={disabled}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm hover:bg-red-600 shadow-md disabled:opacity-50"
+              >
+                ×
+              </button>
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition">
+                {file.name}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleUpload}
-              disabled={uploading || disabled}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
-            >
-              {uploading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Uploading...
-                </span>
-              ) : (
-                `Upload ${previewFiles.length} image${previewFiles.length > 1 ? 's' : ''}`
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={clearAll}
-              disabled={uploading}
-              className="px-3 py-2 text-slate-600 hover:text-slate-800 text-sm disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={clearAll}
+            disabled={disabled}
+            className="self-end px-2 py-1 text-slate-400 hover:text-slate-200 text-xs disabled:opacity-50"
+          >
+            Clear
+          </button>
         </div>
       )}
 
-      {/* Error message */}
+      {/* Validation error */}
       {error && (
-        <div className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded border border-red-200 flex items-start gap-2">
+        <div className="text-xs text-red-400 bg-red-900/30 px-3 py-2 rounded border border-red-500/40 flex items-start gap-2">
           <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -208,3 +155,4 @@ export default function ChatImageUploader({
     </div>
   );
 }
+

@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-03-c311d2a",
+    "date": "2026-05-03T11:16:16+08:00",
+    "title": "feat(web): 2-step chat image upload — select then send, no separate Upload step",
+    "summary": "feat(web): 2-step chat image upload — select then send, no separate Upload step",
+    "areas": [
+      "web"
+    ],
+    "commit": "c311d2a",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx",
+      "apps/web/src/components/chat-image-uploader.tsx",
+      "apps/web/src/components/floating-chat.tsx",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-01-5eab520",
     "date": "2026-05-01T21:44:02+08:00",
     "title": "fix(web): avoid repeated progress modal reloads while open",

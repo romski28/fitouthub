@@ -463,23 +463,40 @@ export function RespondMaterialsClaimModal({
               {/* Add new image/receipt button */}
               <div className="mb-2">
                 <ChatImageUploader
-                  onImagesUploaded={(images) => {
-                    setUploadRows((prev) => [
-                      ...prev,
-                      ...images.map((img, i) => ({
-                        id: `upload-${Date.now()}-${i}`,
-                        filename: img.filename,
-                        url: img.url,
-                        note: '',
-                        value: '',
-                        uploading: false,
-                        kind: 'photo' as const,
-                      })),
-                    ]);
+                  onFilesSelected={async (files) => {
+                    if (files.length === 0) return;
+                    try {
+                      const formData = new FormData();
+                      files.forEach((file) => formData.append('files', file));
+                      if (state.projectId) formData.append('projectId', state.projectId);
+
+                      const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
+                        method: 'POST',
+                        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+                        body: formData,
+                      });
+
+                      if (!res.ok) throw new Error('Upload failed');
+
+                      const data = await res.json();
+                      setUploadRows((prev) => [
+                        ...prev,
+                        ...data.urls.map((url: string, i: number) => ({
+                          id: `upload-${Date.now()}-${i}`,
+                          filename: files[i].name,
+                          url,
+                          note: '',
+                          value: '',
+                          uploading: false,
+                          kind: 'photo' as const,
+                        })),
+                      ]);
+                    } catch {
+                      // error shown by uploader's own validation; nothing more needed
+                    }
                   }}
                   maxImages={5}
                   disabled={savingClaim}
-                  projectId={state.projectId}
                 />
               </div>
 

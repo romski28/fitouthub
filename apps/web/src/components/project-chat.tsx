@@ -48,7 +48,8 @@ export default function ProjectChat({
 }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [pendingAttachments, setPendingAttachments] = useState<{ url: string; filename: string }[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploaderClearKey, setUploaderClearKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,12 +116,37 @@ export default function ProjectChat({
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!newMessage.trim() && pendingAttachments.length === 0) || sending) return;
+    if ((!newMessage.trim() && pendingFiles.length === 0) || sending) return;
 
     setSending(true);
     setError(null);
 
     try {
+      // Upload any pending files first
+      let attachments: { url: string; filename: string }[] = [];
+      if (pendingFiles.length > 0) {
+        const formData = new FormData();
+        pendingFiles.forEach((file) => formData.append('files', file));
+        if (projectId) formData.append('projectId', projectId);
+
+        const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
+          method: 'POST',
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const text = await uploadRes.text();
+          throw new Error(text || 'Image upload failed');
+        }
+
+        const uploadData = await uploadRes.json();
+        attachments = uploadData.urls.map((url: string, i: number) => ({
+          url,
+          filename: pendingFiles[i].name,
+        }));
+      }
+
       const res = await fetch(`${API_BASE_URL}/projects/${projectId}/chat/messages`, {
         method: 'POST',
         headers: {
@@ -129,7 +155,7 @@ export default function ProjectChat({
         },
         body: JSON.stringify({ 
           content: newMessage.trim(),
-          attachments: pendingAttachments,
+          attachments,
           threadScope,
           threadScopeId,
         }),
@@ -142,7 +168,8 @@ export default function ProjectChat({
       const data = await res.json();
       setMessages((prev) => [...prev, data.message]);
       setNewMessage('');
-      setPendingAttachments([]);
+      setPendingFiles([]);
+      setUploaderClearKey((k) => k + 1);
       
       // Fire onMessageSent callback if provided
       if (onMessageSent) {
@@ -257,46 +284,15 @@ export default function ProjectChat({
           </div>
         )}
         
-        {/* Image uploader */}
+        {/* Image uploader — files are uploaded on send */}
         <div className="mb-3">
           <ChatImageUploader
-            onImagesUploaded={(images) => setPendingAttachments((prev) => [...prev, ...images])}
+            onFilesSelected={setPendingFiles}
             maxImages={3}
             disabled={sending || loading}
-            projectId={projectId}
-            accessToken={accessToken}
+            clearKey={uploaderClearKey}
           />
         </div>
-
-        {/* Show pending attachments */}
-        {pendingAttachments.length > 0 && (
-          <div className="mb-3 p-2 bg-slate-800/60 rounded-lg border border-slate-700">
-            <div className="text-xs text-slate-300 mb-2 font-medium">
-              {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {pendingAttachments.map((att, i) => (
-                <div key={i} className="relative group">
-                  <img 
-                    src={att.url} 
-                    alt={att.filename} 
-                    className="w-16 h-16 object-cover rounded border border-slate-300"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs hover:bg-red-600 shadow-md"
-                  >
-                    ×
-                  </button>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 truncate opacity-0 group-hover:opacity-100 transition">
-                    {att.filename}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
@@ -309,10 +305,12 @@ export default function ProjectChat({
           />
           <button
             type="submit"
-            disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending || loading}
+            disabled={(!newMessage.trim() && pendingFiles.length === 0) || sending || loading}
             className="w-full shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-700 sm:w-auto"
           >
-            {sending ? 'Sending...' : sendButtonLabel}
+            {sending
+              ? (pendingFiles.length > 0 ? 'Uploading & Sending...' : 'Sending...')
+              : sendButtonLabel}
           </button>
         </div>
       </form>

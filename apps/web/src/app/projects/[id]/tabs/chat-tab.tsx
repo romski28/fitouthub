@@ -53,8 +53,9 @@ interface ChatTabProps {
   loadingMessages: boolean;
   sending: boolean;
   messageError: string | null;
-  pendingAttachments: { url: string; filename: string }[];
-  onPendingAttachmentsChange: (attachments: { url: string; filename: string }[]) => void;
+  pendingFiles: File[];
+  onPendingFilesChange: (files: File[]) => void;
+  uploaderClearKey?: number;
   // Fitout Hub Assistance
   assistMessages: Message[];
   assistNewMessage: string;
@@ -89,8 +90,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   loadingMessages,
   sending,
   messageError,
-  pendingAttachments,
-  onPendingAttachmentsChange,
+  pendingFiles,
+  onPendingFilesChange,
+  uploaderClearKey = 0,
   assistMessages,
   assistNewMessage,
   onAssistNewMessageChange,
@@ -379,42 +381,15 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {/* Image uploader */}
+                    {/* Image uploader — files are uploaded on send */}
                     <div>
                       <ChatImageUploader
-                        onImagesUploaded={(images) => onPendingAttachmentsChange([...pendingAttachments, ...images])}
+                        onFilesSelected={onPendingFilesChange}
                         maxImages={3}
                         disabled={sending || loadingMessages}
-                        projectId={projectId}
+                        clearKey={uploaderClearKey}
                       />
                     </div>
-
-                    {/* Show pending attachments */}
-                    {pendingAttachments.length > 0 && (
-                      <div className="p-2 bg-slate-800/60 rounded-lg border border-slate-700">
-                        <div className="text-xs text-slate-300 mb-2 font-medium">
-                          {pendingAttachments.length} image{pendingAttachments.length > 1 ? 's' : ''} ready to send
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {pendingAttachments.map((att, i) => (
-                            <div key={i} className="relative group">
-                              <img 
-                                src={att.url} 
-                                alt={att.filename} 
-                                className="w-16 h-16 object-cover rounded border border-slate-600"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => onPendingAttachmentsChange(pendingAttachments.filter((_, idx) => idx !== i))}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs hover:bg-red-600 shadow-md"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                     <div className="flex gap-2">
                       <input
@@ -432,10 +407,12 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                       />
                       <button
                         onClick={onSendMessage}
-                        disabled={(!newMessage.trim() && pendingAttachments.length === 0) || sending}
+                        disabled={(!newMessage.trim() && pendingFiles.length === 0) || sending}
                         className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                       >
-                        {sending ? 'Sending...' : 'Send'}
+                        {sending
+                          ? (pendingFiles.length > 0 ? 'Uploading & Sending...' : 'Sending...')
+                          : 'Send'}
                       </button>
                     </div>
                   </div>
