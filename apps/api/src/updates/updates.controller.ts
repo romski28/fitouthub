@@ -226,4 +226,28 @@ export class UpdatesController {
 
     return this.updatesService.markMessageGroupAsRead(userId, role, body);
   }
+
+  @Get('messages/read-marker')
+  @UseGuards(CombinedAuthGuard)
+  async getMessageGroupReadMarker(
+    @Req() req: any,
+    @Query('chatType') chatType?: 'project-professional' | 'project-general' | 'assist' | 'private-foh',
+    @Query('threadId') threadId?: string,
+    @Query('threadScope') threadScope?: string,
+    @Query('threadScopeId') threadScopeId?: string,
+  ) {
+    if (!chatType || !threadId) {
+      throw new BadRequestException('chatType and threadId are required');
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    const role = req.user?.isProfessional ? 'professional' : req.user.role || 'client';
+
+    return this.updatesService.getMessageGroupReadMarker(userId, role, {
+      chatType,
+      threadId,
+      threadScope,
+      threadScopeId,
+    });
+  }
 }

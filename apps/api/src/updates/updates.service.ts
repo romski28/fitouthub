@@ -37,6 +37,12 @@ export interface UpdatesSummary {
   totalCount: number;
 }
 
+export interface MessageGroupReadMarker {
+  lastReadMessageId: string | null;
+  firstUnreadMessageId: string | null;
+  unreadCount: number;
+}
+
 export interface AdminOpsSummary {
   support: {
     unassigned: number;
@@ -2317,6 +2323,384 @@ export class UpdatesService {
 
     this.invalidateSummaryCache(userId, role);
     return { success: true };
+  }
+
+  async getMessageGroupReadMarker(
+    userId: string,
+    role: 'client' | 'professional' | 'admin',
+    body: {
+      chatType: 'project-professional' | 'project-general' | 'assist' | 'private-foh';
+      threadId: string;
+      threadScope?: string;
+      threadScopeId?: string;
+    },
+  ): Promise<MessageGroupReadMarker> {
+    const { chatType, threadId } = body;
+
+    if (!chatType || !threadId) {
+      throw new BadRequestException('chatType and threadId are required');
+    }
+
+    if (role === 'admin') {
+      throw new BadRequestException('Read marker endpoint is for client/professional actors only');
+    }
+
+    const professional =
+      role === 'professional'
+        ? await this.prisma.professional.findFirst({
+            where: {
+              OR: [{ userId }, { id: userId }],
+            },
+          })
+        : null;
+
+    if (role === 'professional' && !professional) {
+      throw new BadRequestException('Professional not found');
+    }
+
+    const normalizedScope = String(body.threadScope || '').trim().toLowerCase() || null;
+    const normalizedScopeId = String(body.threadScopeId || '').trim() || null;
+    const scopeWhere =
+      normalizedScope && normalizedScopeId
+        ? { threadScope: normalizedScope, threadScopeId: normalizedScopeId }
+        : {};
+
+    if (chatType === 'project-professional') {
+      const projectProfessional = await this.prisma.projectProfessional.findUnique({
+        where: { id: threadId },
+        include: { project: true },
+      });
+
+      if (!projectProfessional) {
+        throw new BadRequestException('Project thread not found');
+      }
+
+      if (role === 'client') {
+        if (
+          projectProfessional.project.userId !== userId &&
+          projectProfessional.project.clientId !== userId
+        ) {
+          throw new BadRequestException('Not authorized');
+        }
+
+        const [lastRead, firstUnread, unreadCount] = await Promise.all([
+          this.prisma.message.findFirst({
+            where: {
+              projectProfessionalId: threadId,
+              senderType: 'professional',
+              readByClientAt: { not: null },
+            },
+            orderBy: { readByClientAt: 'desc' },
+            select: { id: true },
+          }),
+          this.prisma.message.findFirst({
+            where: {
+              projectProfessionalId: threadId,
+              senderType: 'professional',
+              readByClientAt: null,
+            },
+            orderBy: { createdAt: 'asc' },
+            select: { id: true },
+          }),
+          this.prisma.message.count({
+            where: {
+              projectProfessionalId: threadId,
+              senderType: 'professional',
+              readByClientAt: null,
+            },
+          }),
+        ]);
+
+        return {
+          lastReadMessageId: lastRead?.id ?? null,
+          firstUnreadMessageId: firstUnread?.id ?? null,
+          unreadCount,
+        };
+      }
+
+      if (projectProfessional.professionalId !== professional!.id) {
+        throw new BadRequestException('Not authorized');
+      }
+
+      const [lastRead, firstUnread, unreadCount] = await Promise.all([
+        this.prisma.message.findFirst({
+          where: {
+            projectProfessionalId: threadId,
+            senderType: 'client',
+            readByProfessionalAt: { not: null },
+          },
+          orderBy: { readByProfessionalAt: 'desc' },
+          select: { id: true },
+        }),
+        this.prisma.message.findFirst({
+          where: {
+            projectProfessionalId: threadId,
+            senderType: 'client',
+            readByProfessionalAt: null,
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        }),
+        this.prisma.message.count({
+          where: {
+            projectProfessionalId: threadId,
+            senderType: 'client',
+            readByProfessionalAt: null,
+          },
+        }),
+      ]);
+
+      return {
+        lastReadMessageId: lastRead?.id ?? null,
+        firstUnreadMessageId: firstUnread?.id ?? null,
+        unreadCount,
+      };
+    }
+
+    if (chatType === 'project-general') {
+      const thread = await this.prisma.projectChatThread.findUnique({
+        where: { id: threadId },
+        include: { project: true },
+      });
+
+      if (!thread) {
+        throw new BadRequestException('Project chat not found');
+      }
+
+      if (role === 'client') {
+        if (thread.project.userId !== userId && thread.project.clientId !== userId) {
+          throw new BadRequestException('Not authorized');
+        }
+
+        const [lastRead, firstUnread, unreadCount] = await Promise.all([
+          this.prisma.projectChatMessage.findFirst({
+            where: {
+              threadId,
+              senderType: { not: 'client' },
+              readByClientAt: { not: null },
+              ...scopeWhere,
+            },
+            orderBy: { readByClientAt: 'desc' },
+            select: { id: true },
+          }),
+          this.prisma.projectChatMessage.findFirst({
+            where: {
+              threadId,
+              senderType: { not: 'client' },
+              readByClientAt: null,
+              ...scopeWhere,
+            },
+            orderBy: { createdAt: 'asc' },
+            select: { id: true },
+          }),
+          this.prisma.projectChatMessage.count({
+            where: {
+              threadId,
+              senderType: { not: 'client' },
+              readByClientAt: null,
+              ...scopeWhere,
+            },
+          }),
+        ]);
+
+        return {
+          lastReadMessageId: lastRead?.id ?? null,
+          firstUnreadMessageId: firstUnread?.id ?? null,
+          unreadCount,
+        };
+      }
+
+      const awarded = await this.prisma.projectProfessional.findFirst({
+        where: {
+          projectId: thread.projectId,
+          professionalId: professional!.id,
+          status: 'awarded',
+        },
+      });
+
+      if (!awarded) {
+        throw new BadRequestException('Not authorized');
+      }
+
+      const [lastRead, firstUnread, unreadCount] = await Promise.all([
+        this.prisma.projectChatMessage.findFirst({
+          where: {
+            threadId,
+            senderType: { not: 'professional' },
+            readByProAt: { not: null },
+            ...scopeWhere,
+          },
+          orderBy: { readByProAt: 'desc' },
+          select: { id: true },
+        }),
+        this.prisma.projectChatMessage.findFirst({
+          where: {
+            threadId,
+            senderType: { not: 'professional' },
+            readByProAt: null,
+            ...scopeWhere,
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        }),
+        this.prisma.projectChatMessage.count({
+          where: {
+            threadId,
+            senderType: { not: 'professional' },
+            readByProAt: null,
+            ...scopeWhere,
+          },
+        }),
+      ]);
+
+      return {
+        lastReadMessageId: lastRead?.id ?? null,
+        firstUnreadMessageId: firstUnread?.id ?? null,
+        unreadCount,
+      };
+    }
+
+    if (chatType === 'assist') {
+      const assistRequest = await this.prisma.projectAssistRequest.findUnique({
+        where: { id: threadId },
+        include: { project: true },
+      });
+
+      if (!assistRequest) {
+        throw new BadRequestException('Assist request not found');
+      }
+
+      if (
+        role !== 'client' ||
+        (assistRequest.project.userId !== userId && assistRequest.project.clientId !== userId)
+      ) {
+        throw new BadRequestException('Not authorized');
+      }
+
+      const [lastRead, firstUnread, unreadCount] = await Promise.all([
+        this.prisma.assistMessage.findFirst({
+          where: {
+            assistRequestId: threadId,
+            senderType: 'foh',
+            readByClientAt: { not: null },
+          },
+          orderBy: { readByClientAt: 'desc' },
+          select: { id: true },
+        }),
+        this.prisma.assistMessage.findFirst({
+          where: {
+            assistRequestId: threadId,
+            senderType: 'foh',
+            readByClientAt: null,
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        }),
+        this.prisma.assistMessage.count({
+          where: {
+            assistRequestId: threadId,
+            senderType: 'foh',
+            readByClientAt: null,
+          },
+        }),
+      ]);
+
+      return {
+        lastReadMessageId: lastRead?.id ?? null,
+        firstUnreadMessageId: firstUnread?.id ?? null,
+        unreadCount,
+      };
+    }
+
+    if (chatType === 'private-foh') {
+      if (role === 'client') {
+        const thread = await this.prisma.privateChatThread.findFirst({
+          where: { id: threadId, userId },
+        });
+
+        if (!thread) {
+          throw new BadRequestException('Support thread not found');
+        }
+
+        const [lastRead, firstUnread, unreadCount] = await Promise.all([
+          this.prisma.privateChatMessage.findFirst({
+            where: {
+              threadId,
+              senderType: 'foh',
+              readByUserAt: { not: null },
+            },
+            orderBy: { readByUserAt: 'desc' },
+            select: { id: true },
+          }),
+          this.prisma.privateChatMessage.findFirst({
+            where: {
+              threadId,
+              senderType: 'foh',
+              readByUserAt: null,
+            },
+            orderBy: { createdAt: 'asc' },
+            select: { id: true },
+          }),
+          this.prisma.privateChatMessage.count({
+            where: {
+              threadId,
+              senderType: 'foh',
+              readByUserAt: null,
+            },
+          }),
+        ]);
+
+        return {
+          lastReadMessageId: lastRead?.id ?? null,
+          firstUnreadMessageId: firstUnread?.id ?? null,
+          unreadCount,
+        };
+      }
+
+      const thread = await this.prisma.privateChatThread.findFirst({
+        where: { id: threadId, professionalId: professional!.id },
+      });
+
+      if (!thread) {
+        throw new BadRequestException('Support thread not found');
+      }
+
+      const [lastRead, firstUnread, unreadCount] = await Promise.all([
+        this.prisma.privateChatMessage.findFirst({
+          where: {
+            threadId,
+            senderType: 'foh',
+            readByProAt: { not: null },
+          },
+          orderBy: { readByProAt: 'desc' },
+          select: { id: true },
+        }),
+        this.prisma.privateChatMessage.findFirst({
+          where: {
+            threadId,
+            senderType: 'foh',
+            readByProAt: null,
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        }),
+        this.prisma.privateChatMessage.count({
+          where: {
+            threadId,
+            senderType: 'foh',
+            readByProAt: null,
+          },
+        }),
+      ]);
+
+      return {
+        lastReadMessageId: lastRead?.id ?? null,
+        firstUnreadMessageId: firstUnread?.id ?? null,
+        unreadCount,
+      };
+    }
+
+    throw new BadRequestException('Invalid chat type');
   }
 
   /**

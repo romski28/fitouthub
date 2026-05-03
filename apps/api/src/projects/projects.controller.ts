@@ -993,44 +993,22 @@ export class ProjectsController {
       !!req?.user?.isProfessional ||
       String(req?.user?.role || '').toLowerCase() === 'professional';
 
-    const normalizedScope = String(threadScope || '').trim().toLowerCase() || null;
-    const normalizedScopeId = String(threadScopeId || '').trim() || null;
-
-    const scopeWhere =
-      normalizedScope && normalizedScopeId
-        ? { threadScope: normalizedScope, threadScopeId: normalizedScopeId }
-        : {};
-
-    const lastRead = await this.prisma.projectChatMessage.findFirst({
-      where: isProfessional
-        ? { threadId: thread.id, readByProAt: { not: null }, ...scopeWhere }
-        : { threadId: thread.id, readByClientAt: { not: null }, ...scopeWhere },
-      orderBy: isProfessional ? { readByProAt: 'desc' } : { readByClientAt: 'desc' },
-      select: { id: true },
-    });
-
-    const firstUnread = await this.prisma.projectChatMessage.findFirst({
-      where: isProfessional
-        ? {
-            threadId: thread.id,
-            senderType: { not: 'professional' },
-            readByProAt: null,
-            ...scopeWhere,
-          }
-        : {
-            threadId: thread.id,
-            senderType: { not: 'client' },
-            readByClientAt: null,
-            ...scopeWhere,
-          },
-      orderBy: { createdAt: 'asc' },
-      select: { id: true },
-    });
+    const marker = await this.updatesService.getMessageGroupReadMarker(
+      actorId,
+      isProfessional ? 'professional' : 'client',
+      {
+        chatType: 'project-general',
+        threadId: thread.id,
+        threadScope,
+        threadScopeId,
+      },
+    );
 
     return {
       ...thread,
-      lastReadMessageId: lastRead?.id ?? null,
-      firstUnreadMessageId: firstUnread?.id ?? null,
+      lastReadMessageId: marker.lastReadMessageId,
+      firstUnreadMessageId: marker.firstUnreadMessageId,
+      unreadCount: marker.unreadCount,
     };
   }
 

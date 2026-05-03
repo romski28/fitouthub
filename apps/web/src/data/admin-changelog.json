@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-03-53bb675",
+    "date": "2026-05-03T23:17:33+08:00",
+    "title": "feat: phase 3 centralized read-marker compatibility endpoint",
+    "summary": "feat: phase 3 centralized read-marker compatibility endpoint",
+    "areas": [
+      "api"
+    ],
+    "commit": "53bb675",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/updates/updates.controller.ts",
+      "apps/api/src/updates/updates.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-03-d10802e",
     "date": "2026-05-03T23:15:04+08:00",
     "title": "feat: phase 3 legacy mark-read compatibility routing",
