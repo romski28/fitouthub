@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-05-03-9fb0d5a",
+    "date": "2026-05-03T22:11:22+08:00",
+    "title": "chore: trigger Vercel redeploy",
+    "summary": "chore: trigger Vercel redeploy",
+    "areas": [],
+    "commit": "9fb0d5a",
+    "files": []
+  },
+  {
     "id": "2026-05-03-ea8d9dd",
     "date": "2026-05-03T22:06:45+08:00",
     "title": "feat: Phase 2 mark-read real everywhere",
