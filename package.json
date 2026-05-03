@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "hooks:install": "node scripts/install-changelog-hook.js"
+    "hooks:install": "node scripts/install-changelog-hook.js",
+    "smoke:read-marker": "node scripts/smoke-read-marker.js"
   },
   "keywords": [],
   "author": "",

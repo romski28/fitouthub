@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-04-fa7562a",
+    "date": "2026-05-04T00:43:13+08:00",
+    "title": "test: add read-marker smoke script for send and mark-read flow",
+    "summary": "test: add read-marker smoke script for send and mark-read flow",
+    "areas": [
+      "infra"
+    ],
+    "commit": "fa7562a",
+    "files": [
+      "package.json",
+      "scripts/smoke-read-marker.js"
+    ]
+  },
+  {
     "id": "2026-05-04-010acbe",
     "date": "2026-05-04T00:38:56+08:00",
     "title": "refactor: phase 5 unify updates summary unread logic via read-marker service",
