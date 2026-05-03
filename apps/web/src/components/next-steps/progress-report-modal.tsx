@@ -553,9 +553,32 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const [showShareCelebration, setShowShareCelebration] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
   const [composeChatRefreshKey, setComposeChatRefreshKey] = React.useState(0);
+  const [shouldRender, setShouldRender] = React.useState(isOpen);
+  const [isAnimatingIn, setIsAnimatingIn] = React.useState(false);
   const celebrationTimerRef = React.useRef<number | null>(null);
   const threadBottomRef = React.useRef<HTMLDivElement>(null);
   const initialLoadKeyRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      const frameId = window.requestAnimationFrame(() => {
+        setIsAnimatingIn(true);
+      });
+      return () => {
+        window.cancelAnimationFrame(frameId);
+      };
+    }
+
+    setIsAnimatingIn(false);
+    const timeoutId = window.setTimeout(() => {
+      setShouldRender(false);
+    }, 240);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isOpen]);
 
   // Fetch on open
   React.useEffect(() => {
@@ -622,7 +645,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
 
   // Reset on close
   React.useEffect(() => {
-    if (!isOpen) {
+    if (!shouldRender) {
       if (celebrationTimerRef.current) {
         window.clearTimeout(celebrationTimerRef.current);
         celebrationTimerRef.current = null;
@@ -640,7 +663,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
       setDecidingId(null);
       setMode(isClient || isReviewMode ? 'thread' : 'compose');
     }
-  }, [isOpen, isClient, isReviewMode]);
+  }, [shouldRender, isClient, isReviewMode]);
 
   const refreshReports = React.useCallback(() => {
     if (!state.projectId || !effectiveAccessToken) return;
@@ -714,8 +737,8 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
     [effectiveAccessToken, state, refreshReports],
   );
 
-  if (!isOpen) return null;
-  const showMainModal = isOpen && !workflowModalOpen;
+  if (!shouldRender) return null;
+  const showMainModal = shouldRender && !workflowModalOpen;
   const milestoneMap = new Map(milestones.map((m) => [m.id, m]));
   const hasReports = reports.length > 0;
   const frontTitle =
@@ -750,10 +773,16 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
 
       {showMainModal && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 backdrop-blur-sm sm:items-stretch sm:justify-end sm:p-0"
+          className={`fixed inset-0 z-50 flex items-end justify-center p-2 backdrop-blur-sm transition-opacity duration-200 sm:items-stretch sm:justify-end sm:p-0 ${
+            isAnimatingIn ? 'bg-black/60 opacity-100' : 'bg-black/0 opacity-0'
+          }`}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <div className="w-full max-w-3xl [perspective:1600px] sm:my-0 sm:h-full sm:max-w-none sm:w-[min(92vw,56rem)]">
+          <div
+            className={`w-full max-w-3xl [perspective:1600px] transition-transform duration-300 ease-out sm:my-0 sm:h-full sm:max-w-none sm:w-[min(92vw,56rem)] ${
+              isAnimatingIn ? 'translate-y-0 sm:translate-x-0' : 'translate-y-12 sm:translate-x-14 sm:translate-y-0'
+            }`}
+          >
             <div
               className="relative grid [transform-style:preserve-3d] transition-transform duration-500 ease-out"
               style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
@@ -812,14 +841,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                   </div>
                 ) : mode === 'compose' ? (
                   <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-5">
-                    <div className="flex min-h-0 flex-col gap-4" style={{ minHeight: panelBodyMaxHeight }}>
+                    <div className="flex min-h-0 flex-col gap-4 pb-1">
                     {state.projectId && effectiveAccessToken && (
-                      <div className="rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden" style={{ maxHeight: '80dvh' }}>
-                        <div className="px-3 pt-2 pb-0.5 border-b border-slate-700">
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                            Project Updates Chat
-                          </p>
-                        </div>
+                      <div className="h-[70dvh] max-h-[70dvh] min-h-[20rem] rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
                         <ProjectChat
                           projectId={state.projectId}
                           accessToken={effectiveAccessToken}
@@ -830,6 +854,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                           sendButtonLabel="Send"
                           messagePlaceholder="Comment or ask a question about this update…"
                           fillHeight={true}
+                          headerTitle="Project Team Chat - Project Updates"
+                          headerSubtitle=""
+                          showPresenceIndicator={false}
                           className="border-0 rounded-none bg-transparent shadow-none"
                         />
                       </div>
@@ -891,11 +918,6 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                     {/* Scoped reply chat */}
                     {state.projectId && effectiveAccessToken && (
                       <div className="border-t border-slate-700 shrink-0">
-                        <div className="px-3 pt-2 pb-0.5">
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                            Reply to project team
-                          </p>
-                        </div>
                         <ProjectChat
                           projectId={state.projectId}
                           accessToken={effectiveAccessToken}
@@ -905,6 +927,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                           sendButtonLabel="Send"
                           messagePlaceholder="Comment or ask a question about this update…"
                           fillHeight={false}
+                          headerTitle="Project Team Chat - Project Updates"
+                          headerSubtitle=""
+                          showPresenceIndicator={false}
                           className="border-0 rounded-none bg-transparent shadow-none"
                         />
                       </div>

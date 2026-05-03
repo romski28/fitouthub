@@ -31,6 +31,12 @@ interface ProjectChatProps {
   fillHeight?: boolean;
   /** Increment to force a message list refetch without remounting the chat component. */
   refreshToken?: number;
+  /** Optional custom header title. */
+  headerTitle?: string;
+  /** Optional custom subtitle; pass empty string to hide subtitle. */
+  headerSubtitle?: string;
+  /** Whether to show the active presence chip in the header. */
+  showPresenceIndicator?: boolean;
 }
 
 export default function ProjectChat({
@@ -45,6 +51,9 @@ export default function ProjectChat({
   onMessageSent,
   fillHeight = false,
   refreshToken = 0,
+  headerTitle = 'Project Team Chat',
+  headerSubtitle = 'Client, awarded professionals & Fitout Hub',
+  showPresenceIndicator = true,
 }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -202,13 +211,17 @@ export default function ProjectChat({
       <div className="px-4 py-3 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-white">Project Team Chat</h3>
-            <p className="text-xs text-slate-300">Client, awarded professionals & Fitout Hub</p>
+            <h3 className="text-sm font-semibold text-white">{headerTitle}</h3>
+            {headerSubtitle.trim() ? (
+              <p className="text-xs text-slate-300">{headerSubtitle}</p>
+            ) : null}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="Live chat"></div>
-            <span className="text-xs text-emerald-300 font-medium">Active</span>
-          </div>
+          {showPresenceIndicator ? (
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="Live chat"></div>
+              <span className="text-xs text-emerald-300 font-medium">Active</span>
+            </div>
+          ) : null}
         </div>
       </div>
 
