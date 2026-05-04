@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-04-77314e3",
+    "date": "2026-05-04T14:24:16+08:00",
+    "title": "fix(review-quotes-modal): center on mobile and isolate quotation terms above scroll list",
+    "summary": "fix(review-quotes-modal): center on mobile and isolate quotation terms above scroll list",
+    "areas": [
+      "web"
+    ],
+    "commit": "77314e3",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-0238949",
     "date": "2026-05-04T14:12:10+08:00",
     "title": "feat(unread-bubbles): open scoped recent activity drawer and remove redundant view-activity CTA",

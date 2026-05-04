@@ -262,10 +262,10 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const title = state.modalContent?.title || 'Review Quotes';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg [perspective:1600px]">
-        <div className="relative min-h-[420px] h-[80dvh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+        <div className="relative h-[86dvh] min-h-[420px] max-h-[760px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
           <div className="absolute inset-0 flex flex-col h-full overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
             <div className="relative flex items-center justify-between border-b border-slate-700 px-5 pb-4 pt-5 shrink-0">
               {hasDetails && (
@@ -286,34 +286,37 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               </div>
             </div>
 
+            <div className="shrink-0 px-5 pt-4">
+              <div className="rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs text-blue-100">
+                <p className="font-semibold text-blue-200">Quotation Terms</p>
+                <p className="mt-1 leading-relaxed">
+                  Quotations are based on your project description, images, and information you&apos;ve provided. Professionals have the right to visit the site at no cost to you to inspect the project. If site conditions differ materially from your description, the professional may request a quotation adjustment with Mimo approval.
+                </p>
+              </div>
+            </div>
+
             <div className="next-step-scrollbar overflow-y-auto flex-1 px-5 py-4 space-y-3">
-          <div className="sticky top-0 z-10 rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs text-blue-100">
-            <p className="font-semibold text-blue-200">Quotation Terms</p>
-            <p className="mt-1 leading-relaxed">
-              Quotations are based on your project description, images, and information you&apos;ve provided. Professionals have the right to visit the site at no cost to you to inspect the project. If site conditions differ materially from your description, the professional may request a quotation adjustment with Mimo approval.
-            </p>
-          </div>
-          {fetching && (
-            <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-              Loading quotes...
-            </div>
-          )}
+              {fetching && (
+                <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Loading quotes...
+                </div>
+              )}
 
-          {fetchError && (
-            <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {fetchError}
-            </div>
-          )}
+              {fetchError && (
+                <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {fetchError}
+                </div>
+              )}
 
-          {!fetching && !fetchError && professionals.length === 0 && (
-            <div className="py-10 text-center text-slate-400 text-sm">
-              No quotes submitted yet. Check back soon.
-            </div>
-          )}
+              {!fetching && !fetchError && professionals.length === 0 && (
+                <div className="py-10 text-center text-slate-400 text-sm">
+                  No quotes submitted yet. Check back soon.
+                </div>
+              )}
 
           {!fetching &&
             professionals.map((pp) => {
@@ -417,11 +420,11 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               );
             })}
 
-          {acceptError && (
-            <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {acceptError}
-            </div>
-          )}
+              {acceptError && (
+                <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {acceptError}
+                </div>
+              )}
             </div>
 
             <div className="px-5 py-4 border-t border-slate-700 shrink-0">
