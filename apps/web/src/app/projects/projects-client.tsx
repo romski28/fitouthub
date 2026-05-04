@@ -744,12 +744,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 px-3 sm:px-6 lg:px-8">
-      {/* Recent Activity (secondary) */}
-      <div id="recent-activity" className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Recent Activity</p>
-        <div className="flex justify-center md:justify-start">
-          <UpdatesButton onSummaryChange={setUpdatesSummary} />
-        </div>
+      {/* Updates badge — fixed right for thumb access */}
+      <div className="fixed bottom-[260px] right-6 z-30">
+        <UpdatesButton onSummaryChange={setUpdatesSummary} />
       </div>
 
       <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 text-white shadow-sm">

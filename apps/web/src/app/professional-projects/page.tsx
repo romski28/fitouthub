@@ -265,12 +265,9 @@ export default function ProfessionalProjectsPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
-        {/* Recent Activity (secondary) */}
-        <div id="recent-activity" className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Recent Activity</p>
-          <div className="flex justify-center md:justify-start">
-            <UpdatesButton onSummaryChange={setUpdatesSummary} />
-          </div>
+        {/* Updates badge — fixed right for thumb access */}
+        <div className="fixed bottom-[260px] right-6 z-30">
+          <UpdatesButton onSummaryChange={setUpdatesSummary} />
         </div>
 
         {/* Hero (match client styling) */}

@@ -212,44 +212,35 @@ export function UpdatesButton({ className = '', onSummaryChange }: UpdatesButton
 
   return (
     <>
-      <div className={`inline-flex items-center gap-2 ${className}`}>
-        <button
-          onClick={handleOpen}
-          style={{
-            backgroundColor: hasUpdates ? colors.primary : colors.successBg,
-            color: hasUpdates ? colors.background : colors.success,
-            borderColor: !hasUpdates ? colors.success : undefined,
-          }}
-          className={`relative inline-flex items-center gap-3 px-6 py-3 ${
-            !hasUpdates ? 'border' : ''
-          } font-medium ${radii.md} transition-opacity hover:opacity-90 ${shadows.subtle}`}
-        >
-          <span className="text-lg">{hasUpdates ? '🔔' : '✨'}</span>
-          <span>
-            {loading && !summary ? (
-              'Loading...'
-            ) : hasUpdates ? (
-              <>
-                {summary.totalCount} unread message{summary.totalCount === 1 ? '' : 's'}
-              </>
-            ) : (
-              inspirationalMessage
-            )}
+      <button
+        onClick={handleOpen}
+        style={{
+          backgroundColor: hasUpdates ? colors.primary : colors.successBg,
+          color: hasUpdates ? colors.background : colors.success,
+        }}
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-200 hover:shadow-xl ${className}`}
+        title={
+          loading && !summary
+            ? 'Loading messages…'
+            : hasUpdates
+            ? `${summary!.totalCount} unread message${summary!.totalCount === 1 ? '' : 's'}`
+            : "You're all caught up"
+        }
+        aria-label={
+          loading && !summary
+            ? 'Loading messages'
+            : hasUpdates
+            ? `${summary!.totalCount} unread messages`
+            : 'No new messages'
+        }
+      >
+        <span className="text-xl">{hasUpdates ? '🔔' : '✨'}</span>
+        {hasUpdates && summary && summary.totalCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold leading-none text-white">
+            {summary.totalCount > 99 ? '99+' : summary.totalCount}
           </span>
-        </button>
-        <button
-          type="button"
-          onClick={handleManualRefresh}
-          disabled={refreshing}
-          title="Refresh messages"
-          aria-label="Refresh messages"
-          className={`inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 ${
-            refreshing ? 'animate-spin' : ''
-          }`}
-        >
-          ↻
-        </button>
-      </div>
+        )}
+      </button>
 
       <UpdatesModal
         isOpen={isOpen}

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-04-6a81de5",
+    "date": "2026-05-04T16:45:49+08:00",
+    "title": "feat(ux): compact FAB updates badge fixed right; remove section heading and refresh button",
+    "summary": "feat(ux): compact FAB updates badge fixed right; remove section heading and refresh button",
+    "areas": [
+      "web"
+    ],
+    "commit": "6a81de5",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/updates-button.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-c66dd4c",
     "date": "2026-05-04T14:31:41+08:00",
     "title": "feat(modal-ux): default-open collapsible quotation terms; lower floating chat layer under overlays",
