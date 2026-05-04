@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-04-8b7e408",
+    "date": "2026-05-04T13:27:25+08:00",
+    "title": "feat(recent-activity): evolve modal into quick-sheet with filters, sorting, bulk mark-read, and role-aware routing",
+    "summary": "feat(recent-activity): evolve modal into quick-sheet with filters, sorting, bulk mark-read, and role-aware routing",
+    "areas": [
+      "web"
+    ],
+    "commit": "8b7e408",
+    "files": [
+      "apps/web/src/components/updates-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-fbd6a23",
     "date": "2026-05-04T13:19:37+08:00",
     "title": "feat(chat-nav): make project card unread bubbles open chat tab",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
@@ -74,9 +74,12 @@ export function UpdatesModal({
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [chatFilter, setChatFilter] = useState<'all' | 'project' | 'assist' | 'support'>('all');
+  const [professionalProjectMap, setProfessionalProjectMap] = useState<Record<string, string>>({});
 
   // Use whichever token is available
   const token = clientToken || profToken;
+  const isProfessionalView = Boolean(profToken && !clientToken);
 
   const fetchData = async (forceRefresh = false) => {
     if (!token) {
@@ -130,6 +133,7 @@ export function UpdatesModal({
 
   useEffect(() => {
     if (isOpen) {
+      setChatFilter('all');
       if (initialData) {
         setData(initialData);
       }
@@ -139,17 +143,66 @@ export function UpdatesModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, token, actAsClientId]);
 
+  useEffect(() => {
+    if (!isOpen || !isProfessionalView || !token) return;
+
+    let cancelled = false;
+    fetch(`${API_BASE_URL}/professional/projects`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload) return;
+        const list = Array.isArray(payload) ? payload : payload.projects || [];
+        const map: Record<string, string> = {};
+        list.forEach((item: any) => {
+          const projectId = item?.project?.id;
+          const projectProfessionalId = item?.id;
+          if (projectId && projectProfessionalId) {
+            map[String(projectId)] = String(projectProfessionalId);
+          }
+        });
+        setProfessionalProjectMap(map);
+      })
+      .catch(() => void 0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, isProfessionalView, token]);
+
   const handleMessageClick = (group: UnreadMessageGroup) => {
     // Navigate to the appropriate chat and mark as read
     if (group.chatType === 'private-foh') {
       // Check if this is an admin viewing support messages
       if (group.projectId === 'admin-support') {
         router.push('/admin/messaging?tab=support');
+      } else if (isProfessionalView) {
+        router.push('/professional-projects');
       } else {
         router.push('/support');
       }
     } else if (group.chatType === 'assist') {
-      router.push(`/projects/${group.projectId}?tab=assist`);
+      if (isProfessionalView) {
+        const projectProfessionalId = professionalProjectMap[String(group.projectId)];
+        router.push(
+          projectProfessionalId
+            ? `/professional-projects/${projectProfessionalId}?tab=chat`
+            : '/professional-projects',
+        );
+      } else {
+        router.push(`/projects/${group.projectId}?tab=assist`);
+      }
+    } else if (isProfessionalView) {
+      const projectProfessionalId =
+        group.chatType === 'project-professional' && group.threadId
+          ? String(group.threadId)
+          : professionalProjectMap[String(group.projectId)];
+      router.push(
+        projectProfessionalId
+          ? `/professional-projects/${projectProfessionalId}?tab=chat`
+          : '/professional-projects',
+      );
     } else {
       router.push(`/projects/${group.projectId}?tab=chat`);
     }
@@ -188,14 +241,59 @@ export function UpdatesModal({
   };
 
   const handleMarkAllRead = async () => {
-    // This would require backend support for bulk marking
-    // For now, just close and let individual clicks handle it
-    onClose();
+    if (!token) {
+      onClose();
+      return;
+    }
+
+    const markable = filteredUnreadMessages.filter((group) => group.threadId);
+    if (markable.length === 0) {
+      onClose();
+      return;
+    }
+
+    setActionLoading('all');
+    try {
+      await Promise.allSettled(
+        markable.map((group) =>
+          fetch(`${API_BASE_URL}/updates/messages/mark-read`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ chatType: group.chatType, threadId: group.threadId }),
+          }),
+        ),
+      );
+
+      await fetchData(true);
+      onRefresh();
+    } catch (error) {
+      console.error('Failed to mark all messages as read:', error);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const filteredUnreadMessages = projectIdFilter
-    ? (data?.unreadMessages || []).filter((group) => group.projectId === projectIdFilter)
-    : (data?.unreadMessages || []);
+  const filteredUnreadMessages = useMemo(() => {
+    const byProject = projectIdFilter
+      ? (data?.unreadMessages || []).filter((group) => group.projectId === projectIdFilter)
+      : (data?.unreadMessages || []);
+
+    const byType = byProject.filter((group) => {
+      if (chatFilter === 'all') return true;
+      if (chatFilter === 'assist') return group.chatType === 'assist';
+      if (chatFilter === 'support') return group.chatType === 'private-foh';
+      return group.chatType === 'project-professional' || group.chatType === 'project-general';
+    });
+
+    return byType.sort((a, b) => {
+      const aTs = new Date(a.latestMessage?.createdAt || 0).getTime();
+      const bTs = new Date(b.latestMessage?.createdAt || 0).getTime();
+      return bTs - aTs;
+    });
+  }, [chatFilter, data?.unreadMessages, projectIdFilter]);
 
   const filteredUnreadCount = filteredUnreadMessages.reduce((sum, group) => sum + (group.unreadCount || 0), 0);
   const hasFilteredUpdates = filteredUnreadMessages.length > 0;
@@ -207,9 +305,9 @@ export function UpdatesModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-100/70 p-4 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-slate-100/70 p-0 sm:p-4 backdrop-blur-md" onClick={onClose}>
       <div
-        className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-300/70 ring-1 ring-white/40 bg-slate-900 text-white shadow-2xl shadow-slate-500/40"
+        className="ml-auto flex h-full w-full max-w-3xl flex-col overflow-hidden rounded-none border-l border-slate-300/70 ring-1 ring-white/40 bg-slate-900 text-white shadow-2xl shadow-slate-500/40 sm:h-[90vh] sm:rounded-2xl sm:border"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -217,7 +315,7 @@ export function UpdatesModal({
           <div className="flex items-start justify-between gap-4">
           <div>
               <h2 className="text-xl font-semibold text-white">
-                Message Center
+                Recent Activity
                 {!projectIdFilter && filteredUnreadMessages.length > 0 && (
                   <span className="text-sm font-normal text-slate-400 ml-3">
                     {filteredUnreadCount} message{filteredUnreadCount === 1 ? '' : 's'} • {filteredUnreadMessages.length} conversation{filteredUnreadMessages.length === 1 ? '' : 's'}
@@ -236,6 +334,27 @@ export function UpdatesModal({
                   Filtered by project: {filteredProjectName}
                 </div>
               ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { key: 'all', label: 'All' },
+                  { key: 'project', label: 'Project' },
+                  { key: 'assist', label: 'Assist' },
+                  { key: 'support', label: 'Support' },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setChatFilter(item.key as 'all' | 'project' | 'assist' | 'support')}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                      chatFilter === item.key
+                        ? 'border-emerald-300/60 bg-emerald-500/20 text-emerald-100'
+                        : 'border-white/20 bg-white/5 text-slate-200 hover:bg-white/10'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -283,7 +402,8 @@ export function UpdatesModal({
                     {filteredUnreadMessages.map((group, idx) => (
                       <div
                         key={idx}
-                        className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
+                        className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10 cursor-pointer"
+                        onClick={() => handleMessageClick(group)}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
@@ -308,7 +428,7 @@ export function UpdatesModal({
                           <div className="flex gap-2">
                             <button
                               onClick={(e) => handleMarkMessageAsRead(e, group)}
-                              disabled={actionLoading === `msg-${group.threadId}`}
+                              disabled={actionLoading === `msg-${group.threadId}` || actionLoading === 'all'}
                               className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
                             >
                               {actionLoading === `msg-${group.threadId}` ? 'Processing...' : 'OK'}
@@ -335,9 +455,10 @@ export function UpdatesModal({
           <div className="flex items-center justify-between border-t border-slate-700 bg-slate-800/80 px-6 py-4">
             <button
               onClick={handleMarkAllRead}
-              className="text-sm font-medium text-slate-200 transition-colors hover:text-white"
+              disabled={actionLoading === 'all'}
+              className="text-sm font-medium text-slate-200 transition-colors hover:text-white disabled:opacity-50"
             >
-              Mark all messages as read
+              {actionLoading === 'all' ? 'Processing...' : 'Mark all messages as read'}
             </button>
             <button
               onClick={onClose}
