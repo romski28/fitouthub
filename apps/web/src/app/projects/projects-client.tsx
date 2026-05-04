@@ -550,7 +550,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const nextStepCacheScope = `client:${user?.id || 'anonymous'}`;
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
-  const [disableUnreadFetch, setDisableUnreadFetch] = useState(false);
   const [assistMap, setAssistMap] = useState<Record<string, { hasAssist: boolean; status?: AssistStatus }>>({});
   const openAiCreateFlow = () => {
     router.push('/?focusPrompt=1#project-prompt');
@@ -564,7 +563,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   }, [initialShowCreateModal]);
   const [items, setItems] = useState<ExtendedProject[]>(() => mapProjectsToItems(projects));
   const [editing, setEditing] = useState<ExtendedProject | null>(null);
-  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
@@ -621,6 +619,20 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     return ids;
   }, [updatesSummary]);
 
+  const unreadByProjectId = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (!updatesSummary) return counts;
+
+    updatesSummary.unreadMessages.forEach((group) => {
+      if (!group?.projectId) return;
+      const key = String(group.projectId);
+      const unread = Math.max(0, Number(group.unreadCount) || 0);
+      counts[key] = (counts[key] || 0) + unread;
+    });
+
+    return counts;
+  }, [updatesSummary]);
+
   const totals = useMemo(() => {
     return {
       total: items.length,
@@ -629,30 +641,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       withdrawn: items.filter((p) => p.status === "rejected" || p.status === "withdrawn").length,
     };
   }, [items]);
-
-  useEffect(() => {
-    if (!hydrated || !isLoggedIn || !accessToken || disableUnreadFetch) return;
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
-    fetch(`${API_BASE_URL}/client/projects/unread-counts`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      signal: controller.signal,
-    })
-      .then((r) => {
-        if (r?.status === 401) {
-          setDisableUnreadFetch(true);
-          return null;
-        }
-        return r?.ok ? r.json() : null;
-      })
-      .then((data) => {
-        if (data?.counts) setUnreadMap(data.counts);
-      })
-      .catch(() => {})
-      .finally(() => clearTimeout(timeoutId));
-  }, [hydrated, isLoggedIn, accessToken, disableUnreadFetch]);
 
   // Fetch assistance presence per project
   useEffect(() => {
@@ -811,7 +799,10 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const primaryAction = primaryActions[0] || null;
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               const assistInfo = assistMap[project.id];
-              const unreadCount = (project.sourceIds ?? [project.id]).reduce((sum, id) => sum + (unreadMap[id] || 0), 0);
+              const unreadCount = (project.sourceIds ?? [project.id]).reduce(
+                (sum, id) => sum + (unreadByProjectId[String(id)] || 0),
+                0,
+              );
               const quoteOverdue = isQuoteOverdueForProject(project);
               const isStopStatus = ['withdrawn', 'rejected', 'declined'].includes((project.status || '').toLowerCase());
               const baseBorder = clientCardBorderByStatus[project.status] || 'border-white/20';

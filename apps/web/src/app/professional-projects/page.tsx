@@ -81,6 +81,19 @@ export default function ProfessionalProjectsPage() {
     });
     return ids;
   }, [updatesSummary]);
+  const unreadByProjectId = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (!updatesSummary) return counts;
+
+    updatesSummary.unreadMessages.forEach((group) => {
+      if (!group?.projectId) return;
+      const key = String(group.projectId);
+      const unread = Math.max(0, Number(group.unreadCount) || 0);
+      counts[key] = (counts[key] || 0) + unread;
+    });
+
+    return counts;
+  }, [updatesSummary]);
   const totals = {
     total: projects.length,
     pending: projects.filter(p => p.status === 'pending').length,
@@ -315,7 +328,7 @@ export default function ProfessionalProjectsPage() {
                 const isStopStatus = ['declined', 'rejected'].includes((projectProf.status || '').toLowerCase());
                 const isRestricted = Boolean(projectProf.accessRestricted);
                 const baseBorder = professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
-                const unreadCount = projectProf.unreadCount ?? 0;
+                const unreadCount = unreadByProjectId[String(projectProf.project.id)] || 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
                   <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-2 px-4 py-3 transition ${

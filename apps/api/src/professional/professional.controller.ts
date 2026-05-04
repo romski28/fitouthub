@@ -478,40 +478,28 @@ export class ProfessionalController {
         orderBy: { createdAt: 'desc' },
       });
 
-      // Attach unread message count per project (client -> professional unread)
-      const withUnread = await Promise.all(
-        projectProfessionals.map(async (pp: any) => {
-          const isRestricted = !this.canAccessFullProject(pp.status);
-          const unreadCount = await (this.prisma as any).message
-            .count({
-              where: {
-                projectProfessionalId: pp.id,
-                senderType: 'client',
-                readByProfessionalAt: null,
-              },
-            })
-            .catch(() => 0);
-          if (!isRestricted) {
-            return { ...pp, unreadCount, accessRestricted: false };
-          }
+      const mapped = projectProfessionals.map((pp: any) => {
+        const isRestricted = !this.canAccessFullProject(pp.status);
+        if (!isRestricted) {
+          return { ...pp, unreadCount: 0, accessRestricted: false };
+        }
 
-          return {
-            ...pp,
-            unreadCount: 0,
-            accessRestricted: true,
-            project: {
-              id: pp.project?.id,
-              projectName: pp.project?.projectName,
-              clientName: '',
-              region: '',
-              budget: undefined,
-              notes: pp.project?.notes,
-            },
-          };
-        }),
-      );
+        return {
+          ...pp,
+          unreadCount: 0,
+          accessRestricted: true,
+          project: {
+            id: pp.project?.id,
+            projectName: pp.project?.projectName,
+            clientName: '',
+            region: '',
+            budget: undefined,
+            notes: pp.project?.notes,
+          },
+        };
+      });
 
-      return withUnread;
+      return mapped;
     } catch (error) {
       console.error('Error fetching professional projects:', error);
       throw error;

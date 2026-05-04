@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-04-2791a13",
+    "date": "2026-05-04T13:13:37+08:00",
+    "title": "perf(unread): unify list badges to updates summary and remove duplicate unread queries",
+    "summary": "perf(unread): unify list badges to updates summary and remove duplicate unread queries",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2791a13",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-a5ceb8f",
     "date": "2026-05-04T12:50:32+08:00",
     "title": "feat(client-chat): wire ChatEventCard into client private chat with professional",
