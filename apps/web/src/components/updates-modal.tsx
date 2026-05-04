@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import ChatEventCard from '@/components/chat-event-card';
+import { parseChatEvent } from '@/lib/chat-event-parser';
 import {
   type UnreadMessageGroup,
   type UpdatesSummary,
@@ -399,9 +401,11 @@ export function UpdatesModal({
                     </span>
                   </h3>
                   <div className="space-y-3">
-                    {filteredUnreadMessages.map((group, idx) => (
+                    {filteredUnreadMessages.map((group) => {
+                      const event = parseChatEvent(group.latestMessage.content || '');
+                      return (
                       <div
-                        key={idx}
+                        key={`${group.chatType}-${group.threadId || group.projectId}`}
                         className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10 cursor-pointer"
                         onClick={() => handleMessageClick(group)}
                       >
@@ -418,9 +422,15 @@ export function UpdatesModal({
                                 From: {group.latestMessage.senderName}
                               </p>
                             )}
-                            <p className="line-clamp-2 text-sm text-slate-300">
-                              {group.latestMessage.content}
-                            </p>
+                            {event ? (
+                              <div className="max-w-2xl">
+                                <ChatEventCard event={event} />
+                              </div>
+                            ) : (
+                              <p className="line-clamp-2 text-sm text-slate-300">
+                                {group.latestMessage.content}
+                              </p>
+                            )}
                             <p className="mt-1 text-xs text-slate-400">
                               {new Date(group.latestMessage.createdAt).toLocaleString()}
                             </p>
@@ -434,7 +444,10 @@ export function UpdatesModal({
                               {actionLoading === `msg-${group.threadId}` ? 'Processing...' : 'OK'}
                             </button>
                             <button
-                              onClick={() => handleMessageClick(group)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMessageClick(group);
+                              }}
                               className="rounded-md bg-slate-200 px-3 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-white"
                             >
                               View
@@ -442,7 +455,8 @@ export function UpdatesModal({
                           </div>
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               )}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-04-0023843",
+    "date": "2026-05-04T13:34:10+08:00",
+    "title": "fix(recent-activity): render structured chat events as event cards in quick-sheet",
+    "summary": "fix(recent-activity): render structured chat events as event cards in quick-sheet",
+    "areas": [
+      "web"
+    ],
+    "commit": "0023843",
+    "files": [
+      "apps/web/src/components/updates-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-8b7e408",
     "date": "2026-05-04T13:27:25+08:00",
     "title": "feat(recent-activity): evolve modal into quick-sheet with filters, sorting, bulk mark-read, and role-aware routing",
