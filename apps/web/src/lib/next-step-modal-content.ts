@@ -103,6 +103,18 @@ const FALLBACK_MODAL_CONTENT: Record<string, NextStepModalContent> = {
     secondaryActionType: 'close_modal',
     detailsTarget: '{"tab":"financials"}',
   },
+  REQUEST_SITE_ACCESS: {
+    title: 'Book a site visit',
+    body: 'The client has shared an available inspection date. Choose your preferred slot and submit your booking request.',
+    detailsBody:
+      'Select one available slot from the client-offered date. Once submitted, the client will review and approve your request.',
+    primaryButtonLabel: 'Book site visit',
+    secondaryButtonLabel: 'Open project information',
+    primaryActionType: 'custom_submit',
+    secondaryActionType: 'navigate_tab',
+    secondaryActionTarget: '{"tab":"site-access"}',
+    detailsTarget: '{"tab":"site-access"}',
+  },
 };
 
 export function resolveNextStepModalContent(

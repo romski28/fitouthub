@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-04-1048c3d",
+    "date": "2026-05-04T18:45:37+08:00",
+    "title": "feat(site-access): add dedicated REQUEST_SITE_ACCESS booking modal with slot picker",
+    "summary": "feat(site-access): add dedicated REQUEST_SITE_ACCESS booking modal with slot picker",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1048c3d",
+    "files": [
+      "apps/api/sql/update_request_site_access_nextstep.sql",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx",
+      "apps/web/src/lib/next-step-modal-content.ts"
+    ]
+  },
+  {
     "id": "2026-05-04-399f129",
     "date": "2026-05-04T17:27:36+08:00",
     "title": "fix(site-access): surface REQUEST_SITE_ACCESS elective on professional projects list; fix navigate_tab action type",

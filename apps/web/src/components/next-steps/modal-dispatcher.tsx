@@ -18,6 +18,7 @@ import { ReviewMaterialsClaimModal } from './review-materials-claim-modal';
 import { RespondMaterialsClaimModal } from './respond-materials-claim-modal';
 import { StartOnSiteModal } from './start-on-site-modal';
 import { ProgressReportModal } from './progress-report-modal';
+import { RequestSiteAccessModal } from './request-site-access-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -86,6 +87,23 @@ export function ModalDispatcher({
     },
     [closeModal, onDetailsNavigate, router, state.projectDetailsPath, state.projectId, state.role]
   );
+
+  const handleOpenProjectInformation = useCallback(() => {
+    const secondaryTarget = state.modalContent?.secondaryActionTarget;
+    const primaryTarget = state.modalContent?.primaryActionTarget;
+    const rawTarget = secondaryTarget || primaryTarget;
+    const target = rawTarget
+      ? rawTarget.trim().startsWith('{')
+        ? rawTarget
+        : JSON.stringify({ tab: rawTarget })
+      : JSON.stringify({ tab: 'site-access' });
+
+    handleDetailsNavigation(target);
+  }, [
+    handleDetailsNavigation,
+    state.modalContent?.primaryActionTarget,
+    state.modalContent?.secondaryActionTarget,
+  ]);
 
   // Route to correct modal based on actionKey
   const modalType = getModalType(state.actionKey || '');
@@ -269,6 +287,17 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'request-site-access') {
+    return (
+      <RequestSiteAccessModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+        onOpenProjectInformation={handleOpenProjectInformation}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -276,7 +305,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' {
   // On-site QR start — both professional (START_PROJECT) and client (START_PROJECT_ON_SITE)
   if (['START_PROJECT', 'START_PROJECT_ON_SITE'].includes(actionKey)) {
     return 'start-on-site';
@@ -339,6 +368,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (['REVIEW_PROGRESS_UPDATE', 'REVIEW_CLIENT_PROGRESS_UPDATE', 'SUBMIT_PROGRESS_UPDATE', 'SUBMIT_CLIENT_PROGRESS_UPDATE', 'REVIEW_PROGRESS'].includes(actionKey)) {
     return 'progress-report';
+  }
+
+  if (actionKey === 'REQUEST_SITE_ACCESS') {
+    return 'request-site-access';
   }
 
   // Default to general modal
