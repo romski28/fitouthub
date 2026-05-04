@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-04-a5ceb8f",
+    "date": "2026-05-04T12:50:32+08:00",
+    "title": "feat(client-chat): wire ChatEventCard into client private chat with professional",
+    "summary": "feat(client-chat): wire ChatEventCard into client private chat with professional",
+    "areas": [
+      "web"
+    ],
+    "commit": "a5ceb8f",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-3ae7f97",
     "date": "2026-05-04T12:47:14+08:00",
     "title": "fix(chat-events): remove duplicate summary line; human-friendly date format (ddd dd mmm at hh:mm HKT)",

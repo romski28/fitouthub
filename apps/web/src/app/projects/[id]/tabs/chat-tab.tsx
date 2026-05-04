@@ -3,6 +3,8 @@
 import React from 'react';
 import ProjectChat from '@/components/project-chat';
 import ChatImageUploader from '@/components/chat-image-uploader';
+import ChatEventCard from '@/components/chat-event-card';
+import { parseChatEvent } from '@/lib/chat-event-parser';
 
 interface ProjectProfessional {
   id: string;
@@ -347,7 +349,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                       No messages yet. Start the conversation!
                     </div>
                   ) : (
-                    messages.map((msg) => (
+                    messages.map((msg) => {
+                      const event = parseChatEvent(msg.content || '');
+                      return (
                       <div key={msg.id}>
                         {privateFirstUnreadMessageId === msg.id && (
                           <div className="my-2 flex items-center gap-3">
@@ -363,32 +367,40 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                           className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                              msg.senderType === 'client'
+                            className={`text-sm ${event ? 'max-w-[86%]' : 'max-w-[75%] rounded-lg px-3 py-2'} ${
+                              event
+                                ? ''
+                                : msg.senderType === 'client'
                                 ? 'bg-emerald-600 text-white'
                                 : 'bg-slate-900 border border-slate-700 text-white'
                             }`}
                           >
-                            {msg.content && <p>{msg.content}</p>}
-                            {msg.attachments && msg.attachments.length > 0 && (
-                              <div className={`${msg.content ? 'mt-2' : ''} flex flex-wrap gap-2`}>
-                                {msg.attachments.map((att, i) => (
-                                  <a
-                                    key={i}
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block"
-                                  >
-                                    <img
-                                      src={att.url}
-                                      alt={att.filename}
-                                      className="w-24 h-24 rounded border border-slate-600 hover:opacity-80 transition object-cover"
-                                      title={att.filename}
-                                    />
-                                  </a>
-                                ))}
-                              </div>
+                            {event ? (
+                              <ChatEventCard event={event} isCurrentUser={msg.senderType === 'client'} />
+                            ) : (
+                              <>
+                                {msg.content && <p>{msg.content}</p>}
+                                {msg.attachments && msg.attachments.length > 0 && (
+                                  <div className={`${msg.content ? 'mt-2' : ''} flex flex-wrap gap-2`}>
+                                    {msg.attachments.map((att, i) => (
+                                      <a
+                                        key={i}
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-block"
+                                      >
+                                        <img
+                                          src={att.url}
+                                          alt={att.filename}
+                                          className="w-24 h-24 rounded border border-slate-600 hover:opacity-80 transition object-cover"
+                                          title={att.filename}
+                                        />
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
                             )}
                             <p className={`text-xs mt-1 ${msg.senderType === 'client' ? 'text-emerald-100' : 'text-slate-400'}`}>
                               {new Date(msg.createdAt).toLocaleString()}
@@ -396,7 +408,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                           </div>
                         </div>
                       </div>
-                    ))
+                    );
+                    })
                   )}
                 </div>
 
