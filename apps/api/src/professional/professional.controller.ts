@@ -481,12 +481,11 @@ export class ProfessionalController {
       const mapped = projectProfessionals.map((pp: any) => {
         const isRestricted = !this.canAccessFullProject(pp.status);
         if (!isRestricted) {
-          return { ...pp, unreadCount: 0, accessRestricted: false };
+          return { ...pp, accessRestricted: false };
         }
 
         return {
           ...pp,
-          unreadCount: 0,
           accessRestricted: true,
           project: {
             id: pp.project?.id,
@@ -611,25 +610,6 @@ export class ProfessionalController {
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException((error as any)?.message || 'Failed to delete reference project');
     }
-  }
-
-  @Get('messages/unread-count')
-  @UseGuards(AuthGuard('jwt-professional'))
-  async getUnreadCount(@Request() req: any) {
-    const professionalId = req.user.id || req.user.sub;
-    const count = await (this.prisma as any).message.count({
-      where: {
-        senderType: 'client',
-        readByProfessionalAt: null,
-        projectProfessional: {
-          professionalId,
-          project: {
-            status: { not: 'archived' },
-          },
-        },
-      },
-    });
-    return { unreadCount: count };
   }
 
   @Get('projects/:projectProfessionalId')

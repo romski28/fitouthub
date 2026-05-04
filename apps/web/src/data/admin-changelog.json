@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-04-7228863",
+    "date": "2026-05-04T13:16:21+08:00",
+    "title": "chore(unread): remove legacy unread-count endpoints and stale unreadCount field",
+    "summary": "chore(unread): remove legacy unread-count endpoints and stale unreadCount field",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7228863",
+    "files": [
+      "apps/api/src/client/client.controller.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-2791a13",
     "date": "2026-05-04T13:13:37+08:00",
     "title": "perf(unread): unify list badges to updates summary and remove duplicate unread queries",

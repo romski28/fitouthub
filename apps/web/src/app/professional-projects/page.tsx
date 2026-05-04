@@ -38,7 +38,6 @@ interface ProjectProfessional {
   quoteAmount?: string;
   quoteNotes?: string;
   quotedAt?: string;
-  unreadCount?: number;
 }
 
 type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
