@@ -8,7 +8,7 @@ import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
 import Link from 'next/link';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 import { ProjectTabs } from '@/components/project-tabs';
 import ProjectInfoCard from '@/components/project-info-card';
@@ -1419,7 +1419,6 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <>
-      <Toaster position="top-right" />
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-300">Project not found</p>
@@ -1522,7 +1521,6 @@ export default function ProjectDetailPage() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="min-h-screen bg-slate-50 pb-16">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -1540,11 +1538,6 @@ export default function ProjectDetailPage() {
               projectScale={project!.projectScale || project!.project.projectScale}
               projectSentimentKey={project!.project.id}
               projectSentimentScope="professional"
-              notes={project!.project.notes || undefined}
-              clientName={project!.project.clientName}
-              createdAt={project!.createdAt}
-              updatedAt={project!.updatedAt}
-              quoteAmount={project!.quoteAmount}
               attachTabs
             />
 
@@ -1734,8 +1727,6 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
-
-      <Toaster position="top-right" />
 
       <AssistRequestModal
         isOpen={assistOpen}

@@ -27,7 +27,7 @@ import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 interface ProjectProfessional {
   id: string;
@@ -1817,7 +1817,6 @@ export default function ClientProjectDetailPage() {
   if (loading || isLoggedIn === undefined) {
     return (
       <>
-        <Toaster position="top-right" />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -1837,7 +1836,6 @@ export default function ClientProjectDetailPage() {
   if (error || !project) {
     return (
       <>
-        <Toaster position="top-right" />
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
           <div className="rounded-lg bg-red-50 border border-red-200 p-6 max-w-md w-full text-center">
             <p className="text-red-800 font-medium">{error || 'Project not found'}</p>
@@ -1852,7 +1850,6 @@ export default function ClientProjectDetailPage() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="min-h-screen bg-slate-50 pb-16">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
           {/* Header */}
