@@ -13,6 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 import { UpdatesService } from '../updates/updates.service';
+import { EmailService } from '../email/email.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ProjectStage } from '@prisma/client';
 
@@ -21,6 +22,7 @@ export class ClientController {
   constructor(
     private prisma: PrismaService,
     private updatesService: UpdatesService,
+    private emailService: EmailService,
   ) {}
 
   @Get('projects/:projectProfessionalId/messages')
@@ -152,25 +154,45 @@ export class ClientController {
         },
       });
 
+      // Structured event card for the winning professional
+      const winnerAmount = pp.quoteAmount
+        ? `HK$${Number(pp.quoteAmount).toLocaleString()}`
+        : null;
+      const quoteAcceptedPayload = {
+        type: 'quote-accepted',
+        icon: '🏆',
+        title: 'Quote Awarded',
+        fields: [
+          { label: 'Project', value: pp.project.projectName },
+          ...(winnerAmount ? [{ label: 'Amount', value: winnerAmount }] : []),
+        ],
+      };
       await tx.message.create({
         data: {
           projectProfessionalId,
           senderType: 'client',
           senderClientId: userId,
-          content: 'We have accepted your quotation.',
+          content: `[[event]]\n${JSON.stringify(quoteAcceptedPayload)}`,
         },
       });
 
       for (const losingAssignment of otherAssignments) {
         const hadQuoted = Boolean(losingAssignment.quotedAt || losingAssignment.quoteAmount);
+        const notSelectedPayload = {
+          type: 'quote-not-selected',
+          icon: '📋',
+          title: hadQuoted ? 'Quote Not Selected' : 'Bidding Concluded',
+          summary: hadQuoted
+            ? `Thank you for your quote on "${pp.project.projectName}". Another professional was selected this time. We appreciate your time and hope to work with you in the future.`
+            : `Bidding has now concluded for "${pp.project.projectName}". Thank you for your interest. We look forward to working with you in the future.`,
+          fields: [{ label: 'Project', value: pp.project.projectName }],
+        };
         await tx.message.create({
           data: {
             projectProfessionalId: losingAssignment.id,
             senderType: 'client',
             senderClientId: userId,
-            content: hadQuoted
-              ? `Thank you for your quote on "${pp.project.projectName}". Another professional was selected for this project. We appreciate your time and hope to work with you in the future.`
-              : `Bidding has concluded for "${pp.project.projectName}". Thank you for your interest in this opportunity. We look forward to working with you in the future.`,
+            content: `[[event]]\n${JSON.stringify(notSelectedPayload)}`,
           },
         });
       }
@@ -214,6 +236,46 @@ export class ClientController {
 
       return updatedPP;
     });
+
+    // Email fallbacks (best-effort, after transaction commits)
+    const winnerName = pp.professional?.fullName || pp.professional?.businessName || 'Professional';
+    try {
+      await this.emailService.sendWinnerNotification({
+        to: pp.professional.email,
+        professionalName: winnerName,
+        projectName: pp.project.projectName,
+        quoteAmount: pp.quoteAmount?.toString() || '0',
+        nextStepsMessage:
+          'The client will be in contact soon to discuss next steps. Please sign the project contract, available in your project panel, to move forward.',
+      });
+    } catch (err) {
+      console.warn('[ClientController.acceptQuote] Winner email failed:', (err as Error)?.message);
+    }
+
+    // Loser emails — otherAssignments captured inside tx but we need a fresh read since tx is done
+    const losingPPs = await (this.prisma as any).projectProfessional.findMany({
+      where: {
+        projectId: pp.projectId,
+        id: { not: projectProfessionalId },
+        status: 'declined',
+      },
+      include: { professional: true },
+    });
+    for (const losingPP of losingPPs) {
+      const hadQuoted = Boolean(losingPP.quotedAt || losingPP.quoteAmount);
+      try {
+        await this.emailService.sendLoserNotification({
+          to: losingPP.professional.email,
+          professionalName: losingPP.professional?.fullName || losingPP.professional?.businessName || 'Professional',
+          projectName: pp.project.projectName,
+          thankYouMessage: hadQuoted
+            ? 'Thank you for your time and effort on this project. We hope to work with you on future opportunities.'
+            : 'Bidding has now concluded for this project. Thank you for your interest, and we look forward to working with you in the future.',
+        });
+      } catch (err) {
+        console.warn('[ClientController.acceptQuote] Loser email failed:', losingPP.professional?.email, (err as Error)?.message);
+      }
+    }
 
     return { success: true, projectProfessional: updated };
   }

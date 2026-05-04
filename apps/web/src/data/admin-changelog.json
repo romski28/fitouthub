@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-04-ea484de",
+    "date": "2026-05-04T16:52:27+08:00",
+    "title": "feat(quotes): structured event cards for winner/non-selected; email fallbacks in client acceptQuote",
+    "summary": "feat(quotes): structured event cards for winner/non-selected; email fallbacks in client acceptQuote",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ea484de",
+    "files": [
+      "apps/api/src/client/client.controller.ts",
+      "apps/api/src/client/client.module.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/chat-event-card.tsx",
+      "apps/web/src/lib/chat-event-parser.ts"
+    ]
+  },
+  {
     "id": "2026-05-04-6a81de5",
     "date": "2026-05-04T16:45:49+08:00",
     "title": "feat(ux): compact FAB updates badge fixed right; remove section heading and refresh button",

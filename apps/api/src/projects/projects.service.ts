@@ -4958,18 +4958,7 @@ Please review the project details and respond with your quote or decline the inv
 
     await this.finalizeNotificationAudit(notificationAudit);
 
-    // Add system messages to project chat
-    // Winner message
-    await this.prisma.message.create({
-      data: {
-        projectProfessionalId: projectProfessional.id,
-        senderType: 'client',
-        senderClientId: project.clientId,
-        content: `✓ Quote awarded. ${clientName} has selected your quote. Next steps will be discussed via the platform or direct contact.`,
-      },
-    });
-
-    // Loser messages
+    // Loser messages (structured event cards)
     for (const pp of otherProfessionals) {
       // Update status to declined for non-awarded professionals
       try {
@@ -4998,15 +4987,22 @@ Please review the project details and respond with your quote or decline the inv
           },
         );
       }
+      const hadQuoted = Boolean(pp.quotedAt || pp.quoteAmount);
+      const notSelectedPayload = {
+        type: 'quote-not-selected',
+        icon: '📋',
+        title: hadQuoted ? 'Quote Not Selected' : 'Bidding Concluded',
+        summary: hadQuoted
+          ? `Thank you for your quote on "${project.projectName}". Another professional was selected this time. We appreciate your time and hope to work with you in the future.`
+          : `Bidding has now concluded for "${project.projectName}". Thank you for your interest. We look forward to working with you in the future.`,
+        fields: [{ label: 'Project', value: project.projectName }],
+      };
       await this.prisma.message.create({
         data: {
           projectProfessionalId: pp.id,
           senderType: 'client',
           senderClientId: project.clientId,
-          content:
-            pp.quotedAt || pp.quoteAmount
-              ? `Thank you for your quote on "${project.projectName}". Another professional was selected for this project. We appreciate your time and hope to work with you in the future.`
-              : `Bidding has concluded for "${project.projectName}". Thank you for your interest in this opportunity. We look forward to working with you in the future.`,
+          content: `[[event]]\n${JSON.stringify(notSelectedPayload)}`,
         },
       });
     }

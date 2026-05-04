@@ -1,4 +1,4 @@
-export type ChatEventType = 'quote-submitted' | 'quote-accepted' | 'generic';
+export type ChatEventType = 'quote-submitted' | 'quote-accepted' | 'quote-not-selected' | 'generic';
 
 export interface ChatEventField {
   label: string;
@@ -32,7 +32,7 @@ function parseStructuredEvent(content: string): ChatEvent | null {
 
   try {
     const parsed = JSON.parse(rawPayload) as StructuredChatEvent;
-    const knownTypes: ChatEventType[] = ['quote-submitted', 'quote-accepted'];
+    const knownTypes: ChatEventType[] = ['quote-submitted', 'quote-accepted', 'quote-not-selected'];
     const eventType: ChatEventType = knownTypes.includes(parsed.type as ChatEventType)
       ? (parsed.type as ChatEventType)
       : 'generic';

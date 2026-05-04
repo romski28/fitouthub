@@ -7,15 +7,30 @@ interface ChatEventCardProps {
 
 export default function ChatEventCard({ event, isCurrentUser = false }: ChatEventCardProps) {
   const isAward = event.type === 'quote-accepted';
+  const isNotSelected = event.type === 'quote-not-selected';
 
   const toneClasses = isAward
     ? 'border-amber-400/60 bg-amber-500/15 text-amber-50'
-    : isCurrentUser
-      ? 'border-emerald-400/50 bg-emerald-600/20 text-emerald-50'
-      : 'border-sky-400/40 bg-sky-500/10 text-slate-100';
+    : isNotSelected
+      ? 'border-rose-400/50 bg-rose-500/10 text-rose-50'
+      : isCurrentUser
+        ? 'border-emerald-400/50 bg-emerald-600/20 text-emerald-50'
+        : 'border-sky-400/40 bg-sky-500/10 text-slate-100';
 
-  const titleTone = isAward ? 'text-amber-200' : isCurrentUser ? 'text-emerald-100' : 'text-sky-200';
-  const iconTone = isAward ? 'bg-amber-400/25' : isCurrentUser ? 'bg-emerald-500/25' : 'bg-sky-500/20';
+  const titleTone = isAward
+    ? 'text-amber-200'
+    : isNotSelected
+      ? 'text-rose-200'
+      : isCurrentUser
+        ? 'text-emerald-100'
+        : 'text-sky-200';
+  const iconTone = isAward
+    ? 'bg-amber-400/25'
+    : isNotSelected
+      ? 'bg-rose-400/20'
+      : isCurrentUser
+        ? 'bg-emerald-500/25'
+        : 'bg-sky-500/20';
 
   return (
     <div className={`rounded-xl border px-3 py-3 ${toneClasses}`}>
