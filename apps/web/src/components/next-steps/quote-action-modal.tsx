@@ -92,6 +92,8 @@ export function QuoteActionModal({
   const [requestedCompletionBy, setRequestedCompletionBy] = useState<string | null>(null);
   const [requestedCompletionDeadline, setRequestedCompletionDeadline] = useState<Date | null>(null);
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState<string | null>(null);
+  const [siteInspectionRawDate, setSiteInspectionRawDate] = useState<string | null>(null);
+  const [hasPendingSiteAccessRequest, setHasPendingSiteAccessRequest] = useState(false);
   const [platformFeePercent, setPlatformFeePercent] = useState<number | undefined>();
   const [platformFeeAmount, setPlatformFeeAmount] = useState<number | undefined>();
   const [grossAmount, setGrossAmount] = useState<number | undefined>();
@@ -122,6 +124,8 @@ export function QuoteActionModal({
       setRequestedCompletionBy(null);
       setRequestedCompletionDeadline(null);
       setSiteInspectionAvailableOn(null);
+      setSiteInspectionRawDate(null);
+      setHasPendingSiteAccessRequest(false);
       setPlatformFeePercent(undefined);
       setPlatformFeeAmount(undefined);
       setGrossAmount(undefined);
@@ -147,13 +151,32 @@ export function QuoteActionModal({
         setRequestedCompletionDeadline(parseCompletionDeadline(endDateRaw));
         const inspectionDateRaw = detail?.project?.siteInspectionAvailableOn || detail?.siteInspectionAvailableOn || null;
         setSiteInspectionAvailableOn(formatCompletionDate(inspectionDateRaw));
+        setSiteInspectionRawDate(inspectionDateRaw);
+
+        // Check whether this professional already has an active site access request
+        if (inspectionDateRaw && state.projectId) {
+          try {
+            const accessRes = await fetch(`${API_BASE_URL}/projects/${state.projectId}/site-access/status`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (accessRes.ok) {
+              const accessData = await accessRes.json();
+              const activeStatuses = ['pending', 'approved_no_visit', 'approved_visit_scheduled', 'visited'];
+              setHasPendingSiteAccessRequest(
+                activeStatuses.includes(accessData?.requestStatus)
+              );
+            }
+          } catch {
+            // Best-effort; don't block the quote flow
+          }
+        }
       } catch {
         // Keep this best-effort only; quote flow must remain available.
       }
     };
 
     void loadRequestedCompletionBy();
-  }, [accessToken, isOpen, projectProfessionalId]);
+  }, [accessToken, isOpen, projectProfessionalId, state.projectId]);
 
   useEffect(() => {
     if (!isOpen || !accessToken || !projectProfessionalId || !amount) {
@@ -354,14 +377,17 @@ export function QuoteActionModal({
     requestedCompletionDeadline,
   ]);
 
+  const showSiteVisitCta = Boolean(siteInspectionRawDate) && !hasPendingSiteAccessRequest;
+
   if (showSuccess) {
     return (
       <WorkflowCompletionModal
         isOpen={isOpen}
         completedLabel="Your quote has gone to the client! Fingers crossed!"
-        completedDescription="Nice work. Your quote is now in the client\'s queue for review."
+        completedDescription="Nice work. Your quote is now in the client's queue for review."
         nextStep={successNextStep}
         primaryActionLabel="Open project"
+        additionalActionLabel={showSiteVisitCta ? `📍 Book site visit (${siteInspectionAvailableOn})` : undefined}
         secondaryActionLabel="Later"
         showConfetti
         onNavigate={() => {
@@ -373,6 +399,14 @@ export function QuoteActionModal({
             router.push(`/projects/${state.projectId}?tab=overview`);
           }
         }}
+        onAdditionalAction={showSiteVisitCta ? () => {
+          const path = state.projectDetailsPath || (state.projectId ? `/professional-projects/${state.projectId}` : null);
+          if (path) {
+            const base = path.split('?')[0];
+            router.push(`${base}?tab=site-access`);
+          }
+          onClose();
+        } : undefined}
         onClose={handleClose}
       />
     );

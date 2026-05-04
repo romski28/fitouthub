@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-04-5d3d0f7",
+    "date": "2026-05-04T17:05:25+08:00",
+    "title": "feat(site-access): surface REQUEST_SITE_ACCESS elective post-quote; add site visit CTA to quote success modal",
+    "summary": "feat(site-access): surface REQUEST_SITE_ACCESS elective post-quote; add site visit CTA to quote success modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5d3d0f7",
+    "files": [
+      "apps/api/sql/update_request_site_access_nextstep.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-ea484de",
     "date": "2026-05-04T16:52:27+08:00",
     "title": "feat(quotes): structured event cards for winner/non-selected; email fallbacks in client acceptQuote",

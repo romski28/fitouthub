@@ -156,6 +156,7 @@ export class NextStepService {
         escrowHeld: true,
         startDate: true,
         siteStartedAt: true,
+        siteInspectionAvailableOn: true,
         _count: {
           select: {
             professionals: true,
@@ -187,6 +188,7 @@ export class NextStepService {
         ],
       },
       select: {
+        id: true,
         status: true,
         professionalId: true,
         professional: {
@@ -292,6 +294,39 @@ export class NextStepService {
           'Your quote has been submitted. No action is needed from you until the client responds.',
         ),
       ];
+
+      // If the client has shared an inspection date and this professional has no active
+      // site access request, surface REQUEST_SITE_ACCESS as an elective.
+      const inspectionDate = (project as any).siteInspectionAvailableOn;
+      if (inspectionDate) {
+        const existingAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+          where: {
+            projectProfessionalId: isProfessional.id,
+            status: { notIn: ['cancelled', 'denied'] },
+          },
+          select: { id: true },
+        });
+        if (!existingAccessRequest) {
+          const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          });
+          availableConfigSteps.push({
+            ...createSyntheticPrimaryStep(
+              'REQUEST_SITE_ACCESS',
+              'Book a site visit',
+              true,
+              role,
+              effectiveStage,
+              `The client has made the site available for inspection on ${inspectionLabel}. Book a visit to get a clearer picture before the client makes their decision.`,
+            ),
+            isPrimary: false,
+            isElective: true,
+            displayOrder: 2,
+          } as any);
+        }
+      }
     }
 
     if (role === 'CLIENT' && effectiveStage === ProjectStage.CREATED) {
