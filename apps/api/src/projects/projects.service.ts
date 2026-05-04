@@ -4798,6 +4798,36 @@ Please review the project details and respond with your quote or decline the inv
       projectUrl: `${webBaseUrl}/professional-projects/${awarded.id}`,
     });
 
+    // Emit structured in-app event message for the awarded professional
+    try {
+      const awardedAmount = projectProfessional.quoteAmount
+        ? `HK$${Number(projectProfessional.quoteAmount).toLocaleString()}`
+        : null;
+      const quoteAcceptedPayload = {
+        type: 'quote-accepted',
+        icon: '🏆',
+        title: 'Quote Awarded',
+        summary: [
+          `Your quotation for "${project.projectName}" has been accepted`,
+          awardedAmount,
+        ].filter(Boolean).join(' · '),
+        fields: [
+          { label: 'Project', value: project.projectName },
+          ...(awardedAmount ? [{ label: 'Amount', value: awardedAmount }] : []),
+        ],
+      };
+      await this.prisma.message.create({
+        data: {
+          projectProfessionalId: awarded.id,
+          senderType: 'client',
+          senderClientId: project.clientId,
+          content: `[[event]]\n${JSON.stringify(quoteAcceptedPayload)}`,
+        },
+      });
+    } catch (e) {
+      console.warn('[ProjectsService.awardQuote] Failed to create award event message:', e);
+    }
+
     // Send notifications to non-declined, non-awarded professionals
     const otherProfessionals = professionals.filter(
       (pp: any) =>

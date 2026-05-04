@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { useConversation, type ConversationMessage as ChatMessage } from '@/hooks/use-conversation';
+import { parseChatEvent } from '@/lib/chat-event-parser';
 import ChatImageAttachment from './chat-image-attachment';
+import ChatEventCard from './chat-event-card';
 import ChatImageUploader from './chat-image-uploader';
 
 interface ProjectChatProps {
@@ -189,6 +191,7 @@ export default function ProjectChat({
           messages.map((msg) => {
             const isCurrent = isCurrentUser(msg);
             const isFoh = msg.senderType === 'foh';
+            const event = parseChatEvent(msg.content || '');
             
             return (
               <div key={msg.id}>
@@ -204,8 +207,10 @@ export default function ProjectChat({
 
                 <div id={`project-chat-message-${msg.id}`} className={`flex min-w-0 ${isCurrent ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`min-w-0 max-w-[75%] rounded-lg px-4 py-2 text-sm ${
-                      isCurrent
+                    className={`min-w-0 ${event ? 'max-w-[86%]' : 'max-w-[75%] rounded-lg px-4 py-2 text-sm'} ${
+                      event
+                        ? ''
+                        : isCurrent
                         ? 'bg-emerald-600 text-white'
                         : isFoh
                         ? 'bg-emerald-500/15 text-white border border-emerald-500/40'
@@ -219,7 +224,7 @@ export default function ProjectChat({
                     )}
 
                     {/* Message content */}
-                    {msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>}
+                    {msg.content && (event ? <ChatEventCard event={event} isCurrentUser={isCurrent} /> : <div className="whitespace-pre-wrap break-words">{msg.content}</div>)}
 
                     {/* Image attachments */}
                     {msg.attachments && msg.attachments.length > 0 && (

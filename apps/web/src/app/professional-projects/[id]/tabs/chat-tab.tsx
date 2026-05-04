@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import ChatEventCard from '@/components/chat-event-card';
 import ProjectChat from '@/components/project-chat';
+import { parseChatEvent } from '@/lib/chat-event-parser';
 
 interface Message {
   id: string;
@@ -123,7 +125,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                     No messages yet. Start the conversation!
                   </div>
                 ) : (
-                  messages.map((msg) => (
+                  messages.map((msg) => {
+                    const event = parseChatEvent(msg.content || '');
+                    return (
                     <div key={msg.id}>
                       {directFirstUnreadMessageId === msg.id && (
                         <div className="my-2 flex items-center gap-3">
@@ -138,13 +142,15 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                         className={`flex ${msg.senderType === 'professional' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                            msg.senderType === 'professional'
+                          className={`text-sm ${event ? 'max-w-[86%]' : 'max-w-[75%] rounded-lg px-3 py-2'} ${
+                            event
+                              ? ''
+                              : msg.senderType === 'professional'
                               ? 'bg-emerald-600 text-white'
                               : 'bg-slate-800 border border-slate-700 text-slate-100'
                           }`}
                         >
-                          <p>{msg.content}</p>
+                          {event ? <ChatEventCard event={event} isCurrentUser={msg.senderType === 'professional'} /> : <p>{msg.content}</p>}
                           <p
                             className={`text-xs mt-1 ${
                               msg.senderType === 'professional' ? 'text-emerald-100' : 'text-slate-400'
@@ -155,7 +161,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                         </div>
                       </div>
                     </div>
-                  ))
+                  );
+                })
                 )}
               </div>
 

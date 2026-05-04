@@ -856,13 +856,29 @@ export class ProfessionalController {
         throw new BadRequestException('Failed to load updated quote record');
       }
 
-      // Create a message to notify the client in-app
+      // Create a structured event message to notify the client in-app
+      const _quoteEventPayload = {
+        type: 'quote-submitted',
+        icon: '💰',
+        title: 'Quotation Submitted',
+        summary: [
+          isNaN(quoteAmount) ? null : `HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`,
+          quoteSchedule.quoteEstimatedStartAt.toLocaleDateString(),
+          this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes),
+        ].filter(Boolean).join(' · '),
+        fields: [
+          ...(isNaN(quoteAmount) ? [] : [{ label: 'Amount', value: `HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}` }]),
+          { label: 'Start', value: quoteSchedule.quoteEstimatedStartAt.toLocaleDateString() },
+          { label: 'Duration', value: this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes) },
+          ...(body.quoteNotes ? [{ label: 'Notes', value: body.quoteNotes }] : []),
+        ],
+      };
       await (this.prisma as any).message.create({
         data: {
           projectProfessionalId,
           senderType: 'professional',
           senderProfessionalId: professionalId,
-          content: `We have submitted a quotation${isNaN(quoteAmount) ? '' : ` for HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`} starting ${quoteSchedule.quoteEstimatedStartAt.toLocaleString()} for ${this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes)}.`,
+          content: `[[event]]\n${JSON.stringify(_quoteEventPayload)}`,
         },
       });
 
