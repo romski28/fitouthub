@@ -50,13 +50,13 @@ function parseStructuredEvent(content: string): ChatEvent | null {
 }
 
 function parseQuoteSubmittedEvent(content: string): ChatEvent | null {
-  const quotePattern = /^We have submitted a quotation(?: for HK\$(?<amount>[\d,]+(?:\.\d+)?))? starting (?<start>.+?) for (?<duration>.+)\.$/i;
+  const quotePattern = /^We have submitted a quotation(?: for HK\$([\d,]+(?:\.\d+)?))? starting (.+?) for (.+)\.$/i;
   const match = content.match(quotePattern);
   if (!match) return null;
 
-  const amount = match.groups?.amount;
-  const start = match.groups?.start;
-  const duration = match.groups?.duration;
+  const amount = match[1];
+  const start = match[2];
+  const duration = match[3];
 
   const fields: ChatEventField[] = [];
   if (amount) fields.push({ label: 'Amount', value: `HK$${amount}` });
