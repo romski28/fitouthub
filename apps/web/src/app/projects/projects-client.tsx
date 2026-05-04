@@ -610,15 +610,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       });
   }, [items, filterStatus]);
 
-  const activityProjectIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (!updatesSummary) return ids;
-    updatesSummary.unreadMessages.forEach((group) => {
-      if (group.unreadCount > 0) ids.add(group.projectId);
-    });
-    return ids;
-  }, [updatesSummary]);
-
   const unreadByProjectId = useMemo(() => {
     const counts: Record<string, number> = {};
     if (!updatesSummary) return counts;
@@ -819,11 +810,15 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        router.push(`/projects/${project.id}?tab=chat`);
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(
+                            new CustomEvent('fitouthub:open-updates', { detail: { projectId: project.id } }),
+                          );
+                        }
                       }}
                       className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md transition hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
-                      title={`Open chat - ${t('unreadMessages', { count: unreadCount })}`}
-                      aria-label={`Open chat with ${unreadCount} unread messages`}
+                      title={`Open recent activity - ${t('unreadMessages', { count: unreadCount })}`}
+                      aria-label={`Open recent activity with ${unreadCount} unread messages`}
                     >
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </button>
@@ -876,21 +871,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                        {activityProjectIds.has(project.id) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (typeof window !== 'undefined') {
-                                window.dispatchEvent(
-                                  new CustomEvent('fitouthub:open-updates', { detail: { projectId: project.id } }),
-                                );
-                              }
-                            }}
-                            className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition text-center"
-                          >
-                            View activity
-                          </button>
-                        )}
                         {nextStepsLoading && !nextStepMap[project.id] ? (
                           <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
                         ) : (

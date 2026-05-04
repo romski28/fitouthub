@@ -72,14 +72,6 @@ export default function ProfessionalProjectsPage() {
     [projects],
   );
   const projectIdsKey = useMemo(() => projectIds.join('|'), [projectIds]);
-  const activityProjectIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (!updatesSummary) return ids;
-    updatesSummary.unreadMessages.forEach((group) => {
-      if (group.unreadCount > 0) ids.add(group.projectId);
-    });
-    return ids;
-  }, [updatesSummary]);
   const unreadByProjectId = useMemo(() => {
     const counts: Record<string, number> = {};
     if (!updatesSummary) return counts;
@@ -341,11 +333,17 @@ export default function ProfessionalProjectsPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          router.push(`/professional-projects/${projectProf.id}?tab=chat`);
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(
+                              new CustomEvent('fitouthub:open-updates', {
+                                detail: { projectId: projectProf.project.id },
+                              }),
+                            );
+                          }
                         }}
                         className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md transition hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
-                        title={`Open chat - ${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
-                        aria-label={`Open chat with ${unreadCount} unread messages`}
+                        title={`Open recent activity - ${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
+                        aria-label={`Open recent activity with ${unreadCount} unread messages`}
                       >
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </button>
@@ -398,21 +396,6 @@ export default function ProfessionalProjectsPage() {
                         </div>
 
                         <div className="col-span-2 flex flex-wrap items-center gap-2 md:col-span-1 md:justify-end">
-                          {!isRestricted && activityProjectIds.has(projectProf.project.id) && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (typeof window !== 'undefined') {
-                                  window.dispatchEvent(
-                                    new CustomEvent('fitouthub:open-updates', { detail: { projectId: projectProf.project.id } }),
-                                  );
-                                }
-                              }}
-                              className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10 transition text-center"
-                            >
-                              View activity
-                            </button>
-                          )}
                           {isRestricted ? (
                             <span className="rounded-lg border border-rose-300/40 px-4 py-2 text-sm font-semibold text-rose-100">
                               Bidding closed

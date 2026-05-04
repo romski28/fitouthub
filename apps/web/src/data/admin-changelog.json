@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-04-0238949",
+    "date": "2026-05-04T14:12:10+08:00",
+    "title": "feat(unread-bubbles): open scoped recent activity drawer and remove redundant view-activity CTA",
+    "summary": "feat(unread-bubbles): open scoped recent activity drawer and remove redundant view-activity CTA",
+    "areas": [
+      "web"
+    ],
+    "commit": "0238949",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-0023843",
     "date": "2026-05-04T13:34:10+08:00",
     "title": "fix(recent-activity): render structured chat events as event cards in quick-sheet",
