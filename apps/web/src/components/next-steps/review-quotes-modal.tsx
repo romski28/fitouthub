@@ -88,6 +88,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [termsExpanded, setTermsExpanded] = useState(true);
   const [acceptedName, setAcceptedName] = useState('');
   const [resolvedNextStep, setResolvedNextStep] = useState<WorkflowNextStep | null>(null);
   const [resolvedNextAction, setResolvedNextAction] = useState<NextStepAction | null>(null);
@@ -122,6 +123,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     if (isOpen) {
       setShowSuccess(false);
       setShowDetails(false);
+      setTermsExpanded(true);
       setAcceptError(null);
       setResolvedNextAction(null);
       hasNotifiedCompletionRef.current = false;
@@ -288,10 +290,23 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
 
             <div className="shrink-0 px-5 pt-4">
               <div className="rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs text-blue-100">
-                <p className="font-semibold text-blue-200">Quotation Terms</p>
-                <p className="mt-1 leading-relaxed">
-                  Quotations are based on your project description, images, and information you&apos;ve provided. Professionals have the right to visit the site at no cost to you to inspect the project. If site conditions differ materially from your description, the professional may request a quotation adjustment with Mimo approval.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setTermsExpanded((prev) => !prev)}
+                  className="flex w-full items-center justify-between gap-3 text-left"
+                  aria-expanded={termsExpanded}
+                  aria-label="Toggle quotation terms"
+                >
+                  <p className="font-semibold text-blue-200">Quotation Terms</p>
+                  <span className="text-blue-200/90 text-[11px] font-semibold">
+                    {termsExpanded ? 'Hide' : 'Show'}
+                  </span>
+                </button>
+                {termsExpanded && (
+                  <p className="mt-1 leading-relaxed">
+                    Quotations are based on your project description, images, and information you&apos;ve provided. Professionals have the right to visit the site at no cost to you to inspect the project. If site conditions differ materially from your description, the professional may request a quotation adjustment with Mimo approval.
+                  </p>
+                )}
               </div>
             </div>
 

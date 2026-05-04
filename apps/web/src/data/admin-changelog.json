@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-04-c66dd4c",
+    "date": "2026-05-04T14:31:41+08:00",
+    "title": "feat(modal-ux): default-open collapsible quotation terms; lower floating chat layer under overlays",
+    "summary": "feat(modal-ux): default-open collapsible quotation terms; lower floating chat layer under overlays",
+    "areas": [
+      "web"
+    ],
+    "commit": "c66dd4c",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-77314e3",
     "date": "2026-05-04T14:24:16+08:00",
     "title": "fix(review-quotes-modal): center on mobile and isolate quotation terms above scroll list",

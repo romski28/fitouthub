@@ -740,7 +740,7 @@ export default function FloatingChat() {
     <>
       {/* Chat Modal */}
       {isOpen && (
-        <div className="fixed top-1/2 right-6 -translate-y-1/2 z-50 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-slate-200 flex flex-col">
+        <div className="fixed top-1/2 right-6 -translate-y-1/2 z-40 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-slate-200 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between bg-blue-600 text-white px-4 py-3 rounded-t-lg">
             <div>
@@ -900,7 +900,7 @@ export default function FloatingChat() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-[180px] right-6 z-50 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group attention-wiggle overflow-hidden"
+          className="fixed bottom-[180px] right-6 z-40 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group attention-wiggle overflow-hidden"
           aria-label="Open chat"
           title="Chat with Fitout Hub support"
         >
