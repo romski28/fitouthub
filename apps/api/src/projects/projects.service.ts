@@ -259,6 +259,24 @@ export class ProjectsService {
     );
   }
 
+  private async addProjectProfessionalMessage(
+    projectProfessionalId: string,
+    senderType: 'client' | 'professional',
+    senderClientId: string | null,
+    senderProfessionalId: string | null,
+    content: string,
+  ): Promise<void> {
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId,
+        senderType,
+        senderClientId,
+        senderProfessionalId,
+        content,
+      },
+    });
+  }
+
   private normalizeQuoteSchedule(
     input: {
       quoteEstimatedStartAt?: string | Date | null;
@@ -3973,12 +3991,26 @@ Please review the project details and respond with your quote or decline the inv
       projectProfessional.professional?.businessName ||
       projectProfessional.professional?.fullName ||
       'Professional';
-    await this.addProjectChatMessage(
-      projectId,
+
+    const siteVisitRequestedEvent = JSON.stringify({
+      type: 'generic',
+      icon: '🚪',
+      title: 'Site Visit Requested',
+      summary: `${professionalName} requested a site visit.`,
+      fields: [
+        { label: 'Requested for', value: this.formatDateTime(scheduledAt) },
+        ...(body.notes?.trim()
+          ? [{ label: 'Notes', value: body.notes.trim() }]
+          : []),
+      ],
+    });
+
+    await this.addProjectProfessionalMessage(
+      projectProfessional.id,
       'professional',
       null,
       professionalId,
-      `${professionalName} requested a site visit on ${this.formatDateTime(scheduledAt)}.`,
+      `[[event]] ${siteVisitRequestedEvent}`,
     );
 
     return {

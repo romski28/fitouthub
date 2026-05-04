@@ -329,6 +329,49 @@ export class NextStepService {
       }
     }
 
+    if (role === 'CLIENT') {
+      const pendingClientVisitResponse = await this.prisma.siteAccessVisit.findFirst({
+        where: {
+          projectId,
+          status: 'proposed',
+          proposedByRole: 'professional',
+        },
+        select: { id: true, proposedAt: true },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (pendingClientVisitResponse) {
+        const proposedAtLabel = new Date(
+          pendingClientVisitResponse.proposedAt,
+        ).toLocaleString('en-HK', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        return {
+          PRIMARY: [
+            toApiAction(
+              createSyntheticPrimaryStep(
+                'CONFIRM_SITE_VISIT',
+                'Confirm site visit',
+                true,
+                role,
+                effectiveStage,
+                `A professional proposed a site visit for ${proposedAtLabel}. Confirm or decline this request.`,
+              ),
+            ),
+          ],
+          ELECTIVE: [],
+          status: project.status,
+          stage: effectiveStage,
+        };
+      }
+    }
+
     if (role === 'CLIENT' && effectiveStage === ProjectStage.CREATED) {
       const invitedProfessionalCount = project._count.professionals;
 

@@ -98,6 +98,60 @@ const formatDuration = (minutes?: number) => {
   return `${minutes} min`;
 };
 
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(value));
+  } catch {
+    return '—';
+  }
+};
+
+const extractOverviewSummaryLines = (value?: string): string[] => {
+  const source = (value || '').trim();
+  if (!source) return [];
+
+  const lines = source
+    .replace(/\r\n/g, '\n')
+    .replace(/\s+(Summary:)/gi, '\n$1')
+    .replace(/\s+(Assumptions:)/gi, '\n$1')
+    .replace(/\s+(Q&A:)/gi, '\n$1')
+    .replace(/\s+(Q\d+\s*:)/gi, '\n$1')
+    .replace(/\n{2,}/g, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const filtered: string[] = [];
+  let inAssumptions = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (/^Assumptions:/i.test(line)) {
+      inAssumptions = true;
+      continue;
+    }
+    if (/^(Summary:|Q&A:|Q\d+\s*:)/i.test(line)) {
+      inAssumptions = false;
+    }
+    if (inAssumptions) continue;
+
+    if (/^Summary:/i.test(line)) {
+      const summaryContent = line.replace(/^Summary:\s*/i, '').trim();
+      if (summaryContent) filtered.push(summaryContent);
+      continue;
+    }
+
+    filtered.push(line);
+  }
+
+  return filtered;
+};
+
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   project,
   quoteForm,
@@ -161,6 +215,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const shouldEnforceInitialDeadline = !hasInitialQuote && !isRebidFlow;
   const isInitialQuoteLocked = shouldEnforceInitialDeadline && isOverdue;
   const showQuoteForm = ['pending', 'accepted', 'counter_requested'].includes(project.status);
+  const overviewSummaryLines = extractOverviewSummaryLines(project.project.notes);
 
   const countdownBadge = quoteDeadline && shouldEnforceInitialDeadline ? (
     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -178,6 +233,22 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {overviewSummaryLines.length > 0 && (
+        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+          <h2 className="text-lg font-bold text-white mb-3">Summary</h2>
+          <div className="rounded-md border border-slate-700 bg-slate-900/45 px-3 py-3 space-y-1.5">
+            {overviewSummaryLines.map((line, index) => (
+              <p key={`overview-summary-line-${index}`} className="text-sm leading-relaxed text-slate-200">
+                {line}
+              </p>
+            ))}
+            <div className="mt-3 pt-2 border-t border-slate-700 flex gap-4 text-xs text-slate-300">
+              <span>Invited: {formatDate(project.createdAt)}</span>
+              {project.updatedAt && <span>Last updated: {formatDate(project.updatedAt)}</span>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quote Form/Status */}
       {showQuoteForm && 

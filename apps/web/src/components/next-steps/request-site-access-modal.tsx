@@ -35,6 +35,25 @@ interface SiteAccessStatus {
   siteAccessData: SiteAccessData | null;
 }
 
+function BookingProgressLabel() {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span>Booking</span>
+      <span className="inline-flex items-end" aria-hidden="true">
+        <span className="inline-block animate-bounce" style={{ animationDelay: '0ms' }}>
+          .
+        </span>
+        <span className="inline-block animate-bounce" style={{ animationDelay: '140ms' }}>
+          .
+        </span>
+        <span className="inline-block animate-bounce" style={{ animationDelay: '280ms' }}>
+          .
+        </span>
+      </span>
+    </span>
+  );
+}
+
 const INSPECTION_TIME_OPTIONS = Array.from({ length: 11 }, (_, index) => {
   const hour = 8 + index;
   return `${String(hour).padStart(2, '0')}:00`;
@@ -412,7 +431,7 @@ export function RequestSiteAccessModal({
                 : ''
             }
           >
-            {actionLoading ? 'Booking...' : primaryButtonLabel}
+            {actionLoading ? <BookingProgressLabel /> : primaryButtonLabel}
           </button>
         </div>
       </div>
