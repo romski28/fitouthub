@@ -287,6 +287,12 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
             </div>
 
             <div className="next-step-scrollbar overflow-y-auto flex-1 px-5 py-4 space-y-3">
+          <div className="sticky top-0 z-10 rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs text-blue-100">
+            <p className="font-semibold text-blue-200">Quotation Terms</p>
+            <p className="mt-1 leading-relaxed">
+              Quotations are based on your project description, images, and information you&apos;ve provided. Professionals have the right to visit the site at no cost to you to inspect the project. If site conditions differ materially from your description, the professional may request a quotation adjustment with Mimo approval.
+            </p>
+          </div>
           {fetching && (
             <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">

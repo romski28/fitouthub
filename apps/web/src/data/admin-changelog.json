@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-04-7d63119",
+    "date": "2026-05-04T11:49:23+08:00",
+    "title": "Enhance quote UX messaging and mobile responsiveness",
+    "summary": "Enhance quote UX messaging and mobile responsiveness",
+    "areas": [
+      "web"
+    ],
+    "commit": "7d63119",
+    "files": [
+      "apps/web/public/assets/images/HKD.webp",
+      "apps/web/src/app/professional-projects/[id]/professional-project-detail.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-fa7562a",
     "date": "2026-05-04T00:43:13+08:00",
     "title": "test: add read-marker smoke script for send and mark-read flow",

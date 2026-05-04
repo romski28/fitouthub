@@ -19,6 +19,18 @@ export default function ProfessionalProjectDetail({ project, projectId }: Profes
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const siteInspectionAvailableOn = (project as Project & { siteInspectionAvailableOn?: string | null }).siteInspectionAvailableOn;
+  const siteInspectionLabel = siteInspectionAvailableOn
+    ? (() => {
+        const parsed = new Date(siteInspectionAvailableOn);
+        if (Number.isNaN(parsed.getTime())) return siteInspectionAvailableOn;
+        return parsed.toLocaleDateString('en-HK', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+      })()
+    : null;
 
   if (!professionalId) {
     return (
@@ -104,6 +116,12 @@ export default function ProfessionalProjectDetail({ project, projectId }: Profes
                 <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</p>
                 <p className="text-lg font-medium text-slate-900 capitalize">{project.status}</p>
               </div>
+              {siteInspectionLabel && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Site inspection</p>
+                  <p className="text-lg font-medium text-slate-900">Site inspection available on {siteInspectionLabel}</p>
+                </div>
+              )}
             </div>
 
             {project.notes && (

@@ -91,6 +91,7 @@ export function QuoteActionModal({
   const [showDetails, setShowDetails] = useState(false);
   const [requestedCompletionBy, setRequestedCompletionBy] = useState<string | null>(null);
   const [requestedCompletionDeadline, setRequestedCompletionDeadline] = useState<Date | null>(null);
+  const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState<string | null>(null);
   const [platformFeePercent, setPlatformFeePercent] = useState<number | undefined>();
   const [platformFeeAmount, setPlatformFeeAmount] = useState<number | undefined>();
   const [grossAmount, setGrossAmount] = useState<number | undefined>();
@@ -120,6 +121,7 @@ export function QuoteActionModal({
       setShowDetails(false);
       setRequestedCompletionBy(null);
       setRequestedCompletionDeadline(null);
+      setSiteInspectionAvailableOn(null);
       setPlatformFeePercent(undefined);
       setPlatformFeeAmount(undefined);
       setGrossAmount(undefined);
@@ -143,6 +145,8 @@ export function QuoteActionModal({
         const endDateRaw = detail?.project?.endDate || detail?.endDate || null;
         setRequestedCompletionBy(formatCompletionDate(endDateRaw));
         setRequestedCompletionDeadline(parseCompletionDeadline(endDateRaw));
+        const inspectionDateRaw = detail?.project?.siteInspectionAvailableOn || detail?.siteInspectionAvailableOn || null;
+        setSiteInspectionAvailableOn(formatCompletionDate(inspectionDateRaw));
       } catch {
         // Keep this best-effort only; quote flow must remain available.
       }
@@ -409,32 +413,32 @@ export function QuoteActionModal({
               )}
 
               <form onSubmit={handleSubmit} className="flex max-h-[80vh] flex-col">
-                <div className="shrink-0 border-b border-slate-700 px-6 py-5">
+                <div className="shrink-0 border-b border-slate-700 px-4 sm:px-6 py-5">
                   <div className="flex items-start gap-4">
                     <img
                       src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
                       alt="Quote"
-                      className="h-14 w-14 rounded-full border border-white/20 object-cover"
+                      className="h-12 sm:h-14 w-12 sm:w-14 rounded-full border border-white/20 object-cover flex-shrink-0"
                     />
-                    <div>
-                      <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
-                      {body ? <p className="mt-1 text-sm text-slate-200">{body}</p> : null}
+                    <div className="min-w-0">
+                      <h2 className="text-lg sm:text-2xl font-bold text-emerald-300">{title}</h2>
+                      {body ? <p className="mt-1 text-xs sm:text-sm text-slate-200">{body}</p> : null}
                     </div>
                   </div>
                 </div>
 
-                <div className="next-step-scrollbar grid flex-1 gap-4 overflow-y-auto px-6 py-5">
-                  <div className="grid grid-cols-3 gap-3">
-                    <label className="col-span-2 block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">Quote amount (HKD)</span>
+                <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-semibold text-slate-200">Your quote amount (HKD)</span>
                       <input
                         type="number"
-                        min="0"
-                        step="0.01"
+                        min="1"
+                        step="1"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                        placeholder="e.g. 125000"
+                        placeholder="Enter your quote"
                         disabled={submitting}
                       />
                     </label>
@@ -459,6 +463,12 @@ export function QuoteActionModal({
                   {requestedCompletionBy ? (
                     <div className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-sm text-slate-200">
                       Client requested completion by: <span className="font-semibold text-white">{requestedCompletionBy}</span>
+                    </div>
+                  ) : null}
+
+                  {siteInspectionAvailableOn ? (
+                    <div className="rounded-lg border border-sky-600/50 bg-sky-600/10 px-3 py-2 text-sm text-sky-200">
+                      Site inspection available: <span className="font-semibold text-sky-100">{siteInspectionAvailableOn}</span>
                     </div>
                   ) : null}
 
@@ -561,22 +571,22 @@ export function QuoteActionModal({
                   ) : null}
                 </div>
 
-                <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
-                  <button
-                    type="button"
-                    onClick={handleClose}
-                    className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={submitting}
-                  >
-                    {secondaryButtonLabel || 'Cancel'}
-                  </button>
-                  <button
-                    type="submit"
-                    className="min-w-[140px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Submitting...' : primaryButtonLabel}
-                  </button>
+                  <div className="shrink-0 flex items-center justify-end gap-2 sm:gap-3 border-t border-slate-700 px-4 sm:px-6 py-4">
+                    <button
+                      type="button"
+                      onClick={handleClose}
+                      className="min-w-fit rounded-lg border border-slate-500 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={submitting}
+                    >
+                      {secondaryButtonLabel || 'Cancel'}
+                    </button>
+                    <button
+                      type="submit"
+                      className="min-w-fit rounded-lg bg-emerald-600 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Submitting...' : primaryButtonLabel}
+                    </button>
                 </div>
               </form>
             </div>
