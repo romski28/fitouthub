@@ -9,8 +9,9 @@ import { fetchWithRetry } from '@/lib/http';
 import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
-import ProjectInfoCard from '@/components/project-info-card';
+
 import { ProjectTabs } from '@/components/project-tabs';
+import ProjectInfoCard from '@/components/project-info-card';
 import { OverviewTab } from './tabs/overview-tab';
 import { SiteAccessTab } from './tabs/site-access-tab';
 import { ContractTab } from './tabs/contract-tab';
@@ -1531,7 +1532,6 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="space-y-0">
-            {/* Unified Top Project Info */}
             <ProjectInfoCard
               role="professional"
               title={project!.project.projectName}

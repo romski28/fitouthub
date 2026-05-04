@@ -178,8 +178,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Quote Form / Status — shown first so the action is immediately visible */}
-      {/* (Project Info follows below) */}
 
       {/* Quote Form/Status */}
       {showQuoteForm && 

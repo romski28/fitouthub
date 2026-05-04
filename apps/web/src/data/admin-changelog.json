@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-04-cbddf86",
+    "date": "2026-05-04T19:04:06+08:00",
+    "title": "feat: move AI panel to overview tab, keep ProjectInfoCard in hero",
+    "summary": "feat: move AI panel to overview tab, keep ProjectInfoCard in hero",
+    "areas": [
+      "web"
+    ],
+    "commit": "cbddf86",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-1048c3d",
     "date": "2026-05-04T18:45:37+08:00",
     "title": "feat(site-access): add dedicated REQUEST_SITE_ACCESS booking modal with slot picker",
