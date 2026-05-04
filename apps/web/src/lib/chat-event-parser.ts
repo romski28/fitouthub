@@ -67,7 +67,6 @@ function parseQuoteSubmittedEvent(content: string): ChatEvent | null {
     type: 'quote-submitted',
     icon: '💰',
     title: 'Quote Submitted',
-    summary: 'A professional submitted a quotation update.',
     fields,
     rawContent: content,
   };

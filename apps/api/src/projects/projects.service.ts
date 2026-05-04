@@ -4807,10 +4807,6 @@ Please review the project details and respond with your quote or decline the inv
         type: 'quote-accepted',
         icon: '🏆',
         title: 'Quote Awarded',
-        summary: [
-          `Your quotation for "${project.projectName}" has been accepted`,
-          awardedAmount,
-        ].filter(Boolean).join(' · '),
         fields: [
           { label: 'Project', value: project.projectName },
           ...(awardedAmount ? [{ label: 'Amount', value: awardedAmount }] : []),

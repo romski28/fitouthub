@@ -857,18 +857,22 @@ export class ProfessionalController {
       }
 
       // Create a structured event message to notify the client in-app
+      const _fmtDate = (d: Date): string => {
+        const p = new Intl.DateTimeFormat('en-GB', {
+          weekday: 'short', day: '2-digit', month: 'short',
+          hour: '2-digit', minute: '2-digit', hour12: false,
+          timeZone: 'Asia/Hong_Kong',
+        }).formatToParts(d);
+        const get = (t: string) => p.find((x) => x.type === t)?.value ?? '';
+        return `${get('weekday')} ${get('day')} ${get('month')} at ${get('hour')}:${get('minute')}`;
+      };
       const _quoteEventPayload = {
         type: 'quote-submitted',
         icon: '💰',
         title: 'Quotation Submitted',
-        summary: [
-          isNaN(quoteAmount) ? null : `HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}`,
-          quoteSchedule.quoteEstimatedStartAt.toLocaleDateString(),
-          this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes),
-        ].filter(Boolean).join(' · '),
         fields: [
           ...(isNaN(quoteAmount) ? [] : [{ label: 'Amount', value: `HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}` }]),
-          { label: 'Start', value: quoteSchedule.quoteEstimatedStartAt.toLocaleDateString() },
+          { label: 'Start', value: _fmtDate(quoteSchedule.quoteEstimatedStartAt) },
           { label: 'Duration', value: this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes) },
           ...(body.quoteNotes ? [{ label: 'Notes', value: body.quoteNotes }] : []),
         ],

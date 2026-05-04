@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-04-3ae7f97",
+    "date": "2026-05-04T12:47:14+08:00",
+    "title": "fix(chat-events): remove duplicate summary line; human-friendly date format (ddd dd mmm at hh:mm HKT)",
+    "summary": "fix(chat-events): remove duplicate summary line; human-friendly date format (ddd dd mmm at hh:mm HKT)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "3ae7f97",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/lib/chat-event-parser.ts"
+    ]
+  },
+  {
     "id": "2026-05-04-f2ec4b6",
     "date": "2026-05-04T12:39:21+08:00",
     "title": "fix(chat-event-parser): replace named capture groups with positional (ES2018 compat)",
