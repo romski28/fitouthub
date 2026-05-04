@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-04-399f129",
+    "date": "2026-05-04T17:27:36+08:00",
+    "title": "fix(site-access): surface REQUEST_SITE_ACCESS elective on professional projects list; fix navigate_tab action type",
+    "summary": "fix(site-access): surface REQUEST_SITE_ACCESS elective on professional projects list; fix navigate_tab action type",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "399f129",
+    "files": [
+      "apps/api/sql/update_request_site_access_nextstep.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/lib/next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-05-04-5d3d0f7",
     "date": "2026-05-04T17:05:25+08:00",
     "title": "feat(site-access): surface REQUEST_SITE_ACCESS elective post-quote; add site visit CTA to quote success modal",

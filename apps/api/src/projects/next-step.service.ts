@@ -316,7 +316,7 @@ export class NextStepService {
             ...createSyntheticPrimaryStep(
               'REQUEST_SITE_ACCESS',
               'Book a site visit',
-              true,
+              false,
               role,
               effectiveStage,
               `The client has made the site available for inspection on ${inspectionLabel}. Book a visit to get a clearer picture before the client makes their decision.`,

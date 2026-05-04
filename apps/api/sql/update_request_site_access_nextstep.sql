@@ -7,7 +7,7 @@ SET
   "modalTitle"               = 'Book a site visit',
   "modalBody"                = 'The client has shared an available inspection date. Visiting the site before the client selects a professional gives you a much clearer picture of the scope — and shows the client you are thorough and serious.\n\nHead to the **Access & Schedule** tab to confirm your preferred time.',
   "modalPrimaryButtonLabel"  = 'Go to Access & Schedule',
-  "modalPrimaryActionType"   = 'navigate',
+  "modalPrimaryActionType"   = 'navigate_tab',
   "modalPrimaryActionTarget" = 'site-access',
   "requiresAction"           = TRUE,
   "updatedAt"                = NOW()

@@ -247,7 +247,10 @@ export async function fetchPrimaryNextSteps(
 
     const data = (await response.json()) as NextStepResponse;
     clearEndpointBackoff();
-    const actions = Array.isArray(data.PRIMARY) ? data.PRIMARY : [];
+    const actions = [
+      ...(Array.isArray(data.PRIMARY) ? data.PRIMARY : []),
+      ...(Array.isArray(data.ELECTIVE) ? data.ELECTIVE : []),
+    ];
     nextStepListCache.set(key, { actions, updatedAt: Date.now() });
     return actions;
   })();
