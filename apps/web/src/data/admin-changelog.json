@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-04-fbd6a23",
+    "date": "2026-05-04T13:19:37+08:00",
+    "title": "feat(chat-nav): make project card unread bubbles open chat tab",
+    "summary": "feat(chat-nav): make project card unread bubbles open chat tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "fbd6a23",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-04-7228863",
     "date": "2026-05-04T13:16:21+08:00",
     "title": "chore(unread): remove legacy unread-count endpoints and stale unreadCount field",

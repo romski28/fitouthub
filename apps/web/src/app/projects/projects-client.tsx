@@ -814,9 +814,19 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     : `${baseBorder} bg-white/10 hover:bg-white/15`
                 }`}>
                   {unreadCount > 0 && (
-                    <span className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md" title={t('unreadMessages', { count: unreadCount })}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        router.push(`/projects/${project.id}?tab=chat`);
+                      }}
+                      className="absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-700 px-2 text-xs font-bold text-white shadow-md transition hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+                      title={`Open chat - ${t('unreadMessages', { count: unreadCount })}`}
+                      aria-label={`Open chat with ${unreadCount} unread messages`}
+                    >
                       {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
+                    </button>
                   )}
                   <div className="grid gap-3">
                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
