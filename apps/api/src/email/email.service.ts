@@ -1094,4 +1094,55 @@ export class EmailService {
       throw error;
     }
   }
+
+  /**
+   * Notify a professional that the client has confirmed their proposed site visit
+   */
+  async sendSiteVisitConfirmed(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    visitAt: string;
+    projectUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send site visit confirmed notice to:', params.to);
+      return;
+    }
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `✅ Site visit confirmed: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #065f46; margin: 0 0 12px 0;">🗓️ Site visit confirmed</h2>
+            <p style="color: #374151;">Hi ${params.professionalName},</p>
+            <p style="color: #374151; line-height: 1.5;">
+              Great news — the client has confirmed your proposed site visit for
+              <strong>${params.projectName}</strong>.
+            </p>
+            <div style="background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 16px; margin: 18px 0;">
+              <p style="margin: 0; color: #065f46; font-size: 15px;">
+                <strong>Confirmed time:</strong> ${params.visitAt}
+              </p>
+            </div>
+            <p style="color: #374151;">Please make sure you arrive on time. Access details will be available in the project.</p>
+            <div style="margin: 24px 0; text-align: center;">
+              <a href="${params.projectUrl}" style="display: inline-block; background: #059669; color: white; text-decoration: none; padding: 12px 22px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                View project
+              </a>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Site visit confirmed notice sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send site visit confirmed notice:', error);
+      // Non-fatal — do not rethrow
+    }
+  }
 }

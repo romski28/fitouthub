@@ -884,6 +884,18 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                                   const shouldWaitForQuotes =
                                     quotedCount === 0 && /review\s+quotes?/i.test(action.actionLabel || '');
 
+                                  if (action.actionKey === 'CONFIRM_SITE_VISIT') {
+                                    return (
+                                      <Link
+                                        key={`${project.id}-${action.actionKey}`}
+                                        href={`/projects/${project.id}?tab=site-access`}
+                                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                      >
+                                        {action.actionLabel}
+                                      </Link>
+                                    );
+                                  }
+
                                   return (
                                     <NextStepModalButton
                                       key={`${project.id}-${action.actionKey}`}

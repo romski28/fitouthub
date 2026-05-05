@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-05-07e9c8c",
+    "date": "2026-05-05T11:46:06+08:00",
+    "title": "feat(site-access): bypass CONFIRM_SITE_VISIT modal; refactor client site-access panel; email on accept",
+    "summary": "feat(site-access): bypass CONFIRM_SITE_VISIT modal; refactor client site-access panel; email on accept",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "07e9c8c",
+    "files": [
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-6e9db6c",
     "date": "2026-05-05T00:58:15+08:00",
     "title": "feat(workflow): surface site-visit actions and scope pre-award chat notifications",

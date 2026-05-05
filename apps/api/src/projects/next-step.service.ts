@@ -357,7 +357,7 @@ export class NextStepService {
             toApiAction(
               createSyntheticPrimaryStep(
                 'CONFIRM_SITE_VISIT',
-                'Confirm site visit',
+                'Manage site requests',
                 true,
                 role,
                 effectiveStage,

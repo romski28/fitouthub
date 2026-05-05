@@ -4092,6 +4092,21 @@ Please review the project details and respond with your quote or decline the inv
         : `${actorLabel} declined the proposed site visit for ${this.formatDateTime(visit.proposedAt)}${body.responseNotes ? `: ${body.responseNotes}` : '.'}`,
     );
 
+    // Email notification to professional when client accepts their proposed visit
+    if (body.status === 'accepted' && !isProfessional && visit.professional?.email) {
+      const webBase = process.env.WEB_BASE_URL || 'https://fitouthub-web.vercel.app';
+      const projectProfessionalId = visit.projectProfessionalId;
+      this.emailService
+        .sendSiteVisitConfirmed({
+          to: visit.professional.email,
+          professionalName,
+          projectName: visit.project?.projectName || 'your project',
+          visitAt: this.formatDateTime(visit.proposedAt),
+          projectUrl: `${webBase}/professional-projects/${projectProfessionalId}?tab=site-access`,
+        })
+        .catch((err) => console.error('Failed to send site visit confirmed email:', err));
+    }
+
     return {
       success: true,
       visit: updated,
