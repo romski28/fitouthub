@@ -81,7 +81,7 @@ interface SiteAccessTabProps {
 }
 
 const formatDate = (date?: string) => {
-  if (!date) return 'â€”';
+  if (!date) return '-';
   try {
     return new Intl.DateTimeFormat('en-GB', {
       day: '2-digit',
@@ -89,12 +89,12 @@ const formatDate = (date?: string) => {
       year: 'numeric',
     }).format(new Date(date));
   } catch {
-    return 'â€”';
+    return '-';
   }
 };
 
 const formatDateTime = (date?: string) => {
-  if (!date) return 'â€”';
+  if (!date) return '-';
   try {
     return new Intl.DateTimeFormat('en-GB', {
       day: '2-digit',
@@ -104,7 +104,7 @@ const formatDateTime = (date?: string) => {
       minute: '2-digit',
     }).format(new Date(date));
   } catch {
-    return 'â€”';
+    return '-';
   }
 };
 
@@ -125,6 +125,7 @@ const toTimeInput = (value?: string | null) => {
 };
 
 export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
+  siteAccessRequests,
   siteVisits,
   siteAccessBlockers,
   onRespondToVisit,
@@ -161,6 +162,20 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     () => siteVisits.filter((v) => v.status !== 'proposed' && v.status !== 'accepted'),
     [siteVisits],
   );
+  const professionalsWithPendingVisits = useMemo(
+    () => new Set(pendingVisits.map((v) => v.professional.id)),
+    [pendingVisits],
+  );
+  const pendingAccessRequests = useMemo(() => {
+    return siteAccessRequests.filter((request) => {
+      const status = (request.status || '').toLowerCase();
+      const isLikelyPending =
+        !request.respondedAt &&
+        (!status || status === 'requested' || status === 'pending' || status === 'awaiting_response');
+      return isLikelyPending && !professionalsWithPendingVisits.has(request.professional.id);
+    });
+  }, [siteAccessRequests, professionalsWithPendingVisits]);
+  const hasVisitOrRequestItems = siteVisits.length > 0 || pendingAccessRequests.length > 0;
 
   return (
     <div className="space-y-6">
@@ -171,7 +186,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         {locationDetailsForm.desiredStartDate ? (
           <p className="mt-1 text-base font-bold text-white">{formatDate(locationDetailsForm.desiredStartDate)}</p>
         ) : (
-          <p className="mt-1 text-sm text-slate-400">Not set â€” use the section below to share a date with contractors.</p>
+          <p className="mt-1 text-sm text-slate-400">Not set - use the section below to share a date with contractors.</p>
         )}
       </div>
 
@@ -193,8 +208,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       )}
 
       {siteVisitLoading ? (
-        <p className="text-sm text-slate-300">Loading visit requestsâ€¦</p>
-      ) : siteVisits.length === 0 ? (
+        <p className="text-sm text-slate-300">Loading visit requests...</p>
+      ) : !hasVisitOrRequestItems ? (
         <div className="rounded-md border border-slate-700 bg-slate-900/60 px-4 py-3 text-sm text-slate-300">
           No visit requests yet. Contractors will appear here once they request access.
         </div>
@@ -235,8 +250,30 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   title={!hasBasicLocation ? 'Complete your address details first' : 'Confirm this visit'}
                   className={`min-w-[70px] rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
                 >
-                  {isSubmitting ? 'Savingâ€¦' : isJustAccepted ? 'ðŸ‘' : 'Accept'}
+                  {isSubmitting ? 'Saving...' : isJustAccepted ? 'Accepted' : 'Accept'}
                 </button>
+              </div>
+            );
+          })}
+
+          {pendingAccessRequests.map((request) => {
+            const name =
+              request.professional.fullName ||
+              request.professional.businessName ||
+              request.professional.email ||
+              'Contractor';
+            return (
+              <div
+                key={`req-${request.id}`}
+                className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-white">{name}</p>
+                  <p className="text-xs text-amber-200">requested access at {formatDateTime(request.requestedAt)}</p>
+                </div>
+                <span className="rounded-full border border-amber-400/40 bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-200">
+                  Requested access
+                </span>
               </div>
             );
           })}
@@ -257,7 +294,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   <p className="text-xs text-emerald-300">{formatDateTime(visit.proposedAt)}</p>
                 </div>
                 <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-300">
-                  Booked âœ“
+                  Booked
                 </span>
               </div>
             );
@@ -288,11 +325,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       )}
 
       {/* Address details */}
-      <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4 space-y-3">
+      <div className={`rounded-lg border p-4 space-y-3 ${hasBasicLocation ? 'border-slate-700 bg-slate-900/60' : 'border-rose-500/70 bg-rose-950/25'}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-white">
-              Your address {hasBasicLocation ? <span className="text-emerald-400">âœ“</span> : null}
+              Your address {hasBasicLocation ? <span className="text-emerald-400">Done</span> : <span className="text-rose-300">Required</span>}
             </p>
             <p className="mt-0.5 text-xs text-slate-400">Required before accepting a visit. This will be shared with the contractor.</p>
           </div>
@@ -355,7 +392,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
             className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            {isSubmittingLocationDetails ? 'Savingâ€¦' : 'Save address'}
+            {isSubmittingLocationDetails ? 'Saving...' : 'Save address'}
           </button>
         </div>
         {basicAddressSaved && (
@@ -372,9 +409,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         >
           <div>
             <p className="text-sm font-semibold text-white">Building information</p>
-            <p className="text-xs text-slate-400">Optional â€” helps contractors prepare for the visit.</p>
+            <p className="text-xs text-slate-400">Optional - helps contractors prepare for the visit.</p>
           </div>
-          <span className="text-slate-400 text-xs">{showBuildingInfo ? 'â–²' : 'â–¼'}</span>
+          <span className="text-slate-400 text-xs">{showBuildingInfo ? '^' : 'v'}</span>
         </button>
         {showBuildingInfo && (
           <div className="border-t border-slate-700 p-4 space-y-3">
@@ -489,7 +526,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
                 className="rounded-md border border-sky-500 bg-sky-900/40 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:bg-sky-900/60 disabled:opacity-50"
               >
-                {isSubmittingLocationDetails ? 'Savingâ€¦' : 'Update building information'}
+                {isSubmittingLocationDetails ? 'Saving...' : 'Update building information'}
               </button>
             </div>
             {buildingInfoSaved && (
@@ -502,24 +539,26 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       {/* Change site availability date */}
       <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4 space-y-3">
         <p className="text-sm font-semibold text-white">Update your site availability</p>
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-white">New availability date</label>
-          <input
-            type="date"
-            value={changeAvailDate}
-            onChange={(e) => setChangeAvailDate(e.target.value)}
-            className="quote-picker-input w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none sm:w-48"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-white">Reason for change</label>
-          <textarea
-            rows={2}
-            value={changeAvailReason}
-            onChange={(e) => setChangeAvailReason(e.target.value)}
-            placeholder="Briefly explain why the date needs to change"
-            className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-          />
+        <div className="grid gap-3 lg:grid-cols-[220px_1fr]">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-white">New availability date</label>
+            <input
+              type="date"
+              value={changeAvailDate}
+              onChange={(e) => setChangeAvailDate(e.target.value)}
+              className="quote-picker-input w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-white">Reason for change</label>
+            <input
+              type="text"
+              value={changeAvailReason}
+              onChange={(e) => setChangeAvailReason(e.target.value)}
+              placeholder="Briefly explain why the date needs to change"
+              className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
         </div>
         <div className="flex items-center justify-between gap-3">
           <button
@@ -531,7 +570,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           </button>
         </div>
         <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-          We recommend only changing your availability date if absolutely necessary. If you have already confirmed visits with any contractors, please contact them directly before making changes â€” it can cause unnecessary disruption to their schedules.
+          We recommend only changing your availability date if absolutely necessary. If you have already confirmed visits with any contractors, please contact them directly before making changes - it can cause unnecessary disruption to their schedules.
         </p>
       </div>
 

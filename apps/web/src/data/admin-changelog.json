@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-8a154e3",
+    "date": "2026-05-05T11:59:30+08:00",
+    "title": "style(site-access): tint incomplete address panel background",
+    "summary": "style(site-access): tint incomplete address panel background",
+    "areas": [
+      "web"
+    ],
+    "commit": "8a154e3",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-9614d2e",
     "date": "2026-05-05T11:51:59+08:00",
     "title": "fix(site-access): remove remaining orphaned old JSX causing Vercel build failure",
