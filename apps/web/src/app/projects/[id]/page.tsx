@@ -62,6 +62,7 @@ interface ProjectDetail {
   id: string;
   projectName: string;
   region: string;
+  siteInspectionAvailableOn?: string;
   status?: string;
   budget?: string;
   approvedBudget?: string;
@@ -2151,6 +2152,7 @@ export default function ClientProjectDetailPage() {
             <SiteAccessTab
               siteAccessRequests={siteAccessRequests}
               siteVisits={siteVisits}
+              siteInspectionAvailableOn={project.siteInspectionAvailableOn || null}
               projectIsAwarded={isAwarded}
               siteAccessBlockers={siteAccessBlockers}
               expandedAccordions={expandedAccordions}

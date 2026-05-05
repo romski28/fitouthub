@@ -47,6 +47,7 @@ type SiteAccessResponsePatch = {
 interface SiteAccessTabProps {
   siteAccessRequests: SiteAccessRequest[];
   siteVisits: SiteAccessVisit[];
+  siteInspectionAvailableOn?: string | null;
   projectIsAwarded: boolean;
   siteAccessBlockers: string[];
   expandedAccordions: Record<string, boolean>;
@@ -119,6 +120,7 @@ const toTimeInput = (value?: string | null) => {
 export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   siteAccessRequests,
   siteVisits,
+  siteInspectionAvailableOn,
   siteAccessBlockers,
   onRespondToRequest,
   onRespondToVisit,
@@ -180,6 +182,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     locationDetailsForm.addressFull,
     [locationDetailsForm.unitNumber, locationDetailsForm.floorLevel].filter(Boolean).join(' / '),
   ].filter(Boolean).join(' · ');
+  const siteAvailabilityDate = siteInspectionAvailableOn || locationDetailsForm.desiredStartDate;
 
   return (
     <div className="space-y-6">
@@ -287,8 +290,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       {/* Site availability date */}
       <div className="rounded-lg border border-slate-700 bg-slate-900/40 px-4 py-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Site availability date</p>
-        {locationDetailsForm.desiredStartDate ? (
-          <p className="mt-1 text-base font-bold text-white">{formatDate(locationDetailsForm.desiredStartDate)}</p>
+        {siteAvailabilityDate ? (
+          <p className="mt-1 text-base font-bold text-white">{formatDate(siteAvailabilityDate)}</p>
         ) : (
           <p className="mt-1 text-sm text-slate-400">Not set - use the section below to share a date with contractors.</p>
         )}

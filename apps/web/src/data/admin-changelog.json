@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-05-59d66e9",
+    "date": "2026-05-05T13:05:18+08:00",
+    "title": "fix(site-access): source availability banner from project inspection date",
+    "summary": "fix(site-access): source availability banner from project inspection date",
+    "areas": [
+      "web"
+    ],
+    "commit": "59d66e9",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-23c03a5",
     "date": "2026-05-05T12:57:10+08:00",
     "title": "fix(site-access): remove stale siteAccessData prop from SiteAccessTab usage",
