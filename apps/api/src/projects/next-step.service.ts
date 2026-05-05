@@ -258,6 +258,14 @@ export class NextStepService {
 
     let availableConfigSteps = nextSteps;
 
+    // Legacy action key still exists in some seeded configs, but client-side site
+    // access is now driven by explicit professional proposals/requests.
+    if (role === 'CLIENT') {
+      availableConfigSteps = availableConfigSteps.filter(
+        (step) => step.actionKey !== 'REQUEST_SITE_VISIT',
+      );
+    }
+
     // If a professional has already accepted the invitation but the project stage is still CREATED,
     // they should see SUBMIT_QUOTE (BIDDING_ACTIVE steps) rather than REPLY_TO_INVITATION.
     if (

@@ -38,6 +38,8 @@ const nextStepSeeds: NextStepSeed[] = [
   { projectStage: ProjectStage.CREATED, role: 'PROFESSIONAL', actionKey: 'REPLY_TO_INVITATION', actionLabel: 'Reply to invitation', description: 'Accept and proceed to quote workflow.', isPrimary: true, displayOrder: 1 },
 
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'CLIENT', actionKey: 'REVIEW_INCOMING_QUOTES', actionLabel: 'Review incoming quotes', description: 'Compare submitted pricing and notes.', isPrimary: true, displayOrder: 1 },
+  // Deprecated: client-requested site visits were replaced by professional
+  // proposals + client confirmations in the site-access flow.
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'CLIENT', actionKey: 'REQUEST_SITE_VISIT', actionLabel: 'Request site visit', description: 'Allow professionals to inspect site before final quote.', isElective: true, displayOrder: 2 },
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'PROFESSIONAL', actionKey: 'SUBMIT_QUOTE', actionLabel: 'Submit quote', description: 'Provide quote and timeline.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'PROFESSIONAL', actionKey: 'REQUEST_SITE_ACCESS', actionLabel: 'Request site access', description: 'Ask for visit access before finalizing quote.', isElective: true, displayOrder: 2 },

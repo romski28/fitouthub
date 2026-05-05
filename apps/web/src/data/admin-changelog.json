@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-05-b125928",
+    "date": "2026-05-05T16:21:51+08:00",
+    "title": "fix(next-steps): suppress legacy client request-site-visit action",
+    "summary": "fix(next-steps): suppress legacy client request-site-visit action",
+    "areas": [
+      "api"
+    ],
+    "commit": "b125928",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-05-05-ff5be56",
     "date": "2026-05-05T14:19:27+08:00",
     "title": "feat(reminders): add protected manual test endpoints",
