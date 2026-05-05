@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-e97babc",
+    "date": "2026-05-05T11:48:48+08:00",
+    "title": "fix(site-access): remove orphaned old JSX that caused unterminated regexp build error",
+    "summary": "fix(site-access): remove orphaned old JSX that caused unterminated regexp build error",
+    "areas": [
+      "web"
+    ],
+    "commit": "e97babc",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-07e9c8c",
     "date": "2026-05-05T11:46:06+08:00",
     "title": "feat(site-access): bypass CONFIRM_SITE_VISIT modal; refactor client site-access panel; email on accept",

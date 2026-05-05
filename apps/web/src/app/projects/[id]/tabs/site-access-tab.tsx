@@ -539,18 +539,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   );
 };
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <button
-            type="button"
-            onClick={() => setActiveSection('access-requests')}
-            className={`rounded-md px-3 py-2 text-xs font-semibold transition ${
-              activeSection === 'access-requests'
-                ? 'bg-emerald-600 text-white'
-                : 'border border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'
-            }`}
-          >
-            Access Requests
-          </button>
           <button
             type="button"
             onClick={() => setActiveSection('basic-address')}
