@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-05-ff5be56",
+    "date": "2026-05-05T14:19:27+08:00",
+    "title": "feat(reminders): add protected manual test endpoints",
+    "summary": "feat(reminders): add protected manual test endpoints",
+    "areas": [
+      "api"
+    ],
+    "commit": "ff5be56",
+    "files": [
+      "apps/api/src/reminders/reminder.controller.ts",
+      "apps/api/src/reminders/reminder.module.ts"
+    ]
+  },
+  {
     "id": "2026-05-05-128aaad",
     "date": "2026-05-05T13:49:50+08:00",
     "title": "feat(reminders): day-before site visit reminder cron for clients and professionals",

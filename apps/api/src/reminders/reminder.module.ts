@@ -3,9 +3,11 @@ import { ReminderService } from './reminder.service';
 import { PrismaService } from '../prisma.service';
 import { NotificationModule } from '../notifications/notification.module';
 import { EmailModule } from '../email/email.module';
+import { ReminderController } from './reminder.controller';
 
 @Module({
   imports: [NotificationModule, EmailModule],
+  controllers: [ReminderController],
   providers: [ReminderService, PrismaService],
 })
 export class ReminderModule {}
