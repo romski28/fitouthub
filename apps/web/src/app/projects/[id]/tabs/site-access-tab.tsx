@@ -217,6 +217,17 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     () => new Set(acceptedVisits.map((v) => v.professional.id)),
     [acceptedVisits],
   );
+  // Professionals who already have a reschedule-required cancelled visit in otherVisits
+  // should not also appear as a request row (prevents double display after date change).
+  const professionalsWithRescheduleVisit = useMemo(
+    () =>
+      new Set(
+        otherVisits
+          .filter((v) => v.status === 'cancelled' && isRescheduleRequired(v.responseNotes))
+          .map((v) => v.professional.id),
+      ),
+    [otherVisits],
+  );
   const pendingAccessRequests = useMemo(() => {
     return siteAccessRequests.filter((request) => {
       const status = (request.status || '').toLowerCase();
@@ -241,10 +252,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       return (
         isAccepted &&
         !professionalsWithPendingVisits.has(request.professional.id) &&
-        !professionalsWithAcceptedVisits.has(request.professional.id)
+        !professionalsWithAcceptedVisits.has(request.professional.id) &&
+        !professionalsWithRescheduleVisit.has(request.professional.id)
       );
     }).sort((a, b) => toRequestTime(a) - toRequestTime(b));
-  }, [siteAccessRequests, professionalsWithPendingVisits, professionalsWithAcceptedVisits]);
+  }, [siteAccessRequests, professionalsWithPendingVisits, professionalsWithAcceptedVisits, professionalsWithRescheduleVisit]);
   const hasVisitOrRequestItems =
     siteVisits.length > 0 || pendingAccessRequests.length > 0 || acceptedAccessRequests.length > 0;
 

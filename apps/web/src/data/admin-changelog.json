@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-05-909084b",
+    "date": "2026-05-05T21:54:48+08:00",
+    "title": "fix(site-access): stamp visitDetails on approved_no_visit requests when visits are cancelled",
+    "summary": "fix(site-access): stamp visitDetails on approved_no_visit requests when visits are cancelled",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "909084b",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-7de5aed",
     "date": "2026-05-05T21:27:05+08:00",
     "title": "feat(site-access): improve availability-change UX and reschedule flow",

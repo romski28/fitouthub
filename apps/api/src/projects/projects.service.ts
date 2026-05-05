@@ -4596,7 +4596,13 @@ Please review the project details and respond with your quote or decline the inv
 
     const cancellationNote = this.buildSiteAvailabilityChangeReason(nextDateLabel, reason);
 
-    const [updatedProject, downgradedRequests, cancelledVisits] = await this.prisma.$transaction([
+    // Professionals whose visits are being cancelled — their approved_no_visit requests
+    // also need visitDetails stamped so the client panel shows "Reschedule" instead of "Booked".
+    const projectProfessionalIdsWithActiveVisits = [
+      ...new Set(activeVisits.map((v) => v.projectProfessionalId)),
+    ];
+
+    const [updatedProject, downgradedRequests, , cancelledVisits] = await this.prisma.$transaction([
       this.prisma.project.update({
         where: { id: projectId },
         data: {
@@ -4607,6 +4613,7 @@ Please review the project details and respond with your quote or decline the inv
           siteInspectionAvailableOn: true,
         },
       }),
+      // Downgrade explicitly-scheduled requests and stamp the cancellation note.
       this.prisma.siteAccessRequest.updateMany({
         where: {
           projectId,
@@ -4616,6 +4623,19 @@ Please review the project details and respond with your quote or decline the inv
           status: 'approved_no_visit',
           visitScheduledFor: null,
           visitScheduledAt: null,
+          visitDetails: cancellationNote,
+        },
+      }),
+      // Also stamp visitDetails on approved_no_visit requests for professionals whose
+      // visits are being cancelled — otherwise those request rows reappear as "Booked"
+      // once the accepted visit is gone and the request becomes visible again.
+      this.prisma.siteAccessRequest.updateMany({
+        where: {
+          projectId,
+          status: 'approved_no_visit',
+          projectProfessionalId: { in: projectProfessionalIdsWithActiveVisits },
+        },
+        data: {
           visitDetails: cancellationNote,
         },
       }),

@@ -1115,7 +1115,10 @@ export default function ClientProjectDetailPage() {
 
       setSiteAccessRequests((prev) =>
         prev.map((request) => {
-          if (request.status !== 'approved_visit_scheduled') {
+          if (
+            request.status !== 'approved_visit_scheduled' &&
+            request.status !== 'approved_no_visit'
+          ) {
             return request;
           }
 
