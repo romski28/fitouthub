@@ -269,6 +269,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               'Contractor';
             const isSubmitting = submittingSiteAccess === request.id;
             const isJustAccepted = acceptedRequestId === request.id;
+            const proposedVisitLabel = request.visitScheduledAt
+              ? `wants to visit ${formatDateTime(request.visitScheduledAt)}`
+              : request.visitScheduledFor
+              ? `wants to visit ${formatDate(request.visitScheduledFor)}`
+              : `requested access`;
             return (
               <div
                 key={`req-${request.id}`}
@@ -276,7 +281,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               >
                 <div>
                   <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-300">requested access at {formatDateTime(request.requestedAt)}</p>
+                  <p className="text-xs text-slate-300">{proposedVisitLabel}</p>
                 </div>
                 <button
                   type="button"

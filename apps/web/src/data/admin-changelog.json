@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-c24de2c",
+    "date": "2026-05-05T12:28:49+08:00",
+    "title": "fix(site-access): show proposed visit time (not request submission timestamp) on access request rows",
+    "summary": "fix(site-access): show proposed visit time (not request submission timestamp) on access request rows",
+    "areas": [
+      "web"
+    ],
+    "commit": "c24de2c",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-c14f23e",
     "date": "2026-05-05T12:25:07+08:00",
     "title": "fix(site-access): display visit times in HKT (Asia/Hong_Kong) instead of UTC",
