@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-05-7de5aed",
+    "date": "2026-05-05T21:27:05+08:00",
+    "title": "feat(site-access): improve availability-change UX and reschedule flow",
+    "summary": "feat(site-access): improve availability-change UX and reschedule flow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7de5aed",
+    "files": [
+      "apps/api/prisma/migrations/phase1_unified_conversation_schema.sql",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-1714b00",
     "date": "2026-05-05T17:09:15+08:00",
     "title": "feat(site-access): reschedule inspection availability with notifications",

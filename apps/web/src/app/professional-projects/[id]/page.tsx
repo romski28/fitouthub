@@ -131,6 +131,7 @@ interface SiteAccessStatus {
   requestStatus: string;
   visitScheduledFor: string | null;
   visitScheduledAt?: string | null;
+  visitDetails?: string | null;
   visitedAt: string | null;
   reasonDenied: string | null;
   hasAccess: boolean;

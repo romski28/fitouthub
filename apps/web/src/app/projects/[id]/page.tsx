@@ -116,6 +116,7 @@ interface SiteAccessRequest {
   respondedAt?: string;
   visitScheduledFor?: string | null;
   visitScheduledAt?: string | null;
+  visitDetails?: string | null;
   reasonDenied?: string | null;
   professional: {
     id: string;
@@ -1103,6 +1104,45 @@ export default function ClientProjectDetailPage() {
         ...prev,
         desiredStartDate: date,
       }));
+
+      const changedToLabel = new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        timeZone: 'Asia/Hong_Kong',
+      });
+      const cancellationNote = `Site availability changed to ${changedToLabel}. Previous visit slot is no longer valid. Reason: ${reason}`;
+
+      setSiteAccessRequests((prev) =>
+        prev.map((request) => {
+          if (request.status !== 'approved_visit_scheduled') {
+            return request;
+          }
+
+          return {
+            ...request,
+            status: 'approved_no_visit',
+            visitScheduledFor: null,
+            visitScheduledAt: null,
+            visitDetails: cancellationNote,
+          };
+        }),
+      );
+
+      setSiteVisits((prev) =>
+        prev.map((visit) => {
+          if (visit.status !== 'proposed' && visit.status !== 'accepted') {
+            return visit;
+          }
+
+          return {
+            ...visit,
+            status: 'cancelled',
+            responseNotes: cancellationNote,
+            respondedAt: new Date().toISOString(),
+          };
+        }),
+      );
 
       const impacted = data?.impacted || {};
       const bookingsVoided = Number(impacted.bookingsVoided || 0);

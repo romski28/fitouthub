@@ -178,6 +178,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const [acceptedRequestId, setAcceptedRequestId] = useState<string | null>(null);
   const [changeAvailDate, setChangeAvailDate] = useState(locationDetailsForm.desiredStartDate || '');
   const [changeAvailReason, setChangeAvailReason] = useState('');
+  const [showAvailabilityConfirm, setShowAvailabilityConfirm] = useState(false);
 
   useEffect(() => {
     setChangeAvailDate(siteInspectionAvailableOn || locationDetailsForm.desiredStartDate || '');
@@ -257,6 +258,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const siteAvailabilityDate = siteInspectionAvailableOn || locationDetailsForm.desiredStartDate;
   const currentAvailabilityInput =
     toDateInput(siteInspectionAvailableOn || null) || locationDetailsForm.desiredStartDate || '';
+  const normalizedChangeAvailDate = toDateInput(changeAvailDate) || changeAvailDate;
+  const isSameAvailabilityDate = normalizedChangeAvailDate === currentAvailabilityInput;
   const bookedProfessionalCount = new Set([
     ...acceptedVisits.map((visit) => visit.professional.id),
     ...pendingVisits.map((visit) => visit.professional.id),
@@ -750,37 +753,19 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 toast.error('Please enter a reason for the change');
                 return;
               }
-              if (trimmedDate === currentAvailabilityInput) {
+              const normalizedDate = toDateInput(trimmedDate) || trimmedDate;
+              if (normalizedDate === currentAvailabilityInput) {
                 toast.error('Please choose a different date');
                 return;
               }
 
-              const confirmation = [
-                `Change site inspection date to ${formatDate(trimmedDate)}?`,
-                bookedProfessionalCount > 0
-                  ? `${bookedProfessionalCount} booked or proposed site visit slot(s) will be voided and professionals will be asked to rebook.`
-                  : 'No booked site visits will be voided.',
-                notifyOnlyProfessionalCount > 0
-                  ? `${notifyOnlyProfessionalCount} additional professional(s) will be notified of the new availability date.`
-                  : 'No additional professionals need a date-change notification.',
-              ].join('\n\n');
-
-              if (!window.confirm(confirmation)) {
-                return;
-              }
-
-              try {
-                await onUpdateSiteAvailability(trimmedDate, trimmedReason);
-                setChangeAvailReason('');
-              } catch {
-                // Error toast is handled by the page-level submit handler.
-              }
+              setShowAvailabilityConfirm(true);
             }}
             disabled={
               isUpdatingSiteAvailability ||
               !changeAvailDate.trim() ||
               !changeAvailReason.trim() ||
-              changeAvailDate === currentAvailabilityInput
+              isSameAvailabilityDate
             }
             className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -791,6 +776,56 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           We recommend only changing your availability date if absolutely necessary. If you have already confirmed visits with any contractors, please contact them directly before making changes - it can cause unnecessary disruption to their schedules.
         </p>
       </div>
+
+      {showAvailabilityConfirm && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
+          <div className="w-full max-w-lg rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-xl">
+            <h3 className="text-base font-semibold text-white">Confirm site inspection date change</h3>
+            <p className="mt-2 text-sm text-slate-300">
+              Change site inspection date to <span className="font-semibold text-white">{formatDate(changeAvailDate)}</span>?
+            </p>
+            <div className="mt-4 space-y-2 rounded-lg border border-slate-700 bg-slate-950/60 p-3 text-xs text-slate-300">
+              <p>
+                {bookedProfessionalCount > 0
+                  ? `${bookedProfessionalCount} booked or proposed site visit slot(s) will be voided and professionals will be asked to rebook.`
+                  : 'No booked site visits will be voided.'}
+              </p>
+              <p>
+                {notifyOnlyProfessionalCount > 0
+                  ? `${notifyOnlyProfessionalCount} additional professional(s) will be notified of the new availability date.`
+                  : 'No additional professionals need a date-change notification.'}
+              </p>
+              <p>Reason: {changeAvailReason.trim()}</p>
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAvailabilityConfirm(false)}
+                disabled={isUpdatingSiteAvailability}
+                className="rounded-md border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await onUpdateSiteAvailability(changeAvailDate.trim(), changeAvailReason.trim());
+                    setChangeAvailReason('');
+                    setShowAvailabilityConfirm(false);
+                  } catch {
+                    // Error toast is handled by the page-level submit handler.
+                  }
+                }}
+                disabled={isUpdatingSiteAvailability}
+                className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {isUpdatingSiteAvailability ? 'Sending...' : 'Update date and notify professionals'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

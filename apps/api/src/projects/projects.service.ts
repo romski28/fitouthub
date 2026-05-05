@@ -2914,6 +2914,18 @@ Please review the project details and respond with your quote or decline the inv
     return `${year}-${month}-${day}`;
   }
 
+  private formatHongKongShortDateLabel(value?: Date | string | null): string | null {
+    if (!value) return null;
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Hong_Kong',
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+    }).format(parsed);
+  }
+
   private isValidInspectionHour(value?: string | null): boolean {
     if (!value) return false;
     const match = value.match(/^(\d{2}):(\d{2})$/);
@@ -4329,6 +4341,7 @@ Please review the project details and respond with your quote or decline the inv
       requestStatus: latestAccessRequest?.status || 'none',
       visitScheduledFor: latestAccessRequest?.visitScheduledFor || null,
       visitScheduledAt: latestAccessRequest?.visitScheduledAt || null,
+      visitDetails: latestAccessRequest?.visitDetails || null,
       visitedAt: latestAccessRequest?.visitedAt || null,
       reasonDenied: latestAccessRequest?.reasonDenied || null,
       hasAccess,
@@ -4489,8 +4502,8 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('A valid site inspection date is required');
     }
 
-    const previousDateLabel = this.formatHongKongDateInput(project.siteInspectionAvailableOn);
-    const nextDateLabel = this.formatHongKongDateInput(normalizedDate);
+    const previousDateLabel = this.formatHongKongShortDateLabel(project.siteInspectionAvailableOn);
+    const nextDateLabel = this.formatHongKongShortDateLabel(normalizedDate);
 
     if (!nextDateLabel) {
       throw new BadRequestException('A valid site inspection date is required');
