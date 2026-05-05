@@ -101,6 +101,34 @@ const formatDateTime = (date?: string) => {
   }
 };
 
+const formatBookedSlot = (date?: string | null) => {
+  if (!date) return 'Site access booked';
+  try {
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) {
+      return 'Site access booked';
+    }
+
+    const dateLabel = new Intl.DateTimeFormat('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      timeZone: 'Asia/Hong_Kong',
+    }).format(parsed);
+
+    const timeLabel = new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Hong_Kong',
+    }).format(parsed);
+
+    return `Site access booked for ${dateLabel} at ${timeLabel}`;
+  } catch {
+    return 'Site access booked';
+  }
+};
+
 const toDateInput = (value?: string | null) => {
   if (!value) return '';
   const date = new Date(value);
@@ -452,7 +480,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               >
                 <div>
                   <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-300">{formatDateTime(visit.proposedAt)}</p>
+                  <p className="text-xs text-slate-300">{formatBookedSlot(visit.proposedAt)}</p>
                 </div>
                 <span className={`rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white ${acceptedVisitId === visit.id ? 'animate-thumbs-wiggle' : ''}`}>
                   Booked
@@ -468,9 +496,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               request.professional.email ||
               'Contractor';
             const bookedLabel = request.visitScheduledAt
-              ? `Booked for ${formatDateTime(request.visitScheduledAt)}`
+              ? formatBookedSlot(request.visitScheduledAt)
               : request.visitScheduledFor
-              ? `Booked for ${formatDate(request.visitScheduledFor)}`
+              ? formatBookedSlot(request.visitScheduledFor)
               : 'Access approved';
             const isJustAccepted = acceptedRequestId === request.id;
             return (

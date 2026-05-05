@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-957a2d1",
+    "date": "2026-05-05T16:35:45+08:00",
+    "title": "feat(site-access): show booked visit date and time in client panel",
+    "summary": "feat(site-access): show booked visit date and time in client panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "957a2d1",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-b125928",
     "date": "2026-05-05T16:21:51+08:00",
     "title": "fix(next-steps): suppress legacy client request-site-visit action",
