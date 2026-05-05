@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-05-fca6881",
+    "date": "2026-05-05T12:51:45+08:00",
+    "title": "fix(site-access): address hydration, desiredStartDate display, thumbs-up on save",
+    "summary": "fix(site-access): address hydration, desiredStartDate display, thumbs-up on save",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "fca6881",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-ed5f6d1",
     "date": "2026-05-05T12:42:09+08:00",
     "title": "fix(site-access): use ▼/▲ toggle icons on building info panel for consistency",

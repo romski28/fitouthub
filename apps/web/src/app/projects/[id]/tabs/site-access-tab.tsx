@@ -264,7 +264,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 />
               </div>
             </div>
-            <div className="flex justify-end pt-1">
+            <div className="flex items-center justify-end gap-3 pt-1">
+              {basicAddressSaved && (
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-300">
+                  <span className="animate-thumbs-wiggle inline-block">👍</span> Saved
+                </span>
+              )}
               <button
                 type="button"
                 onClick={async () => {
@@ -285,9 +290,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 {isSubmittingLocationDetails ? 'Saving...' : 'Save address'}
               </button>
             </div>
-            {basicAddressSaved && (
-              <p className="text-right text-xs font-semibold text-emerald-300">Saved just now</p>
-            )}
           </div>
         )}
       </div>

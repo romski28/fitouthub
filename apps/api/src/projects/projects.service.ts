@@ -4468,10 +4468,36 @@ Please review the project details and respond with your quote or decline the inv
       where: { projectId },
     });
 
+    // Also fetch projectLocationDetails — this is the table the client's "Save address"
+    // button writes to. Prefer its fields over the older siteAccessData record.
+    const locationDetails = await this.prisma.projectLocationDetails.findUnique({
+      where: { projectId },
+    });
+
+    const mergedSiteAccessData = locationDetails
+      ? {
+          addressFull: locationDetails.addressFull,
+          unitNumber: locationDetails.unitNumber ?? siteAccessData?.unitNumber ?? null,
+          floorLevel: locationDetails.floorLevel ?? siteAccessData?.floorLevel ?? null,
+          postalCode: locationDetails.postalCode ?? null,
+          propertyType: locationDetails.propertyType ?? null,
+          propertySize: locationDetails.propertySize ?? null,
+          propertyAge: locationDetails.propertyAge ?? null,
+          accessDetails: locationDetails.accessDetails ?? siteAccessData?.accessDetails ?? null,
+          existingConditions: locationDetails.existingConditions ?? null,
+          accessHoursDescription: locationDetails.accessHoursDescription ?? null,
+          onSiteContactName: locationDetails.onSiteContactName ?? siteAccessData?.onSiteContactName ?? null,
+          onSiteContactPhone: locationDetails.onSiteContactPhone ?? siteAccessData?.onSiteContactPhone ?? null,
+          desiredStartDate: locationDetails.desiredStartDate
+            ? locationDetails.desiredStartDate.toISOString().split('T')[0]
+            : null,
+        }
+      : siteAccessData;
+
     return {
       success: true,
       requests,
-      siteAccessData,
+      siteAccessData: mergedSiteAccessData,
     };
   }
 

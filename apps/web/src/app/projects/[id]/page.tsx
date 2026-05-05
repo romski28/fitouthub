@@ -94,11 +94,18 @@ interface Message {
 
 interface SiteAccessData {
   addressFull: string;
-  unitNumber?: string;
-  floorLevel?: string;
-  accessDetails?: string;
-  onSiteContactName?: string;
-  onSiteContactPhone?: string;
+  unitNumber?: string | null;
+  floorLevel?: string | null;
+  postalCode?: string | null;
+  propertyType?: string | null;
+  propertySize?: string | null;
+  propertyAge?: string | null;
+  accessDetails?: string | null;
+  existingConditions?: string | null;
+  accessHoursDescription?: string | null;
+  onSiteContactName?: string | null;
+  onSiteContactPhone?: string | null;
+  desiredStartDate?: string | null;
 }
 
 interface SiteAccessRequest {
@@ -1042,6 +1049,7 @@ export default function ClientProjectDetailPage() {
 
       setLocationDetailsSuccess(true);
       toast.success('Location details submitted.');
+      await fetchSiteAccessRequests();
       await fetchProject();
       return true;
     } catch (err) {
@@ -1108,9 +1116,16 @@ export default function ClientProjectDetailPage() {
       addressFull: prev.addressFull || siteAccessData.addressFull || '',
       unitNumber: prev.unitNumber || siteAccessData.unitNumber || '',
       floorLevel: prev.floorLevel || siteAccessData.floorLevel || '',
+      postalCode: prev.postalCode || siteAccessData.postalCode || '',
+      propertyType: prev.propertyType || siteAccessData.propertyType || '',
+      propertySize: prev.propertySize || siteAccessData.propertySize || '',
+      propertyAge: prev.propertyAge || siteAccessData.propertyAge || '',
       accessDetails: prev.accessDetails || siteAccessData.accessDetails || '',
+      existingConditions: prev.existingConditions || siteAccessData.existingConditions || '',
+      accessHoursDescription: prev.accessHoursDescription || siteAccessData.accessHoursDescription || '',
       onSiteContactName: prev.onSiteContactName || siteAccessData.onSiteContactName || '',
       onSiteContactPhone: prev.onSiteContactPhone || siteAccessData.onSiteContactPhone || '',
+      desiredStartDate: prev.desiredStartDate || siteAccessData.desiredStartDate || '',
     }));
   }, [siteAccessData]);
 
