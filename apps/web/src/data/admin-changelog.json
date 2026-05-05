@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-faa6b97",
+    "date": "2026-05-05T12:55:01+08:00",
+    "title": "fix(site-access): remove duplicate SiteAccessData interface causing Vercel type error",
+    "summary": "fix(site-access): remove duplicate SiteAccessData interface causing Vercel type error",
+    "areas": [
+      "web"
+    ],
+    "commit": "faa6b97",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-fca6881",
     "date": "2026-05-05T12:51:45+08:00",
     "title": "fix(site-access): address hydration, desiredStartDate display, thumbs-up on save",

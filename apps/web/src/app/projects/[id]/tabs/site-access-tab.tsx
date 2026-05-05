@@ -37,15 +37,6 @@ interface SiteAccessVisit {
   };
 }
 
-interface SiteAccessData {
-  addressFull: string;
-  unitNumber?: string;
-  floorLevel?: string;
-  accessDetails?: string;
-  onSiteContactName?: string;
-  onSiteContactPhone?: string;
-}
-
 type SiteAccessResponsePatch = {
   status?: 'approved_no_visit' | 'approved_visit_scheduled' | 'denied';
   visitScheduledFor?: string;
@@ -55,7 +46,6 @@ type SiteAccessResponsePatch = {
 
 interface SiteAccessTabProps {
   siteAccessRequests: SiteAccessRequest[];
-  siteAccessData: SiteAccessData | null;
   siteVisits: SiteAccessVisit[];
   projectIsAwarded: boolean;
   siteAccessBlockers: string[];
