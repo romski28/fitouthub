@@ -1530,6 +1530,16 @@ model NotificationLog {
   @@index([createdAt(sort: Desc)])
 }
 
+model ReminderLog {
+  id             String   @id @default(cuid())
+  reminderKey    String   @unique  // e.g. "visit:{visitId}:client:2026-05-06"
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([reminderKey])
+  @@index([sentAt])
+}
+
 model NextStepConfig {
   id                       String   @id @default(cuid())
   projectStage             ProjectStage

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
@@ -41,6 +42,7 @@ import { ConversationModule } from './conversation/conversation.module';
 import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { AcProjectsModule } from './ac-projects/ac-projects.module';
 import { ProgressReportsModule } from './progress-reports/progress-reports.module';
+import { ReminderModule } from './reminders/reminder.module';
 import { PlatformFeeService } from './common/platform-fee.service';
 
 @Module({
@@ -68,6 +70,8 @@ import { PlatformFeeService } from './common/platform-fee.service';
     AiModule,
     AcProjectsModule,
     ProgressReportsModule,
+    ReminderModule,
+    ScheduleModule.forRoot(),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '30d' },

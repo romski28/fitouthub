@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-05-128aaad",
+    "date": "2026-05-05T13:49:50+08:00",
+    "title": "feat(reminders): day-before site visit reminder cron for clients and professionals",
+    "summary": "feat(reminders): day-before site visit reminder cron for clients and professionals",
+    "areas": [
+      "api",
+      "infra"
+    ],
+    "commit": "128aaad",
+    "files": [
+      "apps/api/package.json",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/reminders/reminder.module.ts",
+      "apps/api/src/reminders/reminder.service.ts",
+      "pnpm-lock.yaml"
+    ]
+  },
+  {
     "id": "2026-05-05-d24d3b2",
     "date": "2026-05-05T13:22:26+08:00",
     "title": "feat(site-access): sort booked contractors chronologically",
