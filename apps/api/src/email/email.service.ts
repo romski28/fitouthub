@@ -1145,4 +1145,63 @@ export class EmailService {
       // Non-fatal — do not rethrow
     }
   }
+
+  async sendSiteAvailabilityChanged(params: {
+    to: string;
+    professionalName: string;
+    projectName: string;
+    previousDateLabel?: string | null;
+    nextDateLabel: string;
+    reason: string;
+    voidedExistingBooking: boolean;
+    projectUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send site availability change notice to:', params.to);
+      return;
+    }
+
+    const dateSummary = params.previousDateLabel
+      ? `from ${params.previousDateLabel} to ${params.nextDateLabel}`
+      : `to ${params.nextDateLabel}`;
+    const impactCopy = params.voidedExistingBooking
+      ? 'Your previously arranged site visit slot is no longer valid and must be rebooked.'
+      : 'Please review the updated availability and book against the new date if needed.';
+    const title = params.voidedExistingBooking
+      ? 'Site visit booking needs to be rescheduled'
+      : 'Site inspection availability updated';
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Site availability updated: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #92400e; margin: 0 0 12px 0;">${title}</h2>
+            <p style="color: #374151;">Hi ${params.professionalName},</p>
+            <p style="color: #374151; line-height: 1.5;">
+              The client changed the site inspection availability for <strong>${params.projectName}</strong>
+              <strong>${dateSummary}</strong>.
+            </p>
+            <div style="background: #fffbeb; border: 1px solid #f59e0b; border-radius: 10px; padding: 16px; margin: 18px 0;">
+              <p style="margin: 0 0 8px 0; color: #92400e; font-size: 15px;"><strong>New availability:</strong> ${params.nextDateLabel}</p>
+              <p style="margin: 0; color: #92400e; font-size: 15px;"><strong>Reason:</strong> ${params.reason}</p>
+            </div>
+            <p style="color: #374151; line-height: 1.5;">${impactCopy}</p>
+            <div style="margin: 24px 0; text-align: center;">
+              <a href="${params.projectUrl}" style="display: inline-block; background: #0f766e; color: white; text-decoration: none; padding: 12px 22px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                Open site access
+              </a>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Site availability change notice sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send site availability change notice:', error);
+    }
+  }
 }

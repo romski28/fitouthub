@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-05-1714b00",
+    "date": "2026-05-05T17:09:15+08:00",
+    "title": "feat(site-access): reschedule inspection availability with notifications",
+    "summary": "feat(site-access): reschedule inspection availability with notifications",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1714b00",
+    "files": [
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/projects/dto/update-site-inspection-availability.dto.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-957a2d1",
     "date": "2026-05-05T16:35:45+08:00",
     "title": "feat(site-access): show booked visit date and time in client panel",

@@ -2953,6 +2953,10 @@ Please review the project details and respond with your quote or decline the inv
     }).format(parsed);
   }
 
+  private buildSiteAvailabilityChangeReason(nextDateLabel: string, reason: string): string {
+    return `Site availability changed to ${nextDateLabel}. Previous visit slot is no longer valid. Reason: ${reason}`;
+  }
+
   private async findConflictingSiteAccessSlot(projectId: string, visitScheduledAt: Date, excludeRequestId?: string) {
     return this.prisma.siteAccessRequest.findFirst({
       where: {
@@ -4465,6 +4469,218 @@ Please review the project details and respond with your quote or decline the inv
     return {
       success: true,
       details,
+    };
+  }
+
+  async updateSiteInspectionAvailability(
+    projectId: string,
+    userId: string,
+    body: { siteInspectionAvailableOn: string; reason: string },
+  ) {
+    const project = await this.assertClientProjectAccess(projectId, userId);
+
+    const reason = body.reason?.trim();
+    if (!reason) {
+      throw new BadRequestException('Reason is required when changing the site inspection date');
+    }
+
+    const normalizedDate = this.normalizeDateInput(body.siteInspectionAvailableOn);
+    if (!normalizedDate) {
+      throw new BadRequestException('A valid site inspection date is required');
+    }
+
+    const previousDateLabel = this.formatHongKongDateInput(project.siteInspectionAvailableOn);
+    const nextDateLabel = this.formatHongKongDateInput(normalizedDate);
+
+    if (!nextDateLabel) {
+      throw new BadRequestException('A valid site inspection date is required');
+    }
+
+    if (previousDateLabel === nextDateLabel) {
+      throw new BadRequestException('The new site inspection date must be different from the current date');
+    }
+
+    const [activeRequests, activeVisits] = await Promise.all([
+      this.prisma.siteAccessRequest.findMany({
+        where: {
+          projectId,
+          status: { in: ['pending', 'approved_no_visit', 'approved_visit_scheduled'] },
+        },
+        include: {
+          professional: {
+            select: {
+              id: true,
+              fullName: true,
+              businessName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      }),
+      this.prisma.siteAccessVisit.findMany({
+        where: {
+          projectId,
+          status: { in: ['proposed', 'accepted'] },
+        },
+        include: {
+          professional: {
+            select: {
+              id: true,
+              fullName: true,
+              businessName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const recipients = new Map<string, {
+      projectProfessionalId: string;
+      professionalId: string;
+      professionalName: string;
+      phone?: string | null;
+      email?: string | null;
+      voidedExistingBooking: boolean;
+    }>();
+
+    for (const request of activeRequests) {
+      const existing = recipients.get(request.projectProfessionalId);
+      recipients.set(request.projectProfessionalId, {
+        projectProfessionalId: request.projectProfessionalId,
+        professionalId: request.professionalId,
+        professionalName:
+          request.professional.businessName ||
+          request.professional.fullName ||
+          request.professional.email ||
+          'Professional',
+        phone: request.professional.phone,
+        email: request.professional.email,
+        voidedExistingBooking:
+          Boolean(existing?.voidedExistingBooking) ||
+          request.status === 'approved_visit_scheduled' ||
+          Boolean(request.visitScheduledAt || request.visitScheduledFor),
+      });
+    }
+
+    for (const visit of activeVisits) {
+      const existing = recipients.get(visit.projectProfessionalId);
+      recipients.set(visit.projectProfessionalId, {
+        projectProfessionalId: visit.projectProfessionalId,
+        professionalId: visit.professionalId,
+        professionalName:
+          visit.professional.businessName ||
+          visit.professional.fullName ||
+          visit.professional.email ||
+          'Professional',
+        phone: visit.professional.phone,
+        email: visit.professional.email,
+        voidedExistingBooking: Boolean(existing?.voidedExistingBooking) || true,
+      });
+    }
+
+    const cancellationNote = this.buildSiteAvailabilityChangeReason(nextDateLabel, reason);
+
+    const [updatedProject, downgradedRequests, cancelledVisits] = await this.prisma.$transaction([
+      this.prisma.project.update({
+        where: { id: projectId },
+        data: {
+          siteInspectionAvailableOn: normalizedDate,
+        },
+        select: {
+          id: true,
+          siteInspectionAvailableOn: true,
+        },
+      }),
+      this.prisma.siteAccessRequest.updateMany({
+        where: {
+          projectId,
+          status: 'approved_visit_scheduled',
+        },
+        data: {
+          status: 'approved_no_visit',
+          visitScheduledFor: null,
+          visitScheduledAt: null,
+          visitDetails: cancellationNote,
+        },
+      }),
+      this.prisma.siteAccessVisit.updateMany({
+        where: {
+          projectId,
+          status: { in: ['proposed', 'accepted'] },
+        },
+        data: {
+          status: 'cancelled',
+          respondedAt: new Date(),
+          respondedBy: userId,
+          responseNotes: cancellationNote,
+        },
+      }),
+    ]);
+
+    await this.prisma.projectLocationDetails.updateMany({
+      where: { projectId },
+      data: {
+        desiredStartDate: normalizedDate,
+      },
+    });
+
+    const webBase = process.env.WEB_BASE_URL || 'https://fitouthub-web.vercel.app';
+    const dateChangeSummary = previousDateLabel
+      ? `from ${previousDateLabel} to ${nextDateLabel}`
+      : `to ${nextDateLabel}`;
+
+    for (const recipient of recipients.values()) {
+      const privateMessage = recipient.voidedExistingBooking
+        ? `The client changed the site inspection availability for "${project.projectName}" ${dateChangeSummary}. Your previously arranged site visit slot is no longer valid and must be rebooked. Reason: ${reason}`
+        : `The client changed the site inspection availability for "${project.projectName}" ${dateChangeSummary}. Reason: ${reason}. Please review the new availability in the site-access tab.`;
+
+      await this.addProjectProfessionalMessage(
+        recipient.projectProfessionalId,
+        'client',
+        userId,
+        null,
+        privateMessage,
+      );
+
+      if (recipient.phone) {
+        await this.notificationService.send({
+          professionalId: recipient.professionalId,
+          phoneNumber: recipient.phone,
+          eventType: 'site_availability_changed',
+          message: privateMessage,
+        }).catch((error) => {
+          console.error('Failed to send site availability update notification:', error);
+        });
+      }
+
+      if (recipient.email) {
+        await this.emailService.sendSiteAvailabilityChanged({
+          to: recipient.email,
+          professionalName: recipient.professionalName,
+          projectName: project.projectName,
+          previousDateLabel,
+          nextDateLabel,
+          reason,
+          voidedExistingBooking: recipient.voidedExistingBooking,
+          projectUrl: `${webBase}/professional-projects/${recipient.projectProfessionalId}?tab=site-access`,
+        }).catch((error) => {
+          console.error('Failed to send site availability change email:', error);
+        });
+      }
+    }
+
+    return {
+      success: true,
+      project: updatedProject,
+      impacted: {
+        professionalsNotified: recipients.size,
+        bookingsVoided: Array.from(recipients.values()).filter((recipient) => recipient.voidedExistingBooking).length,
+        scheduledRequestsCleared: downgradedRequests.count,
+        visitsCancelled: cancelledVisits.count,
+      },
     };
   }
 

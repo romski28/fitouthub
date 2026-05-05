@@ -28,6 +28,7 @@ import { RequestProjectStartProposalDto } from './dto/request-project-start-prop
 import { RespondProjectStartProposalDto } from './dto/respond-project-start-proposal.dto';
 import { ConfirmSiteVisitDto } from './dto/confirm-site-visit.dto';
 import { ProjectLocationDetailsDto } from './dto/project-location-details.dto';
+import { UpdateSiteInspectionAvailabilityDto } from './dto/update-site-inspection-availability.dto';
 import { ChatService } from '../chat/chat.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 import { PrismaService } from '../prisma.service';
@@ -677,6 +678,25 @@ export class ProjectsController {
     }
 
     return this.projectsService.submitLocationDetails(projectId, userId, body);
+  }
+
+  @Post(':id/site-inspection-availability')
+  @UseGuards(CombinedAuthGuard)
+  async updateSiteInspectionAvailability(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: UpdateSiteInspectionAvailabilityDto,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only clients can update site inspection availability', HttpStatus.FORBIDDEN);
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.updateSiteInspectionAvailability(projectId, userId, body);
   }
 
   @Post(':id/transactions/:transactionId/confirm-deposit')

@@ -382,6 +382,7 @@ export default function ClientProjectDetailPage() {
     photoUrls: '' as string,
   });
   const [submittingLocationDetails, setSubmittingLocationDetails] = useState(false);
+  const [updatingSiteAvailability, setUpdatingSiteAvailability] = useState(false);
   const [locationDetailsError, setLocationDetailsError] = useState<string | null>(null);
   const [locationDetailsSuccess, setLocationDetailsSuccess] = useState(false);
 
@@ -1060,6 +1061,66 @@ export default function ClientProjectDetailPage() {
       return false;
     } finally {
       setSubmittingLocationDetails(false);
+    }
+  };
+
+  const handleUpdateSiteAvailability = async (date: string, reason: string) => {
+    if (!accessToken || !projectId) return;
+
+    setUpdatingSiteAvailability(true);
+    setLocationDetailsError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/site-inspection-availability`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            siteInspectionAvailableOn: date,
+            reason,
+          }),
+        },
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update site inspection date');
+      }
+
+      setProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              siteInspectionAvailableOn: date,
+            }
+          : prev,
+      );
+      setLocationDetailsForm((prev) => ({
+        ...prev,
+        desiredStartDate: date,
+      }));
+
+      const impacted = data?.impacted || {};
+      const bookingsVoided = Number(impacted.bookingsVoided || 0);
+      const professionalsNotified = Number(impacted.professionalsNotified || 0);
+      toast.success(
+        bookingsVoided > 0
+          ? `Date updated. ${bookingsVoided} booking(s) voided and ${professionalsNotified} professional(s) notified.`
+          : `Date updated and ${professionalsNotified} professional(s) notified.`,
+      );
+
+      await Promise.all([fetchSiteAccessRequests(), fetchSiteVisits(), fetchProject()]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update site inspection date';
+      setLocationDetailsError(message);
+      toast.error(message);
+      throw err;
+    } finally {
+      setUpdatingSiteAvailability(false);
     }
   };
 
@@ -2192,7 +2253,9 @@ export default function ClientProjectDetailPage() {
                 }));
               }}
               onSubmitLocationDetails={handleSubmitLocationDetails}
+              onUpdateSiteAvailability={handleUpdateSiteAvailability}
               isSubmittingLocationDetails={submittingLocationDetails}
+              isUpdatingSiteAvailability={updatingSiteAvailability}
               locationDetailsError={locationDetailsError}
             />
           </div>

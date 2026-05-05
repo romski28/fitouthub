@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 interface SiteAccessRequest {
@@ -10,6 +10,7 @@ interface SiteAccessRequest {
   respondedAt?: string;
   visitScheduledFor?: string | null;
   visitScheduledAt?: string | null;
+  visitDetails?: string | null;
   reasonDenied?: string | null;
   professional: {
     id: string;
@@ -67,7 +68,9 @@ interface SiteAccessTabProps {
   locationDetailsForm: any;
   onUpdateLocationDetailsForm: (patch: any) => void;
   onSubmitLocationDetails: () => Promise<boolean>;
+  onUpdateSiteAvailability: (date: string, reason: string) => Promise<void>;
   isSubmittingLocationDetails: boolean;
+  isUpdatingSiteAvailability: boolean;
   locationDetailsError: string | null;
 }
 
@@ -129,6 +132,9 @@ const formatBookedSlot = (date?: string | null) => {
   }
 };
 
+const isRescheduleRequired = (note?: string | null) =>
+  Boolean(note && note.includes('Site availability changed to'));
+
 const toDateInput = (value?: string | null) => {
   if (!value) return '';
   const date = new Date(value);
@@ -159,7 +165,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   locationDetailsForm,
   onUpdateLocationDetailsForm,
   onSubmitLocationDetails,
+  onUpdateSiteAvailability,
   isSubmittingLocationDetails,
+  isUpdatingSiteAvailability,
   locationDetailsError,
 }) => {
   const [basicAddressSaved, setBasicAddressSaved] = useState(false);
@@ -170,6 +178,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const [acceptedRequestId, setAcceptedRequestId] = useState<string | null>(null);
   const [changeAvailDate, setChangeAvailDate] = useState(locationDetailsForm.desiredStartDate || '');
   const [changeAvailReason, setChangeAvailReason] = useState('');
+
+  useEffect(() => {
+    setChangeAvailDate(siteInspectionAvailableOn || locationDetailsForm.desiredStartDate || '');
+  }, [locationDetailsForm.desiredStartDate, siteInspectionAvailableOn]);
 
   const hasBasicLocation =
     Boolean(locationDetailsForm.addressFull?.trim()) &&
@@ -243,6 +255,21 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     [locationDetailsForm.unitNumber, locationDetailsForm.floorLevel].filter(Boolean).join(' / '),
   ].filter(Boolean).join(' · ');
   const siteAvailabilityDate = siteInspectionAvailableOn || locationDetailsForm.desiredStartDate;
+  const currentAvailabilityInput =
+    toDateInput(siteInspectionAvailableOn || null) || locationDetailsForm.desiredStartDate || '';
+  const bookedProfessionalCount = new Set([
+    ...acceptedVisits.map((visit) => visit.professional.id),
+    ...pendingVisits.map((visit) => visit.professional.id),
+    ...acceptedAccessRequests
+      .filter((request) => Boolean(request.visitScheduledAt || request.visitScheduledFor))
+      .map((request) => request.professional.id),
+  ]).size;
+  const notifyOnlyProfessionalCount = new Set([
+    ...pendingAccessRequests.map((request) => request.professional.id),
+    ...acceptedAccessRequests
+      .filter((request) => !request.visitScheduledAt && !request.visitScheduledFor)
+      .map((request) => request.professional.id),
+  ]).size;
 
   return (
     <div className="space-y-6">
@@ -495,7 +522,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               request.professional.businessName ||
               request.professional.email ||
               'Contractor';
-            const bookedLabel = request.visitScheduledAt
+            const rescheduleRequired = isRescheduleRequired(request.visitDetails);
+            const bookedLabel = rescheduleRequired
+              ? `Reschedule required - new availability ${formatDate(siteAvailabilityDate)}`
+              : request.visitScheduledAt
               ? formatBookedSlot(request.visitScheduledAt)
               : request.visitScheduledFor
               ? formatBookedSlot(request.visitScheduledFor)
@@ -510,8 +540,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   <p className="text-sm font-semibold text-white">{name}</p>
                   <p className="text-xs text-slate-300">{bookedLabel}</p>
                 </div>
-                <span className={`rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}>
-                  Booked
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold text-white ${rescheduleRequired ? 'bg-amber-600' : 'bg-blue-600'} ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}>
+                  {rescheduleRequired ? 'Reschedule' : 'Booked'}
                 </span>
               </div>
             );
@@ -523,6 +553,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               visit.professional.businessName ||
               visit.professional.email ||
               'Contractor';
+            const rescheduleRequired = isRescheduleRequired(visit.responseNotes);
             return (
               <div
                 key={visit.id}
@@ -530,10 +561,14 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               >
                 <div>
                   <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-400">{formatDateTime(visit.proposedAt)}</p>
+                  <p className="text-xs text-slate-400">
+                    {rescheduleRequired
+                      ? `Previous slot voided - new availability ${formatDate(siteAvailabilityDate)}`
+                      : formatDateTime(visit.proposedAt)}
+                  </p>
                 </div>
-                <span className="rounded-full border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300 capitalize">
-                  {visit.status}
+                <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${rescheduleRequired ? 'border-amber-500 bg-amber-500/15 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300 capitalize'}`}>
+                  {rescheduleRequired ? 'Reschedule' : visit.status}
                 </span>
               </div>
             );
@@ -704,10 +739,52 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            disabled
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white opacity-50 cursor-not-allowed"
+            onClick={async () => {
+              const trimmedDate = changeAvailDate.trim();
+              const trimmedReason = changeAvailReason.trim();
+              if (!trimmedDate) {
+                toast.error('Please choose the new site inspection date');
+                return;
+              }
+              if (!trimmedReason) {
+                toast.error('Please enter a reason for the change');
+                return;
+              }
+              if (trimmedDate === currentAvailabilityInput) {
+                toast.error('Please choose a different date');
+                return;
+              }
+
+              const confirmation = [
+                `Change site inspection date to ${formatDate(trimmedDate)}?`,
+                bookedProfessionalCount > 0
+                  ? `${bookedProfessionalCount} booked or proposed site visit slot(s) will be voided and professionals will be asked to rebook.`
+                  : 'No booked site visits will be voided.',
+                notifyOnlyProfessionalCount > 0
+                  ? `${notifyOnlyProfessionalCount} additional professional(s) will be notified of the new availability date.`
+                  : 'No additional professionals need a date-change notification.',
+              ].join('\n\n');
+
+              if (!window.confirm(confirmation)) {
+                return;
+              }
+
+              try {
+                await onUpdateSiteAvailability(trimmedDate, trimmedReason);
+                setChangeAvailReason('');
+              } catch {
+                // Error toast is handled by the page-level submit handler.
+              }
+            }}
+            disabled={
+              isUpdatingSiteAvailability ||
+              !changeAvailDate.trim() ||
+              !changeAvailReason.trim() ||
+              changeAvailDate === currentAvailabilityInput
+            }
+            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Send update
+            {isUpdatingSiteAvailability ? 'Sending...' : 'Send update'}
           </button>
         </div>
         <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
