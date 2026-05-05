@@ -87,6 +87,7 @@ const formatDate = (date?: string) => {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+      timeZone: 'Asia/Hong_Kong',
     }).format(new Date(date));
   } catch {
     return '-';
@@ -102,6 +103,7 @@ const formatDateTime = (date?: string) => {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Asia/Hong_Kong',
     }).format(new Date(date));
   } catch {
     return '-';
