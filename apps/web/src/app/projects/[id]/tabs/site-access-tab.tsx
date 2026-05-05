@@ -145,6 +145,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const [basicAddressSaved, setBasicAddressSaved] = useState(false);
   const [buildingInfoSaved, setBuildingInfoSaved] = useState(false);
   const [showBuildingInfo, setShowBuildingInfo] = useState(false);
+  const [addressExpanded, setAddressExpanded] = useState<boolean | null>(null); // null = auto
   const [acceptedVisitId, setAcceptedVisitId] = useState<string | null>(null);
   const [acceptedRequestId, setAcceptedRequestId] = useState<string | null>(null);
   const [changeAvailDate, setChangeAvailDate] = useState(locationDetailsForm.desiredStartDate || '');
@@ -182,8 +183,114 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   }, [siteAccessRequests, professionalsWithPendingVisits]);
   const hasVisitOrRequestItems = siteVisits.length > 0 || pendingAccessRequests.length > 0;
 
+  // Address panel is open when: explicitly expanded, OR auto (null) and address is incomplete
+  const addressOpen = addressExpanded !== null ? addressExpanded : !hasBasicLocation;
+
+  const addressSummary = [
+    locationDetailsForm.addressFull,
+    [locationDetailsForm.unitNumber, locationDetailsForm.floorLevel].filter(Boolean).join(' / '),
+  ].filter(Boolean).join(' · ');
+
   return (
     <div className="space-y-6">
+
+      {/* Address details — collapsed when complete, open when required */}
+      <div className={`rounded-lg border overflow-hidden ${hasBasicLocation ? 'border-slate-700 bg-slate-900/60' : 'border-rose-500/70 bg-rose-950/25'}`}>
+        {/* Header / collapsed summary */}
+        <button
+          type="button"
+          onClick={() => setAddressExpanded((v) => (v === null ? !addressOpen : !v))}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white flex items-center gap-2">
+              Your address
+              {hasBasicLocation
+                ? <span className="text-emerald-400 text-xs font-normal">Saved</span>
+                : <span className="text-rose-300 text-xs font-normal">Required</span>}
+            </p>
+            {hasBasicLocation && !addressOpen && addressSummary && (
+              <p className="mt-0.5 truncate text-xs text-slate-400">{addressSummary}</p>
+            )}
+            {!hasBasicLocation && !addressOpen && (
+              <p className="mt-0.5 text-xs text-rose-300">Complete your address before accepting visits</p>
+            )}
+          </div>
+          <span className="shrink-0 text-slate-400 text-xs">{addressOpen ? '▲' : '▼'}</span>
+        </button>
+
+        {/* Expanded form */}
+        {addressOpen && (
+          <div className="border-t border-slate-700/60 p-4 space-y-3">
+            <p className="text-xs text-slate-400">Required before accepting a visit. This will be shared with the contractor.</p>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-white">Full Address *</label>
+              <input
+                type="text"
+                value={locationDetailsForm.addressFull}
+                onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
+                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                placeholder="e.g. 123 Nathan Road, Tsim Sha Tsui"
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-white">Unit Number *</label>
+                <input
+                  type="text"
+                  value={locationDetailsForm.unitNumber}
+                  onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
+                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  placeholder="e.g. Flat 12A"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-white">Floor Level *</label>
+                <input
+                  type="text"
+                  value={locationDetailsForm.floorLevel}
+                  onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
+                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  placeholder="e.g. 12/F"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-white">Postal Code / District</label>
+                <input
+                  type="text"
+                  value={locationDetailsForm.postalCode}
+                  onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
+                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const saved = await onSubmitLocationDetails();
+                    if (saved) {
+                      setBasicAddressSaved(true);
+                      setAddressExpanded(false); // auto-collapse on successful save
+                      setTimeout(() => setBasicAddressSaved(false), 8000);
+                    }
+                  } catch {
+                    toast.error('Failed to save address');
+                  }
+                }}
+                disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
+                className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {isSubmittingLocationDetails ? 'Saving...' : 'Save address'}
+              </button>
+            </div>
+            {basicAddressSaved && (
+              <p className="text-right text-xs font-semibold text-emerald-300">Saved just now</p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Site availability date */}
       <div className="rounded-lg border border-slate-700 bg-slate-900/40 px-4 py-3">
@@ -195,7 +302,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         )}
       </div>
 
-      {/* Professional visit list */}
+      {/* Error banners */}
       {siteVisitError && (
         <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
           {siteVisitError}
@@ -212,6 +319,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         </div>
       )}
 
+      {/* Contractor visit / request list */}
       {siteVisitLoading ? (
         <p className="text-sm text-slate-300">Loading visit requests...</p>
       ) : !hasVisitOrRequestItems ? (
@@ -220,11 +328,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {!hasBasicLocation && (pendingVisits.length > 0) && (
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-              Add your address details below before accepting any visit.
-            </div>
-          )}
 
           {pendingVisits.map((visit) => {
             const name =
@@ -346,82 +449,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           })}
         </div>
       )}
-
-      {/* Address details */}
-      <div className={`rounded-lg border p-4 space-y-3 ${hasBasicLocation ? 'border-slate-700 bg-slate-900/60' : 'border-rose-500/70 bg-rose-950/25'}`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-white">
-              Your address {hasBasicLocation ? <span className="text-emerald-400">Done</span> : <span className="text-rose-300">Required</span>}
-            </p>
-            <p className="mt-0.5 text-xs text-slate-400">Required before accepting a visit. This will be shared with the contractor.</p>
-          </div>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-white">Full Address *</label>
-          <input
-            type="text"
-            value={locationDetailsForm.addressFull}
-            onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
-            className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-            placeholder="e.g. 123 Nathan Road, Tsim Sha Tsui"
-          />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white">Unit Number *</label>
-            <input
-              type="text"
-              value={locationDetailsForm.unitNumber}
-              onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
-              className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-              placeholder="e.g. Flat 12A"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white">Floor Level *</label>
-            <input
-              type="text"
-              value={locationDetailsForm.floorLevel}
-              onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
-              className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-              placeholder="e.g. 12/F"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white">Postal Code / District</label>
-            <input
-              type="text"
-              value={locationDetailsForm.postalCode}
-              onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
-              className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end pt-1">
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                const saved = await onSubmitLocationDetails();
-                if (saved) {
-                  setBasicAddressSaved(true);
-                  setTimeout(() => setBasicAddressSaved(false), 8000);
-                }
-              } catch {
-                toast.error('Failed to save address');
-              }
-            }}
-            disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {isSubmittingLocationDetails ? 'Saving...' : 'Save address'}
-          </button>
-        </div>
-        {basicAddressSaved && (
-          <p className="text-right text-xs font-semibold text-emerald-300">Saved just now</p>
-        )}
-      </div>
 
       {/* Building Information (optional, collapsible) */}
       <div className="rounded-lg border border-slate-700 bg-slate-900/60 overflow-hidden">

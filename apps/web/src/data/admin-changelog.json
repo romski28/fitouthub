@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-4025d0d",
+    "date": "2026-05-05T12:38:26+08:00",
+    "title": "feat(site-access): move address panel above contractor list, auto-collapse when complete",
+    "summary": "feat(site-access): move address panel above contractor list, auto-collapse when complete",
+    "areas": [
+      "web"
+    ],
+    "commit": "4025d0d",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-c24de2c",
     "date": "2026-05-05T12:28:49+08:00",
     "title": "fix(site-access): show proposed visit time (not request submission timestamp) on access request rows",
