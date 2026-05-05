@@ -461,7 +461,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             <p className="text-sm font-semibold text-white">Building information</p>
             <p className="text-xs text-slate-400">Optional - helps contractors prepare for the visit.</p>
           </div>
-          <span className="text-slate-400 text-xs">{showBuildingInfo ? '^' : 'v'}</span>
+          <span className="shrink-0 text-slate-400 text-xs">{showBuildingInfo ? '▲' : '▼'}</span>
         </button>
         {showBuildingInfo && (
           <div className="border-t border-slate-700 p-4 space-y-3">
