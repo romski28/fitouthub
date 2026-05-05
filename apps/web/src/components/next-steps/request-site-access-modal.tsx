@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
-import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
+import toast from 'react-hot-toast';
 
 interface RequestSiteAccessModalProps {
   isOpen: boolean;
@@ -210,17 +210,27 @@ export function RequestSiteAccessModal({
         throw new Error(data.message || 'Failed to request site access');
       }
 
-      await showWorkflowSuccessToast({
-        successMessage: 'Site access request sent to the client.',
-        projectId: state.projectId,
-        token: accessToken,
-        fallbackGuidance: {
-          nextStepLabel: 'Wait for client response',
-          canActNow: false,
-          waitReason:
-            'No action needed now; the client needs to approve your access request.',
-        },
-      });
+      toast.custom(
+        (t) => (
+          <div
+            className={`pointer-events-auto w-[300px] rounded-2xl border border-emerald-300/50 bg-gradient-to-br from-emerald-500/95 to-teal-500/95 p-4 text-white shadow-2xl backdrop-blur ${t.visible ? 'animate-enter' : 'animate-leave'}`}
+          >
+            <div className="flex items-center justify-center gap-2 text-lg">
+              <span className="inline-block animate-bounce" style={{ animationDelay: '0ms' }}>✨</span>
+              <span className="inline-block animate-bounce" style={{ animationDelay: '120ms' }}>🎉</span>
+              <span className="inline-block animate-bounce" style={{ animationDelay: '240ms' }}>✨</span>
+            </div>
+            <div className="mt-2 text-center">
+              <div className="text-5xl leading-none">
+                <span className="inline-block animate-thumbs-wiggle">👍</span>
+              </div>
+              <p className="mt-2 text-sm font-semibold">Site visit booked!</p>
+              <p className="text-xs text-emerald-50/90">Your request has been sent to the client.</p>
+            </div>
+          </div>
+        ),
+        { duration: 3200 },
+      );
 
       await state.onCompleted?.({
         projectId: state.projectId,

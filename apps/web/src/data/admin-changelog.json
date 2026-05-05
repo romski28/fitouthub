@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-05-6c6b863",
+    "date": "2026-05-05T23:22:45+08:00",
+    "title": "feat(site-access): add celebratory thumbs-up toast for booking success",
+    "summary": "feat(site-access): add celebratory thumbs-up toast for booking success",
+    "areas": [
+      "web"
+    ],
+    "commit": "6c6b863",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-9f56e54",
     "date": "2026-05-05T23:11:56+08:00",
     "title": "chore(site-access): soft-disable legacy site-visit request flow behind flags",
