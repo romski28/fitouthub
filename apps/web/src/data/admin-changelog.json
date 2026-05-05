@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-05-fbe418d",
+    "date": "2026-05-05T13:10:38+08:00",
+    "title": "fix(site-access): make request Accept persist without prefilled form",
+    "summary": "fix(site-access): make request Accept persist without prefilled form",
+    "areas": [
+      "web"
+    ],
+    "commit": "fbe418d",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-59d66e9",
     "date": "2026-05-05T13:05:18+08:00",
     "title": "fix(site-access): source availability banner from project inspection date",

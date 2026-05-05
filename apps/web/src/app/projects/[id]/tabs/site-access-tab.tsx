@@ -385,13 +385,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   type="button"
                   onClick={async () => {
                     if (!hasBasicLocation || isSubmitting) return;
-                    await onRespondToRequest(request.id);
+                    await onRespondToRequest(request.id, { status: 'approved_no_visit' });
                     setAcceptedRequestId(request.id);
                     setTimeout(() => setAcceptedRequestId(null), 1800);
                   }}
                   disabled={isSubmitting || !hasBasicLocation}
                   title={!hasBasicLocation ? 'Complete your address details first' : 'Approve this request'}
-                  className="min-w-[70px] rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                  className={`min-w-[70px] rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
                 >
                   {isSubmitting ? 'Saving...' : isJustAccepted ? 'Accepted' : 'Accept'}
                 </button>

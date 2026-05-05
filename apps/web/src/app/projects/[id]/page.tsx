@@ -800,8 +800,7 @@ export default function ClientProjectDetailPage() {
     },
   ) => {
     if (!accessToken) return;
-    const form = siteAccessForms[requestId];
-    if (!form) return;
+    const form = siteAccessForms[requestId] || { status: 'approved_no_visit' as const };
 
     const mergedForm = {
       ...form,
