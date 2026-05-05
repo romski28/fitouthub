@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-05-7e234c2",
+    "date": "2026-05-05T13:18:48+08:00",
+    "title": "fix(site-access): private acceptance chat + persistent booked rows + accept animation",
+    "summary": "fix(site-access): private acceptance chat + persistent booked rows + accept animation",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7e234c2",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-fbe418d",
     "date": "2026-05-05T13:10:38+08:00",
     "title": "fix(site-access): make request Accept persist without prefilled form",

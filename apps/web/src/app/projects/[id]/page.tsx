@@ -947,6 +947,7 @@ export default function ClientProjectDetailPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to respond to request';
       toast.error(message);
+      throw err;
     } finally {
       setSubmittingSiteAccess(null);
       setSubmittingLocationDetails(false);
@@ -988,6 +989,7 @@ export default function ClientProjectDetailPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to respond to site visit';
       setSiteVisitError(message);
+      throw err;
     } finally {
       setSubmittingSiteVisit(null);
     }

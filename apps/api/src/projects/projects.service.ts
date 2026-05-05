@@ -3782,15 +3782,30 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
-    await this.addProjectChatMessage(
-      request.projectId,
-      'client',
-      userId,
-      null,
+    const siteAccessApprovalMessage =
       body.status === 'approved_no_visit'
         ? 'Client approved site access (no visit required).'
-        : `Client approved site access with a proposed visit on ${this.formatDateTime(safeScheduledAt)}.`,
-    );
+        : `Client approved site access with a proposed visit on ${this.formatDateTime(safeScheduledAt)}.`;
+    const requestProjectStatus = (request.project?.status || '').toLowerCase();
+    const routeApprovalToPrivate = requestProjectStatus === 'pending' || requestProjectStatus === 'approved';
+
+    if (routeApprovalToPrivate) {
+      await this.addProjectProfessionalMessage(
+        request.projectProfessionalId,
+        'client',
+        userId,
+        null,
+        siteAccessApprovalMessage,
+      );
+    } else {
+      await this.addProjectChatMessage(
+        request.projectId,
+        'client',
+        userId,
+        null,
+        siteAccessApprovalMessage,
+      );
+    }
 
     // Send notification to professional
     try {
@@ -4082,15 +4097,31 @@ Please review the project details and respond with your quote or decline the inv
     const professionalName =
       visit.professional?.businessName || visit.professional?.fullName || 'Professional';
     const actorLabel = isProfessional ? professionalName : 'Client';
-    await this.addProjectChatMessage(
-      visit.projectId,
-      isProfessional ? 'professional' : 'client',
-      isProfessional ? null : actorId,
-      isProfessional ? actorId : null,
+    const visitResponseMessage =
       body.status === 'accepted'
         ? `${actorLabel} accepted the proposed site visit for ${this.formatDateTime(visit.proposedAt)}.`
-        : `${actorLabel} declined the proposed site visit for ${this.formatDateTime(visit.proposedAt)}${body.responseNotes ? `: ${body.responseNotes}` : '.'}`,
-    );
+        : `${actorLabel} declined the proposed site visit for ${this.formatDateTime(visit.proposedAt)}${body.responseNotes ? `: ${body.responseNotes}` : '.'}`;
+    const visitProjectStatus = (visit.project?.status || '').toLowerCase();
+    const routeVisitAcceptanceToPrivate =
+      body.status === 'accepted' && (visitProjectStatus === 'pending' || visitProjectStatus === 'approved');
+
+    if (routeVisitAcceptanceToPrivate) {
+      await this.addProjectProfessionalMessage(
+        visit.projectProfessionalId,
+        isProfessional ? 'professional' : 'client',
+        isProfessional ? null : actorId,
+        isProfessional ? actorId : null,
+        visitResponseMessage,
+      );
+    } else {
+      await this.addProjectChatMessage(
+        visit.projectId,
+        isProfessional ? 'professional' : 'client',
+        isProfessional ? null : actorId,
+        isProfessional ? actorId : null,
+        visitResponseMessage,
+      );
+    }
 
     // Email notification to professional when client accepts their proposed visit
     if (body.status === 'accepted' && !isProfessional && visit.professional?.email) {

@@ -164,6 +164,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     () => new Set(pendingVisits.map((v) => v.professional.id)),
     [pendingVisits],
   );
+  const professionalsWithAcceptedVisits = useMemo(
+    () => new Set(acceptedVisits.map((v) => v.professional.id)),
+    [acceptedVisits],
+  );
   const pendingAccessRequests = useMemo(() => {
     return siteAccessRequests.filter((request) => {
       const status = (request.status || '').toLowerCase();
@@ -173,7 +177,21 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       return isLikelyPending && !professionalsWithPendingVisits.has(request.professional.id);
     });
   }, [siteAccessRequests, professionalsWithPendingVisits]);
-  const hasVisitOrRequestItems = siteVisits.length > 0 || pendingAccessRequests.length > 0;
+  const acceptedAccessRequests = useMemo(() => {
+    return siteAccessRequests.filter((request) => {
+      const status = (request.status || '').toLowerCase();
+      const isAccepted =
+        !!request.respondedAt &&
+        (status === 'approved_no_visit' || status === 'approved_visit_scheduled' || status === 'visited');
+      return (
+        isAccepted &&
+        !professionalsWithPendingVisits.has(request.professional.id) &&
+        !professionalsWithAcceptedVisits.has(request.professional.id)
+      );
+    });
+  }, [siteAccessRequests, professionalsWithPendingVisits, professionalsWithAcceptedVisits]);
+  const hasVisitOrRequestItems =
+    siteVisits.length > 0 || pendingAccessRequests.length > 0 || acceptedAccessRequests.length > 0;
 
   // Address panel is open when: explicitly expanded, OR auto (null) and address is incomplete
   const addressOpen = addressExpanded !== null ? addressExpanded : !hasBasicLocation;
@@ -345,9 +363,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   type="button"
                   onClick={async () => {
                     if (!hasBasicLocation || isSubmitting) return;
-                    await onRespondToVisit(visit.id, 'accepted');
                     setAcceptedVisitId(visit.id);
-                    setTimeout(() => setAcceptedVisitId(null), 1800);
+                    try {
+                      await onRespondToVisit(visit.id, 'accepted');
+                      setTimeout(() => setAcceptedVisitId(null), 1800);
+                    } catch {
+                      setAcceptedVisitId(null);
+                    }
                   }}
                   disabled={isSubmitting || !hasBasicLocation}
                   title={!hasBasicLocation ? 'Complete your address details first' : 'Confirm this visit'}
@@ -385,9 +407,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   type="button"
                   onClick={async () => {
                     if (!hasBasicLocation || isSubmitting) return;
-                    await onRespondToRequest(request.id, { status: 'approved_no_visit' });
                     setAcceptedRequestId(request.id);
-                    setTimeout(() => setAcceptedRequestId(null), 1800);
+                    try {
+                      await onRespondToRequest(request.id, { status: 'approved_no_visit' });
+                      setTimeout(() => setAcceptedRequestId(null), 1800);
+                    } catch {
+                      setAcceptedRequestId(null);
+                    }
                   }}
                   disabled={isSubmitting || !hasBasicLocation}
                   title={!hasBasicLocation ? 'Complete your address details first' : 'Approve this request'}
@@ -414,7 +440,35 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   <p className="text-sm font-semibold text-white">{name}</p>
                   <p className="text-xs text-slate-300">{formatDateTime(visit.proposedAt)}</p>
                 </div>
-                <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">
+                <span className={`rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white ${acceptedVisitId === visit.id ? 'animate-thumbs-wiggle' : ''}`}>
+                  Booked
+                </span>
+              </div>
+            );
+          })}
+
+          {acceptedAccessRequests.map((request) => {
+            const name =
+              request.professional.fullName ||
+              request.professional.businessName ||
+              request.professional.email ||
+              'Contractor';
+            const bookedLabel = request.visitScheduledAt
+              ? `Booked for ${formatDateTime(request.visitScheduledAt)}`
+              : request.visitScheduledFor
+              ? `Booked for ${formatDate(request.visitScheduledFor)}`
+              : 'Access approved';
+            const isJustAccepted = acceptedRequestId === request.id;
+            return (
+              <div
+                key={`approved-${request.id}`}
+                className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-white">{name}</p>
+                  <p className="text-xs text-slate-300">{bookedLabel}</p>
+                </div>
+                <span className={`rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}>
                   Booked
                 </span>
               </div>
