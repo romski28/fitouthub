@@ -128,9 +128,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   siteAccessRequests,
   siteVisits,
   siteAccessBlockers,
+  onRespondToRequest,
   onRespondToVisit,
   siteVisitLoading,
   siteVisitError,
+  submittingSiteAccess,
   submittingSiteVisit,
   locationDetailsForm,
   onUpdateLocationDetailsForm,
@@ -142,6 +144,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const [buildingInfoSaved, setBuildingInfoSaved] = useState(false);
   const [showBuildingInfo, setShowBuildingInfo] = useState(false);
   const [acceptedVisitId, setAcceptedVisitId] = useState<string | null>(null);
+  const [acceptedRequestId, setAcceptedRequestId] = useState<string | null>(null);
   const [changeAvailDate, setChangeAvailDate] = useState(locationDetailsForm.desiredStartDate || '');
   const [changeAvailReason, setChangeAvailReason] = useState('');
 
@@ -262,18 +265,31 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               request.professional.businessName ||
               request.professional.email ||
               'Contractor';
+            const isSubmitting = submittingSiteAccess === request.id;
+            const isJustAccepted = acceptedRequestId === request.id;
             return (
               <div
                 key={`req-${request.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
               >
                 <div>
                   <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-amber-200">requested access at {formatDateTime(request.requestedAt)}</p>
+                  <p className="text-xs text-slate-300">requested access at {formatDateTime(request.requestedAt)}</p>
                 </div>
-                <span className="rounded-full border border-amber-400/40 bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-200">
-                  Requested access
-                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!hasBasicLocation || isSubmitting) return;
+                    await onRespondToRequest(request.id);
+                    setAcceptedRequestId(request.id);
+                    setTimeout(() => setAcceptedRequestId(null), 1800);
+                  }}
+                  disabled={isSubmitting || !hasBasicLocation}
+                  title={!hasBasicLocation ? 'Complete your address details first' : 'Approve this request'}
+                  className="min-w-[70px] rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Saving...' : isJustAccepted ? 'Accepted' : 'Accept'}
+                </button>
               </div>
             );
           })}
@@ -287,13 +303,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             return (
               <div
                 key={visit.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
               >
                 <div>
                   <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-emerald-300">{formatDateTime(visit.proposedAt)}</p>
+                  <p className="text-xs text-slate-300">{formatDateTime(visit.proposedAt)}</p>
                 </div>
-                <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">
                   Booked
                 </span>
               </div>

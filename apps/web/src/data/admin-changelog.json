@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-ee027b6",
+    "date": "2026-05-05T12:21:16+08:00",
+    "title": "feat(site-access): accept buttons on request rows, neutral row styling, solid blue booked badge",
+    "summary": "feat(site-access): accept buttons on request rows, neutral row styling, solid blue booked badge",
+    "areas": [
+      "web"
+    ],
+    "commit": "ee027b6",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-8a154e3",
     "date": "2026-05-05T11:59:30+08:00",
     "title": "style(site-access): tint incomplete address panel background",
