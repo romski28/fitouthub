@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-9c95c78",
+    "date": "2026-05-05T22:22:04+08:00",
+    "title": "fix(site-access): stamp visitDetails on all approved_no_visit requests on availability change",
+    "summary": "fix(site-access): stamp visitDetails on all approved_no_visit requests on availability change",
+    "areas": [
+      "api"
+    ],
+    "commit": "9c95c78",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-05-909084b",
     "date": "2026-05-05T21:54:48+08:00",
     "title": "fix(site-access): stamp visitDetails on approved_no_visit requests when visits are cancelled",
