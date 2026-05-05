@@ -27,6 +27,7 @@ interface SiteAccessStatus {
   requestStatus: string;
   visitScheduledFor: string | null;
   visitScheduledAt?: string | null;
+  visitDetails?: string | null;
   visitedAt: string | null;
   reasonDenied: string | null;
   hasAccess: boolean;
@@ -84,6 +85,9 @@ const formatInspectionDateTime = (value?: string | null) => {
     hour12: false,
   });
 };
+
+const isRescheduleRequired = (note?: string | null) =>
+  Boolean(note && note.includes('Site availability changed to'));
 
 export function RequestSiteAccessModal({
   isOpen,
@@ -234,7 +238,9 @@ export function RequestSiteAccessModal({
   };
 
   const requestPending = status?.requestStatus === 'pending';
+  const rescheduleRequired = isRescheduleRequired(status?.visitDetails);
   const hasAccess = Boolean(status?.hasAccess);
+  const canRequestNewVisit = !hasAccess || rescheduleRequired;
   const isBusy = isLoading || loadingStatus;
 
   if (!isOpen) return null;
@@ -301,8 +307,10 @@ export function RequestSiteAccessModal({
               ) : null}
 
               {status.requestStatus === 'approved_no_visit' ? (
-                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
-                  Site access approved (no visit required).
+                <div className={`rounded-md border px-3 py-2 text-sm ${rescheduleRequired ? 'border-amber-500/40 bg-amber-500/15 text-amber-200' : 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'}`}>
+                  {rescheduleRequired
+                    ? 'Your previous visit slot was voided due to a client date change. Please choose a new slot.'
+                    : 'Site access approved (no visit required).'}
                 </div>
               ) : null}
 
@@ -326,7 +334,7 @@ export function RequestSiteAccessModal({
                 </div>
               ) : null}
 
-              {!hasAccess ? (
+              {canRequestNewVisit ? (
                 <div className="space-y-3 rounded-md border border-slate-700 bg-slate-900/60 p-4">
                   <p className="text-sm font-semibold text-white">Request Site Access</p>
                   <p className="text-xs text-slate-300">
@@ -418,7 +426,7 @@ export function RequestSiteAccessModal({
             disabled={
               actionLoading ||
               requestPending ||
-              hasAccess ||
+              !canRequestNewVisit ||
               !canRequestSiteAccess ||
               isBusy
             }

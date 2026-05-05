@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-7b29123",
+    "date": "2026-05-05T22:56:42+08:00",
+    "title": "fix(site-access): allow rebooking in REQUEST_SITE_ACCESS modal after reschedule",
+    "summary": "fix(site-access): allow rebooking in REQUEST_SITE_ACCESS modal after reschedule",
+    "areas": [
+      "web"
+    ],
+    "commit": "7b29123",
+    "files": [
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-74949ed",
     "date": "2026-05-05T22:42:46+08:00",
     "title": "fix(next-steps): show book site visit after reschedule-required access",
