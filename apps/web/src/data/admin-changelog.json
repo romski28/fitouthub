@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-9614d2e",
+    "date": "2026-05-05T11:51:59+08:00",
+    "title": "fix(site-access): remove remaining orphaned old JSX causing Vercel build failure",
+    "summary": "fix(site-access): remove remaining orphaned old JSX causing Vercel build failure",
+    "areas": [
+      "web"
+    ],
+    "commit": "9614d2e",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-e97babc",
     "date": "2026-05-05T11:48:48+08:00",
     "title": "fix(site-access): remove orphaned old JSX that caused unterminated regexp build error",
