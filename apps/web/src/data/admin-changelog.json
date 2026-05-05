@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-d24d3b2",
+    "date": "2026-05-05T13:22:26+08:00",
+    "title": "feat(site-access): sort booked contractors chronologically",
+    "summary": "feat(site-access): sort booked contractors chronologically",
+    "areas": [
+      "web"
+    ],
+    "commit": "d24d3b2",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-7e234c2",
     "date": "2026-05-05T13:18:48+08:00",
     "title": "fix(site-access): private acceptance chat + persistent booked rows + accept animation",

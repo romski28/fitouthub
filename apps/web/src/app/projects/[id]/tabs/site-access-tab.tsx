@@ -152,10 +152,18 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     () => siteVisits.filter((v) => v.status === 'proposed' && v.proposedByRole === 'professional'),
     [siteVisits],
   );
-  const acceptedVisits = useMemo(
-    () => siteVisits.filter((v) => v.status === 'accepted'),
-    [siteVisits],
-  );
+  const acceptedVisits = useMemo(() => {
+    return siteVisits
+      .filter((v) => v.status === 'accepted')
+      .slice()
+      .sort((a, b) => {
+        const aMs = new Date(a.proposedAt).getTime();
+        const bMs = new Date(b.proposedAt).getTime();
+        const safeA = Number.isNaN(aMs) ? Number.MAX_SAFE_INTEGER : aMs;
+        const safeB = Number.isNaN(bMs) ? Number.MAX_SAFE_INTEGER : bMs;
+        return safeA - safeB;
+      });
+  }, [siteVisits]);
   const otherVisits = useMemo(
     () => siteVisits.filter((v) => v.status !== 'proposed' && v.status !== 'accepted'),
     [siteVisits],
@@ -178,6 +186,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     });
   }, [siteAccessRequests, professionalsWithPendingVisits]);
   const acceptedAccessRequests = useMemo(() => {
+    const toRequestTime = (request: SiteAccessRequest) => {
+      const source = request.visitScheduledAt || request.visitScheduledFor || request.requestedAt;
+      const ms = source ? new Date(source).getTime() : Number.MAX_SAFE_INTEGER;
+      return Number.isNaN(ms) ? Number.MAX_SAFE_INTEGER : ms;
+    };
+
     return siteAccessRequests.filter((request) => {
       const status = (request.status || '').toLowerCase();
       const isAccepted =
@@ -188,7 +202,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         !professionalsWithPendingVisits.has(request.professional.id) &&
         !professionalsWithAcceptedVisits.has(request.professional.id)
       );
-    });
+    }).sort((a, b) => toRequestTime(a) - toRequestTime(b));
   }, [siteAccessRequests, professionalsWithPendingVisits, professionalsWithAcceptedVisits]);
   const hasVisitOrRequestItems =
     siteVisits.length > 0 || pendingAccessRequests.length > 0 || acceptedAccessRequests.length > 0;
