@@ -303,18 +303,37 @@ export class NextStepService {
         ),
       ];
 
-      // If the client has shared an inspection date and this professional has no active
-      // site access request, surface REQUEST_SITE_ACCESS as an elective.
+      // If the client has shared an inspection date and this professional has no blocking
+      // site access state, surface REQUEST_SITE_ACCESS as an elective.
       const inspectionDate = (project as any).siteInspectionAvailableOn;
       if (inspectionDate) {
-        const existingAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+        const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
           where: {
             projectProfessionalId: isProfessional.id,
             status: { notIn: ['cancelled', 'denied'] },
           },
-          select: { id: true },
+          select: {
+            id: true,
+            status: true,
+            visitDetails: true,
+          },
+          orderBy: {
+            requestedAt: 'desc',
+          },
         });
-        if (!existingAccessRequest) {
+
+        const latestStatus = (latestAccessRequest?.status || '').toLowerCase();
+        const rescheduleRequired = Boolean(
+          latestAccessRequest?.visitDetails?.includes('Site availability changed to'),
+        );
+
+        const hasBlockingAccessState =
+          latestStatus === 'pending' ||
+          latestStatus === 'approved_visit_scheduled' ||
+          latestStatus === 'visited' ||
+          (latestStatus === 'approved_no_visit' && !rescheduleRequired);
+
+        if (!hasBlockingAccessState) {
           const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
             day: 'numeric',
             month: 'short',

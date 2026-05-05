@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-05-74949ed",
+    "date": "2026-05-05T22:42:46+08:00",
+    "title": "fix(next-steps): show book site visit after reschedule-required access",
+    "summary": "fix(next-steps): show book site visit after reschedule-required access",
+    "areas": [
+      "api"
+    ],
+    "commit": "74949ed",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-05-9c95c78",
     "date": "2026-05-05T22:22:04+08:00",
     "title": "fix(site-access): stamp visitDetails on all approved_no_visit requests on availability change",
