@@ -3920,6 +3920,14 @@ Please review the project details and respond with your quote or decline the inv
     professionalId: string,
     body: { scheduledAt: string; notes?: string },
   ) {
+    const legacySiteVisitRequestEnabled =
+      process.env.ENABLE_LEGACY_SITE_VISIT_REQUEST === 'true';
+    if (!legacySiteVisitRequestEnabled) {
+      throw new BadRequestException(
+        'Legacy site visit request flow is disabled. Use site access request instead.',
+      );
+    }
+
     const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null;
     if (!scheduledAt || Number.isNaN(scheduledAt.getTime())) {
       throw new BadRequestException('scheduledAt is required');
