@@ -357,6 +357,8 @@ export class NextStepService {
     }
 
     if (role === 'CLIENT') {
+      let manageSiteRequestsDescription: string | null = null;
+
       const pendingClientAccessRequest = await this.prisma.siteAccessRequest.findFirst({
         where: {
           projectId,
@@ -378,23 +380,8 @@ export class NextStepService {
           hour12: false,
         });
 
-        return {
-          PRIMARY: [
-            toApiAction(
-              createSyntheticPrimaryStep(
-                'CONFIRM_SITE_VISIT',
-                'Manage site requests',
-                true,
-                role,
-                effectiveStage,
-                `A professional requested site access on ${requestedAtLabel}. Review and respond in the site-access tab.`,
-              ),
-            ),
-          ],
-          ELECTIVE: [],
-          status: project.status,
-          stage: effectiveStage,
-        };
+        manageSiteRequestsDescription =
+          `A professional requested site access on ${requestedAtLabel}. Review and respond in the site-access tab.`;
       }
 
       const pendingClientVisitResponse = await this.prisma.siteAccessVisit.findFirst({
@@ -419,23 +406,24 @@ export class NextStepService {
           hour12: false,
         });
 
-        return {
-          PRIMARY: [
-            toApiAction(
-              createSyntheticPrimaryStep(
-                'CONFIRM_SITE_VISIT',
-                'Manage site requests',
-                true,
-                role,
-                effectiveStage,
-                `A professional proposed a site visit for ${proposedAtLabel}. Confirm or decline this request.`,
-              ),
-            ),
-          ],
-          ELECTIVE: [],
-          status: project.status,
-          stage: effectiveStage,
-        };
+        if (!manageSiteRequestsDescription) {
+          manageSiteRequestsDescription =
+            `A professional proposed a site visit for ${proposedAtLabel}. Confirm or decline this request.`;
+        }
+      }
+
+      if (manageSiteRequestsDescription) {
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'CONFIRM_SITE_VISIT',
+            'Manage site requests',
+            true,
+            role,
+            effectiveStage,
+            manageSiteRequestsDescription,
+          ),
+          ...availableConfigSteps.filter((step) => step.actionKey !== 'CONFIRM_SITE_VISIT'),
+        ];
       }
     }
 

@@ -783,13 +783,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           <div className="space-y-2">
             {dashboardProjects.map((project) => {
               const actions = nextStepMap[project.id] || [];
-              const primaryActions = actions.filter((action) => action.isPrimary).slice(0, 2);
-              const requestSiteVisitAction = actions.find(
-                (action) => action.actionKey === 'REQUEST_SITE_VISIT',
-              );
-              const primaryHasRequestSiteVisit = primaryActions.some(
-                (action) => action.actionKey === 'REQUEST_SITE_VISIT',
-              );
+              const primaryActions = actions.filter((action) => action.isPrimary).slice(0, 3);
+              const primaryActionKeys = new Set(primaryActions.map((action) => action.actionKey));
+              const electiveActions = actions
+                .filter((action) => action.isElective && !primaryActionKeys.has(action.actionKey))
+                .slice(0, 2);
               const primaryAction = primaryActions[0] || null;
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               const assistInfo = assistMap[project.id];
@@ -913,15 +911,15 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                                     />
                                   );
                                 })}
-                                {requestSiteVisitAction && !primaryHasRequestSiteVisit ? (
+                                {electiveActions.map((action) => (
                                   <NextStepModalButton
-                                    key={`${project.id}-${requestSiteVisitAction.actionKey}-elective`}
-                                    action={requestSiteVisitAction}
+                                    key={`${project.id}-${action.actionKey}-elective`}
+                                    action={action}
                                     projectId={project.id}
                                     variant="secondary"
                                     onCompleted={() => refreshProjectNextStep(project.id)}
                                   />
-                                ) : null}
+                                ))}
                               </div>
                             ) : (
                               <Link
