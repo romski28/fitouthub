@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-05-df6b823",
+    "date": "2026-05-05T23:33:02+08:00",
+    "title": "fix(site-access): restore client manage step and hide superseded request rows",
+    "summary": "fix(site-access): restore client manage step and hide superseded request rows",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "df6b823",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-05-6c6b863",
     "date": "2026-05-05T23:22:45+08:00",
     "title": "feat(site-access): add celebratory thumbs-up toast for booking success",

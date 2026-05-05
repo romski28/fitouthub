@@ -357,6 +357,46 @@ export class NextStepService {
     }
 
     if (role === 'CLIENT') {
+      const pendingClientAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+        where: {
+          projectId,
+          status: 'pending',
+        },
+        select: { id: true, requestedAt: true },
+        orderBy: { requestedAt: 'asc' },
+      });
+
+      if (pendingClientAccessRequest) {
+        const requestedAtLabel = new Date(
+          pendingClientAccessRequest.requestedAt,
+        ).toLocaleString('en-HK', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        return {
+          PRIMARY: [
+            toApiAction(
+              createSyntheticPrimaryStep(
+                'CONFIRM_SITE_VISIT',
+                'Manage site requests',
+                true,
+                role,
+                effectiveStage,
+                `A professional requested site access on ${requestedAtLabel}. Review and respond in the site-access tab.`,
+              ),
+            ),
+          ],
+          ELECTIVE: [],
+          status: project.status,
+          stage: effectiveStage,
+        };
+      }
+
       const pendingClientVisitResponse = await this.prisma.siteAccessVisit.findFirst({
         where: {
           projectId,

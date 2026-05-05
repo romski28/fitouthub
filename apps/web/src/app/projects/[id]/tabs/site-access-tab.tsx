@@ -228,15 +228,43 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       ),
     [otherVisits],
   );
+
+  const latestAccessRequestsByProfessional = useMemo(() => {
+    const byProfessional = new Map<string, SiteAccessRequest>();
+
+    const toMillis = (value?: string | null) => {
+      if (!value) return Number.NEGATIVE_INFINITY;
+      const ms = new Date(value).getTime();
+      return Number.isNaN(ms) ? Number.NEGATIVE_INFINITY : ms;
+    };
+
+    for (const request of siteAccessRequests) {
+      const professionalId = request.professional.id;
+      const existing = byProfessional.get(professionalId);
+      if (!existing) {
+        byProfessional.set(professionalId, request);
+        continue;
+      }
+
+      const currentMs = toMillis(request.requestedAt);
+      const existingMs = toMillis(existing.requestedAt);
+      if (currentMs >= existingMs) {
+        byProfessional.set(professionalId, request);
+      }
+    }
+
+    return Array.from(byProfessional.values());
+  }, [siteAccessRequests]);
+
   const pendingAccessRequests = useMemo(() => {
-    return siteAccessRequests.filter((request) => {
+    return latestAccessRequestsByProfessional.filter((request) => {
       const status = (request.status || '').toLowerCase();
       const isLikelyPending =
         !request.respondedAt &&
         (!status || status === 'requested' || status === 'pending' || status === 'awaiting_response');
       return isLikelyPending && !professionalsWithPendingVisits.has(request.professional.id);
     });
-  }, [siteAccessRequests, professionalsWithPendingVisits]);
+  }, [latestAccessRequestsByProfessional, professionalsWithPendingVisits]);
   const acceptedAccessRequests = useMemo(() => {
     const toRequestTime = (request: SiteAccessRequest) => {
       const source = request.visitScheduledAt || request.visitScheduledFor || request.requestedAt;
@@ -244,7 +272,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       return Number.isNaN(ms) ? Number.MAX_SAFE_INTEGER : ms;
     };
 
-    return siteAccessRequests.filter((request) => {
+    return latestAccessRequestsByProfessional.filter((request) => {
       const status = (request.status || '').toLowerCase();
       const isAccepted =
         !!request.respondedAt &&
@@ -256,7 +284,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         !professionalsWithRescheduleVisit.has(request.professional.id)
       );
     }).sort((a, b) => toRequestTime(a) - toRequestTime(b));
-  }, [siteAccessRequests, professionalsWithPendingVisits, professionalsWithAcceptedVisits, professionalsWithRescheduleVisit]);
+  }, [latestAccessRequestsByProfessional, professionalsWithPendingVisits, professionalsWithAcceptedVisits, professionalsWithRescheduleVisit]);
   const hasVisitOrRequestItems =
     siteVisits.length > 0 || pendingAccessRequests.length > 0 || acceptedAccessRequests.length > 0;
 
