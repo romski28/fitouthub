@@ -539,7 +539,7 @@ export default function GetStartedPage() {
   const checkIcon = <span className="text-amber-400">✓</span>;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#181818] text-slate-100">
+    <main className="relative min-h-screen overflow-hidden bg-[#1A1A1A] text-slate-100">
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
@@ -557,7 +557,7 @@ export default function GetStartedPage() {
           priority
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-[#181818]/58" />
+        <div className="absolute inset-0 bg-[#1A1A1A]/58" />
       </div>
 
       <section
@@ -568,14 +568,14 @@ export default function GetStartedPage() {
         <div className="w-full max-w-xl">
 
           {!pendingOtp && (
-            <div className="rounded-3xl border border-[#F5EEDE]/70 bg-[#F5EEDE]/90 text-[#181818] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
+            <div className="rounded-3xl border border-[#EFE7CF]/70 bg-[#EFE7CF]/90 text-[#1A1A1A] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
                   <Image src="/assets/mimo.webp" alt="Mimo" width={72} height={72} className="rounded-xl" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
-                <h1 className="text-2xl font-black text-[#181818]">{pageTitle}</h1>
+                <h1 className="text-2xl font-black text-[#1A1A1A]">{pageTitle}</h1>
                 <p className="mt-1 text-sm text-[#FF6B5B]">&nbsp;</p>
               </div>
               <div className="px-5 pb-6 sm:px-8">
@@ -585,18 +585,18 @@ export default function GetStartedPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <button
                       onClick={() => handleChooseRole('client')}
-                      className="group rounded-2xl border border-red-400/40 bg-gradient-to-br from-red-500/20 to-red-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-red-300"
+                      className="group rounded-2xl border border-[#FF6B5B]/40 bg-gradient-to-br from-[#FF6B5B]/10 to-[#FF6B5B]/15 p-5 text-left transition hover:-translate-y-1 hover:border-[#FF6B5B]/50"
                     >
                       <p className="text-xs uppercase tracking-[0.2em] text-red-700">Client</p>
-                      <p className="mt-2 text-xl font-extrabold text-[#181818]">Plan and control your renovation</p>
+                      <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Plan and control your renovation</p>
                       <p className="mt-2 text-sm text-[#4E4A42]">Compare quotes, track progress, and use escrow-backed payments.</p>
                     </button>
                     <button
                       onClick={() => handleChooseRole('professional')}
-                      className="group rounded-2xl border border-blue-400/40 bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-blue-300"
+                      className="group rounded-2xl border border-[#0E7C3A]/40 bg-gradient-to-br from-[#0E7C3A]/10 to-[#0E7C3A]/15 p-5 text-left transition hover:-translate-y-1 hover:border-[#0E7C3A]/50"
                     >
                       <p className="text-xs uppercase tracking-[0.2em] text-blue-700">Professional</p>
-                      <p className="mt-2 text-xl font-extrabold text-[#181818]">Win premium renovation projects</p>
+                      <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Win premium renovation projects</p>
                       <p className="mt-2 text-sm text-[#4E4A42]">Showcase your trade, manage milestones, and reduce admin overhead.</p>
                     </button>
                   </div>
@@ -613,19 +613,19 @@ export default function GetStartedPage() {
                       </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-white/20">
-                      <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-orange-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                      <div className="h-full rounded-full bg-[#0E7C3A] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                     </div>
                     <div className="flex gap-2">
                       {stepsByRole[role].map((name, idx) => (
                         <div
                           key={name}
-                          className={`h-2 flex-1 rounded-full transition ${idx <= step ? 'bg-orange-400' : 'bg-white/20'}`}
+                          className={`h-2 flex-1 rounded-full transition ${idx <= step ? 'bg-[#0E7C3A]' : 'bg-white/20'}`}
                         />
                       ))}
                     </div>
                   </div>
 
-                  <div className="min-h-[280px] rounded-2xl border border-[#DDD5C5] bg-[#F5EEDE]/78 p-4 transition-all duration-300 sm:p-6">
+                  <div className="min-h-[280px] rounded-2xl border border-[#E8DFD5] bg-[#EFE7CF]/78 p-4 transition-all duration-300 sm:p-6">
                     {role === 'client' && step === 0 && (
                       <div className="space-y-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in method</p>
@@ -637,7 +637,7 @@ export default function GetStartedPage() {
                               setError(null);
                               setTimeout(renderGoogleButton, 40);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'google' ? 'border-[#1F5F78] bg-[#DCECF2]' : 'border-[#D8D1C1] bg-[#F5EEDE] hover:bg-[#EEE5D4]'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#1A1A1A] transition ${method === 'google' ? 'border-[#0E7C3A] bg-[#E8F5E9]' : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'}`}
                           >
                             <p className="font-semibold">Continue with Google</p>
                             <p className="text-xs text-[#5B5851]">Faster setup, verified email</p>
@@ -649,7 +649,7 @@ export default function GetStartedPage() {
                               setGoogleOnboardingToken(null);
                               setError(null);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'email' ? 'border-[#D45F4F] bg-[#FFE1DA]' : 'border-[#D8D1C1] bg-[#F5EEDE] hover:bg-[#EEE5D4]'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#1A1A1A] transition ${method === 'email' ? 'border-[#D45F4F] bg-[#FFE1DA]' : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'}`}
                           >
                             <p className="font-semibold">Continue with Email</p>
                             <p className="text-xs text-[#5B5851]">Classic signup with OTP verification</p>
@@ -671,7 +671,7 @@ export default function GetStartedPage() {
                                 type="email"
                                 value={clientForm.email}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, email: e.target.value }))}
-                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                                className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                               />
                             </label>
                             <div className="space-y-1 text-sm">
@@ -680,11 +680,11 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={clientForm.password}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, password: e.target.value }))}
-                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                                className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                               />
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
                                 <div
-                                  className="h-full rounded bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 transition-all"
+                                  className="h-full rounded bg-[#0E7C3A] transition-all"
                                   style={{ width: `${Math.min((clientPwStrength / 5) * 100, 100)}%` }}
                                 />
                               </div>
@@ -695,7 +695,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={clientForm.confirmPassword}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                                className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                               />
                             </label>
                           </div>
@@ -713,7 +713,7 @@ export default function GetStartedPage() {
                               type="text"
                               value={clientForm.firstName}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, firstName: e.target.value }))}
-                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                             />
                           </label>
                           <label className="space-y-1 text-sm">
@@ -722,7 +722,7 @@ export default function GetStartedPage() {
                               type="text"
                               value={clientForm.surname}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, surname: e.target.value }))}
-                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                             />
                           </label>
                           <label className="space-y-1 text-sm sm:col-span-2">
@@ -730,7 +730,7 @@ export default function GetStartedPage() {
                             <select
                               value={clientForm.preferredLanguage}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
-                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                             >
                               <option value="en">English</option>
                               <option value="zh-HK">Chinese (Hong Kong)</option>
@@ -746,7 +746,7 @@ export default function GetStartedPage() {
                                   preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
                                 }))
                               }
-                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                             >
                               <option value="EMAIL">Email</option>
                               <option value="WHATSAPP">WhatsApp</option>
@@ -759,7 +759,7 @@ export default function GetStartedPage() {
                               type="tel"
                               value={clientForm.mobile}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, mobile: e.target.value }))}
-                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                             />
                           </label>
                         </div>
@@ -775,7 +775,7 @@ export default function GetStartedPage() {
                             type="text"
                             value={clientForm.nickname}
                             onChange={(e) => setClientForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           />
                         </label>
                         <label className="flex items-center gap-2 text-sm">
@@ -830,7 +830,7 @@ export default function GetStartedPage() {
                               setError(null);
                               setTimeout(renderGoogleButton, 40);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'google' ? 'border-[#1F5F78] bg-[#DCECF2]' : 'border-[#D8D1C1] bg-[#F5EEDE] hover:bg-[#EEE5D4]'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#1A1A1A] transition ${method === 'google' ? 'border-[#0E7C3A] bg-[#E8F5E9]' : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'}`}
                           >
                             <p className="font-semibold">Continue with Google</p>
                             <p className="text-xs text-[#5B5851]">Faster account verification</p>
@@ -842,7 +842,7 @@ export default function GetStartedPage() {
                               setGoogleOnboardingToken(null);
                               setError(null);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'email' ? 'border-[#D45F4F] bg-[#FFE1DA]' : 'border-[#D8D1C1] bg-[#F5EEDE] hover:bg-[#EEE5D4]'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#1A1A1A] transition ${method === 'email' ? 'border-[#D45F4F] bg-[#FFE1DA]' : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'}`}
                           >
                             <p className="font-semibold">Continue with Email</p>
                             <p className="text-xs text-[#5B5851]">Create password and verify by OTP</p>
@@ -866,7 +866,7 @@ export default function GetStartedPage() {
                                 type="email"
                                 value={professionalForm.email}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, email: e.target.value }))}
-                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                                className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                               />
                             </label>
                             <label className="space-y-1 text-sm">
@@ -875,7 +875,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={professionalForm.password}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, password: e.target.value }))}
-                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                                className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                               />
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
                                 <div
@@ -890,7 +890,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={professionalForm.confirmPassword}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                                className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                               />
                             </label>
                           </div>
@@ -906,7 +906,7 @@ export default function GetStartedPage() {
                           <select
                             value={professionalForm.professionType}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, professionType: e.target.value }))}
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           >
                             <option value="company">Company</option>
                             <option value="contractor">Contractor</option>
@@ -919,7 +919,7 @@ export default function GetStartedPage() {
                             type="text"
                             value={professionalForm.businessName}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, businessName: e.target.value }))}
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           />
                         </label>
                         <label className="space-y-1 text-sm">
@@ -928,7 +928,7 @@ export default function GetStartedPage() {
                             type="text"
                             value={professionalForm.fullName}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, fullName: e.target.value }))}
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           />
                         </label>
                       </div>
@@ -943,7 +943,7 @@ export default function GetStartedPage() {
                             type="tel"
                             value={professionalForm.phone}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, phone: e.target.value }))}
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           />
                         </label>
                         <label className="space-y-1 text-sm">
@@ -956,7 +956,7 @@ export default function GetStartedPage() {
                                 preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
                               }))
                             }
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           >
                             <option value="EMAIL">Email</option>
                             <option value="WHATSAPP">WhatsApp</option>
@@ -988,7 +988,7 @@ export default function GetStartedPage() {
                             type="text"
                             value={professionalForm.nickname}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           />
                         </label>
                         <label className="space-y-1 text-sm">
@@ -996,7 +996,7 @@ export default function GetStartedPage() {
                           <select
                             value={professionalForm.preferredLanguage}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
-                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                           >
                             <option value="en">English</option>
                             <option value="zh-HK">Chinese (Hong Kong)</option>
@@ -1076,7 +1076,7 @@ export default function GetStartedPage() {
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="rounded-xl border border-[#1F5F78] bg-[#1F5F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#17495D]"
+                      className="rounded-xl border border-[#0E7C3A] bg-[#0E7C3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0A5D2D]"
                     >
                       {step === 0 ? 'Change path' : 'Back'}
                     </button>
@@ -1084,7 +1084,7 @@ export default function GetStartedPage() {
                       type="button"
                       disabled={loading}
                       onClick={handleNext}
-                      className="rounded-xl border border-[#18A67A] bg-[#18A67A] px-5 py-2 text-sm font-black text-white transition hover:bg-[#128763] disabled:opacity-60"
+                      className="rounded-xl border border-[#0E7C3A] bg-[#0E7C3A] px-5 py-2 text-sm font-black text-white transition hover:bg-[#0A5D2D] disabled:opacity-60"
                     >
                       {loading
                         ? 'Please wait...'
@@ -1100,14 +1100,14 @@ export default function GetStartedPage() {
           )}
 
           {pendingOtp && (
-            <div className="rounded-3xl border border-[#F5EEDE]/70 bg-[#F5EEDE]/90 text-[#181818] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
+            <div className="rounded-3xl border border-[#EFE7CF]/70 bg-[#EFE7CF]/90 text-[#1A1A1A] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
                   <Image src="/assets/mimo.webp" alt="Mimo" width={72} height={72} className="rounded-xl" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
-                <h1 className="text-2xl font-black text-[#181818]">Check your inbox.</h1>
+                <h1 className="text-2xl font-black text-[#1A1A1A]">Check your inbox.</h1>
                 <p className="mt-1 text-sm text-[#FF6B5B]">&nbsp;</p>
               </div>
               <div className="px-5 pb-6 sm:px-8">
@@ -1120,7 +1120,7 @@ export default function GetStartedPage() {
                   maxLength={6}
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
+                  className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                 />
               </label>
               {error && (
@@ -1133,7 +1133,7 @@ export default function GetStartedPage() {
                   type="button"
                   disabled={loading}
                   onClick={handleVerifyOtp}
-                  className="rounded-xl border border-[#18A67A] bg-[#18A67A] px-5 py-2 text-sm font-black text-white transition hover:bg-[#128763] disabled:opacity-60"
+                  className="rounded-xl border border-[#0E7C3A] bg-[#0E7C3A] px-5 py-2 text-sm font-black text-white transition hover:bg-[#0A5D2D] disabled:opacity-60"
                 >
                   {loading ? 'Verifying...' : 'Verify and continue'}
                 </button>
@@ -1141,7 +1141,7 @@ export default function GetStartedPage() {
                   type="button"
                   disabled={loading}
                   onClick={handleResendOtp}
-                  className="rounded-xl border border-[#D8D1C1] px-4 py-2 text-sm font-semibold text-[#181818] transition hover:bg-black/5"
+                  className="rounded-xl border border-[#E8DFD5] px-4 py-2 text-sm font-semibold text-[#1A1A1A] transition hover:bg-black/5"
                 >
                   Resend code
                 </button>

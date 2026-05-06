@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-06-7305c4c",
+    "date": "2026-05-06T17:49:33+08:00",
+    "title": "feat(web): apply Mimo brand color palette to join pages",
+    "summary": "feat(web): apply Mimo brand color palette to join pages",
+    "areas": [
+      "web"
+    ],
+    "commit": "7305c4c",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/app/globals.css"
+    ]
+  },
+  {
     "id": "2026-05-06-2e75e04",
     "date": "2026-05-06T17:33:20+08:00",
     "title": "fix(web): remove join panel bounce and use empty hero wallpaper",

@@ -1,6 +1,24 @@
 @import "tailwindcss";
 
 :root {
+  /* MIMO brand colors */
+  --mimo-coral: #FF6B5B;
+  --mimo-jade: #0E7C3A;
+  --mimo-bamboo: #F5B700;
+  --mimo-paper: #F4EEDC;
+  --mimo-cream: #EFE7CF;
+  --mimo-ink: #1A1A1A;
+
+  /* Semantic */
+  --mimo-background: var(--mimo-paper);
+  --mimo-surface: var(--mimo-cream);
+  --mimo-text: var(--mimo-ink);
+  --mimo-text-on-primary: #FFFFFF;
+  --mimo-primary: var(--mimo-coral);
+  --mimo-success: var(--mimo-jade);
+  --mimo-warning: var(--mimo-bamboo);
+
+  /* Legacy variables for compatibility */
   --background: #ffffff;
   --foreground: #171717;
   --color-surface: #ffffff;
