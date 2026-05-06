@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-ee424b5",
+    "date": "2026-05-06T17:56:23+08:00",
+    "title": "assets(web): add horizontal lockup logo",
+    "summary": "assets(web): add horizontal lockup logo",
+    "areas": [
+      "web"
+    ],
+    "commit": "ee424b5",
+    "files": [
+      "apps/web/public/assets/lockup-horizontal-ink.webp"
+    ]
+  },
+  {
     "id": "2026-05-06-8b6c9bd",
     "date": "2026-05-06T17:55:06+08:00",
     "title": "fix(web): replace logo with horizontal lockup",
