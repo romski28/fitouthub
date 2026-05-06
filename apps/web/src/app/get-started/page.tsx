@@ -569,7 +569,7 @@ export default function GetStartedPage() {
             <div className="rounded-3xl border border-[#FCF8EE]/70 bg-[#FCF8EE]/90 text-[#181818] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
-                  <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="rounded-lg" />
+                  <Image src="/assets/mimo.webp" alt="Mimo" width={72} height={72} className="rounded-xl" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
@@ -641,10 +641,10 @@ export default function GetStartedPage() {
                               setError(null);
                               setTimeout(renderGoogleButton, 40);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-red-400 bg-red-500/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'google' ? 'border-[#1F5F78] bg-[#DCECF2]' : 'border-[#D8D1C1] bg-[#F7F2E7] hover:bg-[#EFE8D8]'}`}
                           >
                             <p className="font-semibold">Continue with Google</p>
-                            <p className="text-xs text-slate-200">Faster setup, verified email</p>
+                            <p className="text-xs text-[#5B5851]">Faster setup, verified email</p>
                           </button>
                           <button
                             type="button"
@@ -653,7 +653,7 @@ export default function GetStartedPage() {
                               setGoogleOnboardingToken(null);
                               setError(null);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-red-400 bg-red-500/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'email' ? 'border-[#D45F4F] bg-[#FFE1DA]' : 'border-[#D8D1C1] bg-[#F7F2E7] hover:bg-[#EFE8D8]'}`}
                           >
                             <p className="font-semibold">Continue with Email</p>
                             <p className="text-xs text-[#5B5851]">Classic signup with OTP verification</p>
@@ -834,10 +834,10 @@ export default function GetStartedPage() {
                               setError(null);
                               setTimeout(renderGoogleButton, 40);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-blue-400 bg-blue-500/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'google' ? 'border-[#1F5F78] bg-[#DCECF2]' : 'border-[#D8D1C1] bg-[#F7F2E7] hover:bg-[#EFE8D8]'}`}
                           >
                             <p className="font-semibold">Continue with Google</p>
-                            <p className="text-xs text-slate-200">Faster account verification</p>
+                            <p className="text-xs text-[#5B5851]">Faster account verification</p>
                           </button>
                           <button
                             type="button"
@@ -846,10 +846,10 @@ export default function GetStartedPage() {
                               setGoogleOnboardingToken(null);
                               setError(null);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-blue-400 bg-blue-500/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left text-[#181818] transition ${method === 'email' ? 'border-[#D45F4F] bg-[#FFE1DA]' : 'border-[#D8D1C1] bg-[#F7F2E7] hover:bg-[#EFE8D8]'}`}
                           >
                             <p className="font-semibold">Continue with Email</p>
-                            <p className="text-xs text-slate-200">Create password and verify by OTP</p>
+                            <p className="text-xs text-[#5B5851]">Create password and verify by OTP</p>
                           </button>
                         </div>
 
@@ -1080,7 +1080,7 @@ export default function GetStartedPage() {
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="rounded-xl border border-[#D8D1C1] px-4 py-2 text-sm font-semibold text-[#181818] transition hover:bg-black/5"
+                      className="rounded-xl border border-[#1F5F78] bg-[#1F5F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#17495D]"
                     >
                       {step === 0 ? 'Change path' : 'Back'}
                     </button>
@@ -1088,7 +1088,7 @@ export default function GetStartedPage() {
                       type="button"
                       disabled={loading}
                       onClick={handleNext}
-                      className="rounded-xl bg-gradient-to-r from-red-500 via-orange-400 to-amber-400 px-5 py-2 text-sm font-black text-white transition hover:brightness-110 disabled:opacity-60"
+                      className="rounded-xl border border-[#18A67A] bg-[#18A67A] px-5 py-2 text-sm font-black text-white transition hover:bg-[#128763] disabled:opacity-60"
                     >
                       {loading
                         ? 'Please wait...'
@@ -1107,7 +1107,7 @@ export default function GetStartedPage() {
             <div className="rounded-3xl border border-[#FCF8EE]/70 bg-[#FCF8EE]/90 text-[#181818] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
-                  <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="rounded-lg" />
+                  <Image src="/assets/mimo.webp" alt="Mimo" width={72} height={72} className="rounded-xl" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
@@ -1137,7 +1137,7 @@ export default function GetStartedPage() {
                   type="button"
                   disabled={loading}
                   onClick={handleVerifyOtp}
-                  className="rounded-xl bg-gradient-to-r from-red-500 via-orange-400 to-amber-400 px-5 py-2 text-sm font-black text-white transition disabled:opacity-60"
+                  className="rounded-xl border border-[#18A67A] bg-[#18A67A] px-5 py-2 text-sm font-black text-white transition hover:bg-[#128763] disabled:opacity-60"
                 >
                   {loading ? 'Verifying...' : 'Verify and continue'}
                 </button>

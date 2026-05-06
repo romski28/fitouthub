@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-a9446ca",
+    "date": "2026-05-06T15:23:00+08:00",
+    "title": "style(web): enlarge mimo logo and solidify join action buttons",
+    "summary": "style(web): enlarge mimo logo and solidify join action buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "a9446ca",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-e229c32",
     "date": "2026-05-06T15:13:41+08:00",
     "title": "feat(web): refine join page with paper/ink/coral palette and hero background",
