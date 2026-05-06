@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-06-e229c32",
+    "date": "2026-05-06T15:13:41+08:00",
+    "title": "feat(web): refine join page with paper/ink/coral palette and hero background",
+    "summary": "feat(web): refine join page with paper/ink/coral palette and hero background",
+    "areas": [
+      "web"
+    ],
+    "commit": "e229c32",
+    "files": [
+      "apps/web/public/assets/mimo.webp",
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-a0b7700",
     "date": "2026-05-06T15:02:22+08:00",
     "title": "fix(web): resolve get-started JSX parse regressions",

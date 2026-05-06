@@ -120,17 +120,6 @@ export default function GetStartedPage() {
     agreeToSecurity: false,
   });
 
-  const dots = useMemo(
-    () =>
-      Array.from({ length: 18 }, (_, i) => ({
-        id: i,
-        left: `${(i * 17) % 100}%`,
-        top: `${(i * 29) % 100}%`,
-        delay: `${(i % 7) * 0.3}s`,
-      })),
-    [],
-  );
-
   const totalSteps = role ? stepsByRole[role].length : 0;
   const progressPercent = role ? ((step + 1) / totalSteps) * 100 : 0;
   const canRenderGoogle = role && step === 0;
@@ -552,7 +541,7 @@ export default function GetStartedPage() {
   const checkIcon = <span className="text-amber-400">✓</span>;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#0d1a24] text-slate-100">
+    <main className="relative min-h-screen overflow-hidden bg-[#181818] text-slate-100">
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
@@ -563,53 +552,50 @@ export default function GetStartedPage() {
       />
 
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-20 top-[-120px] h-[360px] w-[360px] rounded-full bg-red-500/15 blur-3xl" />
-        <div className="absolute right-[-90px] top-[180px] h-[340px] w-[340px] rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="absolute bottom-[-140px] left-1/3 h-[380px] w-[380px] rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.05),transparent_40%),linear-gradient(130deg,rgba(13,12,10,0.95),rgba(20,18,16,0.92))]" />
-        {dots.map((dot) => (
-          <span
-            key={dot.id}
-            className="absolute h-1.5 w-1.5 animate-pulse rounded-full bg-white/40"
-            style={{ left: dot.left, top: dot.top, animationDelay: dot.delay }}
-          />
-        ))}
+        <Image
+          src="/assets/images/hero-homepage.webp"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-[#181818]/58" />
       </div>
 
       <section className="relative flex min-h-screen w-full items-center justify-center px-4 py-8">
         <div className="w-full max-w-xl">
 
           {!pendingOtp && (
-            <div className="rounded-3xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl">
+            <div className="rounded-3xl border border-[#FCF8EE]/70 bg-[#FCF8EE]/90 text-[#181818] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
                   <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="rounded-lg" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
-                <h1 className="text-2xl font-black text-white">{pageTitle}</h1>
-                <p className="mt-1 text-sm text-slate-400">&nbsp;</p>
+                <h1 className="text-2xl font-black text-[#181818]">{pageTitle}</h1>
+                <p className="mt-1 text-sm text-[#FF6B5B]">&nbsp;</p>
               </div>
               <div className="px-5 pb-6 sm:px-8">
               {!role && (
                 <div className="space-y-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-200">Choose your path</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">Choose your path</p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <button
                       onClick={() => handleChooseRole('client')}
                       className="group rounded-2xl border border-red-400/40 bg-gradient-to-br from-red-500/20 to-red-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-red-300"
                     >
-                      <p className="text-xs uppercase tracking-[0.2em] text-red-200">Client</p>
-                      <p className="mt-2 text-xl font-extrabold text-white">Plan and control your renovation</p>
-                      <p className="mt-2 text-sm text-slate-100">Compare quotes, track progress, and use escrow-backed payments.</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-red-700">Client</p>
+                      <p className="mt-2 text-xl font-extrabold text-[#181818]">Plan and control your renovation</p>
+                      <p className="mt-2 text-sm text-[#4E4A42]">Compare quotes, track progress, and use escrow-backed payments.</p>
                     </button>
                     <button
                       onClick={() => handleChooseRole('professional')}
                       className="group rounded-2xl border border-blue-400/40 bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-blue-300"
                     >
-                      <p className="text-xs uppercase tracking-[0.2em] text-blue-200">Professional</p>
-                      <p className="mt-2 text-xl font-extrabold text-white">Win premium renovation projects</p>
-                      <p className="mt-2 text-sm text-slate-100">Showcase your trade, manage milestones, and reduce admin overhead.</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-blue-700">Professional</p>
+                      <p className="mt-2 text-xl font-extrabold text-[#181818]">Win premium renovation projects</p>
+                      <p className="mt-2 text-sm text-[#4E4A42]">Showcase your trade, manage milestones, and reduce admin overhead.</p>
                     </button>
                   </div>
                 </div>
@@ -618,7 +604,7 @@ export default function GetStartedPage() {
               {role && (
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-300">
+                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-[#5B5851]">
                       <span>{stepsByRole[role][step]}</span>
                       <span>
                         Step {step + 1} / {totalSteps}
@@ -643,10 +629,10 @@ export default function GetStartedPage() {
                     </div>
                   )}
 
-                  <div className="min-h-[280px] rounded-2xl border border-white/15 bg-black/10 p-4 transition-all duration-300 sm:p-6">
+                  <div className="min-h-[280px] rounded-2xl border border-[#E7DFCD] bg-[#FCF8EE]/75 p-4 transition-all duration-300 sm:p-6">
                     {role === 'client' && step === 0 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Sign in method</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in method</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <button
                             type="button"
@@ -670,14 +656,14 @@ export default function GetStartedPage() {
                             className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-red-400 bg-red-500/20' : 'border-white/20 hover:bg-white/10'}`}
                           >
                             <p className="font-semibold">Continue with Email</p>
-                            <p className="text-xs text-slate-200">Classic signup with OTP verification</p>
+                            <p className="text-xs text-[#5B5851]">Classic signup with OTP verification</p>
                           </button>
                         </div>
                         {method === 'google' && (
                           <div className="rounded-xl border border-white/20 bg-white/5 p-3">
                             <div ref={googleContainerRef} className="flex justify-center" />
                             {googleScriptReady && !googleButtonRendered && (
-                              <p className="mt-2 text-center text-xs text-slate-300">Loading Google button...</p>
+                              <p className="mt-2 text-center text-xs text-[#5B5851]">Loading Google button...</p>
                             )}
                           </div>
                         )}
@@ -689,7 +675,7 @@ export default function GetStartedPage() {
                                 type="email"
                                 value={clientForm.email}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, email: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                               />
                             </label>
                             <div className="space-y-1 text-sm">
@@ -698,7 +684,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={clientForm.password}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, password: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                               />
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
                                 <div
@@ -713,7 +699,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={clientForm.confirmPassword}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                               />
                             </label>
                           </div>
@@ -723,7 +709,7 @@ export default function GetStartedPage() {
 
                     {role === 'client' && step === 1 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">About you</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">About you</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <label className="space-y-1 text-sm">
                             <span>First name {clientForm.firstName ? checkIcon : null}</span>
@@ -731,7 +717,7 @@ export default function GetStartedPage() {
                               type="text"
                               value={clientForm.firstName}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, firstName: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                             />
                           </label>
                           <label className="space-y-1 text-sm">
@@ -740,7 +726,7 @@ export default function GetStartedPage() {
                               type="text"
                               value={clientForm.surname}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, surname: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                             />
                           </label>
                           <label className="space-y-1 text-sm sm:col-span-2">
@@ -748,7 +734,7 @@ export default function GetStartedPage() {
                             <select
                               value={clientForm.preferredLanguage}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                             >
                               <option value="en">English</option>
                               <option value="zh-HK">Chinese (Hong Kong)</option>
@@ -764,7 +750,7 @@ export default function GetStartedPage() {
                                   preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
                                 }))
                               }
-                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                             >
                               <option value="EMAIL">Email</option>
                               <option value="WHATSAPP">WhatsApp</option>
@@ -777,7 +763,7 @@ export default function GetStartedPage() {
                               type="tel"
                               value={clientForm.mobile}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, mobile: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                              className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                             />
                           </label>
                         </div>
@@ -786,14 +772,14 @@ export default function GetStartedPage() {
 
                     {role === 'client' && step === 2 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Nickname and preferences</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Nickname and preferences</p>
                         <label className="space-y-1 text-sm">
                           <span>Nickname {clientForm.nickname ? checkIcon : null}</span>
                           <input
                             type="text"
                             value={clientForm.nickname}
                             onChange={(e) => setClientForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                           />
                         </label>
                         <label className="flex items-center gap-2 text-sm">
@@ -839,7 +825,7 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 0 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Sign in method</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in method</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <button
                             type="button"
@@ -884,7 +870,7 @@ export default function GetStartedPage() {
                                 type="email"
                                 value={professionalForm.email}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, email: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                               />
                             </label>
                             <label className="space-y-1 text-sm">
@@ -893,7 +879,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={professionalForm.password}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, password: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                               />
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
                                 <div
@@ -908,7 +894,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={professionalForm.confirmPassword}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                                className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                               />
                             </label>
                           </div>
@@ -918,13 +904,13 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 1 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Your business</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Your business</p>
                         <label className="space-y-1 text-sm">
                           <span>Profession type {professionalForm.professionType ? checkIcon : null}</span>
                           <select
                             value={professionalForm.professionType}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, professionType: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                           >
                             <option value="company">Company</option>
                             <option value="contractor">Contractor</option>
@@ -937,7 +923,7 @@ export default function GetStartedPage() {
                             type="text"
                             value={professionalForm.businessName}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, businessName: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                           />
                         </label>
                         <label className="space-y-1 text-sm">
@@ -946,7 +932,7 @@ export default function GetStartedPage() {
                             type="text"
                             value={professionalForm.fullName}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, fullName: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                           />
                         </label>
                       </div>
@@ -954,14 +940,14 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 2 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Contact and availability</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Contact and availability</p>
                         <label className="space-y-1 text-sm">
                           <span>Phone {professionalForm.phone ? checkIcon : null}</span>
                           <input
                             type="tel"
                             value={professionalForm.phone}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, phone: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                           />
                         </label>
                         <label className="space-y-1 text-sm">
@@ -974,7 +960,7 @@ export default function GetStartedPage() {
                                 preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
                               }))
                             }
-                            className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                           >
                             <option value="EMAIL">Email</option>
                             <option value="WHATSAPP">WhatsApp</option>
@@ -999,14 +985,14 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 3 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Your account</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Your account</p>
                         <label className="space-y-1 text-sm">
                           <span>Nickname {professionalForm.nickname ? checkIcon : null}</span>
                           <input
                             type="text"
                             value={professionalForm.nickname}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                           />
                         </label>
                         <label className="space-y-1 text-sm">
@@ -1014,7 +1000,7 @@ export default function GetStartedPage() {
                           <select
                             value={professionalForm.preferredLanguage}
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-amber-200"
+                            className="w-full rounded-lg border border-[#D8D1C1] bg-white/90 px-3 py-2 text-[#181818] outline-none focus:border-amber-200"
                           >
                             <option value="en">English</option>
                             <option value="zh-HK">Chinese (Hong Kong)</option>
@@ -1030,7 +1016,7 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 4 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Terms and verification</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Terms and verification</p>
                         <label className="flex items-center gap-2 text-sm">
                           <input
                             type="checkbox"
@@ -1094,7 +1080,7 @@ export default function GetStartedPage() {
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                      className="rounded-xl border border-[#D8D1C1] px-4 py-2 text-sm font-semibold text-[#181818] transition hover:bg-black/5"
                     >
                       {step === 0 ? 'Change path' : 'Back'}
                     </button>
@@ -1118,18 +1104,18 @@ export default function GetStartedPage() {
           )}
 
           {pendingOtp && (
-            <div className="rounded-3xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl">
+            <div className="rounded-3xl border border-[#FCF8EE]/70 bg-[#FCF8EE]/90 text-[#181818] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
                   <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="rounded-lg" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
-                <h1 className="text-2xl font-black text-white">Check your inbox.</h1>
-                <p className="mt-1 text-sm text-slate-400">&nbsp;</p>
+                <h1 className="text-2xl font-black text-[#181818]">Check your inbox.</h1>
+                <p className="mt-1 text-sm text-[#FF6B5B]">&nbsp;</p>
               </div>
               <div className="px-5 pb-6 sm:px-8">
-              <p className="text-sm text-slate-300">Enter the OTP sent to {pendingOtp.email}.</p>
+              <p className="text-sm text-[#5B5851]">Enter the OTP sent to {pendingOtp.email}.</p>
               <label className="mt-4 block space-y-1 text-sm">
                 <span>Verification code</span>
                 <input
@@ -1138,7 +1124,7 @@ export default function GetStartedPage() {
                   maxLength={6}
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
+                  className="w-full rounded-lg border border-[#D8D1C1] bg-white/80 px-3 py-2 text-[#181818] outline-none focus:border-orange-400"
                 />
               </label>
               {error && (
@@ -1159,7 +1145,7 @@ export default function GetStartedPage() {
                   type="button"
                   disabled={loading}
                   onClick={handleResendOtp}
-                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                  className="rounded-xl border border-[#D8D1C1] px-4 py-2 text-sm font-semibold text-[#181818] transition hover:bg-black/5"
                 >
                   Resend code
                 </button>
@@ -1196,3 +1182,4 @@ export default function GetStartedPage() {
     </main>
   );
 }
+
