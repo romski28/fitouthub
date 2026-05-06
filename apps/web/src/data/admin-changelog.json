@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-8b6c9bd",
+    "date": "2026-05-06T17:55:06+08:00",
+    "title": "fix(web): replace logo with horizontal lockup",
+    "summary": "fix(web): replace logo with horizontal lockup",
+    "areas": [
+      "web"
+    ],
+    "commit": "8b6c9bd",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-7305c4c",
     "date": "2026-05-06T17:49:33+08:00",
     "title": "feat(web): apply Mimo brand color palette to join pages",
