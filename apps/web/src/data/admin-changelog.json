@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-7cc9dc1",
+    "date": "2026-05-06T10:54:17+08:00",
+    "title": "fix(next-steps): hide materials-claim steps until escrow is funded",
+    "summary": "fix(next-steps): hide materials-claim steps until escrow is funded",
+    "areas": [
+      "api"
+    ],
+    "commit": "7cc9dc1",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-05-7d3f89d",
     "date": "2026-05-05T23:52:40+08:00",
     "title": "fix(next-steps): surface manage site requests alongside review quotes",

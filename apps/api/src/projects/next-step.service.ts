@@ -481,6 +481,27 @@ export class NextStepService {
             ];
       }
 
+      if (role === 'CLIENT' && !clientSigned) {
+        // Client hasn't signed yet — only the review/sign step is relevant.
+        // Materials-claim and escrow steps must not appear before escrow is funded.
+        const reviewStep =
+          nextSteps.find((step) => step.actionKey === 'REVIEW_AGREEMENT') ||
+          nextSteps.find((step) => step.actionKey === 'SIGN_CONTRACT') ||
+          nextSteps.find((step) => step.actionKey === 'REVIEW_CONTRACT');
+        availableConfigSteps = reviewStep
+          ? [reviewStep]
+          : [
+              createSyntheticPrimaryStep(
+                'REVIEW_AGREEMENT',
+                'Review agreement',
+                true,
+                role,
+                effectiveStage,
+                'The professional has submitted a contract for your review. Sign to proceed to escrow funding.',
+              ),
+            ];
+      }
+
       if (role === 'CLIENT' && clientSigned && !professionalSigned) {
         availableConfigSteps = [
           createSyntheticPrimaryStep(
