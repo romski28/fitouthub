@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-ef99409",
+    "date": "2026-05-06T13:45:30+08:00",
+    "title": "fix(web): align policy modal props on get-started page",
+    "summary": "fix(web): align policy modal props on get-started page",
+    "areas": [
+      "web"
+    ],
+    "commit": "ef99409",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-38e5586",
     "date": "2026-05-06T13:38:42+08:00",
     "title": "feat(join): add multi-step wizard onboarding with Google OAuth start/complete",

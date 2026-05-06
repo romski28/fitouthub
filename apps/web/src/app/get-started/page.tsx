@@ -1166,12 +1166,14 @@ export default function GetStartedPage() {
       <PolicyDocumentModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
-        documentType="terms"
+        title="Terms and Conditions"
+        policyType="TERMS_AND_CONDITIONS"
       />
       <PolicyDocumentModal
         isOpen={showSecurityModal}
         onClose={() => setShowSecurityModal(false)}
-        documentType="security"
+        title="Security Statement"
+        policyType="SECURITY_STATEMENT"
       />
     </main>
   );
