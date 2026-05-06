@@ -571,7 +571,7 @@ export default function GetStartedPage() {
             <div className="rounded-3xl border border-[#EFE7CF]/70 bg-[#EFE7CF]/90 text-[#1A1A1A] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
-                  <Image src="/assets/lockup-horizontal-ink.webp" alt="Mimo" width={72} height={72} className="rounded-xl" />
+                  <Image src="/assets/lockup-horizontal-ink.webp" alt="Mimo" width={144} height={144} className="rounded-xl" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
@@ -1103,7 +1103,7 @@ export default function GetStartedPage() {
             <div className="rounded-3xl border border-[#EFE7CF]/70 bg-[#EFE7CF]/90 text-[#1A1A1A] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
-                  <Image src="/assets/lockup-horizontal-ink.webp" alt="Mimo" width={72} height={72} className="rounded-xl" />
+                  <Image src="/assets/lockup-horizontal-ink.webp" alt="Mimo" width={144} height={144} className="rounded-xl" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">

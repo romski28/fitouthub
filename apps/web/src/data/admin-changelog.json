@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-b226ee5",
+    "date": "2026-05-06T17:59:18+08:00",
+    "title": "fix(web): double logo size to 144x144",
+    "summary": "fix(web): double logo size to 144x144",
+    "areas": [
+      "web"
+    ],
+    "commit": "b226ee5",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-ee424b5",
     "date": "2026-05-06T17:56:23+08:00",
     "title": "assets(web): add horizontal lockup logo",
