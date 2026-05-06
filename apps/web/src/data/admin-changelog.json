@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-81b0258",
+    "date": "2026-05-06T17:18:34+08:00",
+    "title": "style(web): shift join page surfaces from paper to cream",
+    "summary": "style(web): shift join page surfaces from paper to cream",
+    "areas": [
+      "web"
+    ],
+    "commit": "81b0258",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-a9446ca",
     "date": "2026-05-06T15:23:00+08:00",
     "title": "style(web): enlarge mimo logo and solidify join action buttons",
