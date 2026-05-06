@@ -123,6 +123,7 @@ export default function GetStartedPage() {
   const totalSteps = role ? stepsByRole[role].length : 0;
   const progressPercent = role ? ((step + 1) / totalSteps) * 100 : 0;
   const canRenderGoogle = role && step === 0;
+  const lockViewportHeight = !pendingOtp && (!role || step === 0);
 
   const saveClientSession = (result: ClientSessionResult) => {
     localStorage.setItem('accessToken', result.accessToken);
@@ -562,7 +563,11 @@ export default function GetStartedPage() {
         <div className="absolute inset-0 bg-[#181818]/58" />
       </div>
 
-      <section className="relative flex min-h-screen w-full items-center justify-center px-4 py-8">
+      <section
+        className={`relative flex w-full items-center justify-center px-4 ${
+          lockViewportHeight ? 'h-[100dvh] overflow-hidden py-4 sm:py-5' : 'min-h-screen py-8'
+        }`}
+      >
         <div className="w-full max-w-xl">
 
           {!pendingOtp && (
@@ -1154,7 +1159,7 @@ export default function GetStartedPage() {
             </div>
           )}
 
-          <div className="mt-6 text-center text-sm text-slate-200">
+          <div className={`text-center text-sm text-slate-200 ${lockViewportHeight ? 'mt-4' : 'mt-6'}`}>
             Already have an account?{' '}
             <button onClick={openLoginModal} className="font-semibold text-orange-300 underline underline-offset-2">
               Sign in
