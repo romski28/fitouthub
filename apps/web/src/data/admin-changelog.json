@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-17431ee",
+    "date": "2026-05-06T18:33:44+08:00",
+    "title": "fix(web): embed characters inside role cards with text-safe padding",
+    "summary": "fix(web): embed characters inside role cards with text-safe padding",
+    "areas": [
+      "web"
+    ],
+    "commit": "17431ee",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-03f79fe",
     "date": "2026-05-06T18:26:52+08:00",
     "title": "fix(web): widen join panel to max-w-2xl",
