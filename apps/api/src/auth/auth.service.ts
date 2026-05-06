@@ -11,6 +11,15 @@ import { randomUUID } from 'crypto';
 import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
 import { NotificationChannel } from '@prisma/client';
+import { verifyGoogleIdToken } from '../common/google-id-token';
+
+type ClientGoogleOnboardingPayload = {
+  type: 'google_onboarding_client';
+  email: string;
+  givenName?: string;
+  familyName?: string;
+  picture?: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -115,6 +124,197 @@ export class AuthService {
     });
 
     // Generate tokens
+    const tokens = this.generateTokens(user.id, user.role, sessionToken);
+
+    return {
+      success: true,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user.id,
+        nickname: user.nickname,
+        email: user.email,
+        firstName: user.firstName,
+        surname: user.surname,
+        role: user.role,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
+      },
+    };
+  }
+
+  async googleStart(idToken: string) {
+    const profile = await verifyGoogleIdToken(
+      idToken,
+      process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '',
+    );
+
+    if (!profile.emailVerified) {
+      throw new UnauthorizedException('Google account email is not verified');
+    }
+
+    const existingUser = await (this.prisma as any).user.findUnique({
+      where: { email: profile.email },
+      include: {
+        notificationPreference: {
+          select: {
+            preferredLanguage: true,
+          },
+        },
+      },
+    });
+
+    if (existingUser) {
+      const sessionToken = randomUUID();
+      await (this.prisma as any).user.update({
+        where: { id: existingUser.id },
+        data: {
+          sessionToken,
+          emailVerified: true,
+        },
+      });
+
+      const tokens = this.generateTokens(existingUser.id, existingUser.role, sessionToken);
+
+      return {
+        success: true,
+        existingUser: true,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        user: {
+          id: existingUser.id,
+          nickname: existingUser.nickname,
+          email: existingUser.email,
+          firstName: existingUser.firstName,
+          surname: existingUser.surname,
+          role: existingUser.role,
+          preferredLanguage:
+            existingUser.notificationPreference?.preferredLanguage ?? 'en',
+        },
+      };
+    }
+
+    const onboardingToken = this.jwtService.sign(
+      {
+        type: 'google_onboarding_client',
+        email: profile.email,
+        givenName: profile.givenName,
+        familyName: profile.familyName,
+        picture: profile.picture,
+      } satisfies ClientGoogleOnboardingPayload,
+      { expiresIn: '20m' },
+    );
+
+    return {
+      success: true,
+      onboardingRequired: true,
+      onboardingToken,
+      profile: {
+        email: profile.email,
+        firstName: profile.givenName || '',
+        surname: profile.familyName || '',
+        picture: profile.picture,
+      },
+    };
+  }
+
+  async googleComplete(dto: {
+    onboardingToken: string;
+    nickname: string;
+    preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    preferredLanguage?: string;
+    mobile?: string;
+    allowPartnerOffers?: boolean;
+    allowPlatformUpdates?: boolean;
+    firstName?: string;
+    surname?: string;
+  }) {
+    if (!dto.onboardingToken || !dto.nickname) {
+      throw new BadRequestException('Onboarding token and nickname are required');
+    }
+
+    let payload: ClientGoogleOnboardingPayload;
+    try {
+      payload = this.jwtService.verify<ClientGoogleOnboardingPayload>(
+        dto.onboardingToken,
+      );
+    } catch {
+      throw new UnauthorizedException('Invalid or expired onboarding token');
+    }
+
+    if (payload.type !== 'google_onboarding_client' || !payload.email) {
+      throw new UnauthorizedException('Invalid onboarding token payload');
+    }
+
+    const existingUser = await (this.prisma as any).user.findUnique({
+      where: { email: payload.email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Email already registered. Continue with Google sign-in.');
+    }
+
+    const existingNickname = await (this.prisma as any).user.findUnique({
+      where: { nickname: dto.nickname },
+    });
+
+    if (existingNickname) {
+      throw new BadRequestException('Nickname already taken');
+    }
+
+    const preferredContactMethod =
+      dto.preferredContactMethod || NotificationChannel.EMAIL;
+
+    if (
+      (preferredContactMethod === NotificationChannel.WHATSAPP ||
+        preferredContactMethod === NotificationChannel.SMS) &&
+      !dto.mobile
+    ) {
+      throw new BadRequestException(
+        'Mobile number is required for WhatsApp or SMS contact methods',
+      );
+    }
+
+    const user = await (this.prisma as any).user.create({
+      data: {
+        email: payload.email,
+        nickname: dto.nickname,
+        passwordHash: `google-oauth-${randomUUID()}`,
+        firstName: dto.firstName || payload.givenName || 'Member',
+        surname: dto.surname || payload.familyName || 'User',
+        mobile: dto.mobile,
+        role: 'client',
+        emailVerified: true,
+        agreedToTermsAt: new Date(),
+        agreedToTermsVersion: '1.0',
+        agreedToSecurityStatementAt: new Date(),
+        agreedToSecurityStatementVersion: '1.0',
+      },
+    });
+
+    await this.prisma.notificationPreference.create({
+      data: {
+        userId: user.id,
+        primaryChannel: preferredContactMethod,
+        fallbackChannel:
+          preferredContactMethod === NotificationChannel.EMAIL
+            ? NotificationChannel.WHATSAPP
+            : NotificationChannel.EMAIL,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
+        enableEmail: true,
+        enableWhatsApp: !!dto.mobile,
+        enableSMS: !!dto.mobile,
+        enableWeChat: false,
+        allowPartnerOffers: dto.allowPartnerOffers ?? false,
+        allowPlatformUpdates: dto.allowPlatformUpdates ?? true,
+      },
+    });
+
+    const sessionToken = randomUUID();
+    await (this.prisma as any).user.update({
+      where: { id: user.id },
+      data: { sessionToken },
+    });
+
     const tokens = this.generateTokens(user.id, user.role, sessionToken);
 
     return {

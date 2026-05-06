@@ -33,6 +33,31 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Post('oauth/google/start')
+  @HttpCode(HttpStatus.OK)
+  async googleStart(@Body() body: { idToken: string }) {
+    return this.authService.googleStart(body.idToken);
+  }
+
+  @Post('oauth/google/complete')
+  @HttpCode(HttpStatus.OK)
+  async googleComplete(
+    @Body()
+    body: {
+      onboardingToken: string;
+      nickname: string;
+      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+      preferredLanguage?: string;
+      mobile?: string;
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      firstName?: string;
+      surname?: string;
+    },
+  ) {
+    return this.authService.googleComplete(body);
+  }
+
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() body: { refreshToken: string }) {

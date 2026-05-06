@@ -1,6 +1,7 @@
 export class ProfessionalRegisterDto {
   email: string;
   password: string;
+  nickname?: string;
   phone?: string;
   professionType?: string;
   fullName?: string;

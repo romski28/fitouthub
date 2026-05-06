@@ -1,37 +1,124 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import Script from 'next/script';
+import { useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
+import { useAuth } from '@/context/auth-context';
+import { useAuthModalControl } from '@/context/auth-modal-control';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { PolicyDocumentModal } from '@/components/policy-document-modal';
 
-type PathCard = {
-  title: string;
-  subtitle: string;
-  href: string;
-  accentFrom: string;
-  accentTo: string;
-  bullets: string[];
+type Role = 'client' | 'professional';
+type SignInMethod = 'email' | 'google' | null;
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (options: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              theme: 'outline' | 'filled_blue' | 'filled_black';
+              size: 'large' | 'medium' | 'small';
+              width?: number;
+              text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
+              shape?: 'rectangular' | 'pill' | 'circle' | 'square';
+            },
+          ) => void;
+        };
+      };
+    };
+  }
+}
+
+type ClientSessionResult = {
+  accessToken: string;
+  refreshToken: string;
+  user: Record<string, unknown>;
 };
 
-const paths: PathCard[] = [
-  {
-    title: 'I am a client',
-    subtitle: 'Plan the renovation, compare pros, and stay in control of every step.',
-    href: '/join?role=client',
-    accentFrom: 'from-cyan-400/30',
-    accentTo: 'to-blue-500/30',
-    bullets: ['Fast onboarding', 'Quote comparison', 'Escrow-protected payments'],
-  },
-  {
-    title: 'I am a professional',
-    subtitle: 'Win high-intent projects and manage delivery with less admin overhead.',
-    href: '/join?role=professional',
-    accentFrom: 'from-amber-300/30',
-    accentTo: 'to-orange-500/30',
-    bullets: ['Premium lead flow', 'Structured milestones', 'Built-in client trust signals'],
-  },
-];
+type ProfessionalSessionResult = {
+  accessToken: string;
+  refreshToken: string;
+  professional: Record<string, unknown>;
+};
+
+function passwordStrength(password: string): number {
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[a-z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  return score;
+}
+
+const stepsByRole: Record<Role, string[]> = {
+  client: ['Sign in method', 'About you', 'Nickname and preferences'],
+  professional: ['Sign in method', 'Your business', 'Contact and availability', 'Your account', 'Terms and verification'],
+};
 
 export default function GetStartedPage() {
+  const router = useRouter();
+  const { openLoginModal } = useAuthModalControl();
+  const { login: clientLogin } = useAuth();
+  const { login: professionalLogin } = useProfessionalAuth();
+  const [role, setRole] = useState<Role | null>(null);
+  const [roleChosenMoment, setRoleChosenMoment] = useState(false);
+  const [step, setStep] = useState(0);
+  const [method, setMethod] = useState<SignInMethod>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [pendingOtp, setPendingOtp] = useState<null | { email: string; role: Role; password?: string }> (null);
+  const [otpCode, setOtpCode] = useState('');
+  const [googleOnboardingToken, setGoogleOnboardingToken] = useState<string | null>(null);
+  const [googleScriptReady, setGoogleScriptReady] = useState(false);
+  const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
+  const googleContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const [clientForm, setClientForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    surname: '',
+    nickname: '',
+    mobile: '',
+    preferredLanguage: 'en',
+    preferredContactMethod: 'EMAIL' as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+    allowPartnerOffers: false,
+    allowPlatformUpdates: true,
+    agreeToTerms: false,
+    agreeToSecurity: false,
+  });
+
+  const [professionalForm, setProfessionalForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    fullName: '',
+    businessName: '',
+    professionType: 'company',
+    phone: '',
+    nickname: '',
+    preferredLanguage: 'en',
+    preferredContactMethod: 'EMAIL' as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+    emergencyCalloutAvailable: false,
+    allowPartnerOffers: false,
+    allowPlatformUpdates: true,
+    agreeToTerms: false,
+    agreeToSecurity: false,
+  });
+
   const dots = useMemo(
     () =>
       Array.from({ length: 18 }, (_, i) => ({
@@ -43,8 +130,427 @@ export default function GetStartedPage() {
     [],
   );
 
+  const totalSteps = role ? stepsByRole[role].length : 0;
+  const progressPercent = role ? ((step + 1) / totalSteps) * 100 : 0;
+  const canRenderGoogle = role && step === 0;
+
+  const saveClientSession = (result: ClientSessionResult) => {
+    localStorage.setItem('accessToken', result.accessToken);
+    localStorage.setItem('refreshToken', result.refreshToken);
+    localStorage.setItem('user', JSON.stringify(result.user));
+    window.location.href = '/projects';
+  };
+
+  const saveProfessionalSession = (result: ProfessionalSessionResult) => {
+    localStorage.setItem('professionalAccessToken', result.accessToken);
+    localStorage.setItem('professionalRefreshToken', result.refreshToken || '');
+    localStorage.setItem('professional', JSON.stringify(result.professional));
+    window.location.href = '/professional-projects';
+  };
+
+  const handleGoogleCredential = async (credential: string) => {
+    if (!role) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const startEndpoint =
+        role === 'client'
+          ? `${API_BASE_URL}/auth/oauth/google/start`
+          : `${API_BASE_URL}/professional/auth/oauth/google/start`;
+
+      const response = await fetch(startEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: credential }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Google sign-in failed');
+      }
+
+      if (data.existingUser) {
+        if (role === 'client') saveClientSession(data);
+        else saveProfessionalSession(data);
+        return;
+      }
+
+      if (data.onboardingRequired) {
+        setGoogleOnboardingToken(data.onboardingToken);
+        setMethod('google');
+        if (role === 'client') {
+          setClientForm((prev) => ({
+            ...prev,
+            email: data.profile?.email || prev.email,
+            firstName: data.profile?.firstName || prev.firstName,
+            surname: data.profile?.surname || prev.surname,
+          }));
+          setStep(1);
+        } else {
+          setProfessionalForm((prev) => ({
+            ...prev,
+            email: data.profile?.email || prev.email,
+            fullName: data.profile?.fullName || prev.fullName,
+          }));
+          setStep(1);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderGoogleButton = () => {
+    if (!googleScriptReady || !canRenderGoogle || !googleContainerRef.current || !role) return;
+    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+      setError('Google is not configured yet. Please add NEXT_PUBLIC_GOOGLE_CLIENT_ID.');
+      return;
+    }
+    if (!window.google?.accounts?.id) return;
+
+    googleContainerRef.current.innerHTML = '';
+    window.google.accounts.id.initialize({
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      callback: (response: { credential?: string }) => {
+        if (!response.credential) {
+          setError('Google did not return a credential. Please try again.');
+          return;
+        }
+        void handleGoogleCredential(response.credential);
+      },
+    });
+    window.google.accounts.id.renderButton(googleContainerRef.current, {
+      theme: 'outline',
+      size: 'large',
+      width: 340,
+      text: 'continue_with',
+      shape: 'pill',
+    });
+    setGoogleButtonRendered(true);
+  };
+
+  const handleChooseRole = (nextRole: Role) => {
+    setRole(nextRole);
+    setRoleChosenMoment(true);
+    setStep(0);
+    setMethod(null);
+    setGoogleOnboardingToken(null);
+    setError(null);
+    setGoogleButtonRendered(false);
+    setTimeout(() => setRoleChosenMoment(false), 700);
+  };
+
+  const validateCurrentStep = (): string | null => {
+    if (!role) return 'Choose your path to continue.';
+
+    if (role === 'client') {
+      if (step === 0) {
+        if (!method) return 'Choose email or Google to continue.';
+        if (method === 'email') {
+          if (!clientForm.email || !clientForm.password || !clientForm.confirmPassword) {
+            return 'Email and password fields are required.';
+          }
+          if (clientForm.password !== clientForm.confirmPassword) {
+            return 'Passwords do not match.';
+          }
+        }
+      }
+      if (step === 1) {
+        if (!clientForm.firstName || !clientForm.surname) {
+          return 'First name and surname are required.';
+        }
+        if (
+          (clientForm.preferredContactMethod === 'WHATSAPP' ||
+            clientForm.preferredContactMethod === 'SMS') &&
+          !clientForm.mobile
+        ) {
+          return 'Mobile is required when WhatsApp or SMS is selected.';
+        }
+      }
+      if (step === 2) {
+        if (!clientForm.nickname) return 'Nickname is required.';
+        if (!clientForm.agreeToTerms || !clientForm.agreeToSecurity) {
+          return 'Please accept Terms and Security Statement.';
+        }
+      }
+    }
+
+    if (role === 'professional') {
+      if (step === 0) {
+        if (!method) return 'Choose email or Google to continue.';
+        if (method === 'email') {
+          if (!professionalForm.email || !professionalForm.password || !professionalForm.confirmPassword) {
+            return 'Email and password fields are required.';
+          }
+          if (professionalForm.password !== professionalForm.confirmPassword) {
+            return 'Passwords do not match.';
+          }
+        }
+      }
+      if (step === 1) {
+        if (!professionalForm.professionType || !professionalForm.businessName || !professionalForm.fullName) {
+          return 'Profession type, business name, and full name are required.';
+        }
+      }
+      if (step === 2) {
+        if (!professionalForm.phone) return 'Phone is required for professionals.';
+        if (
+          (professionalForm.preferredContactMethod === 'WHATSAPP' ||
+            professionalForm.preferredContactMethod === 'SMS') &&
+          !professionalForm.phone
+        ) {
+          return 'Phone is required when WhatsApp or SMS is selected.';
+        }
+      }
+      if (step === 3) {
+        if (!professionalForm.nickname) return 'Nickname is required.';
+        if (method === 'email' && !professionalForm.password) {
+          return 'Password is required when using email sign-up.';
+        }
+      }
+      if (step === 4) {
+        if (!professionalForm.agreeToTerms || !professionalForm.agreeToSecurity) {
+          return 'Please accept Terms and Security Statement.';
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const submitClient = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (method === 'google') {
+        if (!googleOnboardingToken) throw new Error('Google onboarding token is missing. Restart sign-in.');
+        const response = await fetch(`${API_BASE_URL}/auth/oauth/google/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            onboardingToken: googleOnboardingToken,
+            nickname: clientForm.nickname,
+            firstName: clientForm.firstName,
+            surname: clientForm.surname,
+            mobile: clientForm.mobile || undefined,
+            preferredLanguage: clientForm.preferredLanguage,
+            preferredContactMethod: clientForm.preferredContactMethod,
+            allowPartnerOffers: clientForm.allowPartnerOffers,
+            allowPlatformUpdates: clientForm.allowPlatformUpdates,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Google onboarding failed.');
+        saveClientSession(data);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: clientForm.nickname,
+          firstName: clientForm.firstName,
+          surname: clientForm.surname,
+          email: clientForm.email,
+          mobile: clientForm.mobile || undefined,
+          preferredContactMethod: clientForm.preferredContactMethod,
+          preferredLanguage: clientForm.preferredLanguage,
+          allowPartnerOffers: clientForm.allowPartnerOffers,
+          allowPlatformUpdates: clientForm.allowPlatformUpdates,
+          requireOtpVerification: true,
+          password: clientForm.password,
+          role: 'client',
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Registration failed.');
+      if (data.otpRequired) {
+        setPendingOtp({ email: clientForm.email, role: 'client', password: clientForm.password });
+        return;
+      }
+      saveClientSession(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitProfessional = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (method === 'google') {
+        if (!googleOnboardingToken) throw new Error('Google onboarding token is missing. Restart sign-in.');
+        const response = await fetch(`${API_BASE_URL}/professional/auth/oauth/google/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            onboardingToken: googleOnboardingToken,
+            professionType: professionalForm.professionType,
+            fullName: professionalForm.fullName,
+            businessName: professionalForm.businessName,
+            phone: professionalForm.phone,
+            nickname: professionalForm.nickname,
+            preferredContactMethod: professionalForm.preferredContactMethod,
+            preferredLanguage: professionalForm.preferredLanguage,
+            allowPartnerOffers: professionalForm.allowPartnerOffers,
+            allowPlatformUpdates: professionalForm.allowPlatformUpdates,
+            emergencyCalloutAvailable: professionalForm.emergencyCalloutAvailable,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Google onboarding failed.');
+        saveProfessionalSession(data);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/professional/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: professionalForm.email,
+          password: professionalForm.password,
+          phone: professionalForm.phone,
+          professionType: professionalForm.professionType,
+          fullName: professionalForm.fullName,
+          businessName: professionalForm.businessName,
+          nickname: professionalForm.nickname,
+          preferredContactMethod: professionalForm.preferredContactMethod,
+          preferredLanguage: professionalForm.preferredLanguage,
+          allowPartnerOffers: professionalForm.allowPartnerOffers,
+          allowPlatformUpdates: professionalForm.allowPlatformUpdates,
+          requireOtpVerification: true,
+          emergencyCalloutAvailable: professionalForm.emergencyCalloutAvailable,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Registration failed.');
+      if (data.otpRequired) {
+        setPendingOtp({
+          email: professionalForm.email,
+          role: 'professional',
+          password: professionalForm.password,
+        });
+        return;
+      }
+      saveProfessionalSession(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
+    const validationError = validateCurrentStep();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError(null);
+
+    if (!role) return;
+    const isLast = step >= stepsByRole[role].length - 1;
+    if (isLast) {
+      if (role === 'client') await submitClient();
+      if (role === 'professional') await submitProfessional();
+      return;
+    }
+    setStep((prev) => prev + 1);
+  };
+
+  const handleBack = () => {
+    setError(null);
+    if (step === 0) {
+      setRole(null);
+      setMethod(null);
+      setGoogleOnboardingToken(null);
+      setGoogleButtonRendered(false);
+      return;
+    }
+    setStep((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!pendingOtp || !otpCode) {
+      setError('Enter the verification code first.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const endpoint =
+        pendingOtp.role === 'client'
+          ? `${API_BASE_URL}/auth/verify-registration-otp`
+          : `${API_BASE_URL}/professional/auth/verify-registration-otp`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingOtp.email, code: otpCode }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Verification failed.');
+
+      if (pendingOtp.role === 'client') {
+        if (!pendingOtp.password) throw new Error('Missing password for login.');
+        await clientLogin(pendingOtp.email, pendingOtp.password);
+        router.push('/projects');
+      } else {
+        if (!pendingOtp.password) throw new Error('Missing password for login.');
+        await professionalLogin(pendingOtp.email, pendingOtp.password);
+        router.push('/professional-projects');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!pendingOtp) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const endpoint =
+        pendingOtp.role === 'client'
+          ? `${API_BASE_URL}/auth/resend-registration-otp`
+          : `${API_BASE_URL}/professional/auth/resend-registration-otp`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingOtp.email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to resend code.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clientPwStrength = passwordStrength(clientForm.password);
+  const professionalPwStrength = passwordStrength(professionalForm.password);
+
+  const checkIcon = <span className="text-emerald-300">✓</span>;
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0d1a24] text-slate-100">
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
+        onLoad={() => {
+          setGoogleScriptReady(true);
+          setTimeout(renderGoogleButton, 50);
+        }}
+      />
+
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-[-120px] h-[360px] w-[360px] rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute right-[-90px] top-[180px] h-[340px] w-[340px] rounded-full bg-fuchsia-500/20 blur-3xl" />
@@ -59,63 +565,614 @@ export default function GetStartedPage() {
         ))}
       </div>
 
-      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-5 py-14 sm:px-8">
-        <div className="mx-auto w-full max-w-3xl text-center">
-          <p className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-4 py-1 text-xs font-semibold tracking-[0.24em] text-cyan-100 backdrop-blur">
-            FITOUTHUB JOIN EXPERIENCE
-          </p>
-          <h1 className="mt-5 text-balance text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl">
-            Build Something Beautiful.
-            <span className="block bg-gradient-to-r from-cyan-200 via-white to-amber-100 bg-clip-text text-transparent">
-              Start in under a minute.
-            </span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-sm text-slate-200 sm:text-base">
-            Pick your path and jump into a premium onboarding flow. Your original join forms stay exactly as-is under the hood.
-          </p>
-        </div>
+      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-5 py-12 sm:px-8">
+        <div className="mx-auto w-full max-w-4xl">
+          <div className="text-center">
+            <p className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-4 py-1 text-xs font-semibold tracking-[0.24em] text-cyan-100 backdrop-blur">
+              YOUR RENOVATION, YOUR TEAM, YOUR TERMS
+            </p>
+            <h1 className="mt-5 text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl">
+              Join FitoutHub
+              <span className="block bg-gradient-to-r from-cyan-200 via-white to-amber-100 bg-clip-text text-transparent">
+                in a flow that feels premium.
+              </span>
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-sm text-slate-200 sm:text-base">
+              A guided onboarding experience with Google or email, clear milestones, and smart defaults.
+            </p>
+          </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
-          {paths.map((path) => (
-            <article
-              key={path.title}
-              className="group relative overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-white/50 hover:bg-white/15"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${path.accentFrom} ${path.accentTo} opacity-70`} />
-              <div className="relative">
-                <h2 className="text-2xl font-extrabold text-white">{path.title}</h2>
-                <p className="mt-2 text-sm text-slate-100">{path.subtitle}</p>
+          {!pendingOtp && (
+            <div className="mx-auto mt-8 max-w-3xl rounded-3xl border border-white/20 bg-white/10 p-5 backdrop-blur-xl sm:p-8">
+              {!role && (
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100">Choose your path</p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <button
+                      onClick={() => handleChooseRole('client')}
+                      className="group rounded-2xl border border-cyan-200/40 bg-gradient-to-br from-cyan-400/20 to-blue-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-100"
+                    >
+                      <p className="text-xs uppercase tracking-[0.2em] text-cyan-100">Client</p>
+                      <p className="mt-2 text-xl font-extrabold text-white">Plan and control your renovation</p>
+                      <p className="mt-2 text-sm text-slate-100">Compare quotes, track progress, and use escrow-backed payments.</p>
+                    </button>
+                    <button
+                      onClick={() => handleChooseRole('professional')}
+                      className="group rounded-2xl border border-amber-200/40 bg-gradient-to-br from-amber-300/20 to-orange-500/20 p-5 text-left transition hover:-translate-y-1 hover:border-amber-100"
+                    >
+                      <p className="text-xs uppercase tracking-[0.2em] text-amber-100">Professional</p>
+                      <p className="mt-2 text-xl font-extrabold text-white">Win premium renovation projects</p>
+                      <p className="mt-2 text-sm text-slate-100">Showcase your trade, manage milestones, and reduce admin overhead.</p>
+                    </button>
+                  </div>
+                </div>
+              )}
 
-                <ul className="mt-5 space-y-2 text-sm text-slate-100/95">
-                  {path.bullets.map((bullet) => (
-                    <li key={bullet} className="flex items-center gap-2">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
+              {role && (
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-200">
+                      <span>{stepsByRole[role][step]}</span>
+                      <span>
+                        Step {step + 1} / {totalSteps}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/20">
+                      <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                    </div>
+                    <div className="flex gap-2">
+                      {stepsByRole[role].map((name, idx) => (
+                        <div
+                          key={name}
+                          className={`h-2 flex-1 rounded-full transition ${idx <= step ? 'bg-cyan-300' : 'bg-white/20'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
 
-                <Link
-                  href={path.href}
-                  className="mt-7 inline-flex w-full items-center justify-center rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm font-bold text-slate-900 transition group-hover:bg-white"
+                  {roleChosenMoment && (
+                    <div className="animate-pulse rounded-xl border border-emerald-300/50 bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-100">
+                      Great choice. Let us get this set up.
+                    </div>
+                  )}
+
+                  <div className="min-h-[280px] rounded-2xl border border-white/15 bg-black/10 p-4 transition-all duration-300 sm:p-6">
+                    {role === 'client' && step === 0 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">How do you want to sign in?</h2>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMethod('google');
+                              setError(null);
+                              setTimeout(renderGoogleButton, 40);
+                            }}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-cyan-200 bg-cyan-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                          >
+                            <p className="font-semibold">Continue with Google</p>
+                            <p className="text-xs text-slate-200">Faster setup, verified email</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMethod('email');
+                              setGoogleOnboardingToken(null);
+                              setError(null);
+                            }}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-cyan-200 bg-cyan-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                          >
+                            <p className="font-semibold">Continue with Email</p>
+                            <p className="text-xs text-slate-200">Classic signup with OTP verification</p>
+                          </button>
+                        </div>
+                        {method === 'google' && (
+                          <div className="rounded-xl border border-white/20 bg-white/5 p-3">
+                            <div ref={googleContainerRef} className="flex justify-center" />
+                            {googleScriptReady && !googleButtonRendered && (
+                              <p className="mt-2 text-center text-xs text-slate-300">Loading Google button...</p>
+                            )}
+                          </div>
+                        )}
+                        {method === 'email' && (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="space-y-1 text-sm">
+                              <span>Email</span>
+                              <input
+                                type="email"
+                                value={clientForm.email}
+                                onChange={(e) => setClientForm((prev) => ({ ...prev, email: e.target.value }))}
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              />
+                            </label>
+                            <div className="space-y-1 text-sm">
+                              <span>Password strength {clientPwStrength >= 3 ? checkIcon : null}</span>
+                              <input
+                                type="password"
+                                value={clientForm.password}
+                                onChange={(e) => setClientForm((prev) => ({ ...prev, password: e.target.value }))}
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              />
+                              <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
+                                <div
+                                  className="h-full rounded bg-gradient-to-r from-rose-300 via-amber-300 to-emerald-300 transition-all"
+                                  style={{ width: `${Math.min((clientPwStrength / 5) * 100, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                            <label className="space-y-1 text-sm sm:col-span-2">
+                              <span>Confirm password {clientForm.confirmPassword && clientForm.confirmPassword === clientForm.password ? checkIcon : null}</span>
+                              <input
+                                type="password"
+                                value={clientForm.confirmPassword}
+                                onChange={(e) => setClientForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {role === 'client' && step === 1 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">About you</h2>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="space-y-1 text-sm">
+                            <span>First name {clientForm.firstName ? checkIcon : null}</span>
+                            <input
+                              type="text"
+                              value={clientForm.firstName}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, firstName: e.target.value }))}
+                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                            />
+                          </label>
+                          <label className="space-y-1 text-sm">
+                            <span>Surname {clientForm.surname ? checkIcon : null}</span>
+                            <input
+                              type="text"
+                              value={clientForm.surname}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, surname: e.target.value }))}
+                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                            />
+                          </label>
+                          <label className="space-y-1 text-sm sm:col-span-2">
+                            <span>Preferred language</span>
+                            <select
+                              value={clientForm.preferredLanguage}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
+                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                            >
+                              <option value="en">English</option>
+                              <option value="zh-HK">Chinese (Hong Kong)</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1 text-sm sm:col-span-2">
+                            <span>Preferred contact</span>
+                            <select
+                              value={clientForm.preferredContactMethod}
+                              onChange={(e) =>
+                                setClientForm((prev) => ({
+                                  ...prev,
+                                  preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+                                }))
+                              }
+                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                            >
+                              <option value="EMAIL">Email</option>
+                              <option value="WHATSAPP">WhatsApp</option>
+                              <option value="SMS">SMS</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1 text-sm sm:col-span-2">
+                            <span>Mobile (optional unless WhatsApp/SMS)</span>
+                            <input
+                              type="tel"
+                              value={clientForm.mobile}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, mobile: e.target.value }))}
+                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {role === 'client' && step === 2 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">Your nickname and preferences</h2>
+                        <label className="space-y-1 text-sm">
+                          <span>Nickname {clientForm.nickname ? checkIcon : null}</span>
+                          <input
+                            type="text"
+                            value={clientForm.nickname}
+                            onChange={(e) => setClientForm((prev) => ({ ...prev, nickname: e.target.value }))}
+                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                          />
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={clientForm.allowPartnerOffers}
+                            onChange={(e) => setClientForm((prev) => ({ ...prev, allowPartnerOffers: e.target.checked }))}
+                          />
+                          Receive partner offers
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={clientForm.allowPlatformUpdates}
+                            onChange={(e) => setClientForm((prev) => ({ ...prev, allowPlatformUpdates: e.target.checked }))}
+                          />
+                          Receive platform updates
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={clientForm.agreeToTerms}
+                            onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
+                          />
+                          I agree to the Terms and Conditions
+                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-cyan-200 underline">
+                            Read
+                          </button>
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={clientForm.agreeToSecurity}
+                            onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))}
+                          />
+                          I agree to the Security Statement
+                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-cyan-200 underline">
+                            Read
+                          </button>
+                        </label>
+                      </div>
+                    )}
+
+                    {role === 'professional' && step === 0 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">Choose your sign-in method</h2>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMethod('google');
+                              setError(null);
+                              setTimeout(renderGoogleButton, 40);
+                            }}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-amber-200 bg-amber-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                          >
+                            <p className="font-semibold">Continue with Google</p>
+                            <p className="text-xs text-slate-200">Faster account verification</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMethod('email');
+                              setGoogleOnboardingToken(null);
+                              setError(null);
+                            }}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-amber-200 bg-amber-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                          >
+                            <p className="font-semibold">Continue with Email</p>
+                            <p className="text-xs text-slate-200">Create password and verify by OTP</p>
+                          </button>
+                        </div>
+
+                        {method === 'google' && (
+                          <div className="rounded-xl border border-white/20 bg-white/5 p-3">
+                            <div ref={googleContainerRef} className="flex justify-center" />
+                            {googleScriptReady && !googleButtonRendered && (
+                              <p className="mt-2 text-center text-xs text-slate-300">Loading Google button...</p>
+                            )}
+                          </div>
+                        )}
+
+                        {method === 'email' && (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="space-y-1 text-sm sm:col-span-2">
+                              <span>Email</span>
+                              <input
+                                type="email"
+                                value={professionalForm.email}
+                                onChange={(e) => setProfessionalForm((prev) => ({ ...prev, email: e.target.value }))}
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                              />
+                            </label>
+                            <label className="space-y-1 text-sm">
+                              <span>Password strength {professionalPwStrength >= 3 ? checkIcon : null}</span>
+                              <input
+                                type="password"
+                                value={professionalForm.password}
+                                onChange={(e) => setProfessionalForm((prev) => ({ ...prev, password: e.target.value }))}
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                              />
+                              <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
+                                <div
+                                  className="h-full rounded bg-gradient-to-r from-rose-300 via-amber-300 to-emerald-300 transition-all"
+                                  style={{ width: `${Math.min((professionalPwStrength / 5) * 100, 100)}%` }}
+                                />
+                              </div>
+                            </label>
+                            <label className="space-y-1 text-sm">
+                              <span>Confirm password {professionalForm.confirmPassword && professionalForm.confirmPassword === professionalForm.password ? checkIcon : null}</span>
+                              <input
+                                type="password"
+                                value={professionalForm.confirmPassword}
+                                onChange={(e) => setProfessionalForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {role === 'professional' && step === 1 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">Your business</h2>
+                        <label className="space-y-1 text-sm">
+                          <span>Profession type {professionalForm.professionType ? checkIcon : null}</span>
+                          <select
+                            value={professionalForm.professionType}
+                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, professionType: e.target.value }))}
+                            className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-amber-200"
+                          >
+                            <option value="company">Company</option>
+                            <option value="contractor">Contractor</option>
+                            <option value="reseller">Reseller</option>
+                          </select>
+                        </label>
+                        <label className="space-y-1 text-sm">
+                          <span>Business name {professionalForm.businessName ? checkIcon : null}</span>
+                          <input
+                            type="text"
+                            value={professionalForm.businessName}
+                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, businessName: e.target.value }))}
+                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                          />
+                        </label>
+                        <label className="space-y-1 text-sm">
+                          <span>Full name {professionalForm.fullName ? checkIcon : null}</span>
+                          <input
+                            type="text"
+                            value={professionalForm.fullName}
+                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                          />
+                        </label>
+                      </div>
+                    )}
+
+                    {role === 'professional' && step === 2 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">Contact and availability</h2>
+                        <label className="space-y-1 text-sm">
+                          <span>Phone {professionalForm.phone ? checkIcon : null}</span>
+                          <input
+                            type="tel"
+                            value={professionalForm.phone}
+                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, phone: e.target.value }))}
+                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                          />
+                        </label>
+                        <label className="space-y-1 text-sm">
+                          <span>Preferred contact</span>
+                          <select
+                            value={professionalForm.preferredContactMethod}
+                            onChange={(e) =>
+                              setProfessionalForm((prev) => ({
+                                ...prev,
+                                preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+                              }))
+                            }
+                            className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-amber-200"
+                          >
+                            <option value="EMAIL">Email</option>
+                            <option value="WHATSAPP">WhatsApp</option>
+                            <option value="SMS">SMS</option>
+                          </select>
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={professionalForm.emergencyCalloutAvailable}
+                            onChange={(e) =>
+                              setProfessionalForm((prev) => ({
+                                ...prev,
+                                emergencyCalloutAvailable: e.target.checked,
+                              }))
+                            }
+                          />
+                          Available for emergency callouts
+                        </label>
+                      </div>
+                    )}
+
+                    {role === 'professional' && step === 3 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">Your account</h2>
+                        <label className="space-y-1 text-sm">
+                          <span>Nickname {professionalForm.nickname ? checkIcon : null}</span>
+                          <input
+                            type="text"
+                            value={professionalForm.nickname}
+                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, nickname: e.target.value }))}
+                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-amber-200"
+                          />
+                        </label>
+                        <label className="space-y-1 text-sm">
+                          <span>Preferred language</span>
+                          <select
+                            value={professionalForm.preferredLanguage}
+                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
+                            className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-amber-200"
+                          >
+                            <option value="en">English</option>
+                            <option value="zh-HK">Chinese (Hong Kong)</option>
+                          </select>
+                        </label>
+                        {method === 'google' && (
+                          <p className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
+                            Google account selected. Password setup can be done later if needed.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {role === 'professional' && step === 4 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-extrabold text-white">Terms and verification</h2>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={professionalForm.allowPartnerOffers}
+                            onChange={(e) =>
+                              setProfessionalForm((prev) => ({ ...prev, allowPartnerOffers: e.target.checked }))
+                            }
+                          />
+                          Receive partner offers
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={professionalForm.allowPlatformUpdates}
+                            onChange={(e) =>
+                              setProfessionalForm((prev) => ({ ...prev, allowPlatformUpdates: e.target.checked }))
+                            }
+                          />
+                          Receive platform updates
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={professionalForm.agreeToTerms}
+                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
+                          />
+                          I agree to the Terms and Conditions
+                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-cyan-200 underline">
+                            Read
+                          </button>
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={professionalForm.agreeToSecurity}
+                            onChange={(e) =>
+                              setProfessionalForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))
+                            }
+                          />
+                          I agree to the Security Statement
+                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-cyan-200 underline">
+                            Read
+                          </button>
+                        </label>
+                        {method === 'email' && (
+                          <p className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
+                            Email sign-up will send OTP verification before activating your account.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {error && (
+                    <div className="rounded-xl border border-rose-300/60 bg-rose-500/20 px-4 py-3 text-sm text-rose-100">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                    >
+                      {step === 0 ? 'Change path' : 'Back'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={handleNext}
+                      className="rounded-xl bg-gradient-to-r from-cyan-300 via-emerald-300 to-cyan-100 px-5 py-2 text-sm font-black text-slate-900 transition hover:brightness-105 disabled:opacity-60"
+                    >
+                      {loading
+                        ? 'Please wait...'
+                        : step >= totalSteps - 1
+                        ? 'Complete signup'
+                        : 'Continue'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {pendingOtp && (
+            <div className="mx-auto mt-8 max-w-xl rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-xl">
+              <h2 className="text-2xl font-extrabold text-white">Verify your account</h2>
+              <p className="mt-2 text-sm text-slate-200">Enter the OTP sent to {pendingOtp.email}.</p>
+              <label className="mt-4 block space-y-1 text-sm">
+                <span>Verification code</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                />
+              </label>
+              {error && (
+                <div className="mt-3 rounded-xl border border-rose-300/60 bg-rose-500/20 px-4 py-3 text-sm text-rose-100">
+                  {error}
+                </div>
+              )}
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleVerifyOtp}
+                  className="rounded-xl bg-gradient-to-r from-cyan-300 via-emerald-300 to-cyan-100 px-5 py-2 text-sm font-black text-slate-900 transition disabled:opacity-60"
                 >
-                  Continue
-                </Link>
+                  {loading ? 'Verifying...' : 'Verify and continue'}
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleResendOtp}
+                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Resend code
+                </button>
               </div>
-            </article>
-          ))}
-        </div>
+            </div>
+          )}
 
-        <div className="mx-auto mt-7 w-full max-w-3xl rounded-2xl border border-white/20 bg-white/10 p-4 text-center text-sm text-slate-200 backdrop-blur">
-          <p className="font-semibold text-white">Google account sign-in is being connected next.</p>
-          <p className="mt-1 text-slate-200/90">
-            Once enabled, you will be able to continue with Google and only fill in the additional details FitoutHub needs.
-          </p>
-          <Link href="/join" className="mt-3 inline-flex text-sm font-semibold text-cyan-200 underline-offset-2 hover:underline">
-            Prefer classic join form? Open it here.
-          </Link>
+          <div className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-200">
+            Already have an account?{' '}
+            <button onClick={openLoginModal} className="font-semibold text-cyan-200 underline underline-offset-2">
+              Sign in
+            </button>
+            <span className="mx-2">|</span>
+            <Link href="/join" className="font-semibold text-cyan-200 underline underline-offset-2">
+              Classic join form
+            </Link>
+          </div>
         </div>
       </section>
+
+      <PolicyDocumentModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        documentType="terms"
+      />
+      <PolicyDocumentModal
+        isOpen={showSecurityModal}
+        onClose={() => setShowSecurityModal(false)}
+        documentType="security"
+      />
     </main>
   );
 }

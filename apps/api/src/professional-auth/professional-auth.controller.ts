@@ -45,6 +45,33 @@ export class ProfessionalAuthController {
     return this.professionalAuthService.login(dto);
   }
 
+  @Post('oauth/google/start')
+  @HttpCode(HttpStatus.OK)
+  async googleStart(@Body() body: { idToken: string }) {
+    return this.professionalAuthService.googleStart(body.idToken);
+  }
+
+  @Post('oauth/google/complete')
+  @HttpCode(HttpStatus.OK)
+  async googleComplete(
+    @Body()
+    body: {
+      onboardingToken: string;
+      professionType?: string;
+      fullName?: string;
+      businessName?: string;
+      phone?: string;
+      nickname?: string;
+      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+      preferredLanguage?: string;
+      allowPartnerOffers?: boolean;
+      allowPlatformUpdates?: boolean;
+      emergencyCalloutAvailable?: boolean;
+    },
+  ) {
+    return this.professionalAuthService.googleComplete(body);
+  }
+
   @Post('set-password')
   @UseGuards(AuthGuard('jwt-professional'))
   @HttpCode(HttpStatus.OK)

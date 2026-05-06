@@ -12,6 +12,15 @@ import { ProfessionalLoginDto, ProfessionalRegisterDto } from './dto';
 import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
 import { NotificationChannel } from '@prisma/client';
+import { verifyGoogleIdToken } from '../common/google-id-token';
+
+type ProfessionalGoogleOnboardingPayload = {
+  type: 'google_onboarding_professional';
+  email: string;
+  givenName?: string;
+  familyName?: string;
+  picture?: string;
+};
 
 @Injectable()
 export class ProfessionalAuthService {
@@ -61,6 +70,7 @@ export class ProfessionalAuthService {
         professionType: dto.professionType || 'general',
         fullName: dto.fullName,
         businessName: dto.businessName,
+        additionalData: dto.nickname ? { nickname: dto.nickname } : undefined,
         passwordHash: hashedPassword,
         status: 'pending',
         agreedToTermsAt: new Date(),
@@ -126,6 +136,181 @@ export class ProfessionalAuthService {
         preferredLanguage: dto.preferredLanguage ?? 'en',
       },
       otpRequired: dto.requireOtpVerification || false,
+    };
+  }
+
+  async googleStart(idToken: string) {
+    const profile = await verifyGoogleIdToken(
+      idToken,
+      process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '',
+    );
+
+    if (!profile.emailVerified) {
+      throw new UnauthorizedException('Google account email is not verified');
+    }
+
+    const existingProfessional = await (this.prisma as any).professional.findUnique({
+      where: { email: profile.email },
+      include: {
+        notificationPreferences: {
+          select: {
+            preferredLanguage: true,
+          },
+        },
+      },
+    });
+
+    if (existingProfessional) {
+      const sessionToken = randomUUID();
+      await (this.prisma as any).professional.update({
+        where: { id: existingProfessional.id },
+        data: { sessionToken },
+      });
+
+      const tokens = this.generateTokens(existingProfessional.id, sessionToken);
+
+      return {
+        success: true,
+        existingUser: true,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        professional: {
+          id: existingProfessional.id,
+          email: existingProfessional.email,
+          fullName: existingProfessional.fullName,
+          businessName: existingProfessional.businessName,
+          professionType: existingProfessional.professionType,
+          status: existingProfessional.status,
+          preferredLanguage:
+            existingProfessional.notificationPreferences?.preferredLanguage ?? 'en',
+        },
+      };
+    }
+
+    const onboardingToken = this.jwtService.sign(
+      {
+        type: 'google_onboarding_professional',
+        email: profile.email,
+        givenName: profile.givenName,
+        familyName: profile.familyName,
+        picture: profile.picture,
+      } satisfies ProfessionalGoogleOnboardingPayload,
+      { expiresIn: '20m' },
+    );
+
+    return {
+      success: true,
+      onboardingRequired: true,
+      onboardingToken,
+      profile: {
+        email: profile.email,
+        fullName:
+          `${profile.givenName || ''} ${profile.familyName || ''}`.trim() || '',
+        picture: profile.picture,
+      },
+    };
+  }
+
+  async googleComplete(dto: {
+    onboardingToken: string;
+    professionType?: string;
+    fullName?: string;
+    businessName?: string;
+    phone?: string;
+    nickname?: string;
+    preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    preferredLanguage?: string;
+    allowPartnerOffers?: boolean;
+    allowPlatformUpdates?: boolean;
+    emergencyCalloutAvailable?: boolean;
+  }) {
+    if (!dto.onboardingToken) {
+      throw new BadRequestException('Onboarding token is required');
+    }
+
+    let payload: ProfessionalGoogleOnboardingPayload;
+    try {
+      payload = this.jwtService.verify<ProfessionalGoogleOnboardingPayload>(
+        dto.onboardingToken,
+      );
+    } catch {
+      throw new UnauthorizedException('Invalid or expired onboarding token');
+    }
+
+    if (payload.type !== 'google_onboarding_professional' || !payload.email) {
+      throw new UnauthorizedException('Invalid onboarding token payload');
+    }
+
+    const existingProfessional = await (this.prisma as any).professional.findUnique({
+      where: { email: payload.email },
+    });
+
+    if (existingProfessional) {
+      throw new ConflictException('Professional account already exists with this email');
+    }
+
+    const professional = await (this.prisma as any).professional.create({
+      data: {
+        email: payload.email,
+        phone: dto.phone || '',
+        professionType: dto.professionType || 'general',
+        fullName:
+          dto.fullName ||
+          `${payload.givenName || ''} ${payload.familyName || ''}`.trim() ||
+          'Professional',
+        businessName: dto.businessName,
+        additionalData: dto.nickname ? { nickname: dto.nickname } : undefined,
+        passwordHash: null,
+        status: 'pending',
+        agreedToTermsAt: new Date(),
+        agreedToTermsVersion: '1.0',
+        agreedToSecurityStatementAt: new Date(),
+        agreedToSecurityStatementVersion: '1.0',
+        emergencyCalloutAvailable: dto.emergencyCalloutAvailable ?? false,
+      },
+    });
+
+    const preferredChannel =
+      (dto.preferredContactMethod as NotificationChannel) || NotificationChannel.EMAIL;
+
+    await (this.prisma as any).notificationPreference.create({
+      data: {
+        professionalId: professional.id,
+        primaryChannel: preferredChannel,
+        fallbackChannel:
+          preferredChannel === NotificationChannel.EMAIL
+            ? NotificationChannel.WHATSAPP
+            : NotificationChannel.EMAIL,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
+        enableEmail: true,
+        enableWhatsApp: !!professional.phone,
+        enableSMS: !!professional.phone,
+        enableWeChat: false,
+        allowPartnerOffers: dto.allowPartnerOffers ?? false,
+        allowPlatformUpdates: dto.allowPlatformUpdates ?? true,
+      },
+    });
+
+    const sessionToken = randomUUID();
+    await (this.prisma as any).professional.update({
+      where: { id: professional.id },
+      data: { sessionToken },
+    });
+
+    const tokens = this.generateTokens(professional.id, sessionToken);
+
+    return {
+      success: true,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      professional: {
+        id: professional.id,
+        email: professional.email,
+        fullName: professional.fullName,
+        businessName: professional.businessName,
+        professionType: professional.professionType,
+        preferredLanguage: dto.preferredLanguage ?? 'en',
+      },
     };
   }
 
