@@ -549,7 +549,7 @@ export default function GetStartedPage() {
     return titles[step] ?? 'Last step.';
   }, [role, step]);
 
-  const checkIcon = <span className="text-emerald-300">✓</span>;
+  const checkIcon = <span className="text-amber-400">✓</span>;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0d1a24] text-slate-100">
@@ -563,10 +563,10 @@ export default function GetStartedPage() {
       />
 
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-20 top-[-120px] h-[360px] w-[360px] rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute right-[-90px] top-[180px] h-[340px] w-[340px] rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="absolute bottom-[-140px] left-1/3 h-[380px] w-[380px] rounded-full bg-amber-400/15 blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.08),transparent_40%),linear-gradient(130deg,rgba(13,26,36,0.95),rgba(15,38,53,0.92))]" />
+        <div className="absolute -left-20 top-[-120px] h-[360px] w-[360px] rounded-full bg-red-500/15 blur-3xl" />
+        <div className="absolute right-[-90px] top-[180px] h-[340px] w-[340px] rounded-full bg-orange-500/10 blur-3xl" />
+        <div className="absolute bottom-[-140px] left-1/3 h-[380px] w-[380px] rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.05),transparent_40%),linear-gradient(130deg,rgba(13,12,10,0.95),rgba(20,18,16,0.92))]" />
         {dots.map((dot) => (
           <span
             key={dot.id}
@@ -583,7 +583,7 @@ export default function GetStartedPage() {
             <div className="rounded-3xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
-                  <Image src="/FOHLogo.png" alt="FitoutHub" width={36} height={36} className="rounded-lg" />
+                  <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="rounded-lg" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
@@ -593,21 +593,21 @@ export default function GetStartedPage() {
               <div className="px-5 pb-6 sm:px-8">
               {!role && (
                 <div className="space-y-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100">Choose your path</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-200">Choose your path</p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <button
                       onClick={() => handleChooseRole('client')}
-                      className="group rounded-2xl border border-cyan-200/40 bg-gradient-to-br from-cyan-400/20 to-blue-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-100"
+                      className="group rounded-2xl border border-red-400/40 bg-gradient-to-br from-red-500/20 to-red-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-red-300"
                     >
-                      <p className="text-xs uppercase tracking-[0.2em] text-cyan-100">Client</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-red-200">Client</p>
                       <p className="mt-2 text-xl font-extrabold text-white">Plan and control your renovation</p>
                       <p className="mt-2 text-sm text-slate-100">Compare quotes, track progress, and use escrow-backed payments.</p>
                     </button>
                     <button
                       onClick={() => handleChooseRole('professional')}
-                      className="group rounded-2xl border border-amber-200/40 bg-gradient-to-br from-amber-300/20 to-orange-500/20 p-5 text-left transition hover:-translate-y-1 hover:border-amber-100"
+                      className="group rounded-2xl border border-blue-400/40 bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-5 text-left transition hover:-translate-y-1 hover:border-blue-300"
                     >
-                      <p className="text-xs uppercase tracking-[0.2em] text-amber-100">Professional</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-blue-200">Professional</p>
                       <p className="mt-2 text-xl font-extrabold text-white">Win premium renovation projects</p>
                       <p className="mt-2 text-sm text-slate-100">Showcase your trade, manage milestones, and reduce admin overhead.</p>
                     </button>
@@ -618,27 +618,27 @@ export default function GetStartedPage() {
               {role && (
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-200">
+                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-300">
                       <span>{stepsByRole[role][step]}</span>
                       <span>
                         Step {step + 1} / {totalSteps}
                       </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-white/20">
-                      <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                      <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-orange-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                     </div>
                     <div className="flex gap-2">
                       {stepsByRole[role].map((name, idx) => (
                         <div
                           key={name}
-                          className={`h-2 flex-1 rounded-full transition ${idx <= step ? 'bg-cyan-300' : 'bg-white/20'}`}
+                          className={`h-2 flex-1 rounded-full transition ${idx <= step ? 'bg-orange-400' : 'bg-white/20'}`}
                         />
                       ))}
                     </div>
                   </div>
 
                   {roleChosenMoment && (
-                    <div className="animate-pulse rounded-xl border border-emerald-300/50 bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-100">
+                    <div className="animate-pulse rounded-xl border border-green-400/50 bg-green-500/15 px-4 py-3 text-sm font-semibold text-green-100">
                       Great choice. Let us get this set up.
                     </div>
                   )}
@@ -655,7 +655,7 @@ export default function GetStartedPage() {
                               setError(null);
                               setTimeout(renderGoogleButton, 40);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-cyan-200 bg-cyan-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-red-400 bg-red-500/20' : 'border-white/20 hover:bg-white/10'}`}
                           >
                             <p className="font-semibold">Continue with Google</p>
                             <p className="text-xs text-slate-200">Faster setup, verified email</p>
@@ -667,7 +667,7 @@ export default function GetStartedPage() {
                               setGoogleOnboardingToken(null);
                               setError(null);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-cyan-200 bg-cyan-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-red-400 bg-red-500/20' : 'border-white/20 hover:bg-white/10'}`
                           >
                             <p className="font-semibold">Continue with Email</p>
                             <p className="text-xs text-slate-200">Classic signup with OTP verification</p>
@@ -689,7 +689,7 @@ export default function GetStartedPage() {
                                 type="email"
                                 value={clientForm.email}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, email: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                               />
                             </label>
                             <div className="space-y-1 text-sm">
@@ -698,11 +698,11 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={clientForm.password}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, password: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                               />
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
                                 <div
-                                  className="h-full rounded bg-gradient-to-r from-rose-300 via-amber-300 to-emerald-300 transition-all"
+                                  className="h-full rounded bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 transition-all"
                                   style={{ width: `${Math.min((clientPwStrength / 5) * 100, 100)}%` }}
                                 />
                               </div>
@@ -713,7 +713,7 @@ export default function GetStartedPage() {
                                 type="password"
                                 value={clientForm.confirmPassword}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                               />
                             </label>
                           </div>
@@ -731,7 +731,7 @@ export default function GetStartedPage() {
                               type="text"
                               value={clientForm.firstName}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, firstName: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                             />
                           </label>
                           <label className="space-y-1 text-sm">
@@ -740,7 +740,7 @@ export default function GetStartedPage() {
                               type="text"
                               value={clientForm.surname}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, surname: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                             />
                           </label>
                           <label className="space-y-1 text-sm sm:col-span-2">
@@ -748,7 +748,7 @@ export default function GetStartedPage() {
                             <select
                               value={clientForm.preferredLanguage}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-orange-400"
                             >
                               <option value="en">English</option>
                               <option value="zh-HK">Chinese (Hong Kong)</option>
@@ -764,7 +764,7 @@ export default function GetStartedPage() {
                                   preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
                                 }))
                               }
-                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              className="w-full rounded-lg border border-white/30 bg-slate-900 px-3 py-2 text-white outline-none focus:border-orange-400"
                             >
                               <option value="EMAIL">Email</option>
                               <option value="WHATSAPP">WhatsApp</option>
@@ -777,7 +777,7 @@ export default function GetStartedPage() {
                               type="tel"
                               value={clientForm.mobile}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, mobile: e.target.value }))}
-                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                             />
                           </label>
                         </div>
@@ -793,7 +793,7 @@ export default function GetStartedPage() {
                             type="text"
                             value={clientForm.nickname}
                             onChange={(e) => setClientForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                           />
                         </label>
                         <label className="flex items-center gap-2 text-sm">
@@ -819,7 +819,7 @@ export default function GetStartedPage() {
                             onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
                           />
                           I agree to the Terms and Conditions
-                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-cyan-200 underline">
+                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">
                             Read
                           </button>
                         </label>
@@ -830,7 +830,7 @@ export default function GetStartedPage() {
                             onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))}
                           />
                           I agree to the Security Statement
-                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-cyan-200 underline">
+                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">
                             Read
                           </button>
                         </label>
@@ -848,7 +848,7 @@ export default function GetStartedPage() {
                               setError(null);
                               setTimeout(renderGoogleButton, 40);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-amber-200 bg-amber-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'google' ? 'border-blue-400 bg-blue-500/20' : 'border-white/20 hover:bg-white/10'}`
                           >
                             <p className="font-semibold">Continue with Google</p>
                             <p className="text-xs text-slate-200">Faster account verification</p>
@@ -860,7 +860,7 @@ export default function GetStartedPage() {
                               setGoogleOnboardingToken(null);
                               setError(null);
                             }}
-                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-amber-200 bg-amber-400/20' : 'border-white/20 hover:bg-white/10'}`}
+                            className={`rounded-xl border px-4 py-3 text-left transition ${method === 'email' ? 'border-blue-400 bg-blue-500/20' : 'border-white/20 hover:bg-white/10'}`
                           >
                             <p className="font-semibold">Continue with Email</p>
                             <p className="text-xs text-slate-200">Create password and verify by OTP</p>
@@ -897,7 +897,7 @@ export default function GetStartedPage() {
                               />
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
                                 <div
-                                  className="h-full rounded bg-gradient-to-r from-rose-300 via-amber-300 to-emerald-300 transition-all"
+                                  className="h-full rounded bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 transition-all"
                                   style={{ width: `${Math.min((professionalPwStrength / 5) * 100, 100)}%` }}
                                 />
                               </div>
@@ -1021,7 +1021,7 @@ export default function GetStartedPage() {
                           </select>
                         </label>
                         {method === 'google' && (
-                          <p className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
+                          <p className="rounded-lg border border-green-400/30 bg-green-500/10 px-3 py-2 text-sm text-green-100">
                             Google account selected. Password setup can be done later if needed.
                           </p>
                         )}
@@ -1058,7 +1058,7 @@ export default function GetStartedPage() {
                             onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
                           />
                           I agree to the Terms and Conditions
-                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-cyan-200 underline">
+                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">
                             Read
                           </button>
                         </label>
@@ -1071,12 +1071,12 @@ export default function GetStartedPage() {
                             }
                           />
                           I agree to the Security Statement
-                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-cyan-200 underline">
+                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">
                             Read
                           </button>
                         </label>
                         {method === 'email' && (
-                          <p className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
+                          <p className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-100"
                             Email sign-up will send OTP verification before activating your account.
                           </p>
                         )}
@@ -1102,7 +1102,7 @@ export default function GetStartedPage() {
                       type="button"
                       disabled={loading}
                       onClick={handleNext}
-                      className="rounded-xl bg-gradient-to-r from-cyan-300 via-emerald-300 to-cyan-100 px-5 py-2 text-sm font-black text-slate-900 transition hover:brightness-105 disabled:opacity-60"
+                      className="rounded-xl bg-gradient-to-r from-red-500 via-orange-400 to-amber-400 px-5 py-2 text-sm font-black text-white transition hover:brightness-110 disabled:opacity-60"
                     >
                       {loading
                         ? 'Please wait...'
@@ -1121,7 +1121,7 @@ export default function GetStartedPage() {
             <div className="rounded-3xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl">
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
-                  <Image src="/FOHLogo.png" alt="FitoutHub" width={36} height={36} className="rounded-lg" />
+                  <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="rounded-lg" />
                 </Link>
               </div>
               <div className="px-6 pb-2 pt-3">
@@ -1129,7 +1129,7 @@ export default function GetStartedPage() {
                 <p className="mt-1 text-sm text-slate-400">&nbsp;</p>
               </div>
               <div className="px-5 pb-6 sm:px-8">
-              <p className="text-sm text-slate-200">Enter the OTP sent to {pendingOtp.email}.</p>
+              <p className="text-sm text-slate-300">Enter the OTP sent to {pendingOtp.email}.</p>
               <label className="mt-4 block space-y-1 text-sm">
                 <span>Verification code</span>
                 <input
@@ -1138,11 +1138,11 @@ export default function GetStartedPage() {
                   maxLength={6}
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-cyan-200"
+                  className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-white outline-none focus:border-orange-400"
                 />
               </label>
               {error && (
-                <div className="mt-3 rounded-xl border border-rose-300/60 bg-rose-500/20 px-4 py-3 text-sm text-rose-100">
+                <div className="mt-3 rounded-xl border border-red-400/60 bg-red-500/20 px-4 py-3 text-sm text-red-100"
                   {error}
                 </div>
               )}
@@ -1151,7 +1151,7 @@ export default function GetStartedPage() {
                   type="button"
                   disabled={loading}
                   onClick={handleVerifyOtp}
-                  className="rounded-xl bg-gradient-to-r from-cyan-300 via-emerald-300 to-cyan-100 px-5 py-2 text-sm font-black text-slate-900 transition disabled:opacity-60"
+                  className="rounded-xl bg-gradient-to-r from-red-500 via-orange-400 to-amber-400 px-5 py-2 text-sm font-black text-white transition disabled:opacity-60"
                 >
                   {loading ? 'Verifying...' : 'Verify and continue'}
                 </button>
@@ -1170,11 +1170,11 @@ export default function GetStartedPage() {
 
           <div className="mt-6 text-center text-sm text-slate-200">
             Already have an account?{' '}
-            <button onClick={openLoginModal} className="font-semibold text-cyan-200 underline underline-offset-2">
+            <button onClick={openLoginModal} className="font-semibold text-orange-300 underline underline-offset-2">
               Sign in
             </button>
             <span className="mx-2">|</span>
-            <Link href="/join" className="font-semibold text-cyan-200 underline underline-offset-2">
+            <Link href="/join" className="font-semibold text-orange-300 underline underline-offset-2">
               Classic join form
             </Link>
           </div>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-ed5ac76",
+    "date": "2026-05-06T14:51:35+08:00",
+    "title": "feat(web): apply mimo branding to get-started wizard — coral/red/blue palette, new logo",
+    "summary": "feat(web): apply mimo branding to get-started wizard — coral/red/blue palette, new logo",
+    "areas": [
+      "web"
+    ],
+    "commit": "ed5ac76",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-d27d862",
     "date": "2026-05-06T14:17:58+08:00",
     "title": "feat(web): fullscreen get-started wizard — no chrome, floating panel, logo, fun titles",
