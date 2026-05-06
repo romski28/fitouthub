@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-a0b7700",
+    "date": "2026-05-06T15:02:22+08:00",
+    "title": "fix(web): resolve get-started JSX parse regressions",
+    "summary": "fix(web): resolve get-started JSX parse regressions",
+    "areas": [
+      "web"
+    ],
+    "commit": "a0b7700",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-ed5ac76",
     "date": "2026-05-06T14:51:35+08:00",
     "title": "feat(web): apply mimo branding to get-started wizard — coral/red/blue palette, new logo",
