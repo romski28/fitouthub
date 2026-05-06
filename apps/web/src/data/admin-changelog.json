@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-06-7a0e4a4",
+    "date": "2026-05-06T18:15:12+08:00",
+    "title": "assets(web): add sarah character pack",
+    "summary": "assets(web): add sarah character pack",
+    "areas": [
+      "web"
+    ],
+    "commit": "7a0e4a4",
+    "files": [
+      "apps/web/public/assets/images/sarah-character-pack/sarah-400.png",
+      "apps/web/public/assets/images/sarah-character-pack/sarah-800.png",
+      "apps/web/public/assets/images/sarah-character-pack/sarah-800.webp",
+      "apps/web/public/assets/images/sarah-character-pack/sarah-avatar-128.png",
+      "apps/web/public/assets/images/sarah-character-pack/sarah-avatar-512.png",
+      "apps/web/public/assets/images/sarah-character-pack/sarah-full.webp"
+    ]
+  },
+  {
     "id": "2026-05-06-b226ee5",
     "date": "2026-05-06T17:59:18+08:00",
     "title": "fix(web): double logo size to 144x144",
