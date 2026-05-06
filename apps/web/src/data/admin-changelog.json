@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-06-274f6e7",
+    "date": "2026-05-06T13:27:52+08:00",
+    "title": "feat(join): add premium get-started experience and reroute join CTA",
+    "summary": "feat(join): add premium get-started experience and reroute join CTA",
+    "areas": [
+      "web"
+    ],
+    "commit": "274f6e7",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/app/join/page.tsx",
+      "apps/web/src/context/auth-modal-control.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-7cc9dc1",
     "date": "2026-05-06T10:54:17+08:00",
     "title": "fix(next-steps): hide materials-claim steps until escrow is funded",

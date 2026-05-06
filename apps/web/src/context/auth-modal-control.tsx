@@ -26,8 +26,13 @@ export const AuthModalControlProvider: React.FC<{ children: ReactNode }> = ({
     tab: 'login',
   });
 
-  const openJoinModal = () =>
+  const openJoinModal = () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/get-started';
+      return;
+    }
     setModalState({ isOpen: true, tab: 'join' });
+  };
   const openLoginModal = () =>
     setModalState({ isOpen: true, tab: 'login' });
   const closeModal = () =>

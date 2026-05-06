@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { useAuth } from '@/context/auth-context';
@@ -11,11 +12,23 @@ import { API_BASE_URL } from '@/config/api';
 
 export default function JoinPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { openLoginModal } = useAuthModalControl();
   const t = useTranslations('auth');
   const navT = useTranslations('nav');
   const [showClientFlow, setShowClientFlow] = useState(false);
   const [showProfessionalFlow, setShowProfessionalFlow] = useState(false);
+
+  useEffect(() => {
+    const role = (searchParams.get('role') || '').toLowerCase();
+    if (role === 'client') {
+      setShowClientFlow(true);
+      setShowProfessionalFlow(false);
+    } else if (role === 'professional') {
+      setShowProfessionalFlow(true);
+      setShowClientFlow(false);
+    }
+  }, [searchParams]);
 
   // If user selects professional, show the profession modal
   if (showProfessionalFlow) {
