@@ -565,7 +565,7 @@ export default function GetStartedPage() {
           lockViewportHeight ? 'h-[100dvh] overflow-hidden py-4 sm:py-5' : 'min-h-screen py-8'
         }`}
       >
-        <div className="w-full max-w-xl">
+        <div className="w-full max-w-2xl">
 
           {!pendingOtp && (
             <div className="rounded-3xl border border-[#EFE7CF]/70 bg-[#EFE7CF]/90 text-[#1A1A1A] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
