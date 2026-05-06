@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
 import { useMemo, useRef, useState } from 'react';
@@ -538,6 +539,16 @@ export default function GetStartedPage() {
   const clientPwStrength = passwordStrength(clientForm.password);
   const professionalPwStrength = passwordStrength(professionalForm.password);
 
+  const pageTitle = useMemo(() => {
+    if (!role) return "Let's get you in.";
+    if (role === 'client') {
+      const titles = ['How do you want in?', 'Tell us about you.', 'Almost done!'];
+      return titles[step] ?? 'Almost done!';
+    }
+    const titles = ['How do you want in?', 'Your business.', 'Stay reachable.', 'Your account.', 'Last step.'];
+    return titles[step] ?? 'Last step.';
+  }, [role, step]);
+
   const checkIcon = <span className="text-emerald-300">✓</span>;
 
   return (
@@ -565,25 +576,21 @@ export default function GetStartedPage() {
         ))}
       </div>
 
-      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-5 py-12 sm:px-8">
-        <div className="mx-auto w-full max-w-4xl">
-          <div className="text-center">
-            <p className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-4 py-1 text-xs font-semibold tracking-[0.24em] text-cyan-100 backdrop-blur">
-              YOUR RENOVATION, YOUR TEAM, YOUR TERMS
-            </p>
-            <h1 className="mt-5 text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl">
-              Join FitoutHub
-              <span className="block bg-gradient-to-r from-cyan-200 via-white to-amber-100 bg-clip-text text-transparent">
-                in a flow that feels premium.
-              </span>
-            </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-sm text-slate-200 sm:text-base">
-              A guided onboarding experience with Google or email, clear milestones, and smart defaults.
-            </p>
-          </div>
+      <section className="relative flex min-h-screen w-full items-center justify-center px-4 py-8">
+        <div className="w-full max-w-xl">
 
           {!pendingOtp && (
-            <div className="mx-auto mt-8 max-w-3xl rounded-3xl border border-white/20 bg-white/10 p-5 backdrop-blur-xl sm:p-8">
+            <div className="rounded-3xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center gap-3 px-6 pt-6">
+                <Link href="/">
+                  <Image src="/FOHLogo.png" alt="FitoutHub" width={36} height={36} className="rounded-lg" />
+                </Link>
+              </div>
+              <div className="px-6 pb-2 pt-3">
+                <h1 className="text-2xl font-black text-white">{pageTitle}</h1>
+                <p className="mt-1 text-sm text-slate-400">&nbsp;</p>
+              </div>
+              <div className="px-5 pb-6 sm:px-8">
               {!role && (
                 <div className="space-y-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100">Choose your path</p>
@@ -639,7 +646,7 @@ export default function GetStartedPage() {
                   <div className="min-h-[280px] rounded-2xl border border-white/15 bg-black/10 p-4 transition-all duration-300 sm:p-6">
                     {role === 'client' && step === 0 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">How do you want to sign in?</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Sign in method</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <button
                             type="button"
@@ -716,7 +723,7 @@ export default function GetStartedPage() {
 
                     {role === 'client' && step === 1 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">About you</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">About you</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <label className="space-y-1 text-sm">
                             <span>First name {clientForm.firstName ? checkIcon : null}</span>
@@ -779,7 +786,7 @@ export default function GetStartedPage() {
 
                     {role === 'client' && step === 2 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">Your nickname and preferences</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Nickname and preferences</p>
                         <label className="space-y-1 text-sm">
                           <span>Nickname {clientForm.nickname ? checkIcon : null}</span>
                           <input
@@ -832,7 +839,7 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 0 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">Choose your sign-in method</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Sign in method</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <button
                             type="button"
@@ -911,7 +918,7 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 1 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">Your business</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Your business</p>
                         <label className="space-y-1 text-sm">
                           <span>Profession type {professionalForm.professionType ? checkIcon : null}</span>
                           <select
@@ -947,7 +954,7 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 2 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">Contact and availability</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Contact and availability</p>
                         <label className="space-y-1 text-sm">
                           <span>Phone {professionalForm.phone ? checkIcon : null}</span>
                           <input
@@ -992,7 +999,7 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 3 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">Your account</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Your account</p>
                         <label className="space-y-1 text-sm">
                           <span>Nickname {professionalForm.nickname ? checkIcon : null}</span>
                           <input
@@ -1023,7 +1030,7 @@ export default function GetStartedPage() {
 
                     {role === 'professional' && step === 4 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-extrabold text-white">Terms and verification</h2>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Terms and verification</p>
                         <label className="flex items-center gap-2 text-sm">
                           <input
                             type="checkbox"
@@ -1106,13 +1113,23 @@ export default function GetStartedPage() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           )}
 
           {pendingOtp && (
-            <div className="mx-auto mt-8 max-w-xl rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-xl">
-              <h2 className="text-2xl font-extrabold text-white">Verify your account</h2>
-              <p className="mt-2 text-sm text-slate-200">Enter the OTP sent to {pendingOtp.email}.</p>
+            <div className="rounded-3xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center gap-3 px-6 pt-6">
+                <Link href="/">
+                  <Image src="/FOHLogo.png" alt="FitoutHub" width={36} height={36} className="rounded-lg" />
+                </Link>
+              </div>
+              <div className="px-6 pb-2 pt-3">
+                <h1 className="text-2xl font-black text-white">Check your inbox.</h1>
+                <p className="mt-1 text-sm text-slate-400">&nbsp;</p>
+              </div>
+              <div className="px-5 pb-6 sm:px-8">
+              <p className="text-sm text-slate-200">Enter the OTP sent to {pendingOtp.email}.</p>
               <label className="mt-4 block space-y-1 text-sm">
                 <span>Verification code</span>
                 <input
@@ -1147,10 +1164,11 @@ export default function GetStartedPage() {
                   Resend code
                 </button>
               </div>
+              </div>
             </div>
           )}
 
-          <div className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-200">
+          <div className="mt-6 text-center text-sm text-slate-200">
             Already have an account?{' '}
             <button onClick={openLoginModal} className="font-semibold text-cyan-200 underline underline-offset-2">
               Sign in

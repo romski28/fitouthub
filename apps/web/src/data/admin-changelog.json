@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-06-d27d862",
+    "date": "2026-05-06T14:17:58+08:00",
+    "title": "feat(web): fullscreen get-started wizard — no chrome, floating panel, logo, fun titles",
+    "summary": "feat(web): fullscreen get-started wizard — no chrome, floating panel, logo, fun titles",
+    "areas": [
+      "web"
+    ],
+    "commit": "d27d862",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/components/footer-wrapper.tsx",
+      "apps/web/src/components/main-wrapper.tsx",
+      "apps/web/src/components/navbar-wrapper.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-ef99409",
     "date": "2026-05-06T13:45:30+08:00",
     "title": "fix(web): align policy modal props on get-started page",

@@ -7,9 +7,10 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
   const isAdminPath = pathname?.startsWith('/admin');
   const isHomePath = pathname === '/';
   const isProjectsListPath = pathname === '/projects' || pathname === '/professional-projects';
+  const isGetStartedPath = pathname === '/get-started';
 
-  // Admin pages manage their own layout completely
-  if (isAdminPath) {
+  // Admin and get-started pages manage their own layout completely
+  if (isAdminPath || isGetStartedPath) {
     return <>{children}</>;
   }
 

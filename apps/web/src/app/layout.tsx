@@ -11,7 +11,7 @@ import { NextStepModalProvider } from "@/context/next-step-modal-context";
 import { ModalDispatcher } from '@/components/next-steps/modal-dispatcher';
 import { NavbarWrapper } from "@/components/navbar-wrapper";
 import { GlobalAuthModal } from "@/components/global-auth-modal";
-import Footer from "@/components/footer";
+import { FooterWrapper } from "@/components/footer-wrapper";
 import CornerRibbon from "@/components/corner-ribbon";
 import FloatingChat from "@/components/floating-chat";
 import { MainWrapper } from "@/components/main-wrapper";
@@ -50,7 +50,7 @@ export default async function RootLayout({
                 <div className="min-h-screen bg-slate-50 text-slate-900">
                   <NavbarWrapper />
                   <MainWrapper>{children}</MainWrapper>
-                  <Footer />
+                  <FooterWrapper />
                   {/* Version badge for quick deployment verification */}
                   <div className="fixed bottom-2 right-2 z-50 rounded bg-slate-900/80 px-2 py-1 text-[11px] font-medium text-slate-100">
                     <span>web v{appVersion}</span>
