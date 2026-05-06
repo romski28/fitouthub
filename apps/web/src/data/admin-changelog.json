@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-06-8f5bebf",
+    "date": "2026-05-06T18:15:51+08:00",
+    "title": "feat(web): add character illustrations to role picker",
+    "summary": "feat(web): add character illustrations to role picker",
+    "areas": [
+      "web"
+    ],
+    "commit": "8f5bebf",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-7a0e4a4",
     "date": "2026-05-06T18:15:12+08:00",
     "title": "assets(web): add sarah character pack",
