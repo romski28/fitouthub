@@ -1,5 +1,45 @@
 [
   {
+    "id": "2026-05-06-11446fd",
+    "date": "2026-05-06T18:18:05+08:00",
+    "title": "assets(web): add tradesmen character pack",
+    "summary": "assets(web): add tradesmen character pack",
+    "areas": [
+      "web"
+    ],
+    "commit": "11446fd",
+    "files": [
+      "apps/web/public/assets/images/tradesmen-character-pack/ben-400.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/ben-800.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/ben-800.webp",
+      "apps/web/public/assets/images/tradesmen-character-pack/ben-avatar-128.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/ben-avatar-512.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/ben-character.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/ben-full.webp",
+      "apps/web/public/assets/images/tradesmen-character-pack/leo-400.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/leo-800.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/leo-800.webp",
+      "apps/web/public/assets/images/tradesmen-character-pack/leo-avatar-128.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/leo-avatar-512.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/leo-character.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/leo-full.webp",
+      "apps/web/public/assets/images/tradesmen-character-pack/liam-400.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/liam-800.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/liam-800.webp",
+      "apps/web/public/assets/images/tradesmen-character-pack/liam-avatar-128.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/liam-avatar-512.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/liam-character.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/liam-full.webp",
+      "apps/web/public/assets/images/tradesmen-character-pack/mike-400.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/mike-800.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/mike-800.webp",
+      "apps/web/public/assets/images/tradesmen-character-pack/mike-avatar-128.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/mike-avatar-512.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/mike-character.png",
+      "apps/web/public/assets/images/tradesmen-character-pack/mike-full.webp"
+    ]
+  },
+  {
     "id": "2026-05-06-8f5bebf",
     "date": "2026-05-06T18:15:51+08:00",
     "title": "feat(web): add character illustrations to role picker",
