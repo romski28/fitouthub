@@ -72,7 +72,6 @@ export default function GetStartedPage() {
   const { login: clientLogin } = useAuth();
   const { login: professionalLogin } = useProfessionalAuth();
   const [role, setRole] = useState<Role | null>(null);
-  const [roleChosenMoment, setRoleChosenMoment] = useState(false);
   const [step, setStep] = useState(0);
   const [method, setMethod] = useState<SignInMethod>(null);
   const [error, setError] = useState<string | null>(null);
@@ -224,13 +223,11 @@ export default function GetStartedPage() {
 
   const handleChooseRole = (nextRole: Role) => {
     setRole(nextRole);
-    setRoleChosenMoment(true);
     setStep(0);
     setMethod(null);
     setGoogleOnboardingToken(null);
     setError(null);
     setGoogleButtonRendered(false);
-    setTimeout(() => setRoleChosenMoment(false), 700);
   };
 
   const validateCurrentStep = (): string | null => {
@@ -554,7 +551,7 @@ export default function GetStartedPage() {
 
       <div className="pointer-events-none absolute inset-0">
         <Image
-          src="/assets/images/hero-homepage.webp"
+          src="/assets/images/hero-homepage-empty.webp"
           alt=""
           fill
           priority
@@ -627,12 +624,6 @@ export default function GetStartedPage() {
                       ))}
                     </div>
                   </div>
-
-                  {roleChosenMoment && (
-                    <div className="animate-pulse rounded-xl border border-green-400/50 bg-green-500/15 px-4 py-3 text-sm font-semibold text-green-100">
-                      Great choice. Let us get this set up.
-                    </div>
-                  )}
 
                   <div className="min-h-[280px] rounded-2xl border border-[#DDD5C5] bg-[#F5EEDE]/78 p-4 transition-all duration-300 sm:p-6">
                     {role === 'client' && step === 0 && (

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-06-2e75e04",
+    "date": "2026-05-06T17:33:20+08:00",
+    "title": "fix(web): remove join panel bounce and use empty hero wallpaper",
+    "summary": "fix(web): remove join panel bounce and use empty hero wallpaper",
+    "areas": [
+      "web"
+    ],
+    "commit": "2e75e04",
+    "files": [
+      "apps/web/public/assets/images/hero-homepage-empty.webp",
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-06-19dad15",
     "date": "2026-05-06T17:25:45+08:00",
     "title": "fix(web): lock intro join states to viewport height",
