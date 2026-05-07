@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-07-b4d479f",
+    "date": "2026-05-07T16:56:57+08:00",
+    "title": "fix(auth-modal): restore role-card overlap and center sign-in label",
+    "summary": "fix(auth-modal): restore role-card overlap and center sign-in label",
+    "areas": [
+      "web"
+    ],
+    "commit": "b4d479f",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-3e73fc3",
     "date": "2026-05-07T16:47:32+08:00",
     "title": "feat(auth): add Google login flow and login-to-join shortcut",

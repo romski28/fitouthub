@@ -520,8 +520,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {activeTab === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in as</p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <p className="relative z-20 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in as</p>
+              <div className="relative z-10 mt-1 grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setUserType('client')}
@@ -587,48 +587,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
               </div>
 
-              {loginMethod === 'google' ? (
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <div ref={googleContainerRef} className="flex justify-center" />
-                  {googleScriptReady && !googleButtonRendered && (
-                    <p className="mt-2 text-center text-xs text-gray-500">Loading Google button...</p>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      {t('login.email')}
-                    </label>
-                    <input
-                      type="email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
+              <div className="min-h-[220px]">
+                {loginMethod === 'google' ? (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div ref={googleContainerRef} className="flex min-h-[84px] items-center justify-center" />
+                    {googleScriptReady && !googleButtonRendered && (
+                      <p className="mt-2 text-center text-xs text-gray-500">Loading Google button...</p>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('login.password')}
-                    </label>
-                    <input
-                      type="password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
-                  >
-                    {loading ? modalT('loading') : modalT('login')}
-                  </button>
-                </>
-              )}
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('login.email')}
+                      </label>
+                      <input
+                        type="email"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('login.password')}
+                      </label>
+                      <input
+                        type="password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {loading ? modalT('loading') : modalT('login')}
+                    </button>
+                  </>
+                )}
+              </div>
             </form>
           ) : (
             <>
