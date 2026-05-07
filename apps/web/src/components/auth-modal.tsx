@@ -590,10 +590,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="min-h-[220px]">
                 {loginMethod === 'google' ? (
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                    <div ref={googleContainerRef} className="flex min-h-[84px] items-center justify-center" />
-                    {googleScriptReady && !googleButtonRendered && (
-                      <p className="mt-2 text-center text-xs text-gray-500">Loading Google button...</p>
-                    )}
+                    <div className="flex h-[44px] items-center justify-center">
+                      <div ref={googleContainerRef} className="flex h-[44px] w-[320px] items-center justify-center" />
+                    </div>
+                    <p className="mt-2 h-4 text-center text-xs text-gray-500">
+                      {googleScriptReady && !googleButtonRendered ? 'Loading Google button...' : '\u00A0'}
+                    </p>
                   </div>
                 ) : (
                   <>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-07-cbca947",
+    "date": "2026-05-07T17:02:19+08:00",
+    "title": "fix(auth-modal): stabilize Google button mount layout",
+    "summary": "fix(auth-modal): stabilize Google button mount layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "cbca947",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-b4d479f",
     "date": "2026-05-07T16:56:57+08:00",
     "title": "fix(auth-modal): restore role-card overlap and center sign-in label",
