@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
-import toast from 'react-hot-toast';
 
 interface SiteAccessData {
   addressFull: string;
@@ -16,6 +15,8 @@ interface SiteAccessData {
 interface SiteAccessStatus {
   requestId: string | null;
   requestStatus: string;
+  rescheduleRequired?: boolean | null;
+  requiresReschedule?: boolean | null;
   visitScheduledFor: string | null;
   visitScheduledAt?: string | null;
   visitDetails?: string | null;
@@ -101,50 +102,49 @@ const formatInspectionDateTime = (value?: string | null) => {
   });
 };
 
-const isRescheduleRequired = (note?: string | null) =>
-  Boolean(note && note.includes('Site availability changed to'));
+export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
+  const {
+    siteAccessStatus,
+    siteAccessLoading,
+    siteAccessError,
+    expandedAccordions,
+    onToggleAccordion,
+    onRequestSiteAccess,
+    siteAccessRequestTime,
+    onUpdateSiteAccessRequestTime,
+    siteAccessActionLoading,
+  } = props;
 
-const legacySiteVisitRequestEnabled =
-  process.env.NEXT_PUBLIC_ENABLE_LEGACY_SITE_VISIT_REQUEST === 'true';
-
-export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
-  siteAccessStatus,
-  siteAccessLoading,
-  siteAccessError,
-  siteVisits,
-  siteVisitLoading,
-  siteVisitError,
-  expandedAccordions,
-  onToggleAccordion,
-  onRequestSiteAccess,
-  siteAccessRequestDate,
-  onUpdateSiteAccessRequestDate,
-  siteAccessRequestTime,
-  onUpdateSiteAccessRequestTime,
-  onRequestSiteVisit,
-  onRespondSiteVisit,
-  onCompleteSiteVisit,
-  siteAccessActionLoading,
-  siteVisitActionLoading,
-  visitDate,
-  onUpdateVisitDate,
-  visitTime,
-  onUpdateVisitTime,
-  visitRequestNotes,
-  onUpdateVisitRequestNotes,
-  visitNotes,
-  onUpdateVisitNotes,
-  visitResponseNotes,
-  onUpdateVisitResponseNotes,
-}) => {
-  const acceptedVisit = siteVisits.find((visit) => visit.status === 'accepted');
   const offeredInspectionDate = siteAccessStatus?.siteInspectionAvailableOn || '';
-  const rescheduleRequired = isRescheduleRequired(siteAccessStatus?.visitDetails);
+  const backendRescheduleRequired =
+    siteAccessStatus?.rescheduleRequired === true ||
+    siteAccessStatus?.requiresReschedule === true ||
+    (siteAccessStatus?.requestStatus || '').toLowerCase().includes('reschedule');
   const bookedInspectionTimes = useMemo(
     () => new Set(siteAccessStatus?.bookedInspectionTimes || []),
     [siteAccessStatus?.bookedInspectionTimes],
   );
-  const canRequestSiteAccess = Boolean((offeredInspectionDate || siteAccessRequestDate) && siteAccessRequestTime);
+  const requestStatus = (siteAccessStatus?.requestStatus || 'none').toLowerCase();
+  const isPending = requestStatus === 'pending';
+  const isBooked = requestStatus === 'approved_visit_scheduled' || requestStatus === 'visited';
+  const isNotAvailable = !offeredInspectionDate;
+  const isNotRequested =
+    !backendRescheduleRequired &&
+    !isPending &&
+    !isBooked &&
+    (requestStatus === 'none' || requestStatus === 'denied' || !siteAccessStatus?.requestId);
+  const badgeLabel = backendRescheduleRequired
+    ? 'Reschedule'
+    : isBooked
+    ? 'Booked'
+    : isPending
+    ? 'Pending'
+    : isNotRequested
+    ? 'Not requested'
+    : 'Not available';
+  const showRequestPanel = isNotRequested || backendRescheduleRequired;
+  const showPendingReadOnlyPanel = isPending;
+  const canRequestSiteAccess = Boolean(offeredInspectionDate && siteAccessRequestTime);
 
   return (
     <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
@@ -152,7 +152,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         {/* Site Access Status */}
         <AccordionItem
           id="site-access-status"
-          title="Site Access Status"
+          title="Site Inspection"
+          badge={badgeLabel}
           isOpen={expandedAccordions['site-access-status'] !== false}
           onToggle={() => onToggleAccordion('site-access-status')}
         >
@@ -168,22 +169,15 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             <p className="text-sm text-slate-300">No site access data</p>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm text-slate-200">
-                <span className="font-semibold">Status:</span>{' '}
-                {siteAccessStatus.requestStatus === 'none'
-                  ? 'No request yet'
-                  : siteAccessStatus.requestStatus.replace('_', ' ')}
-              </div>
-
               {offeredInspectionDate && (
                 <div className="rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
                   Client inspection date available: <span className="font-semibold">{formatInspectionDate(offeredInspectionDate)}</span>
                 </div>
               )}
 
-              {siteAccessStatus.requestStatus === 'pending' && (
+              {showPendingReadOnlyPanel && (
                 <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
-                  Awaiting client approval. You can still submit a quote without site access.
+                  Awaiting client approval.
                   {siteAccessStatus.visitScheduledAt && (
                     <span className="block mt-1 text-amber-100">
                       Requested visit: {formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}
@@ -192,23 +186,36 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 </div>
               )}
 
-              {siteAccessStatus.requestStatus === 'denied' && (
-                <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
-                  Site access denied{siteAccessStatus.reasonDenied ? `: ${siteAccessStatus.reasonDenied}` : '.'}
+              {showPendingReadOnlyPanel && offeredInspectionDate && (
+                <div className="space-y-2 rounded-md border border-slate-700 bg-slate-900/60 p-4">
+                  <p className="text-sm font-semibold text-white">Selected inspection slot</p>
+                  <p className="text-xs text-slate-300">Slot picker is read-only while the client reviews your request.</p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-slate-200">
+                      {formatInspectionDate(offeredInspectionDate)}
+                    </span>
+                    <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-amber-100">
+                      {siteAccessStatus.visitScheduledAt
+                        ? new Date(siteAccessStatus.visitScheduledAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })
+                        : 'Time submitted'}
+                    </span>
+                  </div>
                 </div>
               )}
 
-              {siteAccessStatus.requestStatus === 'approved_no_visit' && (
-                <div className={`rounded-md border px-3 py-2 text-sm ${rescheduleRequired ? 'border-amber-500/40 bg-amber-500/15 text-amber-200' : 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'}`}>
-                  {rescheduleRequired
-                    ? 'Your previous visit slot was voided due to a client date change. Please choose a new slot.'
-                    : 'Site access approved (no visit required)'}
+              {backendRescheduleRequired && (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
+                  The client requested a reschedule. Please select a new slot.
                 </div>
               )}
 
-              {siteAccessStatus.requestStatus === 'approved_visit_scheduled' && (
+              {isBooked && (
                 <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
-                  Visit approved
+                  Visit booked
                   {siteAccessStatus.visitScheduledAt
                     ? ` for ${formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}`
                     : siteAccessStatus.visitScheduledFor
@@ -217,51 +224,25 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 </div>
               )}
 
-              {siteAccessStatus.requestStatus === 'visited' && (
-                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
-                  Site visited{siteAccessStatus.visitedAt ? ` on ${new Date(siteAccessStatus.visitedAt).toLocaleDateString()}` : '.'}
-                </div>
-              )}
-
-              {siteAccessStatus.hasAccess && siteAccessStatus.siteAccessData && (
+              {isBooked && (
                 <div className="grid gap-3 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Address</p>
-                    <p className="font-medium text-white">{siteAccessStatus.siteAccessData.addressFull}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Inspection Location</p>
+                    <p className="font-medium text-white">{siteAccessStatus.siteAccessData?.accessDetails || 'Client will share the inspection location details.'}</p>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Unit / Floor</p>
-                      <p className="text-slate-200">
-                        {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
-                          .filter(Boolean)
-                          .join(' / ') || '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Access</p>
-                      <p className="text-slate-200">{siteAccessStatus.siteAccessData.accessDetails || '—'}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">On-site Contact</p>
-                    <p className="text-slate-200">
-                      {[siteAccessStatus.siteAccessData.onSiteContactName, siteAccessStatus.siteAccessData.onSiteContactPhone]
-                        .filter(Boolean)
-                        .join(' · ') || '—'}
-                    </p>
-                  </div>
+                  <p className="text-xs text-slate-400">You can still submit a quote without site inspection.</p>
                 </div>
               )}
 
-              {(!siteAccessStatus.hasAccess || rescheduleRequired) && (
+              {showRequestPanel && (
                 <div className="space-y-3 rounded-md border border-slate-700 bg-slate-900/60 p-4">
-                  <p className="text-sm font-semibold text-white">Request Site Access</p>
+                  <p className="text-sm font-semibold text-white">Select inspection slot</p>
                   <p className="text-xs text-slate-300">
                     {offeredInspectionDate
                       ? 'Choose one available inspection slot on the client offered date. Times already selected by other professionals are disabled.'
-                      : 'Propose a preferred date and time so the client can accept, update, or decline.'}
+                      : 'Client has not offered an inspection date yet.'}
                   </p>
+
                   {offeredInspectionDate ? (
                     <div className="space-y-3">
                       <div>
@@ -298,200 +279,29 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Date</label>
-                        <input
-                          type="date"
-                          value={siteAccessRequestDate}
-                          onChange={(e) => onUpdateSiteAccessRequestDate(e.target.value)}
-                          className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-300">Preferred Time</label>
-                        <input
-                          type="time"
-                          value={siteAccessRequestTime}
-                          onChange={(e) => onUpdateSiteAccessRequestTime(e.target.value)}
-                          className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-                        />
-                      </div>
+                    <div className="rounded-md border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
+                      Waiting for client to offer a site inspection date.
                     </div>
                   )}
+
                   <button
                     type="button"
                     onClick={onRequestSiteAccess}
-                    disabled={siteAccessActionLoading || siteAccessStatus.requestStatus === 'pending' || !canRequestSiteAccess}
-                    title={!canRequestSiteAccess ? (offeredInspectionDate ? 'Choose a time to request site access' : 'Choose both date and time to request site access') : ''}
+                    disabled={siteAccessActionLoading || !canRequestSiteAccess}
+                    title={!canRequestSiteAccess ? 'Choose a time to request inspection slot' : ''}
                     className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                   >
-                    {siteAccessActionLoading ? 'Requesting...' : 'Request Site Access'}
+                    {siteAccessActionLoading ? 'Requesting...' : backendRescheduleRequired ? 'Request Reschedule' : 'Request Slot'}
                   </button>
                 </div>
               )}
 
-              <p className="text-xs text-slate-400">
-                You can submit quotes without site access. Those quotes will be marked as remote.
-              </p>
+              {!isBooked && isNotAvailable && (
+                <p className="text-xs text-slate-400">Inspection date not available yet.</p>
+              )}
             </div>
           )}
         </AccordionItem>
-
-        {/* Site Visits */}
-        {siteAccessStatus?.hasAccess && (
-          <AccordionItem
-            id="site-visits"
-            title="Site Visits"
-            badge={siteVisits.length > 0 ? siteVisits.length.toString() : undefined}
-            isOpen={expandedAccordions['site-visits'] !== false}
-            onToggle={() => onToggleAccordion('site-visits')}
-          >
-            <div className="space-y-4">
-              {legacySiteVisitRequestEnabled && (
-                <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-3">
-                  <h3 className="font-semibold text-white text-sm">Request Site Visit</h3>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                    <div className="flex-1">
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">Date</label>
-                      <input
-                        type="date"
-                        value={visitDate}
-                        onChange={(e) => onUpdateVisitDate(e.target.value)}
-                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">Time</label>
-                      <input
-                        type="time"
-                        value={visitTime}
-                        onChange={(e) => onUpdateVisitTime(e.target.value)}
-                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={onRequestSiteVisit}
-                      disabled={siteVisitActionLoading}
-                      className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition whitespace-nowrap"
-                    >
-                      {siteVisitActionLoading ? 'Requesting...' : 'Request'}
-                    </button>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Notes (optional)</label>
-                    <input
-                      value={visitRequestNotes}
-                      onChange={(e) => onUpdateVisitRequestNotes(e.target.value)}
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500"
-                      placeholder="Access details, parking, timing, etc."
-                    />
-                  </div>
-                </div>
-              )}
-
-              {siteVisitError && (
-                <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
-                  {siteVisitError}
-                </div>
-              )}
-
-              {/* Visit History */}
-              {siteVisitLoading ? (
-                <p className="text-sm text-slate-300">Loading site visits...</p>
-              ) : siteVisits.length === 0 ? (
-                <p className="text-sm text-slate-300">No site visits scheduled yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {siteVisits.map((visit) => {
-                    const isPending = visit.status === 'proposed';
-                    const proposedByClient = visit.proposedByRole === 'client';
-
-                    return (
-                      <div key={visit.id} className="rounded-md border border-slate-700 bg-slate-900/60 p-3 text-sm">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <div>
-                            <p className="font-semibold text-white">
-                              {proposedByClient ? 'Client proposed visit' : 'You proposed visit'}
-                            </p>
-                            <p className="text-xs text-slate-400">{new Date(visit.proposedAt).toLocaleString()}</p>
-                          </div>
-                          <span className="rounded-full bg-slate-700 px-2 py-1 text-xs font-semibold text-slate-200 whitespace-nowrap border border-slate-600">
-                            {visit.status.replace('_', ' ')}
-                          </span>
-                        </div>
-
-                        {visit.notes && <p className="text-xs text-slate-300 mb-2">Notes: {visit.notes}</p>}
-                        {visit.responseNotes && <p className="text-xs text-slate-300 mb-2">Response: {visit.responseNotes}</p>}
-
-                        {isPending && proposedByClient && (
-                          <div className="space-y-2 mt-3 pt-3 border-t border-slate-700">
-                            <input
-                              value={visitResponseNotes[visit.id] || ''}
-                              onChange={(e) =>
-                                onUpdateVisitResponseNotes({
-                                  ...visitResponseNotes,
-                                  [visit.id]: e.target.value,
-                                })
-                              }
-                              className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500"
-                              placeholder="Add a response note (optional)"
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => onRespondSiteVisit(visit.id, 'accepted')}
-                                disabled={siteVisitActionLoading}
-                                className="flex-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                              >
-                                Accept
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onRespondSiteVisit(visit.id, 'declined')}
-                                disabled={siteVisitActionLoading}
-                                className="flex-1 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
-                              >
-                                Decline
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {isPending && !proposedByClient && (
-                          <p className="text-xs text-slate-400 mt-2">Awaiting client response.</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Complete Visit */}
-              {acceptedVisit && (
-                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-emerald-200">Complete Site Visit</p>
-                  <textarea
-                    value={visitNotes}
-                    onChange={(e) => onUpdateVisitNotes(e.target.value)}
-                    rows={3}
-                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                    placeholder="Add any notes from the site visit"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onCompleteSiteVisit(acceptedVisit.id)}
-                    disabled={siteVisitActionLoading}
-                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                  >
-                    {siteVisitActionLoading ? 'Completing...' : 'Mark Visit Complete'}
-                  </button>
-                </div>
-              )}
-            </div>
-          </AccordionItem>
-        )}
       </AccordionGroup>
     </div>
   );

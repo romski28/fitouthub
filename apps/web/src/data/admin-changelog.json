@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-a448c70",
+    "date": "2026-05-08T00:01:35+08:00",
+    "title": "feat(professional): refactor site inspection status panel",
+    "summary": "feat(professional): refactor site inspection status panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "a448c70",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-585161b",
     "date": "2026-05-07T23:33:41+08:00",
     "title": "docs(security): add RLS rollout scripts and checklist",
