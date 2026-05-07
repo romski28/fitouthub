@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-07-0388432",
+    "date": "2026-05-07T16:08:32+08:00",
+    "title": "fix(web): coral globe and transparent project list blocks",
+    "summary": "fix(web): coral globe and transparent project list blocks",
+    "areas": [
+      "web"
+    ],
+    "commit": "0388432",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/language-switcher.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-e89bcd0",
     "date": "2026-05-07T15:53:06+08:00",
     "title": "style(web): remap green accents to coral",

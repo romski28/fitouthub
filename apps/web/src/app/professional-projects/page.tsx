@@ -249,7 +249,7 @@ export default function ProfessionalProjectsPage() {
 
   if (isLoggedIn === undefined || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           <p className="mt-4 text-gray-600">Loading projects...</p>
@@ -263,7 +263,7 @@ export default function ProfessionalProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
+    <div className="min-h-screen bg-transparent pb-16">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
         {/* Updates badge — fixed right for thumb access */}
         <div className="fixed bottom-[260px] right-6 z-30">
@@ -323,7 +323,7 @@ export default function ProfessionalProjectsPage() {
                   <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-2 px-4 py-3 transition ${
                     isStopStatus
                       ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
-                      : `${baseBorder} bg-white/10 hover:bg-white/15`
+                      : `${baseBorder} bg-transparent hover:bg-white/10`
                   }`}>
                     {unreadCount > 0 && (
                       <button
@@ -464,7 +464,7 @@ export default function ProfessionalProjectsPage() {
         )}
 
         {dashboardProjects.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+          <div className="rounded-xl border border-dashed border-slate-300 bg-transparent p-6 text-sm text-slate-600">
             No immediate actions. Check Recent Activity for updates.
           </div>
         ) : null}

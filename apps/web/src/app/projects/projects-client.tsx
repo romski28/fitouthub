@@ -803,7 +803,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 <div key={`dash-${project.id}`} className={`relative rounded-lg border-2 px-4 py-3 transition ${
                   quoteOverdue || isStopStatus
                     ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
-                    : `${baseBorder} bg-white/10 hover:bg-white/15`
+                    : `${baseBorder} bg-transparent hover:bg-white/10`
                 }`}>
                   {unreadCount > 0 && (
                     <button
@@ -950,7 +950,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         )}
 
         {dashboardProjects.length === 0 && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center space-y-3">
+          <div className="rounded-xl border border-white/10 bg-transparent p-8 text-center space-y-3">
             <p className="text-base font-semibold text-white">No immediate actions.</p>
             <p className="text-sm text-slate-300">Check Recent Activity for updates.</p>
             <button
