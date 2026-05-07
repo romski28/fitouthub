@@ -19,7 +19,7 @@
   --mimo-warning: var(--mimo-bamboo);
 
   /* Legacy variables for compatibility */
-  --background: #ffffff;
+  --background: var(--mimo-paper);
   --foreground: #171717;
   --color-surface: #ffffff;
   --color-surface-muted: #f8fafc;
@@ -122,13 +122,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

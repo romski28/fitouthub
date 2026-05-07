@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-07-fe34902",
+    "date": "2026-05-07T15:34:32+08:00",
+    "title": "style(web): apply Mimo lockup and cream shell background",
+    "summary": "style(web): apply Mimo lockup and cream shell background",
+    "areas": [
+      "web"
+    ],
+    "commit": "fe34902",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-a1901aa",
     "date": "2026-05-07T15:28:29+08:00",
     "title": "fix(web): refine responsive language switcher",

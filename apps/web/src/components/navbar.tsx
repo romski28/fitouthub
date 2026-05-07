@@ -43,18 +43,15 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 hover:opacity-80 transition"
+            className="flex items-center hover:opacity-80 transition"
           >
             <Image
-              src="/FOHLogo.png"
-              alt="Fitout Hub"
-              width={40}
-              height={40}
+              src="/assets/lockup-horizontal-ink.webp"
+              alt="Mimo"
+              width={172}
+              height={44}
               className="object-contain"
             />
-            <span className="text-lg font-semibold tracking-tight hidden sm:inline">
-              Fitout Hub
-            </span>
           </Link>
 
           {/* Desktop Navigation */}

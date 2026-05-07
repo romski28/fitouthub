@@ -18,6 +18,10 @@ import { MainWrapper } from "@/components/main-wrapper";
 import "./globals.css";
 import pkg from "../../package.json";
 
+type PackageJson = {
+  version?: string;
+};
+
 const geistSans = GeistSans;
 const geistMono = GeistMono;
 
@@ -25,7 +29,7 @@ export const metadata: Metadata = {
   title: "Fitout Hub",
   description: "Find tradesmen, professionals, and manage fitout projects",
   icons: {
-    icon: "/FOHLogo.png",
+    icon: "/assets/lockup-horizontal-ink.webp",
   },
 };
 
@@ -35,7 +39,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const commitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_COMMIT_SHA || "";
-  const appVersion = (pkg as any)?.version ?? "0.0.0";
+  const appVersion = (pkg as PackageJson)?.version ?? "0.0.0";
   const messages = await getMessages();
   
   return (
@@ -47,7 +51,7 @@ export default async function RootLayout({
               <AuthModalControlProvider>
                 <NextStepModalProvider>
                 <Toaster position="top-right" />
-                <div className="min-h-screen bg-slate-50 text-slate-900">
+                <div className="min-h-screen bg-[var(--mimo-paper)] text-slate-900">
                   <NavbarWrapper />
                   <MainWrapper>{children}</MainWrapper>
                   <FooterWrapper />
