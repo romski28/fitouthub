@@ -29,7 +29,11 @@ export const metadata: Metadata = {
   title: "Fitout Hub",
   description: "Find tradesmen, professionals, and manage fitout projects",
   icons: {
-    icon: "/assets/lockup-horizontal-ink.webp",
+    icon: [
+      { url: "/assets/images/favicon-180.ico", type: "image/x-icon" },
+      { url: "/assets/images/favicon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+    apple: "/assets/images/favicon-180.png",
   },
 };
 

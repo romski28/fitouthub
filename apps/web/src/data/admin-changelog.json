@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-07-cc1bd0e",
+    "date": "2026-05-07T15:42:06+08:00",
+    "title": "assets(web): add favicon files and wire metadata",
+    "summary": "assets(web): add favicon files and wire metadata",
+    "areas": [
+      "web"
+    ],
+    "commit": "cc1bd0e",
+    "files": [
+      "apps/web/public/assets/images/favicon-180.ico",
+      "apps/web/public/assets/images/favicon-180.png",
+      "apps/web/src/app/layout.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-fe34902",
     "date": "2026-05-07T15:34:32+08:00",
     "title": "style(web): apply Mimo lockup and cream shell background",
