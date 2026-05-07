@@ -21,9 +21,9 @@ export const colors = {
   actionHover: "#1d4ed8", // blue-700
 
   // Success / Warning / Danger
-  successBg: "#ecfdf3", // emerald-50
-  success: "#059669", // emerald-600
-  successStrong: "#047857", // emerald-700
+  successBg: "#fff1ee", // mimo-coral-50-ish
+  success: "#ff6b5b", // mimo-coral
+  successStrong: "#e85b4b", // mimo-coral-strong
 
   warningBg: "#fef9c3", // yellow-100
   warning: "#d97706", // amber-600
@@ -68,7 +68,7 @@ export const typography = {
 export const badges = {
   status: {
     info: "bg-blue-100 text-blue-800",
-    success: "bg-emerald-100 text-emerald-800",
+    success: "bg-red-100 text-red-700",
     warning: "bg-amber-100 text-amber-800",
     danger: "bg-red-100 text-red-800",
     neutral: "bg-slate-100 text-slate-700",

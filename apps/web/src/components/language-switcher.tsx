@@ -75,7 +75,7 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#FF6B5B]/40 bg-white text-[#FF6B5B] transition hover:border-[#FF6B5B]/70 hover:bg-[#FFF1EE]"
         aria-label={`Language menu, current selection ${activeOption.shortLabel}`}
         aria-expanded={open}
       >

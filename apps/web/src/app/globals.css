@@ -15,7 +15,7 @@
   --mimo-text: var(--mimo-ink);
   --mimo-text-on-primary: #FFFFFF;
   --mimo-primary: var(--mimo-coral);
-  --mimo-success: var(--mimo-jade);
+  --mimo-success: var(--mimo-coral);
   --mimo-warning: var(--mimo-bamboo);
 
   /* Legacy variables for compatibility */
@@ -28,9 +28,9 @@
   --color-primary-muted: #1e293b;
   --color-action: #2563eb;
   --color-action-hover: #1d4ed8;
-  --color-success-bg: #ecfdf3;
-  --color-success: #059669;
-  --color-success-strong: #047857;
+  --color-success-bg: #fff1ee;
+  --color-success: #ff6b5b;
+  --color-success-strong: #e85b4b;
   --color-warning-bg: #fef9c3;
   --color-warning: #d97706;
   --color-danger-bg: #fef2f2;
@@ -128,6 +128,17 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Temporary CSS-first remap: keep green text accents aligned to Mimo coral until inline Tailwind sweep. */
+[class*="text-emerald-"],
+[class*="text-green-"] {
+  color: var(--mimo-coral) !important;
+}
+
+[class*="hover:text-emerald-"]:hover,
+[class*="hover:text-green-"]:hover {
+  color: #e85b4b !important;
 }
 
 .quote-picker-input {

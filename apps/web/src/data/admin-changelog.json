@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-07-e89bcd0",
+    "date": "2026-05-07T15:53:06+08:00",
+    "title": "style(web): remap green accents to coral",
+    "summary": "style(web): remap green accents to coral",
+    "areas": [
+      "web"
+    ],
+    "commit": "e89bcd0",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/components/language-switcher.tsx",
+      "apps/web/src/styles/theme.ts"
+    ]
+  },
+  {
     "id": "2026-05-07-cc1bd0e",
     "date": "2026-05-07T15:42:06+08:00",
     "title": "assets(web): add favicon files and wire metadata",
