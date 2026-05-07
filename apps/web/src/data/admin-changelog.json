@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-05-07-585161b",
+    "date": "2026-05-07T23:33:41+08:00",
+    "title": "docs(security): add RLS rollout scripts and checklist",
+    "summary": "docs(security): add RLS rollout scripts and checklist",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "585161b",
+    "files": [
+      "ENABLE_RLS_ON_PUBLIC_TABLES.sql",
+      "PHASE_A1_ADMIN_CRUD_POLICIES.sql",
+      "PHASE_A1_ADMIN_CRUD_POLICIES_ROLLBACK.sql",
+      "PHASE_A2_REMAINING_ADMIN_POLICIES.sql",
+      "PHASE_A_BASELINE_RLS_POLICIES.sql",
+      "RLS_POLICY_CHECKLIST.md",
+      "apps/api/README.md"
+    ]
+  },
+  {
     "id": "2026-05-07-cbca947",
     "date": "2026-05-07T17:02:19+08:00",
     "title": "fix(auth-modal): stabilize Google button mount layout",

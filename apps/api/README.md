@@ -59,6 +59,25 @@ $ pnpm run test:cov
 
 ## Deployment
 
+### RLS policy reminder (new tables)
+
+Whenever a new table is added in `public` schema:
+
+- Enable RLS for the new table (or rerun `ENABLE_RLS_ON_PUBLIC_TABLES.sql` at repo root).
+- Add/update `CREATE POLICY` statements for required roles and ownership rules.
+- Treat this as part of the same migration/release as the table creation.
+
+Without explicit policies, PostgREST/Supabase requests are denied when RLS is enabled.
+
+Reference docs/scripts:
+
+- `RLS_POLICY_CHECKLIST.md`
+- `ENABLE_RLS_ON_PUBLIC_TABLES.sql`
+- `PHASE_A_BASELINE_RLS_POLICIES.sql`
+- `PHASE_A1_ADMIN_CRUD_POLICIES.sql`
+- `PHASE_A1_ADMIN_CRUD_POLICIES_ROLLBACK.sql`
+- `PHASE_A2_REMAINING_ADMIN_POLICIES.sql`
+
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
 ### Manual SQL required (2026-03-15)
