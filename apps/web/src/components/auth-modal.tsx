@@ -2,11 +2,38 @@
 
 import React, { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import Image from 'next/image';
+import Script from 'next/script';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import { API_BASE_URL } from '@/config/api';
 import confetti from 'canvas-confetti';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (options: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              theme: 'outline' | 'filled_blue' | 'filled_black';
+              size: 'large' | 'medium' | 'small';
+              width?: number;
+              text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
+              shape?: 'rectangular' | 'pill' | 'circle' | 'square';
+            },
+          ) => void;
+        };
+      };
+    };
+  }
+}
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,8 +50,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const modalT = useTranslations('auth.modal');
   const commonT = useTranslations('common');
   const locale = useLocale();
-  const { login, register } = useAuth();
-  const { login: loginProfessional, register: registerProfessional } = useProfessionalAuth();
+  const { login, register, googleLogin } = useAuth();
+  const { login: loginProfessional, register: registerProfessional, googleLogin: googleLoginProfessional } = useProfessionalAuth();
   const pageLanguage = locale === 'zh-HK' ? 'zh-HK' : 'en';
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
   const [userType, setUserType] = useState<'client' | 'professional'>('client');
@@ -50,6 +77,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   } | null>(null);
   const [otpCode, setOtpCode] = useState('');
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('email');
+  const [googleScriptReady, setGoogleScriptReady] = useState(false);
+  const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
+  const googleContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const shouldShowJoinShortcut =
+    activeTab === 'login' &&
+    loginMethod === 'google' &&
+    typeof error === 'string' &&
+    error.toLowerCase().includes('please join first');
 
   React.useEffect(() => {
     setActiveTab(defaultTab);
@@ -76,6 +112,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setPendingVerification(null);
       setOtpCode('');
       setVerificationSuccess(false);
+      setLoginMethod('email');
+      setGoogleButtonRendered(false);
       setClientForm({
         nickname: '',
         email: '',
@@ -141,6 +179,60 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setLoading(false);
     }
   };
+
+  const handleGoogleCredential = React.useCallback(async (credential: string) => {
+    setError(null);
+    setLoading(true);
+    try {
+      if (userType === 'professional') {
+        await googleLoginProfessional(credential);
+      } else {
+        await googleLogin(credential);
+      }
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [googleLogin, googleLoginProfessional, onClose, userType]);
+
+  React.useEffect(() => {
+    if (!isOpen || activeTab !== 'login' || loginMethod !== 'google') return;
+    setGoogleButtonRendered(false);
+
+    const timer = window.setTimeout(() => {
+      if (!googleScriptReady || !googleContainerRef.current) return;
+      if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+        setError('Google is not configured yet. Please add NEXT_PUBLIC_GOOGLE_CLIENT_ID.');
+        return;
+      }
+      if (!window.google?.accounts?.id) return;
+
+      googleContainerRef.current.innerHTML = '';
+      window.google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        callback: (response: { credential?: string }) => {
+          if (!response.credential) {
+            setError('Google did not return a credential. Please try again.');
+            return;
+          }
+          void handleGoogleCredential(response.credential);
+        },
+      });
+
+      window.google.accounts.id.renderButton(googleContainerRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 320,
+        text: 'continue_with',
+        shape: 'pill',
+      });
+      setGoogleButtonRendered(true);
+    }, 50);
+
+    return () => window.clearTimeout(timer);
+  }, [isOpen, activeTab, loginMethod, userType, googleScriptReady, handleGoogleCredential]);
 
   const handleClientRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -355,6 +447,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
+    <>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
+        onLoad={() => setGoogleScriptReady(true)}
+      />
+
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 py-12 px-4 sm:px-6 lg:px-8"
       onClick={handleBackdropClick}
@@ -366,14 +465,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }}
     >
       <div 
-        className="w-full max-w-md rounded-lg bg-white shadow-lg"
+        className="w-full max-w-2xl rounded-lg bg-white shadow-lg"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {activeTab === 'login' ? modalT('signIn') : modalT('join')}
+          <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+            {activeTab === 'login' ? (
+              <>
+                <Image
+                  src="/assets/images/chatbot-avatar-icon.png"
+                  alt="Chat avatar"
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-full"
+                />
+                <span>Hi, welcome back</span>
+              </>
+            ) : (
+              modalT('join')
+            )}
           </h2>
           <button
             onClick={onClose}
@@ -384,102 +496,139 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 bg-gray-50">
-          <button
-            onClick={() => {
-              setActiveTab('login');
-              setError(null);
-            }}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'login'
-                ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            {modalT('login')}
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('join');
-              setError(null);
-            }}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'join'
-                ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            {modalT('join')}
-          </button>
-        </div>
-
         {/* Content */}
         <div className="p-6">
           {error && (
             <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
               {error}
+              {shouldShowJoinShortcut && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('join');
+                      setError(null);
+                    }}
+                    className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                  >
+                    Start join flow
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* User Type Toggle for Login */}
-              <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in as</p>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setUserType('client')}
-                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={`group relative rounded-2xl border pb-4 pl-24 pr-4 pt-4 text-left transition ${
                     userType === 'client'
-                      ? 'bg-white text-blue-600 shadow'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'border-[#FF6B5B]/60 bg-gradient-to-br from-[#FF6B5B]/12 to-[#FF6B5B]/20'
+                      : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'
                   }`}
                 >
-                  {modalT('client')}
+                  <div className="pointer-events-none absolute bottom-0 -left-5 w-24 select-none">
+                    <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={96} height={132} className="object-contain" />
+                  </div>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-red-700">{modalT('client')}</p>
+                  <p className="mt-1 text-base font-bold text-[#1A1A1A]">Plan and control</p>
+                  <p className="mt-1 text-xs text-[#4E4A42]">Project owner sign-in</p>
                 </button>
                 <button
                   type="button"
                   onClick={() => setUserType('professional')}
-                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={`group relative rounded-2xl border pb-4 pl-4 pr-24 pt-4 text-left transition ${
                     userType === 'professional'
+                      ? 'border-[#0E7C3A]/60 bg-gradient-to-br from-[#0E7C3A]/12 to-[#0E7C3A]/20'
+                      : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'
+                  }`}
+                >
+                  <div className="pointer-events-none absolute bottom-0 -right-5 w-24 select-none">
+                    <Image src="/assets/images/tradesmen-character-pack/ben-800.webp" alt="Ben" width={96} height={132} className="object-contain" />
+                  </div>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-blue-700">{modalT('professional')}</p>
+                  <p className="mt-1 text-base font-bold text-[#1A1A1A]">Run your jobs</p>
+                  <p className="mt-1 text-xs text-[#4E4A42]">Trade professional sign-in</p>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMethod('google');
+                    setError(null);
+                  }}
+                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    loginMethod === 'google'
                       ? 'bg-white text-blue-600 shadow'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  {modalT('professional')}
+                  Google
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMethod('email');
+                    setError(null);
+                  }}
+                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    loginMethod === 'email'
+                      ? 'bg-white text-blue-600 shadow'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Email
                 </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('login.email')}
-                </label>
-                <input
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('login.password')}
-                </label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {loading ? modalT('loading') : modalT('login')}
-              </button>
+
+              {loginMethod === 'google' ? (
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <div ref={googleContainerRef} className="flex justify-center" />
+                  {googleScriptReady && !googleButtonRendered && (
+                    <p className="mt-2 text-center text-xs text-gray-500">Loading Google button...</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('login.email')}
+                    </label>
+                    <input
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('login.password')}
+                    </label>
+                    <input
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    {loading ? modalT('loading') : modalT('login')}
+                  </button>
+                </>
+              )}
             </form>
           ) : (
             <>
@@ -1034,5 +1183,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         />
       </div>
     </div>
+    </>
   );
 };

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-07-3e73fc3",
+    "date": "2026-05-07T16:47:32+08:00",
+    "title": "feat(auth): add Google login flow and login-to-join shortcut",
+    "summary": "feat(auth): add Google login flow and login-to-join shortcut",
+    "areas": [
+      "web"
+    ],
+    "commit": "3e73fc3",
+    "files": [
+      "apps/web/public/assets/images/lockup-horizontal-ink.webp",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-de1746b",
     "date": "2026-05-07T16:20:56+08:00",
     "title": "assets(web): use custom globe icon in language switcher",

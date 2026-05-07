@@ -54,6 +54,7 @@ interface ProfessionalAuthContextType {
     email: string,
     password: string,
   ) => Promise<{ success: boolean; accessToken: string; refreshToken: string }>;
+  googleLogin: (idToken: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string }>;
   logout: () => void;
   refreshToken: () => Promise<void>;
   clearError: () => void;
@@ -230,6 +231,58 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const googleLogin = async (idToken: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/professional/auth/oauth/google/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Google login failed. Please try again.');
+      }
+
+      if (result?.onboardingRequired) {
+        throw new Error('No professional account found for this Google email. Please join first.');
+      }
+
+      if (!result?.accessToken || !result?.refreshToken || !result?.professional) {
+        throw new Error('Google login response is missing authentication tokens');
+      }
+
+      localStorage.setItem('professionalAccessToken', result.accessToken);
+      localStorage.setItem(
+        'professionalRefreshToken',
+        result.refreshToken || '',
+      );
+      localStorage.setItem('professional', JSON.stringify(result.professional));
+
+      setAccessToken(result.accessToken);
+      setProfessional(result.professional);
+      applyPreferredLocale(result.professional?.preferredLanguage);
+      setIsLoggedIn(true);
+
+      return {
+        success: true,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Google login failed. Please try again.';
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     // Clear all auth tokens (client and professional) to ensure clean slate
     localStorage.removeItem('professionalAccessToken');
@@ -334,6 +387,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
         error,
         register,
         login,
+        googleLogin,
         logout,
         refreshToken,
         clearError,

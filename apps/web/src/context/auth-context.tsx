@@ -57,6 +57,7 @@ interface AuthContextType {
       }
   >;
   login: (email: string, password: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
+  googleLogin: (idToken: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
   logout: () => void;
   refreshToken: () => Promise<void>;
 }
@@ -228,6 +229,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return result;
   };
 
+  const googleLogin = async (idToken: string) => {
+    const response = await fetch(`${API_BASE_URL}/auth/oauth/google/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Google login failed');
+    }
+
+    if (result?.onboardingRequired) {
+      throw new Error('No client account found for this Google email. Please join first.');
+    }
+
+    if (!result?.accessToken || !result?.refreshToken || !result?.user) {
+      throw new Error('Google login response is missing authentication tokens');
+    }
+
+    localStorage.setItem('accessToken', result.accessToken);
+    localStorage.setItem('refreshToken', result.refreshToken);
+    localStorage.setItem('user', JSON.stringify(result.user));
+
+    setAccessToken(result.accessToken);
+    setUser(result.user);
+    setRole(result.user.role);
+    applyPreferredLocale(result.user?.preferredLanguage);
+    const derivedLoc = extractLocationFromUser(result.user);
+    if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
+      persistLocation(derivedLoc);
+    }
+    setIsLoggedIn(true);
+
+    return result;
+  };
+
   const logout = () => {
     // Clear all auth tokens (client and professional) to ensure clean slate
     localStorage.removeItem('accessToken');
@@ -327,6 +366,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUserLocation: persistLocation,
         register,
         login,
+        googleLogin,
         logout,
         refreshToken: refreshAccessToken,
       }}
