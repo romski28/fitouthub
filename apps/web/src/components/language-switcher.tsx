@@ -79,9 +79,7 @@ export function LanguageSwitcher() {
         aria-label={`Language menu, current selection ${activeOption.shortLabel}`}
         aria-expanded={open}
       >
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9Zm0 0C9 6 6.7 9 6 12c.7 3 3 6 6 9m0-18c3 3 5.3 6 6 9-.7 3-3 6-6 9" />
-        </svg>
+        <span className="text-lg leading-none" aria-hidden="true">🌐</span>
       </button>
 
       {open && (

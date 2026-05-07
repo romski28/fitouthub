@@ -58,7 +58,7 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
+          <nav className="hidden min-[820px]:flex items-center gap-6 text-sm font-medium text-slate-700">
             {showPublicLinks ? (
               <>
                 <a className="hover:text-slate-900" href="/professionals">
@@ -203,7 +203,7 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Mobile Auth & Hamburger */}
-          <div className="md:hidden flex items-center gap-3">
+          <div className="flex items-center gap-3 min-[820px]:hidden">
             {/* Auth buttons on mobile */}
             {showAuthed ? (
               <button
@@ -236,10 +236,12 @@ export const Navbar: React.FC = () => {
               </div>
             )}
 
+            <LanguageSwitcher />
+
             {/* Hamburger menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md hover:bg-slate-100"
+              className="p-2 rounded-md hover:bg-slate-100"
               aria-label="Toggle menu"
             >
               <svg
@@ -270,7 +272,7 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 bg-slate-50">
+          <div className="min-[820px]:hidden border-t border-slate-200 bg-slate-50">
             <nav className="flex flex-col px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
               {showPublicLinks ? (
                 <>
@@ -317,11 +319,6 @@ export const Navbar: React.FC = () => {
                   </a>
                 </>
               ) : null}
-
-              {/* Language Switcher */}
-              <div className="px-3 py-2">
-                <LanguageSwitcher />
-              </div>
 
               {/* Mobile profile menu */}
               {showAuthed && (
@@ -400,7 +397,7 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Profile Dropdown */}
         {profileMenuOpen && (showAuthed || showProfessionalAuthed) && mobileMenuOpen === false && (
-          <div className="md:hidden border-t border-slate-200 bg-white">
+          <div className="min-[820px]:hidden border-t border-slate-200 bg-white">
             <div className="px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
               {showAuthed && (
                 <>

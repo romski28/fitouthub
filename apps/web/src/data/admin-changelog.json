@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-07-a1901aa",
+    "date": "2026-05-07T15:28:29+08:00",
+    "title": "fix(web): refine responsive language switcher",
+    "summary": "fix(web): refine responsive language switcher",
+    "areas": [
+      "web"
+    ],
+    "commit": "a1901aa",
+    "files": [
+      "apps/web/src/components/language-switcher.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-05-07-a22e2ef",
     "date": "2026-05-07T15:18:45+08:00",
     "title": "feat(web): simplify navbar and add locale menu",
