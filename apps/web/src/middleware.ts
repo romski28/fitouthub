@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   // Parse locale from cookie or Accept-Language header
-  const locale = request.cookies.get('NEXT_LOCALE')?.value ||
+  const rawLocale = request.cookies.get('NEXT_LOCALE')?.value;
+  const locale = (rawLocale === 'zh-CN' ? 'zh-HK' : rawLocale) ||
     (request.headers.get('accept-language')?.includes('zh') ? 'zh-HK' : 'en');
   
   // Set locale cookie if not already set

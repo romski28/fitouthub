@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-07-a22e2ef",
+    "date": "2026-05-07T15:18:45+08:00",
+    "title": "feat(web): simplify navbar and add locale menu",
+    "summary": "feat(web): simplify navbar and add locale menu",
+    "areas": [
+      "web"
+    ],
+    "commit": "a22e2ef",
+    "files": [
+      "apps/web/src/app/docs/page.tsx",
+      "apps/web/src/components/language-switcher.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/i18n/request.ts",
+      "apps/web/src/middleware.ts"
+    ]
+  },
+  {
     "id": "2026-05-06-17431ee",
     "date": "2026-05-06T18:33:44+08:00",
     "title": "fix(web): embed characters inside role cards with text-safe padding",

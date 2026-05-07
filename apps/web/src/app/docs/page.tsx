@@ -18,7 +18,7 @@ export default function DocsPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">Guides</p>
             <h2 className="mt-1 text-2xl font-bold text-white">Documentation</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Link href="/docs/user-manual" className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 transition hover:border-emerald-400 hover:bg-slate-900">
               <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">User manual</p>
               <h3 className="mt-2 text-xl font-semibold text-white">FitoutHub User Manual</h3>
@@ -28,6 +28,11 @@ export default function DocsPage() {
               <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">Walkthrough</p>
               <h3 className="mt-2 text-xl font-semibold text-white">How to Use FitoutHub</h3>
               <p className="mt-2 text-sm text-slate-300">A simpler start-here guide for browsing professionals, creating projects, and managing invites.</p>
+            </Link>
+            <Link href="/tradesmen" className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 transition hover:border-emerald-400 hover:bg-slate-900">
+              <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">Learn more</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Tradesmen and women</h3>
+              <p className="mt-2 text-sm text-slate-300">Get to know more about the trades that work together to deliver your projects, large and small.</p>
             </Link>
           </div>
         </section>

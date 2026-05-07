@@ -7,17 +7,15 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
-import { API_BASE_URL } from '@/config/api';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { LanguageSwitcher } from './language-switcher';
 
 export const Navbar: React.FC = () => {
   const t = useTranslations('nav');
-  const { isLoggedIn, user, accessToken, logout } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const {
     isLoggedIn: profIsLoggedIn,
     professional,
-    accessToken: professionalAccessToken,
     logout: profLogout,
   } = useProfessionalAuth();
   const router = useRouter();
@@ -27,7 +25,8 @@ export const Navbar: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(true);
+    const frameId = window.requestAnimationFrame(() => setHydrated(true));
+    return () => window.cancelAnimationFrame(frameId);
   }, []);
 
   const showAuthed = hydrated && isLoggedIn && user;
@@ -62,9 +61,6 @@ export const Navbar: React.FC = () => {
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
             {showPublicLinks ? (
               <>
-                <a className="hover:text-slate-900" href="/tradesmen">
-                  {t('tradesmen')}
-                </a>
                 <a className="hover:text-slate-900" href="/professionals">
                   {t('professionals')}
                 </a>
@@ -74,15 +70,15 @@ export const Navbar: React.FC = () => {
               {t('docs')}
             </a>
             {showProjectsLink ? (
-              <a className="hover:text-slate-900" href="/projects">
+              <Link className="hover:text-slate-900" href="/projects">
                 {t('projects')}
-              </a>
+              </Link>
             ) : null}
             {showProfessionalProjectsLink ? (
               <>
-                <a className="hover:text-slate-900" href="/professional-projects">
+                <Link className="hover:text-slate-900" href="/professional-projects">
                   {t('projects')}
-                </a>
+                </Link>
                 <a className="hover:text-slate-900" href="/professional/calendar">
                   Calendar
                 </a>
@@ -280,13 +276,6 @@ export const Navbar: React.FC = () => {
                 <>
                   <a
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
-                    href="/tradesmen"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t('tradesmen')}
-                  </a>
-                  <a
-                    className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     href="/professionals"
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -302,23 +291,23 @@ export const Navbar: React.FC = () => {
                 {t('docs')}
               </a>
               {showProjectsLink ? (
-                <a
+                <Link
                   className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                   href="/projects"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t('projects')}
-                </a>
+                </Link>
               ) : null}
               {showProfessionalProjectsLink ? (
                 <>
-                  <a
+                  <Link
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     href="/professional-projects"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('projects')}
-                  </a>
+                  </Link>
                   <a
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     href="/professional/calendar"

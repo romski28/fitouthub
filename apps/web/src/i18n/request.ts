@@ -1136,13 +1136,14 @@ export default getRequestConfig(async () => {
   
   const localeCookie = cookieStore.get('NEXT_LOCALE')?.value;
   const acceptLanguage = headersList.get('accept-language');
+  const normalizedCookieLocale = localeCookie === 'zh-CN' ? 'zh-HK' : localeCookie;
   
-  // Default to English, support Cantonese (zh-HK)
+  // Default to English, support Cantonese/Traditional today and tolerate Simplified cookies.
   let locale: 'en' | 'zh-HK' = 'en';
   
   // Priority: cookie > accept-language header
-  if (localeCookie && ['en', 'zh-HK'].includes(localeCookie)) {
-    locale = localeCookie as 'en' | 'zh-HK';
+  if (normalizedCookieLocale && ['en', 'zh-HK'].includes(normalizedCookieLocale)) {
+    locale = normalizedCookieLocale as 'en' | 'zh-HK';
   } else if (acceptLanguage?.includes('zh')) {
     locale = 'zh-HK';
   }
