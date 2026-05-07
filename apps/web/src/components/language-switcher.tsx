@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -79,9 +80,7 @@ export function LanguageSwitcher() {
         aria-label={`Language menu, current selection ${activeOption.shortLabel}`}
         aria-expanded={open}
       >
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9Zm0 0C9 6 6.7 9 6 12c.7 3 3 6 6 9m0-18c3 3 5.3 6 6 9-.7 3-3 6-6 9" />
-        </svg>
+        <Image src="/assets/images/globe.svg" alt="Language" width={18} height={18} className="h-[18px] w-[18px] object-contain" />
       </button>
 
       {open && (

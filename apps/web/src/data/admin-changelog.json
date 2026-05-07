@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-07-de1746b",
+    "date": "2026-05-07T16:20:56+08:00",
+    "title": "assets(web): use custom globe icon in language switcher",
+    "summary": "assets(web): use custom globe icon in language switcher",
+    "areas": [
+      "web"
+    ],
+    "commit": "de1746b",
+    "files": [
+      "apps/web/public/assets/images/globe.png",
+      "apps/web/public/assets/images/globe.svg",
+      "apps/web/src/components/language-switcher.tsx"
+    ]
+  },
+  {
     "id": "2026-05-07-0388432",
     "date": "2026-05-07T16:08:32+08:00",
     "title": "fix(web): coral globe and transparent project list blocks",
