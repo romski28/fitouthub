@@ -104,6 +104,17 @@ const formatInspectionDateTime = (value?: string | null) => {
   });
 };
 
+const formatInspectionTime = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleTimeString('en-HK', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
 export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   const {
     siteAccessStatus,
@@ -138,15 +149,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
     !isPending &&
     !isBooked &&
     (requestStatus === 'none' || requestStatus === 'denied' || !siteAccessStatus?.requestId);
-  const badgeLabel = isNotAvailable
-    ? 'Not available'
-    : backendRescheduleRequired
-    ? 'Reschedule'
-    : isBooked
-    ? 'Booked'
-    : isPending
-    ? 'Pending'
-    : 'Not requested';
   const showRequestPanel = isNotRequested || backendRescheduleRequired;
   const showPendingReadOnlyPanel = isPending;
   const canRequestSiteAccess = Boolean(offeredInspectionDate && siteAccessRequestTime);
@@ -158,7 +160,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
         <AccordionItem
           id="site-access-status"
           title="Site Inspection"
-          badge={badgeLabel}
           isOpen={expandedAccordions['site-access-status'] !== false}
           onToggle={() => onToggleAccordion('site-access-status')}
         >
@@ -176,7 +177,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
             <div className="space-y-3">
               {offeredInspectionDate && (
                 <div className="rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
-                  Client inspection date available: <span className="font-semibold">{formatInspectionDate(offeredInspectionDate)}</span>
+                  Site inspection date available: <span className="font-semibold">{formatInspectionDate(offeredInspectionDate)}</span>
                 </div>
               )}
 
@@ -220,9 +221,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
 
               {isBooked && (
                 <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
-                  Visit booked
+                  Inspection booked
                   {siteAccessStatus.visitScheduledAt
-                    ? ` for ${formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}`
+                    ? ` at ${formatInspectionTime(siteAccessStatus.visitScheduledAt)}. Don't be late.`
                     : siteAccessStatus.visitScheduledFor
                     ? ` for ${formatInspectionDate(siteAccessStatus.visitScheduledFor)}`
                     : '.'}
@@ -232,8 +233,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
               {isBooked && siteAccessStatus.siteAccessData && (
                 <div className="grid gap-3 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Inspection Location</p>
-                    <p className="font-medium text-white">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">SITE ADDRESS</p>
+                    <p className="mt-2 font-medium text-white">
                       {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
                         .filter(Boolean)
                         .join('/')
@@ -243,9 +244,14 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                             : siteAccessStatus.siteAccessData.addressFull,
                         )}
                     </p>
-                    <p className="text-slate-300 mt-0.5">
-                      {(siteAccessStatus.siteAccessData.postalCode || '—') + ' / ' + (siteAccessStatus.siteAccessData.district || '—')}
-                    </p>
+                    {(() => {
+                      const district = (siteAccessStatus.siteAccessData.district || '').trim();
+                      const postalCode = (siteAccessStatus.siteAccessData.postalCode || '').trim();
+                      const locationMeta = district && postalCode
+                        ? `${postalCode} / ${district}`
+                        : district || postalCode;
+                      return locationMeta ? <p className="text-slate-300 mt-0.5">{locationMeta}</p> : null;
+                    })()}
                   </div>
                   {siteAccessStatus.siteAccessData.accessDetails && (
                     <div>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-fae906d",
+    "date": "2026-05-08T10:41:42+08:00",
+    "title": "refactor(site-inspection): simplify status panel copy and site address display",
+    "summary": "refactor(site-inspection): simplify status panel copy and site address display",
+    "areas": [
+      "web"
+    ],
+    "commit": "fae906d",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-1fad59a",
     "date": "2026-05-08T10:19:15+08:00",
     "title": "feat(site-inspection): format address block and make project detail backgrounds transparent",
