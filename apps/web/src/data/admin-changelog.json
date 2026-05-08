@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-018f932",
+    "date": "2026-05-08T10:56:25+08:00",
+    "title": "fix(site-access): restore booked status and address for approved access",
+    "summary": "fix(site-access): restore booked status and address for approved access",
+    "areas": [
+      "web"
+    ],
+    "commit": "018f932",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-eb735e0",
     "date": "2026-05-08T10:50:13+08:00",
     "title": "fix(site-inspection): align reschedule/time status logic and postal code source",

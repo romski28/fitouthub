@@ -142,12 +142,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   );
   const requestStatus = (siteAccessStatus?.requestStatus || 'none').toLowerCase();
   const isPending = requestStatus === 'pending';
+  const hasApprovedAccess =
+    siteAccessStatus?.hasAccess === true ||
+    ['approved_no_visit', 'approved_visit_scheduled', 'visited'].includes(requestStatus);
   const isBooked =
     !backendRescheduleRequired &&
-    (requestStatus === 'approved_visit_scheduled' ||
-      requestStatus === 'visited' ||
-      (requestStatus === 'approved_no_visit' &&
-        Boolean(siteAccessStatus?.visitScheduledAt || siteAccessStatus?.visitScheduledFor)));
+    hasApprovedAccess;
   const isNotAvailable = !offeredInspectionDate;
   const isNotRequested =
     !backendRescheduleRequired &&
@@ -236,7 +236,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                 </div>
               )}
 
-              {isBooked && siteAccessStatus.siteAccessData && (
+              {hasApprovedAccess && !backendRescheduleRequired && siteAccessStatus.siteAccessData && (
                 <div className="grid gap-3 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">SITE ADDRESS</p>
