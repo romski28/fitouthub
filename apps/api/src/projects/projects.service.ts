@@ -3432,11 +3432,23 @@ Please review the project details and respond with your quote or decline the inv
     });
 
     if (existingRequest) {
-      return {
-        success: true,
-        request: existingRequest,
-        message: 'A site access request is already pending',
-      };
+      // If the existing request was voided by a date change (visitDetails has the reschedule note),
+      // allow the professional to create a fresh request for the new date.
+      const needsRebook = Boolean(
+        existingRequest.visitDetails && existingRequest.visitDetails.includes('Site availability changed to'),
+      );
+      if (!needsRebook) {
+        return {
+          success: true,
+          request: existingRequest,
+          message: 'A site access request is already pending',
+        };
+      }
+      // Cancel the stale pending request so the new one can take its place.
+      await this.prisma.siteAccessRequest.update({
+        where: { id: existingRequest.id },
+        data: { status: 'denied', reasonDenied: existingRequest.visitDetails },
+      });
     }
 
     const offeredInspectionDate = this.formatHongKongDateInput(project.siteInspectionAvailableOn);
@@ -4692,6 +4704,18 @@ Please review the project details and respond with your quote or decline the inv
           respondedAt: new Date(),
           respondedBy: userId,
           responseNotes: cancellationNote,
+        },
+      }),
+      // Void pending requests so professionals know they must rebook for the new date.
+      this.prisma.siteAccessRequest.updateMany({
+        where: {
+          projectId,
+          status: 'pending',
+        },
+        data: {
+          visitScheduledFor: null,
+          visitScheduledAt: null,
+          visitDetails: cancellationNote,
         },
       }),
     ]);

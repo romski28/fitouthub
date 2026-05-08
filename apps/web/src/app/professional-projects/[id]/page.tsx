@@ -672,6 +672,7 @@ export default function ProjectDetailPage() {
         requestStatus: data.request?.status || 'pending',
         visitScheduledFor: data.request?.visitScheduledFor || prev?.visitScheduledFor || null,
         visitScheduledAt: data.request?.visitScheduledAt || prev?.visitScheduledAt || null,
+        visitDetails: data.request?.visitDetails ?? null,
         visitedAt: prev?.visitedAt || null,
         reasonDenied: prev?.reasonDenied || null,
         hasAccess: prev?.hasAccess || false,

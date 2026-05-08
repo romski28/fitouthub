@@ -171,7 +171,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
     siteAccessStatus?.visitScheduledFor,
   );
   const showRequestPanel = isNotRequested || backendRescheduleRequired;
-  const showPendingReadOnlyPanel = isPending;
+  // Hide the "Awaiting approval" panel when a reschedule is also required — the reschedule
+  // panel + picker takes priority so the professional can select a new slot.
+  const showPendingReadOnlyPanel = isPending && !backendRescheduleRequired;
   const canRequestSiteAccess = Boolean(offeredInspectionDate && siteAccessRequestTime);
 
   return (
