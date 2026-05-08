@@ -25,6 +25,8 @@ interface SiteAccessData {
 interface SiteAccessStatus {
   requestId: string | null;
   requestStatus: string;
+  rescheduleRequired?: boolean | null;
+  requiresReschedule?: boolean | null;
   visitScheduledFor: string | null;
   visitScheduledAt?: string | null;
   visitDetails?: string | null;
@@ -248,8 +250,11 @@ export function RequestSiteAccessModal({
     }
   };
 
-  const requestPending = status?.requestStatus === 'pending';
-  const rescheduleRequired = isRescheduleRequired(status?.visitDetails);
+  const rescheduleRequired =
+    status?.rescheduleRequired === true ||
+    status?.requiresReschedule === true ||
+    isRescheduleRequired(status?.visitDetails);
+  const requestPending = status?.requestStatus === 'pending' && !rescheduleRequired;
   const hasAccess = Boolean(status?.hasAccess);
   const canRequestNewVisit = !hasAccess || rescheduleRequired;
   const isBusy = isLoading || loadingStatus;

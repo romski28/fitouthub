@@ -4337,6 +4337,10 @@ Please review the project details and respond with your quote or decline the inv
       'approved_visit_scheduled',
       'visited',
     ];
+    const rescheduleRequired = Boolean(
+      latestAccessRequest?.visitDetails &&
+        latestAccessRequest.visitDetails.includes('Site availability changed to'),
+    );
     const hasAccess =
       !!latestAccessRequest && approvedStatuses.includes(latestAccessRequest.status);
 
@@ -4401,6 +4405,8 @@ Please review the project details and respond with your quote or decline the inv
       success: true,
       requestId: latestAccessRequest?.id || null,
       requestStatus: latestAccessRequest?.status || 'none',
+      rescheduleRequired,
+      requiresReschedule: rescheduleRequired,
       visitScheduledFor: latestAccessRequest?.visitScheduledFor || null,
       visitScheduledAt: latestAccessRequest?.visitScheduledAt || null,
       visitDetails: latestAccessRequest?.visitDetails || null,

@@ -153,7 +153,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
     [siteAccessStatus?.bookedInspectionTimes],
   );
   const requestStatus = (siteAccessStatus?.requestStatus || 'none').toLowerCase();
-  const isPending = requestStatus === 'pending';
+  const isPending = requestStatus === 'pending' && !backendRescheduleRequired;
   const hasApprovedAccess =
     siteAccessStatus?.hasAccess === true ||
     ['approved_no_visit', 'approved_visit_scheduled', 'visited'].includes(requestStatus);
@@ -314,7 +314,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                                 key={timeOption}
                                 type="button"
                                 onClick={() => onUpdateSiteAccessRequestTime(timeOption)}
-                                disabled={isBooked || siteAccessActionLoading || siteAccessStatus.requestStatus === 'pending'}
+                                disabled={isBooked || siteAccessActionLoading || isPending}
                                 className={`rounded-md border px-3 py-2 text-sm font-semibold transition ${
                                   isSelected
                                     ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'

@@ -166,6 +166,8 @@ export function QuoteActionModal({
             if (accessRes.ok) {
               const accessData = await accessRes.json();
               const rescheduleRequired =
+                accessData?.rescheduleRequired === true ||
+                accessData?.requiresReschedule === true ||
                 typeof accessData?.visitDetails === 'string' &&
                 accessData.visitDetails.includes('Site availability changed to');
               const activeStatuses = ['pending', 'approved_no_visit', 'approved_visit_scheduled', 'visited'];
