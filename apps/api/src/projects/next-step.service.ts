@@ -328,7 +328,7 @@ export class NextStepService {
         );
 
         const hasBlockingAccessState =
-          latestStatus === 'pending' ||
+          (latestStatus === 'pending' && !rescheduleRequired) ||
           latestStatus === 'approved_visit_scheduled' ||
           latestStatus === 'visited' ||
           (latestStatus === 'approved_no_visit' && !rescheduleRequired);

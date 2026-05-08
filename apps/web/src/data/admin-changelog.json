@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-eca3fdd",
+    "date": "2026-05-08T18:08:56+08:00",
+    "title": "fix(next-steps): unblock REQUEST_SITE_ACCESS for pending reschedules",
+    "summary": "fix(next-steps): unblock REQUEST_SITE_ACCESS for pending reschedules",
+    "areas": [
+      "api"
+    ],
+    "commit": "eca3fdd",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-08-aa42e8d",
     "date": "2026-05-08T17:50:42+08:00",
     "title": "fix(site-access): allow rebooking for pending reschedule state",
