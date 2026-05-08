@@ -8,7 +8,6 @@ interface SiteAccessData {
   unitNumber?: string;
   floorLevel?: string;
   postalCode?: string | null;
-  district?: string | null;
   accessDetails?: string;
   onSiteContactName?: string;
   onSiteContactPhone?: string;
@@ -115,6 +114,9 @@ const formatInspectionTime = (value?: string | null) => {
   });
 };
 
+const isRescheduleRequired = (note?: string | null) =>
+  Boolean(note && note.includes('Site availability changed to'));
+
 export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   const {
     siteAccessStatus,
@@ -132,7 +134,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   const backendRescheduleRequired =
     siteAccessStatus?.rescheduleRequired === true ||
     siteAccessStatus?.requiresReschedule === true ||
-    (siteAccessStatus?.requestStatus || '').toLowerCase().includes('reschedule');
+    (siteAccessStatus?.requestStatus || '').toLowerCase().includes('reschedule') ||
+    isRescheduleRequired(siteAccessStatus?.visitDetails);
   const bookedInspectionTimes = useMemo(
     () => new Set(siteAccessStatus?.bookedInspectionTimes || []),
     [siteAccessStatus?.bookedInspectionTimes],
@@ -140,9 +143,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   const requestStatus = (siteAccessStatus?.requestStatus || 'none').toLowerCase();
   const isPending = requestStatus === 'pending';
   const isBooked =
-    requestStatus === 'approved_visit_scheduled' ||
-    requestStatus === 'approved_no_visit' ||
-    requestStatus === 'visited';
+    !backendRescheduleRequired &&
+    (requestStatus === 'approved_visit_scheduled' ||
+      requestStatus === 'visited' ||
+      (requestStatus === 'approved_no_visit' &&
+        Boolean(siteAccessStatus?.visitScheduledAt || siteAccessStatus?.visitScheduledFor)));
   const isNotAvailable = !offeredInspectionDate;
   const isNotRequested =
     !backendRescheduleRequired &&
@@ -183,11 +188,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
 
               {showPendingReadOnlyPanel && (
                 <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
-                  Awaiting client approval.
+                  Awaiting client approval
                   {siteAccessStatus.visitScheduledAt && (
-                    <span className="block mt-1 text-amber-100">
-                      Requested visit: {formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}
-                    </span>
+                    <> at <span className="font-semibold text-amber-100">{formatInspectionTime(siteAccessStatus.visitScheduledAt)}</span>.</>
+                  )}
+                  {siteAccessStatus.visitScheduledAt && (
+                    <span className="block mt-1 text-amber-100">Requested visit: {formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}</span>
                   )}
                 </div>
               )}
@@ -244,14 +250,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                             : siteAccessStatus.siteAccessData.addressFull,
                         )}
                     </p>
-                    {(() => {
-                      const district = (siteAccessStatus.siteAccessData.district || '').trim();
-                      const postalCode = (siteAccessStatus.siteAccessData.postalCode || '').trim();
-                      const locationMeta = district && postalCode
-                        ? `${postalCode} / ${district}`
-                        : district || postalCode;
-                      return locationMeta ? <p className="text-slate-300 mt-0.5">{locationMeta}</p> : null;
-                    })()}
+                    {siteAccessStatus.siteAccessData.postalCode?.trim() ? (
+                      <p className="text-slate-300 mt-0.5">{siteAccessStatus.siteAccessData.postalCode.trim()}</p>
+                    ) : null}
                   </div>
                   {siteAccessStatus.siteAccessData.accessDetails && (
                     <div>

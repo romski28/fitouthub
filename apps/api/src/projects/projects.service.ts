@@ -4355,7 +4355,6 @@ Please review the project details and respond with your quote or decline the inv
       ? {
           ...siteAccessData,
           postalCode: project?.locationDetails?.postalCode || null,
-          district: project?.region || null,
         }
       : null;
 

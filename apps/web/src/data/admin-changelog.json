@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-08-eb735e0",
+    "date": "2026-05-08T10:50:13+08:00",
+    "title": "fix(site-inspection): align reschedule/time status logic and postal code source",
+    "summary": "fix(site-inspection): align reschedule/time status logic and postal code source",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "eb735e0",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-fae906d",
     "date": "2026-05-08T10:41:42+08:00",
     "title": "refactor(site-inspection): simplify status panel copy and site address display",
