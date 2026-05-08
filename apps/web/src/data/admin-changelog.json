@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-08-1fad59a",
+    "date": "2026-05-08T10:19:15+08:00",
+    "title": "feat(site-inspection): format address block and make project detail backgrounds transparent",
+    "summary": "feat(site-inspection): format address block and make project detail backgrounds transparent",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1fad59a",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-7c83e5e",
     "date": "2026-05-08T09:58:38+08:00",
     "title": "fix(professional): show inspection location only when siteAccessData present, display full address",

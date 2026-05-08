@@ -7,6 +7,8 @@ interface SiteAccessData {
   addressFull: string;
   unitNumber?: string;
   floorLevel?: string;
+  postalCode?: string | null;
+  district?: string | null;
   accessDetails?: string;
   onSiteContactName?: string;
   onSiteContactPhone?: string;
@@ -231,14 +233,19 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                 <div className="grid gap-3 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Inspection Location</p>
-                    <p className="font-medium text-white">{siteAccessStatus.siteAccessData.addressFull}</p>
-                    {(siteAccessStatus.siteAccessData.unitNumber || siteAccessStatus.siteAccessData.floorLevel) && (
-                      <p className="text-slate-400 mt-0.5">
-                        {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
-                          .filter(Boolean)
-                          .join(' / ')}
-                      </p>
-                    )}
+                    <p className="font-medium text-white">
+                      {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
+                        .filter(Boolean)
+                        .join('/')
+                        .concat(
+                          [siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel].some(Boolean)
+                            ? ` ${siteAccessStatus.siteAccessData.addressFull}`
+                            : siteAccessStatus.siteAccessData.addressFull,
+                        )}
+                    </p>
+                    <p className="text-slate-300 mt-0.5">
+                      {(siteAccessStatus.siteAccessData.postalCode || '—') + ' / ' + (siteAccessStatus.siteAccessData.district || '—')}
+                    </p>
                   </div>
                   {siteAccessStatus.siteAccessData.accessDetails && (
                     <div>
@@ -246,6 +253,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                       <p className="text-slate-200">{siteAccessStatus.siteAccessData.accessDetails}</p>
                     </div>
                   )}
+                  <p className="text-xs text-slate-400">Client or their representative will be on site for your visit.</p>
                 </div>
               )}
 

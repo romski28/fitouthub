@@ -4309,7 +4309,15 @@ Please review the project details and respond with your quote or decline the inv
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { siteInspectionAvailableOn: true },
+      select: {
+        siteInspectionAvailableOn: true,
+        region: true,
+        locationDetails: {
+          select: {
+            postalCode: true,
+          },
+        },
+      },
     });
 
     const siteInspectionAvailableOn = this.formatHongKongDateInput(project?.siteInspectionAvailableOn || null);
@@ -4343,6 +4351,14 @@ Please review the project details and respond with your quote or decline the inv
           })
       : [];
 
+    const siteAccessDataPayload = siteAccessData
+      ? {
+          ...siteAccessData,
+          postalCode: project?.locationDetails?.postalCode || null,
+          district: project?.region || null,
+        }
+      : null;
+
     return {
       success: true,
       requestId: latestAccessRequest?.id || null,
@@ -4355,7 +4371,7 @@ Please review the project details and respond with your quote or decline the inv
       hasAccess,
       siteInspectionAvailableOn,
       bookedInspectionTimes,
-      siteAccessData,
+      siteAccessData: siteAccessDataPayload,
     };
   }
 

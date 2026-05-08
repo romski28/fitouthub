@@ -1957,7 +1957,7 @@ export default function ClientProjectDetailPage() {
   if (error || !project) {
     return (
       <>
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
           <div className="rounded-lg bg-red-50 border border-red-200 p-6 max-w-md w-full text-center">
             <p className="text-red-800 font-medium">{error || 'Project not found'}</p>
             <Link href="/projects" className="mt-4 inline-block text-blue-600 hover:underline">
@@ -1971,7 +1971,7 @@ export default function ClientProjectDetailPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-slate-50 pb-16">
+      <div className="min-h-screen bg-transparent pb-16">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
           {/* Header */}
           <div className="flex items-center justify-between">
