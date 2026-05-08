@@ -193,7 +193,11 @@ export function UpdatesModal({
             : '/professional-projects',
         );
       } else {
-        router.push(`/projects/${group.projectId}?tab=assist`);
+        const params = new URLSearchParams({ tab: 'chat', chatType: 'assist' });
+        if (group.threadId) {
+          params.set('assistRequestId', String(group.threadId));
+        }
+        router.push(`/projects/${group.projectId}?${params.toString()}`);
       }
     } else if (isProfessionalView) {
       const projectProfessionalId =
@@ -206,7 +210,14 @@ export function UpdatesModal({
           : '/professional-projects',
       );
     } else {
-      router.push(`/projects/${group.projectId}?tab=chat`);
+      const params = new URLSearchParams({ tab: 'chat' });
+      if (group.chatType === 'project-professional' && group.threadId) {
+        params.set('chatType', 'project-professional');
+        params.set('projectProfessionalId', String(group.threadId));
+      } else if (group.chatType === 'project-general') {
+        params.set('chatType', 'project-general');
+      }
+      router.push(`/projects/${group.projectId}?${params.toString()}`);
     }
     onClose();
   };

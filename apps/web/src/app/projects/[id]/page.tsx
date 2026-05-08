@@ -501,6 +501,53 @@ export default function ClientProjectDetailPage() {
   }, [searchParams, isAwarded, assistRequestId, hasAnyProfessional, hasPostAwardLifecycleAccess]);
 
   useEffect(() => {
+    const requestedTab = searchParams.get('tab');
+    const requestedChatType = searchParams.get('chatType');
+
+    if (requestedTab !== 'chat' && requestedTab !== 'assist') {
+      return;
+    }
+
+    if (requestedChatType === 'assist') {
+      const requestedAssistId = searchParams.get('assistRequestId');
+      setViewingAssistChat(true);
+      if (requestedAssistId && requestedAssistId !== assistRequestId) {
+        setAssistRequestId(requestedAssistId);
+      }
+      return;
+    }
+
+    if (requestedChatType === 'project-general') {
+      setViewingAssistChat(false);
+      setSelectedProfessional(null);
+      return;
+    }
+
+    if (requestedChatType === 'project-professional') {
+      const requestedProjectProfessionalId = searchParams.get('projectProfessionalId');
+      if (!requestedProjectProfessionalId || !project?.professionals?.length) {
+        return;
+      }
+
+      const requestedProfessional = project.professionals.find(
+        (professional) => professional.id === requestedProjectProfessionalId,
+      );
+
+      if (requestedProfessional) {
+        setViewingAssistChat(false);
+        setSelectedProfessional((current) =>
+          current?.id === requestedProfessional.id ? current : requestedProfessional,
+        );
+      }
+      return;
+    }
+
+    if (requestedTab === 'chat') {
+      setViewingAssistChat(false);
+    }
+  }, [searchParams, project?.professionals, assistRequestId]);
+
+  useEffect(() => {
     const requestedSection = searchParams.get('section');
     if (requestedSection !== 'progress-financials') return;
 
@@ -587,6 +634,29 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const markMessageGroupRead = useCallback(
+    async (
+      chatType: 'project-professional' | 'project-general' | 'assist' | 'private-foh',
+      threadId: string,
+    ): Promise<void> => {
+      if (!accessToken) return;
+
+      try {
+        await fetch(`${API_BASE_URL}/updates/messages/mark-read`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ chatType, threadId }),
+        });
+      } catch {
+        // Keep message rendering non-blocking if read-state sync fails.
+      }
+    },
+    [accessToken],
+  );
+
   const fetchAssistThreadsForProject = async (): Promise<AssistThreadSummary[]> => {
     if (!accessToken || !projectId) return [];
 
@@ -640,6 +710,7 @@ export default function ClientProjectDetailPage() {
     if (!appendOlder) {
       const marker = await fetchMessageReadMarker('assist', requestId);
       setAssistFirstUnreadMessageId(marker?.firstUnreadMessageId ?? null);
+      await markMessageGroupRead('assist', requestId);
     }
 
     if (appendOlder) {
@@ -1289,13 +1360,7 @@ export default function ClientProjectDetailPage() {
         setPrivateFirstUnreadMessageId(marker?.firstUnreadMessageId ?? null);
 
         // Mark messages as read
-        await fetch(
-          `${API_BASE_URL}/client/projects/${selectedProfessional.id}/messages/mark-read`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
-        );
+        await markMessageGroupRead('project-professional', selectedProfessional.id);
       } catch (err) {
         console.error('Error fetching messages:', err);
         setMessageError('Failed to load messages');
@@ -1305,7 +1370,7 @@ export default function ClientProjectDetailPage() {
     };
 
     fetchMessages();
-  }, [selectedProfessional, accessToken, router]);
+  }, [selectedProfessional, accessToken, router, markMessageGroupRead]);
 
   // Load FOH assistance thread for this project
   useEffect(() => {
