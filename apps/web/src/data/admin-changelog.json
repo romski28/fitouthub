@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-7c83e5e",
+    "date": "2026-05-08T09:58:38+08:00",
+    "title": "fix(professional): show inspection location only when siteAccessData present, display full address",
+    "summary": "fix(professional): show inspection location only when siteAccessData present, display full address",
+    "areas": [
+      "web"
+    ],
+    "commit": "7c83e5e",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-eacd955",
     "date": "2026-05-08T09:51:25+08:00",
     "title": "fix(professional): include approved_no_visit in site inspection Booked state",

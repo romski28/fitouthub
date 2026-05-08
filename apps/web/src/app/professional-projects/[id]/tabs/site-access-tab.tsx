@@ -227,13 +227,25 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                 </div>
               )}
 
-              {isBooked && (
+              {isBooked && siteAccessStatus.siteAccessData && (
                 <div className="grid gap-3 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Inspection Location</p>
-                    <p className="font-medium text-white">{siteAccessStatus.siteAccessData?.accessDetails || 'Client will share the inspection location details.'}</p>
+                    <p className="font-medium text-white">{siteAccessStatus.siteAccessData.addressFull}</p>
+                    {(siteAccessStatus.siteAccessData.unitNumber || siteAccessStatus.siteAccessData.floorLevel) && (
+                      <p className="text-slate-400 mt-0.5">
+                        {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
+                          .filter(Boolean)
+                          .join(' / ')}
+                      </p>
+                    )}
                   </div>
-                  <p className="text-xs text-slate-400">You can still submit a quote without site inspection.</p>
+                  {siteAccessStatus.siteAccessData.accessDetails && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Access Details</p>
+                      <p className="text-slate-200">{siteAccessStatus.siteAccessData.accessDetails}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
