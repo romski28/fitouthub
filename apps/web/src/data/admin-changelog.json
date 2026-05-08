@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-faa0d34",
+    "date": "2026-05-08T09:44:18+08:00",
+    "title": "fix(professional): correct site inspection badge priority — not available only when no date offered",
+    "summary": "fix(professional): correct site inspection badge priority — not available only when no date offered",
+    "areas": [
+      "web"
+    ],
+    "commit": "faa0d34",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-a448c70",
     "date": "2026-05-08T00:01:35+08:00",
     "title": "feat(professional): refactor site inspection status panel",

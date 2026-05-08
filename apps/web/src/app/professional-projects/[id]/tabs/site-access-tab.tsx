@@ -133,15 +133,15 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
     !isPending &&
     !isBooked &&
     (requestStatus === 'none' || requestStatus === 'denied' || !siteAccessStatus?.requestId);
-  const badgeLabel = backendRescheduleRequired
+  const badgeLabel = isNotAvailable
+    ? 'Not available'
+    : backendRescheduleRequired
     ? 'Reschedule'
     : isBooked
     ? 'Booked'
     : isPending
     ? 'Pending'
-    : isNotRequested
-    ? 'Not requested'
-    : 'Not available';
+    : 'Not requested';
   const showRequestPanel = isNotRequested || backendRescheduleRequired;
   const showPendingReadOnlyPanel = isPending;
   const canRequestSiteAccess = Boolean(offeredInspectionDate && siteAccessRequestTime);
