@@ -94,6 +94,7 @@ const formatInspectionDateTime = (value?: string | null) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString('en-HK', {
+    timeZone: 'Asia/Hong_Kong',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -108,6 +109,7 @@ const formatInspectionTime = (value?: string | null) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleTimeString('en-HK', {
+    timeZone: 'Asia/Hong_Kong',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -222,7 +224,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                     </span>
                     <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-amber-100">
                       {siteAccessStatus.visitScheduledAt
-                        ? new Date(siteAccessStatus.visitScheduledAt).toLocaleTimeString([], {
+                        ? new Date(siteAccessStatus.visitScheduledAt).toLocaleTimeString('en-HK', {
+                            timeZone: 'Asia/Hong_Kong',
                             hour: '2-digit',
                             minute: '2-digit',
                             hour12: false,

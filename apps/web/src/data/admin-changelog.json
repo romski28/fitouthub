@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-6cbfa6f",
+    "date": "2026-05-08T11:45:48+08:00",
+    "title": "fix(site-access): add HK timezone to time formatters to prevent SSR hydration mismatch",
+    "summary": "fix(site-access): add HK timezone to time formatters to prevent SSR hydration mismatch",
+    "areas": [
+      "web"
+    ],
+    "commit": "6cbfa6f",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-15e99c3",
     "date": "2026-05-08T11:05:42+08:00",
     "title": "fix(site-access): preserve and display inspection time slots",
