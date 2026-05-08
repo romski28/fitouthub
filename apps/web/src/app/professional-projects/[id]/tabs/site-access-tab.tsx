@@ -114,6 +114,16 @@ const formatInspectionTime = (value?: string | null) => {
   });
 };
 
+const formatInspectionSlot = (scheduledAt?: string | null, scheduledFor?: string | null) => {
+  if (scheduledAt) {
+    return formatInspectionDateTime(scheduledAt);
+  }
+  if (scheduledFor) {
+    return formatInspectionDate(scheduledFor);
+  }
+  return null;
+};
+
 const isRescheduleRequired = (note?: string | null) =>
   Boolean(note && note.includes('Site availability changed to'));
 
@@ -154,6 +164,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
     !isPending &&
     !isBooked &&
     (requestStatus === 'none' || requestStatus === 'denied' || !siteAccessStatus?.requestId);
+  const scheduledInspectionSlot = formatInspectionSlot(
+    siteAccessStatus?.visitScheduledAt,
+    siteAccessStatus?.visitScheduledFor,
+  );
   const showRequestPanel = isNotRequested || backendRescheduleRequired;
   const showPendingReadOnlyPanel = isPending;
   const canRequestSiteAccess = Boolean(offeredInspectionDate && siteAccessRequestTime);
@@ -192,8 +206,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                   {siteAccessStatus.visitScheduledAt && (
                     <> at <span className="font-semibold text-amber-100">{formatInspectionTime(siteAccessStatus.visitScheduledAt)}</span>.</>
                   )}
-                  {siteAccessStatus.visitScheduledAt && (
-                    <span className="block mt-1 text-amber-100">Requested visit: {formatInspectionDateTime(siteAccessStatus.visitScheduledAt)}</span>
+                  {scheduledInspectionSlot && (
+                    <span className="block mt-1 text-amber-100">Requested slot: {scheduledInspectionSlot}</span>
                   )}
                 </div>
               )}
@@ -233,6 +247,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                     : siteAccessStatus.visitScheduledFor
                     ? ` for ${formatInspectionDate(siteAccessStatus.visitScheduledFor)}`
                     : '.'}
+                  {scheduledInspectionSlot && (
+                    <span className="block mt-1 text-emerald-100">Confirmed slot: {scheduledInspectionSlot}</span>
+                  )}
                 </div>
               )}
 

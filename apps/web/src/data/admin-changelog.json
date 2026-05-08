@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-08-15e99c3",
+    "date": "2026-05-08T11:05:42+08:00",
+    "title": "fix(site-access): preserve and display inspection time slots",
+    "summary": "fix(site-access): preserve and display inspection time slots",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "15e99c3",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-018f932",
     "date": "2026-05-08T10:56:25+08:00",
     "title": "fix(site-access): restore booked status and address for approved access",

@@ -3756,18 +3756,45 @@ Please review the project details and respond with your quote or decline the inv
     const isValidDate = (value: Date | null) =>
       !!value && !Number.isNaN(value.getTime());
 
-    const safeScheduledFor = scheduledAt
-      ? new Date(scheduledAt.getFullYear(), scheduledAt.getMonth(), scheduledAt.getDate())
+    const existingScheduledAt = request.visitScheduledAt
+      ? new Date(request.visitScheduledAt)
+      : null;
+    const existingScheduledFor = request.visitScheduledFor
+      ? new Date(request.visitScheduledFor)
       : null;
 
-    const safeScheduledAt = isValidDate(scheduledAt) ? scheduledAt : null;
+    const requestedSlotWasProvided = Boolean(request.visitScheduledAt || request.visitScheduledFor);
+    const shouldPreserveRequestedSlot =
+      body.status === 'approved_visit_scheduled' ||
+      (!scheduledForInput && !scheduledAtInput && requestedSlotWasProvided);
 
-    if (body.status === 'approved_visit_scheduled' && !safeScheduledAt) {
+    const effectiveScheduledAt = isValidDate(scheduledAt)
+      ? scheduledAt
+      : shouldPreserveRequestedSlot && isValidDate(existingScheduledAt)
+        ? existingScheduledAt
+        : null;
+
+    const effectiveScheduledFor = effectiveScheduledAt
+      ? new Date(
+          effectiveScheduledAt.getFullYear(),
+          effectiveScheduledAt.getMonth(),
+          effectiveScheduledAt.getDate(),
+        )
+      : shouldPreserveRequestedSlot && isValidDate(existingScheduledFor)
+        ? existingScheduledFor
+        : null;
+
+    const approvedStatus =
+      shouldPreserveRequestedSlot && effectiveScheduledAt
+        ? 'approved_visit_scheduled'
+        : body.status;
+
+    if (approvedStatus === 'approved_visit_scheduled' && !effectiveScheduledAt) {
       throw new BadRequestException('A valid visit date/time is required for scheduled visits');
     }
 
-    if (body.status === 'approved_visit_scheduled' && safeScheduledAt) {
-      const conflictingSlot = await this.findConflictingSiteAccessSlot(request.projectId, safeScheduledAt, requestId);
+    if (approvedStatus === 'approved_visit_scheduled' && effectiveScheduledAt) {
+      const conflictingSlot = await this.findConflictingSiteAccessSlot(request.projectId, effectiveScheduledAt, requestId);
       if (conflictingSlot) {
         throw new BadRequestException('That inspection time has already been selected by another professional');
       }
@@ -3776,22 +3803,22 @@ Please review the project details and respond with your quote or decline the inv
     const approved = await this.prisma.siteAccessRequest.update({
       where: { id: requestId },
       data: {
-        status: body.status,
+        status: approvedStatus,
         respondedAt: new Date(),
         clientApprovedBy: userId,
         reasonDenied: body.reasonDenied,
-        visitScheduledFor: safeScheduledFor,
-        visitScheduledAt: safeScheduledAt,
+        visitScheduledFor: effectiveScheduledFor,
+        visitScheduledAt: effectiveScheduledAt,
       },
     });
 
-    if (body.status === 'approved_visit_scheduled' && safeScheduledAt) {
+    if (approvedStatus === 'approved_visit_scheduled' && effectiveScheduledAt) {
       await this.prisma.siteAccessVisit.create({
         data: {
           projectId: request.projectId,
           projectProfessionalId: request.projectProfessionalId,
           professionalId: request.professionalId,
-          proposedAt: safeScheduledAt,
+          proposedAt: effectiveScheduledAt,
           proposedByRole: 'client',
           status: 'proposed',
         },
@@ -3799,9 +3826,9 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     const siteAccessApprovalMessage =
-      body.status === 'approved_no_visit'
+      approvedStatus === 'approved_no_visit'
         ? 'Client approved site access (no visit required).'
-        : `Client approved site access with a proposed visit on ${this.formatDateTime(safeScheduledAt)}.`;
+        : `Client approved site access with a proposed visit on ${this.formatDateTime(effectiveScheduledAt)}.`;
     const requestProjectStatus = (request.project?.status || '').toLowerCase();
     const routeApprovalToPrivate = requestProjectStatus === 'pending' || requestProjectStatus === 'approved';
 
@@ -3835,9 +3862,9 @@ Please review the project details and respond with your quote or decline the inv
           select: { projectName: true },
         });
 
-        const notificationMessage = body.status === 'approved_no_visit'
+        const notificationMessage = approvedStatus === 'approved_no_visit'
           ? `Good news! Your site access request for "${project?.projectName}" has been approved. No site visit required.`
-          : `Good news! Your site access request for "${project?.projectName}" has been approved with a scheduled visit on ${this.formatDateTime(safeScheduledAt)}.`;
+          : `Good news! Your site access request for "${project?.projectName}" has been approved with a scheduled visit on ${this.formatDateTime(effectiveScheduledAt)}.`;
 
         await this.notificationService.send({
           professionalId: professional.id,
