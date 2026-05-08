@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-08-96542f0",
+    "date": "2026-05-08T15:44:09+08:00",
+    "title": "fix(site-access): resolve reschedule state, date input format, and HK time messaging",
+    "summary": "fix(site-access): resolve reschedule state, date input format, and HK time messaging",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "96542f0",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-d3f3245",
     "date": "2026-05-08T14:28:59+08:00",
     "title": "fix(site-access): void pending requests on inspection date change; unblock rebook flow",

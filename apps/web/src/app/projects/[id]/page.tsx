@@ -1116,6 +1116,7 @@ export default function ClientProjectDetailPage() {
       setSiteAccessRequests((prev) =>
         prev.map((request) => {
           if (
+            request.status !== 'pending' &&
             request.status !== 'approved_visit_scheduled' &&
             request.status !== 'approved_no_visit'
           ) {
@@ -1217,6 +1218,18 @@ export default function ClientProjectDetailPage() {
 
   useEffect(() => {
     if (!siteAccessData) return;
+    const normalizedDesiredStartDate = (() => {
+      const value = siteAccessData.desiredStartDate;
+      if (!value) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return '';
+      const shifted = new Date(parsed.getTime() + 8 * 60 * 60 * 1000);
+      const year = shifted.getUTCFullYear();
+      const month = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(shifted.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    })();
     setLocationDetailsForm((prev) => ({
       ...prev,
       addressFull: prev.addressFull || siteAccessData.addressFull || '',
@@ -1231,7 +1244,7 @@ export default function ClientProjectDetailPage() {
       accessHoursDescription: prev.accessHoursDescription || siteAccessData.accessHoursDescription || '',
       onSiteContactName: prev.onSiteContactName || siteAccessData.onSiteContactName || '',
       onSiteContactPhone: prev.onSiteContactPhone || siteAccessData.onSiteContactPhone || '',
-      desiredStartDate: prev.desiredStartDate || siteAccessData.desiredStartDate || '',
+      desiredStartDate: prev.desiredStartDate || normalizedDesiredStartDate,
     }));
   }, [siteAccessData]);
 

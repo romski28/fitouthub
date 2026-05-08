@@ -131,8 +131,9 @@ export function RequestSiteAccessModal({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/projects/${state.projectId}/site-access/status`,
+        `${API_BASE_URL}/projects/${state.projectId}/site-access/status?_ts=${Date.now()}`,
         {
+          cache: 'no-store',
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',

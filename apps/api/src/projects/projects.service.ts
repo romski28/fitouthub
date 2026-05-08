@@ -3840,7 +3840,7 @@ Please review the project details and respond with your quote or decline the inv
     const siteAccessApprovalMessage =
       approvedStatus === 'approved_no_visit'
         ? 'Client approved site access (no visit required).'
-        : `Client approved site access with a proposed visit on ${this.formatDateTime(effectiveScheduledAt)}.`;
+        : `Client approved site access with a proposed visit on ${this.formatHongKongDateTimeLabel(effectiveScheduledAt)}.`;
     const requestProjectStatus = (request.project?.status || '').toLowerCase();
     const routeApprovalToPrivate = requestProjectStatus === 'pending' || requestProjectStatus === 'approved';
 
@@ -3876,7 +3876,7 @@ Please review the project details and respond with your quote or decline the inv
 
         const notificationMessage = approvedStatus === 'approved_no_visit'
           ? `Good news! Your site access request for "${project?.projectName}" has been approved. No site visit required.`
-          : `Good news! Your site access request for "${project?.projectName}" has been approved with a scheduled visit on ${this.formatDateTime(effectiveScheduledAt)}.`;
+          : `Good news! Your site access request for "${project?.projectName}" has been approved with a scheduled visit on ${this.formatHongKongDateTimeLabel(effectiveScheduledAt)}.`;
 
         await this.notificationService.send({
           professionalId: professional.id,
@@ -4811,6 +4811,26 @@ Please review the project details and respond with your quote or decline the inv
       orderBy: { requestedAt: 'desc' },
     });
 
+    // Expose the latest request per professional so the client tab shows a single current row.
+    const latestRequestByProjectProfessional = new Map<string, (typeof requests)[number]>();
+    for (const request of requests) {
+      const existing = latestRequestByProjectProfessional.get(request.projectProfessionalId);
+      if (!existing) {
+        latestRequestByProjectProfessional.set(request.projectProfessionalId, request);
+        continue;
+      }
+      const requestMs = request.requestedAt ? new Date(request.requestedAt).getTime() : Number.NEGATIVE_INFINITY;
+      const existingMs = existing.requestedAt ? new Date(existing.requestedAt).getTime() : Number.NEGATIVE_INFINITY;
+      if (requestMs >= existingMs) {
+        latestRequestByProjectProfessional.set(request.projectProfessionalId, request);
+      }
+    }
+    const latestRequests = Array.from(latestRequestByProjectProfessional.values()).sort((a, b) => {
+      const aMs = a.requestedAt ? new Date(a.requestedAt).getTime() : Number.NEGATIVE_INFINITY;
+      const bMs = b.requestedAt ? new Date(b.requestedAt).getTime() : Number.NEGATIVE_INFINITY;
+      return bMs - aMs;
+    });
+
     const siteAccessData = await this.prisma.siteAccessData.findUnique({
       where: { projectId },
     });
@@ -4843,7 +4863,7 @@ Please review the project details and respond with your quote or decline the inv
 
     return {
       success: true,
-      requests,
+      requests: latestRequests,
       siteAccessData: mergedSiteAccessData,
     };
   }

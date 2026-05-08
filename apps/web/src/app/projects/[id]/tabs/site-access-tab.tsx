@@ -217,18 +217,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     () => new Set(acceptedVisits.map((v) => v.professional.id)),
     [acceptedVisits],
   );
-  // Professionals who already have a reschedule-required cancelled visit in otherVisits
-  // should not also appear as a request row (prevents double display after date change).
-  const professionalsWithRescheduleVisit = useMemo(
-    () =>
-      new Set(
-        otherVisits
-          .filter((v) => v.status === 'cancelled' && isRescheduleRequired(v.responseNotes))
-          .map((v) => v.professional.id),
-      ),
-    [otherVisits],
-  );
-
   const latestAccessRequestsByProfessional = useMemo(() => {
     const byProfessional = new Map<string, SiteAccessRequest>();
 
@@ -255,6 +243,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
     return Array.from(byProfessional.values());
   }, [siteAccessRequests]);
+  const professionalsWithLatestAccessRequest = useMemo(
+    () => new Set(latestAccessRequestsByProfessional.map((request) => request.professional.id)),
+    [latestAccessRequestsByProfessional],
+  );
 
   const pendingAccessRequests = useMemo(() => {
     return latestAccessRequestsByProfessional.filter((request) => {
@@ -262,7 +254,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       const isLikelyPending =
         !request.respondedAt &&
         (!status || status === 'requested' || status === 'pending' || status === 'awaiting_response');
-      return isLikelyPending && !professionalsWithPendingVisits.has(request.professional.id);
+      return (
+        isLikelyPending &&
+        !isRescheduleRequired(request.visitDetails) &&
+        !professionalsWithPendingVisits.has(request.professional.id)
+      );
     });
   }, [latestAccessRequestsByProfessional, professionalsWithPendingVisits]);
   const acceptedAccessRequests = useMemo(() => {
@@ -277,16 +273,29 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       const isAccepted =
         !!request.respondedAt &&
         (status === 'approved_no_visit' || status === 'approved_visit_scheduled' || status === 'visited');
+      const isReschedule = isRescheduleRequired(request.visitDetails);
       return (
-        isAccepted &&
+        (isAccepted || isReschedule) &&
         !professionalsWithPendingVisits.has(request.professional.id) &&
-        !professionalsWithAcceptedVisits.has(request.professional.id) &&
-        !professionalsWithRescheduleVisit.has(request.professional.id)
+        !professionalsWithAcceptedVisits.has(request.professional.id)
       );
     }).sort((a, b) => toRequestTime(a) - toRequestTime(b));
-  }, [latestAccessRequestsByProfessional, professionalsWithPendingVisits, professionalsWithAcceptedVisits, professionalsWithRescheduleVisit]);
+  }, [latestAccessRequestsByProfessional, professionalsWithPendingVisits, professionalsWithAcceptedVisits]);
+  const visibleOtherVisits = useMemo(() => {
+    return otherVisits.filter((visit) => {
+      if (!isRescheduleRequired(visit.responseNotes)) {
+        return true;
+      }
+      // If a newer access request exists for this professional, hide stale cancelled-reschedule visit rows.
+      return !professionalsWithLatestAccessRequest.has(visit.professional.id);
+    });
+  }, [otherVisits, professionalsWithLatestAccessRequest]);
   const hasVisitOrRequestItems =
-    siteVisits.length > 0 || pendingAccessRequests.length > 0 || acceptedAccessRequests.length > 0;
+    visibleOtherVisits.length > 0 ||
+    pendingVisits.length > 0 ||
+    acceptedVisits.length > 0 ||
+    pendingAccessRequests.length > 0 ||
+    acceptedAccessRequests.length > 0;
 
   // Address panel is open when: explicitly expanded, OR auto (null) and address is incomplete
   const addressOpen = addressExpanded !== null ? addressExpanded : !hasBasicLocation;
@@ -590,7 +599,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             );
           })}
 
-          {otherVisits.map((visit) => {
+          {visibleOtherVisits.map((visit) => {
             const name =
               visit.professional.fullName ||
               visit.professional.businessName ||

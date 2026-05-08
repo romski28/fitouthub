@@ -542,9 +542,10 @@ export default function ProjectDetailPage() {
       setSiteAccessError(null);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/projects/${project.project.id}/site-access/status`,
+          `${API_BASE_URL}/projects/${project.project.id}/site-access/status?_ts=${Date.now()}`,
           {
             method: 'GET',
+            cache: 'no-store',
             headers: {
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json',

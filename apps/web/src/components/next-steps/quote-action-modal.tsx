@@ -156,14 +156,21 @@ export function QuoteActionModal({
         // Check whether this professional already has an active site access request
         if (inspectionDateRaw && state.projectId) {
           try {
-            const accessRes = await fetch(`${API_BASE_URL}/projects/${state.projectId}/site-access/status`, {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            });
+            const accessRes = await fetch(
+              `${API_BASE_URL}/projects/${state.projectId}/site-access/status?_ts=${Date.now()}`,
+              {
+                cache: 'no-store',
+                headers: { Authorization: `Bearer ${accessToken}` },
+              },
+            );
             if (accessRes.ok) {
               const accessData = await accessRes.json();
+              const rescheduleRequired =
+                typeof accessData?.visitDetails === 'string' &&
+                accessData.visitDetails.includes('Site availability changed to');
               const activeStatuses = ['pending', 'approved_no_visit', 'approved_visit_scheduled', 'visited'];
               setHasPendingSiteAccessRequest(
-                activeStatuses.includes(accessData?.requestStatus)
+                activeStatuses.includes(accessData?.requestStatus) && !rescheduleRequired
               );
             }
           } catch {
