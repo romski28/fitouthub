@@ -126,7 +126,10 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   );
   const requestStatus = (siteAccessStatus?.requestStatus || 'none').toLowerCase();
   const isPending = requestStatus === 'pending';
-  const isBooked = requestStatus === 'approved_visit_scheduled' || requestStatus === 'visited';
+  const isBooked =
+    requestStatus === 'approved_visit_scheduled' ||
+    requestStatus === 'approved_no_visit' ||
+    requestStatus === 'visited';
   const isNotAvailable = !offeredInspectionDate;
   const isNotRequested =
     !backendRescheduleRequired &&

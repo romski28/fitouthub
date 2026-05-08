@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-08-eacd955",
+    "date": "2026-05-08T09:51:25+08:00",
+    "title": "fix(professional): include approved_no_visit in site inspection Booked state",
+    "summary": "fix(professional): include approved_no_visit in site inspection Booked state",
+    "areas": [
+      "web"
+    ],
+    "commit": "eacd955",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-08-faa0d34",
     "date": "2026-05-08T09:44:18+08:00",
     "title": "fix(professional): correct site inspection badge priority — not available only when no date offered",
