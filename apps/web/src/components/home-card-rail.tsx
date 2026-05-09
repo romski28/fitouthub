@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 
 const DISMISSED_VERSION_KEY = 'home-card-rail-dismissed-version';
@@ -52,6 +52,10 @@ export function HomeCardRail() {
   const [cards, setCards] = useState<HomeRailCard[]>(fallbackCards);
   const [version, setVersion] = useState('home-rail-v1:fallback');
   const [dismissed, setDismissed] = useState(false);
+  const [showDesktopNav, setShowDesktopNav] = useState(false);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(true);
+  const railRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -93,6 +97,52 @@ export function HomeCardRail() {
     setDismissed(true);
   };
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(pointer: fine) and (hover: hover)');
+
+    const updateNavVisibility = () => {
+      setShowDesktopNav(mediaQuery.matches);
+    };
+
+    updateNavVisibility();
+    mediaQuery.addEventListener('change', updateNavVisibility);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateNavVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+
+    const updateScrollState = () => {
+      const maxScrollLeft = rail.scrollWidth - rail.clientWidth;
+      setCanScrollPrev(rail.scrollLeft > 2);
+      setCanScrollNext(rail.scrollLeft < maxScrollLeft - 2);
+    };
+
+    updateScrollState();
+    rail.addEventListener('scroll', updateScrollState);
+    window.addEventListener('resize', updateScrollState);
+
+    return () => {
+      rail.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [cards]);
+
+  const scrollRailByPage = (direction: 'prev' | 'next') => {
+    const rail = railRef.current;
+    if (!rail) return;
+
+    const distance = rail.clientWidth;
+    rail.scrollBy({
+      left: direction === 'next' ? distance : -distance,
+      behavior: 'smooth',
+    });
+  };
+
   if (dismissed) {
     return null;
   }
@@ -110,7 +160,33 @@ export function HomeCardRail() {
             X
           </button>
 
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {showDesktopNav && cards.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => scrollRailByPage('prev')}
+                disabled={!canScrollPrev}
+                className="absolute left-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/85 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous highlight"
+              >
+                <span aria-hidden>‹</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollRailByPage('next')}
+                disabled={!canScrollNext}
+                className="absolute right-10 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/85 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next highlight"
+              >
+                <span aria-hidden>›</span>
+              </button>
+            </>
+          ) : null}
+
+          <div
+            ref={railRef}
+            className="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             {cards.map((card) => (
               <a
                 key={card.id}
