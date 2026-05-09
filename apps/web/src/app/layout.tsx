@@ -15,6 +15,7 @@ import { FooterWrapper } from "@/components/footer-wrapper";
 import CornerRibbon from "@/components/corner-ribbon";
 import FloatingChat from "@/components/floating-chat";
 import { MainWrapper } from "@/components/main-wrapper";
+import { AdminFab } from "@/components/admin-fab";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -69,6 +70,7 @@ export default async function RootLayout({
                 <ModalDispatcher />
                 <CornerRibbon />
                 <FloatingChat />
+                <AdminFab />
                 </NextStepModalProvider>
               </AuthModalControlProvider>
             </ProfessionalAuthProvider>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-09-1097dbe",
+    "date": "2026-05-09T16:17:48+08:00",
+    "title": "feat(web): add floating admin FAB to toggle between admin panel and platform",
+    "summary": "feat(web): add floating admin FAB to toggle between admin panel and platform",
+    "areas": [
+      "web"
+    ],
+    "commit": "1097dbe",
+    "files": [
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/components/admin-fab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-3bad198",
     "date": "2026-05-09T16:05:24+08:00",
     "title": "style(home): refine hero/card rail spacing and panel treatments",
