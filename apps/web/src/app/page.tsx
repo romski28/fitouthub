@@ -97,28 +97,28 @@ export default function Home() {
                   Move In, Move Out, and everything in between.
                 </p>
 
-                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2">
                   <Link
                     href="/login"
-                    className="rounded-xl border border-slate-900 bg-slate-900 px-4 py-3 text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-slate-800"
+                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-900 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-slate-800"
                   >
                     You got an account? Login
                   </Link>
                   <Link
                     href="/get-started"
-                    className="rounded-xl border border-[#F97362] bg-[#F97362] px-4 py-3 text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-[#e8624f]"
+                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-[#F97362] bg-[#F97362] px-4 py-3 text-center text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-[#e8624f]"
                   >
                     Ready to book a project? Join
                   </Link>
                   <a
                     href="#project-prompt"
-                    className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-emerald-400 hover:text-emerald-700"
+                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-emerald-400 hover:text-emerald-700"
                   >
                     Want to play with our AI?
                   </a>
                   <a
                     href="#why-choose-us"
-                    className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-500"
+                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-500"
                   >
                     Want to know more about Mimo?
                   </a>
