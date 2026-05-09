@@ -104,7 +104,7 @@ export function HomeCardRail() {
           <button
             type="button"
             onClick={closeRail}
-            className="absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-slate-500 transition hover:bg-white hover:text-slate-700"
+            className="absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#F97362] text-white transition hover:bg-[#ef5f4b]"
             aria-label="Close highlights"
           >
             X
@@ -115,7 +115,7 @@ export function HomeCardRail() {
               <a
                 key={card.id}
                 href={card.ctaHref}
-                className="group flex h-[10vh] min-h-[72px] max-h-[96px] min-w-[320px] snap-start overflow-hidden rounded-xl border border-white/55 bg-white/95 pr-2 shadow-sm shadow-black/10 sm:min-w-[360px]"
+                className="group flex h-[10vh] min-h-[72px] max-h-[96px] w-full min-w-full snap-start overflow-hidden rounded-xl border border-white/55 bg-white/95 pr-2 shadow-sm shadow-black/10"
               >
                 <div className="h-full aspect-square overflow-hidden bg-slate-100">
                   <img

@@ -44,7 +44,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[#1a1a1a]/44" />
       </div>
 
-      <div className="space-y-12 pb-8">
+      <div className="space-y-12 pb-8 pt-4">
         <HomeCardRail />
 
         {/* Updates Button - Only for logged-in users (client or professional) */}
@@ -57,32 +57,34 @@ export default function Home() {
         {/* Search Flow - Single entry point for all users */}
         <section
           id="project-prompt"
-          className="relative -mx-6 rounded-b-3xl border-b border-white/45 bg-[#F5EEDE] px-6 py-12"
+          className="relative -mx-6 px-6"
         >
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
-            <div className="order-2 max-w-2xl lg:order-2">
-              <div className="mb-8 text-center lg:text-left">
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                  {t('quickStart.tagline')}
-                </p>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {t('quickStart.title')}
-                </h2>
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-b-3xl border-b border-white/45 bg-[#F5EEDE] py-12">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
+              <div className="order-2 max-w-2xl lg:order-2">
+                <div className="mb-8 text-center lg:text-left">
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    {t('quickStart.tagline')}
+                  </p>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {t('quickStart.title')}
+                  </h2>
+                </div>
+                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resultsPortalId="ai-results-portal" />
               </div>
-              <SearchFlow autoFocusPrompt={shouldFocusPrompt} resultsPortalId="ai-results-portal" />
-            </div>
 
-            <div className="order-1 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm lg:order-1 lg:mt-2">
-              <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
-                <video
-                  className="h-full w-full"
-                  src="/assets/video/FitOut-Hub-CIP-Animation-v2.mp4"
-                  controls
-                  preload="metadata"
-                />
-              </div>
-              <div className="mt-3 text-sm text-slate-700">
-                What is FitOut Hub and why you should use it - see Sarah&rsquo;s story.
+              <div className="order-1 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm lg:order-1 lg:mt-2">
+                <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
+                  <video
+                    className="h-full w-full"
+                    src="/assets/video/FitOut-Hub-CIP-Animation-v2.mp4"
+                    controls
+                    preload="metadata"
+                  />
+                </div>
+                <div className="mt-3 text-sm text-slate-700">
+                  What is FitOut Hub and why you should use it - see Sarah&rsquo;s story.
+                </div>
               </div>
             </div>
           </div>
@@ -99,9 +101,9 @@ export default function Home() {
         </section>
 
         {/* Hero Section */}
-        <section className="relative -mx-6 overflow-hidden rounded-t-3xl border-y border-white/45 bg-[#F5EEDE] px-6">
+        <section className="-mx-6 px-6">
           <div className="mx-auto max-w-6xl">
-            <div className="relative overflow-hidden rounded-b-2xl">
+            <div className="relative overflow-hidden rounded-t-3xl rounded-b-2xl border-y border-white/45 bg-[#F5EEDE]">
               <div
                 className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
                 style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}

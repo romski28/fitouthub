@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-09-7ec5e89",
+    "date": "2026-05-09T15:52:34+08:00",
+    "title": "style(home): align panel widths and single-card rail with coral close",
+    "summary": "style(home): align panel widths and single-card rail with coral close",
+    "areas": [
+      "web"
+    ],
+    "commit": "7ec5e89",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/home-card-rail.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-c10d48a",
     "date": "2026-05-09T15:46:00+08:00",
     "title": "feat(admin): replace ticker editor with home card rail manager",
