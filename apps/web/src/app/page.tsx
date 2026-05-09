@@ -142,14 +142,14 @@ export default function Home() {
         </section>
 
         {/* Hero Section */}
-        <section className="relative overflow-hidden rounded-2xl border border-white/50 bg-white">
+        <section className="relative overflow-hidden rounded-2xl border border-white/50 bg-amber-50">
           <div
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat opacity-45 lg:block"
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
             style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
           />
           <div className="relative p-8 lg:p-12">
             <div
-              className="max-w-2xl rounded-xl bg-white p-4 space-y-4 text-slate-800 sm:p-5"
+              className="max-w-2xl rounded-xl bg-amber-50 p-4 space-y-4 text-slate-800 sm:p-5"
               style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}
             >
               <div>

@@ -73,7 +73,7 @@ function ThinkingIndicator() {
   }, []);
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-white/90 p-4" aria-live="polite">
+    <div className="rounded-lg border border-emerald-200 bg-amber-50 p-4" aria-live="polite">
       <div className="flex items-center gap-3">
         <div className="flex items-end gap-1" aria-hidden="true">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
@@ -141,7 +141,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
   })();
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-white p-4 space-y-3 text-sm">
+    <div className="rounded-lg border border-emerald-200 bg-amber-50 p-4 space-y-3 text-sm">
       {/* Title */}
       {s.title && (
         <h3 className="font-bold text-slate-900 text-base leading-tight">{s.title}</h3>

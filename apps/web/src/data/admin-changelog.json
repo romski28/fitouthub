@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-09-8897a3c",
+    "date": "2026-05-09T11:50:38+08:00",
+    "title": "style(web): cream bg for hero and AI panels, restore hero image to full opacity",
+    "summary": "style(web): cream bg for hero and AI panels, restore hero image to full opacity",
+    "areas": [
+      "web"
+    ],
+    "commit": "8897a3c",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-bbc6008",
     "date": "2026-05-09T11:46:39+08:00",
     "title": "style(web): set AI panel to 90% opaque and make fitout panels fully opaque",
