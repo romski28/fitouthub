@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-09-13d43e5",
+    "date": "2026-05-09T11:39:09+08:00",
+    "title": "fix(web): restore home navbar visibility and reduce panel translucency",
+    "summary": "fix(web): restore home navbar visibility and reduce panel translucency",
+    "areas": [
+      "web"
+    ],
+    "commit": "13d43e5",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-c35d097",
     "date": "2026-05-09T11:32:46+08:00",
     "title": "feat(web): add fixed home wallpaper and translucent home navbar",

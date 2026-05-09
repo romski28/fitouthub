@@ -43,8 +43,8 @@ export const Navbar: React.FC = () => {
       <header
         className={
           isHomePath
-            ? 'border-b border-slate-200/80 bg-white/70 backdrop-blur-md'
-            : 'border-b border-slate-200 bg-white'
+            ? 'relative z-40 border-b border-slate-200/80 bg-white/70 backdrop-blur-md'
+            : 'relative z-40 border-b border-slate-200 bg-white'
         }
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
