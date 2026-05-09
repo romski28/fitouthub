@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-6cd831e",
+    "date": "2026-05-09T22:51:15+08:00",
+    "title": "style(home): polish welcome panel hierarchy, copy, and rotating greeting motion",
+    "summary": "style(home): polish welcome panel hierarchy, copy, and rotating greeting motion",
+    "areas": [
+      "web"
+    ],
+    "commit": "6cd831e",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-e7b5eec",
     "date": "2026-05-09T16:39:01+08:00",
     "title": "fix(home): apply full rounded corners to top search hero panel",
