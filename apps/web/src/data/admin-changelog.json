@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-6385cbd",
+    "date": "2026-05-09T23:54:36+08:00",
+    "title": "style(home): set inactive feature tabs to 10% translucent white",
+    "summary": "style(home): set inactive feature tabs to 10% translucent white",
+    "areas": [
+      "web"
+    ],
+    "commit": "6385cbd",
+    "files": [
+      "apps/web/src/components/information-section.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-30c128c",
     "date": "2026-05-09T23:51:48+08:00",
     "title": "style(home): separate feature tabs from panel and add hover nudge",

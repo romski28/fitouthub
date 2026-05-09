@@ -138,7 +138,7 @@ export default function InformationSection() {
             className={`rounded-lg border px-6 py-3 font-semibold transition-all duration-200 hover:-translate-y-1 ${
               activeTab === tab.id
                 ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
-                : 'border-slate-300 bg-transparent text-slate-700 hover:border-slate-400 hover:bg-white/50'
+                : 'border-slate-300 bg-white/10 text-slate-700 hover:border-slate-400 hover:bg-white/20'
             }`}
           >
             {tab.label}
