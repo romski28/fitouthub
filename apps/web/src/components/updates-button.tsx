@@ -218,7 +218,7 @@ export function UpdatesButton({ className = '', onSummaryChange }: UpdatesButton
           backgroundColor: hasUpdates ? colors.primary : colors.successBg,
           color: hasUpdates ? colors.background : colors.success,
         }}
-        className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-200 hover:shadow-xl ${className}`}
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-200 hover:shadow-xl bell-wiggle ${className}`}
         title={
           loading && !summary
             ? 'Loading messages…'
@@ -255,6 +255,21 @@ export function UpdatesButton({ className = '', onSummaryChange }: UpdatesButton
           onSummaryChange?.(nextSummary);
         }}
       />
+
+      <style jsx>{`
+        @keyframes bell-wink {
+          0%, 80%, 100% { transform: rotate(0deg) scale(1); }
+          85% { transform: rotate(-8deg) scale(1.06); }
+          90% { transform: rotate(8deg) scale(1.06); }
+          95% { transform: rotate(0deg) scale(1.1); }
+        }
+        .bell-wiggle {
+          animation: bell-wink 3.2s ease-in-out infinite;
+        }
+        .bell-wiggle:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </>
   );
 }

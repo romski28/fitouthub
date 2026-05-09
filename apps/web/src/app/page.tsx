@@ -43,9 +43,9 @@ export default function Home() {
       <div className="space-y-6 pb-8 pt-4">
         <HomeCardRail />
 
-        {/* Updates Button - Only for logged-in users (client or professional) */}
+        {/* Updates Button — fixed right for thumb access, same as project list pages */}
         {hydrated && (isLoggedIn || profIsLoggedIn) && (
-          <div className="flex justify-center pt-2">
+          <div className="fixed bottom-[260px] right-6 z-30">
             <UpdatesButton />
           </div>
         )}
@@ -99,7 +99,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="-mx-6 px-6">
           <div className="mx-auto max-w-6xl">
-            <div className="relative overflow-hidden rounded-t-3xl rounded-b-2xl border-y border-white/45 bg-[#F5EEDE]">
+            <div className="relative overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]">
               <div
                 className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
                 style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
