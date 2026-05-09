@@ -98,29 +98,27 @@ export default function Home() {
 
         {/* Hero Section */}
         <section className="-mx-6 px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="relative overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]">
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
+              style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
+            />
+            <div className="relative p-8 sm:px-10 lg:px-12 lg:py-12">
               <div
-                className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
-                style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
-              />
-              <div className="relative p-8 sm:px-10 lg:px-12 lg:py-12">
-                <div
-                  className="max-w-2xl rounded-xl bg-white p-4 space-y-4 text-slate-800 sm:p-5"
-                  style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}
-                >
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 sm:text-sm">
-                      {t('hero.tagline')}
-                    </p>
-                    <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
-                      {t('hero.title')}
-                    </h1>
-                  </div>
-                  <p className="text-sm text-slate-700 sm:text-base lg:text-lg">
-                    {t('hero.description')}
+                className="max-w-2xl rounded-xl bg-white p-4 space-y-4 text-slate-800 sm:p-5"
+                style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}
+              >
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 sm:text-sm">
+                    {t('hero.tagline')}
                   </p>
+                  <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+                    {t('hero.title')}
+                  </h1>
                 </div>
+                <p className="text-sm text-slate-700 sm:text-base lg:text-lg">
+                  {t('hero.description')}
+                </p>
               </div>
             </div>
           </div>
