@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-166e970",
+    "date": "2026-05-09T22:58:46+08:00",
+    "title": "fix(home): point Join CTA to get-started and default welcome actions to 2-column grid",
+    "summary": "fix(home): point Join CTA to get-started and default welcome actions to 2-column grid",
+    "areas": [
+      "web"
+    ],
+    "commit": "166e970",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-6cd831e",
     "date": "2026-05-09T22:51:15+08:00",
     "title": "style(home): polish welcome panel hierarchy, copy, and rotating greeting motion",

@@ -97,7 +97,7 @@ export default function Home() {
                   Move In, Move Out, and everything in between.
                 </p>
 
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                   <Link
                     href="/login"
                     className="rounded-xl border border-slate-900 bg-slate-900 px-4 py-3 text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-slate-800"
@@ -105,7 +105,7 @@ export default function Home() {
                     You got an account? Login
                   </Link>
                   <Link
-                    href="/join"
+                    href="/get-started"
                     className="rounded-xl border border-[#F97362] bg-[#F97362] px-4 py-3 text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-[#e8624f]"
                   >
                     Ready to book a project? Join
