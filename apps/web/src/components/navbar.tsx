@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -19,6 +19,8 @@ export const Navbar: React.FC = () => {
     logout: profLogout,
   } = useProfessionalAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isHomePath = pathname === '/';
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -38,7 +40,13 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="border-b border-slate-200 bg-white">
+      <header
+        className={
+          isHomePath
+            ? 'border-b border-slate-200/80 bg-white/70 backdrop-blur-md'
+            : 'border-b border-slate-200 bg-white'
+        }
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
           {/* Logo */}
           <Link
