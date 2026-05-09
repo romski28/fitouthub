@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-09-89dcd7b",
+    "date": "2026-05-09T15:41:38+08:00",
+    "title": "style(home): compact card rail with dismiss-by-version and aligned hero width",
+    "summary": "style(home): compact card rail with dismiss-by-version and aligned hero width",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "89dcd7b",
+    "files": [
+      "apps/api/src/announcements/announcements.service.ts",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/home-card-rail.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-b3e22e5",
     "date": "2026-05-09T15:30:01+08:00",
     "title": "feat(home): replace ticker with DB-driven image rail and cream panel refinements",

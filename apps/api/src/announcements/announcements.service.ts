@@ -14,6 +14,7 @@ type HomeRailCardRow = {
   ctaLabel: string;
   ctaHref: string;
   displayOrder: number;
+  updatedAt: Date;
 };
 
 @Injectable()
@@ -30,7 +31,8 @@ export class AnnouncementsService {
           image_url AS "imageUrl",
           cta_label AS "ctaLabel",
           cta_href AS "ctaHref",
-          display_order AS "displayOrder"
+          display_order AS "displayOrder",
+          updated_at AS "updatedAt"
         FROM home_card_rail
         WHERE is_active = true
           AND (starts_at IS NULL OR starts_at <= NOW())
@@ -38,11 +40,32 @@ export class AnnouncementsService {
         ORDER BY display_order ASC, created_at ASC
       `;
 
-      return rows;
+      const versionSource = rows
+        .map(
+          (row) =>
+            [row.id, row.displayOrder, row.updatedAt.toISOString()].join(':'),
+        )
+        .join('|');
+
+      const version = `home-rail-v1:${versionSource}`;
+
+      return {
+        version,
+        cards: rows.map((row) => ({
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          imageUrl: row.imageUrl,
+          ctaLabel: row.ctaLabel,
+          ctaHref: row.ctaHref,
+          displayOrder: row.displayOrder,
+          updatedAt: row.updatedAt.toISOString(),
+        })),
+      };
     } catch (error: any) {
       // If the manual SQL table has not been created yet, return an empty list.
       if (error?.code === '42P01') {
-        return [];
+        return { version: 'home-rail-v1:empty', cards: [] };
       }
       throw error;
     }

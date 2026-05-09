@@ -99,9 +99,9 @@ export default function Home() {
         </section>
 
         {/* Hero Section */}
-        <section className="-mx-6 px-6">
+        <section className="relative -mx-6 overflow-hidden rounded-t-3xl border-y border-white/45 bg-[#F5EEDE] px-6">
           <div className="mx-auto max-w-6xl">
-            <div className="relative overflow-hidden rounded-t-3xl rounded-b-2xl border border-white/50 bg-[#F5EEDE]">
+            <div className="relative overflow-hidden rounded-b-2xl">
               <div
                 className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
                 style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
