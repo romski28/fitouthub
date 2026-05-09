@@ -55,7 +55,7 @@ export default function Home() {
           id="project-prompt"
           className="relative -mx-6 px-6"
         >
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-b-3xl border-b border-white/45 bg-[#F5EEDE] py-12">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-12">
             <div className="grid grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:items-start">
               <div className="order-2 max-w-2xl lg:order-2">
                 <div className="mb-8 text-center lg:text-left">

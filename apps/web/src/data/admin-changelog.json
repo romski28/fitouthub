@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-e7b5eec",
+    "date": "2026-05-09T16:39:01+08:00",
+    "title": "fix(home): apply full rounded corners to top search hero panel",
+    "summary": "fix(home): apply full rounded corners to top search hero panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "e7b5eec",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-ff2aca8",
     "date": "2026-05-09T16:33:59+08:00",
     "title": "fix(home): collapse hero wrapper so rounded-3xl applies to constrained element",
