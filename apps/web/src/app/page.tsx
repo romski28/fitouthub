@@ -24,13 +24,9 @@ export default function Home() {
     setHydrated(true);
   }, []);
 
-  // Redirect admins to admin area; professionals to their dashboard
+  // Redirect professionals to their dashboard
   useEffect(() => {
     if (!hydrated) return;
-    if (user?.role === 'admin') {
-      router.replace('/admin');
-      return;
-    }
     if (profIsLoggedIn && !user) {
       router.replace('/professional-projects');
       return;

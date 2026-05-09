@@ -17,7 +17,7 @@ export function AdminFab() {
       type="button"
       onClick={() => router.push(isInAdmin ? '/' : '/admin')}
       title={isInAdmin ? 'Back to platform' : 'Open admin panel'}
-      className="fixed right-4 top-24 z-50 flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 transition hover:bg-slate-700 active:scale-95"
+      className="fixed right-4 top-24 z-50 flex items-center gap-2 rounded-full bg-[#F97362] px-4 py-2 text-sm font-semibold text-[#F5EEDE] shadow-lg ring-1 ring-[#F97362]/30 transition hover:bg-[#e8624f] active:scale-95"
     >
       {isInAdmin ? (
         <>
