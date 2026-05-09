@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-ce3bf1f",
+    "date": "2026-05-09T23:15:53+08:00",
+    "title": "style(home): place welcome panel above card rail",
+    "summary": "style(home): place welcome panel above card rail",
+    "areas": [
+      "web"
+    ],
+    "commit": "ce3bf1f",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-c93928c",
     "date": "2026-05-09T23:02:13+08:00",
     "title": "style(home): cap welcome actions at two columns with centered full-tile labels",
