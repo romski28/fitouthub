@@ -44,7 +44,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[#1a1a1a]/44" />
       </div>
 
-      <div className="space-y-12 pb-8 pt-4">
+      <div className="space-y-6 pb-8 pt-4">
         <HomeCardRail />
 
         {/* Updates Button - Only for logged-in users (client or professional) */}
@@ -60,7 +60,7 @@ export default function Home() {
           className="relative -mx-6 px-6"
         >
           <div className="mx-auto max-w-6xl overflow-hidden rounded-b-3xl border-b border-white/45 bg-[#F5EEDE] py-12">
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
+            <div className="grid grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:items-start">
               <div className="order-2 max-w-2xl lg:order-2">
                 <div className="mb-8 text-center lg:text-left">
                   <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
@@ -73,7 +73,7 @@ export default function Home() {
                 <SearchFlow autoFocusPrompt={shouldFocusPrompt} resultsPortalId="ai-results-portal" />
               </div>
 
-              <div className="order-1 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm lg:order-1 lg:mt-2">
+              <div className="order-1 rounded-2xl p-4 lg:order-1 lg:mt-2">
                 <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
                   <video
                     className="h-full w-full"
@@ -108,7 +108,7 @@ export default function Home() {
                 className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
                 style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
               />
-              <div className="relative p-8 lg:p-12">
+              <div className="relative p-8 sm:px-10 lg:px-12 lg:py-12">
                 <div
                   className="max-w-2xl rounded-xl bg-white p-4 space-y-4 text-slate-800 sm:p-5"
                   style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}

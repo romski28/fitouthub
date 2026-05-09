@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-09-3bad198",
+    "date": "2026-05-09T16:05:24+08:00",
+    "title": "style(home): refine hero/card rail spacing and panel treatments",
+    "summary": "style(home): refine hero/card rail spacing and panel treatments",
+    "areas": [
+      "web"
+    ],
+    "commit": "3bad198",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/home-card-rail.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-7ec5e89",
     "date": "2026-05-09T15:52:34+08:00",
     "title": "style(home): align panel widths and single-card rail with coral close",
