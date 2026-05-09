@@ -73,7 +73,7 @@ function ThinkingIndicator() {
   }, []);
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-white/80 p-4" aria-live="polite">
+    <div className="rounded-lg border border-emerald-200 bg-white/90 p-4" aria-live="polite">
       <div className="flex items-center gap-3">
         <div className="flex items-end gap-1" aria-hidden="true">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
@@ -771,7 +771,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} />
 
       {(() => { const _panel = !deepSeekSandboxEnabled ? null : (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 text-xs text-slate-700 space-y-2">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 p-3 text-xs text-slate-700 space-y-2">
           {/* Mode toggle */}
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold text-slate-700">Mode</span>

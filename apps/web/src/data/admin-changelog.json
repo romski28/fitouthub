@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-09-bbc6008",
+    "date": "2026-05-09T11:46:39+08:00",
+    "title": "style(web): set AI panel to 90% opaque and make fitout panels fully opaque",
+    "summary": "style(web): set AI panel to 90% opaque and make fitout panels fully opaque",
+    "areas": [
+      "web"
+    ],
+    "commit": "bbc6008",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-13d43e5",
     "date": "2026-05-09T11:39:09+08:00",
     "title": "fix(web): restore home navbar visibility and reduce panel translucency",
