@@ -185,13 +185,13 @@ export function HomeCardRail() {
 
           <div
             ref={railRef}
-            className="flex snap-x snap-mandatory gap-3 overflow-x-auto lg:px-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {cards.map((card) => (
               <a
                 key={card.id}
                 href={card.ctaHref}
-                className="group flex h-[10vh] min-h-[72px] max-h-[96px] w-full min-w-full snap-start overflow-hidden rounded-xl border border-white/55 bg-[#F5EEDE] pr-2 shadow-sm shadow-black/10"
+                className="group flex h-[10vh] min-h-[72px] max-h-[96px] w-full min-w-full snap-start overflow-hidden rounded-xl border border-white/55 bg-[#F5EEDE] pr-2 shadow-sm shadow-black/10 lg:px-12"
               >
                 <div className="h-full aspect-square overflow-hidden bg-slate-100">
                   <img

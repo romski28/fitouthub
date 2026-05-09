@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-b664c4b",
+    "date": "2026-05-09T23:37:26+08:00",
+    "title": "fix(home): use internal desktop card padding to clear rail arrows",
+    "summary": "fix(home): use internal desktop card padding to clear rail arrows",
+    "areas": [
+      "web"
+    ],
+    "commit": "b664c4b",
+    "files": [
+      "apps/web/src/components/home-card-rail.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-43b3364",
     "date": "2026-05-09T23:33:31+08:00",
     "title": "style(home): add desktop rail side padding to clear nav arrows",
