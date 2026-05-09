@@ -16,6 +16,11 @@ import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 export class AnnouncementsController {
   constructor(private readonly announcementsService: AnnouncementsService) {}
 
+  @Get('home-rail')
+  getHomeRailCards() {
+    return this.announcementsService.getHomeRailCards();
+  }
+
   @Get('active')
   getActive() {
     return this.announcementsService.getActive();

@@ -6,9 +6,47 @@ import {
 import { PrismaService } from '../prisma.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 
+type HomeRailCardRow = {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  ctaLabel: string;
+  ctaHref: string;
+  displayOrder: number;
+};
+
 @Injectable()
 export class AnnouncementsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getHomeRailCards() {
+    try {
+      const rows = await this.prisma.$queryRaw<HomeRailCardRow[]>`
+        SELECT
+          id,
+          title,
+          description,
+          image_url AS "imageUrl",
+          cta_label AS "ctaLabel",
+          cta_href AS "ctaHref",
+          display_order AS "displayOrder"
+        FROM home_card_rail
+        WHERE is_active = true
+          AND (starts_at IS NULL OR starts_at <= NOW())
+          AND (ends_at IS NULL OR ends_at >= NOW())
+        ORDER BY display_order ASC, created_at ASC
+      `;
+
+      return rows;
+    } catch (error: any) {
+      // If the manual SQL table has not been created yet, return an empty list.
+      if (error?.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+  }
 
   async getActive() {
     return this.prisma.announcementTicker.findFirst({

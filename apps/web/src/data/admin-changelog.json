@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-09-b3e22e5",
+    "date": "2026-05-09T15:30:01+08:00",
+    "title": "feat(home): replace ticker with DB-driven image rail and cream panel refinements",
+    "summary": "feat(home): replace ticker with DB-driven image rail and cream panel refinements",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b3e22e5",
+    "files": [
+      "apps/api/sql/2026-05-09-home-card-rail.sql",
+      "apps/api/src/announcements/announcements.controller.ts",
+      "apps/api/src/announcements/announcements.service.ts",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/home-card-rail.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-8897a3c",
     "date": "2026-05-09T11:50:38+08:00",
     "title": "style(web): cream bg for hero and AI panels, restore hero image to full opacity",

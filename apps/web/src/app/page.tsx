@@ -8,14 +8,7 @@ import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
-import { API_BASE_URL } from '@/config/api';
-import { HomeAnnouncementTicker } from '@/components/home-announcement-ticker';
-
-type ActiveAnnouncement = {
-  id: string;
-  title?: string | null;
-  content: string;
-};
+import { HomeCardRail } from '@/components/home-card-rail';
 
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
@@ -23,7 +16,6 @@ export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [hydrated, setHydrated] = useState(false);
-  const [activeAnnouncement, setActiveAnnouncement] = useState<ActiveAnnouncement | null>(null);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
@@ -45,34 +37,6 @@ export default function Home() {
     }
   }, [hydrated, user, profIsLoggedIn, router]);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    if (isLoggedIn || profIsLoggedIn) {
-      setActiveAnnouncement(null);
-      return;
-    }
-
-    const loadAnnouncement = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/announcements/active`);
-        if (!res.ok) {
-          setActiveAnnouncement(null);
-          return;
-        }
-        const data = await res.json();
-        if (data?.content) {
-          setActiveAnnouncement(data);
-        } else {
-          setActiveAnnouncement(null);
-        }
-      } catch {
-        setActiveAnnouncement(null);
-      }
-    };
-
-    loadAnnouncement();
-  }, [hydrated, isLoggedIn, profIsLoggedIn]);
-
   return (
     <div className="relative isolate">
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
@@ -81,14 +45,7 @@ export default function Home() {
       </div>
 
       <div className="space-y-12 pb-8">
-        {hydrated && !isLoggedIn && !profIsLoggedIn && activeAnnouncement && (
-          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
-            <HomeAnnouncementTicker
-              title={activeAnnouncement.title}
-              content={activeAnnouncement.content}
-            />
-          </div>
-        )}
+        <HomeCardRail />
 
         {/* Updates Button - Only for logged-in users (client or professional) */}
         {hydrated && (isLoggedIn || profIsLoggedIn) && (
@@ -100,7 +57,7 @@ export default function Home() {
         {/* Search Flow - Single entry point for all users */}
         <section
           id="project-prompt"
-          className="relative -mx-6 rounded-b-3xl border-b border-white/45 bg-white px-6 py-12"
+          className="relative -mx-6 rounded-b-3xl border-b border-white/45 bg-[#F5EEDE] px-6 py-12"
         >
           <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
             <div className="order-2 max-w-2xl lg:order-2">
@@ -136,33 +93,37 @@ export default function Home() {
           id="ai-results-section"
           className="scroll-mt-20 -mx-6 px-6"
         >
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-6xl">
             <div id="ai-results-portal" />
           </div>
         </section>
 
         {/* Hero Section */}
-        <section className="relative overflow-hidden rounded-2xl border border-white/50 bg-amber-50">
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
-            style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
-          />
-          <div className="relative p-8 lg:p-12">
-            <div
-              className="max-w-2xl rounded-xl bg-amber-50 p-4 space-y-4 text-slate-800 sm:p-5"
-              style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}
-            >
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 sm:text-sm">
-                  {t('hero.tagline')}
-                </p>
-                <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
-                  {t('hero.title')}
-                </h1>
+        <section className="-mx-6 px-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative overflow-hidden rounded-t-3xl rounded-b-2xl border border-white/50 bg-[#F5EEDE]">
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
+                style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
+              />
+              <div className="relative p-8 lg:p-12">
+                <div
+                  className="max-w-2xl rounded-xl bg-white p-4 space-y-4 text-slate-800 sm:p-5"
+                  style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.35)' }}
+                >
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 sm:text-sm">
+                      {t('hero.tagline')}
+                    </p>
+                    <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+                      {t('hero.title')}
+                    </h1>
+                  </div>
+                  <p className="text-sm text-slate-700 sm:text-base lg:text-lg">
+                    {t('hero.description')}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-slate-700 sm:text-base lg:text-lg">
-                {t('hero.description')}
-              </p>
             </div>
           </div>
         </section>
