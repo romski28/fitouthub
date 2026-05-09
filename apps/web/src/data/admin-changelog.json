@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-485b2df",
+    "date": "2026-05-09T15:42:07+08:00",
+    "title": "chore(api): format home rail version mapping",
+    "summary": "chore(api): format home rail version mapping",
+    "areas": [
+      "api"
+    ],
+    "commit": "485b2df",
+    "files": [
+      "apps/api/src/announcements/announcements.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-09-89dcd7b",
     "date": "2026-05-09T15:41:38+08:00",
     "title": "style(home): compact card rail with dismiss-by-version and aligned hero width",

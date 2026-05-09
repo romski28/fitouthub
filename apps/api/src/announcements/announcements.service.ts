@@ -41,9 +41,8 @@ export class AnnouncementsService {
       `;
 
       const versionSource = rows
-        .map(
-          (row) =>
-            [row.id, row.displayOrder, row.updatedAt.toISOString()].join(':'),
+        .map((row) =>
+          [row.id, row.displayOrder, row.updatedAt.toISOString()].join(':'),
         )
         .join('|');
 
