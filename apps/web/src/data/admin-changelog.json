@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-85c2f7e",
+    "date": "2026-05-10T00:01:18+08:00",
+    "title": "style(home): inactive feature tabs white/90 with full-white hover",
+    "summary": "style(home): inactive feature tabs white/90 with full-white hover",
+    "areas": [
+      "web"
+    ],
+    "commit": "85c2f7e",
+    "files": [
+      "apps/web/src/components/information-section.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-6385cbd",
     "date": "2026-05-09T23:54:36+08:00",
     "title": "style(home): set inactive feature tabs to 10% translucent white",
