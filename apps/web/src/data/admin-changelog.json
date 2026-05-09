@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-09-30c128c",
+    "date": "2026-05-09T23:51:48+08:00",
+    "title": "style(home): separate feature tabs from panel and add hover nudge",
+    "summary": "style(home): separate feature tabs from panel and add hover nudge",
+    "areas": [
+      "web"
+    ],
+    "commit": "30c128c",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/information-section.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-521d266",
     "date": "2026-05-09T23:45:03+08:00",
     "title": "style(home): make features section cream rounded panel",

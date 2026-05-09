@@ -130,15 +130,15 @@ export default function InformationSection() {
   return (
     <section className="space-y-8">
       {/* Tab Buttons */}
-      <div className="flex flex-wrap gap-3 justify-center">
+      <div className="flex flex-wrap justify-center gap-3 bg-transparent">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
+            className={`rounded-lg border px-6 py-3 font-semibold transition-all duration-200 hover:-translate-y-1 ${
               activeTab === tab.id
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-gray-100 text-slate-700 hover:bg-gray-200'
+                ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
+                : 'border-slate-300 bg-transparent text-slate-700 hover:border-slate-400 hover:bg-white/50'
             }`}
           >
             {tab.label}
@@ -147,7 +147,7 @@ export default function InformationSection() {
       </div>
 
       {/* Content */}
-      <div className="space-y-6">
+      <div className="space-y-6 rounded-3xl border border-white/45 bg-[#F5EEDE] p-6 sm:p-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-slate-900">{currentContent.title}</h2>
           {currentContent.description && (
