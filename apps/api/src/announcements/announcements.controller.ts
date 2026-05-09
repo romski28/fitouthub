@@ -21,6 +21,20 @@ export class AnnouncementsController {
     return this.announcementsService.getHomeRailCards();
   }
 
+  @Get('home-rail/admin')
+  @UseGuards(AuthGuard('jwt'))
+  getHomeRailCardsAdmin(@Req() req: any) {
+    this.requireAdmin(req);
+    return this.announcementsService.getHomeRailCardsAdmin();
+  }
+
+  @Post('home-rail')
+  @UseGuards(AuthGuard('jwt'))
+  upsertHomeRailCard(@Req() req: any, @Body() dto: any) {
+    this.requireAdmin(req);
+    return this.announcementsService.upsertHomeRailCard(dto, req.user.id);
+  }
+
   @Get('active')
   getActive() {
     return this.announcementsService.getActive();
