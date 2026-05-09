@@ -221,8 +221,10 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section id="why-choose-us" className="scroll-mt-20">
-          <InformationSection />
+        <section id="why-choose-us" className="scroll-mt-20 -mx-6 px-6">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] p-6 sm:p-8">
+            <InformationSection />
+          </div>
         </section>
       </div>
     </div>

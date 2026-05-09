@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-521d266",
+    "date": "2026-05-09T23:45:03+08:00",
+    "title": "style(home): make features section cream rounded panel",
+    "summary": "style(home): make features section cream rounded panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "521d266",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-b664c4b",
     "date": "2026-05-09T23:37:26+08:00",
     "title": "fix(home): use internal desktop card padding to clear rail arrows",
