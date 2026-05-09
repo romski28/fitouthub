@@ -144,6 +144,8 @@ export default function Home() {
           }
         `}</style>
 
+        <HomeCardRail />
+
         {/* Search Flow - Single entry point for all users */}
         <section
           id="project-prompt"
@@ -195,8 +197,6 @@ export default function Home() {
           <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]">
             <div
               className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
-
-          <HomeCardRail />
               style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
             />
             <div className="relative p-8 sm:px-10 lg:px-12 lg:py-12">

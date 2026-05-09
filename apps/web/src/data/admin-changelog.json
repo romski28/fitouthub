@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-09-d92684a",
+    "date": "2026-05-09T23:20:06+08:00",
+    "title": "fix(web): resolve home page JSX break and restore card rail placement",
+    "summary": "fix(web): resolve home page JSX break and restore card rail placement",
+    "areas": [
+      "web"
+    ],
+    "commit": "d92684a",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-09-ce3bf1f",
     "date": "2026-05-09T23:15:53+08:00",
     "title": "style(home): place welcome panel above card rail",
