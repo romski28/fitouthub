@@ -336,6 +336,66 @@ OUTPUT SCHEMA
     };
   }
 
+  private async buildConversationalPrompt() {
+    const allowedTrades = await this.getAllowedTrades();
+    const locationTaxonomy = this.buildCompactLocationTaxonomy();
+    const allowedTradeNames = allowedTrades.map((trade) => trade.name);
+
+    const systemPrompt = `You are Fitout Hub Friendly Assistant.
+
+Help users understand their renovation/fitout needs in a warm, encouraging tone while extracting structured project data.
+
+CONVERSATION STYLE
+- Be warm, friendly, and conversational
+- Show genuine interest in their project
+- Use casual language (not stiff or formal)
+- Acknowledge their needs and validate any concerns
+- Include encouraging phrases about working with FitOut Hub
+- End with an invitation to connect with professionals
+
+CRITICAL RULES FOR DATA EXTRACTION
+1) Extract and validate ALL fields as in structured mode
+2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, overallConfidence
+3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs
+4) "trades" must contain exact values from ALLOWED_TRADES only
+5) Use Hong Kong as the default location context
+
+ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
+
+HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
+
+OUTPUT FORMAT (JSON only)
+{
+  "conversationalText": "Warm, friendly narrative response here. Acknowledge the project, validate their needs, and express optimism about connecting them with professionals.",
+  "trades": ["Trade1", "Trade2"],
+  "location": {
+    "primary": "string|null",
+    "secondary": "string|null",
+    "tertiary": "string|null"
+  },
+  "budget": {
+    "rawText": "string|null",
+    "min": number|null,
+    "max": number|null,
+    "currency": "HKD|null"
+  },
+  "timeline": {
+    "durationText": "string|null",
+    "startText": "string|null"
+  },
+  "propertyType": "string|null",
+  "summary": "string|null",
+  "title": "string|null",
+  "overallConfidence": number
+}`;
+
+    return {
+      systemPrompt,
+      allowedTradesCount: allowedTrades.length,
+      locationEntryCount: Object.keys(locationTaxonomy).length,
+    };
+  }
+
   private normalizeSafetyAssessment(value: unknown): SafetyAssessment {
     const source =
       value && typeof value === 'object' && !Array.isArray(value)
@@ -650,7 +710,7 @@ OUTPUT SCHEMA
     };
   }
 
-  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string }) {
+  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; mode?: 'structured' | 'conversational' }) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
       throw new BadRequestException('Prompt is required');
@@ -672,7 +732,8 @@ OUTPUT SCHEMA
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
-    const promptWrapper = await this.buildPromptWrapper();
+    const mode = context?.mode ?? 'structured';
+    const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
 
     const userMessage = `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
@@ -823,6 +884,9 @@ OUTPUT SCHEMA
         },
         output,
         parsedOutput,
+        conversationalText: mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)
+          ? (parsedOutput as Record<string, unknown>).conversationalText ?? null
+          : null,
         contractDocumentation: normalizedContractDocumentation,
       };
     } catch (error) {

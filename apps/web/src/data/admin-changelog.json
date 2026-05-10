@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-305a0cd",
+    "date": "2026-05-10T11:42:26+08:00",
+    "title": "fix(ai): make conversationalText mandatory in system prompt",
+    "summary": "fix(ai): make conversationalText mandatory in system prompt",
+    "areas": [
+      "api"
+    ],
+    "commit": "305a0cd",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-10-177f357",
     "date": "2026-05-10T11:35:12+08:00",
     "title": "fix(ai): detect non-logged-in state for conversational mode",
