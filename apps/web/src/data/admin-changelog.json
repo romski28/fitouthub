@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-10-44803c1",
+    "date": "2026-05-10T18:33:41+08:00",
+    "title": "ux(ai): visible streamed reply and rename prompt branding to Mimo",
+    "summary": "ux(ai): visible streamed reply and rename prompt branding to Mimo",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "44803c1",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-3efc8f8",
     "date": "2026-05-10T18:27:49+08:00",
     "title": "ux(ai): stronger word-reveal, coral trade chips, and inline Mimo count copy",

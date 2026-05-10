@@ -231,7 +231,7 @@ export class AiService {
     const locationTaxonomy = this.buildCompactLocationTaxonomy();
     const allowedTradeNames = allowedTrades.map((trade) => trade.name);
 
-    const systemPrompt = `You are Fitout Hub Intake Extractor.
+    const systemPrompt = `You are Mimo Intake Extractor.
 
 Convert a Hong Kong renovation or fitout request into strict JSON for routing and project setup.
 
@@ -341,7 +341,7 @@ OUTPUT SCHEMA
     const locationTaxonomy = this.buildCompactLocationTaxonomy();
     const allowedTradeNames = allowedTrades.map((trade) => trade.name);
 
-    const systemPrompt = `You are Fitout Hub Friendly Assistant.
+    const systemPrompt = `You are Mimo Friendly Assistant.
 
 Help users understand their renovation/fitout needs in a warm, encouraging tone while extracting structured project data.
 
@@ -350,7 +350,7 @@ CONVERSATION STYLE
 - Show genuine interest in their project
 - Use casual language (not stiff or formal)
 - Acknowledge their needs and validate any concerns
-- Include encouraging phrases about working with FitOut Hub
+- Include encouraging phrases about working with Mimo
 - End with an invitation to connect with professionals
 
 CRITICAL RULES FOR DATA EXTRACTION

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -249,27 +249,37 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   safetyAssessment: AiStructured['safetyAssessment'];
 }) {
   const { isLoggedIn } = useAuth();
+  const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
+  const [visibleWordCount, setVisibleWordCount] = useState(0);
 
-  const animatedWords = useMemo(() => {
-    const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
+  useEffect(() => {
+    if (words.length === 0) return;
 
-    return words
-      .reduce<{
-        totalDelayMs: number;
-        items: Array<{ id: string; word: string; delayMs: number }>;
-      }>(
-        (acc, word, index) => {
-          const stepMs = 70 + ((word.length * 11 + index * 17) % 110);
-          const nextDelay = acc.totalDelayMs + stepMs;
-          return {
-            totalDelayMs: nextDelay,
-            items: [...acc.items, { id: `${index}-${word}`, word, delayMs: nextDelay }],
-          };
-        },
-        { totalDelayMs: 0, items: [] },
-      )
-      .items;
-  }, [conversationalText]);
+    let cancelled = false;
+    let timeoutId: number | null = null;
+
+    const streamNextWord = () => {
+      if (cancelled) return;
+
+      setVisibleWordCount((current) => {
+        const next = Math.min(current + 1, words.length);
+        if (next < words.length && !cancelled) {
+          const delayMs = 60 + ((next * 31) % 95);
+          timeoutId = window.setTimeout(streamNextWord, delayMs);
+        }
+        return next;
+      });
+    };
+
+    timeoutId = window.setTimeout(streamNextWord, 130);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [words.length]);
 
   const mimoCountMsg = (() => {
     if (matchCount === null || matchLoading) return null;
@@ -295,37 +305,11 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       {conversationalText && (
         <div key={conversationalText}>
           <p className="text-base leading-relaxed text-slate-700">
-            {animatedWords.map((item) => (
-              <span
-                key={item.id}
-                className="word-reveal"
-                style={{ animationDelay: `${item.delayMs}ms` }}
-              >
-                {item.word}{' '}
-              </span>
-            ))}
+            {words.slice(0, visibleWordCount).join(' ')}
+            {visibleWordCount < words.length && (
+              <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse bg-slate-400 align-[-2px]" />
+            )}
           </p>
-          <style jsx>{`
-            .word-reveal {
-              opacity: 0;
-              display: inline-block;
-              will-change: transform, opacity;
-              animation: wordReveal 320ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-            }
-
-            @keyframes wordReveal {
-              0% {
-                opacity: 0;
-                filter: blur(2px);
-                transform: translateY(6px);
-              }
-              100% {
-                opacity: 1;
-                filter: blur(0);
-                transform: translateY(0);
-              }
-            }
-          `}</style>
         </div>
       )}
 
@@ -960,6 +944,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
           {!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText && (
                 <div className="space-y-3 pt-1">
               <AiConversationalView
+                    key={aiConversationalText}
                 conversationalText={aiConversationalText}
                 matchCount={aiMatchCount}
                 matchLoading={aiCountLoading}
