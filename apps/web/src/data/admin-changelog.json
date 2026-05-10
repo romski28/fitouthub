@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-10-8c6a8a3",
+    "date": "2026-05-10T12:05:20+08:00",
+    "title": "feat(ai): split conversational and structured intake endpoints",
+    "summary": "feat(ai): split conversational and structured intake endpoints",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "8c6a8a3",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-6b049a8",
     "date": "2026-05-10T11:56:15+08:00",
     "title": "fix(ai): always return conversational text in conversational mode",

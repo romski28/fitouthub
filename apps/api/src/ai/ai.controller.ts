@@ -12,9 +12,19 @@ export class AiController {
   }
 
   @Post('sandbox/requirements')
-  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string }, @Request() req: any) {
+  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string; mode?: 'structured' | 'conversational' }, @Request() req: any) {
     const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
     return this.aiService.previewRequirements(body?.prompt ?? '', {
+      sessionId: body?.sessionId,
+      userId,
+      mode: body?.mode ?? 'structured',
+    });
+  }
+
+  @Post('sandbox/requirements/conversational')
+  async previewConversationalRequirements(@Body() body: { prompt?: string; sessionId?: string }, @Request() req: any) {
+    const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
+    return this.aiService.previewConversationalRequirements(body?.prompt ?? '', {
       sessionId: body?.sessionId,
       userId,
     });

@@ -235,11 +235,12 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
   tradesLabel: string;
+  trades: string[];
 }) {
   const t = useTranslations('home.searchFlow');
 
@@ -257,6 +258,19 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       {conversationalText && (
         <div>
           <p className="text-emerald-900 leading-relaxed">{conversationalText}</p>
+        </div>
+      )}
+
+      {trades.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 mb-1">Likely trades</p>
+          <div className="flex flex-wrap gap-1.5">
+            {trades.map((trade) => (
+              <span key={trade} className="rounded-full border border-emerald-200 bg-white px-2.5 py-0.5 text-[11px] font-medium text-emerald-800">
+                {trade}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -394,6 +408,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [aiStructured, setAiStructured] = useState<AiStructured | null>(null);
   const [aiConversationalText, setAiConversationalText] = useState<string | null>(null);
   const [aiDebug, setAiDebug] = useState<{
+    apiPath: string;
     modeRequested: 'structured' | 'conversational' | null;
     isLoggedInAtRequest: boolean | undefined;
     responseHasConversationalText: boolean;
@@ -685,10 +700,17 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     try {
       const mode = isLoggedIn === true ? 'structured' : 'conversational';
       const isLoggedInAtRequest = isLoggedIn;
-      const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
+      const apiPath = isLoggedIn === true
+        ? '/ai/sandbox/requirements'
+        : '/ai/sandbox/requirements/conversational';
+      const response = await fetch(`${API_BASE_URL}${apiPath}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: query.trim(), sessionId: aiSessionId, mode }),
+        body: JSON.stringify(
+          isLoggedIn === true
+            ? { prompt: query.trim(), sessionId: aiSessionId, mode: 'structured' }
+            : { prompt: query.trim(), sessionId: aiSessionId },
+        ),
       });
       if (!response.ok) throw new Error(`Sandbox request failed (${response.status})`);
 
@@ -740,6 +762,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       }
 
       setAiDebug({
+        apiPath,
         modeRequested: mode,
         isLoggedInAtRequest,
         responseHasConversationalText: Boolean(payload.conversationalText),
@@ -879,6 +902,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
             <div className="rounded-md border border-slate-300 bg-white p-2 text-[11px] text-slate-700">
               <p className="font-semibold text-slate-800">AI Debug</p>
               <p>isLoggedIn at request: {String(aiDebug.isLoggedInAtRequest)}</p>
+              <p>API path: {aiDebug.apiPath}</p>
               <p>mode sent to API: {aiDebug.modeRequested ?? 'n/a'}</p>
               <p>response has conversationalText: {String(aiDebug.responseHasConversationalText)}</p>
               <p>parsedOutput has conversationalText: {String(aiDebug.parsedOutputHasConversationalText)}</p>
@@ -896,6 +920,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                     conversationalText={aiConversationalText}
                     matchCount={aiMatchCount}
                     matchLoading={aiCountLoading}
+                    trades={aiStructured.trades}
                     tradesLabel={
                       aiStructured.trades.length === 0
                         ? ''
@@ -904,13 +929,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                           : `${aiStructured.trades[0]} + ${aiStructured.trades.length - 1} other${aiStructured.trades.length > 2 ? 's' : ''}`
                     }
                   />
-                  {/* Optional: Show a link to see structured view for advanced users */}
-                  <details className="text-[11px] text-slate-500 mt-2">
-                    <summary className="cursor-pointer hover:text-slate-700">See structured data</summary>
-                    <pre className="mt-2 whitespace-pre-wrap break-words text-slate-700 text-[11px] bg-slate-50 p-3 rounded max-h-48 overflow-y-auto">
-                      {aiOutput}
-                    </pre>
-                  </details>
                 </>
               ) : (
                 <>

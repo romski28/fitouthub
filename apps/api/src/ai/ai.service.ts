@@ -965,6 +965,56 @@ OUTPUT FORMAT (JSON only)
     }
   }
 
+  async previewConversationalRequirements(prompt: string, context?: { sessionId?: string; userId?: string }) {
+    const baseResponse = await this.previewRequirements(prompt, {
+      ...context,
+      mode: 'conversational',
+    });
+
+    const parsedFromBase =
+      baseResponse.parsedOutput && typeof baseResponse.parsedOutput === 'object' && !Array.isArray(baseResponse.parsedOutput)
+        ? (baseResponse.parsedOutput as Record<string, unknown>)
+        : null;
+
+    const recoveredFromOutput = !parsedFromBase && typeof baseResponse.output === 'string'
+      ? this.extractPartialParsedOutput(baseResponse.output)
+      : null;
+
+    const normalizedParsedOutput = recoveredFromOutput ? this.normalizeParsedOutput(recoveredFromOutput) : parsedFromBase;
+    const parsedObject =
+      normalizedParsedOutput && typeof normalizedParsedOutput === 'object' && !Array.isArray(normalizedParsedOutput)
+        ? (normalizedParsedOutput as Record<string, unknown>)
+        : null;
+
+    const existingConversationalText =
+      typeof baseResponse.conversationalText === 'string' && baseResponse.conversationalText.trim().length > 0
+        ? baseResponse.conversationalText.trim()
+        : parsedObject && typeof parsedObject.conversationalText === 'string' && parsedObject.conversationalText.trim().length > 0
+          ? parsedObject.conversationalText.trim()
+          : null;
+
+    const fallbackConversationalText = this.buildConversationalTextFallback(parsedObject, prompt);
+    const conversationalText = existingConversationalText || fallbackConversationalText ||
+      'Thanks for sharing your project. We can help you understand the next steps and connect you with the right professionals.';
+
+    const trades = parsedObject && Array.isArray(parsedObject.trades)
+      ? parsedObject.trades.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : [];
+
+    const responseParsedOutput = {
+      ...(parsedObject || {}),
+      conversationalText,
+      trades,
+    };
+
+    return {
+      ...baseResponse,
+      conversationalText,
+      parsedOutput: responseParsedOutput,
+      trades,
+    };
+  }
+
   async convertIntake(
     intakeId: string,
     context?: {
