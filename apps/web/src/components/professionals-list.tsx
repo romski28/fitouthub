@@ -122,6 +122,17 @@ const getProfessionalCoverageTokens = (pro: Professional): string[] => {
   return [...serviceAreas, ...locationFields];
 };
 
+const getProfessionalTradeTokens = (pro: Professional): string[] => {
+  const tradeTokens = normalizeUniqueList([
+    pro.primaryTrade,
+    ...(pro.tradesOffered || []),
+    ...(pro.suppliesOffered || []),
+    pro.professionType,
+    pro.professionType === 'company' ? 'company' : null,
+  ]);
+  return tradeTokens.map((value) => value.toLowerCase());
+};
+
 const ProfessionalCard = memo(({
   pro,
   onToggle,
@@ -327,11 +338,12 @@ interface Props {
   initialLocation?: CanonicalLocation;
   projectId?: string;
   initialSearchTerm?: string;
+  initialRequiredTrades?: string[];
   initialProjectData?: Partial<ProjectFormData>;
   requireLocation?: boolean;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialProjectData, requireLocation = false }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, requireLocation = false }: Props) {
   const t = useTranslations('professionalsPage.list');
   const router = useRouter();
   const { role } = useAuth();
@@ -398,6 +410,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     initialSearch
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const requiredTrades = useMemo(
+    () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
+    [initialRequiredTrades, initialProjectData?.tradesRequired],
+  );
 
   useEffect(() => {
     const hasSelectedLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
@@ -478,6 +495,26 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const needle = searchTerm.trim().toLowerCase();
     const mappedProfession = needle ? matchServiceToProfession(needle) : null;
     const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
+    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+
+    const getTradeCoverageMeta = (pro: Professional) => {
+      const tradeTokens = getProfessionalTradeTokens(pro);
+      const isCompany = pro.professionType === 'company';
+
+      if (requiredTradesLower.length === 0) {
+        return { matchedCount: 0, coversAllRequiredTrades: false, isCompany };
+      }
+
+      const matchedCount = requiredTradesLower.filter((trade) =>
+        tradeTokens.some((token) => token.includes(trade) || trade.includes(token)),
+      ).length;
+
+      return {
+        matchedCount,
+        coversAllRequiredTrades: matchedCount === requiredTradesLower.length,
+        isCompany,
+      };
+    };
 
     const items = professionals.filter((pro) => {
       const haystacks = [
@@ -498,6 +535,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
       const bySearch = needle || effectiveProfession ? textMatch || professionMatch || (!needle && professionMatch) : true;
       if (!bySearch) return false;
+
+      const tradeCoverage = getTradeCoverageMeta(pro);
+      if (requiredTradesLower.length > 0 && tradeCoverage.matchedCount === 0) {
+        return false;
+      }
 
       const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
       if (!byRating) return false;
@@ -557,6 +599,19 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     };
 
     const sorted = items.slice().sort((a, b) => {
+      const tradeA = getTradeCoverageMeta(a);
+      const tradeB = getTradeCoverageMeta(b);
+
+      const aPrimaryTier = tradeA.isCompany && tradeA.coversAllRequiredTrades ? 3 : 0;
+      const bPrimaryTier = tradeB.isCompany && tradeB.coversAllRequiredTrades ? 3 : 0;
+      if (bPrimaryTier !== aPrimaryTier) return bPrimaryTier - aPrimaryTier;
+
+      const aSecondaryTier = tradeA.coversAllRequiredTrades ? 2 : 0;
+      const bSecondaryTier = tradeB.coversAllRequiredTrades ? 2 : 0;
+      if (bSecondaryTier !== aSecondaryTier) return bSecondaryTier - aSecondaryTier;
+
+      if (tradeB.matchedCount !== tradeA.matchedCount) return tradeB.matchedCount - tradeA.matchedCount;
+
       const sa = scoreFor(a);
       const sb = scoreFor(b);
       if (sb !== sa) return sb - sa;
@@ -569,7 +624,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return sorted;
-  }, [professionals, searchTerm, professionHint, loc, minRating]);
+  }, [professionals, searchTerm, professionHint, loc, minRating, requiredTrades]);
 
   const [regionExpanded, setRegionExpanded] = useState(false);
   // Reset expansion whenever the location filter itself changes
@@ -578,6 +633,46 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const filtered = useMemo(() => {
     const hasLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
     const hasExplicitRating = minRating > 0;
+    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+
+    const getTradeCoverageMeta = (pro: Professional) => {
+      const tradeTokens = getProfessionalTradeTokens(pro);
+      const isCompany = pro.professionType === 'company';
+
+      if (requiredTradesLower.length === 0) {
+        return { matchedCount: 0, coversAllRequiredTrades: false, isCompany };
+      }
+
+      const matchedCount = requiredTradesLower.filter((trade) =>
+        tradeTokens.some((token) => token.includes(trade) || trade.includes(token)),
+      ).length;
+
+      return {
+        matchedCount,
+        coversAllRequiredTrades: matchedCount === requiredTradesLower.length,
+        isCompany,
+      };
+    };
+
+    const sortByTradePipeline = (a: Professional, b: Professional) => {
+      const tradeA = getTradeCoverageMeta(a);
+      const tradeB = getTradeCoverageMeta(b);
+
+      const aPrimaryTier = tradeA.isCompany && tradeA.coversAllRequiredTrades ? 3 : 0;
+      const bPrimaryTier = tradeB.isCompany && tradeB.coversAllRequiredTrades ? 3 : 0;
+      if (bPrimaryTier !== aPrimaryTier) return bPrimaryTier - aPrimaryTier;
+
+      const aSecondaryTier = tradeA.coversAllRequiredTrades ? 2 : 0;
+      const bSecondaryTier = tradeB.coversAllRequiredTrades ? 2 : 0;
+      if (bSecondaryTier !== aSecondaryTier) return bSecondaryTier - aSecondaryTier;
+
+      if (tradeB.matchedCount !== tradeA.matchedCount) return tradeB.matchedCount - tradeA.matchedCount;
+
+      const ra = typeof a.rating === 'number' ? a.rating : 0;
+      const rb = typeof b.rating === 'number' ? b.rating : 0;
+      if (rb !== ra) return rb - ra;
+      return (a.fullName || a.businessName || '').toLowerCase().localeCompare((b.fullName || b.businessName || '').toLowerCase());
+    };
 
     // If the user explicitly expanded to all regions, return trade+rating without location
     if (regionExpanded && hasLocation) {
@@ -594,14 +689,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           const professionMatch = effectiveProfession ? haystacks.some((s) => s.includes(effectiveProfession)) : false;
           const bySearch = needle || effectiveProfession ? textMatch || professionMatch || (!needle && professionMatch) : true;
           if (!bySearch) return false;
+          const tradeCoverage = getTradeCoverageMeta(pro);
+          if (requiredTradesLower.length > 0 && tradeCoverage.matchedCount === 0) return false;
           return minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
         })
-        .sort((a, b) => {
-          const ra = typeof a.rating === 'number' ? a.rating : 0;
-          const rb = typeof b.rating === 'number' ? b.rating : 0;
-          if (rb !== ra) return rb - ra;
-          return (a.fullName || a.businessName || '').toLowerCase().localeCompare((b.fullName || b.businessName || '').toLowerCase());
-        });
+        .sort(sortByTradePipeline);
     }
 
     // Only widen when: no location is set, OR fewer than 3 results AND no explicit rating is applied.
@@ -634,18 +726,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         const bySearch = needle || effectiveProfession
           ? textMatch || professionMatch || (!needle && professionMatch)
           : true;
-        return bySearch;
+        if (!bySearch) return false;
+        const tradeCoverage = getTradeCoverageMeta(pro);
+        if (requiredTradesLower.length > 0 && tradeCoverage.matchedCount === 0) return false;
+        return true;
       })
-      .sort((a, b) => {
-        const ra = typeof a.rating === 'number' ? a.rating : 0;
-        const rb = typeof b.rating === 'number' ? b.rating : 0;
-        if (rb !== ra) return rb - ra;
-        const na = (a.fullName || a.businessName || '').toLowerCase();
-        const nb = (b.fullName || b.businessName || '').toLowerCase();
-        return na.localeCompare(nb);
-      });
+      .sort(sortByTradePipeline);
     return widened;
-  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating, regionExpanded]);
+  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating, regionExpanded, requiredTrades]);
 
   // Narrowly-scoped count: how many matched with location+trade+rating (before any widening)
   const filteredBaseCount = filteredBase.length;
@@ -726,6 +814,56 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
+
+  const groupedTradeDisplay = useMemo(() => {
+    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+    if (requiredTradesLower.length < 2) {
+      return {
+        isEnabled: false,
+        fullCoverageCompanies: [] as Professional[],
+        specialistSections: [] as Array<{ trade: string; professionals: Professional[] }>,
+        uncategorized: [] as Professional[],
+      };
+    }
+
+    const matchesTrade = (pro: Professional, trade: string) => {
+      const tradeTokens = getProfessionalTradeTokens(pro);
+      return tradeTokens.some((token) => token.includes(trade) || trade.includes(token));
+    };
+
+    const coversAllRequired = (pro: Professional) =>
+      requiredTradesLower.every((trade) => matchesTrade(pro, trade));
+
+    const fullCoverageCompanies = filtered.filter(
+      (pro) => pro.professionType === 'company' && coversAllRequired(pro),
+    );
+
+    const usedIds = new Set(fullCoverageCompanies.map((pro) => pro.id));
+
+    const specialistSections = requiredTrades.map((trade, index) => {
+      const tradeLower = requiredTradesLower[index];
+      const professionalsForTrade = filtered.filter((pro) => {
+        if (usedIds.has(pro.id)) return false;
+        if (!matchesTrade(pro, tradeLower)) return false;
+        usedIds.add(pro.id);
+        return true;
+      });
+
+      return {
+        trade,
+        professionals: professionalsForTrade,
+      };
+    });
+
+    const uncategorized = filtered.filter((pro) => !usedIds.has(pro.id));
+
+    return {
+      isEnabled: true,
+      fullCoverageCompanies,
+      specialistSections,
+      uncategorized,
+    };
+  }, [filtered, requiredTrades]);
 
   const shareInitialData = useMemo<Partial<ProjectFormData>>(() => {
     const needle = (searchTerm || '').trim();
@@ -1068,22 +1206,106 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           {t('states.empty')}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" suppressHydrationWarning>
-          {filtered.map((pro) => (
-            <ProfessionalCard
-              key={pro.id}
-              isSelected={selectedIds.has(pro.id)}
-              isCompared={compareIds.has(pro.id)}
-              pro={pro}
-              onToggle={toggleSelection}
-              onViewDetails={openDetails}
-              onCompare={toggleCompare}
-              isAdmin={isAdmin}
-              disableSelection={blockInviteForMissingLocation}
-              showSelectionAction={canInviteProfessionals}
-            />
-          ))}
-        </div>
+        groupedTradeDisplay.isEnabled ? (
+          <div className="space-y-5" suppressHydrationWarning>
+            {groupedTradeDisplay.fullCoverageCompanies.length > 0 && (
+              <section className="space-y-3">
+                <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-700">Covers all required trades</p>
+                  <p className="text-sm text-emerald-900">
+                    {groupedTradeDisplay.fullCoverageCompanies.length} compan{groupedTradeDisplay.fullCoverageCompanies.length === 1 ? 'y' : 'ies'} can handle this scope end-to-end.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {groupedTradeDisplay.fullCoverageCompanies.map((pro) => (
+                    <ProfessionalCard
+                      key={pro.id}
+                      isSelected={selectedIds.has(pro.id)}
+                      isCompared={compareIds.has(pro.id)}
+                      pro={pro}
+                      onToggle={toggleSelection}
+                      onViewDetails={openDetails}
+                      onCompare={toggleCompare}
+                      isAdmin={isAdmin}
+                      disableSelection={blockInviteForMissingLocation}
+                      showSelectionAction={canInviteProfessionals}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {groupedTradeDisplay.specialistSections
+              .filter((section) => section.professionals.length > 0)
+              .map((section) => (
+                <section key={`specialists-${section.trade}`} className="space-y-3">
+                  <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-2.5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-orange-700">Specialists for {section.trade}</p>
+                    <p className="text-sm text-orange-900">
+                      {section.professionals.length} match{section.professionals.length === 1 ? '' : 'es'} available for this trade.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {section.professionals.map((pro) => (
+                      <ProfessionalCard
+                        key={pro.id}
+                        isSelected={selectedIds.has(pro.id)}
+                        isCompared={compareIds.has(pro.id)}
+                        pro={pro}
+                        onToggle={toggleSelection}
+                        onViewDetails={openDetails}
+                        onCompare={toggleCompare}
+                        isAdmin={isAdmin}
+                        disableSelection={blockInviteForMissingLocation}
+                        showSelectionAction={canInviteProfessionals}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+
+            {groupedTradeDisplay.uncategorized.length > 0 && (
+              <section className="space-y-3">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700">Additional matches</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {groupedTradeDisplay.uncategorized.map((pro) => (
+                    <ProfessionalCard
+                      key={pro.id}
+                      isSelected={selectedIds.has(pro.id)}
+                      isCompared={compareIds.has(pro.id)}
+                      pro={pro}
+                      onToggle={toggleSelection}
+                      onViewDetails={openDetails}
+                      onCompare={toggleCompare}
+                      isAdmin={isAdmin}
+                      disableSelection={blockInviteForMissingLocation}
+                      showSelectionAction={canInviteProfessionals}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" suppressHydrationWarning>
+            {filtered.map((pro) => (
+              <ProfessionalCard
+                key={pro.id}
+                isSelected={selectedIds.has(pro.id)}
+                isCompared={compareIds.has(pro.id)}
+                pro={pro}
+                onToggle={toggleSelection}
+                onViewDetails={openDetails}
+                onCompare={toggleCompare}
+                isAdmin={isAdmin}
+                disableSelection={blockInviteForMissingLocation}
+                showSelectionAction={canInviteProfessionals}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {/* Region expansion nudge — shown when local results are thin (≤2) */}
