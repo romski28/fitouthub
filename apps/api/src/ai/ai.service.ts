@@ -396,6 +396,46 @@ OUTPUT FORMAT (JSON only)
     };
   }
 
+  private buildConversationalTextFallback(parsedOutput: unknown, prompt: string): string | null {
+    const source =
+      parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)
+        ? (parsedOutput as Record<string, unknown>)
+        : null;
+
+    const title = typeof source?.title === 'string' ? source.title.trim() : '';
+    const summary = typeof source?.summary === 'string' ? source.summary.trim() : '';
+    const trades = Array.isArray(source?.trades)
+      ? source.trades.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : [];
+
+    const locationObj =
+      source?.location && typeof source.location === 'object' && !Array.isArray(source.location)
+        ? (source.location as Record<string, unknown>)
+        : null;
+    const primary = typeof locationObj?.primary === 'string' ? locationObj.primary.trim() : '';
+    const secondary = typeof locationObj?.secondary === 'string' ? locationObj.secondary.trim() : '';
+    const locationLabel = [secondary, primary].filter(Boolean).join(', ');
+
+    const tradeLabel =
+      trades.length === 0
+        ? 'the right renovation professionals'
+        : trades.length === 1
+          ? trades[0]
+          : `${trades[0]} and ${trades.length - 1} other specialist${trades.length > 2 ? 's' : ''}`;
+
+    const lead = title || summary || 'Thanks for sharing your project details.';
+    const locationSentence = locationLabel
+      ? ` We can focus this around ${locationLabel} in Hong Kong.`
+      : ' We can tailor this for your area in Hong Kong.';
+
+    const previewPrompt = prompt.trim().replace(/\s+/g, ' ').slice(0, 140);
+    const contextSentence = previewPrompt
+      ? ` Based on your request ("${previewPrompt}${prompt.trim().length > 140 ? '...' : ''}"),`
+      : ' Based on your request,';
+
+    return `${lead} ${contextSentence} we can help you connect with ${tradeLabel}.${locationSentence} If you create an account, we can turn this into a full project brief and start matching you right away.`;
+  }
+
   private normalizeSafetyAssessment(value: unknown): SafetyAssessment {
     const source =
       value && typeof value === 'object' && !Array.isArray(value)
@@ -804,6 +844,20 @@ OUTPUT FORMAT (JSON only)
           if (salvaged) {
             parsedOutput = this.normalizeParsedOutput(salvaged);
             this.logger.warn(`[${requestId}] Recovered partial structured AI output after truncation/parse failure`);
+          }
+        }
+      }
+
+      if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+        const parsedObject = parsedOutput as Record<string, unknown>;
+        const currentConversationalText =
+          typeof parsedObject.conversationalText === 'string' ? parsedObject.conversationalText.trim() : '';
+        if (!currentConversationalText) {
+          const fallbackConversationalText = this.buildConversationalTextFallback(parsedOutput, trimmedPrompt);
+          if (fallbackConversationalText) {
+            parsedObject.conversationalText = fallbackConversationalText;
+            parsedOutput = parsedObject;
+            this.logger.warn(`[${requestId}] conversationalText missing from model output; fallback text generated`);
           }
         }
       }

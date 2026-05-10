@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-6b049a8",
+    "date": "2026-05-10T11:56:15+08:00",
+    "title": "fix(ai): always return conversational text in conversational mode",
+    "summary": "fix(ai): always return conversational text in conversational mode",
+    "areas": [
+      "api"
+    ],
+    "commit": "6b049a8",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-10-053007a",
     "date": "2026-05-10T11:52:12+08:00",
     "title": "debug(ai): surface auth/mode/conversational flags in UI",
