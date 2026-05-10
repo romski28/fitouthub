@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -250,6 +250,27 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
 }) {
   const t = useTranslations('home.searchFlow');
 
+  const animatedWords = useMemo(() => {
+    const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
+
+    return words
+      .reduce<{
+        totalDelayMs: number;
+        items: Array<{ id: string; word: string; delayMs: number }>;
+      }>(
+        (acc, word, index) => {
+          const stepMs = 24 + ((word.length * 7 + index * 13) % 56);
+          const nextDelay = acc.totalDelayMs + stepMs;
+          return {
+            totalDelayMs: nextDelay,
+            items: [...acc.items, { id: `${index}-${word}`, word, delayMs: nextDelay }],
+          };
+        },
+        { totalDelayMs: 0, items: [] },
+      )
+      .items;
+  }, [conversationalText]);
+
   const countMsg = (() => {
     if (matchCount === null || matchLoading) return null;
     if (matchCount === 0) return t('anonMatchNone');
@@ -259,11 +280,38 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   })();
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3 text-sm">
+    <div className="space-y-3 text-sm">
       {/* Conversational narrative */}
       {conversationalText && (
         <div>
-          <p className="text-emerald-900 leading-relaxed">{conversationalText}</p>
+          <p className="text-base leading-relaxed text-slate-700">
+            {animatedWords.map((item) => (
+              <span
+                key={item.id}
+                className="word-reveal"
+                style={{ animationDelay: `${item.delayMs}ms` }}
+              >
+                {item.word}{' '}
+              </span>
+            ))}
+          </p>
+          <style jsx>{`
+            .word-reveal {
+              opacity: 0;
+              animation: wordReveal 220ms ease-out forwards;
+            }
+
+            @keyframes wordReveal {
+              0% {
+                opacity: 0;
+                transform: translateY(2px);
+              }
+              100% {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+          `}</style>
         </div>
       )}
 
@@ -902,7 +950,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
           {!aiLoading && aiError && <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{aiError}</p>}
 
           {!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText && (
-            <div className="space-y-3 rounded-xl border border-emerald-200 bg-white p-4">
+                <div className="space-y-3 pt-1">
               <AiConversationalView
                 conversationalText={aiConversationalText}
                 matchCount={aiMatchCount}

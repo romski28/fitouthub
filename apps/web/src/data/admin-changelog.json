@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-06a6881",
+    "date": "2026-05-10T18:18:32+08:00",
+    "title": "ux(ai): inline slate chat text with word-by-word reveal",
+    "summary": "ux(ai): inline slate chat text with word-by-word reveal",
+    "areas": [
+      "web"
+    ],
+    "commit": "06a6881",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-22b5d87",
     "date": "2026-05-10T12:54:28+08:00",
     "title": "ux(ai): admin-only sandbox panel with inline user chat response",
