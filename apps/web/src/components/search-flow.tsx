@@ -251,6 +251,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   const { isLoggedIn } = useAuth();
   const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
   const [visibleWordCount, setVisibleWordCount] = useState(0);
+  const [visibleMimoWordCount, setVisibleMimoWordCount] = useState(0);
 
   useEffect(() => {
     if (words.length === 0) return;
@@ -299,6 +300,38 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       : `${base} Sign in or join to get this project logged and a professional on the case today.`;
   })();
 
+  const showTradesBlock = words.length > 0 && visibleWordCount >= words.length;
+  const mimoWords = (mimoCountMsg || '').trim().split(/\s+/).filter(Boolean);
+
+  useEffect(() => {
+    if (!showTradesBlock || mimoWords.length === 0) return;
+
+    let cancelled = false;
+    let timeoutId: number | null = null;
+
+    const streamNextWord = () => {
+      if (cancelled) return;
+
+      setVisibleMimoWordCount((current) => {
+        const next = Math.min(current + 1, mimoWords.length);
+        if (next < mimoWords.length && !cancelled) {
+          const delayMs = 52 + ((next * 19) % 82);
+          timeoutId = window.setTimeout(streamNextWord, delayMs);
+        }
+        return next;
+      });
+    };
+
+    timeoutId = window.setTimeout(streamNextWord, 180);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [showTradesBlock, mimoWords.length]);
+
   return (
     <div className="space-y-3 text-sm">
       {/* Conversational narrative */}
@@ -313,10 +346,10 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         </div>
       )}
 
-      {trades.length > 0 && (
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 mb-1">Likely trades</p>
-          <div className="flex flex-wrap gap-1.5">
+      {showTradesBlock && trades.length > 0 && (
+        <div className="space-y-2 text-center">
+          <p className="text-base font-semibold text-slate-700">Looks like you need...</p>
+          <div className="flex flex-wrap justify-center gap-1.5">
             {trades.map((trade) => (
               <span key={trade} className="rounded-full border border-[#F5EEDE] bg-[#F97362] px-3 py-1 text-base font-semibold text-[#F5EEDE]">
                 {trade}
@@ -352,8 +385,13 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         </div>
       )}
 
-      {mimoCountMsg && (
-        <p className="text-base leading-relaxed text-slate-700">{mimoCountMsg}</p>
+      {showTradesBlock && mimoCountMsg && (
+        <p className="text-base leading-relaxed text-slate-700">
+          {mimoWords.slice(0, visibleMimoWordCount).join(' ')}
+          {visibleMimoWordCount < mimoWords.length && (
+            <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse bg-slate-400 align-[-2px]" />
+          )}
+        </p>
       )}
     </div>
   );
