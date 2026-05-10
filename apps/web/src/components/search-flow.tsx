@@ -248,7 +248,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   trades: string[];
   safetyAssessment: AiStructured['safetyAssessment'];
 }) {
-  const t = useTranslations('home.searchFlow');
+  const { isLoggedIn } = useAuth();
 
   const animatedWords = useMemo(() => {
     const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
@@ -259,7 +259,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         items: Array<{ id: string; word: string; delayMs: number }>;
       }>(
         (acc, word, index) => {
-          const stepMs = 24 + ((word.length * 7 + index * 13) % 56);
+          const stepMs = 70 + ((word.length * 11 + index * 17) % 110);
           const nextDelay = acc.totalDelayMs + stepMs;
           return {
             totalDelayMs: nextDelay,
@@ -271,19 +271,29 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       .items;
   }, [conversationalText]);
 
-  const countMsg = (() => {
+  const mimoCountMsg = (() => {
     if (matchCount === null || matchLoading) return null;
-    if (matchCount === 0) return t('anonMatchNone');
-    if (tradesLabel)
-      return t('anonMatchFoundNoLocation', { count: matchCount, trade: tradesLabel });
-    return t('anonMatchFoundNoBoth');
+    if (matchCount === 0) {
+      const base = tradesLabel
+        ? `Mimo will widen the search to find the right ${tradesLabel.toLowerCase()} support across Hong Kong.`
+        : 'Mimo will widen the search to find the right professionals across Hong Kong.';
+      return isLoggedIn === true
+        ? `${base} We can still get your project moving quickly.`
+        : `${base} Sign in or join to get this project logged and a professional on the case today.`;
+    }
+
+    const tradeText = tradesLabel || 'professionals';
+    const base = `Luckily, Mimo has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
+    return isLoggedIn === true
+      ? base
+      : `${base} Sign in or join to get this project logged and a professional on the case today.`;
   })();
 
   return (
     <div className="space-y-3 text-sm">
       {/* Conversational narrative */}
       {conversationalText && (
-        <div>
+        <div key={conversationalText}>
           <p className="text-base leading-relaxed text-slate-700">
             {animatedWords.map((item) => (
               <span
@@ -298,16 +308,20 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
           <style jsx>{`
             .word-reveal {
               opacity: 0;
-              animation: wordReveal 220ms ease-out forwards;
+              display: inline-block;
+              will-change: transform, opacity;
+              animation: wordReveal 320ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
             }
 
             @keyframes wordReveal {
               0% {
                 opacity: 0;
-                transform: translateY(2px);
+                filter: blur(2px);
+                transform: translateY(6px);
               }
               100% {
                 opacity: 1;
+                filter: blur(0);
                 transform: translateY(0);
               }
             }
@@ -320,7 +334,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
           <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 mb-1">Likely trades</p>
           <div className="flex flex-wrap gap-1.5">
             {trades.map((trade) => (
-              <span key={trade} className="rounded-full border border-emerald-200 bg-white px-2.5 py-0.5 text-[11px] font-medium text-emerald-800">
+              <span key={trade} className="rounded-full border border-[#F5EEDE] bg-[#F97362] px-3 py-1 text-base font-semibold text-[#F5EEDE]">
                 {trade}
               </span>
             ))}
@@ -354,14 +368,8 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         </div>
       )}
 
-      {/* Professional count for anonymous users */}
-      {countMsg && (
-        <div className="rounded-md bg-white border border-emerald-200 p-2.5 mt-3">
-          <p className="font-semibold text-emerald-800">{countMsg}</p>
-          {(matchCount ?? 0) > 0 && (
-            <p className="text-emerald-700 text-xs mt-1">{t('anonRegisterPrompt')}</p>
-          )}
-        </div>
+      {mimoCountMsg && (
+        <p className="text-base leading-relaxed text-slate-700">{mimoCountMsg}</p>
       )}
     </div>
   );

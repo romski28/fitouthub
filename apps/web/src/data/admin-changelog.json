@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-3efc8f8",
+    "date": "2026-05-10T18:27:49+08:00",
+    "title": "ux(ai): stronger word-reveal, coral trade chips, and inline Mimo count copy",
+    "summary": "ux(ai): stronger word-reveal, coral trade chips, and inline Mimo count copy",
+    "areas": [
+      "web"
+    ],
+    "commit": "3efc8f8",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-06a6881",
     "date": "2026-05-10T18:18:32+08:00",
     "title": "ux(ai): inline slate chat text with word-by-word reveal",
