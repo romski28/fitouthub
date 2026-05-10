@@ -73,7 +73,7 @@ function ThinkingIndicator() {
   }, []);
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-[#F5EEDE] p-4" aria-live="polite">
+    <div className="rounded-lg border border-emerald-200 bg-amber-50 p-4" aria-live="polite">
       <div className="flex items-center gap-3">
         <div className="flex items-end gap-1" aria-hidden="true">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
@@ -141,7 +141,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
   })();
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-[#F5EEDE] p-4 space-y-3 text-sm">
+    <div className="rounded-lg border border-emerald-200 bg-amber-50 p-4 space-y-3 text-sm">
       {/* Title */}
       {s.title && (
         <h3 className="font-bold text-slate-900 text-base leading-tight">{s.title}</h3>
@@ -227,6 +227,45 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
           <p className="font-semibold text-emerald-800">{countMsg}</p>
           {(matchCount ?? 0) > 0 && (
             <p className="text-emerald-700 mt-1">{t('anonRegisterPrompt')}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Conversational view for anonymous users
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel }: {
+  conversationalText: string | null;
+  matchCount: number | null;
+  matchLoading: boolean;
+  tradesLabel: string;
+}) {
+  const t = useTranslations('home.searchFlow');
+
+  const countMsg = (() => {
+    if (matchCount === null || matchLoading) return null;
+    if (matchCount === 0) return t('anonMatchNone');
+    if (tradesLabel)
+      return t('anonMatchFoundNoLocation', { count: matchCount, trade: tradesLabel });
+    return t('anonMatchFoundNoBoth');
+  })();
+
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3 text-sm">
+      {/* Conversational narrative */}
+      {conversationalText && (
+        <div>
+          <p className="text-emerald-900 leading-relaxed">{conversationalText}</p>
+        </div>
+      )}
+
+      {/* Professional count for anonymous users */}
+      {countMsg && (
+        <div className="rounded-md bg-white border border-emerald-200 p-2.5 mt-3">
+          <p className="font-semibold text-emerald-800">{countMsg}</p>
+          {(matchCount ?? 0) > 0 && (
+            <p className="text-emerald-700 text-xs mt-1">{t('anonRegisterPrompt')}</p>
           )}
         </div>
       )}
@@ -353,6 +392,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [aiOutput, setAiOutput] = useState<string | null>(null);
   const [aiMeta, setAiMeta] = useState<{ model: string; durationMs: number; totalTokens: number | null } | null>(null);
   const [aiStructured, setAiStructured] = useState<AiStructured | null>(null);
+  const [aiConversationalText, setAiConversationalText] = useState<string | null>(null);
   const [aiMatchCount, setAiMatchCount] = useState<number | null>(null);
   const [aiCountLoading, setAiCountLoading] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -504,6 +544,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiOutput(null);
     setAiMeta(null);
     setAiStructured(null);
+    setAiConversationalText(null);
     setAiMatchCount(null);
     setAiCountLoading(false);
   };
@@ -631,12 +672,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiOutput(null);
     setAiMeta(null);
     setAiStructured(null);
+    setAiConversationalText(null);
 
     try {
+      const mode = isLoggedIn === false ? 'conversational' : 'structured';
       const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: query.trim(), sessionId: aiSessionId }),
+        body: JSON.stringify({ prompt: query.trim(), sessionId: aiSessionId, mode }),
       });
       if (!response.ok) throw new Error(`Sandbox request failed (${response.status})`);
 
@@ -645,6 +688,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         output: string;
         model: string;
         durationMs: number;
+        conversationalText?: string | null;
         usage?: { totalTokens?: number | null };
         parsedOutput?: {
           projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
@@ -682,6 +726,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
       setAiOutput(payload.output || '');
       setAiMeta({ model: payload.model, durationMs: payload.durationMs, totalTokens: payload.usage?.totalTokens ?? null });
+      if (payload.conversationalText) {
+        setAiConversationalText(payload.conversationalText);
+      }
 
       const p = payload.parsedOutput;
       setAiStructured({
@@ -771,7 +818,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} />
 
       {(() => { const _panel = !deepSeekSandboxEnabled ? null : (
-        <div className="rounded-lg border border-emerald-200 bg-[#F5EEDE] p-3 text-xs text-slate-700 space-y-2">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 p-3 text-xs text-slate-700 space-y-2">
           {/* Mode toggle */}
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold text-slate-700">Mode</span>
@@ -807,38 +854,65 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
           {!aiLoading && !aiError && aiOutput && aiStructured && (
             <>
-              {/* View toggle */}
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-slate-500">Results</span>
-                <div className="inline-flex rounded border border-slate-200 bg-white p-0.5">
-                  <button type="button" onClick={() => setAiViewMode('human')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'human' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    📋 Summary
-                  </button>
-                  <button type="button" onClick={() => setAiViewMode('json')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'json' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    {'{ }'} JSON
-                  </button>
-                </div>
-              </div>
-
-              {/* Human view */}
-              {aiViewMode === 'human' && (
-                <AiHumanView
-                  s={aiStructured}
-                  matchCount={aiMatchCount}
-                  matchLoading={aiCountLoading}
-                  isLoggedIn={isLoggedIn}
-                  openJoinModal={openJoinModal}
-                />
-              )}
-
-              {/* JSON view */}
-              {aiViewMode === 'json' && (
+              {/* For non-logged-in users: show conversational view if available */}
+              {isLoggedIn === false && aiConversationalText ? (
                 <>
-                  <pre className="whitespace-pre-wrap break-words text-slate-700 text-[11px]">{aiOutput}</pre>
-                  {aiMeta && (
-                    <p className="text-slate-500">
-                      model: {aiMeta.model} · duration: {aiMeta.durationMs}ms · tokens: {aiMeta.totalTokens ?? 'n/a'}
-                    </p>
+                  <AiConversationalView
+                    conversationalText={aiConversationalText}
+                    matchCount={aiMatchCount}
+                    matchLoading={aiCountLoading}
+                    tradesLabel={
+                      aiStructured.trades.length === 0
+                        ? ''
+                        : aiStructured.trades.length === 1
+                          ? aiStructured.trades[0]
+                          : `${aiStructured.trades[0]} + ${aiStructured.trades.length - 1} other${aiStructured.trades.length > 2 ? 's' : ''}`
+                    }
+                  />
+                  {/* Optional: Show a link to see structured view for advanced users */}
+                  <details className="text-[11px] text-slate-500 mt-2">
+                    <summary className="cursor-pointer hover:text-slate-700">See structured data</summary>
+                    <pre className="mt-2 whitespace-pre-wrap break-words text-slate-700 text-[11px] bg-slate-50 p-3 rounded max-h-48 overflow-y-auto">
+                      {aiOutput}
+                    </pre>
+                  </details>
+                </>
+              ) : (
+                <>
+                  {/* For logged-in users or if no conversational text: show structured view with toggle */}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] text-slate-500">Results</span>
+                    <div className="inline-flex rounded border border-slate-200 bg-white p-0.5">
+                      <button type="button" onClick={() => setAiViewMode('human')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'human' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+                        📋 Summary
+                      </button>
+                      <button type="button" onClick={() => setAiViewMode('json')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'json' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+                        {'{ }'} JSON
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Human view */}
+                  {aiViewMode === 'human' && (
+                    <AiHumanView
+                      s={aiStructured}
+                      matchCount={aiMatchCount}
+                      matchLoading={aiCountLoading}
+                      isLoggedIn={isLoggedIn}
+                      openJoinModal={openJoinModal}
+                    />
+                  )}
+
+                  {/* JSON view */}
+                  {aiViewMode === 'json' && (
+                    <>
+                      <pre className="whitespace-pre-wrap break-words text-slate-700 text-[11px]">{aiOutput}</pre>
+                      {aiMeta && (
+                        <p className="text-slate-500">
+                          model: {aiMeta.model} · duration: {aiMeta.durationMs}ms · tokens: {aiMeta.totalTokens ?? 'n/a'}
+                        </p>
+                      )}
+                    </>
                   )}
                 </>
               )}

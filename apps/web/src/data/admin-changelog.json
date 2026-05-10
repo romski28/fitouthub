@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-85452d6",
+    "date": "2026-05-10T11:21:38+08:00",
+    "title": "feat(ai): conversational mode for anonymous users",
+    "summary": "feat(ai): conversational mode for anonymous users",
+    "areas": [
+      "web"
+    ],
+    "commit": "85452d6",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-85c2f7e",
     "date": "2026-05-10T00:01:18+08:00",
     "title": "style(home): inactive feature tabs white/90 with full-white hover",
