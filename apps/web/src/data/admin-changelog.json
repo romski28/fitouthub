@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-5e386a8",
+    "date": "2026-05-10T18:59:38+08:00",
+    "title": "ux(ai): add longer pause before follow-up text and CTAs",
+    "summary": "ux(ai): add longer pause before follow-up text and CTAs",
+    "areas": [
+      "web"
+    ],
+    "commit": "5e386a8",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-ca02c20",
     "date": "2026-05-10T18:53:53+08:00",
     "title": "ux(ai): soften trades reveal and delay CTAs until sequence end",

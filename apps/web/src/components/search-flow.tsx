@@ -306,7 +306,20 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   const isSequenceComplete = showTradesBlock && (mimoWords.length === 0 || visibleMimoWordCount >= mimoWords.length);
 
   useEffect(() => {
-    onSequenceStateChange?.(isSequenceComplete);
+    if (!onSequenceStateChange) return;
+
+    if (!isSequenceComplete) {
+      onSequenceStateChange(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      onSequenceStateChange(true);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [isSequenceComplete, onSequenceStateChange]);
 
   useEffect(() => {
@@ -328,7 +341,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       });
     };
 
-    timeoutId = window.setTimeout(streamNextWord, 180);
+    timeoutId = window.setTimeout(streamNextWord, 2200);
 
     return () => {
       cancelled = true;
