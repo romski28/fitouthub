@@ -222,7 +222,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
       )}
 
       {/* Professional count for anonymous users */}
-      {isLoggedIn === false && countMsg && (
+      {isLoggedIn !== true && countMsg && (
         <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2.5">
           <p className="font-semibold text-emerald-800">{countMsg}</p>
           {(matchCount ?? 0) > 0 && (
@@ -280,7 +280,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 
   if (!intent || intent.confidence === 0) return null;
 
-  const isAnonProfFind = isLoggedIn === false && intent.action === 'find-professional';
+  const isAnonProfFind = isLoggedIn !== true && intent.action === 'find-professional';
 
   const handleProceed = () => {
     setIsNavigating(true);
@@ -675,7 +675,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiConversationalText(null);
 
     try {
-      const mode = isLoggedIn === false ? 'conversational' : 'structured';
+      const mode = isLoggedIn === true ? 'structured' : 'conversational';
       const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -855,7 +855,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
           {!aiLoading && !aiError && aiOutput && aiStructured && (
             <>
               {/* For non-logged-in users: show conversational view if available */}
-              {isLoggedIn === false && aiConversationalText ? (
+              {isLoggedIn !== true && aiConversationalText ? (
                 <>
                   <AiConversationalView
                     conversationalText={aiConversationalText}
