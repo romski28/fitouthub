@@ -393,6 +393,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [aiMeta, setAiMeta] = useState<{ model: string; durationMs: number; totalTokens: number | null } | null>(null);
   const [aiStructured, setAiStructured] = useState<AiStructured | null>(null);
   const [aiConversationalText, setAiConversationalText] = useState<string | null>(null);
+  const [aiDebug, setAiDebug] = useState<{
+    modeRequested: 'structured' | 'conversational' | null;
+    isLoggedInAtRequest: boolean | undefined;
+    responseHasConversationalText: boolean;
+    parsedOutputHasConversationalText: boolean;
+    conversationalTextLength: number;
+  } | null>(null);
   const [aiMatchCount, setAiMatchCount] = useState<number | null>(null);
   const [aiCountLoading, setAiCountLoading] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -673,9 +680,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiMeta(null);
     setAiStructured(null);
     setAiConversationalText(null);
+    setAiDebug(null);
 
     try {
       const mode = isLoggedIn === true ? 'structured' : 'conversational';
+      const isLoggedInAtRequest = isLoggedIn;
       const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -729,6 +738,20 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       if (payload.conversationalText) {
         setAiConversationalText(payload.conversationalText);
       }
+
+      setAiDebug({
+        modeRequested: mode,
+        isLoggedInAtRequest,
+        responseHasConversationalText: Boolean(payload.conversationalText),
+        parsedOutputHasConversationalText: Boolean(
+          payload.parsedOutput &&
+            typeof payload.parsedOutput === 'object' &&
+            !Array.isArray(payload.parsedOutput) &&
+            typeof (payload.parsedOutput as Record<string, unknown>).conversationalText === 'string' &&
+            ((payload.parsedOutput as Record<string, unknown>).conversationalText as string).trim().length > 0,
+        ),
+        conversationalTextLength: typeof payload.conversationalText === 'string' ? payload.conversationalText.length : 0,
+      });
 
       const p = payload.parsedOutput;
       setAiStructured({
@@ -851,6 +874,18 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
           {healthError && <p className="text-rose-600">{healthError}</p>}
           {aiLoading && <ThinkingIndicator />}
           {!aiLoading && aiError && <p className="text-rose-600">{aiError}</p>}
+
+          {aiDebug && (
+            <div className="rounded-md border border-slate-300 bg-white p-2 text-[11px] text-slate-700">
+              <p className="font-semibold text-slate-800">AI Debug</p>
+              <p>isLoggedIn at request: {String(aiDebug.isLoggedInAtRequest)}</p>
+              <p>mode sent to API: {aiDebug.modeRequested ?? 'n/a'}</p>
+              <p>response has conversationalText: {String(aiDebug.responseHasConversationalText)}</p>
+              <p>parsedOutput has conversationalText: {String(aiDebug.parsedOutputHasConversationalText)}</p>
+              <p>conversationalText length: {aiDebug.conversationalTextLength}</p>
+              <p>rendering conversational branch: {String(isLoggedIn !== true && !!aiConversationalText)}</p>
+            </div>
+          )}
 
           {!aiLoading && !aiError && aiOutput && aiStructured && (
             <>

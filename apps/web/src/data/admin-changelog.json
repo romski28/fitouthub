@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-053007a",
+    "date": "2026-05-10T11:52:12+08:00",
+    "title": "debug(ai): surface auth/mode/conversational flags in UI",
+    "summary": "debug(ai): surface auth/mode/conversational flags in UI",
+    "areas": [
+      "web"
+    ],
+    "commit": "053007a",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-305a0cd",
     "date": "2026-05-10T11:42:26+08:00",
     "title": "fix(ai): make conversationalText mandatory in system prompt",
