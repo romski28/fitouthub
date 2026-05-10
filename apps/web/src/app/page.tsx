@@ -146,15 +146,15 @@ export default function Home() {
 
         <HomeCardRail />
 
-        {/* Search Flow - Single entry point for all users */}
+        {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
           className="relative -mx-6 px-6"
         >
           <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-12">
-            <div className="grid grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:items-start">
-              <div className="order-2 max-w-2xl lg:order-2">
-                <div className="mb-8 text-center lg:text-left">
+            <div className="px-4 sm:px-6">
+              <div className="mx-auto max-w-2xl">
+                <div className="mb-8 text-center">
                   <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
                     {t('quickStart.tagline')}
                   </p>
@@ -164,8 +164,15 @@ export default function Home() {
                 </div>
                 <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
               </div>
+            </div>
+          </div>
+        </section>
 
-              <div className="order-1 rounded-2xl p-4 lg:order-1 lg:mt-2">
+        {/* Video Panel */}
+        <section className="-mx-6 px-6">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-8">
+            <div className="px-4 sm:px-6">
+              <div className="mx-auto max-w-4xl rounded-2xl p-2">
                 <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
                   <video
                     className="h-full w-full"

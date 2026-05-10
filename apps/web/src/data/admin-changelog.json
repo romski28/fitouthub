@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-5374164",
+    "date": "2026-05-10T12:43:45+08:00",
+    "title": "layout(home): split AI and video into separate stacked panels",
+    "summary": "layout(home): split AI and video into separate stacked panels",
+    "areas": [
+      "web"
+    ],
+    "commit": "5374164",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-fb525c9",
     "date": "2026-05-10T12:39:45+08:00",
     "title": "feat(web): conversational-first AI panel with persistent safety warnings",
