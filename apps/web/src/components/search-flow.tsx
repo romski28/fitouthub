@@ -895,7 +895,63 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       </div>
       <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} />
 
-      {(() => { const _panel = !deepSeekSandboxEnabled ? null : (
+      {/* Non-admin: inline conversational response injected right below prompt */}
+      {!isAdminTester && deepSeekSandboxEnabled && (
+        <div className="space-y-3">
+          {aiLoading && <ThinkingIndicator />}
+          {!aiLoading && aiError && <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{aiError}</p>}
+
+          {!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText && (
+            <div className="space-y-3 rounded-xl border border-emerald-200 bg-white p-4">
+              <AiConversationalView
+                conversationalText={aiConversationalText}
+                matchCount={aiMatchCount}
+                matchLoading={aiCountLoading}
+                trades={aiStructured.trades}
+                safetyAssessment={aiStructured.safetyAssessment}
+                tradesLabel={
+                  aiStructured.trades.length === 0
+                    ? ''
+                    : aiStructured.trades.length === 1
+                      ? aiStructured.trades[0]
+                      : `${aiStructured.trades[0]} + ${aiStructured.trades.length - 1} other${aiStructured.trades.length > 2 ? 's' : ''}`
+                }
+              />
+
+              <div className="flex flex-wrap justify-center gap-3 pt-1 border-t border-emerald-100">
+                {isLoggedIn === true ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowBriefModal(true)}
+                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                  >
+                    Continue to Matching
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={openJoinModal}
+                      className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                    >
+                      Join to Continue
+                    </button>
+                    <button
+                      type="button"
+                      onClick={openLoginModal}
+                      className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
+                    >
+                      Login
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {(() => { const _panel = !deepSeekSandboxEnabled || !isAdminTester ? null : (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 p-3 text-xs text-slate-700 space-y-2">
           {/* Mode toggle */}
           <div className="flex items-center justify-between gap-2">
@@ -945,59 +1001,37 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
           {!aiLoading && !aiError && aiOutput && aiStructured && (
             <>
-              {/* Conversational-first response for standard users */}
-              {!isAdminTester && aiConversationalText ? (
-                <>
-                  <AiConversationalView
-                    conversationalText={aiConversationalText}
-                    matchCount={aiMatchCount}
-                    matchLoading={aiCountLoading}
-                    trades={aiStructured.trades}
-                    safetyAssessment={aiStructured.safetyAssessment}
-                    tradesLabel={
-                      aiStructured.trades.length === 0
-                        ? ''
-                        : aiStructured.trades.length === 1
-                          ? aiStructured.trades[0]
-                          : `${aiStructured.trades[0]} + ${aiStructured.trades.length - 1} other${aiStructured.trades.length > 2 ? 's' : ''}`
-                    }
-                  />
-                </>
-              ) : (
-                <>
-                  {/* Admin/testing structured view */}
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] text-slate-500">Results</span>
-                    <div className="inline-flex rounded border border-slate-200 bg-white p-0.5">
-                      <button type="button" onClick={() => setAiViewMode('human')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'human' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
-                        📋 Summary
-                      </button>
-                      <button type="button" onClick={() => setAiViewMode('json')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'json' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
-                        {'{ }'} JSON
-                      </button>
-                    </div>
-                  </div>
+              {/* Admin/testing structured view */}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[11px] text-slate-500">Results</span>
+                <div className="inline-flex rounded border border-slate-200 bg-white p-0.5">
+                  <button type="button" onClick={() => setAiViewMode('human')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'human' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    📋 Summary
+                  </button>
+                  <button type="button" onClick={() => setAiViewMode('json')} className={`px-2 py-0.5 text-[11px] font-semibold rounded transition ${aiViewMode === 'json' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    {'{ }'} JSON
+                  </button>
+                </div>
+              </div>
 
-                  {/* Human view */}
-                  {aiViewMode === 'human' && (
-                    <AiHumanView
-                      s={aiStructured}
-                      matchCount={aiMatchCount}
-                      matchLoading={aiCountLoading}
-                      isLoggedIn={isLoggedIn}
-                    />
-                  )}
+              {/* Human view */}
+              {aiViewMode === 'human' && (
+                <AiHumanView
+                  s={aiStructured}
+                  matchCount={aiMatchCount}
+                  matchLoading={aiCountLoading}
+                  isLoggedIn={isLoggedIn}
+                />
+              )}
 
-                  {/* JSON view */}
-                  {aiViewMode === 'json' && (
-                    <>
-                      <pre className="whitespace-pre-wrap break-words text-slate-700 text-[11px]">{aiOutput}</pre>
-                      {aiMeta && (
-                        <p className="text-slate-500">
-                          model: {aiMeta.model} · duration: {aiMeta.durationMs}ms · tokens: {aiMeta.totalTokens ?? 'n/a'}
-                        </p>
-                      )}
-                    </>
+              {/* JSON view */}
+              {aiViewMode === 'json' && (
+                <>
+                  <pre className="whitespace-pre-wrap break-words text-slate-700 text-[11px]">{aiOutput}</pre>
+                  {aiMeta && (
+                    <p className="text-slate-500">
+                      model: {aiMeta.model} · duration: {aiMeta.durationMs}ms · tokens: {aiMeta.totalTokens ?? 'n/a'}
+                    </p>
                   )}
                 </>
               )}
@@ -1020,7 +1054,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       ); return portalEl ? createPortal(_panel, portalEl) : _panel; })()} 
 
       {/* Auth nudge for non-logged-in users */}
-      {isLoggedIn === false && (
+      {isLoggedIn === false && !isAdminTester && !aiConversationalText && (
         <div className="text-center pt-2">
           <p className="text-xs text-slate-500">
             <button onClick={openLoginModal} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">Login</button>

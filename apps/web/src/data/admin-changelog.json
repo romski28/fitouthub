@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-22b5d87",
+    "date": "2026-05-10T12:54:28+08:00",
+    "title": "ux(ai): admin-only sandbox panel with inline user chat response",
+    "summary": "ux(ai): admin-only sandbox panel with inline user chat response",
+    "areas": [
+      "web"
+    ],
+    "commit": "22b5d87",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-5374164",
     "date": "2026-05-10T12:43:45+08:00",
     "title": "layout(home): split AI and video into separate stacked panels",
