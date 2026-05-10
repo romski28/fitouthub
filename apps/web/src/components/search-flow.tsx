@@ -240,13 +240,14 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, onSequenceStateChange }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
   tradesLabel: string;
   trades: string[];
   safetyAssessment: AiStructured['safetyAssessment'];
+  onSequenceStateChange?: (done: boolean) => void;
 }) {
   const { isLoggedIn } = useAuth();
   const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
@@ -302,6 +303,11 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
 
   const showTradesBlock = words.length > 0 && visibleWordCount >= words.length;
   const mimoWords = (mimoCountMsg || '').trim().split(/\s+/).filter(Boolean);
+  const isSequenceComplete = showTradesBlock && (mimoWords.length === 0 || visibleMimoWordCount >= mimoWords.length);
+
+  useEffect(() => {
+    onSequenceStateChange?.(isSequenceComplete);
+  }, [isSequenceComplete, onSequenceStateChange]);
 
   useEffect(() => {
     if (!showTradesBlock || mimoWords.length === 0) return;
@@ -346,8 +352,8 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         </div>
       )}
 
-      {showTradesBlock && trades.length > 0 && (
-        <div className="space-y-2 text-center">
+      {trades.length > 0 && (
+        <div className={`space-y-2 text-center transition-all duration-500 ${showTradesBlock ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
           <p className="text-base font-semibold text-slate-700">Looks like you need...</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             {trades.map((trade) => (
@@ -526,6 +532,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   } | null>(null);
   const [aiMatchCount, setAiMatchCount] = useState<number | null>(null);
   const [aiCountLoading, setAiCountLoading] = useState(false);
+  const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
@@ -679,6 +686,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiConversationalText(null);
     setAiMatchCount(null);
     setAiCountLoading(false);
+    setIsConversationSequenceComplete(false);
   };
 
   // Track previous login state to detect login events
@@ -806,6 +814,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiStructured(null);
     setAiConversationalText(null);
     setAiDebug(null);
+    setIsConversationSequenceComplete(false);
 
     try {
       const mode = isAdminTester ? 'structured' : 'conversational';
@@ -988,6 +997,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 matchLoading={aiCountLoading}
                 trades={aiStructured.trades}
                 safetyAssessment={aiStructured.safetyAssessment}
+                    onSequenceStateChange={setIsConversationSequenceComplete}
                 tradesLabel={
                   aiStructured.trades.length === 0
                     ? ''
@@ -997,7 +1007,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 }
               />
 
-              <div className="flex flex-wrap justify-center gap-3 pt-1 border-t border-emerald-100">
+              <div className={`flex flex-wrap justify-center gap-3 border-t border-emerald-100 pt-1 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
                 {isLoggedIn === true ? (
                   <button
                     type="button"

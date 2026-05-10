@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-10-ca02c20",
+    "date": "2026-05-10T18:53:53+08:00",
+    "title": "ux(ai): soften trades reveal and delay CTAs until sequence end",
+    "summary": "ux(ai): soften trades reveal and delay CTAs until sequence end",
+    "areas": [
+      "web"
+    ],
+    "commit": "ca02c20",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-126f2f7",
     "date": "2026-05-10T18:41:52+08:00",
     "title": "ux(ai): stage conversational flow with centered trades and follow-up typing",
