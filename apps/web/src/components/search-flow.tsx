@@ -95,12 +95,11 @@ function ThinkingIndicator() {
 }
 
 // Human-readable summary card
-function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }: {
+function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
   s: AiStructured;
   matchCount: number | null;
   matchLoading: boolean;
   isLoggedIn: boolean | undefined;
-  openJoinModal: () => void;
 }) {
   const t = useTranslations('home.searchFlow');
 
@@ -201,7 +200,13 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
         </div>
       )}
 
-      {s.safetyAssessment && (s.safetyAssessment.isDangerous || s.safetyAssessment.concerns.length > 0) && (
+      {s.safetyAssessment && (
+        s.safetyAssessment.isDangerous ||
+        s.safetyAssessment.concerns.length > 0 ||
+        s.safetyAssessment.riskLevel === 'medium' ||
+        s.safetyAssessment.riskLevel === 'high' ||
+        s.safetyAssessment.riskLevel === 'critical'
+      ) && (
         <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 mb-1">Safety flag</p>
           <p className="text-sm font-semibold text-amber-900 capitalize">Risk: {s.safetyAssessment.riskLevel}</p>
@@ -235,12 +240,13 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn, openJoinModal }:
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
   tradesLabel: string;
   trades: string[];
+  safetyAssessment: AiStructured['safetyAssessment'];
 }) {
   const t = useTranslations('home.searchFlow');
 
@@ -271,6 +277,32 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
               </span>
             ))}
           </div>
+        </div>
+      )}
+
+      {safetyAssessment && (
+        safetyAssessment.isDangerous ||
+        safetyAssessment.concerns.length > 0 ||
+        safetyAssessment.riskLevel === 'medium' ||
+        safetyAssessment.riskLevel === 'high' ||
+        safetyAssessment.riskLevel === 'critical'
+      ) && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 mb-1">Safety flag</p>
+          <p className="text-sm font-semibold text-amber-900 capitalize">Risk: {safetyAssessment.riskLevel}</p>
+          {safetyAssessment.emergencyReason && (
+            <p className="text-sm text-amber-900 mt-1">{safetyAssessment.emergencyReason}</p>
+          )}
+          {safetyAssessment.temporaryMitigations.length > 0 && (
+            <ul className="mt-2 space-y-1 text-sm text-amber-900">
+              {safetyAssessment.temporaryMitigations.slice(0, 3).map((item, index) => (
+                <li key={`conversational-mitigation-${index}`} className="flex gap-2"><span>•</span><span>{item}</span></li>
+              ))}
+            </ul>
+          )}
+          {safetyAssessment.disclaimer && (
+            <p className="text-xs text-amber-800 mt-2">{safetyAssessment.disclaimer}</p>
+          )}
         </div>
       )}
 
@@ -392,7 +424,6 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 
 export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }: { autoFocusPrompt?: boolean; resultsPortalId?: string }) {
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
-  const t = useTranslations('home.searchFlow');
   const router = useRouter();
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('ai');
@@ -421,8 +452,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
   const [showBriefModal, setShowBriefModal] = useState(false);
-  const { isLoggedIn, userLocation } = useAuth();
+  const { isLoggedIn, userLocation, user } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
+  const isAdminTester = user?.role === 'admin';
 
   // Portal support: render AI results panel into an external DOM node
   const [portalEl, setPortalEl] = useState<Element | null>(null);
@@ -698,16 +730,16 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiDebug(null);
 
     try {
-      const mode = isLoggedIn === true ? 'structured' : 'conversational';
+      const mode = isAdminTester ? 'structured' : 'conversational';
       const isLoggedInAtRequest = isLoggedIn;
-      const apiPath = isLoggedIn === true
+      const apiPath = isAdminTester
         ? '/ai/sandbox/requirements'
         : '/ai/sandbox/requirements/conversational';
       const response = await fetch(`${API_BASE_URL}${apiPath}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
-          isLoggedIn === true
+          isAdminTester
             ? { prompt: query.trim(), sessionId: aiSessionId, mode: 'structured' }
             : { prompt: query.trim(), sessionId: aiSessionId },
         ),
@@ -857,7 +889,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         <p className="text-sm text-slate-600">
           Describe what you need in a few words.{' '}
           <button onClick={() => setShowHelp(true)} className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition">
-            We'll help you get started.
+            We&rsquo;ll help you get started.
           </button>
         </p>
       </div>
@@ -898,7 +930,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
           {aiLoading && <ThinkingIndicator />}
           {!aiLoading && aiError && <p className="text-rose-600">{aiError}</p>}
 
-          {aiDebug && (
+          {aiDebug && isAdminTester && (
             <div className="rounded-md border border-slate-300 bg-white p-2 text-[11px] text-slate-700">
               <p className="font-semibold text-slate-800">AI Debug</p>
               <p>isLoggedIn at request: {String(aiDebug.isLoggedInAtRequest)}</p>
@@ -913,14 +945,15 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
           {!aiLoading && !aiError && aiOutput && aiStructured && (
             <>
-              {/* For non-logged-in users: show conversational view if available */}
-              {isLoggedIn !== true && aiConversationalText ? (
+              {/* Conversational-first response for standard users */}
+              {!isAdminTester && aiConversationalText ? (
                 <>
                   <AiConversationalView
                     conversationalText={aiConversationalText}
                     matchCount={aiMatchCount}
                     matchLoading={aiCountLoading}
                     trades={aiStructured.trades}
+                    safetyAssessment={aiStructured.safetyAssessment}
                     tradesLabel={
                       aiStructured.trades.length === 0
                         ? ''
@@ -932,7 +965,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 </>
               ) : (
                 <>
-                  {/* For logged-in users or if no conversational text: show structured view with toggle */}
+                  {/* Admin/testing structured view */}
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-[11px] text-slate-500">Results</span>
                     <div className="inline-flex rounded border border-slate-200 bg-white p-0.5">
@@ -952,7 +985,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                       matchCount={aiMatchCount}
                       matchLoading={aiCountLoading}
                       isLoggedIn={isLoggedIn}
-                      openJoinModal={openJoinModal}
                     />
                   )}
 
@@ -972,13 +1004,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 pt-1 border-t border-emerald-100">
-                {(isLoggedIn === true || isLoggedIn === undefined) && (
+                {isLoggedIn === true && (
                   <button
                     type="button"
                     onClick={() => setShowBriefModal(true)}
                     className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
                   >
-                    Continue
+                    Continue to Matching
                   </button>
                 )}
               </div>

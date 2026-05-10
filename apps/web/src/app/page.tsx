@@ -162,7 +162,7 @@ export default function Home() {
                     {t('quickStart.title')}
                   </h2>
                 </div>
-                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resultsPortalId="ai-results-portal" />
+                <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
               </div>
 
               <div className="order-1 rounded-2xl p-4 lg:order-1 lg:mt-2">
@@ -179,16 +179,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* AI Analysis Results — standalone full-width panel, portal target for SearchFlow */}
-        <section
-          id="ai-results-section"
-          className="scroll-mt-20 -mx-6 px-6"
-        >
-          <div className="mx-auto max-w-6xl">
-            <div id="ai-results-portal" />
           </div>
         </section>
 
