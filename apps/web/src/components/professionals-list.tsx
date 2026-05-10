@@ -818,6 +818,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const groupedTradeDisplay = useMemo(() => {
     const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
     if (requiredTradesLower.length < 2) {
+      console.log('[ProfessionalsList] Grouping disabled - not enough trades:', { requiredTrades, requiredTradesLower });
       return {
         isEnabled: false,
         fullCoverageCompanies: [] as Professional[],
@@ -856,6 +857,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     const uncategorized = filtered.filter((pro) => !usedIds.has(pro.id));
+
+    console.log('[ProfessionalsList] Grouping enabled:', {
+      requiredTrades,
+      fullCoverageCompanyCount: fullCoverageCompanies.length,
+      specialistSections: specialistSections.map((s) => ({ trade: s.trade, count: s.professionals.length })),
+      uncategorizedCount: uncategorized.length,
+      filteredTotal: filtered.length,
+    });
 
     return {
       isEnabled: true,

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-11-a292a51",
+    "date": "2026-05-11T00:10:26+08:00",
+    "title": "debug: add console logging for multi-trade pipeline tracing",
+    "summary": "debug: add console logging for multi-trade pipeline tracing",
+    "areas": [
+      "web"
+    ],
+    "commit": "a292a51",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-10-857326d",
     "date": "2026-05-10T23:34:30+08:00",
     "title": "feat(professionals): group multi-trade matches by coverage tiers",

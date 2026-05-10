@@ -240,13 +240,15 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, onSequenceStateChange }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, onSequenceStateChange }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
   tradesLabel: string;
   trades: string[];
   safetyAssessment: AiStructured['safetyAssessment'];
+  fullCoverageCompanyCount: number;
+  specialistCount: number;
   onSequenceStateChange?: (done: boolean) => void;
 }) {
   const { isLoggedIn } = useAuth();
@@ -295,7 +297,24 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
     }
 
     const tradeText = tradesLabel || 'professionals';
-    const base = `Luckily, Mimo has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
+    const base = trades.length > 1
+      ? fullCoverageCompanyCount > 0
+        ? `Luckily, Mimo has this covered. We found ${fullCoverageCompanyCount.toLocaleString()} companies in Hong Kong that can handle all required trades, plus ${specialistCount.toLocaleString()} professionals across individual services.`
+        : `Luckily, Mimo has this covered. While a single all-trades company is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
+      : `Luckily, Mimo has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
+    
+    if (typeof window !== 'undefined') {
+      console.log('[AiConversationalView] Generated message:', {
+        trades,
+        tradesCount: trades.length,
+        matchCount,
+        fullCoverageCompanyCount,
+        specialistCount,
+        isMultiTrade: trades.length > 1,
+        base,
+      });
+    }
+    
     return isLoggedIn === true
       ? base
       : `${base} Sign in or join to get this project logged and a professional on the case today.`;
@@ -545,6 +564,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   } | null>(null);
   const [aiMatchCount, setAiMatchCount] = useState<number | null>(null);
   const [aiCountLoading, setAiCountLoading] = useState(false);
+  const [aiFullCoverageCompanyCount, setAiFullCoverageCompanyCount] = useState(0);
+  const [aiSpecialistCount, setAiSpecialistCount] = useState(0);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
@@ -659,6 +680,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
     const params = new URLSearchParams();
     if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
+    if (aiStructured.trades.length > 0) params.set('trades', aiStructured.trades.join(','));
     if (payload.location.tertiary) params.set('location', payload.location.tertiary);
     else if (payload.location.secondary) params.set('location', payload.location.secondary);
     else if (payload.location.primary) params.set('location', payload.location.primary);
@@ -699,6 +721,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiConversationalText(null);
     setAiMatchCount(null);
     setAiCountLoading(false);
+    setAiFullCoverageCompanyCount(0);
+    setAiSpecialistCount(0);
     setIsConversationSequenceComplete(false);
   };
 
@@ -769,6 +793,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   useEffect(() => {
     if (isLoggedIn !== false || searchMode !== 'ai' || !aiStructured) {
       setAiMatchCount(null);
+      setAiFullCoverageCompanyCount(0);
+      setAiSpecialistCount(0);
       return;
     }
     let cancelled = false;
@@ -778,12 +804,32 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         const params = new URLSearchParams();
         if (aiStructured.trades?.length > 0) params.set('trades', aiStructured.trades.join(','));
         if (aiStructured.locationPrimary) params.set('location', aiStructured.locationPrimary);
+        
+        console.log('[SearchFlow] Fetching AI count for non-logged-in user:', {
+          trades: aiStructured.trades,
+          location: aiStructured.locationPrimary,
+          isLoggedIn,
+          queryString: params.toString(),
+        });
+        
         const res = await fetch(`${API_BASE_URL}/ai/professionals/count?${params.toString()}`);
         if (!res.ok) throw new Error('count fetch failed');
-        const data: { count: number } = await res.json();
-        if (!cancelled) setAiMatchCount(data.count);
-      } catch {
-        if (!cancelled) setAiMatchCount(null);
+        const data: { count: number; fullCoverageCompanyCount?: number; specialistCount?: number } = await res.json();
+        
+        console.log('[SearchFlow] Received count response:', data);
+        
+        if (!cancelled) {
+          setAiMatchCount(data.count);
+          setAiFullCoverageCompanyCount(data.fullCoverageCompanyCount ?? 0);
+          setAiSpecialistCount(data.specialistCount ?? data.count);
+        }
+      } catch (error) {
+        console.error('[SearchFlow] Count fetch error:', error);
+        if (!cancelled) {
+          setAiMatchCount(null);
+          setAiFullCoverageCompanyCount(0);
+          setAiSpecialistCount(0);
+        }
       } finally {
         if (!cancelled) setAiCountLoading(false);
       }
@@ -1010,6 +1056,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 matchLoading={aiCountLoading}
                 trades={aiStructured.trades}
                 safetyAssessment={aiStructured.safetyAssessment}
+                  fullCoverageCompanyCount={aiFullCoverageCompanyCount}
+                  specialistCount={aiSpecialistCount}
                     onSequenceStateChange={setIsConversationSequenceComplete}
                 tradesLabel={
                   aiStructured.trades.length === 0

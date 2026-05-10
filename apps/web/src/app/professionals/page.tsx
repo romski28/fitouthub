@@ -67,6 +67,7 @@ function ProfessionalsPageInner() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId') || undefined;
   const tradeParam = searchParams.get('trade') || undefined;
+  const tradesParam = searchParams.get('trades') || undefined;
   const locationParam = searchParams.get('location') || undefined;
   const aiTitleParam = searchParams.get('aiTitle') || undefined;
   const aiScopeParam = searchParams.get('aiScope') || undefined;
@@ -76,6 +77,14 @@ function ProfessionalsPageInner() {
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
   const [projectPrefill, setProjectPrefill] = useState<Partial<ProjectFormData>>({});
+  const requestedTradesFromQuery = useMemo(
+    () =>
+      (tradesParam || '')
+        .split(',')
+        .map((trade) => trade.trim())
+        .filter(Boolean),
+    [tradesParam],
+  );
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -132,10 +141,7 @@ function ProfessionalsPageInner() {
         // Use all trades from tradesRequired array, fallback to projectName for old data
         let name: string | undefined;
         if (Array.isArray(p?.tradesRequired) && p.tradesRequired.length > 0) {
-          // If multiple trades, use first for now (OR logic will match professionals with any of these)
           name = p.tradesRequired[0];
-          // Log all required trades for future multi-trade filtering
-          console.log('[ProfessionalsPage] Multiple trades required:', p.tradesRequired);
         } else if (typeof p?.projectName === 'string') {
           name = p.projectName;
         }
@@ -210,14 +216,31 @@ function ProfessionalsPageInner() {
     [aiPrefill, projectPrefill],
   );
 
+  const initialRequiredTrades = useMemo(() => {
+    if (requestedTradesFromQuery.length > 0) return requestedTradesFromQuery;
+    const prefillTrades = mergedPrefill.tradesRequired || [];
+    return prefillTrades.filter((trade): trade is string => Boolean(trade && trade.trim()));
+  }, [requestedTradesFromQuery, mergedPrefill.tradesRequired]);
+
+  if (typeof window !== 'undefined') {
+    console.log('[ProfessionalsPage] Multi-trade context:', {
+      tradesParam,
+      requestedTradesFromQuery,
+      initialRequiredTrades,
+      mergedPrefillTrades: mergedPrefill.tradesRequired,
+    });
+  }
+
   const isMatchedContext = Boolean(
     projectId ||
       tradeParam ||
+      tradesParam ||
       locationParam ||
       aiTitleParam ||
       aiScopeParam ||
         aiScaleParam ||
-      aiEmergencyParam,
+        aiEmergencyParam ||
+        initialRequiredTrades.length > 0,
   );
 
   console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, locationParam, projectName, defaultLocation });
@@ -280,7 +303,8 @@ function ProfessionalsPageInner() {
             professionals={professionals}
             initialLocation={defaultLocation}
             projectId={projectId}
-            initialSearchTerm={tradeParam || projectName}
+            initialSearchTerm={tradeParam || initialRequiredTrades[0] || projectName}
+            initialRequiredTrades={initialRequiredTrades}
             initialProjectData={mergedPrefill}
             requireLocation={shouldShowRegionNotice}
           />
