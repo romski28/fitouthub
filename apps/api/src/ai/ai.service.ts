@@ -913,7 +913,7 @@ OUTPUT FORMAT (JSON only)
           messages: [
             {
               role: 'user',
-              content: promptText,
+              content: `<image>\n${promptText}`,
               images: [imageUrl],
             },
           ],
@@ -928,7 +928,7 @@ OUTPUT FORMAT (JSON only)
           messages: [
             {
               role: 'user',
-              content: promptText,
+              content: `<image>\n${promptText}`,
             },
           ],
           images: [imageUrl],
@@ -946,7 +946,7 @@ OUTPUT FORMAT (JSON only)
           messages: [
             {
               role: 'user',
-              content: promptText,
+              content: `<image>\n${promptText}`,
               images: [inlineImageDataUrl],
             },
           ],

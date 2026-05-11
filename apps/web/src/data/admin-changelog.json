@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-11-1db1f79",
+    "date": "2026-05-11T18:47:26+08:00",
+    "title": "Bind DeepSeek vision test images with image token in prompt",
+    "summary": "Bind DeepSeek vision test images with image token in prompt",
+    "areas": [
+      "api"
+    ],
+    "commit": "1db1f79",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-11-ebf55cb",
     "date": "2026-05-11T18:35:41+08:00",
     "title": "Add inline-base64 image fallback for DeepSeek vision checks",
