@@ -589,11 +589,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
   const [visionLoading, setVisionLoading] = useState(false);
   const [visionError, setVisionError] = useState<string | null>(null);
-  const [visionModel, setVisionModel] = useState('deepseek-vl2');
+  const [visionModel, setVisionModel] = useState('deepseek-v4-flash');
   const [visionImageUrl, setVisionImageUrl] = useState('https://picsum.photos/id/1062/1200/800');
   const [visionResult, setVisionResult] = useState<{
     ok: boolean;
     statusCode?: number;
+    requestedModel?: string;
     model?: string;
     durationMs?: number;
     contentPreview?: string | null;
@@ -846,6 +847,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       setVisionResult({
         ok: Boolean(payload?.ok),
         statusCode: typeof payload?.statusCode === 'number' ? payload.statusCode : undefined,
+        requestedModel: typeof payload?.requestedModel === 'string' ? payload.requestedModel : undefined,
         model: typeof payload?.model === 'string' ? payload.model : undefined,
         durationMs: typeof payload?.durationMs === 'number' ? payload.durationMs : undefined,
         contentPreview: typeof payload?.contentPreview === 'string' ? payload.contentPreview : null,
@@ -1245,7 +1247,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                   value={visionModel}
                   onChange={(e) => setVisionModel(e.target.value)}
                   className="w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
-                  placeholder="deepseek-vl2"
+                  placeholder="deepseek-v4-flash"
                 />
               </label>
               <label className="space-y-1 sm:col-span-1">
@@ -1266,9 +1268,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 disabled={visionLoading}
                 className="rounded border border-emerald-300 bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
               >
-                {visionLoading ? 'Checking vision...' : 'Check VL2 access'}
+                {visionLoading ? 'Checking vision...' : 'Check vision access'}
               </button>
-              <span className="text-[11px] text-slate-500">Admin-only account capability test</span>
+              <span className="text-[11px] text-slate-500">Use deepseek-v4-flash or deepseek-v4-pro</span>
             </div>
             {visionError && <p className="text-[11px] text-rose-600">{visionError}</p>}
             {visionResult && (
@@ -1278,6 +1280,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                     {visionResult.ok ? 'VL2 access confirmed' : 'Vision check failed'}
                   </span>
                 </p>
+                {visionResult.requestedModel && <p>requestedModel: {visionResult.requestedModel}</p>}
                 {visionResult.model && <p>model: {visionResult.model}</p>}
                 {typeof visionResult.statusCode === 'number' && <p>statusCode: {visionResult.statusCode}</p>}
                 {typeof visionResult.durationMs === 'number' && <p>durationMs: {visionResult.durationMs}</p>}

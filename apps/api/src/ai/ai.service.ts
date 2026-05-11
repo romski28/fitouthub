@@ -845,7 +845,12 @@ OUTPUT FORMAT (JSON only)
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
-    const model = (context.model || process.env.DEEPSEEK_VISION_MODEL || 'deepseek-vl2').trim();
+    const requestedModel = (context.model || process.env.DEEPSEEK_VISION_MODEL || 'deepseek-v4-flash').trim();
+    const modelAliasMap: Record<string, string> = {
+      'deepseek-vl2': 'deepseek-v4-flash',
+      'deepseek-vl2-chat': 'deepseek-v4-flash',
+    };
+    const model = modelAliasMap[requestedModel] ?? requestedModel;
     const imageUrl =
       (context.imageUrl || process.env.DEEPSEEK_VISION_TEST_IMAGE_URL || 'https://picsum.photos/id/1062/1200/800')
         .trim();
@@ -966,6 +971,7 @@ OUTPUT FORMAT (JSON only)
             ok: true,
             requestId,
             model,
+            requestedModel,
             imageUrl,
             endpoint,
             statusCode: response.status,
@@ -993,6 +999,7 @@ OUTPUT FORMAT (JSON only)
         ok: false,
         requestId,
         model,
+        requestedModel,
         imageUrl,
         endpoint,
         statusCode: lastAttempt?.statusCode ?? 400,
@@ -1009,6 +1016,7 @@ OUTPUT FORMAT (JSON only)
           ok: false,
           requestId,
           model,
+          requestedModel,
           imageUrl,
           endpoint,
           statusCode: 408,
@@ -1021,6 +1029,7 @@ OUTPUT FORMAT (JSON only)
         ok: false,
         requestId,
         model,
+        requestedModel,
         imageUrl,
         endpoint,
         statusCode: 500,

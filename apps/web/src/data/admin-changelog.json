@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-11-4d87b74",
+    "date": "2026-05-11T18:12:42+08:00",
+    "title": "Switch vision test defaults to DeepSeek v4 models and map vl2 aliases",
+    "summary": "Switch vision test defaults to DeepSeek v4 models and map vl2 aliases",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "4d87b74",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-11-6de5aa8",
     "date": "2026-05-11T18:05:34+08:00",
     "title": "Add DeepSeek vision payload fallbacks and format diagnostics",
