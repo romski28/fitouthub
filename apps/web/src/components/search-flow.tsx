@@ -598,6 +598,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     durationMs?: number;
     contentPreview?: string | null;
     providerError?: string | null;
+    formatUsed?: string | null;
+    attempts?: Array<{ format: string; statusCode: number; providerError: string }>;
     message?: string;
   } | null>(null);
   const [showBriefModal, setShowBriefModal] = useState(false);
@@ -848,6 +850,15 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         durationMs: typeof payload?.durationMs === 'number' ? payload.durationMs : undefined,
         contentPreview: typeof payload?.contentPreview === 'string' ? payload.contentPreview : null,
         providerError: typeof payload?.providerError === 'string' ? payload.providerError : null,
+        formatUsed: typeof payload?.formatUsed === 'string' ? payload.formatUsed : null,
+        attempts: Array.isArray(payload?.attempts)
+          ? payload.attempts
+              .filter((item: unknown): item is { format: string; statusCode: number; providerError: string } => {
+                if (!item || typeof item !== 'object') return false;
+                const row = item as Record<string, unknown>;
+                return typeof row.format === 'string' && typeof row.statusCode === 'number' && typeof row.providerError === 'string';
+              })
+          : [],
         message: typeof payload?.message === 'string' ? payload.message : undefined,
       });
       if (!response.ok) {
@@ -1272,6 +1283,17 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 {typeof visionResult.durationMs === 'number' && <p>durationMs: {visionResult.durationMs}</p>}
                 {visionResult.message && <p>message: {visionResult.message}</p>}
                 {visionResult.providerError && <p>providerError: {visionResult.providerError}</p>}
+                {visionResult.formatUsed && <p>formatUsed: {visionResult.formatUsed}</p>}
+                {!!visionResult.attempts?.length && (
+                  <div className="space-y-1">
+                    <p className="font-semibold text-slate-600">attempts:</p>
+                    {visionResult.attempts.map((attempt, index) => (
+                      <p key={`attempt-${index}`}>
+                        {`${index + 1}. ${attempt.format} -> ${attempt.statusCode} (${attempt.providerError})`}
+                      </p>
+                    ))}
+                  </div>
+                )}
                 {visionResult.contentPreview && <p className="line-clamp-3">preview: {visionResult.contentPreview}</p>}
               </div>
             )}

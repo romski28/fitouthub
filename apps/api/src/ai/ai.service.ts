@@ -858,93 +858,149 @@ OUTPUT FORMAT (JSON only)
     const startedAt = Date.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const promptText = `What's in this image? Describe it briefly for renovation triage.`;
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
+    const candidates: Array<{
+      label: string;
+      body: Record<string, unknown>;
+    }> = [
+      {
+        label: 'openai_content_parts_image_url',
+        body: {
           model,
           messages: [
             {
               role: 'user',
               content: [
-                { type: 'text', text: `What's in this image? Describe it briefly for renovation triage.` },
+                { type: 'text', text: promptText },
                 { type: 'image_url', image_url: { url: imageUrl } },
               ],
             },
           ],
           max_tokens: 200,
           temperature: 0.2,
-        }),
-        signal: controller.signal,
-      });
+        },
+      },
+      {
+        label: 'message_images_array',
+        body: {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: promptText,
+              images: [imageUrl],
+            },
+          ],
+          max_tokens: 200,
+          temperature: 0.2,
+        },
+      },
+      {
+        label: 'top_level_images_array',
+        body: {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: promptText,
+            },
+          ],
+          images: [imageUrl],
+          max_tokens: 200,
+          temperature: 0.2,
+        },
+      },
+    ];
+
+    const attempts: Array<{ format: string; statusCode: number; providerError: string }> = [];
+
+    try {
+      for (const candidate of candidates) {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(candidate.body),
+          signal: controller.signal,
+        });
+
+        const rawText = await response.text();
+
+        let payload: Record<string, unknown> | null = null;
+        try {
+          payload = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : null;
+        } catch {
+          payload = null;
+        }
+
+        const providerErrorMessage = (() => {
+          if (!payload || typeof payload !== 'object') return rawText.slice(0, 300);
+          const errorField = payload.error;
+          if (typeof errorField === 'string') return errorField;
+          if (errorField && typeof errorField === 'object') {
+            const nested = errorField as Record<string, unknown>;
+            if (typeof nested.message === 'string' && nested.message.trim()) return nested.message.trim();
+            if (typeof nested.code === 'string' && nested.code.trim()) return nested.code.trim();
+          }
+          if (typeof payload.message === 'string' && payload.message.trim()) return payload.message.trim();
+          return rawText.slice(0, 300);
+        })();
+
+        const content =
+          payload &&
+          Array.isArray(payload.choices) &&
+          payload.choices[0] &&
+          typeof payload.choices[0] === 'object' &&
+          (payload.choices[0] as Record<string, unknown>).message &&
+          typeof (payload.choices[0] as Record<string, unknown>).message === 'object' &&
+          typeof ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content === 'string'
+            ? ((((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content as string) || '').trim()
+            : null;
+
+        if (response.ok) {
+          const durationMs = Date.now() - startedAt;
+          return {
+            ok: true,
+            requestId,
+            model,
+            imageUrl,
+            endpoint,
+            statusCode: response.status,
+            durationMs,
+            formatUsed: candidate.label,
+            attempts,
+            contentPreview: content,
+            usage:
+              payload && typeof payload.usage === 'object' && payload.usage
+                ? payload.usage
+                : null,
+          };
+        }
+
+        attempts.push({
+          format: candidate.label,
+          statusCode: response.status,
+          providerError: providerErrorMessage,
+        });
+      }
 
       const durationMs = Date.now() - startedAt;
-      const rawText = await response.text();
-
-      let payload: Record<string, unknown> | null = null;
-      try {
-        payload = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : null;
-      } catch {
-        payload = null;
-      }
-
-      const providerErrorMessage = (() => {
-        if (!payload || typeof payload !== 'object') return rawText.slice(0, 300);
-        const errorField = payload.error;
-        if (typeof errorField === 'string') return errorField;
-        if (errorField && typeof errorField === 'object') {
-          const nested = errorField as Record<string, unknown>;
-          if (typeof nested.message === 'string' && nested.message.trim()) return nested.message.trim();
-          if (typeof nested.code === 'string' && nested.code.trim()) return nested.code.trim();
-        }
-        if (typeof payload.message === 'string' && payload.message.trim()) return payload.message.trim();
-        return rawText.slice(0, 300);
-      })();
-
-      const content =
-        payload &&
-        Array.isArray(payload.choices) &&
-        payload.choices[0] &&
-        typeof payload.choices[0] === 'object' &&
-        (payload.choices[0] as Record<string, unknown>).message &&
-        typeof (payload.choices[0] as Record<string, unknown>).message === 'object' &&
-        typeof ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content === 'string'
-          ? ((((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content as string) || '').trim()
-          : null;
-
-      if (!response.ok) {
-        return {
-          ok: false,
-          requestId,
-          model,
-          imageUrl,
-          endpoint,
-          statusCode: response.status,
-          durationMs,
-          providerError: providerErrorMessage,
-          error: payload || rawText.slice(0, 1200),
-          message: 'Vision model call failed',
-        };
-      }
-
+      const lastAttempt = attempts[attempts.length - 1];
       return {
-        ok: true,
+        ok: false,
         requestId,
         model,
         imageUrl,
         endpoint,
-        statusCode: response.status,
+        statusCode: lastAttempt?.statusCode ?? 400,
         durationMs,
-        contentPreview: content,
-        usage:
-          payload && typeof payload.usage === 'object' && payload.usage
-            ? payload.usage
-            : null,
+        formatUsed: null,
+        attempts,
+        providerError: lastAttempt?.providerError ?? 'Vision model call failed',
+        message: 'Vision model call failed',
       };
     } catch (error) {
       const durationMs = Date.now() - startedAt;
@@ -957,6 +1013,7 @@ OUTPUT FORMAT (JSON only)
           endpoint,
           statusCode: 408,
           durationMs,
+          attempts,
           message: 'Vision test timed out',
         };
       }
@@ -968,6 +1025,7 @@ OUTPUT FORMAT (JSON only)
         endpoint,
         statusCode: 500,
         durationMs,
+        attempts,
         message: (error as Error).message || 'Vision test failed',
       };
     } finally {

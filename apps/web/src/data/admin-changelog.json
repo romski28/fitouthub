@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-11-6de5aa8",
+    "date": "2026-05-11T18:05:34+08:00",
+    "title": "Add DeepSeek vision payload fallbacks and format diagnostics",
+    "summary": "Add DeepSeek vision payload fallbacks and format diagnostics",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6de5aa8",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-11-2ed97e8",
     "date": "2026-05-11T17:57:39+08:00",
     "title": "Show provider details for failed vision checks in admin panel",
