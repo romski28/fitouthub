@@ -557,7 +557,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
-  const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>('ai');
+  const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>(deepSeekSandboxEnabled ? 'ai' : 'legacy');
   const [aiViewMode, setAiViewMode] = useState<'human' | 'json'>('human');
   const [intent, setIntent] = useState<IntentResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -587,8 +587,20 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
+  const [visionLoading, setVisionLoading] = useState(false);
+  const [visionError, setVisionError] = useState<string | null>(null);
+  const [visionModel, setVisionModel] = useState('deepseek-vl2');
+  const [visionImageUrl, setVisionImageUrl] = useState('https://picsum.photos/id/1062/1200/800');
+  const [visionResult, setVisionResult] = useState<{
+    ok: boolean;
+    statusCode?: number;
+    model?: string;
+    durationMs?: number;
+    contentPreview?: string | null;
+    message?: string;
+  } | null>(null);
   const [showBriefModal, setShowBriefModal] = useState(false);
-  const { isLoggedIn, userLocation, user } = useAuth();
+  const { isLoggedIn, userLocation, user, accessToken } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
   const isAdminTester = user?.role === 'admin';
 
@@ -808,6 +820,44 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     }
   };
 
+  const checkVisionAccess = async () => {
+    setVisionLoading(true);
+    setVisionError(null);
+    setVisionResult(null);
+    try {
+      if (!accessToken) {
+        throw new Error('Admin auth token missing. Please login again.');
+      }
+      const response = await fetch(`${API_BASE_URL}/ai/sandbox/vision/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          model: visionModel.trim() || 'deepseek-vl2',
+          imageUrl: visionImageUrl.trim(),
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.message || `Vision check failed (${response.status})`);
+      }
+      setVisionResult({
+        ok: Boolean(payload?.ok),
+        statusCode: typeof payload?.statusCode === 'number' ? payload.statusCode : undefined,
+        model: typeof payload?.model === 'string' ? payload.model : undefined,
+        durationMs: typeof payload?.durationMs === 'number' ? payload.durationMs : undefined,
+        contentPreview: typeof payload?.contentPreview === 'string' ? payload.contentPreview : null,
+        message: typeof payload?.message === 'string' ? payload.message : undefined,
+      });
+    } catch (error) {
+      setVisionError((error as Error).message || 'Vision check failed');
+    } finally {
+      setVisionLoading(false);
+    }
+  };
+
   // Fetch professional count for non-logged-in users after AI extraction
   useEffect(() => {
     if (isLoggedIn !== false || searchMode !== 'ai' || !aiStructured) {
@@ -885,6 +935,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   }, [intent, searchMode]);
 
   const runSandbox = async (query: string) => {
+    const threadIntakeId = aiStructured?.intakeId ?? null;
     setAiLoading(true);
     setAiRoundNotice(null);
     setAiError(null);
@@ -906,8 +957,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           isAdminTester
-            ? { prompt: query.trim(), sessionId: aiSessionId, mode: 'structured' }
-            : { prompt: query.trim(), sessionId: aiSessionId },
+            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured' }
+            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId },
         ),
       });
       if (!response.ok) throw new Error(`Sandbox request failed (${response.status})`);
@@ -1138,7 +1189,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         </div>
       )}
 
-      {(() => { const _panel = !deepSeekSandboxEnabled || !isAdminTester ? null : (
+      {(() => { const _panel = !isAdminTester ? null : (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 p-3 text-xs text-slate-700 space-y-2">
           {/* Mode toggle */}
           <div className="flex items-center justify-between gap-2">
@@ -1147,17 +1198,80 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
               <button type="button" onClick={() => setSearchMode('legacy')} className={`px-2 py-1 text-[11px] font-semibold rounded ${searchMode === 'legacy' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}>
                 Not AI (Legacy)
               </button>
-              <button type="button" onClick={() => setSearchMode('ai')} className={`px-2 py-1 text-[11px] font-semibold rounded ${searchMode === 'ai' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}>
+              <button
+                type="button"
+                onClick={() => setSearchMode('ai')}
+                disabled={!deepSeekSandboxEnabled}
+                className={`px-2 py-1 text-[11px] font-semibold rounded ${searchMode === 'ai' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'} ${!deepSeekSandboxEnabled ? 'cursor-not-allowed opacity-50' : ''}`}
+              >
                 AI (DeepSeek)
               </button>
             </div>
           </div>
+
+          {!deepSeekSandboxEnabled && (
+            <p className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+              Conversational sandbox is disabled by environment flag. Vision account test remains available below.
+            </p>
+          )}
 
           <div className="flex items-center justify-between gap-2">
             <p className="font-semibold text-emerald-700">DeepSeek sandbox preview (test mode)</p>
             <button type="button" onClick={checkSandboxHealth} disabled={healthLoading} className="rounded border border-emerald-300 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 transition disabled:opacity-50">
               {healthLoading ? 'Checking...' : 'Check AI health'}
             </button>
+          </div>
+
+          <div className="rounded-md border border-emerald-200 bg-white p-2 space-y-2">
+            <p className="font-semibold text-slate-700">Vision model access test</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-600">Model</span>
+                <input
+                  type="text"
+                  value={visionModel}
+                  onChange={(e) => setVisionModel(e.target.value)}
+                  className="w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                  placeholder="deepseek-vl2"
+                />
+              </label>
+              <label className="space-y-1 sm:col-span-1">
+                <span className="text-[11px] font-semibold text-slate-600">Image URL</span>
+                <input
+                  type="url"
+                  value={visionImageUrl}
+                  onChange={(e) => setVisionImageUrl(e.target.value)}
+                  className="w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                  placeholder="https://example.com/test.jpg"
+                />
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={checkVisionAccess}
+                disabled={visionLoading}
+                className="rounded border border-emerald-300 bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
+              >
+                {visionLoading ? 'Checking vision...' : 'Check VL2 access'}
+              </button>
+              <span className="text-[11px] text-slate-500">Admin-only account capability test</span>
+            </div>
+            {visionError && <p className="text-[11px] text-rose-600">{visionError}</p>}
+            {visionResult && (
+              <div className="rounded border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 space-y-1">
+                <p>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 font-semibold ${visionResult.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                    {visionResult.ok ? 'VL2 access confirmed' : 'Vision check failed'}
+                  </span>
+                </p>
+                {visionResult.model && <p>model: {visionResult.model}</p>}
+                {typeof visionResult.statusCode === 'number' && <p>statusCode: {visionResult.statusCode}</p>}
+                {typeof visionResult.durationMs === 'number' && <p>durationMs: {visionResult.durationMs}</p>}
+                {visionResult.message && <p>message: {visionResult.message}</p>}
+                {visionResult.contentPreview && <p className="line-clamp-3">preview: {visionResult.contentPreview}</p>}
+              </div>
+            )}
           </div>
 
           {healthStatus && (

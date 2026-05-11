@@ -11,21 +11,39 @@ export class AiController {
     return this.aiService.getSandboxHealth();
   }
 
+  @Post('sandbox/vision/check')
+  @UseGuards(CombinedAuthGuard)
+  async checkVisionAccess(
+    @Body() body: { model?: string; imageUrl?: string },
+    @Request() req: any,
+  ) {
+    const role: string | undefined = req?.user?.role;
+    if (role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.aiService.testVisionAccess({
+      model: body?.model,
+      imageUrl: body?.imageUrl,
+    });
+  }
+
   @Post('sandbox/requirements')
-  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string; mode?: 'structured' | 'conversational' }, @Request() req: any) {
+  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string; mode?: 'structured' | 'conversational' }, @Request() req: any) {
     const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
     return this.aiService.previewRequirements(body?.prompt ?? '', {
       sessionId: body?.sessionId,
+      intakeId: body?.intakeId,
       userId,
       mode: body?.mode ?? 'structured',
     });
   }
 
   @Post('sandbox/requirements/conversational')
-  async previewConversationalRequirements(@Body() body: { prompt?: string; sessionId?: string }, @Request() req: any) {
+  async previewConversationalRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string }, @Request() req: any) {
     const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
     return this.aiService.previewConversationalRequirements(body?.prompt ?? '', {
       sessionId: body?.sessionId,
+      intakeId: body?.intakeId,
       userId,
     });
   }

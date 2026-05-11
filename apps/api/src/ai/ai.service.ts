@@ -45,6 +45,7 @@ type ProjectScale = 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
+  private readonly aiThreadWindowMs = 2 * 60 * 60 * 1000;
 
   constructor(
     private readonly tradesService: TradesService,
@@ -55,6 +56,89 @@ export class AiService {
     const trimmed = sessionId?.trim();
     if (!trimmed) return undefined;
     return trimmed.slice(0, 128);
+  }
+
+  private resolveDeepSeekChatEndpoint() {
+    const configured = (process.env.DEEPSEEK_API_URL || '').trim();
+    if (!configured) return 'https://api.deepseek.com/v1/chat/completions';
+    if (configured.endsWith('/chat/completions')) return configured;
+    return `${configured.replace(/\/+$/, '')}/chat/completions`;
+  }
+
+  private getAiThreadWindowStart() {
+    return new Date(Date.now() - this.aiThreadWindowMs);
+  }
+
+  private buildAiThreadContextSummary(intake: {
+    rawPrompt: string;
+    title?: string | null;
+    summary?: string | null;
+    scope?: string | null;
+    trades: string[];
+    locationPrimary?: string | null;
+    locationSecondary?: string | null;
+    locationTertiary?: string | null;
+    budget?: unknown;
+    timeline?: unknown;
+    rawOutput?: unknown;
+  }) {
+    const locationLabel = [intake.locationTertiary, intake.locationSecondary, intake.locationPrimary]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .join(', ');
+
+    const budget = intake.budget && typeof intake.budget === 'object' && !Array.isArray(intake.budget)
+      ? (intake.budget as Record<string, unknown>)
+      : null;
+    const timeline = intake.timeline && typeof intake.timeline === 'object' && !Array.isArray(intake.timeline)
+      ? (intake.timeline as Record<string, unknown>)
+      : null;
+    const rawOutput = intake.rawOutput && typeof intake.rawOutput === 'object' && !Array.isArray(intake.rawOutput)
+      ? (intake.rawOutput as Record<string, unknown>)
+      : null;
+    const conversationalText = typeof rawOutput?.conversationalText === 'string'
+      ? rawOutput.conversationalText.trim()
+      : '';
+
+    return {
+      priorPrompt: intake.rawPrompt.trim(),
+      title: intake.title?.trim() || null,
+      summary: intake.summary?.trim() || intake.scope?.trim() || null,
+      trades: Array.isArray(intake.trades) ? intake.trades.filter(Boolean) : [],
+      location: locationLabel || null,
+      budget: typeof budget?.rawText === 'string' ? budget.rawText.trim() : null,
+      timeline: typeof timeline?.durationText === 'string' ? timeline.durationText.trim() : null,
+      conversationalText: conversationalText || null,
+    };
+  }
+
+  private async findActiveAiThread(context?: { sessionId?: string; userId?: string; intakeId?: string }) {
+    const sessionId = this.sanitizeSessionId(context?.sessionId);
+    const userId = context?.userId;
+    const intakeId = context?.intakeId?.trim();
+    const createdAt = { gte: this.getAiThreadWindowStart() };
+
+    if (intakeId) {
+      const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
+      if (!intake) return null;
+      if (intake.createdAt < createdAt.gte) return null;
+      if (intake.userId && userId && intake.userId === userId) return intake;
+      if (intake.sessionId && sessionId && intake.sessionId === sessionId) return intake;
+    }
+
+    const whereClauses: Array<Record<string, unknown>> = [];
+    if (userId) whereClauses.push({ userId });
+    if (sessionId) whereClauses.push({ sessionId });
+    if (whereClauses.length === 0) return null;
+
+    return this.prisma.aiIntake.findFirst({
+      where: {
+        AND: [
+          { createdAt },
+          { OR: whereClauses },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   private normalizeLocationText(input: string): string {
@@ -717,7 +801,7 @@ OUTPUT FORMAT (JSON only)
   }
 
   async getSandboxHealth() {
-    const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const endpoint = this.resolveDeepSeekChatEndpoint();
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     const timeoutRaw = process.env.DEEPSEEK_TIMEOUT_MS;
     const timeoutMs = Number(timeoutRaw || '60000');
@@ -750,7 +834,134 @@ OUTPUT FORMAT (JSON only)
     };
   }
 
-  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; mode?: 'structured' | 'conversational' }) {
+  async testVisionAccess(context: {
+    model?: string;
+    imageUrl?: string;
+  }) {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      throw new ServiceUnavailableException('DeepSeek sandbox is not configured');
+    }
+
+    const endpoint = this.resolveDeepSeekChatEndpoint();
+    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
+    const model = (context.model || process.env.DEEPSEEK_VISION_MODEL || 'deepseek-vl2').trim();
+    const imageUrl =
+      (context.imageUrl || process.env.DEEPSEEK_VISION_TEST_IMAGE_URL || 'https://picsum.photos/id/1062/1200/800')
+        .trim();
+
+    if (!/^https?:\/\//i.test(imageUrl)) {
+      throw new BadRequestException('imageUrl must be an absolute http/https URL');
+    }
+
+    const requestId = `ds_vl_${Date.now().toString(36)}`;
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: `What's in this image? Describe it briefly for renovation triage.` },
+                { type: 'image_url', image_url: { url: imageUrl } },
+              ],
+            },
+          ],
+          max_tokens: 200,
+          temperature: 0.2,
+        }),
+        signal: controller.signal,
+      });
+
+      const durationMs = Date.now() - startedAt;
+      const rawText = await response.text();
+
+      let payload: Record<string, unknown> | null = null;
+      try {
+        payload = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : null;
+      } catch {
+        payload = null;
+      }
+
+      const content =
+        payload &&
+        Array.isArray(payload.choices) &&
+        payload.choices[0] &&
+        typeof payload.choices[0] === 'object' &&
+        (payload.choices[0] as Record<string, unknown>).message &&
+        typeof (payload.choices[0] as Record<string, unknown>).message === 'object' &&
+        typeof ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content === 'string'
+          ? ((((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content as string) || '').trim()
+          : null;
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          requestId,
+          model,
+          imageUrl,
+          endpoint,
+          statusCode: response.status,
+          durationMs,
+          error: payload || rawText.slice(0, 1200),
+          message: 'Vision model call failed',
+        };
+      }
+
+      return {
+        ok: true,
+        requestId,
+        model,
+        imageUrl,
+        endpoint,
+        statusCode: response.status,
+        durationMs,
+        contentPreview: content,
+        usage:
+          payload && typeof payload.usage === 'object' && payload.usage
+            ? payload.usage
+            : null,
+      };
+    } catch (error) {
+      const durationMs = Date.now() - startedAt;
+      if ((error as Error).name === 'AbortError') {
+        return {
+          ok: false,
+          requestId,
+          model,
+          imageUrl,
+          endpoint,
+          statusCode: 408,
+          durationMs,
+          message: 'Vision test timed out',
+        };
+      }
+      return {
+        ok: false,
+        requestId,
+        model,
+        imageUrl,
+        endpoint,
+        statusCode: 500,
+        durationMs,
+        message: (error as Error).message || 'Vision test failed',
+      };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; intakeId?: string; mode?: 'structured' | 'conversational' }) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
       throw new BadRequestException('Prompt is required');
@@ -764,7 +975,7 @@ OUTPUT FORMAT (JSON only)
       throw new ServiceUnavailableException('DeepSeek sandbox is not configured');
     }
 
-    const endpoint = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const endpoint = this.resolveDeepSeekChatEndpoint();
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
@@ -775,7 +986,12 @@ OUTPUT FORMAT (JSON only)
     const mode = context?.mode ?? 'structured';
     const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
 
-    const userMessage = `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
+    const activeThread = await this.findActiveAiThread(context);
+    const threadSummary = activeThread ? this.buildAiThreadContextSummary(activeThread) : null;
+
+    const userMessage = threadSummary
+      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nEARLIER_USER_PROMPT:\n${threadSummary.priorPrompt}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${threadSummary.title ?? 'unknown'}\n- Summary: ${threadSummary.summary ?? 'unknown'}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.join(', ') : 'unknown'}\n- Location: ${threadSummary.location ?? 'unknown'}\n- Budget: ${threadSummary.budget ?? 'unknown'}\n- Timeline: ${threadSummary.timeline ?? 'unknown'}\n- Prior assistant reply: ${threadSummary.conversationalText ?? 'unknown'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request`
+      : `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
     const messages: DeepSeekMessage[] = [
       {
@@ -907,11 +1123,19 @@ OUTPUT FORMAT (JSON only)
             risks: Array.isArray(p?.risks) ? p.risks : undefined,
             assumptions: Array.isArray(p?.assumptions) ? p.assumptions : undefined,
             nextQuestions: Array.isArray(p?.nextQuestions) ? p.nextQuestions : undefined,
-            project: projectObj ?? undefined,
             budget: budgetObj ?? undefined,
             timeline: timelineObj ?? undefined,
             overallConfidence: typeof p?.overallConfidence === 'number' ? p.overallConfidence : null,
             rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
+            project: {
+              ...(projectObj && typeof projectObj === 'object' ? (projectObj as Record<string, unknown>) : {}),
+              aiThread: activeThread
+                ? {
+                    sourceIntakeId: activeThread.id,
+                    windowExpiresAt: new Date(activeThread.createdAt.getTime() + this.aiThreadWindowMs).toISOString(),
+                  }
+                : undefined,
+            },
             status: 'draft',
           },
         });
@@ -938,6 +1162,12 @@ OUTPUT FORMAT (JSON only)
         },
         output,
         parsedOutput,
+        threadContext: activeThread
+          ? {
+              sourceIntakeId: activeThread.id,
+              windowExpiresAt: new Date(activeThread.createdAt.getTime() + this.aiThreadWindowMs).toISOString(),
+            }
+          : null,
         conversationalText: mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)
           ? (parsedOutput as Record<string, unknown>).conversationalText ?? null
           : null,
@@ -965,7 +1195,7 @@ OUTPUT FORMAT (JSON only)
     }
   }
 
-  async previewConversationalRequirements(prompt: string, context?: { sessionId?: string; userId?: string }) {
+  async previewConversationalRequirements(prompt: string, context?: { sessionId?: string; userId?: string; intakeId?: string }) {
     const baseResponse = await this.previewRequirements(prompt, {
       ...context,
       mode: 'conversational',
