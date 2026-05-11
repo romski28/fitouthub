@@ -78,10 +78,12 @@ export default function Home() {
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
                   <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    {t('quickStart.tagline')}
+                    Hi and Welcome
                   </p>
                   <h2 className="text-2xl font-bold text-slate-900">
-                    {t('quickStart.title')}
+                    <span key={`ai-${greetingIndex}`} className="inline-block animate-[welcomePop_420ms_ease-out]">
+                      {WELCOME_GREETINGS[greetingIndex]}
+                    </span>
                   </h2>
                 </div>
                 <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
