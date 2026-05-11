@@ -68,6 +68,62 @@ export default function Home() {
           </div>
         )}
 
+        {/* AI Prompt + Response Panel */}
+        <section
+          id="project-prompt"
+          className="relative -mx-6 px-6"
+        >
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-12">
+            <div className="px-4 sm:px-6">
+              <div className="mx-auto max-w-2xl">
+                <div className="mb-8 text-center">
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    {t('quickStart.tagline')}
+                  </p>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {t('quickStart.title')}
+                  </h2>
+                </div>
+                <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Role Selection Panels (from join flow style) */}
+        <section className="-mx-6 px-6">
+          <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE] p-6 sm:p-8">
+            <div className="space-y-4">
+              <p className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">Choose your path</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Link
+                  href="/get-started"
+                  className="group relative rounded-2xl border border-[#FF6B5B]/40 bg-gradient-to-br from-[#FF6B5B]/10 to-[#FF6B5B]/15 pb-5 pl-28 pr-5 pt-5 text-left transition hover:-translate-y-1 hover:border-[#FF6B5B]/50"
+                >
+                  <div className="pointer-events-none absolute bottom-0 -left-6 w-28 select-none">
+                    <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={112} height={160} className="object-contain" />
+                  </div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-red-700">Client</p>
+                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Plan and control your renovation</p>
+                  <p className="mt-2 text-sm text-[#4E4A42]">Compare quotes, track progress, and use escrow-backed payments.</p>
+                </Link>
+
+                <Link
+                  href="/get-started"
+                  className="group relative rounded-2xl border border-[#0E7C3A]/40 bg-gradient-to-br from-[#0E7C3A]/10 to-[#0E7C3A]/15 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-[#0E7C3A]/50"
+                >
+                  <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none">
+                    <Image src="/assets/images/tradesmen-character-pack/ben-800.webp" alt="Ben" width={112} height={160} className="object-contain" />
+                  </div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-blue-700">Professional</p>
+                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Win premium renovation projects</p>
+                  <p className="mt-2 text-sm text-[#4E4A42]">Showcase your trade, manage milestones, and reduce admin overhead.</p>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Welcome Panel */}
         <section className="-mx-6 px-6">
           <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] px-4 py-6 sm:px-6 lg:px-8">
@@ -145,28 +201,6 @@ export default function Home() {
         `}</style>
 
         <HomeCardRail />
-
-        {/* AI Prompt + Response Panel */}
-        <section
-          id="project-prompt"
-          className="relative -mx-6 px-6"
-        >
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-12">
-            <div className="px-4 sm:px-6">
-              <div className="mx-auto max-w-2xl">
-                <div className="mb-8 text-center">
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    {t('quickStart.tagline')}
-                  </p>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    {t('quickStart.title')}
-                  </h2>
-                </div>
-                <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Video Panel */}
         <section className="-mx-6 px-6">

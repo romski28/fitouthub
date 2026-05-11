@@ -1245,6 +1245,9 @@ OUTPUT FORMAT (JSON only)
     count: number;
     hasTrades: boolean;
     hasLocation: boolean;
+    fullCoverageCompanyCount: number;
+    specialistCount: number;
+    perTradeCounts: Array<{ trade: string; count: number }>;
   }> {
     try {
       const hasTrades = Array.isArray(trades) && trades.length > 0;
@@ -1252,7 +1255,14 @@ OUTPUT FORMAT (JSON only)
 
       // If no trades and no location provided, return 0
       if (!hasTrades && !hasLocation) {
-        return { count: 0, hasTrades: false, hasLocation: false };
+        return {
+          count: 0,
+          hasTrades: false,
+          hasLocation: false,
+          fullCoverageCompanyCount: 0,
+          specialistCount: 0,
+          perTradeCounts: [],
+        };
       }
 
       const where: any = { status: 'approved' };
@@ -1325,16 +1335,88 @@ OUTPUT FORMAT (JSON only)
       }
 
       const count = await (this.prisma as any).professional.count({ where });
+
+      const normalizedTrades = hasTrades
+        ? Array.from(
+            new Set(
+              (trades || [])
+                .map((trade) => (trade || '').trim().toLowerCase())
+                .filter(Boolean),
+            ),
+          )
+        : [];
+
+      const matchedProfessionals = await (this.prisma as any).professional.findMany({
+        where,
+        select: {
+          professionType: true,
+          primaryTrade: true,
+          tradesOffered: true,
+          suppliesOffered: true,
+        },
+      });
+
+      const getProfessionalTradeSet = (professional: {
+        primaryTrade?: string | null;
+        tradesOffered?: string[] | null;
+        suppliesOffered?: string[] | null;
+      }) => {
+        const allTrades = [
+          professional.primaryTrade,
+          ...(Array.isArray(professional.tradesOffered) ? professional.tradesOffered : []),
+          ...(Array.isArray(professional.suppliesOffered) ? professional.suppliesOffered : []),
+        ]
+          .map((value) => (value || '').trim().toLowerCase())
+          .filter(Boolean);
+
+        return new Set(allTrades);
+      };
+
+      const fullCoverageCompanyCount = normalizedTrades.length > 0
+        ? matchedProfessionals.filter((professional: any) => {
+            if ((professional?.professionType || '').toLowerCase() !== 'company') return false;
+            const tradeSet = getProfessionalTradeSet(professional);
+            return normalizedTrades.every((trade) => tradeSet.has(trade));
+          }).length
+        : 0;
+
+      const specialistSet = new Set<number>();
+      const perTradeCounts = normalizedTrades.map((trade) => {
+        let tradeCount = 0;
+        matchedProfessionals.forEach((professional: any, index: number) => {
+          const tradeSet = getProfessionalTradeSet(professional);
+          if (tradeSet.has(trade)) {
+            tradeCount += 1;
+            specialistSet.add(index);
+          }
+        });
+
+        return {
+          trade,
+          count: tradeCount,
+        };
+      });
+
       return {
         count,
         hasTrades,
         hasLocation,
+        fullCoverageCompanyCount,
+        specialistCount: specialistSet.size,
+        perTradeCounts,
       };
     } catch (error) {
       this.logger.warn(
         `Error counting professionals for AI extraction: ${(error as Error).message}`,
       );
-      return { count: 0, hasTrades: false, hasLocation: false };
+      return {
+        count: 0,
+        hasTrades: false,
+        hasLocation: false,
+        fullCoverageCompanyCount: 0,
+        specialistCount: 0,
+        perTradeCounts: [],
+      };
     }
   }
 }

@@ -286,6 +286,13 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   }, [words.length]);
 
   const mimoCountMsg = (() => {
+    if (trades.length === 0) {
+      const base = 'We have not found the right professional to sort your problem out, but get your project registered and Mimo will find you the right person to get things done.';
+      return isLoggedIn === true
+        ? base
+        : `${base} Sign in or join to get this project logged and a professional on the case today.`;
+    }
+
     if (matchCount === null || matchLoading) return null;
     if (matchCount === 0) {
       const base = tradesLabel
@@ -320,7 +327,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       : `${base} Sign in or join to get this project logged and a professional on the case today.`;
   })();
 
-  const showTradesBlock = words.length > 0 && visibleWordCount >= words.length;
+  const showTradesBlock = words.length === 0 || visibleWordCount >= words.length;
   const mimoWords = (mimoCountMsg || '').trim().split(/\s+/).filter(Boolean);
   const isSequenceComplete = showTradesBlock && (mimoWords.length === 0 || visibleMimoWordCount >= mimoWords.length);
 

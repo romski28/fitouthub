@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-11-a77479d",
+    "date": "2026-05-11T13:20:43+08:00",
+    "title": "feat(home): move AI panel to top and add role cards under hero",
+    "summary": "feat(home): move AI panel to top and add role cards under hero",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a77479d",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-11-a292a51",
     "date": "2026-05-11T00:10:26+08:00",
     "title": "debug: add console logging for multi-trade pipeline tracing",
