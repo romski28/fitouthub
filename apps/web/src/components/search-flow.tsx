@@ -841,9 +841,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         }),
       });
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.message || `Vision check failed (${response.status})`);
-      }
       setVisionResult({
         ok: Boolean(payload?.ok),
         statusCode: typeof payload?.statusCode === 'number' ? payload.statusCode : undefined,
@@ -853,6 +850,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         providerError: typeof payload?.providerError === 'string' ? payload.providerError : null,
         message: typeof payload?.message === 'string' ? payload.message : undefined,
       });
+      if (!response.ok) {
+        setVisionError(payload?.message || `Vision check failed (${response.status})`);
+      }
     } catch (error) {
       setVisionError((error as Error).message || 'Vision check failed');
     } finally {

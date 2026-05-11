@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-11-2ed97e8",
+    "date": "2026-05-11T17:57:39+08:00",
+    "title": "Show provider details for failed vision checks in admin panel",
+    "summary": "Show provider details for failed vision checks in admin panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "2ed97e8",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-11-781e75e",
     "date": "2026-05-11T17:54:34+08:00",
     "title": "Show DeepSeek provider error details for VL2 vision test failures",
