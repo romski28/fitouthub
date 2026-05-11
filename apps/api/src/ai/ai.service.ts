@@ -893,6 +893,19 @@ OUTPUT FORMAT (JSON only)
         payload = null;
       }
 
+      const providerErrorMessage = (() => {
+        if (!payload || typeof payload !== 'object') return rawText.slice(0, 300);
+        const errorField = payload.error;
+        if (typeof errorField === 'string') return errorField;
+        if (errorField && typeof errorField === 'object') {
+          const nested = errorField as Record<string, unknown>;
+          if (typeof nested.message === 'string' && nested.message.trim()) return nested.message.trim();
+          if (typeof nested.code === 'string' && nested.code.trim()) return nested.code.trim();
+        }
+        if (typeof payload.message === 'string' && payload.message.trim()) return payload.message.trim();
+        return rawText.slice(0, 300);
+      })();
+
       const content =
         payload &&
         Array.isArray(payload.choices) &&
@@ -913,6 +926,7 @@ OUTPUT FORMAT (JSON only)
           endpoint,
           statusCode: response.status,
           durationMs,
+          providerError: providerErrorMessage,
           error: payload || rawText.slice(0, 1200),
           message: 'Vision model call failed',
         };

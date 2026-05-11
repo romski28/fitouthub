@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-11-781e75e",
+    "date": "2026-05-11T17:54:34+08:00",
+    "title": "Show DeepSeek provider error details for VL2 vision test failures",
+    "summary": "Show DeepSeek provider error details for VL2 vision test failures",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "781e75e",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-11-d08932e",
     "date": "2026-05-11T17:33:09+08:00",
     "title": "Add admin VL2 vision access test and always-show admin test panel",

@@ -597,6 +597,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     model?: string;
     durationMs?: number;
     contentPreview?: string | null;
+    providerError?: string | null;
     message?: string;
   } | null>(null);
   const [showBriefModal, setShowBriefModal] = useState(false);
@@ -849,6 +850,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         model: typeof payload?.model === 'string' ? payload.model : undefined,
         durationMs: typeof payload?.durationMs === 'number' ? payload.durationMs : undefined,
         contentPreview: typeof payload?.contentPreview === 'string' ? payload.contentPreview : null,
+        providerError: typeof payload?.providerError === 'string' ? payload.providerError : null,
         message: typeof payload?.message === 'string' ? payload.message : undefined,
       });
     } catch (error) {
@@ -1269,6 +1271,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 {typeof visionResult.statusCode === 'number' && <p>statusCode: {visionResult.statusCode}</p>}
                 {typeof visionResult.durationMs === 'number' && <p>durationMs: {visionResult.durationMs}</p>}
                 {visionResult.message && <p>message: {visionResult.message}</p>}
+                {visionResult.providerError && <p>providerError: {visionResult.providerError}</p>}
                 {visionResult.contentPreview && <p className="line-clamp-3">preview: {visionResult.contentPreview}</p>}
               </div>
             )}
