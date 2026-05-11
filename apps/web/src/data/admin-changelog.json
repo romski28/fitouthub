@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-11-a6b87b7",
+    "date": "2026-05-11T23:25:16+08:00",
+    "title": "Add official DeepSeek docs format as first vision test candidate",
+    "summary": "Add official DeepSeek docs format as first vision test candidate",
+    "areas": [
+      "api"
+    ],
+    "commit": "a6b87b7",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-11-1db1f79",
     "date": "2026-05-11T18:47:26+08:00",
     "title": "Bind DeepSeek vision test images with image token in prompt",

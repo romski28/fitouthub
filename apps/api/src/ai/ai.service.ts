@@ -890,6 +890,26 @@ OUTPUT FORMAT (JSON only)
       body: Record<string, unknown>;
     }> = [
       {
+        label: 'official_deepseek_docs_exact',
+        body: {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: promptText },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: imageUrl,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
         label: 'openai_content_parts_image_url',
         body: {
           model,
