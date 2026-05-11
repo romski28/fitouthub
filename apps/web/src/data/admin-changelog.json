@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-11-ebf55cb",
+    "date": "2026-05-11T18:35:41+08:00",
+    "title": "Add inline-base64 image fallback for DeepSeek vision checks",
+    "summary": "Add inline-base64 image fallback for DeepSeek vision checks",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ebf55cb",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-11-4d87b74",
     "date": "2026-05-11T18:12:42+08:00",
     "title": "Switch vision test defaults to DeepSeek v4 models and map vl2 aliases",

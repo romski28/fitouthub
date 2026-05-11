@@ -601,6 +601,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     providerError?: string | null;
     formatUsed?: string | null;
     attempts?: Array<{ format: string; statusCode: number; providerError: string }>;
+    inlineImagePrepared?: boolean;
+    inlineImageError?: string | null;
     message?: string;
   } | null>(null);
   const [showBriefModal, setShowBriefModal] = useState(false);
@@ -853,6 +855,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         contentPreview: typeof payload?.contentPreview === 'string' ? payload.contentPreview : null,
         providerError: typeof payload?.providerError === 'string' ? payload.providerError : null,
         formatUsed: typeof payload?.formatUsed === 'string' ? payload.formatUsed : null,
+        inlineImagePrepared: typeof payload?.inlineImagePrepared === 'boolean' ? payload.inlineImagePrepared : undefined,
+        inlineImageError: typeof payload?.inlineImageError === 'string' ? payload.inlineImageError : null,
         attempts: Array.isArray(payload?.attempts)
           ? payload.attempts
               .filter((item: unknown): item is { format: string; statusCode: number; providerError: string } => {
@@ -1287,6 +1291,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 {visionResult.message && <p>message: {visionResult.message}</p>}
                 {visionResult.providerError && <p>providerError: {visionResult.providerError}</p>}
                 {visionResult.formatUsed && <p>formatUsed: {visionResult.formatUsed}</p>}
+                {typeof visionResult.inlineImagePrepared === 'boolean' && <p>inlineImagePrepared: {String(visionResult.inlineImagePrepared)}</p>}
+                {visionResult.inlineImageError && <p>inlineImageError: {visionResult.inlineImageError}</p>}
                 {!!visionResult.attempts?.length && (
                   <div className="space-y-1">
                     <p className="font-semibold text-slate-600">attempts:</p>

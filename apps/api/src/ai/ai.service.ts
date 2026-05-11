@@ -864,6 +864,26 @@ OUTPUT FORMAT (JSON only)
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     const promptText = `What's in this image? Describe it briefly for renovation triage.`;
+    const maxInlineImageBytes = Number(process.env.DEEPSEEK_VISION_MAX_INLINE_IMAGE_BYTES || '2097152');
+
+    let inlineImageDataUrl: string | null = null;
+    let inlineImageError: string | null = null;
+    try {
+      const imageRes = await fetch(imageUrl, { signal: controller.signal });
+      if (!imageRes.ok) {
+        inlineImageError = `image fetch failed (${imageRes.status})`;
+      } else {
+        const contentType = (imageRes.headers.get('content-type') || 'image/png').split(';')[0].trim();
+        const imageBuffer = Buffer.from(await imageRes.arrayBuffer());
+        if (imageBuffer.byteLength > maxInlineImageBytes) {
+          inlineImageError = `image too large for inline (${imageBuffer.byteLength} bytes)`;
+        } else {
+          inlineImageDataUrl = `data:${contentType};base64,${imageBuffer.toString('base64')}`;
+        }
+      }
+    } catch (error) {
+      inlineImageError = (error as Error).message || 'image fetch failed';
+    }
 
     const candidates: Array<{
       label: string;
@@ -917,6 +937,24 @@ OUTPUT FORMAT (JSON only)
         },
       },
     ];
+
+    if (inlineImageDataUrl) {
+      candidates.splice(1, 0, {
+        label: 'message_images_array_data_url',
+        body: {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: promptText,
+              images: [inlineImageDataUrl],
+            },
+          ],
+          max_tokens: 200,
+          temperature: 0.2,
+        },
+      });
+    }
 
     const attempts: Array<{ format: string; statusCode: number; providerError: string }> = [];
 
@@ -978,6 +1016,8 @@ OUTPUT FORMAT (JSON only)
             durationMs,
             formatUsed: candidate.label,
             attempts,
+            inlineImagePrepared: Boolean(inlineImageDataUrl),
+            inlineImageError,
             contentPreview: content,
             usage:
               payload && typeof payload.usage === 'object' && payload.usage
@@ -1006,6 +1046,8 @@ OUTPUT FORMAT (JSON only)
         durationMs,
         formatUsed: null,
         attempts,
+        inlineImagePrepared: Boolean(inlineImageDataUrl),
+        inlineImageError,
         providerError: lastAttempt?.providerError ?? 'Vision model call failed',
         message: 'Vision model call failed',
       };
@@ -1022,6 +1064,8 @@ OUTPUT FORMAT (JSON only)
           statusCode: 408,
           durationMs,
           attempts,
+          inlineImagePrepared: Boolean(inlineImageDataUrl),
+          inlineImageError,
           message: 'Vision test timed out',
         };
       }
@@ -1035,6 +1079,8 @@ OUTPUT FORMAT (JSON only)
         statusCode: 500,
         durationMs,
         attempts,
+        inlineImagePrepared: Boolean(inlineImageDataUrl),
+        inlineImageError,
         message: (error as Error).message || 'Vision test failed',
       };
     } finally {
