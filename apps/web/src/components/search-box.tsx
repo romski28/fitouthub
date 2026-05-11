@@ -5,11 +5,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 export interface SearchBoxProps {
   onSubmit: (query: string) => void;
   autoFocus?: boolean;
+  onClear?: () => void;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -130,7 +131,10 @@ export default function SearchBox({ onSubmit, autoFocus = false }: SearchBoxProp
               {query.trim().length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setQuery('')}
+                  onClick={() => {
+                    setQuery('');
+                    onClear?.();
+                  }}
                   className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
                   Clear
@@ -139,9 +143,9 @@ export default function SearchBox({ onSubmit, autoFocus = false }: SearchBoxProp
             </div>
             <button
               type="submit"
-              className="px-3 sm:px-6 py-2 sm:py-2.5 bg-emerald-600 text-white font-semibold hover:bg-emerald-700 active:bg-emerald-800 transition-colors duration-150 text-sm sm:text-base whitespace-nowrap rounded-md shadow-sm"
+              className="rounded-md border border-[#F5EEDE] bg-[#F97362] px-3 py-2 text-sm font-semibold whitespace-nowrap text-[#F5EEDE] shadow-sm transition-colors duration-150 hover:bg-[#e8624f] active:bg-[#d75846] sm:px-6 sm:py-2.5 sm:text-base"
             >
-              Search
+              Ask Mimo
             </button>
           </div>
         </div>

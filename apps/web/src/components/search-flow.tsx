@@ -240,7 +240,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, onSequenceStateChange }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, onSequenceStateChange }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
@@ -249,6 +249,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   safetyAssessment: AiStructured['safetyAssessment'];
   fullCoverageCompanyCount: number;
   specialistCount: number;
+  showForgottenPrompt: boolean;
   onSequenceStateChange?: (done: boolean) => void;
 }) {
   const { isLoggedIn } = useAuth();
@@ -438,6 +439,12 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
           )}
         </p>
       )}
+
+      {showForgottenPrompt && isSequenceComplete && (
+        <p className="text-sm font-semibold text-emerald-700">
+          Anything you have forgotten? Let Mimo know now.
+        </p>
+      )}
     </div>
   );
 }
@@ -546,6 +553,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 }
 
 export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }: { autoFocusPrompt?: boolean; resultsPortalId?: string }) {
+  const MAX_AI_ROUNDS = 2;
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
@@ -573,6 +581,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [aiCountLoading, setAiCountLoading] = useState(false);
   const [aiFullCoverageCompanyCount, setAiFullCoverageCompanyCount] = useState(0);
   const [aiSpecialistCount, setAiSpecialistCount] = useState(0);
+  const [aiRoundCount, setAiRoundCount] = useState(0);
+  const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
@@ -730,6 +740,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiCountLoading(false);
     setAiFullCoverageCompanyCount(0);
     setAiSpecialistCount(0);
+    setAiRoundCount(0);
+    setAiRoundNotice(null);
     setIsConversationSequenceComplete(false);
   };
 
@@ -874,6 +886,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
   const runSandbox = async (query: string) => {
     setAiLoading(true);
+    setAiRoundNotice(null);
     setAiError(null);
     setAiOutput(null);
     setAiMeta(null);
@@ -1005,6 +1018,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         overallConfidence: p?.overallConfidence ?? null,
       });
 
+      setAiRoundCount((current) => Math.min(current + 1, MAX_AI_ROUNDS));
+
     } catch (error) {
       setAiError((error as Error).message || 'DeepSeek sandbox is unavailable');
     } finally {
@@ -1016,6 +1031,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     const trimmed = query.trim();
     if (!trimmed) return;
     if (searchMode === 'ai' && deepSeekSandboxEnabled) {
+      if (aiRoundCount >= MAX_AI_ROUNDS) {
+        setAiRoundNotice('You can make one follow-up tweak only. Clear and start again for a new request.');
+        return;
+      }
       setIntent(null);
       setMatchCount(null);
       runSandbox(trimmed);
@@ -1035,6 +1054,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setIntent(result);
   };
 
+  const handleClearSearch = () => {
+    clearAiResponseState();
+    setIntent(null);
+    setMatchCount(null);
+    setShowBriefModal(false);
+  };
+
 
   return (
     <div className="space-y-3">
@@ -1046,11 +1072,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
           </button>
         </p>
       </div>
-      <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} />
+      <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} onClear={handleClearSearch} />
 
       {/* Non-admin: inline conversational response injected right below prompt */}
       {!isAdminTester && deepSeekSandboxEnabled && (
         <div className="space-y-3">
+          {aiRoundNotice && (
+            <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">{aiRoundNotice}</p>
+          )}
           {aiLoading && <ThinkingIndicator />}
           {!aiLoading && aiError && <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{aiError}</p>}
 
@@ -1065,6 +1094,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
                 safetyAssessment={aiStructured.safetyAssessment}
                   fullCoverageCompanyCount={aiFullCoverageCompanyCount}
                   specialistCount={aiSpecialistCount}
+                  showForgottenPrompt={aiRoundCount === 1}
                     onSequenceStateChange={setIsConversationSequenceComplete}
                 tradesLabel={
                   aiStructured.trades.length === 0
