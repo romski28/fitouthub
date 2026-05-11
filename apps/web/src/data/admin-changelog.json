@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-11-09c9d65",
+    "date": "2026-05-11T23:30:25+08:00",
+    "title": "Switch vision test default from v4-flash to v4-pro for better multimodal support",
+    "summary": "Switch vision test default from v4-flash to v4-pro for better multimodal support",
+    "areas": [
+      "api"
+    ],
+    "commit": "09c9d65",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-11-a6b87b7",
     "date": "2026-05-11T23:25:16+08:00",
     "title": "Add official DeepSeek docs format as first vision test candidate",

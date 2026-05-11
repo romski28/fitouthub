@@ -845,7 +845,7 @@ OUTPUT FORMAT (JSON only)
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
-    const requestedModel = (context.model || process.env.DEEPSEEK_VISION_MODEL || 'deepseek-v4-flash').trim();
+    const requestedModel = (context.model || process.env.DEEPSEEK_VISION_MODEL || 'deepseek-v4-pro').trim();
     const modelAliasMap: Record<string, string> = {
       'deepseek-vl2': 'deepseek-v4-flash',
       'deepseek-vl2-chat': 'deepseek-v4-flash',
