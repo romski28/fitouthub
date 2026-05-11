@@ -14,7 +14,7 @@ export class AiController {
   @Post('sandbox/vision/check')
   @UseGuards(CombinedAuthGuard)
   async checkVisionAccess(
-    @Body() body: { model?: string; imageUrl?: string },
+    @Body() body: { model?: string; imageUrl?: string; provider?: 'deepseek' | 'qwen' },
     @Request() req: any,
   ) {
     const role: string | undefined = req?.user?.role;
@@ -24,6 +24,7 @@ export class AiController {
     return this.aiService.testVisionAccess({
       model: body?.model,
       imageUrl: body?.imageUrl,
+      provider: body?.provider,
     });
   }
 

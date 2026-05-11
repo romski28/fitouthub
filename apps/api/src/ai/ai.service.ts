@@ -65,6 +65,15 @@ export class AiService {
     return `${configured.replace(/\/+$/, '')}/chat/completions`;
   }
 
+  private resolveQwenChatEndpoint() {
+    const configured = (process.env.QWEN_API_URL || '').trim();
+    if (!configured) {
+      return 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
+    }
+    if (configured.endsWith('/chat/completions')) return configured;
+    return `${configured.replace(/\/+$/, '')}/chat/completions`;
+  }
+
   private getAiThreadWindowStart() {
     return new Date(Date.now() - this.aiThreadWindowMs);
   }
@@ -807,6 +816,11 @@ OUTPUT FORMAT (JSON only)
     const timeoutMs = Number(timeoutRaw || '60000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '1200');
     const apiKeyPresent = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
+    const qwenEndpoint = this.resolveQwenChatEndpoint();
+    const qwenModel = process.env.QWEN_MODEL || process.env.QWEN_VISION_MODEL || 'qwen-vl-plus-latest';
+    const qwenTimeoutRaw = process.env.QWEN_TIMEOUT_MS;
+    const qwenTimeoutMs = Number(qwenTimeoutRaw || timeoutRaw || '60000');
+    const qwenApiKeyPresent = Boolean((process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY || '').trim());
     const promptWrapper = await this.buildPromptWrapper();
 
     return {
@@ -820,6 +834,20 @@ OUTPUT FORMAT (JSON only)
         timeoutRaw: timeoutRaw ?? null,
         maxOutputTokens,
         apiKeyPresent,
+      },
+      providers: {
+        deepseek: {
+          model,
+          endpoint,
+          timeoutMs,
+          apiKeyPresent,
+        },
+        qwen: {
+          model: qwenModel,
+          endpoint: qwenEndpoint,
+          timeoutMs: qwenTimeoutMs,
+          apiKeyPresent: qwenApiKeyPresent,
+        },
       },
       promptWrapper: {
         systemPromptChars: promptWrapper.systemPrompt.length,
@@ -837,7 +865,13 @@ OUTPUT FORMAT (JSON only)
   async testVisionAccess(context: {
     model?: string;
     imageUrl?: string;
+    provider?: 'deepseek' | 'qwen';
   }) {
+    const provider = (context.provider || 'deepseek').toLowerCase();
+    if (provider === 'qwen') {
+      return this.testQwenVisionAccess(context);
+    }
+
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       throw new ServiceUnavailableException('DeepSeek sandbox is not configured');
@@ -1027,6 +1061,7 @@ OUTPUT FORMAT (JSON only)
           const durationMs = Date.now() - startedAt;
           return {
             ok: true,
+            provider: 'deepseek',
             requestId,
             model,
             requestedModel,
@@ -1057,6 +1092,7 @@ OUTPUT FORMAT (JSON only)
       const lastAttempt = attempts[attempts.length - 1];
       return {
         ok: false,
+        provider: 'deepseek',
         requestId,
         model,
         requestedModel,
@@ -1076,6 +1112,7 @@ OUTPUT FORMAT (JSON only)
       if ((error as Error).name === 'AbortError') {
         return {
           ok: false,
+          provider: 'deepseek',
           requestId,
           model,
           requestedModel,
@@ -1091,6 +1128,243 @@ OUTPUT FORMAT (JSON only)
       }
       return {
         ok: false,
+        provider: 'deepseek',
+        requestId,
+        model,
+        requestedModel,
+        imageUrl,
+        endpoint,
+        statusCode: 500,
+        durationMs,
+        attempts,
+        inlineImagePrepared: Boolean(inlineImageDataUrl),
+        inlineImageError,
+        message: (error as Error).message || 'Vision test failed',
+      };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async testQwenVisionAccess(context: {
+    model?: string;
+    imageUrl?: string;
+  }) {
+    const apiKey = (process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY || '').trim();
+    if (!apiKey) {
+      throw new ServiceUnavailableException('Qwen sandbox is not configured');
+    }
+
+    const endpoint = this.resolveQwenChatEndpoint();
+    const timeoutMs = Number(process.env.QWEN_TIMEOUT_MS || process.env.DEEPSEEK_TIMEOUT_MS || '60000');
+    const requestedModel = (context.model || process.env.QWEN_VISION_MODEL || 'qwen-vl-plus-latest').trim();
+    const model = requestedModel;
+    const imageUrl =
+      (context.imageUrl || process.env.QWEN_VISION_TEST_IMAGE_URL || 'https://picsum.photos/id/1062/1200/800')
+        .trim();
+
+    if (!/^https?:\/\//i.test(imageUrl)) {
+      throw new BadRequestException('imageUrl must be an absolute http/https URL');
+    }
+
+    const requestId = `qwen_vl_${Date.now().toString(36)}`;
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const promptText = `What's in this image? Describe it briefly for renovation triage.`;
+    const maxInlineImageBytes = Number(process.env.QWEN_VISION_MAX_INLINE_IMAGE_BYTES || '3145728');
+
+    let inlineImageDataUrl: string | null = null;
+    let inlineImageError: string | null = null;
+    try {
+      const imageRes = await fetch(imageUrl, { signal: controller.signal });
+      if (!imageRes.ok) {
+        inlineImageError = `image fetch failed (${imageRes.status})`;
+      } else {
+        const contentType = (imageRes.headers.get('content-type') || 'image/png').split(';')[0].trim();
+        const imageBuffer = Buffer.from(await imageRes.arrayBuffer());
+        if (imageBuffer.byteLength > maxInlineImageBytes) {
+          inlineImageError = `image too large for inline (${imageBuffer.byteLength} bytes)`;
+        } else {
+          inlineImageDataUrl = `data:${contentType};base64,${imageBuffer.toString('base64')}`;
+        }
+      }
+    } catch (error) {
+      inlineImageError = (error as Error).message || 'image fetch failed';
+    }
+
+    const candidates: Array<{
+      label: string;
+      body: Record<string, unknown>;
+    }> = [
+      {
+        label: 'qwen_openai_content_parts_image_url',
+        body: {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: promptText },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: imageUrl,
+                  },
+                },
+              ],
+            },
+          ],
+          max_tokens: 200,
+          temperature: 0.2,
+        },
+      },
+    ];
+
+    if (inlineImageDataUrl) {
+      candidates.push({
+        label: 'qwen_openai_content_parts_data_url',
+        body: {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: promptText },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: inlineImageDataUrl,
+                  },
+                },
+              ],
+            },
+          ],
+          max_tokens: 200,
+          temperature: 0.2,
+        },
+      });
+    }
+
+    const attempts: Array<{ format: string; statusCode: number; providerError: string }> = [];
+
+    try {
+      for (const candidate of candidates) {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(candidate.body),
+          signal: controller.signal,
+        });
+
+        const rawText = await response.text();
+
+        let payload: Record<string, unknown> | null = null;
+        try {
+          payload = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : null;
+        } catch {
+          payload = null;
+        }
+
+        const providerErrorMessage = (() => {
+          if (!payload || typeof payload !== 'object') return rawText.slice(0, 300);
+          const errorField = payload.error;
+          if (typeof errorField === 'string') return errorField;
+          if (errorField && typeof errorField === 'object') {
+            const nested = errorField as Record<string, unknown>;
+            if (typeof nested.message === 'string' && nested.message.trim()) return nested.message.trim();
+            if (typeof nested.code === 'string' && nested.code.trim()) return nested.code.trim();
+          }
+          if (typeof payload.message === 'string' && payload.message.trim()) return payload.message.trim();
+          return rawText.slice(0, 300);
+        })();
+
+        const content =
+          payload &&
+          Array.isArray(payload.choices) &&
+          payload.choices[0] &&
+          typeof payload.choices[0] === 'object' &&
+          (payload.choices[0] as Record<string, unknown>).message &&
+          typeof (payload.choices[0] as Record<string, unknown>).message === 'object' &&
+          typeof ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content === 'string'
+            ? ((((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content as string) || '').trim()
+            : null;
+
+        if (response.ok) {
+          const durationMs = Date.now() - startedAt;
+          return {
+            ok: true,
+            provider: 'qwen',
+            requestId,
+            model,
+            requestedModel,
+            imageUrl,
+            endpoint,
+            statusCode: response.status,
+            durationMs,
+            formatUsed: candidate.label,
+            attempts,
+            inlineImagePrepared: Boolean(inlineImageDataUrl),
+            inlineImageError,
+            contentPreview: content,
+            usage:
+              payload && typeof payload.usage === 'object' && payload.usage
+                ? payload.usage
+                : null,
+          };
+        }
+
+        attempts.push({
+          format: candidate.label,
+          statusCode: response.status,
+          providerError: providerErrorMessage,
+        });
+      }
+
+      const durationMs = Date.now() - startedAt;
+      const lastAttempt = attempts[attempts.length - 1];
+      return {
+        ok: false,
+        provider: 'qwen',
+        requestId,
+        model,
+        requestedModel,
+        imageUrl,
+        endpoint,
+        statusCode: lastAttempt?.statusCode ?? 400,
+        durationMs,
+        formatUsed: null,
+        attempts,
+        inlineImagePrepared: Boolean(inlineImageDataUrl),
+        inlineImageError,
+        providerError: lastAttempt?.providerError ?? 'Vision model call failed',
+        message: 'Vision model call failed',
+      };
+    } catch (error) {
+      const durationMs = Date.now() - startedAt;
+      if ((error as Error).name === 'AbortError') {
+        return {
+          ok: false,
+          provider: 'qwen',
+          requestId,
+          model,
+          requestedModel,
+          imageUrl,
+          endpoint,
+          statusCode: 408,
+          durationMs,
+          attempts,
+          inlineImagePrepared: Boolean(inlineImageDataUrl),
+          inlineImageError,
+          message: 'Vision test timed out',
+        };
+      }
+      return {
+        ok: false,
+        provider: 'qwen',
         requestId,
         model,
         requestedModel,

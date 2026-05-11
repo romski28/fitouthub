@@ -589,10 +589,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
   const [visionLoading, setVisionLoading] = useState(false);
   const [visionError, setVisionError] = useState<string | null>(null);
-  const [visionModel, setVisionModel] = useState('deepseek-v4-flash');
+  const [visionProvider, setVisionProvider] = useState<'deepseek' | 'qwen'>('deepseek');
+  const [visionModel, setVisionModel] = useState('deepseek-v4-pro');
   const [visionImageUrl, setVisionImageUrl] = useState('https://picsum.photos/id/1062/1200/800');
   const [visionResult, setVisionResult] = useState<{
     ok: boolean;
+    provider?: 'deepseek' | 'qwen';
     statusCode?: number;
     requestedModel?: string;
     model?: string;
@@ -841,13 +843,15 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          model: visionModel.trim() || 'deepseek-vl2',
+          provider: visionProvider,
+          model: visionModel.trim() || (visionProvider === 'qwen' ? 'qwen-vl-plus-latest' : 'deepseek-v4-pro'),
           imageUrl: visionImageUrl.trim(),
         }),
       });
       const payload = await response.json();
       setVisionResult({
         ok: Boolean(payload?.ok),
+        provider: payload?.provider === 'qwen' ? 'qwen' : 'deepseek',
         statusCode: typeof payload?.statusCode === 'number' ? payload.statusCode : undefined,
         requestedModel: typeof payload?.requestedModel === 'string' ? payload.requestedModel : undefined,
         model: typeof payload?.model === 'string' ? payload.model : undefined,
@@ -1245,13 +1249,28 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
             <p className="font-semibold text-slate-700">Vision model access test</p>
             <div className="grid gap-2 sm:grid-cols-2">
               <label className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-600">Provider</span>
+                <select
+                  value={visionProvider}
+                  onChange={(e) => {
+                    const next = e.target.value === 'qwen' ? 'qwen' : 'deepseek';
+                    setVisionProvider(next);
+                    setVisionModel(next === 'qwen' ? 'qwen-vl-plus-latest' : 'deepseek-v4-pro');
+                  }}
+                  className="w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                >
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="qwen">Qwen (Alibaba Cloud)</option>
+                </select>
+              </label>
+              <label className="space-y-1">
                 <span className="text-[11px] font-semibold text-slate-600">Model</span>
                 <input
                   type="text"
                   value={visionModel}
                   onChange={(e) => setVisionModel(e.target.value)}
                   className="w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
-                  placeholder="deepseek-v4-flash"
+                  placeholder={visionProvider === 'qwen' ? 'qwen-vl-plus-latest' : 'deepseek-v4-pro'}
                 />
               </label>
               <label className="space-y-1 sm:col-span-1">
@@ -1274,16 +1293,21 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
               >
                 {visionLoading ? 'Checking vision...' : 'Check vision access'}
               </button>
-              <span className="text-[11px] text-slate-500">Use deepseek-v4-flash or deepseek-v4-pro</span>
+              <span className="text-[11px] text-slate-500">
+                {visionProvider === 'qwen'
+                  ? 'Try qwen-vl-plus-latest or qwen-vl-max-latest'
+                  : 'Try deepseek-v4-pro or deepseek-v4-flash'}
+              </span>
             </div>
             {visionError && <p className="text-[11px] text-rose-600">{visionError}</p>}
             {visionResult && (
               <div className="rounded border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 space-y-1">
                 <p>
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 font-semibold ${visionResult.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                    {visionResult.ok ? 'VL2 access confirmed' : 'Vision check failed'}
+                    {visionResult.ok ? 'Vision access confirmed' : 'Vision check failed'}
                   </span>
                 </p>
+                {visionResult.provider && <p>provider: {visionResult.provider}</p>}
                 {visionResult.requestedModel && <p>requestedModel: {visionResult.requestedModel}</p>}
                 {visionResult.model && <p>model: {visionResult.model}</p>}
                 {typeof visionResult.statusCode === 'number' && <p>statusCode: {visionResult.statusCode}</p>}

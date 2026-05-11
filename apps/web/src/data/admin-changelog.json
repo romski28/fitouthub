@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-12-9519491",
+    "date": "2026-05-12T00:12:28+08:00",
+    "title": "Add parallel Qwen vision provider while keeping DeepSeek default flow",
+    "summary": "Add parallel Qwen vision provider while keeping DeepSeek default flow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9519491",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-11-09c9d65",
     "date": "2026-05-11T23:30:25+08:00",
     "title": "Switch vision test default from v4-flash to v4-pro for better multimodal support",
