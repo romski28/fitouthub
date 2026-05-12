@@ -1419,7 +1419,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                     ? ''
                     : displayedTrades.length === 1
                       ? displayedTrades[0]
-                      : `${displayedTrades[0]} + ${displayedTrades.length - 1} other${displayedTrades.length > 2 ? 's' : ''}`
+                      : 'project team members'
                 }
               />
             </div>
