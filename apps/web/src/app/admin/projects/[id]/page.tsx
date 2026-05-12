@@ -12,6 +12,7 @@ import ProjectFinancialsCard from "@/components/project-financials-card";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 import { ProjectAiPanel } from "@/components/project-ai-panel";
+import { ProjectAiScopePanel } from "@/components/project-ai-scope-panel";
 
 interface ProjectProfessional {
   id: string;
@@ -277,6 +278,12 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
           isAcknowledgingSafety={acknowledgingSafety}
         />
       )}
+
+      <ProjectAiScopePanel
+        projectId={project.id}
+        accessToken={accessToken || null}
+        mode="admin"
+      />
 
       <ProjectProgressBar
         project={{

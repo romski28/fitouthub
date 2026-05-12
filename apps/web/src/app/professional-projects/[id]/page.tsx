@@ -21,6 +21,7 @@ import { ChatTab } from './tabs/chat-tab';
 import { AcPlansTab } from './tabs/ac-plans-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
+import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 
 const TabPanel: React.FC<{ tab: string; children: React.ReactNode }> = ({ children }) => <>{children}</>;
 
@@ -1563,6 +1564,7 @@ export default function ProjectDetailPage() {
                   // Build tabs array conditionally
                   const tabsArray = [
                     { id: 'overview', label: 'Overview', icon: '📋' },
+                    { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
                   ];
                   
                   // Show Site Access tab only during bidding stage (not awarded)
@@ -1606,6 +1608,14 @@ export default function ProjectDetailPage() {
               submittingQuote={submittingQuote}
               accessToken={accessToken}
             />
+
+            <TabPanel tab="ai-scope">
+              <ProjectAiScopePanel
+                projectId={project.project.id}
+                accessToken={accessToken || null}
+                mode="professional"
+              />
+            </TabPanel>
 
             <SiteAccessTab
               tab="site-access"

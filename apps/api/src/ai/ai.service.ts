@@ -43,6 +43,68 @@ type SafetyAssessment = {
 
 type ProjectScale = 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
 
+type ProjectActor = { actorId: string; role: 'client' | 'professional' | 'admin' };
+
+type ScopeEntry = {
+  id: string;
+  sequence: number;
+  workPackage: string;
+  deliverable: string;
+  primaryTrade: string;
+  durationMinDays: number;
+  durationMaxDays: number;
+  dependencies: string[];
+  phase: string;
+  milestoneCode: string | null;
+  notes: string;
+};
+
+type ScopeVersion = {
+  id: string;
+  version: number;
+  createdAt: string;
+  createdByRole: 'client' | 'professional' | 'admin';
+  promptInputs: {
+    additionalContext?: string;
+    siteConstraints?: string;
+    longLeadItems?: string;
+    workingCalendar?: string;
+    deadline?: string;
+  };
+  projectSummary: {
+    projectType: string;
+    location: string;
+    assumptions: string[];
+    constraints: string[];
+  };
+  entries: ScopeEntry[];
+  milestones: Array<{
+    code: string;
+    name: string;
+    targetDay: number;
+    acceptanceCriteria: string;
+  }>;
+  programme: {
+    startDay: number;
+    finishDay: number;
+    criticalPath: string[];
+    timelineByPhase: Array<{
+      phase: string;
+      dayRange: string;
+      includedEntryIds: string[];
+    }>;
+  };
+  confidence: {
+    level: 'low' | 'medium' | 'high';
+    notes: string;
+  };
+};
+
+type ScopeContainer = {
+  currentVersionId: string | null;
+  versions: ScopeVersion[];
+};
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -2264,6 +2326,531 @@ OUTPUT FORMAT (JSON only)
     });
 
     return updated;
+  }
+
+  private toScopeContainer(projectJson: Record<string, unknown>): ScopeContainer {
+    const candidate =
+      projectJson.aiScope && typeof projectJson.aiScope === 'object' && !Array.isArray(projectJson.aiScope)
+        ? (projectJson.aiScope as Record<string, unknown>)
+        : null;
+
+    const versionsRaw = Array.isArray(candidate?.versions) ? candidate?.versions : [];
+    const versions = versionsRaw
+      .filter((version): version is ScopeVersion => typeof version === 'object' && version !== null)
+      .map((version) => version as ScopeVersion);
+
+    const currentVersionId =
+      typeof candidate?.currentVersionId === 'string' && candidate.currentVersionId.trim().length > 0
+        ? candidate.currentVersionId
+        : versions.length > 0
+          ? versions[versions.length - 1].id
+          : null;
+
+    return {
+      currentVersionId,
+      versions,
+    };
+  }
+
+  private async resolveProjectScopeContext(projectId: string, actor: ProjectActor) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        userId: true,
+        clientId: true,
+        projectName: true,
+        region: true,
+        notes: true,
+        tradesRequired: true,
+        aiIntake: {
+          select: {
+            id: true,
+            summary: true,
+            scope: true,
+            locationPrimary: true,
+            trades: true,
+            project: true,
+          },
+        },
+        professionals: {
+          select: {
+            professionalId: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (actor.role === 'client') {
+      const isOwner = project.userId === actor.actorId || project.clientId === actor.actorId;
+      if (!isOwner) {
+        throw new NotFoundException('Project not found');
+      }
+    }
+
+    if (actor.role === 'professional') {
+      const hasAccess = project.professionals.some((pp) => pp.professionalId === actor.actorId);
+      if (!hasAccess) {
+        throw new NotFoundException('Project not found');
+      }
+    }
+
+    let intake = project.aiIntake;
+    if (!intake) {
+      const requestId = `scope_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      intake = await this.prisma.aiIntake.create({
+        data: {
+          requestId,
+          rawPrompt: `AI scope workspace for project ${project.id}`,
+          userId: actor.role === 'client' ? actor.actorId : null,
+          trades: Array.isArray(project.tradesRequired) ? project.tradesRequired : [],
+          locationPrimary: project.region || null,
+          projectId: project.id,
+          status: 'draft',
+          project: {},
+        },
+        select: {
+          id: true,
+          summary: true,
+          scope: true,
+          locationPrimary: true,
+          trades: true,
+          project: true,
+        },
+      });
+    }
+
+    const projectJson =
+      intake.project && typeof intake.project === 'object' && !Array.isArray(intake.project)
+        ? ({ ...(intake.project as Record<string, unknown>) } as Record<string, unknown>)
+        : {};
+
+    const container = this.toScopeContainer(projectJson);
+
+    return {
+      project,
+      intake,
+      projectJson,
+      container,
+    };
+  }
+
+  private normalizeScopeEntry(entry: Partial<ScopeEntry>, sequence: number): ScopeEntry {
+    const min = Number(entry.durationMinDays ?? 1);
+    const max = Number(entry.durationMaxDays ?? min);
+    const durationMinDays = Number.isFinite(min) && min > 0 ? Number(min.toFixed(1)) : 1;
+    const durationMaxDays = Number.isFinite(max) && max >= durationMinDays
+      ? Number(max.toFixed(1))
+      : Number(durationMinDays.toFixed(1));
+
+    return {
+      id: typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : `S${sequence}`,
+      sequence,
+      workPackage: typeof entry.workPackage === 'string' ? entry.workPackage.trim() : '',
+      deliverable: typeof entry.deliverable === 'string' ? entry.deliverable.trim() : '',
+      primaryTrade: typeof entry.primaryTrade === 'string' ? entry.primaryTrade.trim() : 'General',
+      durationMinDays,
+      durationMaxDays,
+      dependencies: Array.isArray(entry.dependencies)
+        ? entry.dependencies.filter((dep): dep is string => typeof dep === 'string' && dep.trim().length > 0)
+        : [],
+      phase: typeof entry.phase === 'string' && entry.phase.trim() ? entry.phase.trim() : 'Execution',
+      milestoneCode: typeof entry.milestoneCode === 'string' && entry.milestoneCode.trim().length > 0
+        ? entry.milestoneCode.trim()
+        : null,
+      notes: typeof entry.notes === 'string' ? entry.notes.trim() : '',
+    };
+  }
+
+  private async callDeepSeekForScope(prompt: string) {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      throw new ServiceUnavailableException('DeepSeek sandbox is not configured');
+    }
+
+    const endpoint = this.resolveDeepSeekChatEndpoint();
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const systemPrompt = `You are a senior renovation project manager in Hong Kong.
+Create a pragmatic Scope of Works and Programme of Works at work-package level.
+Do not output micro-task procedural steps.
+For compact single-trade reactive jobs, duration should usually be 0.5 to 2 days unless constraints justify longer.
+If a duration exceeds 3 days, provide explicit reason in notes.
+Return JSON only.`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.15,
+          response_format: { type: 'json_object' },
+          max_tokens: 2200,
+        }),
+        signal: controller.signal,
+      });
+
+      const rawText = await response.text();
+      if (!response.ok) {
+        throw new ServiceUnavailableException(`DeepSeek request failed (${response.status})`);
+      }
+
+      const payload = rawText ? (JSON.parse(rawText) as DeepSeekChatResponse) : null;
+      const content = payload?.choices?.[0]?.message?.content?.trim() || '';
+      if (!content) {
+        throw new ServiceUnavailableException('DeepSeek returned empty scope output');
+      }
+
+      return JSON.parse(content) as Record<string, unknown>;
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        throw new ServiceUnavailableException('DeepSeek scope generation timed out');
+      }
+      if (error instanceof ServiceUnavailableException) {
+        throw error;
+      }
+      throw new ServiceUnavailableException((error as Error).message || 'DeepSeek scope generation failed');
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async saveScopeContainer(intakeId: string, projectJson: Record<string, unknown>, container: ScopeContainer) {
+    await this.prisma.aiIntake.update({
+      where: { id: intakeId },
+      data: {
+        project: {
+          ...projectJson,
+          aiScope: container,
+        },
+      },
+      select: { id: true },
+    });
+  }
+
+  async getProjectScope(projectId: string, actor: ProjectActor) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const currentVersion = context.container.versions.find((version) => version.id === context.container.currentVersionId) || null;
+
+    return {
+      scope: currentVersion,
+      versionCount: context.container.versions.length,
+      canRegenerate: true,
+      canAdminCrud: actor.role === 'admin',
+    };
+  }
+
+  async generateProjectScope(
+    projectId: string,
+    actor: ProjectActor,
+    input: {
+      additionalContext?: string;
+      siteConstraints?: string;
+      longLeadItems?: string;
+      workingCalendar?: string;
+      deadline?: string;
+    },
+  ) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const nextVersion = context.container.versions.length + 1;
+
+    const prompt = `Project:
+- Name: ${context.project.projectName || 'Unnamed project'}
+- Location: ${context.project.region || context.intake.locationPrimary || 'Hong Kong'}
+- Existing summary: ${context.intake.summary || context.intake.scope || context.project.notes || 'Not provided'}
+- Trades: ${(context.intake.trades && context.intake.trades.length > 0 ? context.intake.trades : context.project.tradesRequired || []).join(', ') || 'To be determined'}
+
+Additional inputs:
+- Site constraints: ${input.siteConstraints || 'Not provided'}
+- Long lead items: ${input.longLeadItems || 'Not provided'}
+- Working calendar: ${input.workingCalendar || '6-day week unless stated'}
+- Deadline: ${input.deadline || 'Not provided'}
+- Extra context: ${input.additionalContext || 'Not provided'}
+
+Return JSON with keys:
+projectSummary, scopeOfWorks, milestones, programme, confidence.
+scopeOfWorks[] items must include:
+id, workPackage, deliverable, primaryTrade, durationMinDays, durationMaxDays, dependencies, phase, milestoneCode, notes.
+programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
+
+    const output = await this.callDeepSeekForScope(prompt);
+
+    const outputSummary =
+      output.projectSummary && typeof output.projectSummary === 'object' && !Array.isArray(output.projectSummary)
+        ? (output.projectSummary as Record<string, unknown>)
+        : {};
+
+    const outputWorks = Array.isArray(output.scopeOfWorks) ? output.scopeOfWorks : [];
+
+    const entries = outputWorks.map((item, index) => {
+      const row = item && typeof item === 'object' && !Array.isArray(item)
+        ? (item as Record<string, unknown>)
+        : {};
+      return this.normalizeScopeEntry(
+        {
+          id: typeof row.id === 'string' ? row.id : `S${index + 1}`,
+          workPackage: typeof row.workPackage === 'string' ? row.workPackage : '',
+          deliverable: typeof row.deliverable === 'string' ? row.deliverable : '',
+          primaryTrade: typeof row.primaryTrade === 'string' ? row.primaryTrade : 'General',
+          durationMinDays: typeof row.durationMinDays === 'number' ? row.durationMinDays : 1,
+          durationMaxDays: typeof row.durationMaxDays === 'number' ? row.durationMaxDays : (typeof row.durationMinDays === 'number' ? row.durationMinDays : 1),
+          dependencies: Array.isArray(row.dependencies) ? row.dependencies.filter((dep): dep is string => typeof dep === 'string') : [],
+          phase: typeof row.phase === 'string' ? row.phase : 'Execution',
+          milestoneCode: typeof row.milestoneCode === 'string' ? row.milestoneCode : null,
+          notes: typeof row.notes === 'string' ? row.notes : '',
+        },
+        index + 1,
+      );
+    }).filter((entry) => entry.workPackage.length > 0);
+
+    const milestonesRaw = Array.isArray(output.milestones) ? output.milestones : [];
+    const milestones = milestonesRaw
+      .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null && !Array.isArray(item))
+      .map((item) => ({
+        code: typeof item.code === 'string' ? item.code : '',
+        name: typeof item.name === 'string' ? item.name : '',
+        targetDay: typeof item.targetDay === 'number' ? item.targetDay : 0,
+        acceptanceCriteria: typeof item.acceptanceCriteria === 'string' ? item.acceptanceCriteria : '',
+      }))
+      .filter((item) => item.code.length > 0 && item.name.length > 0);
+
+    const programmeRaw =
+      output.programme && typeof output.programme === 'object' && !Array.isArray(output.programme)
+        ? (output.programme as Record<string, unknown>)
+        : {};
+
+    const timelineByPhaseRaw = Array.isArray(programmeRaw.timelineByPhase) ? programmeRaw.timelineByPhase : [];
+
+    const programme: ScopeVersion['programme'] = {
+      startDay: typeof programmeRaw.startDay === 'number' ? programmeRaw.startDay : 1,
+      finishDay: typeof programmeRaw.finishDay === 'number' ? programmeRaw.finishDay : 1,
+      criticalPath: Array.isArray(programmeRaw.criticalPath)
+        ? programmeRaw.criticalPath.filter((item): item is string => typeof item === 'string')
+        : [],
+      timelineByPhase: timelineByPhaseRaw
+        .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null && !Array.isArray(item))
+        .map((item) => ({
+          phase: typeof item.phase === 'string' ? item.phase : 'Execution',
+          dayRange: typeof item.dayRange === 'string' ? item.dayRange : '',
+          includedEntryIds: Array.isArray(item.includedEntryIds)
+            ? item.includedEntryIds.filter((id): id is string => typeof id === 'string')
+            : [],
+        })),
+    };
+
+    const confidenceRaw =
+      output.confidence && typeof output.confidence === 'object' && !Array.isArray(output.confidence)
+        ? (output.confidence as Record<string, unknown>)
+        : {};
+
+    const confidenceLevelRaw = typeof confidenceRaw.level === 'string' ? confidenceRaw.level.toLowerCase() : 'medium';
+    const confidence: ScopeVersion['confidence'] = {
+      level: confidenceLevelRaw === 'low' || confidenceLevelRaw === 'high' ? confidenceLevelRaw : 'medium',
+      notes: typeof confidenceRaw.notes === 'string' ? confidenceRaw.notes : '',
+    };
+
+    const versionId = `scope_v${nextVersion}_${Date.now().toString(36)}`;
+    const scopeVersion: ScopeVersion = {
+      id: versionId,
+      version: nextVersion,
+      createdAt: new Date().toISOString(),
+      createdByRole: actor.role,
+      promptInputs: {
+        additionalContext: input.additionalContext?.trim() || undefined,
+        siteConstraints: input.siteConstraints?.trim() || undefined,
+        longLeadItems: input.longLeadItems?.trim() || undefined,
+        workingCalendar: input.workingCalendar?.trim() || undefined,
+        deadline: input.deadline?.trim() || undefined,
+      },
+      projectSummary: {
+        projectType: typeof outputSummary.projectType === 'string' ? outputSummary.projectType : 'renovation',
+        location: typeof outputSummary.location === 'string'
+          ? outputSummary.location
+          : context.project.region || context.intake.locationPrimary || 'Hong Kong',
+        assumptions: Array.isArray(outputSummary.assumptions)
+          ? outputSummary.assumptions.filter((item): item is string => typeof item === 'string')
+          : [],
+        constraints: Array.isArray(outputSummary.constraints)
+          ? outputSummary.constraints.filter((item): item is string => typeof item === 'string')
+          : [],
+      },
+      entries,
+      milestones,
+      programme,
+      confidence,
+    };
+
+    const container: ScopeContainer = {
+      currentVersionId: scopeVersion.id,
+      versions: [...context.container.versions, scopeVersion],
+    };
+
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+
+    return {
+      scope: scopeVersion,
+      versionCount: container.versions.length,
+      canRegenerate: true,
+      canAdminCrud: actor.role === 'admin',
+    };
+  }
+
+  async createProjectScopeEntry(
+    projectId: string,
+    actor: ProjectActor,
+    input: {
+      workPackage?: string;
+      deliverable?: string;
+      primaryTrade?: string;
+      durationMinDays?: number;
+      durationMaxDays?: number;
+      dependencies?: string[];
+      phase?: string;
+      milestoneCode?: string | null;
+      notes?: string;
+    },
+  ) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const currentVersion = context.container.versions.find((version) => version.id === context.container.currentVersionId);
+    if (!currentVersion) {
+      throw new BadRequestException('No AI scope exists yet. Generate scope first.');
+    }
+
+    const sequence = currentVersion.entries.length + 1;
+    const entry = this.normalizeScopeEntry(
+      {
+        id: `S${sequence}`,
+        workPackage: input.workPackage || '',
+        deliverable: input.deliverable || '',
+        primaryTrade: input.primaryTrade || 'General',
+        durationMinDays: input.durationMinDays ?? 1,
+        durationMaxDays: input.durationMaxDays ?? input.durationMinDays ?? 1,
+        dependencies: input.dependencies || [],
+        phase: input.phase || 'Execution',
+        milestoneCode: input.milestoneCode ?? null,
+        notes: input.notes || '',
+      },
+      sequence,
+    );
+
+    if (!entry.workPackage) {
+      throw new BadRequestException('workPackage is required');
+    }
+
+    const updatedVersion: ScopeVersion = {
+      ...currentVersion,
+      entries: [...currentVersion.entries, entry],
+    };
+
+    const versions = context.container.versions.map((version) => (version.id === updatedVersion.id ? updatedVersion : version));
+    const container: ScopeContainer = {
+      ...context.container,
+      versions,
+    };
+
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+
+    return { scope: updatedVersion };
+  }
+
+  async updateProjectScopeEntry(
+    projectId: string,
+    entryId: string,
+    actor: ProjectActor,
+    input: {
+      workPackage?: string;
+      deliverable?: string;
+      primaryTrade?: string;
+      durationMinDays?: number;
+      durationMaxDays?: number;
+      dependencies?: string[];
+      phase?: string;
+      milestoneCode?: string | null;
+      notes?: string;
+    },
+  ) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const currentVersion = context.container.versions.find((version) => version.id === context.container.currentVersionId);
+    if (!currentVersion) {
+      throw new BadRequestException('No AI scope exists yet. Generate scope first.');
+    }
+
+    const index = currentVersion.entries.findIndex((entry) => entry.id === entryId);
+    if (index === -1) {
+      throw new NotFoundException('Scope entry not found');
+    }
+
+    const merged = {
+      ...currentVersion.entries[index],
+      ...input,
+    };
+    const normalized = this.normalizeScopeEntry(merged, currentVersion.entries[index].sequence);
+
+    const updatedEntries = [...currentVersion.entries];
+    updatedEntries[index] = normalized;
+
+    const updatedVersion: ScopeVersion = {
+      ...currentVersion,
+      entries: updatedEntries,
+    };
+
+    const versions = context.container.versions.map((version) => (version.id === updatedVersion.id ? updatedVersion : version));
+    const container: ScopeContainer = {
+      ...context.container,
+      versions,
+    };
+
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+
+    return { scope: updatedVersion };
+  }
+
+  async deleteProjectScopeEntry(projectId: string, entryId: string, actor: ProjectActor) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const currentVersion = context.container.versions.find((version) => version.id === context.container.currentVersionId);
+    if (!currentVersion) {
+      throw new BadRequestException('No AI scope exists yet. Generate scope first.');
+    }
+
+    const remaining = currentVersion.entries.filter((entry) => entry.id !== entryId);
+    if (remaining.length === currentVersion.entries.length) {
+      throw new NotFoundException('Scope entry not found');
+    }
+
+    const resequenced = remaining.map((entry, index) => ({
+      ...entry,
+      sequence: index + 1,
+    }));
+
+    const updatedVersion: ScopeVersion = {
+      ...currentVersion,
+      entries: resequenced,
+    };
+
+    const versions = context.container.versions.map((version) => (version.id === updatedVersion.id ? updatedVersion : version));
+    const container: ScopeContainer = {
+      ...context.container,
+      versions,
+    };
+
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+
+    return { scope: updatedVersion };
   }
 
   async getAiAdminMetrics() {

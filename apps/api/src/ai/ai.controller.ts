@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Request, Query, ForbiddenException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Delete, Request, Query, ForbiddenException, UseGuards } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 import { OptionalCombinedAuthGuard } from './optional-combined-auth.guard';
@@ -6,6 +6,24 @@ import { OptionalCombinedAuthGuard } from './optional-combined-auth.guard';
 @Controller('ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}
+
+  private resolveActor(req: any): { actorId: string; role: 'client' | 'professional' | 'admin' } {
+    const actorId: string | undefined = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub ?? undefined;
+    if (!actorId) {
+      throw new ForbiddenException('Authentication required');
+    }
+
+    const tokenRole: string | undefined = req?.user?.role;
+    const isProfessional = !!req?.user?.isProfessional;
+    if (tokenRole === 'admin') {
+      return { actorId, role: 'admin' };
+    }
+    if (tokenRole === 'professional' || isProfessional) {
+      return { actorId, role: 'professional' };
+    }
+
+    return { actorId, role: 'client' };
+  }
 
   @Get('sandbox/health')
   async getSandboxHealth() {
@@ -151,5 +169,95 @@ export class AiController {
       adminUserId: userId,
       adminName: req?.user?.email ?? req?.user?.nickname ?? 'Admin',
     });
+  }
+
+  @Get('projects/:projectId/scope')
+  @UseGuards(CombinedAuthGuard)
+  async getProjectScope(@Param('projectId') projectId: string, @Request() req: any) {
+    const actor = this.resolveActor(req);
+    return this.aiService.getProjectScope(projectId, actor);
+  }
+
+  @Post('projects/:projectId/scope/generate')
+  @UseGuards(CombinedAuthGuard)
+  async generateProjectScope(
+    @Param('projectId') projectId: string,
+    @Body()
+    body: {
+      additionalContext?: string;
+      siteConstraints?: string;
+      longLeadItems?: string;
+      workingCalendar?: string;
+      deadline?: string;
+    },
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    return this.aiService.generateProjectScope(projectId, actor, body || {});
+  }
+
+  @Post('projects/:projectId/scope/entries')
+  @UseGuards(CombinedAuthGuard)
+  async createProjectScopeEntry(
+    @Param('projectId') projectId: string,
+    @Body()
+    body: {
+      workPackage: string;
+      deliverable?: string;
+      primaryTrade: string;
+      durationMinDays?: number;
+      durationMaxDays?: number;
+      dependencies?: string[];
+      phase?: string;
+      milestoneCode?: string | null;
+      notes?: string;
+    },
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.aiService.createProjectScopeEntry(projectId, actor, body || {});
+  }
+
+  @Put('projects/:projectId/scope/entries/:entryId')
+  @UseGuards(CombinedAuthGuard)
+  async updateProjectScopeEntry(
+    @Param('projectId') projectId: string,
+    @Param('entryId') entryId: string,
+    @Body()
+    body: {
+      workPackage?: string;
+      deliverable?: string;
+      primaryTrade?: string;
+      durationMinDays?: number;
+      durationMaxDays?: number;
+      dependencies?: string[];
+      phase?: string;
+      milestoneCode?: string | null;
+      notes?: string;
+    },
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.aiService.updateProjectScopeEntry(projectId, entryId, actor, body || {});
+  }
+
+  @Delete('projects/:projectId/scope/entries/:entryId')
+  @UseGuards(CombinedAuthGuard)
+  async deleteProjectScopeEntry(
+    @Param('projectId') projectId: string,
+    @Param('entryId') entryId: string,
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.aiService.deleteProjectScopeEntry(projectId, entryId, actor);
   }
 }

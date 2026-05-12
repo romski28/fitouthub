@@ -27,6 +27,7 @@ import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
+import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import toast from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -2247,6 +2248,7 @@ export default function ClientProjectDetailPage() {
             onTabChange={setActiveTab}
             tabs={isAwarded ? [
               { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'contract', label: 'Agreement', icon: '📄' },
@@ -2256,6 +2258,7 @@ export default function ClientProjectDetailPage() {
               { id: 'media', label: 'Media', icon: '🖼️' },
             ] : hasPostAwardLifecycleAccess ? [
               { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'financials', label: 'Financials', icon: '💳' },
@@ -2304,6 +2307,14 @@ export default function ClientProjectDetailPage() {
               siteAccessRequests={siteAccessRequests}
             />
           </div>
+        )}
+
+        {activeTab === 'ai-scope' && project && (
+          <ProjectAiScopePanel
+            projectId={projectId}
+            accessToken={accessToken || null}
+            mode="client"
+          />
         )}
 
         {/* Tab Content - Financials */}

@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-12-d4202b8",
+    "date": "2026-05-12T22:10:32+08:00",
+    "title": "Add AI scope-of-works generation, versioning, and role-based project views",
+    "summary": "Add AI scope-of-works generation, versioning, and role-based project views",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "d4202b8",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/admin/projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-3b33944",
     "date": "2026-05-12T21:31:45+08:00",
     "title": "Reset React state on resetAiSession to fully clear old prompts/chats",
