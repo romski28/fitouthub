@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-30f8d7f",
+    "date": "2026-05-12T23:34:07+08:00",
+    "title": "fix(ai): import BadRequestException in scope reorder endpoint",
+    "summary": "fix(ai): import BadRequestException in scope reorder endpoint",
+    "areas": [
+      "api"
+    ],
+    "commit": "30f8d7f",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts"
+    ]
+  },
+  {
     "id": "2026-05-12-20b0521",
     "date": "2026-05-12T23:27:03+08:00",
     "title": "feat(ai-scope): add approval workflow, reorder, comparison UI, and duration calibration",

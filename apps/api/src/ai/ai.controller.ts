@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Delete, Request, Query, ForbiddenException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Delete, Request, Query, ForbiddenException, BadRequestException, UseGuards } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 import { OptionalCombinedAuthGuard } from './optional-combined-auth.guard';
