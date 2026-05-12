@@ -2264,7 +2264,14 @@ export default function ClientProjectDetailPage() {
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
               { id: 'media', label: 'Media', icon: '🖼️' },
-            ] : undefined}
+            ] : [
+              { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
+              { id: 'site-access', label: 'Site Access', icon: '📍' },
+              { id: 'professionals', label: 'Professionals', icon: '👥' },
+              { id: 'chat', label: 'Chat', icon: '💬' },
+              { id: 'media', label: 'Media', icon: '🖼️' },
+            ]}
           />
         </div>
 

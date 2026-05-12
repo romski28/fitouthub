@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-e41c18a",
+    "date": "2026-05-12T22:46:30+08:00",
+    "title": "Show AI Scope tab in client pre-award view",
+    "summary": "Show AI Scope tab in client pre-award view",
+    "areas": [
+      "web"
+    ],
+    "commit": "e41c18a",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-203e05b",
     "date": "2026-05-12T22:15:00+08:00",
     "title": "Fix TypeScript header type error - ensure Authorization key always exists",
