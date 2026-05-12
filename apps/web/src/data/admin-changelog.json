@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-3b33944",
+    "date": "2026-05-12T21:31:45+08:00",
+    "title": "Reset React state on resetAiSession to fully clear old prompts/chats",
+    "summary": "Reset React state on resetAiSession to fully clear old prompts/chats",
+    "areas": [
+      "web"
+    ],
+    "commit": "3b33944",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-8e4071b",
     "date": "2026-05-12T21:30:30+08:00",
     "title": "Clear all AI storage on resetAiSession, not just session ID",

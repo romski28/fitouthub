@@ -904,6 +904,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       // If resetAiSession is true (e.g., on home page), clear all AI state and start fresh
       if (resetAiSession) {
         clearAiClientState();
+        clearAiResponseState();
+        setIntent(null);
+        setMatchCount(null);
       }
       const existing = sessionStorage.getItem(AI_SESSION_STORAGE_KEY);
       if (existing && !resetAiSession) { setAiSessionId(existing); return; }
