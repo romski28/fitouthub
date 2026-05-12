@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-f1675e9",
+    "date": "2026-05-12T13:35:05+08:00",
+    "title": "Fix imageCount -> processedImageCount in admin metrics",
+    "summary": "Fix imageCount -> processedImageCount in admin metrics",
+    "areas": [
+      "api"
+    ],
+    "commit": "f1675e9",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-12-1ccdae7",
     "date": "2026-05-12T13:28:58+08:00",
     "title": "Add trade minimization rules to both structured and conversational AI prompts with shelf-fixing example",

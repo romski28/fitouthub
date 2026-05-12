@@ -2238,9 +2238,9 @@ OUTPUT FORMAT (JSON only)
       providerStats.deepseek.totalDurationMs += row.durationMs ?? 0;
 
       const usage = this.extractVisionUsage({ project: row.project });
-      if (usage.provider === 'qwen' && usage.imageCount > 0) {
+      if (usage.provider === 'qwen' && usage.processedImageCount > 0) {
         providerStats.qwen.requests += 1;
-        providerStats.qwen.imageCount += usage.imageCount;
+        providerStats.qwen.imageCount += usage.processedImageCount;
         providerStats.qwen.totalDurationMs += usage.durationMs ?? 0;
         if (usage.status === 'success') {
           providerStats.qwen.success += 1;
@@ -2252,7 +2252,7 @@ OUTPUT FORMAT (JSON only)
       const day = row.createdAt.toISOString().slice(0, 10);
       const current = dayMap.get(day) || { deepseek: 0, qwen: 0 };
       current.deepseek += 1;
-      if (usage.provider === 'qwen' && usage.imageCount > 0 && usage.status === 'success') {
+      if (usage.provider === 'qwen' && usage.processedImageCount > 0 && usage.status === 'success') {
         current.qwen += 1;
       }
       dayMap.set(day, current);
