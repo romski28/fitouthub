@@ -22,13 +22,13 @@ type AiMetricsResponse = {
 };
 
 export default function AnalyticsPage() {
-  const { accessToken, user, isLoading } = useAuth();
+  const { accessToken, user, isLoggedIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<AiMetricsResponse | null>(null);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoggedIn === undefined) return;
     if (!accessToken || user?.role !== 'admin') {
       setError('Admin access required');
       return;
@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
     };
 
     load();
-  }, [accessToken, user?.role, isLoading]);
+  }, [accessToken, user?.role, isLoggedIn]);
 
   const maxDaily = useMemo(() => {
     if (!metrics?.daily?.length) return 1;

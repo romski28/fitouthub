@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-8174c52",
+    "date": "2026-05-12T12:23:52+08:00",
+    "title": "Fix admin analytics auth context compile error",
+    "summary": "Fix admin analytics auth context compile error",
+    "areas": [
+      "web"
+    ],
+    "commit": "8174c52",
+    "files": [
+      "apps/web/src/app/admin/analytics/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-b72956b",
     "date": "2026-05-12T12:15:28+08:00",
     "title": "Add Qwen image quotas, intake tracking, and dual-provider admin AI dashboard",
