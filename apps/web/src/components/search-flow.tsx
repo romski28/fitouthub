@@ -83,7 +83,7 @@ function ThinkingIndicator() {
         </div>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-emerald-800">AI is thinking...</p>
+            <p className="text-sm font-semibold text-emerald-800">Mimo is thinking...</p>
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
               {elapsedSeconds}s
             </span>
@@ -1043,15 +1043,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
 
   const runSandbox = async (query: string, imageUrls: string[] = []) => {
     const threadIntakeId = aiStructured?.intakeId ?? null;
-    setAiLoading(true);
-    setAiRoundNotice(null);
-    setAiError(null);
-    setAiOutput(null);
-    setAiMeta(null);
-    setAiStructured(null);
-    setAiConversationalText(null);
-    setAiDebug(null);
-    setIsConversationSequenceComplete(false);
 
     try {
       const mode = isAdminTester ? 'structured' : 'conversational';
@@ -1205,14 +1196,27 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         return;
       }
 
+      // Show thinking panel immediately on submit
+      setAiLoading(true);
+      setAiError(null);
+      setAiOutput(null);
+      setAiMeta(null);
+      setAiStructured(null);
+      setAiConversationalText(null);
+      setAiDebug(null);
+      setIsConversationSequenceComplete(false);
+      setAiRoundNotice(null);
+
       if (!isAdminTester && promptImages.length > 0) {
         const maxPerPrompt = visionQuota?.maxImagesPerPrompt ?? promptImageLimit;
         const remainingToday = visionQuota?.remainingToday ?? maxPerPrompt;
         if (promptImages.length > maxPerPrompt) {
+          setAiLoading(false);
           setAiError(`You can attach up to ${maxPerPrompt} image${maxPerPrompt > 1 ? 's' : ''} per prompt.`);
           return;
         }
         if (promptImages.length > remainingToday) {
+          setAiLoading(false);
           setAiError(`Daily image quota exceeded. ${remainingToday} image${remainingToday === 1 ? '' : 's'} remaining today.`);
           return;
         }
@@ -1223,6 +1227,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         try {
           imageUrls = await uploadPromptImages(promptImages);
         } catch (error) {
+          setAiLoading(false);
           setAiError((error as Error).message || 'Failed to upload images');
           return;
         }

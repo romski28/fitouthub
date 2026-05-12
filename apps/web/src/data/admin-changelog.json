@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-12-2d53ccd",
+    "date": "2026-05-12T13:02:59+08:00",
+    "title": "Fix image quota tracking, instant thinking panel, and update thinking text to 'Mimo thinking'",
+    "summary": "Fix image quota tracking, instant thinking panel, and update thinking text to 'Mimo thinking'",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2d53ccd",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-2570ea9",
     "date": "2026-05-12T12:48:43+08:00",
     "title": "Set home page outer panels to 10% transparency (bg-[#F5EEDE]/90)",

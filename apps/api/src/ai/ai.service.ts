@@ -1421,7 +1421,7 @@ OUTPUT FORMAT (JSON only)
     return {
       provider: typeof visionUsage?.provider === 'string' ? visionUsage.provider : null,
       status: typeof visionUsage?.status === 'string' ? visionUsage.status : null,
-      imageCount: typeof visionUsage?.imageCount === 'number' ? visionUsage.imageCount : 0,
+      processedImageCount: typeof visionUsage?.processedImageCount === 'number' ? visionUsage.processedImageCount : 0,
       durationMs: typeof visionUsage?.durationMs === 'number' ? visionUsage.durationMs : null,
       model: typeof visionUsage?.model === 'string' ? visionUsage.model : null,
     };
@@ -1454,7 +1454,7 @@ OUTPUT FORMAT (JSON only)
     const usedToday = intakeRows.reduce((sum, row) => {
       const usage = this.extractVisionUsage(row);
       if (usage.status !== 'success') return sum;
-      return sum + Math.max(0, usage.imageCount);
+      return sum + Math.max(0, usage.processedImageCount);
     }, 0);
 
     const remainingToday = Math.max(0, limits.maxImagesPerDay - usedToday);
