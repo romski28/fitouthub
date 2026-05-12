@@ -37,7 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="fixed inset-0 flex flex-col bg-slate-50">
       <nav className="flex-none border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-12">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Link href="/admin" className="text-xl font-bold text-slate-900">
               Admin Portal
@@ -206,7 +206,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
       </nav>
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-12">{children}</div>
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</div>
       </main>
     </div>
   );

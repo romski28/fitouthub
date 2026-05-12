@@ -743,7 +743,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-3 sm:px-6 lg:px-12">
+    <div className="mx-auto max-w-7xl space-y-5 px-3 sm:px-6 lg:px-8">
       {/* Updates badge — fixed right for thumb access */}
       <div className="fixed bottom-[260px] right-6 z-30">
         <UpdatesButton onSummaryChange={setUpdatesSummary} />

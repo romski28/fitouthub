@@ -34,7 +34,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
     <>
       {/* Desktop Tab Navigation */}
       <div className="hidden sm:block sticky top-0 z-40 bg-slate-950 border-b border-slate-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex overflow-x-auto">
             {resolvedTabs.map((tab) => (
               <button
