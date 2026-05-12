@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-a520dc6",
+    "date": "2026-05-12T21:03:00+08:00",
+    "title": "Clear follow-up textbox only once when forgotten prompt appears",
+    "summary": "Clear follow-up textbox only once when forgotten prompt appears",
+    "areas": [
+      "web"
+    ],
+    "commit": "a520dc6",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-9810814",
     "date": "2026-05-12T20:59:51+08:00",
     "title": "Reset AI chat session on clear and home navigation",

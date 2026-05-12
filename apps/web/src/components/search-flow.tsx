@@ -597,6 +597,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
   const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
+  const hasClearedForgottenPromptRef = useRef(false);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
@@ -817,6 +818,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiRoundCount(0);
     setAiRoundNotice(null);
     setIsConversationSequenceComplete(false);
+    hasClearedForgottenPromptRef.current = false;
     setPromptImages([]);
     setPromptUploaderClearKey((key) => key + 1);
   };
@@ -1271,6 +1273,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       setAiDebug(null);
       setIsConversationSequenceComplete(false);
       setAiRoundNotice(null);
+      hasClearedForgottenPromptRef.current = false;
 
       if (!isAdminTester && promptImages.length > 0) {
         const maxPerPrompt = visionQuota?.maxImagesPerPrompt ?? promptImageLimit;
@@ -1329,6 +1332,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setMatchCount(null);
     setShowBriefModal(false);
   };
+
+  const handleSequenceStateChange = useCallback((complete: boolean) => {
+    setIsConversationSequenceComplete(complete);
+    if (aiRoundCount !== 1 || !complete || hasClearedForgottenPromptRef.current) return;
+    hasClearedForgottenPromptRef.current = true;
+    setSearchBoxClearKey((k) => k + 1);
+  }, [aiRoundCount]);
 
   const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
   const showFollowUpComposer = hasAiResponse && aiRoundCount === 1 && isConversationSequenceComplete;
@@ -1402,12 +1412,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 fullCoverageCompanyCount={aiFullCoverageCompanyCount}
                 specialistCount={aiSpecialistCount}
                 showForgottenPrompt={aiRoundCount === 1}
-                onSequenceStateChange={(complete) => {
-                  setIsConversationSequenceComplete(complete);
-                  if (complete && aiRoundCount === 1) {
-                    setSearchBoxClearKey((k) => k + 1);
-                  }
-                }}
+                onSequenceStateChange={handleSequenceStateChange}
                 onRemoveTrade={handleRemoveTrade}
                 tradesLabel={
                   displayedTrades.length === 0
