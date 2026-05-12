@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-2570ea9",
+    "date": "2026-05-12T12:48:43+08:00",
+    "title": "Set home page outer panels to 10% transparency (bg-[#F5EEDE]/90)",
+    "summary": "Set home page outer panels to 10% transparency (bg-[#F5EEDE]/90)",
+    "areas": [
+      "web"
+    ],
+    "commit": "2570ea9",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-efbe0e4",
     "date": "2026-05-12T12:42:54+08:00",
     "title": "Revert wide-screen padding increase to home page only",

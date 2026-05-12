@@ -73,7 +73,7 @@ export default function Home() {
           id="project-prompt"
           className="relative -mx-6 px-6"
         >
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-12">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-12">
             <div className="px-4 sm:px-6 lg:px-12">
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
@@ -94,7 +94,7 @@ export default function Home() {
 
         {/* Role Selection Panels (from join flow style) */}
         <section className="-mx-6 px-6">
-          <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE] p-6 sm:p-8">
+          <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
             <div className="space-y-4">
               <p className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">Choose your path</p>
               <div className="grid gap-4 md:grid-cols-2">
@@ -128,7 +128,7 @@ export default function Home() {
 
         {/* Welcome Panel */}
         <section className="-mx-6 px-6">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] px-4 py-6 sm:px-6 lg:px-12">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-6 sm:px-6 lg:px-12">
             <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_25%,rgba(16,185,129,0.13),transparent_35%),radial-gradient(circle_at_82%_82%,rgba(15,23,42,0.08),transparent_38%)]" />
             <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-[200px_1fr_200px]">
               <div className="hidden lg:flex lg:justify-start">
@@ -206,7 +206,7 @@ export default function Home() {
 
         {/* Video Panel */}
         <section className="-mx-6 px-6">
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-8">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-8">
             <div className="px-4 sm:px-6 lg:px-12">
               <div className="mx-auto max-w-4xl rounded-2xl p-2">
                 <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
@@ -227,7 +227,7 @@ export default function Home() {
 
         {/* Hero Section */}
         <section className="-mx-6 px-6">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90">
             <div
               className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-cover bg-center bg-no-repeat lg:block"
               style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
