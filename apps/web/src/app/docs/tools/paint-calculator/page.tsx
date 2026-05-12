@@ -40,7 +40,7 @@ export default function PaintCalculatorPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-12">
         <header className="space-y-3 rounded-2xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-300">Docs &amp; Tools</p>
           <h1 className="text-3xl font-bold">Paint Quantity Calculator</h1>

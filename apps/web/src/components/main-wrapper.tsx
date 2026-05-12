@@ -20,7 +20,7 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
 
   // Regular pages get standard padding and max-width
   return (
-    <main className={isHomePath ? 'mx-auto max-w-6xl px-6 pb-10' : 'mx-auto max-w-6xl px-6 py-10'}>
+    <main className={isHomePath ? 'mx-auto max-w-6xl px-6 lg:px-9 pb-10' : 'mx-auto max-w-6xl px-6 lg:px-9 py-10'}>
       {children}
     </main>
   );

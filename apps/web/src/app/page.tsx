@@ -74,7 +74,7 @@ export default function Home() {
           className="relative -mx-6 px-6"
         >
           <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-12">
-            <div className="px-4 sm:px-6">
+            <div className="px-4 sm:px-6 lg:px-12">
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
                   <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
@@ -128,7 +128,7 @@ export default function Home() {
 
         {/* Welcome Panel */}
         <section className="-mx-6 px-6">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] px-4 py-6 sm:px-6 lg:px-8">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] px-4 py-6 sm:px-6 lg:px-12">
             <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_25%,rgba(16,185,129,0.13),transparent_35%),radial-gradient(circle_at_82%_82%,rgba(15,23,42,0.08),transparent_38%)]" />
             <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-[200px_1fr_200px]">
               <div className="hidden lg:flex lg:justify-start">
@@ -207,7 +207,7 @@ export default function Home() {
         {/* Video Panel */}
         <section className="-mx-6 px-6">
           <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE] py-8">
-            <div className="px-4 sm:px-6">
+            <div className="px-4 sm:px-6 lg:px-12">
               <div className="mx-auto max-w-4xl rounded-2xl p-2">
                 <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
                   <video

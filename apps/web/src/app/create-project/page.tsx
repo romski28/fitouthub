@@ -416,7 +416,7 @@ export default function CreateProjectPage() {
         projectName={assistDraft?.formData.projectName || descriptionData?.profession}
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 pb-32">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-12 pb-32">
         <div className="mb-6">
           <Link
             href="/projects"

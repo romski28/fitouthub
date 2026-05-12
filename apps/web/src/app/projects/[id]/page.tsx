@@ -2050,7 +2050,7 @@ export default function ClientProjectDetailPage() {
   return (
     <>
       <div className="min-h-screen bg-transparent pb-16">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-12 py-6 space-y-5">
           {/* Header */}
           <div className="flex items-center justify-between">
             <Link href="/projects" className="text-sm text-blue-600 hover:underline">

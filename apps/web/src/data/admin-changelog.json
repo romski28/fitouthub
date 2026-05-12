@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-05-12-0461e62",
+    "date": "2026-05-12T12:41:35+08:00",
+    "title": "Increase wide-screen side padding by 50% (lg:px-8 -> lg:px-12)",
+    "summary": "Increase wide-screen side padding by 50% (lg:px-8 -> lg:px-12)",
+    "areas": [
+      "web"
+    ],
+    "commit": "0461e62",
+    "files": [
+      "apps/web/src/app/admin/layout.tsx",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/docs/tools/ac-calculator/page.tsx",
+      "apps/web/src/app/docs/tools/paint-calculator/page.tsx",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/main-wrapper.tsx",
+      "apps/web/src/components/project-tabs.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-e1b1948",
     "date": "2026-05-12T12:37:36+08:00",
     "title": "Remove emoji from image uploader button and use prompt box shadow style for image panel",
