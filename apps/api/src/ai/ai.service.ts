@@ -340,6 +340,16 @@ CRITICAL RULES
 8) Prefer precision over completeness. Do not hallucinate.
 9) Return every top-level key in the schema.
 
+TRADE MINIMIZATION RULE (CRITICAL)
+- Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
+- Only include a trade if it is explicitly needed based on the user's description.
+- Prefer single-trade solutions when possible.
+- In Hong Kong, \"Handyman\" typically handles: shelf fixing, basic repairs, minor carpentry, general maintenance.
+- Do NOT add Plumber, Tiler, or Shower Fitter unless there is explicit damage to plumbing/tiles/fixtures.
+- EXAMPLE WRONG: User says \"fixing shelves in shower\" → Plumber, Tiler, Shower Fitter, Handyman
+- EXAMPLE RIGHT: User says \"fixing shelves in shower\" → Handyman ONLY (unless grout damage is explicitly mentioned)
+- Include extra trades ONLY if damage is explicitly stated in the user's description.
+
 ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
 
 HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
@@ -453,6 +463,16 @@ CRITICAL RULES FOR DATA EXTRACTION
 3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs
 4) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
+
+TRADE MINIMIZATION RULE (CRITICAL)
+- Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
+- Only include a trade if it is explicitly needed based on the user's description.
+- Prefer single-trade solutions when possible.
+- In Hong Kong, "Handyman" typically handles: shelf fixing, basic repairs, minor carpentry, general maintenance.
+- Do NOT add Plumber, Tiler, or Shower Fitter unless there is explicit damage to plumbing/tiles/fixtures.
+- EXAMPLE WRONG: User says "fixing shelves in shower" → suggest Plumber, Tiler, Shower Fitter, Handyman
+- EXAMPLE RIGHT: User says "fixing shelves in shower" → suggest Handyman ONLY (unless grout damage is explicitly mentioned)
+- Include extra trades ONLY if damage or specific needs are explicitly mentioned in the user's description.
 
 ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
 

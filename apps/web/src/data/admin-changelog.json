@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-1ccdae7",
+    "date": "2026-05-12T13:28:58+08:00",
+    "title": "Add trade minimization rules to both structured and conversational AI prompts with shelf-fixing example",
+    "summary": "Add trade minimization rules to both structured and conversational AI prompts with shelf-fixing example",
+    "areas": [
+      "api"
+    ],
+    "commit": "1ccdae7",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-12-e4dbbab",
     "date": "2026-05-12T13:25:18+08:00",
     "title": "Remove console.log from JSX render to fix Vercel compile error",
