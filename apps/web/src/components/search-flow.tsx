@@ -851,7 +851,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       const payload = await response.json();
       setVisionResult({
         ok: Boolean(payload?.ok),
-        provider: payload?.provider === 'qwen' ? 'qwen' : 'deepseek',
+        provider:
+          payload?.provider === 'qwen'
+            ? 'qwen'
+            : payload?.provider === 'deepseek'
+              ? 'deepseek'
+              : visionProvider,
         statusCode: typeof payload?.statusCode === 'number' ? payload.statusCode : undefined,
         requestedModel: typeof payload?.requestedModel === 'string' ? payload.requestedModel : undefined,
         model: typeof payload?.model === 'string' ? payload.model : undefined,

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-d996ac8",
+    "date": "2026-05-12T11:16:11+08:00",
+    "title": "Fix admin vision tester provider label on failed checks",
+    "summary": "Fix admin vision tester provider label on failed checks",
+    "areas": [
+      "web"
+    ],
+    "commit": "d996ac8",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-9519491",
     "date": "2026-05-12T00:12:28+08:00",
     "title": "Add parallel Qwen vision provider while keeping DeepSeek default flow",
