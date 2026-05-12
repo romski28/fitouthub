@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-12-0688e66",
+    "date": "2026-05-12T23:01:53+08:00",
+    "title": "Auto-generate scope on project creation; restrict generate/regenerate to admin only",
+    "summary": "Auto-generate scope on project creation; restrict generate/regenerate to admin only",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0688e66",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-e41c18a",
     "date": "2026-05-12T22:46:30+08:00",
     "title": "Show AI Scope tab in client pre-award view",

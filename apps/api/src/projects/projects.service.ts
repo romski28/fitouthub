@@ -4,6 +4,7 @@ import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 import { PlatformFeeService } from '../common/platform-fee.service';
 import { NotificationService } from '../notifications/notification.service';
+import { AiService } from '../ai/ai.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { resolve } from 'path';
@@ -54,6 +55,7 @@ export class ProjectsService {
     private chatService: ChatService,
     private platformFeeService: PlatformFeeService,
     private notificationService: NotificationService,
+    private aiService: AiService,
   ) {}
 
   private readonly STATUS_ORDER = [
@@ -2204,6 +2206,21 @@ Please review the project details and respond with your quote or decline the inv
         });
       }
     }
+
+    // Fire-and-forget: auto-generate initial AI scope for the new project.
+    // Runs non-blocking so project creation is never delayed or blocked.
+    this.aiService
+      .generateProjectScope(
+        project.id,
+        { actorId: project.userId || project.clientId || 'system', role: 'admin' },
+        {},
+      )
+      .catch((err) => {
+        console.warn('[ProjectsService.create] Auto scope generation failed (non-fatal):', {
+          projectId: project.id,
+          error: (err as Error)?.message,
+        });
+      });
 
     return {
       ...project,
