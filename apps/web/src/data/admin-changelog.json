@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-4c2ae6f",
+    "date": "2026-05-12T13:17:22+08:00",
+    "title": "Fix trades count message display while loading, add quota debug logging",
+    "summary": "Fix trades count message display while loading, add quota debug logging",
+    "areas": [
+      "web"
+    ],
+    "commit": "4c2ae6f",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-2d53ccd",
     "date": "2026-05-12T13:02:59+08:00",
     "title": "Fix image quota tracking, instant thinking panel, and update thinking text to 'Mimo thinking'",

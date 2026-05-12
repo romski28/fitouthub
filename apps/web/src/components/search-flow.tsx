@@ -295,7 +295,13 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         : `${base} Sign in or join to get this project logged and a professional on the case today.`;
     }
 
-    if (matchCount === null || matchLoading) return null;
+    // While loading trades count, show a generic message
+    if (matchCount === null || matchLoading) {
+      const base = 'Searching for the right professionals in Hong Kong to match your project...';
+      return isLoggedIn === true
+        ? base
+        : `${base} Sign in or join to get this project logged and a professional on the case today.`;
+    }
     if (matchCount === 0) {
       const base = tradesLabel
         ? `Mimo will widen the search to find the right ${tradesLabel.toLowerCase()} support across Hong Kong.`
@@ -783,20 +789,28 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   };
 
   const fetchVisionQuota = async () => {
-    if (!aiSessionId) return;
+    if (!aiSessionId) {
+      console.log('[fetchVisionQuota] Skipping: no aiSessionId');
+      return;
+    }
+    console.log('[fetchVisionQuota] Starting fetch with sessionId:', aiSessionId);
     setVisionQuotaLoading(true);
     setVisionQuotaError(null);
     try {
       const params = new URLSearchParams();
       params.set('sessionId', aiSessionId);
-      const response = await fetch(`${API_BASE_URL}/ai/sandbox/vision/quota?${params.toString()}`, {
+      const url = `${API_BASE_URL}/ai/sandbox/vision/quota?${params.toString()}`;
+      console.log('[fetchVisionQuota] Fetching from:', url);
+      const response = await fetch(url, {
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       });
+      console.log('[fetchVisionQuota] Response status:', response.status);
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload?.message || `Quota check failed (${response.status})`);
       }
       const payload = await response.json();
+      console.log('[fetchVisionQuota] Received payload:', payload);
       setVisionQuota({
         actor: payload?.actor === 'client' ? 'client' : 'visitor',
         maxImagesPerPrompt: typeof payload?.maxImagesPerPrompt === 'number' ? payload.maxImagesPerPrompt : 1,
@@ -807,6 +821,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         canUseVision: Boolean(payload?.canUseVision),
       });
     } catch (error) {
+      console.error('[fetchVisionQuota] Error:', error);
       setVisionQuota(null);
       setVisionQuotaError((error as Error).message || 'Failed to load image quota');
     } finally {
@@ -1016,6 +1031,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     fetchVisionQuota();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiSessionId, accessToken, isLoggedIn, user?.role, deepSeekSandboxEnabled, isAdminTester]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('[SearchFlow] Render state:', { deepSeekSandboxEnabled, isAdminTester, visionQuotaLoading, visionQuotaError, visionQuota });
+    }
+  }, [visionQuota, visionQuotaLoading, visionQuotaError, deepSeekSandboxEnabled, isAdminTester]);
 
   const uploadPromptImages = async (files: File[]): Promise<string[]> => {
     if (files.length === 0) return [];
@@ -1282,6 +1303,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
             {visionQuotaLoading && <span className="text-slate-500">Checking quota...</span>}
           </div>
           {visionQuotaError && <p className="mb-2 text-xs text-rose-600">{visionQuotaError}</p>}
+          {typeof window !== 'undefined' && console.log('[SearchFlow] Quota state:', { visionQuota, visionQuotaLoading, visionQuotaError })}
           <ChatImageUploader
             onFilesSelected={setPromptImages}
             maxImages={promptImageLimit}
