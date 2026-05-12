@@ -86,7 +86,7 @@ export default function Home() {
                     </span>
                   </h2>
                 </div>
-                <SearchFlow autoFocusPrompt={shouldFocusPrompt} />
+                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} />
               </div>
             </div>
           </div>

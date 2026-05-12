@@ -559,7 +559,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
   );
 }
 
-export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }: { autoFocusPrompt?: boolean; resultsPortalId?: string }) {
+export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean }) {
   const MAX_AI_ROUNDS = 2;
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
@@ -851,6 +851,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   useEffect(() => {
     try {
       const key = 'aiSandboxSessionId';
+      // If resetAiSession is true (e.g., on home page), always clear and start fresh
+      if (resetAiSession) {
+        sessionStorage.removeItem(key);
+      }
       const existing = sessionStorage.getItem(key);
       if (existing) { setAiSessionId(existing); return; }
       const generated =
@@ -862,7 +866,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     } catch {
       setAiSessionId(null);
     }
-  }, []);
+  }, [resetAiSession]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

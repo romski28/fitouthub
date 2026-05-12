@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-12-73a78be",
+    "date": "2026-05-12T13:55:43+08:00",
+    "title": "Always reset AI session on home page, preserve session for other pages",
+    "summary": "Always reset AI session on home page, preserve session for other pages",
+    "areas": [
+      "web"
+    ],
+    "commit": "73a78be",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-f1675e9",
     "date": "2026-05-12T13:35:05+08:00",
     "title": "Fix imageCount -> processedImageCount in admin metrics",
