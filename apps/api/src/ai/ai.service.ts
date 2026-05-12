@@ -6,6 +6,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { LOCATIONS } from '../../../../packages/schemas/locations';
 import { PrismaService } from '../prisma.service';
 import { TradesService, type TradeView } from '../trades/trades.service';
@@ -1799,6 +1800,21 @@ OUTPUT FORMAT (JSON only)
 
       let intakeId: string | null = null;
       const userId = context?.userId;
+      const projectData: Prisma.InputJsonObject = {
+        ...(projectObj && typeof projectObj === 'object' ? (projectObj as Prisma.InputJsonObject) : {}),
+        visionUsage: visionUsageMeta as Prisma.InputJsonValue,
+        aiProviders: (requestedImageCount > 0
+          ? ['deepseek', 'qwen']
+          : ['deepseek']) as Prisma.InputJsonValue,
+        ...(activeThread
+          ? {
+              aiThread: {
+                sourceIntakeId: activeThread.id,
+                windowExpiresAt: new Date(activeThread.createdAt.getTime() + this.aiThreadWindowMs).toISOString(),
+              } as Prisma.InputJsonValue,
+            }
+          : {}),
+      };
 
       try {
         const intake = await this.prisma.aiIntake.create({
@@ -1826,19 +1842,7 @@ OUTPUT FORMAT (JSON only)
             timeline: timelineObj ?? undefined,
             overallConfidence: typeof p?.overallConfidence === 'number' ? p.overallConfidence : null,
             rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
-            project: {
-              ...(projectObj && typeof projectObj === 'object' ? (projectObj as Record<string, unknown>) : {}),
-              visionUsage: visionUsageMeta,
-              aiProviders: requestedImageCount > 0
-                ? ['deepseek', 'qwen']
-                : ['deepseek'],
-              aiThread: activeThread
-                ? {
-                    sourceIntakeId: activeThread.id,
-                    windowExpiresAt: new Date(activeThread.createdAt.getTime() + this.aiThreadWindowMs).toISOString(),
-                  }
-                : undefined,
-            },
+            project: projectData,
             status: 'draft',
           },
         });

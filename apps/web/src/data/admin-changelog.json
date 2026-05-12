@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-460aa65",
+    "date": "2026-05-12T12:28:15+08:00",
+    "title": "Fix Prisma JSON typing for ai_intakes project payload",
+    "summary": "Fix Prisma JSON typing for ai_intakes project payload",
+    "areas": [
+      "api"
+    ],
+    "commit": "460aa65",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-12-8174c52",
     "date": "2026-05-12T12:23:52+08:00",
     "title": "Fix admin analytics auth context compile error",
