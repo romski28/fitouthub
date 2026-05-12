@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
+import { clearAiClientState } from '@/lib/client-session';
 import { LanguageSwitcher } from './language-switcher';
 
 export const Navbar: React.FC = () => {
@@ -51,6 +52,7 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <Link
             href="/"
+            onClick={() => clearAiClientState()}
             className="flex items-center hover:opacity-80 transition"
           >
             <Image

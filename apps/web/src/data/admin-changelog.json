@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-12-9810814",
+    "date": "2026-05-12T20:59:51+08:00",
+    "title": "Reset AI chat session on clear and home navigation",
+    "summary": "Reset AI chat session on clear and home navigation",
+    "areas": [
+      "web"
+    ],
+    "commit": "9810814",
+    "files": [
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-e9b854b",
     "date": "2026-05-12T20:51:22+08:00",
     "title": "Clear prompt text area when 'Anything you have forgotten?' appears",

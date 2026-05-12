@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
-import { AI_STATE_CLEAR_EVENT } from '@/lib/client-session';
+import { AI_STATE_CLEAR_EVENT, clearAiClientState } from '@/lib/client-session';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
 
@@ -561,6 +561,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 
 export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean }) {
   const MAX_AI_ROUNDS = 2;
+  const AI_SESSION_STORAGE_KEY = 'aiSandboxSessionId';
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
@@ -820,6 +821,22 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setPromptUploaderClearKey((key) => key + 1);
   };
 
+  const createAiSessionId = useCallback(() => (
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`
+  ), []);
+
+  const assignNewAiSessionId = useCallback(() => {
+    const generated = createAiSessionId();
+    try {
+      sessionStorage.setItem(AI_SESSION_STORAGE_KEY, generated);
+    } catch {
+      // sessionStorage may be unavailable in strict browser modes
+    }
+    setAiSessionId(generated);
+  }, [createAiSessionId]);
+
   const fetchVisionQuota = async () => {
     if (!aiSessionId) {
       console.log('[fetchVisionQuota] Skipping: no aiSessionId');
@@ -882,35 +899,29 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
   useEffect(() => {
     try {
-      const key = 'aiSandboxSessionId';
       // If resetAiSession is true (e.g., on home page), always clear and start fresh
       if (resetAiSession) {
-        sessionStorage.removeItem(key);
+        sessionStorage.removeItem(AI_SESSION_STORAGE_KEY);
       }
-      const existing = sessionStorage.getItem(key);
+      const existing = sessionStorage.getItem(AI_SESSION_STORAGE_KEY);
       if (existing) { setAiSessionId(existing); return; }
-      const generated =
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-      sessionStorage.setItem(key, generated);
-      setAiSessionId(generated);
+      assignNewAiSessionId();
     } catch {
       setAiSessionId(null);
     }
-  }, [resetAiSession]);
+  }, [assignNewAiSessionId, resetAiSession]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleClearAiState = () => {
-      setAiSessionId(null);
       clearAiResponseState();
+      assignNewAiSessionId();
     };
 
     window.addEventListener(AI_STATE_CLEAR_EVENT, handleClearAiState);
     return () => window.removeEventListener(AI_STATE_CLEAR_EVENT, handleClearAiState);
-  }, []);
+  }, [assignNewAiSessionId]);
 
   const checkSandboxHealth = async () => {
     setHealthLoading(true);
@@ -1313,7 +1324,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   };
 
   const handleClearSearch = () => {
-    clearAiResponseState();
+    clearAiClientState();
     setIntent(null);
     setMatchCount(null);
     setShowBriefModal(false);
