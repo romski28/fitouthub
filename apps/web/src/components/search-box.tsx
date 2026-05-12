@@ -7,11 +7,12 @@ export interface SearchBoxProps {
   autoFocus?: boolean;
   onClear?: () => void;
   submitLabel?: string;
+  clearKey?: number;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo' }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -93,6 +94,11 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
     }, 50);
     return () => window.clearTimeout(id);
   }, [autoFocus]);
+
+  useEffect(() => {
+    if (clearKey === undefined || clearKey === 0) return;
+    setQuery('');
+  }, [clearKey]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

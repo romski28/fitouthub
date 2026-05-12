@@ -595,6 +595,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiRoundCount, setAiRoundCount] = useState(0);
   const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
+  const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
@@ -1390,7 +1391,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 fullCoverageCompanyCount={aiFullCoverageCompanyCount}
                 specialistCount={aiSpecialistCount}
                 showForgottenPrompt={aiRoundCount === 1}
-                onSequenceStateChange={setIsConversationSequenceComplete}
+                onSequenceStateChange={(complete) => {
+                  setIsConversationSequenceComplete(complete);
+                  if (complete && aiRoundCount === 1) {
+                    setSearchBoxClearKey((k) => k + 1);
+                  }
+                }}
                 onRemoveTrade={handleRemoveTrade}
                 tradesLabel={
                   displayedTrades.length === 0
@@ -1421,6 +1427,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           autoFocus={autoFocusPrompt}
           onClear={handleClearSearch}
           submitLabel={showFollowUpComposer ? 'Update Mimo' : 'Ask Mimo'}
+          clearKey={searchBoxClearKey}
         />
 
         {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
