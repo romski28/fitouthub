@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-8e4071b",
+    "date": "2026-05-12T21:30:30+08:00",
+    "title": "Clear all AI storage on resetAiSession, not just session ID",
+    "summary": "Clear all AI storage on resetAiSession, not just session ID",
+    "areas": [
+      "web"
+    ],
+    "commit": "8e4071b",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-27a88e5",
     "date": "2026-05-12T21:18:32+08:00",
     "title": "Use 'project team members' label for multiple trades instead of '+n'",

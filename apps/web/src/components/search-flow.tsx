@@ -901,12 +901,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
   useEffect(() => {
     try {
-      // If resetAiSession is true (e.g., on home page), always clear and start fresh
+      // If resetAiSession is true (e.g., on home page), clear all AI state and start fresh
       if (resetAiSession) {
-        sessionStorage.removeItem(AI_SESSION_STORAGE_KEY);
+        clearAiClientState();
       }
       const existing = sessionStorage.getItem(AI_SESSION_STORAGE_KEY);
-      if (existing) { setAiSessionId(existing); return; }
+      if (existing && !resetAiSession) { setAiSessionId(existing); return; }
       assignNewAiSessionId();
     } catch {
       setAiSessionId(null);
