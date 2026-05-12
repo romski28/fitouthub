@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-203e05b",
+    "date": "2026-05-12T22:15:00+08:00",
+    "title": "Fix TypeScript header type error - ensure Authorization key always exists",
+    "summary": "Fix TypeScript header type error - ensure Authorization key always exists",
+    "areas": [
+      "web"
+    ],
+    "commit": "203e05b",
+    "files": [
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-d4202b8",
     "date": "2026-05-12T22:10:32+08:00",
     "title": "Add AI scope-of-works generation, versioning, and role-based project views",

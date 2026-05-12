@@ -75,13 +75,13 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
 
   const isAdmin = mode === 'admin';
 
-  const headers = useMemo(() => {
-    if (!accessToken) return { 'Content-Type': 'application/json' };
-    return {
-      Authorization: `Bearer ${accessToken}`,
+  const headers = useMemo(
+    () => ({
       'Content-Type': 'application/json',
-    };
-  }, [accessToken]);
+      Authorization: accessToken ? `Bearer ${accessToken}` : '',
+    }),
+    [accessToken]
+  );
 
   const fetchScope = useCallback(async () => {
     if (!accessToken || !projectId) return;
