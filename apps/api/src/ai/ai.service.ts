@@ -59,10 +59,24 @@ type ScopeEntry = {
   notes: string;
 };
 
+type ScopeStatus = 'draft' | 'pm_reviewed' | 'published' | 'superseded';
+
+type ScopeAuditEntry = {
+  fromStatus: ScopeStatus;
+  toStatus: ScopeStatus;
+  byActorId: string;
+  byRole: 'admin';
+  at: string;
+  note?: string;
+};
+
 type ScopeVersion = {
   id: string;
   version: number;
   createdAt: string;
+  status: ScopeStatus;
+  publishedAt?: string;
+  scopeAuditLog: ScopeAuditEntry[];
   createdByRole: 'client' | 'professional' | 'admin';
   promptInputs: {
     additionalContext?: string;
@@ -102,6 +116,7 @@ type ScopeVersion = {
 
 type ScopeContainer = {
   currentVersionId: string | null;
+  publishedVersionId: string | null;
   versions: ScopeVersion[];
 };
 
@@ -2339,16 +2354,29 @@ OUTPUT FORMAT (JSON only)
       .filter((version): version is ScopeVersion => typeof version === 'object' && version !== null)
       .map((version) => version as ScopeVersion);
 
+    // Back-compat: versions with no status are treated as published
+    const migratedVersions = versions.map((v) => ({
+      ...v,
+      status: (v.status ?? 'published') as ScopeStatus,
+      scopeAuditLog: Array.isArray(v.scopeAuditLog) ? v.scopeAuditLog : [],
+    }));
+
     const currentVersionId =
       typeof candidate?.currentVersionId === 'string' && candidate.currentVersionId.trim().length > 0
         ? candidate.currentVersionId
-        : versions.length > 0
-          ? versions[versions.length - 1].id
+        : migratedVersions.length > 0
+          ? migratedVersions[migratedVersions.length - 1].id
           : null;
+
+    const publishedVersionId =
+      typeof candidate?.publishedVersionId === 'string' && candidate.publishedVersionId.trim().length > 0
+        ? candidate.publishedVersionId
+        : (migratedVersions.slice().reverse().find((v) => v.status === 'published')?.id ?? null);
 
     return {
       currentVersionId,
-      versions,
+      publishedVersionId,
+      versions: migratedVersions,
     };
   }
 
@@ -2479,11 +2507,35 @@ OUTPUT FORMAT (JSON only)
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     const systemPrompt = `You are a senior renovation project manager in Hong Kong.
-Create a pragmatic Scope of Works and Programme of Works at work-package level.
-Do not output micro-task procedural steps.
-For compact single-trade reactive jobs, duration should usually be 0.5 to 2 days unless constraints justify longer.
-If a duration exceeds 3 days, provide explicit reason in notes.
-Return JSON only.`;
+  Create a pragmatic Scope of Works and Programme of Works at work-package level.
+  Do not output micro-task procedural steps.
+  Return JSON only — no markdown, no commentary outside the JSON object.
+
+  DURATION CALIBRATION RULES (apply strictly to every work package):
+
+  By project scale — infer from trade count and scope description:
+  • Single-trade reactive (1 trade, targeted repair/fix): 0.5–2 days per work package; justify anything over 3 days in notes.
+  • Light multi-trade (2–3 trades, partial refurbishment): 1–5 days per package; mobilisation 0.5 day.
+  • Full renovation (4+ trades, whole flat/floor): 5–30 days; structural/wet works at longer end; finishing at shorter end.
+  • Commercial fit-out (shopfront, F&B, office): add permit/compliance lead 5–15 days; M&E coordination buffer 3–10 days.
+
+  By primary trade:
+  • Civil/Structural (hacking, concrete, waterproofing): 2–10 days based on area.
+  • Wet works (plumbing, drainage, sanitary): 1–5 days; pressure/DFU test 1 day.
+  • Dry works (plastering, tiling, screed): 3–15 days; note drying time requirements.
+  • M&E Electrical (first-fix, second-fix): 1–3 days per phase; 2–5 days for full rewire.
+  • Carpentry/Joinery (built-ins, doors, cabinetry): 3–10 days; note 5–15 day supply lead for bespoke items.
+  • Painting (internal full coverage): 2–5 days; each coat 0.5 day cure.
+  • Fixture Installation (sanitary ware, hardware, fittings): 0.5–2 days per item type.
+  • Glazing/Windows: 0.5–3 days install; flag 7–14 day supply lead in notes.
+  • Inspection/Snagging: 0.5–1 day.
+  • General/Miscellaneous: default 1 day unless scope states otherwise.
+
+  Mandatory formatting rules:
+  1. durationMinDays must always be ≤ durationMaxDays.
+  2. Round all durations to nearest 0.5.
+  3. Add an explanatory note in the notes field for any durationMaxDays ≥ 5.
+  4. criticalPath must list work package IDs forming the longest dependency chain.`;
 
     try {
       const response = await fetch(endpoint, {
@@ -2545,13 +2597,32 @@ Return JSON only.`;
 
   async getProjectScope(projectId: string, actor: ProjectActor) {
     const context = await this.resolveProjectScopeContext(projectId, actor);
-    const currentVersion = context.container.versions.find((version) => version.id === context.container.currentVersionId) || null;
+
+    // Non-admins only see the latest published version
+    if (actor.role !== 'admin') {
+      const publishedVersion =
+        context.container.versions.find((v) => v.id === context.container.publishedVersionId) ||
+        context.container.versions.slice().reverse().find((v) => v.status === 'published') ||
+        null;
+      return {
+        scope: publishedVersion,
+        versionCount: context.container.versions.filter((v) => v.status === 'published').length,
+        canRegenerate: false,
+        canAdminCrud: false,
+        workflowStatus: publishedVersion?.status ?? null,
+      };
+    }
+
+    const currentVersion = context.container.versions.find((v) => v.id === context.container.currentVersionId) || null;
+    const publishedVersion = context.container.versions.find((v) => v.id === context.container.publishedVersionId) || null;
 
     return {
       scope: currentVersion,
+      publishedScope: publishedVersion,
       versionCount: context.container.versions.length,
       canRegenerate: true,
-      canAdminCrud: actor.role === 'admin',
+      canAdminCrud: true,
+      workflowStatus: currentVersion?.status ?? null,
     };
   }
 
@@ -2669,6 +2740,8 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
       id: versionId,
       version: nextVersion,
       createdAt: new Date().toISOString(),
+      status: 'draft',
+      scopeAuditLog: [],
       createdByRole: actor.role,
       promptInputs: {
         additionalContext: input.additionalContext?.trim() || undefined,
@@ -2697,6 +2770,7 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
 
     const container: ScopeContainer = {
       currentVersionId: scopeVersion.id,
+      publishedVersionId: context.container.publishedVersionId,
       versions: [...context.container.versions, scopeVersion],
     };
 
@@ -2707,6 +2781,7 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
       versionCount: container.versions.length,
       canRegenerate: true,
       canAdminCrud: actor.role === 'admin',
+      workflowStatus: 'draft',
     };
   }
 
@@ -2851,6 +2926,127 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
 
     return { scope: updatedVersion };
+  }
+
+  // ─── Approval workflow ──────────────────────────────────────────────────────
+
+  private appendAuditEntry(
+    version: ScopeVersion,
+    fromStatus: ScopeStatus,
+    toStatus: ScopeStatus,
+    actor: ProjectActor,
+    note?: string,
+  ): ScopeVersion {
+    const entry: ScopeAuditEntry = {
+      fromStatus,
+      toStatus,
+      byActorId: actor.actorId,
+      byRole: 'admin',
+      at: new Date().toISOString(),
+      note,
+    };
+    return {
+      ...version,
+      status: toStatus,
+      scopeAuditLog: [...(version.scopeAuditLog ?? []), entry],
+    };
+  }
+
+  async reviewProjectScope(projectId: string, actor: ProjectActor, note?: string) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const current = context.container.versions.find((v) => v.id === context.container.currentVersionId);
+    if (!current) throw new BadRequestException('No scope draft to review.');
+    if (current.status !== 'draft') throw new BadRequestException(`Cannot review a scope in status '${current.status}'. Expected 'draft'.`);
+
+    const updated = this.appendAuditEntry(current, 'draft', 'pm_reviewed', actor, note);
+    const versions = context.container.versions.map((v) => (v.id === updated.id ? updated : v));
+    const container: ScopeContainer = { ...context.container, versions };
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    return { scope: updated, workflowStatus: updated.status };
+  }
+
+  async publishProjectScope(projectId: string, actor: ProjectActor, note?: string) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const current = context.container.versions.find((v) => v.id === context.container.currentVersionId);
+    if (!current) throw new BadRequestException('No scope to publish.');
+    if (current.status !== 'pm_reviewed') throw new BadRequestException(`Cannot publish a scope in status '${current.status}'. Expected 'pm_reviewed'.`);
+
+    const now = new Date().toISOString();
+    const published: ScopeVersion = {
+      ...this.appendAuditEntry(current, 'pm_reviewed', 'published', actor, note),
+      publishedAt: now,
+    };
+
+    // Supersede previous published version
+    const versions = context.container.versions.map((v) => {
+      if (v.id === published.id) return published;
+      if (v.status === 'published') return { ...v, status: 'superseded' as ScopeStatus };
+      return v;
+    });
+
+    const container: ScopeContainer = {
+      ...context.container,
+      publishedVersionId: published.id,
+      versions,
+    };
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    return { scope: published, workflowStatus: published.status };
+  }
+
+  async reviseProjectScope(projectId: string, actor: ProjectActor, note?: string) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const publishedVersion = context.container.versions.find((v) => v.id === context.container.publishedVersionId)
+      ?? context.container.versions.slice().reverse().find((v) => v.status === 'published');
+    if (!publishedVersion) throw new BadRequestException('No published scope to revise.');
+
+    const nextVersionNum = context.container.versions.length + 1;
+    const revisionId = `scope_v${nextVersionNum}_${Date.now().toString(36)}`;
+    const revision: ScopeVersion = {
+      ...publishedVersion,
+      id: revisionId,
+      version: nextVersionNum,
+      createdAt: new Date().toISOString(),
+      status: 'draft',
+      publishedAt: undefined,
+      scopeAuditLog: [
+        {
+          fromStatus: 'published',
+          toStatus: 'draft',
+          byActorId: actor.actorId,
+          byRole: 'admin',
+          at: new Date().toISOString(),
+          note: note ?? `Revision of v${publishedVersion.version}`,
+        },
+      ],
+    };
+
+    const container: ScopeContainer = {
+      ...context.container,
+      currentVersionId: revision.id,
+      versions: [...context.container.versions, revision],
+    };
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    return { scope: revision, workflowStatus: revision.status };
+  }
+
+  async reorderScopeEntries(projectId: string, actor: ProjectActor, orderedEntryIds: string[]) {
+    const context = await this.resolveProjectScopeContext(projectId, actor);
+    const current = context.container.versions.find((v) => v.id === context.container.currentVersionId);
+    if (!current) throw new BadRequestException('No scope draft to reorder.');
+
+    const entryMap = new Map(current.entries.map((e) => [e.id, e]));
+    const known = orderedEntryIds.filter((id) => entryMap.has(id));
+    const untouched = current.entries.filter((e) => !orderedEntryIds.includes(e.id));
+    const reordered = [
+      ...known.map((id, i) => ({ ...entryMap.get(id)!, sequence: i + 1 })),
+      ...untouched.map((e, i) => ({ ...e, sequence: known.length + i + 1 })),
+    ];
+
+    const updated: ScopeVersion = { ...current, entries: reordered };
+    const versions = context.container.versions.map((v) => (v.id === updated.id ? updated : v));
+    const container: ScopeContainer = { ...context.container, versions };
+    await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    return { scope: updated };
   }
 
   async getAiAdminMetrics() {

@@ -260,4 +260,53 @@ export class AiController {
     }
     return this.aiService.deleteProjectScopeEntry(projectId, entryId, actor);
   }
+
+  @Post('projects/:projectId/scope/review')
+  @UseGuards(CombinedAuthGuard)
+  async reviewProjectScope(
+    @Param('projectId') projectId: string,
+    @Body() body: { note?: string },
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.aiService.reviewProjectScope(projectId, actor, body?.note);
+  }
+
+  @Post('projects/:projectId/scope/publish')
+  @UseGuards(CombinedAuthGuard)
+  async publishProjectScope(
+    @Param('projectId') projectId: string,
+    @Body() body: { note?: string },
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.aiService.publishProjectScope(projectId, actor, body?.note);
+  }
+
+  @Post('projects/:projectId/scope/revise')
+  @UseGuards(CombinedAuthGuard)
+  async reviseProjectScope(
+    @Param('projectId') projectId: string,
+    @Body() body: { note?: string },
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.aiService.reviseProjectScope(projectId, actor, body?.note);
+  }
+
+  @Put('projects/:projectId/scope/reorder')
+  @UseGuards(CombinedAuthGuard)
+  async reorderScopeEntries(
+    @Param('projectId') projectId: string,
+    @Body() body: { entryIds: string[] },
+    @Request() req: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') throw new ForbiddenException('Admin access required');
+    if (!Array.isArray(body?.entryIds)) throw new BadRequestException('entryIds must be an array');
+    return this.aiService.reorderScopeEntries(projectId, actor, body.entryIds);
+  }
 }

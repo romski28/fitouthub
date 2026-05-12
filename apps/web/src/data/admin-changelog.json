@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-12-20b0521",
+    "date": "2026-05-12T23:27:03+08:00",
+    "title": "feat(ai-scope): add approval workflow, reorder, comparison UI, and duration calibration",
+    "summary": "feat(ai-scope): add approval workflow, reorder, comparison UI, and duration calibration",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "20b0521",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-0688e66",
     "date": "2026-05-12T23:01:53+08:00",
     "title": "Auto-generate scope on project creation; restrict generate/regenerate to admin only",
