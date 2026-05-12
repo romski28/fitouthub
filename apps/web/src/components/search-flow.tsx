@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -587,6 +588,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiMeta, setAiMeta] = useState<{ model: string; durationMs: number; totalTokens: number | null } | null>(null);
   const [aiStructured, setAiStructured] = useState<AiStructured | null>(null);
   const [activeTrades, setActiveTrades] = useState<string[]>([]);
+  const [initialAiPrompt, setInitialAiPrompt] = useState<string | null>(null);
+  const [initialAiImageUrls, setInitialAiImageUrls] = useState<string[]>([]);
   const [aiConversationalText, setAiConversationalText] = useState<string | null>(null);
   const [aiDebug, setAiDebug] = useState<{
     apiPath: string;
@@ -812,6 +815,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiMeta(null);
     setAiStructured(null);
     setActiveTrades([]);
+    setInitialAiPrompt(null);
+    setInitialAiImageUrls([]);
     setAiConversationalText(null);
     setAiMatchCount(null);
     setAiCountLoading(false);
@@ -1304,6 +1309,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       }
       setIntent(null);
       setMatchCount(null);
+      if (aiRoundCount === 0) {
+        setInitialAiPrompt(trimmed);
+        setInitialAiImageUrls(imageUrls);
+      }
       runSandbox(trimmed, imageUrls);
       // Scroll to the results panel after a short delay to allow state to update
       if (resultsPortalId) {
@@ -1335,6 +1344,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     : aiLoading
       ? false
       : aiRoundCount === 0 || showFollowUpComposer;
+  const showPromptHelperText = aiRoundCount === 0;
+  const showPromptUploader = aiRoundCount === 0;
   const displayedTrades = activeTrades.length > 0 ? activeTrades : (aiStructured?.trades ?? []);
 
   const handleRemoveTrade = (tradeToRemove: string) => {
@@ -1357,6 +1368,31 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
           {hasAiResponse && aiStructured && aiConversationalText && (
             <div className="space-y-3 pt-1">
+              {initialAiPrompt && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">You asked...</p>
+                  <p className="mt-1 text-sm text-slate-800">{initialAiPrompt}</p>
+                  {initialAiImageUrls.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">...and you sent these images</p>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {initialAiImageUrls.map((imageUrl, index) => (
+                          <Image
+                            key={`initial-ai-image-${index}`}
+                            src={imageUrl}
+                            alt={`Prompt image ${index + 1}`}
+                            width={64}
+                            height={64}
+                            className="h-16 w-16 flex-none rounded-md border border-slate-200 object-cover"
+                            unoptimized
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <AiConversationalView
                 key={aiConversationalText}
                 conversationalText={aiConversationalText}
@@ -1382,18 +1418,20 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         </div>
       )}
 
-      <div className={`origin-top transition-all duration-300 ${showPromptComposer ? 'max-h-[720px] scale-y-100 opacity-100' : 'pointer-events-none max-h-0 scale-y-95 opacity-0'} overflow-hidden`}>
-        <div className="text-center space-y-2 mb-6">
-          <p className="text-sm text-slate-600">
-            Describe what you need in a few words.{' '}
-            <button onClick={() => setShowHelp(true)} className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition">
-              We&rsquo;ll help you get started.
-            </button>
-          </p>
-        </div>
+      <div className={`origin-top transition-all duration-[900ms] ${showPromptComposer ? 'max-h-[720px] scale-y-100 opacity-100' : 'pointer-events-none max-h-0 scale-y-95 opacity-0'} overflow-hidden`}>
+        {showPromptHelperText && (
+          <div className="text-center space-y-2 mb-6">
+            <p className="text-sm text-slate-600">
+              Describe what you need in a few words.{' '}
+              <button onClick={() => setShowHelp(true)} className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition">
+                We&rsquo;ll help you get started.
+              </button>
+            </p>
+          </div>
+        )}
         <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} onClear={handleClearSearch} />
 
-        {!isAdminTester && deepSeekSandboxEnabled && (
+        {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
           <div className="mt-3 rounded-lg shadow-lg border border-slate-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-600">
               <p>
