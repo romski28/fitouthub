@@ -2136,6 +2136,69 @@ OUTPUT FORMAT (JSON only)
     };
   }
 
+  async saveTradeFeedback(
+    intakeId: string,
+    context?: {
+      userId?: string;
+      sessionId?: string;
+      selectedTrades?: string[];
+      removedTrades?: string[];
+    },
+  ) {
+    const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
+    if (!intake) throw new NotFoundException('AI intake not found');
+
+    const userId = context?.userId;
+    const sessionId = this.sanitizeSessionId(context?.sessionId);
+
+    if (intake.userId) {
+      if (!userId || intake.userId !== userId) {
+        throw new NotFoundException('AI intake not found');
+      }
+    } else if (intake.sessionId) {
+      if (!sessionId || intake.sessionId !== sessionId) {
+        throw new NotFoundException('AI intake not found');
+      }
+    }
+
+    const normalizeTrades = (value?: string[]) =>
+      Array.isArray(value)
+        ? Array.from(
+            new Set(
+              value
+                .map((trade) => (typeof trade === 'string' ? trade.trim() : ''))
+                .filter((trade) => trade.length > 0),
+            ),
+          )
+        : [];
+
+    const selectedTrades = normalizeTrades(context?.selectedTrades);
+    const removedTrades = normalizeTrades(context?.removedTrades);
+    const projectJson =
+      intake.project && typeof intake.project === 'object' && !Array.isArray(intake.project)
+        ? ({ ...(intake.project as Record<string, unknown>) } as Record<string, unknown>)
+        : {};
+
+    await this.prisma.aiIntake.update({
+      where: { id: intakeId },
+      data: {
+        ...(selectedTrades.length > 0 ? { trades: selectedTrades } : {}),
+        project: {
+          ...projectJson,
+          tradeSelection: {
+            selectedTrades,
+            removedTrades,
+            updatedAt: new Date().toISOString(),
+            updatedBy: userId ? 'user' : 'visitor',
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    return { ok: true };
+  }
+
   async acknowledgeSafetyTriage(
     intakeId: string,
     context: { adminUserId: string; adminName?: string },

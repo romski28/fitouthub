@@ -108,6 +108,26 @@ export class AiController {
     });
   }
 
+  @Post('intake/:id/trade-feedback')
+  async saveTradeFeedback(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      sessionId?: string;
+      selectedTrades?: string[];
+      removedTrades?: string[];
+    },
+    @Request() req: any,
+  ) {
+    const userId: string | undefined = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub ?? undefined;
+    return this.aiService.saveTradeFeedback(id, {
+      userId,
+      sessionId: body?.sessionId,
+      selectedTrades: body?.selectedTrades,
+      removedTrades: body?.removedTrades,
+    });
+  }
+
   @Get('professionals/count')
   async countProfessionals(
     @Query('trades') tradesParam?: string,

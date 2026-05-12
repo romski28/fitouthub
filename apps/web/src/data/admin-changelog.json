@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-12-5a83456",
+    "date": "2026-05-12T17:38:00+08:00",
+    "title": "Polish AI flow UX with animated composer, removable trade chips, and intake trade feedback",
+    "summary": "Polish AI flow UX with animated composer, removable trade chips, and intake trade feedback",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5a83456",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-73a78be",
     "date": "2026-05-12T13:55:43+08:00",
     "title": "Always reset AI session on home page, preserve session for other pages",

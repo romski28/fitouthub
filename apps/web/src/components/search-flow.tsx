@@ -71,10 +71,10 @@ function ThinkingIndicator() {
       window.clearInterval(phaseInterval);
       window.clearInterval(timerInterval);
     };
-  }, []);
+  }, [phases.length]);
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-amber-50 p-4" aria-live="polite">
+    <div className="rounded-lg border border-slate-200 bg-amber-50 p-4" aria-live="polite">
       <div className="flex items-center gap-3">
         <div className="flex items-end gap-1" aria-hidden="true">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
@@ -241,7 +241,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, onSequenceStateChange }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, onSequenceStateChange, onRemoveTrade }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
@@ -252,6 +252,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   specialistCount: number;
   showForgottenPrompt: boolean;
   onSequenceStateChange?: (done: boolean) => void;
+  onRemoveTrade?: (trade: string) => void;
 }) {
   const { isLoggedIn } = useAuth();
   const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
@@ -404,8 +405,18 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
           <p className="text-base font-semibold text-slate-700">Looks like you need...</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             {trades.map((trade) => (
-              <span key={trade} className="rounded-full border border-[#F5EEDE] bg-[#F97362] px-3 py-1 text-base font-semibold text-[#F5EEDE]">
-                {trade}
+              <span key={trade} className="inline-flex items-center gap-2 rounded-full border border-[#F5EEDE] bg-[#F97362] px-3 py-1 text-base font-semibold text-[#F5EEDE]">
+                <span>{trade}</span>
+                {trades.length > 1 && onRemoveTrade && (
+                  <button
+                    type="button"
+                    aria-label={`Remove ${trade}`}
+                    onClick={() => onRemoveTrade(trade)}
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#F5EEDE]/70 bg-white/20 text-sm leading-none text-[#F5EEDE] transition hover:bg-white/35"
+                  >
+                    ×
+                  </button>
+                )}
               </span>
             ))}
           </div>
@@ -575,6 +586,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiOutput, setAiOutput] = useState<string | null>(null);
   const [aiMeta, setAiMeta] = useState<{ model: string; durationMs: number; totalTokens: number | null } | null>(null);
   const [aiStructured, setAiStructured] = useState<AiStructured | null>(null);
+  const [activeTrades, setActiveTrades] = useState<string[]>([]);
   const [aiConversationalText, setAiConversationalText] = useState<string | null>(null);
   const [aiDebug, setAiDebug] = useState<{
     apiPath: string;
@@ -650,6 +662,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     followUpAnswers: Array<{ question: string; answer: string }>;
   }) => {
     if (!aiStructured) return;
+    const selectedTrades = activeTrades.length > 0 ? activeTrades : aiStructured.trades;
+    const removedTrades = aiStructured.trades.filter((trade) => !selectedTrades.includes(trade));
 
     const handoffDebug =
       typeof window !== 'undefined' &&
@@ -697,7 +711,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         projectName: payload.title || aiStructured.title || aiStructured.summary || '',
         notes: combinedNotes || payload.summary || aiStructured.scope || aiStructured.summary || '',
         projectScale: aiStructured.projectScale || undefined,
-        tradesRequired: aiStructured.trades || [],
+        tradesRequired: selectedTrades,
         region: resolvedRegion,
         location: payload.location,
         isEmergency: payload.isEmergency,
@@ -705,6 +719,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           assumptions: aiStructured.assumptions,
           risks: aiStructured.risks,
           safety: aiStructured.safetyAssessment,
+          selectedTrades,
+          removedTrades,
         },
       },
       ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
@@ -737,8 +753,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
 
     const params = new URLSearchParams();
-    if (aiStructured.trades[0]) params.set('trade', aiStructured.trades[0]);
-    if (aiStructured.trades.length > 0) params.set('trades', aiStructured.trades.join(','));
+    if (selectedTrades[0]) params.set('trade', selectedTrades[0]);
+    if (selectedTrades.length > 0) params.set('trades', selectedTrades.join(','));
     if (payload.location.tertiary) params.set('location', payload.location.tertiary);
     else if (payload.location.secondary) params.set('location', payload.location.secondary);
     else if (payload.location.primary) params.set('location', payload.location.primary);
@@ -760,9 +776,28 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         notesLength: (aiDraft.initialData.notes || '').length,
         isEmergency: aiDraft.initialData.isEmergency,
         tradesRequired: aiDraft.initialData.tradesRequired,
+        removedTrades,
         location: aiDraft.initialData.location,
         followUpAnswers: payload.followUpAnswers,
         route: `/professionals?${params.toString()}`,
+      });
+    }
+
+    if (aiStructured.intakeId) {
+      fetch(`${API_BASE_URL}/ai/intake/${aiStructured.intakeId}/trade-feedback`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          sessionId: aiSessionId,
+          selectedTrades,
+          removedTrades,
+        }),
+      }).catch(() => {
+        // Best-effort metadata sync; project handoff still carries trade selection.
       });
     }
 
@@ -776,6 +811,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiOutput(null);
     setAiMeta(null);
     setAiStructured(null);
+    setActiveTrades([]);
     setAiConversationalText(null);
     setAiMatchCount(null);
     setAiCountLoading(false);
@@ -967,11 +1003,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       setAiCountLoading(true);
       try {
         const params = new URLSearchParams();
-        if (aiStructured.trades?.length > 0) params.set('trades', aiStructured.trades.join(','));
+        const tradesForCount = activeTrades.length > 0 ? activeTrades : aiStructured.trades;
+        if (tradesForCount.length > 0) params.set('trades', tradesForCount.join(','));
         if (aiStructured.locationPrimary) params.set('location', aiStructured.locationPrimary);
         
         console.log('[SearchFlow] Fetching AI count for non-logged-in user:', {
-          trades: aiStructured.trades,
+          trades: tradesForCount,
           location: aiStructured.locationPrimary,
           isLoggedIn,
           queryString: params.toString(),
@@ -1001,7 +1038,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     };
     fetchCount();
     return () => { cancelled = true; };
-  }, [aiStructured, isLoggedIn, searchMode]);
+  }, [aiStructured, activeTrades, isLoggedIn, searchMode]);
 
   // Fetch professional count for legacy intent searches
   useEffect(() => {
@@ -1155,19 +1192,25 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       });
 
       const p = payload.parsedOutput;
+      const parsedTrades = Array.isArray(p?.trades)
+        ? p.trades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
+        : [];
+      const projectScaleFromProject =
+        p?.project &&
+        typeof p.project === 'object' &&
+        (p.project.projectScale === 'SCALE_1' ||
+          p.project.projectScale === 'SCALE_2' ||
+          p.project.projectScale === 'SCALE_3')
+          ? p.project.projectScale
+          : null;
       setAiStructured({
         intakeId: payload.intakeId ?? null,
         projectScale:
           p?.projectScale === 'SCALE_1' || p?.projectScale === 'SCALE_2' || p?.projectScale === 'SCALE_3'
             ? p.projectScale
-            : p?.project && typeof p.project === 'object' &&
-                ((p.project as any).projectScale === 'SCALE_1' ||
-                  (p.project as any).projectScale === 'SCALE_2' ||
-                  (p.project as any).projectScale === 'SCALE_3')
-              ? ((p.project as any).projectScale as 'SCALE_1' | 'SCALE_2' | 'SCALE_3')
-              : null,
+            : projectScaleFromProject,
         title: p?.title ?? null,
-        trades: p?.trades ?? [],
+        trades: parsedTrades,
         locationPrimary: p?.location?.primary ?? null,
         locationSecondary: p?.location?.secondary ?? null,
         summary: p?.summary ?? null,
@@ -1197,6 +1240,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         } : null,
         overallConfidence: p?.overallConfidence ?? null,
       });
+      setActiveTrades(parsedTrades);
 
       setAiRoundCount((current) => Math.min(current + 1, MAX_AI_ROUNDS));
       if (imageUrls.length > 0) {
@@ -1227,6 +1271,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       setAiOutput(null);
       setAiMeta(null);
       setAiStructured(null);
+      setActiveTrades([]);
       setAiConversationalText(null);
       setAiDebug(null);
       setIsConversationSequenceComplete(false);
@@ -1283,45 +1328,25 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setShowBriefModal(false);
   };
 
+  const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
+  const showFollowUpComposer = hasAiResponse && aiRoundCount === 1 && isConversationSequenceComplete;
+  const showPromptComposer = !deepSeekSandboxEnabled
+    ? true
+    : aiLoading
+      ? false
+      : aiRoundCount === 0 || showFollowUpComposer;
+  const displayedTrades = activeTrades.length > 0 ? activeTrades : (aiStructured?.trades ?? []);
+
+  const handleRemoveTrade = (tradeToRemove: string) => {
+    setActiveTrades((current) => {
+      if (current.length <= 1) return current;
+      return current.filter((trade) => trade !== tradeToRemove);
+    });
+  };
+
 
   return (
     <div className="space-y-3">
-      <div className="text-center space-y-2 mb-6">
-        <p className="text-sm text-slate-600">
-          Describe what you need in a few words.{' '}
-          <button onClick={() => setShowHelp(true)} className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition">
-            We&rsquo;ll help you get started.
-          </button>
-        </p>
-      </div>
-      <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} onClear={handleClearSearch} />
-
-      {!isAdminTester && deepSeekSandboxEnabled && (
-        <div className="rounded-lg shadow-lg border border-slate-200 bg-white p-3">
-          <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-600">
-            <p>
-              {visionQuota
-                ? `Image quota: ${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
-                : 'Image quota: visitor 1/prompt, 3/day · client 3/prompt, 9/day'}
-            </p>
-            {visionQuotaLoading && <span className="text-slate-500">Checking quota...</span>}
-          </div>
-          {visionQuotaError && <p className="mb-2 text-xs text-rose-600">{visionQuotaError}</p>}
-          <ChatImageUploader
-            onFilesSelected={setPromptImages}
-            maxImages={promptImageLimit}
-            disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
-            clearKey={promptUploaderClearKey}
-          />
-          {visionQuota && !visionQuota.canUseVision && (
-            <p className="mt-2 text-xs text-amber-700">
-              Daily image quota reached. You can still submit text-only prompts.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Non-admin: inline conversational response injected right below prompt */}
       {!isAdminTester && deepSeekSandboxEnabled && (
         <div className="space-y-3">
           {aiRoundNotice && (
@@ -1330,57 +1355,97 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           {aiLoading && <ThinkingIndicator />}
           {!aiLoading && aiError && <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{aiError}</p>}
 
-          {!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText && (
-                <div className="space-y-3 pt-1">
+          {hasAiResponse && aiStructured && aiConversationalText && (
+            <div className="space-y-3 pt-1">
               <AiConversationalView
-                    key={aiConversationalText}
+                key={aiConversationalText}
                 conversationalText={aiConversationalText}
                 matchCount={aiMatchCount}
                 matchLoading={aiCountLoading}
-                trades={aiStructured.trades}
+                trades={displayedTrades}
                 safetyAssessment={aiStructured.safetyAssessment}
-                  fullCoverageCompanyCount={aiFullCoverageCompanyCount}
-                  specialistCount={aiSpecialistCount}
-                  showForgottenPrompt={aiRoundCount === 1}
-                    onSequenceStateChange={setIsConversationSequenceComplete}
+                fullCoverageCompanyCount={aiFullCoverageCompanyCount}
+                specialistCount={aiSpecialistCount}
+                showForgottenPrompt={aiRoundCount === 1}
+                onSequenceStateChange={setIsConversationSequenceComplete}
+                onRemoveTrade={handleRemoveTrade}
                 tradesLabel={
-                  aiStructured.trades.length === 0
+                  displayedTrades.length === 0
                     ? ''
-                    : aiStructured.trades.length === 1
-                      ? aiStructured.trades[0]
-                      : `${aiStructured.trades[0]} + ${aiStructured.trades.length - 1} other${aiStructured.trades.length > 2 ? 's' : ''}`
+                    : displayedTrades.length === 1
+                      ? displayedTrades[0]
+                      : `${displayedTrades[0]} + ${displayedTrades.length - 1} other${displayedTrades.length > 2 ? 's' : ''}`
                 }
               />
-
-              <div className={`flex flex-wrap justify-center gap-3 border-t border-emerald-100 pt-1 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
-                {isLoggedIn === true ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowBriefModal(true)}
-                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                  >
-                    Continue to Matching
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={openJoinModal}
-                      className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                    >
-                      Join to Continue
-                    </button>
-                    <button
-                      type="button"
-                      onClick={openLoginModal}
-                      className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
-                    >
-                      Login
-                    </button>
-                  </>
-                )}
-              </div>
             </div>
+          )}
+        </div>
+      )}
+
+      <div className={`origin-top transition-all duration-300 ${showPromptComposer ? 'max-h-[720px] scale-y-100 opacity-100' : 'pointer-events-none max-h-0 scale-y-95 opacity-0'} overflow-hidden`}>
+        <div className="text-center space-y-2 mb-6">
+          <p className="text-sm text-slate-600">
+            Describe what you need in a few words.{' '}
+            <button onClick={() => setShowHelp(true)} className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition">
+              We&rsquo;ll help you get started.
+            </button>
+          </p>
+        </div>
+        <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} onClear={handleClearSearch} />
+
+        {!isAdminTester && deepSeekSandboxEnabled && (
+          <div className="mt-3 rounded-lg shadow-lg border border-slate-200 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-600">
+              <p>
+                {visionQuota
+                  ? `Image quota: ${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
+                  : 'Image quota: visitor 1/prompt, 3/day · client 3/prompt, 9/day'}
+              </p>
+              {visionQuotaLoading && <span className="text-slate-500">Checking quota...</span>}
+            </div>
+            {visionQuotaError && <p className="mb-2 text-xs text-rose-600">{visionQuotaError}</p>}
+            <ChatImageUploader
+              onFilesSelected={setPromptImages}
+              maxImages={promptImageLimit}
+              disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
+              clearKey={promptUploaderClearKey}
+            />
+            {visionQuota && !visionQuota.canUseVision && (
+              <p className="mt-2 text-xs text-amber-700">
+                Daily image quota reached. You can still submit text-only prompts.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {hasAiResponse && (
+        <div className={`flex flex-wrap justify-center gap-3 border-t border-emerald-100 pt-1 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
+          {isLoggedIn === true ? (
+            <button
+              type="button"
+              onClick={() => setShowBriefModal(true)}
+              className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+            >
+              Continue to Matching
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={openJoinModal}
+                className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+              >
+                Join to Continue
+              </button>
+              <button
+                type="button"
+                onClick={openLoginModal}
+                className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
+              >
+                Login
+              </button>
+            </>
           )}
         </div>
       )}
