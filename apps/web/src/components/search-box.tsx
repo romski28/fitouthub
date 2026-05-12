@@ -6,11 +6,12 @@ export interface SearchBoxProps {
   onSubmit: (query: string) => void;
   autoFocus?: boolean;
   onClear?: () => void;
+  submitLabel?: string;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo' }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -145,7 +146,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear }: Sear
               type="submit"
               className="rounded-md border border-[#F5EEDE] bg-[#F97362] px-3 py-2 text-sm font-semibold whitespace-nowrap text-[#F5EEDE] shadow-sm transition-colors duration-150 hover:bg-[#e8624f] active:bg-[#d75846] sm:px-6 sm:py-2.5 sm:text-base"
             >
-              Ask Mimo
+              {submitLabel}
             </button>
           </div>
         </div>

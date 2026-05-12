@@ -589,6 +589,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiStructured, setAiStructured] = useState<AiStructured | null>(null);
   const [activeTrades, setActiveTrades] = useState<string[]>([]);
   const [initialAiPrompt, setInitialAiPrompt] = useState<string | null>(null);
+  const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([]);
   const [initialAiImageUrls, setInitialAiImageUrls] = useState<string[]>([]);
   const [aiConversationalText, setAiConversationalText] = useState<string | null>(null);
   const [aiDebug, setAiDebug] = useState<{
@@ -816,6 +817,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiStructured(null);
     setActiveTrades([]);
     setInitialAiPrompt(null);
+    setAiPromptHistory([]);
     setInitialAiImageUrls([]);
     setAiConversationalText(null);
     setAiMatchCount(null);
@@ -1311,7 +1313,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       setMatchCount(null);
       if (aiRoundCount === 0) {
         setInitialAiPrompt(trimmed);
+        setAiPromptHistory([trimmed]);
         setInitialAiImageUrls(imageUrls);
+      } else {
+        setAiPromptHistory((current) => [...current, trimmed]);
       }
       runSandbox(trimmed, imageUrls);
       // Scroll to the results panel after a short delay to allow state to update
@@ -1371,7 +1376,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               {initialAiPrompt && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">You asked...</p>
-                  <p className="mt-1 text-sm text-slate-800">{initialAiPrompt}</p>
+                  <div className="mt-1 space-y-1 text-sm text-slate-800">
+                    {(aiPromptHistory.length > 0 ? aiPromptHistory : [initialAiPrompt]).map((prompt, index) => (
+                      <p key={`asked-prompt-${index}`}>
+                        {index === 0 ? prompt : `Update: ${prompt}`}
+                      </p>
+                    ))}
+                  </div>
                   {initialAiImageUrls.length > 0 && (
                     <div className="mt-3 space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">...and you sent these images</p>
@@ -1429,7 +1440,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             </p>
           </div>
         )}
-        <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} onClear={handleClearSearch} />
+        <SearchBox
+          onSubmit={handleSearch}
+          autoFocus={autoFocusPrompt}
+          onClear={handleClearSearch}
+          submitLabel={showFollowUpComposer ? 'Update Mimo' : 'Ask Mimo'}
+        />
 
         {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
           <div className="mt-3 rounded-lg shadow-lg border border-slate-200 bg-white p-3">

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-12-10a211c",
+    "date": "2026-05-12T18:07:21+08:00",
+    "title": "Use 'Update Mimo' for follow-up turn and show both prompts in AI recap",
+    "summary": "Use 'Update Mimo' for follow-up turn and show both prompts in AI recap",
+    "areas": [
+      "web"
+    ],
+    "commit": "10a211c",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-5e56590",
     "date": "2026-05-12T17:57:25+08:00",
     "title": "Refine AI composer transitions and add initial prompt/image recap",
