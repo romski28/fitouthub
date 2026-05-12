@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
+import ChatImageUploader from '@/components/chat-image-uploader';
 import { SearchHelpModal } from '@/components/search-help-modal';
 import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
 import { useAuth } from '@/context/auth-context';
@@ -589,6 +590,19 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
   const [visionLoading, setVisionLoading] = useState(false);
   const [visionError, setVisionError] = useState<string | null>(null);
+  const [promptImages, setPromptImages] = useState<File[]>([]);
+  const [promptUploaderClearKey, setPromptUploaderClearKey] = useState(0);
+  const [visionQuotaLoading, setVisionQuotaLoading] = useState(false);
+  const [visionQuota, setVisionQuota] = useState<{
+    actor: 'visitor' | 'client';
+    maxImagesPerPrompt: number;
+    maxImagesPerDay: number;
+    usedToday: number;
+    remainingToday: number;
+    resetAt: string;
+    canUseVision: boolean;
+  } | null>(null);
+  const [visionQuotaError, setVisionQuotaError] = useState<string | null>(null);
   const [visionProvider, setVisionProvider] = useState<'deepseek' | 'qwen'>('deepseek');
   const [visionModel, setVisionModel] = useState('deepseek-v4-pro');
   const [visionImageUrl, setVisionImageUrl] = useState('https://picsum.photos/id/1062/1200/800');
@@ -611,6 +625,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
   const { isLoggedIn, userLocation, user, accessToken } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
   const isAdminTester = user?.role === 'admin';
+  const promptImageLimit = visionQuota?.maxImagesPerPrompt ?? ((isLoggedIn && user?.role === 'client') ? 3 : 1);
 
   // Portal support: render AI results panel into an external DOM node
   const [portalEl, setPortalEl] = useState<Element | null>(null);
@@ -763,6 +778,40 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     setAiRoundCount(0);
     setAiRoundNotice(null);
     setIsConversationSequenceComplete(false);
+    setPromptImages([]);
+    setPromptUploaderClearKey((key) => key + 1);
+  };
+
+  const fetchVisionQuota = async () => {
+    if (!aiSessionId) return;
+    setVisionQuotaLoading(true);
+    setVisionQuotaError(null);
+    try {
+      const params = new URLSearchParams();
+      params.set('sessionId', aiSessionId);
+      const response = await fetch(`${API_BASE_URL}/ai/sandbox/vision/quota?${params.toString()}`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.message || `Quota check failed (${response.status})`);
+      }
+      const payload = await response.json();
+      setVisionQuota({
+        actor: payload?.actor === 'client' ? 'client' : 'visitor',
+        maxImagesPerPrompt: typeof payload?.maxImagesPerPrompt === 'number' ? payload.maxImagesPerPrompt : 1,
+        maxImagesPerDay: typeof payload?.maxImagesPerDay === 'number' ? payload.maxImagesPerDay : 3,
+        usedToday: typeof payload?.usedToday === 'number' ? payload.usedToday : 0,
+        remainingToday: typeof payload?.remainingToday === 'number' ? payload.remainingToday : 0,
+        resetAt: typeof payload?.resetAt === 'string' ? payload.resetAt : '',
+        canUseVision: Boolean(payload?.canUseVision),
+      });
+    } catch (error) {
+      setVisionQuota(null);
+      setVisionQuotaError((error as Error).message || 'Failed to load image quota');
+    } finally {
+      setVisionQuotaLoading(false);
+    }
   };
 
   // Track previous login state to detect login events
@@ -962,7 +1011,37 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     return () => { cancelled = true; };
   }, [intent, searchMode]);
 
-  const runSandbox = async (query: string) => {
+  useEffect(() => {
+    if (!deepSeekSandboxEnabled || isAdminTester) return;
+    fetchVisionQuota();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiSessionId, accessToken, isLoggedIn, user?.role, deepSeekSandboxEnabled, isAdminTester]);
+
+  const uploadPromptImages = async (files: File[]): Promise<string[]> => {
+    if (files.length === 0) return [];
+
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
+      method: 'POST',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      body: formData,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload?.message || `Image upload failed (${response.status})`);
+    }
+
+    if (!Array.isArray(payload?.urls)) {
+      throw new Error('Image upload failed: invalid response');
+    }
+
+    return payload.urls.filter((url: unknown): url is string => typeof url === 'string' && url.trim().length > 0);
+  };
+
+  const runSandbox = async (query: string, imageUrls: string[] = []) => {
     const threadIntakeId = aiStructured?.intakeId ?? null;
     setAiLoading(true);
     setAiRoundNotice(null);
@@ -982,14 +1061,20 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         : '/ai/sandbox/requirements/conversational';
       const response = await fetch(`${API_BASE_URL}${apiPath}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify(
           isAdminTester
-            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured' }
-            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId },
+            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured', imageUrls }
+            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, imageUrls },
         ),
       });
-      if (!response.ok) throw new Error(`Sandbox request failed (${response.status})`);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.message || `Sandbox request failed (${response.status})`);
+      }
 
       const payload: {
         intakeId: string | null;
@@ -1098,6 +1183,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       });
 
       setAiRoundCount((current) => Math.min(current + 1, MAX_AI_ROUNDS));
+      if (imageUrls.length > 0) {
+        setPromptImages([]);
+        setPromptUploaderClearKey((key) => key + 1);
+        fetchVisionQuota();
+      }
 
     } catch (error) {
       setAiError((error as Error).message || 'DeepSeek sandbox is unavailable');
@@ -1106,7 +1196,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
     }
   };
 
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
     if (searchMode === 'ai' && deepSeekSandboxEnabled) {
@@ -1114,9 +1204,32 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         setAiRoundNotice('You can make one follow-up tweak only. Clear and start again for a new request.');
         return;
       }
+
+      if (!isAdminTester && promptImages.length > 0) {
+        const maxPerPrompt = visionQuota?.maxImagesPerPrompt ?? promptImageLimit;
+        const remainingToday = visionQuota?.remainingToday ?? maxPerPrompt;
+        if (promptImages.length > maxPerPrompt) {
+          setAiError(`You can attach up to ${maxPerPrompt} image${maxPerPrompt > 1 ? 's' : ''} per prompt.`);
+          return;
+        }
+        if (promptImages.length > remainingToday) {
+          setAiError(`Daily image quota exceeded. ${remainingToday} image${remainingToday === 1 ? '' : 's'} remaining today.`);
+          return;
+        }
+      }
+
+      let imageUrls: string[] = [];
+      if (!isAdminTester && promptImages.length > 0) {
+        try {
+          imageUrls = await uploadPromptImages(promptImages);
+        } catch (error) {
+          setAiError((error as Error).message || 'Failed to upload images');
+          return;
+        }
+      }
       setIntent(null);
       setMatchCount(null);
-      runSandbox(trimmed);
+      runSandbox(trimmed, imageUrls);
       // Scroll to the results panel after a short delay to allow state to update
       if (resultsPortalId) {
         setTimeout(() => {
@@ -1152,6 +1265,31 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
         </p>
       </div>
       <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} onClear={handleClearSearch} />
+
+      {!isAdminTester && deepSeekSandboxEnabled && (
+        <div className="rounded-lg border border-emerald-200 bg-white p-3">
+          <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-600">
+            <p>
+              {visionQuota
+                ? `Image quota: ${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
+                : 'Image quota: visitor 1/prompt, 3/day · client 3/prompt, 9/day'}
+            </p>
+            {visionQuotaLoading && <span className="text-slate-500">Checking quota...</span>}
+          </div>
+          {visionQuotaError && <p className="mb-2 text-xs text-rose-600">{visionQuotaError}</p>}
+          <ChatImageUploader
+            onFilesSelected={setPromptImages}
+            maxImages={promptImageLimit}
+            disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
+            clearKey={promptUploaderClearKey}
+          />
+          {visionQuota && !visionQuota.canUseVision && (
+            <p className="mt-2 text-xs text-amber-700">
+              Daily image quota reached. You can still submit text-only prompts.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Non-admin: inline conversational response injected right below prompt */}
       {!isAdminTester && deepSeekSandboxEnabled && (

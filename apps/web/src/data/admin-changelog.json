@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-12-b72956b",
+    "date": "2026-05-12T12:15:28+08:00",
+    "title": "Add Qwen image quotas, intake tracking, and dual-provider admin AI dashboard",
+    "summary": "Add Qwen image quotas, intake tracking, and dual-provider admin AI dashboard",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b72956b",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.module.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/ai/optional-combined-auth.guard.ts",
+      "apps/web/src/app/admin/analytics/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-d996ac8",
     "date": "2026-05-12T11:16:11+08:00",
     "title": "Fix admin vision tester provider label on failed checks",

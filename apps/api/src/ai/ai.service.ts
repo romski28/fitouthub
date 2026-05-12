@@ -1382,7 +1382,190 @@ OUTPUT FORMAT (JSON only)
     }
   }
 
-  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; intakeId?: string; mode?: 'structured' | 'conversational' }) {
+  private getHongKongDayWindow(nowMs = Date.now()) {
+    const hkOffsetMs = 8 * 60 * 60 * 1000;
+    const hkNow = new Date(nowMs + hkOffsetMs);
+    const year = hkNow.getUTCFullYear();
+    const month = hkNow.getUTCMonth();
+    const date = hkNow.getUTCDate();
+    const startUtcMs = Date.UTC(year, month, date) - hkOffsetMs;
+    const endUtcMs = startUtcMs + 24 * 60 * 60 * 1000;
+
+    return {
+      start: new Date(startUtcMs),
+      end: new Date(endUtcMs),
+      resetAt: new Date(endUtcMs).toISOString(),
+    };
+  }
+
+  private getVisionLimits(context?: { userId?: string; userRole?: string }) {
+    const isClient = Boolean(context?.userId) && (context?.userRole || '').toLowerCase() === 'client';
+    return {
+      actor: isClient ? 'client' : 'visitor',
+      maxImagesPerPrompt: isClient ? 3 : 1,
+      maxImagesPerDay: isClient ? 9 : 3,
+    };
+  }
+
+  private extractVisionUsage(intake: {
+    project?: unknown;
+  }) {
+    const project = intake.project && typeof intake.project === 'object' && !Array.isArray(intake.project)
+      ? (intake.project as Record<string, unknown>)
+      : null;
+    const visionUsage = project?.visionUsage && typeof project.visionUsage === 'object' && !Array.isArray(project.visionUsage)
+      ? (project.visionUsage as Record<string, unknown>)
+      : null;
+
+    return {
+      provider: typeof visionUsage?.provider === 'string' ? visionUsage.provider : null,
+      status: typeof visionUsage?.status === 'string' ? visionUsage.status : null,
+      imageCount: typeof visionUsage?.imageCount === 'number' ? visionUsage.imageCount : 0,
+      durationMs: typeof visionUsage?.durationMs === 'number' ? visionUsage.durationMs : null,
+      model: typeof visionUsage?.model === 'string' ? visionUsage.model : null,
+    };
+  }
+
+  async getVisionQuota(context?: { userId?: string; userRole?: string; sessionId?: string }) {
+    const sessionId = this.sanitizeSessionId(context?.sessionId);
+    const limits = this.getVisionLimits(context);
+    const dayWindow = this.getHongKongDayWindow();
+
+    const whereBase = {
+      createdAt: {
+        gte: dayWindow.start,
+        lt: dayWindow.end,
+      },
+    };
+
+    const intakeRows = await this.prisma.aiIntake.findMany({
+      where: {
+        ...whereBase,
+        ...(limits.actor === 'client'
+          ? { userId: context?.userId ?? '__no_user__' }
+          : { sessionId: sessionId ?? '__no_session__' }),
+      },
+      select: {
+        project: true,
+      },
+    });
+
+    const usedToday = intakeRows.reduce((sum, row) => {
+      const usage = this.extractVisionUsage(row);
+      if (usage.status !== 'success') return sum;
+      return sum + Math.max(0, usage.imageCount);
+    }, 0);
+
+    const remainingToday = Math.max(0, limits.maxImagesPerDay - usedToday);
+
+    return {
+      actor: limits.actor,
+      maxImagesPerPrompt: limits.maxImagesPerPrompt,
+      maxImagesPerDay: limits.maxImagesPerDay,
+      usedToday,
+      remainingToday,
+      resetAt: dayWindow.resetAt,
+      canUseVision: remainingToday > 0,
+    };
+  }
+
+  private async analyzeImagesWithQwen(imageUrls: string[], userPrompt: string) {
+    const apiKey = (process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY || '').trim();
+    if (!apiKey) {
+      throw new ServiceUnavailableException('Qwen sandbox is not configured');
+    }
+
+    const endpoint = this.resolveQwenChatEndpoint();
+    const timeoutMs = Number(process.env.QWEN_TIMEOUT_MS || process.env.DEEPSEEK_TIMEOUT_MS || '60000');
+    const model = (process.env.QWEN_VISION_MODEL || process.env.QWEN_MODEL || 'qwen-vl-plus-latest').trim();
+
+    const requestId = `qwen_intake_${Date.now().toString(36)}`;
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const contentParts: Array<Record<string, unknown>> = [
+      {
+        type: 'text',
+        text:
+          `Analyze these renovation-related photos and return strict JSON with this shape: ` +
+          `{"imageSummary":string,"suggestedTrades":string[],"conditionFindings":string[],"safetyFlags":string[],"followUpQuestions":string[],"confidence":number}. ` +
+          `Keep suggestedTrades concise and relevant to Hong Kong renovation context. User prompt: ${userPrompt}`,
+      },
+      ...imageUrls.map((url) => ({
+        type: 'image_url',
+        image_url: { url },
+      })),
+    ];
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: contentParts,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          max_tokens: 600,
+          temperature: 0.1,
+        }),
+        signal: controller.signal,
+      });
+
+      const rawText = await response.text();
+      if (!response.ok) {
+        throw new ServiceUnavailableException(`Qwen image analysis failed (${response.status})`);
+      }
+
+      const payload = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : null;
+      const rawContent =
+        payload &&
+        Array.isArray(payload.choices) &&
+        payload.choices[0] &&
+        typeof payload.choices[0] === 'object' &&
+        (payload.choices[0] as Record<string, unknown>).message &&
+        typeof (payload.choices[0] as Record<string, unknown>).message === 'object' &&
+        typeof ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content === 'string'
+          ? (((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content as string)
+          : '';
+
+      let parsed: Record<string, unknown> = {};
+      try {
+        parsed = rawContent ? (JSON.parse(rawContent) as Record<string, unknown>) : {};
+      } catch {
+        parsed = {
+          imageSummary: rawContent.slice(0, 1200),
+          suggestedTrades: [],
+          conditionFindings: [],
+          safetyFlags: [],
+          followUpQuestions: [],
+          confidence: 0.35,
+        };
+      }
+
+      return {
+        ok: true,
+        provider: 'qwen' as const,
+        requestId,
+        model,
+        durationMs: Date.now() - startedAt,
+        usage: payload && typeof payload.usage === 'object' ? payload.usage : null,
+        parsed,
+      };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; userRole?: string; ipAddress?: string; intakeId?: string; imageUrls?: string[]; mode?: 'structured' | 'conversational' }) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
       throw new BadRequestException('Prompt is required');
@@ -1394,6 +1577,29 @@ OUTPUT FORMAT (JSON only)
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       throw new ServiceUnavailableException('DeepSeek sandbox is not configured');
+    }
+
+    const sessionId = this.sanitizeSessionId(context?.sessionId);
+    const normalizedImageUrls = Array.isArray(context?.imageUrls)
+      ? context!.imageUrls
+          .map((url) => (typeof url === 'string' ? url.trim() : ''))
+          .filter((url) => /^https?:\/\//i.test(url))
+      : [];
+    const requestedImageCount = normalizedImageUrls.length;
+    const quota = await this.getVisionQuota({
+      userId: context?.userId,
+      userRole: context?.userRole,
+      sessionId,
+    });
+    if (requestedImageCount > quota.maxImagesPerPrompt) {
+      throw new BadRequestException(
+        `Image limit per prompt exceeded. Max ${quota.maxImagesPerPrompt} image${quota.maxImagesPerPrompt > 1 ? 's' : ''}.`,
+      );
+    }
+    if (requestedImageCount > quota.remainingToday) {
+      throw new BadRequestException(
+        `Daily image analysis quota reached. ${quota.remainingToday} image${quota.remainingToday === 1 ? '' : 's'} remaining today.`,
+      );
     }
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
@@ -1471,6 +1677,15 @@ OUTPUT FORMAT (JSON only)
       const durationMs = Date.now() - startedAt;
       const usage = payload.usage || {};
       let parsedOutput: unknown = null;
+      let visionUsageMeta: Record<string, unknown> = {
+        requestedImageCount,
+        processedImageCount: 0,
+        provider: null,
+        model: null,
+        status: requestedImageCount > 0 ? 'skipped' : 'not_requested',
+        durationMs: null,
+        error: null,
+      };
 
       if (output) {
         try {
@@ -1499,6 +1714,70 @@ OUTPUT FORMAT (JSON only)
         }
       }
 
+      if (requestedImageCount > 0) {
+        try {
+          const qwenVision = await this.analyzeImagesWithQwen(normalizedImageUrls, trimmedPrompt);
+          const parsed = qwenVision.parsed;
+          const suggestedTrades = Array.isArray(parsed.suggestedTrades)
+            ? parsed.suggestedTrades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
+            : [];
+
+          if (parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+            const parsedObject = parsedOutput as Record<string, unknown>;
+            const existingTrades = Array.isArray(parsedObject.trades)
+              ? parsedObject.trades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
+              : [];
+            parsedObject.trades = Array.from(new Set([...existingTrades, ...suggestedTrades]));
+
+            const projectObject =
+              parsedObject.project && typeof parsedObject.project === 'object' && !Array.isArray(parsedObject.project)
+                ? (parsedObject.project as Record<string, unknown>)
+                : {};
+
+            projectObject.imageInsights = {
+              summary: typeof parsed.imageSummary === 'string' ? parsed.imageSummary : null,
+              conditionFindings: Array.isArray(parsed.conditionFindings)
+                ? parsed.conditionFindings.filter((item): item is string => typeof item === 'string')
+                : [],
+              safetyFlags: Array.isArray(parsed.safetyFlags)
+                ? parsed.safetyFlags.filter((item): item is string => typeof item === 'string')
+                : [],
+              followUpQuestions: Array.isArray(parsed.followUpQuestions)
+                ? parsed.followUpQuestions.filter((item): item is string => typeof item === 'string')
+                : [],
+              confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null,
+              provider: 'qwen',
+              model: qwenVision.model,
+            };
+            parsedObject.project = projectObject;
+            parsedOutput = parsedObject;
+          }
+
+          visionUsageMeta = {
+            requestedImageCount,
+            processedImageCount: requestedImageCount,
+            provider: 'qwen',
+            model: qwenVision.model,
+            status: 'success',
+            durationMs: qwenVision.durationMs,
+            error: null,
+          };
+        } catch (visionError) {
+          this.logger.warn(
+            `[${requestId}] Qwen image analysis failed; continuing text-only. ${(visionError as Error).message}`,
+          );
+          visionUsageMeta = {
+            requestedImageCount,
+            processedImageCount: 0,
+            provider: 'qwen',
+            model: process.env.QWEN_VISION_MODEL || process.env.QWEN_MODEL || 'qwen-vl-plus-latest',
+            status: 'failed',
+            durationMs: null,
+            error: (visionError as Error).message || 'Qwen image analysis failed',
+          };
+        }
+      }
+
       const normalizedContractDocumentation =
         parsedOutput &&
         typeof parsedOutput === 'object' &&
@@ -1519,7 +1798,6 @@ OUTPUT FORMAT (JSON only)
       const projectObj = p?.project && typeof p.project === 'object' ? p.project : null;
 
       let intakeId: string | null = null;
-      const sessionId = this.sanitizeSessionId(context?.sessionId);
       const userId = context?.userId;
 
       try {
@@ -1550,6 +1828,10 @@ OUTPUT FORMAT (JSON only)
             rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
             project: {
               ...(projectObj && typeof projectObj === 'object' ? (projectObj as Record<string, unknown>) : {}),
+              visionUsage: visionUsageMeta,
+              aiProviders: requestedImageCount > 0
+                ? ['deepseek', 'qwen']
+                : ['deepseek'],
               aiThread: activeThread
                 ? {
                     sourceIntakeId: activeThread.id,
@@ -1583,6 +1865,11 @@ OUTPUT FORMAT (JSON only)
         },
         output,
         parsedOutput,
+        vision: {
+          requestedImageCount,
+          quota,
+          usage: visionUsageMeta,
+        },
         threadContext: activeThread
           ? {
               sourceIntakeId: activeThread.id,
@@ -1616,7 +1903,7 @@ OUTPUT FORMAT (JSON only)
     }
   }
 
-  async previewConversationalRequirements(prompt: string, context?: { sessionId?: string; userId?: string; intakeId?: string }) {
+  async previewConversationalRequirements(prompt: string, context?: { sessionId?: string; userId?: string; userRole?: string; ipAddress?: string; intakeId?: string; imageUrls?: string[] }) {
     const baseResponse = await this.previewRequirements(prompt, {
       ...context,
       mode: 'conversational',
@@ -1890,6 +2177,93 @@ OUTPUT FORMAT (JSON only)
     });
 
     return updated;
+  }
+
+  async getAiAdminMetrics() {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const rows = await this.prisma.aiIntake.findMany({
+      where: {
+        createdAt: { gte: since },
+      },
+      select: {
+        createdAt: true,
+        model: true,
+        durationMs: true,
+        project: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const providerStats: Record<string, {
+      requests: number;
+      success: number;
+      failed: number;
+      totalDurationMs: number;
+      imageCount: number;
+    }> = {
+      deepseek: { requests: 0, success: 0, failed: 0, totalDurationMs: 0, imageCount: 0 },
+      qwen: { requests: 0, success: 0, failed: 0, totalDurationMs: 0, imageCount: 0 },
+    };
+
+    const daily: Array<{ day: string; deepseek: number; qwen: number }> = [];
+    const dayMap = new Map<string, { deepseek: number; qwen: number }>();
+
+    rows.forEach((row) => {
+      providerStats.deepseek.requests += 1;
+      providerStats.deepseek.success += 1;
+      providerStats.deepseek.totalDurationMs += row.durationMs ?? 0;
+
+      const usage = this.extractVisionUsage({ project: row.project });
+      if (usage.provider === 'qwen' && usage.imageCount > 0) {
+        providerStats.qwen.requests += 1;
+        providerStats.qwen.imageCount += usage.imageCount;
+        providerStats.qwen.totalDurationMs += usage.durationMs ?? 0;
+        if (usage.status === 'success') {
+          providerStats.qwen.success += 1;
+        } else if (usage.status === 'failed') {
+          providerStats.qwen.failed += 1;
+        }
+      }
+
+      const day = row.createdAt.toISOString().slice(0, 10);
+      const current = dayMap.get(day) || { deepseek: 0, qwen: 0 };
+      current.deepseek += 1;
+      if (usage.provider === 'qwen' && usage.imageCount > 0 && usage.status === 'success') {
+        current.qwen += 1;
+      }
+      dayMap.set(day, current);
+    });
+
+    dayMap.forEach((value, day) => {
+      daily.push({ day, deepseek: value.deepseek, qwen: value.qwen });
+    });
+
+    daily.sort((a, b) => a.day.localeCompare(b.day));
+
+    const average = (total: number, count: number) => (count > 0 ? Math.round(total / count) : 0);
+
+    return {
+      window: {
+        days: 7,
+        since: since.toISOString(),
+      },
+      providers: {
+        deepseek: {
+          requests: providerStats.deepseek.requests,
+          success: providerStats.deepseek.success,
+          failed: providerStats.deepseek.failed,
+          avgDurationMs: average(providerStats.deepseek.totalDurationMs, providerStats.deepseek.requests),
+        },
+        qwen: {
+          requests: providerStats.qwen.requests,
+          success: providerStats.qwen.success,
+          failed: providerStats.qwen.failed,
+          avgDurationMs: average(providerStats.qwen.totalDurationMs, providerStats.qwen.requests),
+          imagesAnalyzed: providerStats.qwen.imageCount,
+        },
+      },
+      daily,
+    };
   }
 
   async countProfessionals(trades?: string[], location?: string): Promise<{

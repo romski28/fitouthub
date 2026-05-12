@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Request, Query, ForbiddenException, UseGuards } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
+import { OptionalCombinedAuthGuard } from './optional-combined-auth.guard';
 
 @Controller('ai')
 export class AiController {
@@ -29,24 +30,62 @@ export class AiController {
   }
 
   @Post('sandbox/requirements')
-  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string; mode?: 'structured' | 'conversational' }, @Request() req: any) {
-    const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
+  @UseGuards(OptionalCombinedAuthGuard)
+  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string; mode?: 'structured' | 'conversational'; imageUrls?: string[] }, @Request() req: any) {
+    const userId: string | undefined = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub ?? undefined;
+    const userRole: string | undefined = req?.user?.role;
+    const ipAddress = ((req?.headers?.['x-forwarded-for'] as string) || req?.ip || '')
+      .split(',')[0]
+      .trim();
     return this.aiService.previewRequirements(body?.prompt ?? '', {
       sessionId: body?.sessionId,
       intakeId: body?.intakeId,
+      imageUrls: Array.isArray(body?.imageUrls) ? body.imageUrls : [],
       userId,
+      userRole,
+      ipAddress,
       mode: body?.mode ?? 'structured',
     });
   }
 
   @Post('sandbox/requirements/conversational')
-  async previewConversationalRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string }, @Request() req: any) {
-    const userId: string | undefined = req?.user?.userId ?? req?.user?.sub ?? undefined;
+  @UseGuards(OptionalCombinedAuthGuard)
+  async previewConversationalRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string; imageUrls?: string[] }, @Request() req: any) {
+    const userId: string | undefined = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub ?? undefined;
+    const userRole: string | undefined = req?.user?.role;
+    const ipAddress = ((req?.headers?.['x-forwarded-for'] as string) || req?.ip || '')
+      .split(',')[0]
+      .trim();
     return this.aiService.previewConversationalRequirements(body?.prompt ?? '', {
       sessionId: body?.sessionId,
       intakeId: body?.intakeId,
+      imageUrls: Array.isArray(body?.imageUrls) ? body.imageUrls : [],
       userId,
+      userRole,
+      ipAddress,
     });
+  }
+
+  @Get('sandbox/vision/quota')
+  @UseGuards(OptionalCombinedAuthGuard)
+  async getVisionQuota(@Query('sessionId') sessionId: string | undefined, @Request() req: any) {
+    const userId: string | undefined = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub ?? undefined;
+    const userRole: string | undefined = req?.user?.role;
+    return this.aiService.getVisionQuota({
+      userId,
+      userRole,
+      sessionId,
+    });
+  }
+
+  @Get('admin/metrics')
+  @UseGuards(CombinedAuthGuard)
+  async getAiAdminMetrics(@Request() req: any) {
+    const role: string | undefined = req?.user?.role;
+    if (role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.aiService.getAiAdminMetrics();
   }
 
   @Post('intake/:id/convert')
