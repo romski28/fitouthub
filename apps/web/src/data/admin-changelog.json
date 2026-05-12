@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-a5312d3",
+    "date": "2026-05-12T20:43:56+08:00",
+    "title": "Fix trade count fetch to run for all users, not just anonymous",
+    "summary": "Fix trade count fetch to run for all users, not just anonymous",
+    "areas": [
+      "web"
+    ],
+    "commit": "a5312d3",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-10a211c",
     "date": "2026-05-12T18:07:21+08:00",
     "title": "Use 'Update Mimo' for follow-up turn and show both prompts in AI recap",

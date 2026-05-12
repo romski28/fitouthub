@@ -320,18 +320,6 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         : `Luckily, Mimo has this covered. While a single all-trades company is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
       : `Luckily, Mimo has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
     
-    if (typeof window !== 'undefined') {
-      console.log('[AiConversationalView] Generated message:', {
-        trades,
-        tradesCount: trades.length,
-        matchCount,
-        fullCoverageCompanyCount,
-        specialistCount,
-        isMultiTrade: trades.length > 1,
-        base,
-      });
-    }
-    
     return isLoggedIn === true
       ? base
       : `${base} Sign in or join to get this project logged and a professional on the case today.`;
@@ -997,9 +985,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
   };
 
-  // Fetch professional count for non-logged-in users after AI extraction
+  // Fetch professional count after AI extraction (all users)
   useEffect(() => {
-    if (isLoggedIn !== false || searchMode !== 'ai' || !aiStructured) {
+    if (searchMode !== 'ai' || !aiStructured) {
       setAiMatchCount(null);
       setAiFullCoverageCompanyCount(0);
       setAiSpecialistCount(0);
@@ -1013,27 +1001,15 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         const tradesForCount = activeTrades.length > 0 ? activeTrades : aiStructured.trades;
         if (tradesForCount.length > 0) params.set('trades', tradesForCount.join(','));
         if (aiStructured.locationPrimary) params.set('location', aiStructured.locationPrimary);
-        
-        console.log('[SearchFlow] Fetching AI count for non-logged-in user:', {
-          trades: tradesForCount,
-          location: aiStructured.locationPrimary,
-          isLoggedIn,
-          queryString: params.toString(),
-        });
-        
         const res = await fetch(`${API_BASE_URL}/ai/professionals/count?${params.toString()}`);
         if (!res.ok) throw new Error('count fetch failed');
         const data: { count: number; fullCoverageCompanyCount?: number; specialistCount?: number } = await res.json();
-        
-        console.log('[SearchFlow] Received count response:', data);
-        
         if (!cancelled) {
           setAiMatchCount(data.count);
           setAiFullCoverageCompanyCount(data.fullCoverageCompanyCount ?? 0);
           setAiSpecialistCount(data.specialistCount ?? data.count);
         }
-      } catch (error) {
-        console.error('[SearchFlow] Count fetch error:', error);
+      } catch {
         if (!cancelled) {
           setAiMatchCount(null);
           setAiFullCoverageCompanyCount(0);
@@ -1045,7 +1021,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     };
     fetchCount();
     return () => { cancelled = true; };
-  }, [aiStructured, activeTrades, isLoggedIn, searchMode]);
+  }, [aiStructured, activeTrades, searchMode]);
 
   // Fetch professional count for legacy intent searches
   useEffect(() => {
