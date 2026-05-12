@@ -1267,7 +1267,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
       <SearchBox onSubmit={handleSearch} autoFocus={autoFocusPrompt} onClear={handleClearSearch} />
 
       {!isAdminTester && deepSeekSandboxEnabled && (
-        <div className="rounded-lg border border-emerald-200 bg-white p-3">
+        <div className="rounded-lg shadow-lg border border-slate-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-600">
             <p>
               {visionQuota

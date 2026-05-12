@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-12-e1b1948",
+    "date": "2026-05-12T12:37:36+08:00",
+    "title": "Remove emoji from image uploader button and use prompt box shadow style for image panel",
+    "summary": "Remove emoji from image uploader button and use prompt box shadow style for image panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "e1b1948",
+    "files": [
+      "apps/web/src/components/chat-image-uploader.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-460aa65",
     "date": "2026-05-12T12:28:15+08:00",
     "title": "Fix Prisma JSON typing for ai_intakes project payload",
