@@ -1303,7 +1303,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId }:
             {visionQuotaLoading && <span className="text-slate-500">Checking quota...</span>}
           </div>
           {visionQuotaError && <p className="mb-2 text-xs text-rose-600">{visionQuotaError}</p>}
-          {typeof window !== 'undefined' && console.log('[SearchFlow] Quota state:', { visionQuota, visionQuotaLoading, visionQuotaError })}
           <ChatImageUploader
             onFilesSelected={setPromptImages}
             maxImages={promptImageLimit}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-12-e4dbbab",
+    "date": "2026-05-12T13:25:18+08:00",
+    "title": "Remove console.log from JSX render to fix Vercel compile error",
+    "summary": "Remove console.log from JSX render to fix Vercel compile error",
+    "areas": [
+      "web"
+    ],
+    "commit": "e4dbbab",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-4c2ae6f",
     "date": "2026-05-12T13:17:22+08:00",
     "title": "Fix trades count message display while loading, add quota debug logging",
