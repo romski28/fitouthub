@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-13-d426fab",
+    "date": "2026-05-13T15:43:02+08:00",
+    "title": "feat(assist): send guest consultation acknowledgment email and WhatsApp",
+    "summary": "feat(assist): send guest consultation acknowledgment email and WhatsApp",
+    "areas": [
+      "api"
+    ],
+    "commit": "d426fab",
+    "files": [
+      "apps/api/src/assist/assist-requests.service.ts",
+      "apps/api/src/email/email.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-13-3c0aac9",
     "date": "2026-05-13T15:05:15+08:00",
     "title": "fix(search-flow): flush pending assist draft on reset and new prompt",

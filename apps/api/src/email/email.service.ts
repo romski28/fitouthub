@@ -768,6 +768,46 @@ export class EmailService {
   }
 
   /**
+   * Send acknowledgment to a guest after consultation booking submission.
+   */
+  async sendGuestConsultationAcknowledgement(params: {
+    to: string;
+    clientName?: string;
+    projectName?: string;
+    message: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send guest consultation acknowledgment to:', params.to, params);
+      return;
+    }
+
+    const safeName = (params.clientName || '').trim() || 'there';
+    const safeProject = (params.projectName || '').trim() || 'your project';
+
+    try {
+      await this.resend.emails.send({
+        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: 'We have received your consultation request',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #111827; margin: 0 0 12px 0;">Thanks ${safeName}, your request is in</h2>
+            <p style="color: #374151; margin: 0 0 12px 0;">Project: <strong>${safeProject}</strong></p>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px;">
+              <p style="color: #374151; margin: 0; white-space: pre-wrap;">${params.message}</p>
+            </div>
+          </div>
+        `,
+      });
+
+      console.log('✅ Guest consultation acknowledgment sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send guest consultation acknowledgment:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Send notification that funds are secure and project can start
    */
   async sendFundsSecureNotification(params: {

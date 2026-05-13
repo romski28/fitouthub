@@ -2,6 +2,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { NotificationService } from '../notifications/notification.service';
+import { NotificationChannel } from '../notifications/notification.types';
 import { createHash } from 'crypto';
 
 interface CreateAssistRequestDto {
@@ -239,6 +241,19 @@ export class AssistRequestsService {
     return Array.from(variants);
   }
 
+  private normalizeHongKongMobileForOutbound(input?: string | null) {
+    const raw = (input || '').trim();
+    if (!raw) return null;
+
+    const digits = this.normalizePhoneDigits(raw);
+    if (!digits) return null;
+
+    if (raw.startsWith('+')) return `+${digits}`;
+    if (digits.length === 8) return `+852${digits}`;
+    if (digits.startsWith('852')) return `+${digits}`;
+    return `+${digits}`;
+  }
+
   async precheckAiConsultationGuestLead(dto: GuestLeadPrecheckDto) {
     const email = this.normalizeEmail(dto.email);
     const mobileVariants = this.buildHongKongMobileVariants(dto.mobile);
@@ -402,6 +417,7 @@ export class AssistRequestsService {
     const ipHash = this.sha256(dto.context?.ip);
     const uaHash = this.sha256(dto.context?.userAgent);
     const source = dto.context?.source || 'ai_guest_quick';
+    const requestedContactMethod = dto.assist?.contactMethod || 'chat';
 
     const precheck = await this.precheckAiConsultationGuestLead({ email, mobile });
     if (!precheck.eligible) {
@@ -523,6 +539,37 @@ export class AssistRequestsService {
       },
     });
 
+    const guestAckMessage = 'We have got your request for a chat and one of the team will get back to you very shortly.\n\nRegards\nThe Mimo Team';
+
+    if (email) {
+      try {
+        await this.emailService.sendGuestConsultationAcknowledgement({
+          to: email,
+          clientName: name,
+          projectName,
+          message: guestAckMessage,
+        });
+      } catch (error) {
+        console.warn('[AssistRequestsService] Guest consultation acknowledgment email failed:', (error as Error)?.message);
+      }
+    }
+
+    if (requestedContactMethod === 'whatsapp' && mobile) {
+      const outboundMobile = this.normalizeHongKongMobileForOutbound(mobile);
+      if (outboundMobile) {
+        try {
+          await this.notificationService.send({
+            phoneNumber: outboundMobile,
+            eventType: 'guest_consultation_acknowledged',
+            message: guestAckMessage,
+            channel: NotificationChannel.WHATSAPP,
+          });
+        } catch (error) {
+          console.warn('[AssistRequestsService] Guest consultation acknowledgment WhatsApp failed:', (error as Error)?.message);
+        }
+      }
+    }
+
     return {
       projectId: project.id,
       assistRequestId: assist?.id || null,
@@ -607,6 +654,7 @@ export class AssistRequestsService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private notificationService: NotificationService,
     private realtime: RealtimeService,
   ) {}
 
