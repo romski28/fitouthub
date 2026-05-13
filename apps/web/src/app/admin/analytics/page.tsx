@@ -21,11 +21,25 @@ type AiMetricsResponse = {
   daily: Array<{ day: string; deepseek: number; qwen: number }>;
 };
 
+type ConsultationReport = {
+  windowDays: number;
+  from: string;
+  prospectiveUsersCreated: number;
+  prospectiveUsersConverted: number;
+  conversionRate: number;
+  activeBlocks: number;
+  totalBookings: number;
+  bookingsByChannel: Record<string, number>;
+  bookingsByMethod: Record<string, number>;
+  eventCounts: Array<{ eventType: string; count: number }>;
+};
+
 export default function AnalyticsPage() {
   const { accessToken, user, isLoggedIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<AiMetricsResponse | null>(null);
+  const [consultationReport, setConsultationReport] = useState<ConsultationReport | null>(null);
 
   useEffect(() => {
     if (isLoggedIn === undefined) return;
@@ -38,16 +52,34 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/ai/admin/metrics`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        const payload = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(payload?.message || `Failed to load AI metrics (${res.status})`);
+        const [aiMetricsRes, consultationRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/ai/admin/metrics`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+          fetch(`${API_BASE_URL}/assist-requests/ai-consultation/report?days=30`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+        ]);
+
+        const aiMetricsPayload = await aiMetricsRes.json().catch(() => ({}));
+        if (!aiMetricsRes.ok) {
+          throw new Error(aiMetricsPayload?.message || `Failed to load AI metrics (${aiMetricsRes.status})`);
         }
-        setMetrics(payload as AiMetricsResponse);
+
+        const consultationPayload = await consultationRes.json().catch(() => ({}));
+        if (!consultationRes.ok) {
+          throw new Error(
+            consultationPayload?.message ||
+              `Failed to load consultation report (${consultationRes.status})`,
+          );
+        }
+
+        setMetrics(aiMetricsPayload as AiMetricsResponse);
+        setConsultationReport(consultationPayload as ConsultationReport);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load AI metrics');
       } finally {
@@ -62,6 +94,21 @@ export default function AnalyticsPage() {
     if (!metrics?.daily?.length) return 1;
     return Math.max(...metrics.daily.map((entry) => Math.max(entry.deepseek, entry.qwen, 1)));
   }, [metrics]);
+
+  const topConsultationEvents = useMemo(() => {
+    if (!consultationReport?.eventCounts?.length) return [];
+    return consultationReport.eventCounts.slice(0, 8);
+  }, [consultationReport]);
+
+  const bookingChannelEntries = useMemo(() => {
+    if (!consultationReport?.bookingsByChannel) return [];
+    return Object.entries(consultationReport.bookingsByChannel).sort((a, b) => b[1] - a[1]);
+  }, [consultationReport]);
+
+  const bookingMethodEntries = useMemo(() => {
+    if (!consultationReport?.bookingsByMethod) return [];
+    return Object.entries(consultationReport.bookingsByMethod).sort((a, b) => b[1] - a[1]);
+  }, [consultationReport]);
 
   return (
     <div className="space-y-8">
@@ -137,6 +184,82 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
+
+          {consultationReport && (
+            <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">AI Consultation Funnel (30d)</h2>
+                  <p className="text-sm text-slate-600">Prospective lead quality, conversion and abuse guardrails.</p>
+                </div>
+                <span className="text-xs text-slate-500">Since {new Date(consultationReport.from).toLocaleDateString()}</span>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">Prospective created</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{consultationReport.prospectiveUsersCreated}</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">Converted</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{consultationReport.prospectiveUsersConverted}</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">Conversion rate</p>
+                  <p className="mt-2 text-2xl font-semibold text-emerald-700">{(consultationReport.conversionRate * 100).toFixed(1)}%</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">Total bookings</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{consultationReport.totalBookings}</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">Active blocks</p>
+                  <p className="mt-2 text-2xl font-semibold text-rose-700">{consultationReport.activeBlocks}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Bookings by channel</h3>
+                  <div className="mt-3 space-y-2 text-sm">
+                    {bookingChannelEntries.length === 0 && <p className="text-slate-500">No channel data yet.</p>}
+                    {bookingChannelEntries.map(([channel, count]) => (
+                      <div key={channel} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2">
+                        <span className="font-medium text-slate-700">{channel}</span>
+                        <span className="font-semibold text-slate-900">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Bookings by method</h3>
+                  <div className="mt-3 space-y-2 text-sm">
+                    {bookingMethodEntries.length === 0 && <p className="text-slate-500">No method data yet.</p>}
+                    {bookingMethodEntries.map(([method, count]) => (
+                      <div key={method} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2">
+                        <span className="font-medium text-slate-700">{method}</span>
+                        <span className="font-semibold text-slate-900">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 p-4">
+                <h3 className="text-sm font-semibold text-slate-900">Top event counts</h3>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {topConsultationEvents.length === 0 && <p className="text-sm text-slate-500">No event data yet.</p>}
+                  {topConsultationEvents.map((event) => (
+                    <div key={event.eventType} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2 text-sm">
+                      <span className="text-slate-700">{event.eventType}</span>
+                      <span className="font-semibold text-slate-900">{event.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

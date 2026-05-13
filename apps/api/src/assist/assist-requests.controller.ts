@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpException,
   HttpStatus,
@@ -8,8 +9,11 @@ import {
   Patch,
   Post,
   Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { AssistRequestsService } from './assist-requests.service';
+import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 @Controller('assist-requests')
 export class AssistRequestsController {
@@ -30,6 +34,11 @@ export class AssistRequestsController {
       contactMethod?: 'chat' | 'call' | 'whatsapp';
       requestedCallAt?: string;
       requestedCallTimezone?: string;
+      bookingChannel?: 'app' | 'ai_guest_quick' | 'ai_logged_in' | 'manual_admin';
+      leadLifecycleAtBooking?: 'active' | 'prospective' | 'suspended' | 'blocked';
+      consultationDurationMin?: number;
+      contactEmailSnapshot?: string;
+      contactMobileSnapshot?: string;
     },
   ) {
     try {
@@ -45,6 +54,11 @@ export class AssistRequestsController {
         contactMethod: body.contactMethod,
         requestedCallAt: body.requestedCallAt,
         requestedCallTimezone: body.requestedCallTimezone,
+        bookingChannel: body.bookingChannel,
+        leadLifecycleAtBooking: body.leadLifecycleAtBooking,
+        consultationDurationMin: body.consultationDurationMin,
+        contactEmailSnapshot: body.contactEmailSnapshot,
+        contactMobileSnapshot: body.contactMobileSnapshot,
       });
     } catch (error) {
       throw new HttpException(
@@ -52,6 +66,68 @@ export class AssistRequestsController {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  @Post('ai-consultation')
+  async createAiConsultation(
+    @Body()
+    body: {
+      lead: { name: string; email?: string; mobile?: string };
+      project: {
+        projectName?: string;
+        region?: string;
+        notes?: string;
+        tradesRequired?: string[];
+        userPrompt?: string;
+        aiIntakeId?: string;
+        projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
+        isEmergency?: boolean;
+      };
+      assist: {
+        notes?: string;
+        contactMethod?: 'chat' | 'call' | 'whatsapp';
+        requestedCallAt?: string;
+        requestedCallTimezone?: string;
+      };
+    },
+    @Request() req: any,
+  ) {
+    try {
+      const forwardedFor = req?.headers?.['x-forwarded-for'];
+      const ip = Array.isArray(forwardedFor)
+        ? forwardedFor[0]
+        : typeof forwardedFor === 'string'
+          ? forwardedFor.split(',')[0]?.trim()
+          : req?.ip;
+      const userAgent = req?.headers?.['user-agent'];
+
+      return await this.service.createAiConsultationBooking({
+        ...body,
+        context: {
+          source: 'ai_guest_quick',
+          ip,
+          userAgent: typeof userAgent === 'string' ? userAgent : undefined,
+        },
+      } as any);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to create AI consultation booking',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('ai-consultation/report')
+  @UseGuards(CombinedAuthGuard)
+  async getAiConsultationReport(
+    @Query('days') days?: string,
+    @Request() req?: any,
+  ) {
+    if (req?.user?.role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
+    const parsedDays = days ? parseInt(days, 10) : 30;
+    return this.service.getAiConsultationReport(parsedDays);
   }
 
   @Get()

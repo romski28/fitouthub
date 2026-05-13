@@ -10,6 +10,8 @@ import SearchBox from '@/components/search-box';
 import ChatImageUploader from '@/components/chat-image-uploader';
 import { SearchHelpModal } from '@/components/search-help-modal';
 import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
+import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
+import { ModalOverlay } from '@/components/modal-overlay';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
@@ -567,6 +569,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 }
 
 export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean }) {
+  const AI_ASSIST_DRAFT_STORAGE_KEY = 'aiPendingAssistDraft';
   const MAX_AI_ROUNDS = 2;
   const AI_SESSION_STORAGE_KEY = 'aiSandboxSessionId';
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
@@ -642,6 +645,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     message?: string;
   } | null>(null);
   const [showBriefModal, setShowBriefModal] = useState(false);
+  const [showConsultChoiceModal, setShowConsultChoiceModal] = useState(false);
+  const [leadName, setLeadName] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadMobile, setLeadMobile] = useState('');
+  const [leadFormError, setLeadFormError] = useState<string | null>(null);
+  const [showAssistModal, setShowAssistModal] = useState(false);
+  const [assistSubmitting, setAssistSubmitting] = useState(false);
+  const [assistError, setAssistError] = useState<string | null>(null);
   const { isLoggedIn, userLocation, user, accessToken } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
   const isAdminTester = user?.role === 'admin';
@@ -828,7 +839,258 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     hasClearedForgottenPromptRef.current = false;
     setPromptImages([]);
     setPromptUploaderClearKey((key) => key + 1);
+    setShowConsultChoiceModal(false);
+    setLeadName('');
+    setLeadEmail('');
+    setLeadMobile('');
+    setLeadFormError(null);
+    setShowAssistModal(false);
+    setAssistSubmitting(false);
+    setAssistError(null);
   };
+
+  const buildAiAssistProjectPayload = useCallback(() => {
+    if (!aiStructured) return null;
+    const selectedTrades = activeTrades.length > 0 ? activeTrades : aiStructured.trades;
+    const baseSummary = (aiStructured.summary || aiStructured.scope || '').trim();
+    const assumptions = (aiStructured.assumptions || []).filter((item) => item && item.trim().length > 0);
+    const notes = [
+      baseSummary ? `Summary:\n${baseSummary}` : '',
+      assumptions.length > 0 ? `Assumptions:\n${assumptions.map((item) => `- ${item}`).join('\n')}` : '',
+    ].filter(Boolean).join('\n\n');
+
+    const userFullName = [user?.firstName, user?.surname].filter(Boolean).join(' ').trim();
+    const clientName = userFullName || user?.nickname || user?.email || 'Client';
+
+    return {
+      projectName: (aiStructured.title || aiStructured.summary || 'AI project consultation').slice(0, 180),
+      clientName,
+      region: aiStructured.locationPrimary || userLocation?.primary || 'Hong Kong',
+      notes: (notes || baseSummary || 'AI-assisted project consultation request').slice(0, 5000),
+      tradesRequired: selectedTrades,
+      userPrompt: (initialAiPrompt || aiPromptHistory[0] || '').slice(0, 2000),
+      projectScale: aiStructured.projectScale || undefined,
+      isEmergency: ['high', 'critical'].includes(String(aiStructured.safetyAssessment?.riskLevel || '').toLowerCase()),
+      onlySelectedProfessionalsCanBid: true,
+      ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
+    };
+  }, [aiStructured, activeTrades, user, userLocation, initialAiPrompt, aiPromptHistory]);
+
+  const persistTempAssistDraft = useCallback(() => {
+    if (typeof window === 'undefined' || !aiStructured) return;
+    const payload = buildAiAssistProjectPayload();
+    if (!payload) return;
+    const tempClientId = `temp_client_${Date.now().toString(36)}`;
+    const tempDraft = {
+      tempClientId,
+      createdAt: new Date().toISOString(),
+      source: 'ai-search',
+      payload,
+    };
+    sessionStorage.setItem(AI_ASSIST_DRAFT_STORAGE_KEY, JSON.stringify(tempDraft));
+  }, [aiStructured, buildAiAssistProjectPayload]);
+
+  const handleLetsTalk = useCallback(() => {
+    if (!aiStructured) return;
+    setLeadFormError(null);
+    setAssistError(null);
+    persistTempAssistDraft();
+
+    if (!isLoggedIn || !accessToken) {
+      setShowConsultChoiceModal(true);
+      return;
+    }
+
+    setShowAssistModal(true);
+  }, [aiStructured, persistTempAssistDraft, isLoggedIn, accessToken]);
+
+  const handleGuestContinueQuick = useCallback(() => {
+    const safeName = leadName.trim();
+    const safeEmail = leadEmail.trim();
+    const safeMobile = leadMobile.trim();
+
+    if (!safeName) {
+      setLeadFormError('Please share your name.');
+      return;
+    }
+    if (!safeEmail && !safeMobile) {
+      setLeadFormError('Please provide either email or mobile.');
+      return;
+    }
+
+    setLeadFormError(null);
+    setShowConsultChoiceModal(false);
+    setShowAssistModal(true);
+  }, [leadName, leadEmail, leadMobile]);
+
+  const handleGuestJoin = useCallback(() => {
+    try {
+      sessionStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search);
+    } catch {
+      // Ignore storage failures
+    }
+    setShowConsultChoiceModal(false);
+    openJoinModal();
+  }, [openJoinModal]);
+
+  const submitAssistFromGuest = useCallback(async (assistConfig: AssistRequestModalSubmit) => {
+    if (!aiStructured) {
+      throw new Error('Unable to prepare project details from AI response.');
+    }
+    const safeName = leadName.trim();
+    const safeEmail = leadEmail.trim();
+    const safeMobile = leadMobile.trim();
+    if (!safeName || (!safeEmail && !safeMobile)) {
+      throw new Error('Please provide your name and either email or mobile.');
+    }
+
+    const projectPayload = buildAiAssistProjectPayload();
+    if (!projectPayload) {
+      throw new Error('Unable to prepare project details from AI response.');
+    }
+
+    setAssistError(null);
+    setAssistSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/assist-requests/ai-consultation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lead: {
+            name: safeName,
+            email: safeEmail || undefined,
+            mobile: safeMobile || undefined,
+          },
+          project: {
+            projectName: projectPayload.projectName,
+            region: projectPayload.region,
+            notes: projectPayload.notes,
+            tradesRequired: projectPayload.tradesRequired,
+            userPrompt: projectPayload.userPrompt,
+            aiIntakeId: aiStructured.intakeId || undefined,
+            projectScale: aiStructured.projectScale || undefined,
+            isEmergency: projectPayload.isEmergency,
+          },
+          assist: {
+            notes: assistConfig.notes,
+            contactMethod: assistConfig.contactMethod,
+            requestedCallAt: assistConfig.requestedCallAt,
+            requestedCallTimezone: assistConfig.requestedCallTimezone,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ message: 'Failed to book consultation call' }));
+        throw new Error(data.message || `Server error: ${response.status}`);
+      }
+
+      const data = await response.json().catch(() => ({}));
+      setAiRoundNotice('Consultation request submitted. Sarah will follow up shortly.');
+      return { caseNumber: typeof data?.caseNumber === 'string' ? data.caseNumber : undefined };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to book consultation call';
+      setAssistError(message);
+      throw error;
+    } finally {
+      setAssistSubmitting(false);
+    }
+  }, [aiStructured, leadName, leadEmail, leadMobile, buildAiAssistProjectPayload]);
+
+  const submitAssistFromAi = useCallback(async (assistConfig: AssistRequestModalSubmit) => {
+    if (!accessToken || !user || !aiStructured) {
+      throw new Error('Please log in before booking a consultation call.');
+    }
+    const projectPayload = buildAiAssistProjectPayload();
+    if (!projectPayload) {
+      throw new Error('Unable to prepare project details from AI response.');
+    }
+
+    setAssistError(null);
+    setAssistSubmitting(true);
+    try {
+      const createProjectRes = await fetch(`${API_BASE_URL}/projects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(projectPayload),
+      });
+
+      if (!createProjectRes.ok) {
+        const data = await createProjectRes.json().catch(() => ({ message: 'Failed to create consultation project' }));
+        throw new Error(data.message || `Server error: ${createProjectRes.status}`);
+      }
+
+      const project = await createProjectRes.json();
+      if (!project?.id) {
+        throw new Error('Project creation succeeded but no project ID was returned.');
+      }
+
+      const assistRes = await fetch(`${API_BASE_URL}/assist-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          userId: user.id,
+          raisedBy: 'client',
+          clientName: projectPayload.clientName,
+          projectName: projectPayload.projectName,
+          notes: assistConfig.notes,
+          contactMethod: assistConfig.contactMethod,
+          requestedCallAt: assistConfig.requestedCallAt,
+          requestedCallTimezone: assistConfig.requestedCallTimezone,
+          bookingChannel: 'ai_logged_in',
+          leadLifecycleAtBooking: 'active',
+          consultationDurationMin: 30,
+          contactEmailSnapshot: user.email,
+        }),
+      });
+
+      if (!assistRes.ok) {
+        const data = await assistRes.json().catch(() => ({ message: 'Failed to request assistance' }));
+        throw new Error(data.message || `Server error: ${assistRes.status}`);
+      }
+
+      try {
+        sessionStorage.removeItem(AI_ASSIST_DRAFT_STORAGE_KEY);
+      } catch {
+        // Ignore storage failures
+      }
+
+      setShowAssistModal(false);
+      setAiRoundNotice(
+        assistConfig.contactMethod === 'call'
+          ? 'Consultation project created and 30-minute call request submitted.'
+          : 'Consultation project created and assistance request submitted.',
+      );
+      router.push(`/projects/${project.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to book consultation call';
+      setAssistError(message);
+      throw error;
+    } finally {
+      setAssistSubmitting(false);
+    }
+  }, [accessToken, user, aiStructured, buildAiAssistProjectPayload, router]);
+
+  useEffect(() => {
+    const hasReadyAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
+    if (!isLoggedIn || !accessToken || !hasReadyAiResponse || !aiStructured) return;
+    try {
+      const raw = sessionStorage.getItem(AI_ASSIST_DRAFT_STORAGE_KEY);
+      if (!raw) return;
+      setShowAssistModal(true);
+    } catch {
+      // Ignore storage failures
+    }
+  }, [isLoggedIn, accessToken, aiLoading, aiError, aiOutput, aiStructured, aiConversationalText]);
 
   const createAiSessionId = useCallback(() => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -1528,13 +1790,108 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           )}
           <button
             type="button"
-            onClick={() => router.push('/contact?source=ai-search&intent=free-chat')}
+            onClick={handleLetsTalk}
             className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-3 font-semibold text-amber-800 transition-all duration-200 hover:-translate-y-1 hover:border-amber-400 hover:bg-amber-100"
           >
             Let&rsquo;s talk
           </button>
         </div>
       )}
+
+      <ModalOverlay isOpen={showConsultChoiceModal} onClose={() => setShowConsultChoiceModal(false)} maxWidth="max-w-2xl">
+        <div className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
+            <div className="mx-auto md:mx-0">
+              <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={108} height={140} className="object-contain" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-600">Sarah from Mimo</p>
+              <h3 className="text-2xl font-bold text-slate-900">Let&rsquo;s set up your consultation</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Choose quick booking with basic details, or join as a full client now. Both options keep your project context linked to the consultation.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
+            <p className="text-sm font-semibold text-emerald-900">Book chat now (lightweight)</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <input
+                value={leadName}
+                onChange={(e) => setLeadName(e.target.value)}
+                placeholder="Your name"
+                className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm"
+              />
+              <input
+                value={leadEmail}
+                onChange={(e) => setLeadEmail(e.target.value)}
+                placeholder="Email (optional if mobile provided)"
+                className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm"
+              />
+              <input
+                value={leadMobile}
+                onChange={(e) => setLeadMobile(e.target.value)}
+                placeholder="Mobile (optional if email provided)"
+                className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm md:col-span-2"
+              />
+            </div>
+            <p className="text-xs text-slate-600">
+              We will create a lightweight prospective profile so your project and call booking stay linked.
+            </p>
+            <button
+              type="button"
+              onClick={handleGuestContinueQuick}
+              className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Continue to Booking
+            </button>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Join as client instead</p>
+            <p className="mt-1 text-xs text-slate-600">Create your full Mimo client account now and continue with the same consultation context.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleGuestJoin}
+                className="rounded-lg border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              >
+                Join as Client
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConsultChoiceModal(false);
+                  openLoginModal();
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                I already have an account
+              </button>
+            </div>
+          </div>
+
+          {leadFormError && (
+            <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{leadFormError}</p>
+          )}
+        </div>
+      </ModalOverlay>
+
+      <AssistRequestModal
+        key={showAssistModal ? `${aiStructured?.title || 'ai-assist'}-${aiStructured?.summary || ''}` : 'ai-assist-closed'}
+        isOpen={showAssistModal}
+        onClose={() => {
+          if (assistSubmitting) return;
+          setShowAssistModal(false);
+        }}
+        onSubmit={isLoggedIn === true ? submitAssistFromAi : submitAssistFromGuest}
+        isSubmitting={assistSubmitting}
+        error={assistError}
+        context="pre-project"
+        submitPrefix="Book consultation"
+        initialNotes={(aiStructured?.scope || aiStructured?.summary || initialAiPrompt || '').slice(0, 1200)}
+        projectName={aiStructured?.title || 'AI consultation project'}
+      />
 
       {(() => { const _panel = !isAdminTester ? null : (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 p-3 text-xs text-slate-700 space-y-2">

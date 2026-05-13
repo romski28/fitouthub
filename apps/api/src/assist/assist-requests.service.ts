@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { createHash } from 'crypto';
 
 interface CreateAssistRequestDto {
   projectId: string;
@@ -15,6 +16,40 @@ interface CreateAssistRequestDto {
   contactMethod?: 'chat' | 'call' | 'whatsapp';
   requestedCallAt?: string;
   requestedCallTimezone?: string;
+  bookingChannel?: 'app' | 'ai_guest_quick' | 'ai_logged_in' | 'manual_admin';
+  leadLifecycleAtBooking?: 'active' | 'prospective' | 'suspended' | 'blocked';
+  consultationDurationMin?: number;
+  contactEmailSnapshot?: string;
+  contactMobileSnapshot?: string;
+}
+
+interface CreateAiConsultationBookingDto {
+  lead: {
+    name: string;
+    email?: string;
+    mobile?: string;
+  };
+  project: {
+    projectName?: string;
+    region?: string;
+    notes?: string;
+    tradesRequired?: string[];
+    userPrompt?: string;
+    aiIntakeId?: string;
+    projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3';
+    isEmergency?: boolean;
+  };
+  assist: {
+    notes?: string;
+    contactMethod?: 'chat' | 'call' | 'whatsapp';
+    requestedCallAt?: string;
+    requestedCallTimezone?: string;
+  };
+  context?: {
+    source?: string;
+    ip?: string;
+    userAgent?: string;
+  };
 }
 
 interface MirrorSupportPoolParams {
@@ -163,6 +198,353 @@ export class AssistRequestsService {
     });
   }
 
+  private sha256(input?: string | null) {
+    if (!input || !input.trim()) return null;
+    return createHash('sha256').update(input.trim()).digest('hex');
+  }
+
+  private async logProspectiveLeadEvent(payload: {
+    userId?: string | null;
+    projectId?: string | null;
+    assistRequestId?: string | null;
+    eventType: string;
+    source?: string | null;
+    ipHash?: string | null;
+    uaHash?: string | null;
+    metadata?: Record<string, unknown>;
+  }) {
+    try {
+      await this.prisma.$executeRaw`
+        INSERT INTO "ProspectiveLeadEvent"
+          ("userId", "projectId", "assistRequestId", "eventType", "source", "ipHash", "uaHash", "metadata", "createdAt")
+        VALUES
+          (${payload.userId ?? null}, ${payload.projectId ?? null}, ${payload.assistRequestId ?? null}, ${payload.eventType}, ${payload.source ?? null}, ${payload.ipHash ?? null}, ${payload.uaHash ?? null}, ${JSON.stringify(payload.metadata ?? {})}::jsonb, NOW())
+      `;
+    } catch (error) {
+      console.warn('[AssistRequestsService] Failed to write ProspectiveLeadEvent:', (error as Error)?.message);
+    }
+  }
+
+  private async updateUserProspectiveState(payload: {
+    userId: string;
+    source?: string | null;
+    created?: boolean;
+    ipHash?: string | null;
+    uaHash?: string | null;
+  }) {
+    try {
+      if (payload.created) {
+        await this.prisma.$executeRaw`
+          UPDATE "User"
+          SET
+            "lifecycleStatus" = 'prospective',
+            "prospectiveSource" = COALESCE(${payload.source ?? null}, "prospectiveSource"),
+            "prospectiveCreatedAt" = COALESCE("prospectiveCreatedAt", NOW()),
+            "prospectiveLastActivityAt" = NOW(),
+            "lastSeenIpHash" = COALESCE(${payload.ipHash ?? null}, "lastSeenIpHash"),
+            "lastSeenUaHash" = COALESCE(${payload.uaHash ?? null}, "lastSeenUaHash")
+          WHERE "id" = ${payload.userId}
+        `;
+      } else {
+        await this.prisma.$executeRaw`
+          UPDATE "User"
+          SET
+            "prospectiveLastActivityAt" = NOW(),
+            "lastSeenIpHash" = COALESCE(${payload.ipHash ?? null}, "lastSeenIpHash"),
+            "lastSeenUaHash" = COALESCE(${payload.uaHash ?? null}, "lastSeenUaHash")
+          WHERE "id" = ${payload.userId}
+        `;
+      }
+    } catch (error) {
+      console.warn('[AssistRequestsService] Failed to update user prospective state:', (error as Error)?.message);
+    }
+  }
+
+  private async updateProjectLeadState(payload: {
+    projectId: string;
+    leadType: 'prospective' | 'registered';
+    leadSource?: string | null;
+  }) {
+    try {
+      await this.prisma.$executeRaw`
+        UPDATE "Project"
+        SET
+          "leadType" = ${payload.leadType},
+          "leadSource" = COALESCE(${payload.leadSource ?? null}, "leadSource"),
+          "leadCapturedAt" = COALESCE("leadCapturedAt", NOW())
+        WHERE "id" = ${payload.projectId}
+      `;
+    } catch (error) {
+      console.warn('[AssistRequestsService] Failed to update project lead state:', (error as Error)?.message);
+    }
+  }
+
+  private async updateAssistBookingMetadata(payload: {
+    assistRequestId: string;
+    bookingChannel?: 'app' | 'ai_guest_quick' | 'ai_logged_in' | 'manual_admin';
+    leadLifecycleAtBooking?: 'active' | 'prospective' | 'suspended' | 'blocked';
+    consultationDurationMin?: number;
+    contactEmailSnapshot?: string | null;
+    contactMobileSnapshot?: string | null;
+  }) {
+    try {
+      await this.prisma.$executeRaw`
+        UPDATE "ProjectAssistRequest"
+        SET
+          "bookingChannel" = COALESCE(${payload.bookingChannel ?? null}, "bookingChannel"),
+          "leadLifecycleAtBooking" = COALESCE(${payload.leadLifecycleAtBooking ?? null}, "leadLifecycleAtBooking"),
+          "consultationDurationMin" = COALESCE(${payload.consultationDurationMin ?? null}, "consultationDurationMin"),
+          "contactEmailSnapshot" = COALESCE(${payload.contactEmailSnapshot ?? null}, "contactEmailSnapshot"),
+          "contactMobileSnapshot" = COALESCE(${payload.contactMobileSnapshot ?? null}, "contactMobileSnapshot")
+        WHERE "id" = ${payload.assistRequestId}
+      `;
+    } catch (error) {
+      console.warn('[AssistRequestsService] Failed to update assist booking metadata:', (error as Error)?.message);
+    }
+  }
+
+  async createAiConsultationBooking(dto: CreateAiConsultationBookingDto) {
+    const name = (dto.lead?.name || '').trim();
+    const email = (dto.lead?.email || '').trim().toLowerCase();
+    const mobile = (dto.lead?.mobile || '').trim();
+
+    if (!name) {
+      throw new BadRequestException('name is required');
+    }
+    if (!email && !mobile) {
+      throw new BadRequestException('Either email or mobile is required');
+    }
+
+    const [firstNameRaw, ...surnameParts] = name.split(/\s+/).filter(Boolean);
+    const firstName = firstNameRaw || 'Guest';
+    const surname = surnameParts.join(' ') || 'Client';
+
+    const prospectiveEmail = email || `prospective_${Date.now().toString(36)}@prospect.fitouthub.local`;
+    const ipHash = this.sha256(dto.context?.ip);
+    const uaHash = this.sha256(dto.context?.userAgent);
+    const source = dto.context?.source || 'ai_guest_quick';
+
+    let user = email
+      ? await this.prisma.user.findUnique({ where: { email }, select: { id: true, firstName: true, surname: true, email: true, role: true } })
+      : null;
+
+    if (user && user.role !== 'client') {
+      throw new BadRequestException('This email is already linked to a non-client account. Please sign in first.');
+    }
+
+    if (!user) {
+      const nicknameBase = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 24) || 'guest';
+      const nickname = `prospective-${nicknameBase}-${Math.random().toString(36).slice(2, 7)}`;
+
+      user = await this.prisma.user.create({
+        data: {
+          nickname,
+          firstName,
+          surname,
+          email: prospectiveEmail,
+          mobile: mobile || null,
+          passwordHash: `prospective-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          role: 'client',
+          emailVerified: false,
+        },
+        select: { id: true, firstName: true, surname: true, email: true, role: true },
+      });
+
+      await this.updateUserProspectiveState({
+        userId: user.id,
+        source,
+        created: true,
+        ipHash,
+        uaHash,
+      });
+      await this.logProspectiveLeadEvent({
+        userId: user.id,
+        eventType: 'prospective_user_created',
+        source,
+        ipHash,
+        uaHash,
+        metadata: { via: 'assist.ai-consultation' },
+      });
+    } else {
+      await this.updateUserProspectiveState({
+        userId: user.id,
+        source,
+        created: false,
+        ipHash,
+        uaHash,
+      });
+      await this.logProspectiveLeadEvent({
+        userId: user.id,
+        eventType: 'prospective_user_reused',
+        source,
+        ipHash,
+        uaHash,
+      });
+    }
+
+    const projectName = (dto.project?.projectName || 'AI consultation project').trim().slice(0, 180);
+    const region = (dto.project?.region || 'Hong Kong').trim();
+    const notes = (dto.project?.notes || 'AI consultation request').trim();
+    const tradesRequired = Array.isArray(dto.project?.tradesRequired)
+      ? dto.project.tradesRequired.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
+      : [];
+
+    const project = await this.prisma.project.create({
+      data: {
+        projectName,
+        clientName: `${user.firstName} ${user.surname}`.trim(),
+        region,
+        notes,
+        tradesRequired,
+        userPrompt: dto.project?.userPrompt?.trim() || null,
+        aiIntakeId: dto.project?.aiIntakeId || null,
+        projectScale: dto.project?.projectScale || null,
+        isEmergency: Boolean(dto.project?.isEmergency),
+        onlySelectedProfessionalsCanBid: true,
+        user: { connect: { id: user.id } },
+      },
+      select: { id: true, projectName: true },
+    });
+
+    await this.updateProjectLeadState({
+      projectId: project.id,
+      leadType: 'prospective',
+      leadSource: source,
+    });
+    await this.logProspectiveLeadEvent({
+      userId: user.id,
+      projectId: project.id,
+      eventType: 'project_partial_created',
+      source,
+      ipHash,
+      uaHash,
+      metadata: { tradesCount: tradesRequired.length },
+    });
+
+    const assist = await this.createRequest({
+      projectId: project.id,
+      userId: user.id,
+      raisedBy: 'client',
+      category: 'general',
+      notes: dto.assist?.notes,
+      clientName: `${user.firstName} ${user.surname}`.trim(),
+      projectName: project.projectName,
+      contactMethod: dto.assist?.contactMethod,
+      requestedCallAt: dto.assist?.requestedCallAt,
+      requestedCallTimezone: dto.assist?.requestedCallTimezone,
+      bookingChannel: 'ai_guest_quick',
+      leadLifecycleAtBooking: 'prospective',
+      consultationDurationMin: 30,
+      contactEmailSnapshot: email || null,
+      contactMobileSnapshot: mobile || null,
+    });
+
+    await this.prisma.$executeRaw`
+      UPDATE "User"
+      SET "prospectiveBookingCount" = COALESCE("prospectiveBookingCount", 0) + 1,
+          "prospectiveLastActivityAt" = NOW()
+      WHERE "id" = ${user.id}
+    `;
+
+    await this.logProspectiveLeadEvent({
+      userId: user.id,
+      projectId: project.id,
+      assistRequestId: assist?.id || null,
+      eventType: 'consultation_booking_submitted',
+      source,
+      ipHash,
+      uaHash,
+      metadata: {
+        contactMethod: dto.assist?.contactMethod || 'chat',
+        requestedCallAt: dto.assist?.requestedCallAt || null,
+      },
+    });
+
+    return {
+      projectId: project.id,
+      assistRequestId: assist?.id || null,
+      caseNumber: (assist as any)?.caseNumber || null,
+      prospectiveUserId: user.id,
+      requiresJoin: true,
+    };
+  }
+
+  async getAiConsultationReport(days = 30) {
+    const safeDays = Number.isFinite(days) && days > 0 ? Math.min(Math.floor(days), 365) : 30;
+    const from = new Date(Date.now() - safeDays * 24 * 60 * 60 * 1000);
+
+    const [prospectiveUsersCreated, prospectiveUsersConverted, activeBlocks] = await Promise.all([
+      (this.prisma as any).user.count({
+        where: {
+          lifecycleStatus: 'prospective',
+          prospectiveCreatedAt: { gte: from },
+        },
+      }),
+      (this.prisma as any).user.count({
+        where: {
+          prospectiveConvertedAt: { gte: from },
+        },
+      }),
+      (this.prisma as any).user.count({
+        where: {
+          prospectiveBlockedUntil: { gt: new Date() },
+        },
+      }),
+    ]);
+
+    const bookings = await (this.prisma as any).projectAssistRequest.findMany({
+      where: {
+        createdAt: { gte: from },
+      },
+      select: {
+        bookingChannel: true,
+        contactMethod: true,
+        createdAt: true,
+      },
+    });
+
+    const bookingsByChannel: Record<string, number> = {};
+    const bookingsByMethod: Record<string, number> = {};
+    for (const booking of bookings) {
+      const channel = booking.bookingChannel || 'unknown';
+      bookingsByChannel[channel] = (bookingsByChannel[channel] || 0) + 1;
+
+      const method = booking.contactMethod || 'unknown';
+      bookingsByMethod[method] = (bookingsByMethod[method] || 0) + 1;
+    }
+
+    const events = await this.prisma.$queryRaw<Array<{ eventType: string; count: bigint }>>`
+      SELECT "eventType", COUNT(*)::bigint AS count
+      FROM "ProspectiveLeadEvent"
+      WHERE "createdAt" >= ${from}
+      GROUP BY "eventType"
+      ORDER BY COUNT(*) DESC
+    `;
+
+    return {
+      windowDays: safeDays,
+      from,
+      prospectiveUsersCreated,
+      prospectiveUsersConverted,
+      conversionRate:
+        prospectiveUsersCreated > 0
+          ? Number((prospectiveUsersConverted / prospectiveUsersCreated).toFixed(4))
+          : 0,
+      activeBlocks,
+      totalBookings: bookings.length,
+      bookingsByChannel,
+      bookingsByMethod,
+      eventCounts: events.map((event) => ({
+        eventType: event.eventType,
+        count: Number(event.count),
+      })),
+    };
+  }
+
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -293,6 +675,27 @@ export class AssistRequestsService {
         requestedCallAt,
         requestedCallTimezone: dto.requestedCallTimezone || (requestedCallAt ? 'Asia/Hong_Kong' : null),
         notes: dto.notes?.trim() || null,
+      },
+    });
+
+    await this.updateAssistBookingMetadata({
+      assistRequestId: created.id,
+      bookingChannel: dto.bookingChannel,
+      leadLifecycleAtBooking: dto.leadLifecycleAtBooking,
+      consultationDurationMin: dto.consultationDurationMin,
+      contactEmailSnapshot: dto.contactEmailSnapshot || requestUser?.email || null,
+      contactMobileSnapshot: dto.contactMobileSnapshot || requestUser?.mobile || null,
+    });
+
+    await this.logProspectiveLeadEvent({
+      userId: dto.userId || project.userId || null,
+      projectId: dto.projectId,
+      assistRequestId: created.id,
+      eventType: 'assist_request_created',
+      source: dto.bookingChannel || 'app',
+      metadata: {
+        contactMethod,
+        lifecycleAtBooking: dto.leadLifecycleAtBooking || null,
       },
     });
 

@@ -30,6 +30,28 @@ export class AuthService {
     private notificationService: NotificationService,
   ) {}
 
+  private async markProspectiveConversion(userId: string, source: string) {
+    try {
+      await this.prisma.$executeRaw`
+        UPDATE "User"
+        SET
+          "lifecycleStatus" = 'active',
+          "prospectiveConvertedAt" = COALESCE("prospectiveConvertedAt", NOW()),
+          "prospectiveLastActivityAt" = NOW()
+        WHERE "id" = ${userId}
+      `;
+
+      await this.prisma.$executeRaw`
+        INSERT INTO "ProspectiveLeadEvent"
+          ("userId", "eventType", "source", "metadata", "createdAt")
+        VALUES
+          (${userId}, 'prospective_converted', ${source}, ${JSON.stringify({ source })}::jsonb, NOW())
+      `;
+    } catch (error) {
+      console.warn('[AuthService] Failed to persist prospective conversion:', (error as Error)?.message);
+    }
+  }
+
   async register(dto: RegisterDto) {
     // Validate inputs
     if (!dto.email || !dto.password || !dto.nickname) {
@@ -126,6 +148,8 @@ export class AuthService {
     // Generate tokens
     const tokens = this.generateTokens(user.id, user.role, sessionToken);
 
+    await this.markProspectiveConversion(user.id, 'register');
+
     return {
       success: true,
       accessToken: tokens.accessToken,
@@ -174,6 +198,8 @@ export class AuthService {
       });
 
       const tokens = this.generateTokens(existingUser.id, existingUser.role, sessionToken);
+
+      await this.markProspectiveConversion(existingUser.id, 'google_start_existing');
 
       return {
         success: true,
@@ -317,6 +343,8 @@ export class AuthService {
 
     const tokens = this.generateTokens(user.id, user.role, sessionToken);
 
+    await this.markProspectiveConversion(user.id, 'google_complete');
+
     return {
       success: true,
       accessToken: tokens.accessToken,
@@ -453,6 +481,8 @@ export class AuthService {
 
     // Generate tokens
     const tokens = this.generateTokens(user.id, user.role, sessionToken);
+
+    await this.markProspectiveConversion(user.id, 'login');
 
     return {
       success: true,
