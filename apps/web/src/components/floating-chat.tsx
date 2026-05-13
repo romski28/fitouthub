@@ -781,12 +781,12 @@ export default function FloatingChat() {
     <>
       {/* Chat Modal */}
       {isOpen && (
-        <div className="fixed top-1/2 right-6 -translate-y-1/2 z-40 w-96 h-[500px] bg-amber-50 rounded-lg shadow-2xl border border-slate-200 flex flex-col">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[calc(100vw-1.5rem)] max-w-[36rem] min-h-[500px] h-[50vh] max-h-[calc(100vh-1.5rem)] bg-amber-50 rounded-lg shadow-2xl border border-slate-200 flex flex-col md:left-auto md:right-6 md:translate-x-0">
           {/* Header */}
           <div className="flex items-center justify-between bg-[#ff6b5b] text-white px-4 py-3 rounded-t-lg">
             <div>
-              <h3 className="font-semibold">Chat with Fitout Hub</h3>
-              <p className="text-xs text-white/80">{isLoggedIn ? contextLabel : 'Anonymous support chat'}</p>
+              <h3 className="text-lg font-semibold leading-tight">Chat with Fitout Hub</h3>
+              <p className="text-sm text-white/85">{isLoggedIn ? contextLabel : 'Anonymous support chat'}</p>
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -802,7 +802,7 @@ export default function FloatingChat() {
           {/* Messages */}
           <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
             {(threadStatus === 'closure_pending' || threadStatus === 'closed') && (
-              <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+              <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-base leading-relaxed text-sky-900">
                 {threadStatus === 'closure_pending'
                   ? `Fitout Hub marked this conversation as pending closure${threadClosureDueAt ? ` until ${new Date(threadClosureDueAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here if you still need help.`
                   : `This conversation was closed${threadResolvedAt ? ` on ${new Date(threadResolvedAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here to reopen it.`}
@@ -814,19 +814,19 @@ export default function FloatingChat() {
                   type="button"
                   onClick={() => void loadOlderMessages()}
                   disabled={loadingOlderMessages}
-                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
                   {loadingOlderMessages ? 'Loading…' : 'Load older messages'}
                 </button>
               </div>
             )}
             {loading ? (
-              <div className="text-center text-slate-500 text-sm mt-8">Loading chat...</div>
+              <div className="text-center text-slate-500 text-base mt-8">Loading chat...</div>
             ) : messages.length === 0 ? (
-              <div className="text-center text-slate-500 text-sm mt-8">
+              <div className="text-center text-slate-500 text-base mt-8 leading-relaxed">
                 <p>Welcome to Fitout Hub support!</p>
                 <p className="mt-2">Ask questions, get help, or report issues.</p>
-                <p className="mt-1 text-xs text-slate-400">Start a conversation below</p>
+                <p className="mt-1 text-sm text-slate-400">Start a conversation below</p>
               </div>
             ) : (
               messages.map((msg, idx) => {
@@ -839,7 +839,7 @@ export default function FloatingChat() {
                     className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`${event ? 'max-w-[86%]' : 'max-w-[75%] rounded-lg px-4 py-2 text-sm'} ${
+                      className={`${event ? 'max-w-[88%]' : 'max-w-[78%] rounded-lg px-4 py-2 text-[18px] leading-7'} ${
                         event
                           ? ''
                           : isUser
@@ -848,7 +848,7 @@ export default function FloatingChat() {
                       }`}
                     >
                       {!isUser && (
-                        <div className="text-xs font-semibold mb-1 opacity-75">
+                        <div className="text-sm font-semibold mb-1 opacity-75">
                           {isFoh ? 'Fitout Hub' : 'Support'}
                         </div>
                       )}
@@ -874,7 +874,7 @@ export default function FloatingChat() {
                         </div>
                       )}
                       
-                      <div className="text-xs opacity-60 mt-1">
+                      <div className="text-sm opacity-70 mt-1">
                         {new Date(msg.createdAt).toLocaleTimeString('en-GB', {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -906,7 +906,7 @@ export default function FloatingChat() {
                   type="button"
                   onClick={() => doSend('📱 Please contact me via WhatsApp.', [])}
                   disabled={sending || loading || !threadId}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   📱 WhatsApp me
                 </button>
@@ -914,7 +914,7 @@ export default function FloatingChat() {
                   type="button"
                   onClick={() => doSend('📞 Please give me a call to discuss this.', [])}
                   disabled={sending || loading || !threadId}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   📞 Call me
                 </button>
@@ -928,12 +928,12 @@ export default function FloatingChat() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
                 disabled={sending || loading || !threadId}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-100"
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-100"
               />
               <button
                 type="submit"
                 disabled={(!message.trim() && pendingFiles.length === 0) || sending || loading || !threadId}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-base font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
               >
                 {sending ? '...' : 'Send'}
               </button>

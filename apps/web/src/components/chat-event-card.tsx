@@ -35,17 +35,17 @@ export default function ChatEventCard({ event, isCurrentUser = false }: ChatEven
   return (
     <div className={`rounded-xl border px-3 py-3 ${toneClasses}`}>
       <div className="flex items-start gap-3">
-        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base ${iconTone}`}>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg ${iconTone}`}>
           {event.icon}
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-sm font-semibold ${titleTone}`}>{event.title}</p>
-          {event.summary ? <p className={`mt-0.5 text-xs whitespace-pre-wrap ${isCurrentUser ? 'text-white' : 'text-slate-200/90'}`}>{event.summary}</p> : null}
+          <p className={`text-base font-semibold leading-relaxed ${titleTone}`}>{event.title}</p>
+          {event.summary ? <p className={`mt-1 text-sm leading-relaxed whitespace-pre-wrap ${isCurrentUser ? 'text-white' : 'text-slate-200/90'}`}>{event.summary}</p> : null}
 
           {event.fields && event.fields.length > 0 ? (
-            <dl className="mt-2 space-y-1">
+            <dl className="mt-2 space-y-1.5">
               {event.fields.map((field) => (
-                <div key={`${field.label}-${field.value}`} className="flex items-baseline gap-2 text-xs">
+                <div key={`${field.label}-${field.value}`} className="flex items-baseline gap-2 text-sm">
                   <dt className={`shrink-0 ${isCurrentUser ? 'text-white' : 'text-slate-300'}`}>{field.label}:</dt>
                   <dd className="font-medium text-white break-words">{field.value}</dd>
                 </div>
