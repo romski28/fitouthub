@@ -148,6 +148,7 @@ export default function FloatingChat() {
   const [pendingAutoMessage, setPendingAutoMessage] = useState<string | null>(null);
   const [contextOverride, setContextOverride] = useState<ChatContext | null>(null);
   const [projectNameHint, setProjectNameHint] = useState<string | null>(null);
+  const autoSendInFlightRef = useRef(false);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const suppressNextAutoScrollRef = useRef(false);
 
@@ -711,20 +712,27 @@ export default function FloatingChat() {
 
   useEffect(() => {
     if (!isOpen || !pendingAutoMessage || !threadId || loading || sending) return;
+    if (autoSendInFlightRef.current) return;
 
     let cancelled = false;
     const sendPendingInitialMessage = async () => {
-      const sent = await doSend(pendingAutoMessage, []);
-      if (cancelled) return;
+      const messageToSend = pendingAutoMessage;
+      autoSendInFlightRef.current = true;
+      // Clear first to avoid re-triggering during doSend state transitions.
       setPendingAutoMessage(null);
+
+      const sent = await doSend(messageToSend, []);
+      if (cancelled) return;
       if (sent) {
         setMessage('');
       }
+      autoSendInFlightRef.current = false;
     };
 
     void sendPendingInitialMessage();
     return () => {
       cancelled = true;
+      autoSendInFlightRef.current = false;
     };
   }, [isOpen, pendingAutoMessage, threadId, loading, sending]);
 
