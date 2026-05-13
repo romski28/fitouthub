@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-13-ba39804",
+    "date": "2026-05-13T16:19:11+08:00",
+    "title": "feat(chat): WhatsApp-like colour scheme - coral header, emerald user bubbles, cream window",
+    "summary": "feat(chat): WhatsApp-like colour scheme - coral header, emerald user bubbles, cream window",
+    "areas": [
+      "web"
+    ],
+    "commit": "ba39804",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-13-42ae253",
     "date": "2026-05-13T16:01:13+08:00",
     "title": "fix(chat): stop repeated auto-send toast loop in floating chat",

@@ -781,12 +781,12 @@ export default function FloatingChat() {
     <>
       {/* Chat Modal */}
       {isOpen && (
-        <div className="fixed top-1/2 right-6 -translate-y-1/2 z-40 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-slate-200 flex flex-col">
+        <div className="fixed top-1/2 right-6 -translate-y-1/2 z-40 w-96 h-[500px] bg-amber-50 rounded-lg shadow-2xl border border-slate-200 flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between bg-blue-600 text-white px-4 py-3 rounded-t-lg">
+          <div className="flex items-center justify-between bg-[#ff6b5b] text-white px-4 py-3 rounded-t-lg">
             <div>
               <h3 className="font-semibold">Chat with Fitout Hub</h3>
-              <p className="text-xs text-blue-100">{isLoggedIn ? contextLabel : 'Anonymous support chat'}</p>
+              <p className="text-xs text-white/80">{isLoggedIn ? contextLabel : 'Anonymous support chat'}</p>
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -843,8 +843,8 @@ export default function FloatingChat() {
                         event
                           ? ''
                           : isUser
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-100 text-slate-900'
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-white text-slate-800 shadow-sm'
                       }`}
                     >
                       {!isUser && (
@@ -928,12 +928,12 @@ export default function FloatingChat() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
                 disabled={sending || loading || !threadId}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100"
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-100"
               />
               <button
                 type="submit"
                 disabled={(!message.trim() && pendingFiles.length === 0) || sending || loading || !threadId}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
               >
                 {sending ? '...' : 'Send'}
               </button>
