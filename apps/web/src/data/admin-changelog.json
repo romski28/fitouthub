@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-13-9016544",
+    "date": "2026-05-13T13:31:19+08:00",
+    "title": "fix(assist): remove unreachable user reuse branch",
+    "summary": "fix(assist): remove unreachable user reuse branch",
+    "areas": [
+      "api"
+    ],
+    "commit": "9016544",
+    "files": [
+      "apps/api/src/assist/assist-requests.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-13-4411a04",
     "date": "2026-05-13T13:05:07+08:00",
     "title": "feat(guest-booking): precheck existing contacts and normalize HK mobile",

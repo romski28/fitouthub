@@ -408,74 +408,42 @@ export class AssistRequestsService {
       throw new BadRequestException(precheck.message);
     }
 
-    let user: {
-      id: string;
-      firstName: string;
-      surname: string;
-      email: string;
-      emailVerified: boolean;
-      role: string;
-    } | null = null;
+    const nicknameBase = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 24) || 'guest';
+    const nickname = `prospective-${nicknameBase}-${Math.random().toString(36).slice(2, 7)}`;
 
-    if (!user) {
-      const nicknameBase = name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .slice(0, 24) || 'guest';
-      const nickname = `prospective-${nicknameBase}-${Math.random().toString(36).slice(2, 7)}`;
+    const bookingUser = await this.prisma.user.create({
+      data: {
+        nickname,
+        firstName,
+        surname,
+        email: prospectiveEmail,
+        mobile: mobile || null,
+        passwordHash: `prospective-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+        role: 'client',
+        emailVerified: false,
+      },
+      select: { id: true, firstName: true, surname: true, email: true, emailVerified: true, role: true },
+    });
 
-      user = await this.prisma.user.create({
-        data: {
-          nickname,
-          firstName,
-          surname,
-          email: prospectiveEmail,
-          mobile: mobile || null,
-          passwordHash: `prospective-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-          role: 'client',
-          emailVerified: false,
-        },
-        select: { id: true, firstName: true, surname: true, email: true, emailVerified: true, role: true },
-      });
-
-      await this.updateUserProspectiveState({
-        userId: user.id,
-        source,
-        created: true,
-        ipHash,
-        uaHash,
-      });
-      await this.logProspectiveLeadEvent({
-        userId: user.id,
-        eventType: 'prospective_user_created',
-        source,
-        ipHash,
-        uaHash,
-        metadata: { via: 'assist.ai-consultation' },
-      });
-    } else {
-      await this.updateUserProspectiveState({
-        userId: user.id,
-        source,
-        created: false,
-        ipHash,
-        uaHash,
-      });
-      await this.logProspectiveLeadEvent({
-        userId: user.id,
-        eventType: 'prospective_user_reused',
-        source,
-        ipHash,
-        uaHash,
-      });
-    }
-
-    if (!user) {
-      throw new BadRequestException('Unable to prepare consultation booking profile. Please try again.');
-    }
-
-    const bookingUser = user;
+    await this.updateUserProspectiveState({
+      userId: bookingUser.id,
+      source,
+      created: true,
+      ipHash,
+      uaHash,
+    });
+    await this.logProspectiveLeadEvent({
+      userId: bookingUser.id,
+      eventType: 'prospective_user_created',
+      source,
+      ipHash,
+      uaHash,
+      metadata: { via: 'assist.ai-consultation' },
+    });
 
     const projectName = (dto.project?.projectName || 'AI consultation project').trim().slice(0, 180);
     const region = (dto.project?.region || 'Hong Kong').trim();
