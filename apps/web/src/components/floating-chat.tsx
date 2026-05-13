@@ -10,7 +10,6 @@ import { API_BASE_URL } from '@/config/api';
 import { parseChatEvent } from '@/lib/chat-event-parser';
 import ChatEventCard from './chat-event-card';
 import ChatImageAttachment from './chat-image-attachment';
-import ChatImageUploader from './chat-image-uploader';
 
 interface ChatMessage {
   id: string;
@@ -134,7 +133,8 @@ export default function FloatingChat() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [uploaderClearKey, setUploaderClearKey] = useState(0);
+  const [pendingPreviewUrls, setPendingPreviewUrls] = useState<string[]>([]);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -723,13 +723,58 @@ export default function FloatingChat() {
     };
   }, [isOpen, pendingAutoMessage, threadId, loading, sending]);
 
+  useEffect(() => {
+    return () => {
+      pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [pendingPreviewUrls]);
+
+  const handleInlineImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (files.length > 3) {
+      setImageUploadError('Maximum 3 images allowed');
+      e.target.value = '';
+      return;
+    }
+
+    const oversized = files.find((file) => file.size > 10 * 1024 * 1024);
+    if (oversized) {
+      setImageUploadError(`File too large: ${oversized.name} (max 10MB)`);
+      e.target.value = '';
+      return;
+    }
+
+    const invalid = files.find((file) => !file.type.startsWith('image/'));
+    if (invalid) {
+      setImageUploadError(`Invalid file type: ${invalid.name} (images only)`);
+      e.target.value = '';
+      return;
+    }
+
+    setImageUploadError(null);
+    pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setPendingFiles(files);
+    setPendingPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+    e.target.value = '';
+  };
+
+  const removePendingImage = (index: number) => {
+    const nextFiles = pendingFiles.filter((_, i) => i !== index);
+    const nextUrls = pendingPreviewUrls.filter((_, i) => i !== index);
+    setPendingFiles(nextFiles);
+    setPendingPreviewUrls(nextUrls);
+    setImageUploadError(null);
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && pendingFiles.length === 0) || !threadId || sending) return;
 
     // Upload any pending files before sending
     let attachmentsToSend: { url: string; filename: string }[] = [];
-    if (pendingFiles.length > 0 && accessToken) {
+    if (pendingFiles.length > 0) {
       try {
         const formData = new FormData();
         pendingFiles.forEach((file) => formData.append('files', file));
@@ -737,27 +782,40 @@ export default function FloatingChat() {
 
         const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
           body: formData,
         });
 
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
-          attachmentsToSend = uploadData.urls.map((url: string, i: number) => ({
+          const uploadedUrls = Array.isArray(uploadData?.urls)
+            ? uploadData.urls.filter((url: unknown): url is string => typeof url === 'string' && url.trim().length > 0)
+            : [];
+          attachmentsToSend = uploadedUrls.map((url: string, i: number) => ({
             url,
-            filename: pendingFiles[i].name,
+            filename: pendingFiles[i]?.name || `image-${i + 1}`,
           }));
+        } else {
+          const payload = await uploadRes.json().catch(() => ({}));
+          throw new Error(payload?.message || `Image upload failed (${uploadRes.status})`);
         }
       } catch (e) {
         console.warn('[FloatingChat] Image upload failed:', e);
+        toast.error(e instanceof Error ? e.message : 'Image upload failed');
+      }
+
+      if (attachmentsToSend.length === 0) {
+        return;
       }
     }
 
     const sent = await doSend(message.trim(), attachmentsToSend);
     if (sent) {
       setMessage('');
+      pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
       setPendingFiles([]);
-      setUploaderClearKey((k) => k + 1);
+      setPendingPreviewUrls([]);
+      setImageUploadError(null);
     }
   };
 
@@ -899,14 +957,24 @@ export default function FloatingChat() {
               </div>
             )}
 
-            <div className="flex gap-2">
-              <ChatImageUploader
-                onFilesSelected={setPendingFiles}
-                maxImages={3}
-                disabled={sending || loading || !threadId}
-                clearKey={uploaderClearKey}
-                compact
-              />
+            <div className="flex gap-2 items-stretch">
+              <label
+                className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white transition shadow-sm ${sending || loading || !threadId ? 'bg-slate-400 cursor-not-allowed opacity-50' : 'bg-emerald-600 hover:bg-emerald-700 cursor-pointer'}`}
+                title="Attach images"
+                aria-label="Attach images"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleInlineImageSelect}
+                  disabled={sending || loading || !threadId}
+                  className="hidden"
+                />
+              </label>
               <input
                 type="text"
                 value={message}
@@ -923,6 +991,35 @@ export default function FloatingChat() {
                 {sending ? '...' : 'Send'}
               </button>
             </div>
+
+            {pendingFiles.length > 0 && (
+              <div className="mt-2 flex items-start gap-2 overflow-x-auto pb-1">
+                {pendingFiles.map((file, i) => (
+                  <div key={`${file.name}-${i}`} className="relative shrink-0">
+                    <img
+                      src={pendingPreviewUrls[i]}
+                      alt={file.name}
+                      className="h-16 w-16 rounded-md border border-slate-300 object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePendingImage(i)}
+                      disabled={sending}
+                      className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-xs text-white hover:bg-rose-600 disabled:opacity-50"
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {imageUploadError && (
+              <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {imageUploadError}
+              </div>
+            )}
           </form>
         </div>
       )}
