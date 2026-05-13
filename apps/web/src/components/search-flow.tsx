@@ -16,6 +16,7 @@ import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import { AI_STATE_CLEAR_EVENT, clearAiClientState } from '@/lib/client-session';
+import { buildStructuredChatEventMessage } from '@/lib/chat-event-parser';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
 
@@ -1119,20 +1120,21 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     const region = projectPayload?.region || aiStructured?.locationPrimary || userLocation?.primary || 'Hong Kong';
     const trades = (projectPayload?.tradesRequired || aiStructured?.trades || []).slice(0, 5);
     const summary = (aiStructured?.summary || aiStructured?.scope || '').trim();
-    const chatCardMessage = [
-      '🗂 Project Details Card',
-      `Project: ${projectTitle}`,
-      `Location: ${region}`,
-      trades.length > 0 ? `Trades: ${trades.join(', ')}` : null,
-      aiStructured?.projectScale ? `Scale: ${aiStructured.projectScale}` : null,
-      projectPayload?.isEmergency ? 'Emergency: Yes' : 'Emergency: No',
-      summary ? `Summary: ${summary}` : null,
-      payload.notes ? `Client note: ${payload.notes}` : null,
-      '',
-      'Please help me start this discussion now.',
-    ]
-      .filter((line): line is string => Boolean(line && line.trim()))
-      .join('\n');
+    const chatCardMessage = buildStructuredChatEventMessage({
+      type: 'generic',
+      icon: '🗂',
+      title: 'Project details card',
+      summary: 'Client requested to start chat from AI consultation flow.',
+      fields: [
+        { label: 'Project', value: projectTitle },
+        { label: 'Location', value: region },
+        ...(trades.length > 0 ? [{ label: 'Trades', value: trades.join(', ') }] : []),
+        ...(aiStructured?.projectScale ? [{ label: 'Scale', value: aiStructured.projectScale }] : []),
+        { label: 'Emergency', value: projectPayload?.isEmergency ? 'Yes' : 'No' },
+        ...(summary ? [{ label: 'Summary', value: summary.slice(0, 220) }] : []),
+        ...(payload.notes ? [{ label: 'Client note', value: payload.notes.slice(0, 220) }] : []),
+      ],
+    });
 
     window.dispatchEvent(
       new CustomEvent('foh-open-chat', {

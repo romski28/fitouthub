@@ -24,6 +24,26 @@ interface StructuredChatEvent {
 
 const STRUCTURED_PREFIX = '[[event]]';
 
+export function buildStructuredChatEventMessage(event: {
+  type?: string;
+  icon?: string;
+  title: string;
+  summary?: string;
+  fields?: ChatEventField[];
+}) {
+  const payload: StructuredChatEvent = {
+    type: (event.type || 'generic').trim(),
+    icon: event.icon,
+    title: event.title,
+    summary: event.summary,
+    fields: Array.isArray(event.fields)
+      ? event.fields.filter((field) => field.label?.trim() && field.value?.trim())
+      : undefined,
+  };
+
+  return `${STRUCTURED_PREFIX}\n${JSON.stringify(payload)}`;
+}
+
 function parseStructuredEvent(content: string): ChatEvent | null {
   if (!content.startsWith(STRUCTURED_PREFIX)) return null;
 

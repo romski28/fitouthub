@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-13-7ddea68",
+    "date": "2026-05-13T15:55:06+08:00",
+    "title": "feat(chat-cards): unify floating chat with shared structured event cards",
+    "summary": "feat(chat-cards): unify floating chat with shared structured event cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "7ddea68",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/chat-event-parser.ts"
+    ]
+  },
+  {
     "id": "2026-05-13-7e8f088",
     "date": "2026-05-13T15:49:50+08:00",
     "title": "feat(consultation): refactor contact options and wire chat-now project card",

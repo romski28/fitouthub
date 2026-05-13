@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import { parseChatEvent } from '@/lib/chat-event-parser';
+import ChatEventCard from './chat-event-card';
 import ChatImageAttachment from './chat-image-attachment';
 import ChatImageUploader from './chat-image-uploader';
 
@@ -822,16 +824,19 @@ export default function FloatingChat() {
               messages.map((msg, idx) => {
                 const isFoh = msg.senderType === 'foh';
                 const isUser = msg.senderType === userRole || msg.senderType === 'user';
+                const event = parseChatEvent(msg.content || '');
                 return (
                   <div
                     key={msg.id || idx}
                     className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[75%] rounded-lg px-4 py-2 text-sm ${
-                        isUser
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 text-slate-900'
+                      className={`${event ? 'max-w-[86%]' : 'max-w-[75%] rounded-lg px-4 py-2 text-sm'} ${
+                        event
+                          ? ''
+                          : isUser
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-900'
                       }`}
                     >
                       {!isUser && (
@@ -842,7 +847,9 @@ export default function FloatingChat() {
                       
                       {/* Message content */}
                       {msg.content && (
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        event
+                          ? <ChatEventCard event={event} isCurrentUser={isUser} />
+                          : <div className="whitespace-pre-wrap">{msg.content}</div>
                       )}
                       
                       {/* Image attachments */}
