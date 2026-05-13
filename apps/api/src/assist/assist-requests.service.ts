@@ -366,7 +366,7 @@ export class AssistRequestsService {
           role: 'client',
           emailVerified: false,
         },
-        select: { id: true, firstName: true, surname: true, email: true, role: true },
+        select: { id: true, firstName: true, surname: true, email: true, emailVerified: true, role: true },
       });
 
       await this.updateUserProspectiveState({
@@ -401,6 +401,12 @@ export class AssistRequestsService {
       });
     }
 
+    if (!user) {
+      throw new BadRequestException('Unable to prepare consultation booking profile. Please try again.');
+    }
+
+    const bookingUser = user;
+
     const projectName = (dto.project?.projectName || 'AI consultation project').trim().slice(0, 180);
     const region = (dto.project?.region || 'Hong Kong').trim();
     const notes = (dto.project?.notes || 'AI consultation request').trim();
@@ -411,7 +417,7 @@ export class AssistRequestsService {
     const project = await this.prisma.project.create({
       data: {
         projectName,
-        clientName: `${user.firstName} ${user.surname}`.trim(),
+        clientName: `${bookingUser.firstName} ${bookingUser.surname}`.trim(),
         region,
         notes,
         tradesRequired,
@@ -420,7 +426,7 @@ export class AssistRequestsService {
         projectScale: dto.project?.projectScale || null,
         isEmergency: Boolean(dto.project?.isEmergency),
         onlySelectedProfessionalsCanBid: true,
-        user: { connect: { id: user.id } },
+        user: { connect: { id: bookingUser.id } },
       },
       select: { id: true, projectName: true },
     });
@@ -431,7 +437,7 @@ export class AssistRequestsService {
       leadSource: source,
     });
     await this.logProspectiveLeadEvent({
-      userId: user.id,
+      userId: bookingUser.id,
       projectId: project.id,
       eventType: 'project_partial_created',
       source,
@@ -442,11 +448,11 @@ export class AssistRequestsService {
 
     const assist = await this.createRequest({
       projectId: project.id,
-      userId: user.id,
+      userId: bookingUser.id,
       raisedBy: 'client',
       category: 'general',
       notes: dto.assist?.notes,
-      clientName: `${user.firstName} ${user.surname}`.trim(),
+      clientName: `${bookingUser.firstName} ${bookingUser.surname}`.trim(),
       projectName: project.projectName,
       contactMethod: dto.assist?.contactMethod,
       requestedCallAt: dto.assist?.requestedCallAt,
@@ -462,11 +468,11 @@ export class AssistRequestsService {
       UPDATE "User"
       SET "prospectiveBookingCount" = COALESCE("prospectiveBookingCount", 0) + 1,
           "prospectiveLastActivityAt" = NOW()
-      WHERE "id" = ${user.id}
+      WHERE "id" = ${bookingUser.id}
     `;
 
     await this.logProspectiveLeadEvent({
-      userId: user.id,
+      userId: bookingUser.id,
       projectId: project.id,
       assistRequestId: assist?.id || null,
       eventType: 'consultation_booking_submitted',
@@ -483,7 +489,7 @@ export class AssistRequestsService {
       projectId: project.id,
       assistRequestId: assist?.id || null,
       caseNumber: (assist as any)?.caseNumber || null,
-      prospectiveUserId: user.id,
+      prospectiveUserId: bookingUser.id,
       requiresJoin: true,
     };
   }
