@@ -850,6 +850,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAssistError(null);
   };
 
+  const clearPendingAssistDraft = useCallback(() => {
+    try {
+      sessionStorage.removeItem(AI_ASSIST_DRAFT_STORAGE_KEY);
+    } catch {
+      // Ignore storage failures
+    }
+  }, []);
+
   const buildAiAssistProjectPayload = useCallback(() => {
     if (!aiStructured) return null;
     const selectedTrades = activeTrades.length > 0 ? activeTrades : aiStructured.trades;
@@ -1197,6 +1205,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     try {
       // If resetAiSession is true (e.g., on home page), clear all AI state and start fresh
       if (resetAiSession) {
+        clearPendingAssistDraft();
         clearAiClientState();
         clearAiResponseState();
         setIntent(null);
@@ -1208,7 +1217,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     } catch {
       setAiSessionId(null);
     }
-  }, [assignNewAiSessionId, resetAiSession]);
+  }, [assignNewAiSessionId, clearPendingAssistDraft, resetAiSession]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1560,6 +1569,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       }
 
       // Show thinking panel immediately on submit
+      clearPendingAssistDraft();
+      setShowConsultChoiceModal(false);
+      setShowAssistModal(false);
       setAiLoading(true);
       setAiError(null);
       setAiOutput(null);
@@ -1624,7 +1636,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   };
 
   const handleClearSearch = () => {
+    clearPendingAssistDraft();
     clearAiClientState();
+    clearAiResponseState();
     setIntent(null);
     setMatchCount(null);
     setShowBriefModal(false);
