@@ -156,6 +156,12 @@ export default function FloatingChat() {
   const isLoggedIn = clientLoggedIn || proLoggedIn;
   const accessToken = clientToken || proToken;
   const userRole = clientLoggedIn ? 'client' : proLoggedIn ? 'professional' : 'anonymous';
+  const generalChatContext = useMemo<ChatContext>(() => ({
+    pageType: 'general',
+    pathname: '/',
+    projectId: null,
+    projectName: null,
+  }), []);
   const pathContext = useMemo(() => {
     const base = getChatContextFromPath(pathname);
     if (base.pageType === 'project_view') {
@@ -167,21 +173,9 @@ export default function FloatingChat() {
     return base;
   }, [pathname, projectNameHint]);
   const chatContext = useMemo(() => {
-    const activeContext = contextOverride ?? pathContext;
-    if (
-      activeContext.pageType === 'project_view' &&
-      !activeContext.projectName &&
-      pathContext.pageType === 'project_view' &&
-      activeContext.projectId === pathContext.projectId &&
-      pathContext.projectName
-    ) {
-      return {
-        ...activeContext,
-        projectName: pathContext.projectName,
-      };
-    }
-    return activeContext;
-  }, [contextOverride, pathContext]);
+    // Keep floating support chat unscoped for now.
+    return generalChatContext;
+  }, [generalChatContext]);
   const contextLabel = getContextLabel(chatContext);
 
   const getStoredThreadKey = (context: ChatContext) => `foh_thread_${userRole}_${getContextKey(context)}`;
@@ -256,25 +250,18 @@ export default function FloatingChat() {
       }>;
       const detail = customEvent.detail || {};
 
-      const requestedProjectId = detail.projectId || resolveProjectIdFromPath(pathname);
-      const nextContext: ChatContext = detail.context === 'project_view' && requestedProjectId
-        ? {
-            pageType: 'project_view',
-            pathname: pathname || '/',
-            projectId: requestedProjectId,
-            projectName: detail.projectName?.trim() || null,
-          }
-        : detail.context === 'project_creation'
-          ? { pageType: 'project_creation', pathname: '/create-project', projectId: null, projectName: detail.projectName?.trim() || null }
-          : getChatContextFromPath(pathname);
-
-      setContextOverride(nextContext);
+      setContextOverride(null);
       if (detail.initialMessage?.trim()) {
         const trimmedInitial = detail.initialMessage.trim();
-        setMessage(trimmedInitial);
         if (detail.autoSendInitialMessage) {
           setPendingAutoMessage(trimmedInitial);
+          setMessage('');
+        } else {
+          // For regular opens, keep composer empty for the user to start typing.
+          setMessage('');
         }
+      } else {
+        setMessage('');
       }
       setIsOpen(true);
     };
@@ -889,15 +876,6 @@ export default function FloatingChat() {
 
           {/* Input */}
           <form onSubmit={handleSend} className="border-t border-slate-200 p-4">
-            {/* Image uploader — files are uploaded on send */}
-            <div className="mb-3">
-              <ChatImageUploader
-                onFilesSelected={setPendingFiles}
-                maxImages={3}
-                disabled={sending || loading || !threadId}
-                clearKey={uploaderClearKey}
-              />
-            </div>
             
             {/* Quick-action shortcuts */}
             {isLoggedIn && (
@@ -922,6 +900,13 @@ export default function FloatingChat() {
             )}
 
             <div className="flex gap-2">
+              <ChatImageUploader
+                onFilesSelected={setPendingFiles}
+                maxImages={3}
+                disabled={sending || loading || !threadId}
+                clearKey={uploaderClearKey}
+                compact
+              />
               <input
                 type="text"
                 value={message}

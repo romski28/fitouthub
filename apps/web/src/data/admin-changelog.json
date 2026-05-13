@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-13-c7e5e68",
+    "date": "2026-05-13T20:38:18+08:00",
+    "title": "feat(chat): clear composer on open, inline image icon button, and use unscoped thread",
+    "summary": "feat(chat): clear composer on open, inline image icon button, and use unscoped thread",
+    "areas": [
+      "web"
+    ],
+    "commit": "c7e5e68",
+    "files": [
+      "apps/web/src/components/chat-image-uploader.tsx",
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-13-dd0dbc0",
     "date": "2026-05-13T16:47:43+08:00",
     "title": "feat(chat): enlarge modal footprint and typography for better readability",
