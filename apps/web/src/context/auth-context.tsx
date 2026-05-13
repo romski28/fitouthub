@@ -20,6 +20,7 @@ interface User {
   firstName: string;
   surname: string;
   role: string;
+  mobile?: string | null;
   preferredLanguage?: string;
   locationPrimary?: string | null;
   locationSecondary?: string | null;
