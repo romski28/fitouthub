@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-13-7e8f088",
+    "date": "2026-05-13T15:49:50+08:00",
+    "title": "feat(consultation): refactor contact options and wire chat-now project card",
+    "summary": "feat(consultation): refactor contact options and wire chat-now project card",
+    "areas": [
+      "web"
+    ],
+    "commit": "7e8f088",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx",
+      "apps/web/src/components/floating-chat.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-13-d426fab",
     "date": "2026-05-13T15:43:02+08:00",
     "title": "feat(assist): send guest consultation acknowledgment email and WhatsApp",

@@ -143,6 +143,7 @@ export default function FloatingChat() {
   const [threadResolutionReason, setThreadResolutionReason] = useState<string | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
+  const [pendingAutoMessage, setPendingAutoMessage] = useState<string | null>(null);
   const [contextOverride, setContextOverride] = useState<ChatContext | null>(null);
   const [projectNameHint, setProjectNameHint] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -212,6 +213,7 @@ export default function FloatingChat() {
       setThreadResolutionReason(null);
       setHasOlderMessages(false);
       setContextOverride(null);
+      setPendingAutoMessage(null);
       console.log('[FloatingChat] User logged out, clearing chat state');
     }
   }, [isLoggedIn]);
@@ -242,7 +244,13 @@ export default function FloatingChat() {
 
   useEffect(() => {
     const handler = (event: Event) => {
-      const customEvent = event as CustomEvent<{ context?: 'project_creation' | 'project_view' | 'general'; projectId?: string; projectName?: string; initialMessage?: string; }>;
+      const customEvent = event as CustomEvent<{
+        context?: 'project_creation' | 'project_view' | 'general';
+        projectId?: string;
+        projectName?: string;
+        initialMessage?: string;
+        autoSendInitialMessage?: boolean;
+      }>;
       const detail = customEvent.detail || {};
 
       const requestedProjectId = detail.projectId || resolveProjectIdFromPath(pathname);
@@ -259,7 +267,11 @@ export default function FloatingChat() {
 
       setContextOverride(nextContext);
       if (detail.initialMessage?.trim()) {
-        setMessage(detail.initialMessage.trim());
+        const trimmedInitial = detail.initialMessage.trim();
+        setMessage(trimmedInitial);
+        if (detail.autoSendInitialMessage) {
+          setPendingAutoMessage(trimmedInitial);
+        }
       }
       setIsOpen(true);
     };
@@ -694,6 +706,25 @@ export default function FloatingChat() {
       setSending(false);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen || !pendingAutoMessage || !threadId || loading || sending) return;
+
+    let cancelled = false;
+    const sendPendingInitialMessage = async () => {
+      const sent = await doSend(pendingAutoMessage, []);
+      if (cancelled) return;
+      setPendingAutoMessage(null);
+      if (sent) {
+        setMessage('');
+      }
+    };
+
+    void sendPendingInitialMessage();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, pendingAutoMessage, threadId, loading, sending]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

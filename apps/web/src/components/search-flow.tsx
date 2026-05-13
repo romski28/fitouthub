@@ -1113,6 +1113,41 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
   }, [accessToken, user, aiStructured, buildAiAssistProjectPayload, router]);
 
+  const handleChatNowFromAssist = useCallback((payload: { notes: string; projectName?: string }) => {
+    const projectPayload = buildAiAssistProjectPayload();
+    const projectTitle = payload.projectName || projectPayload?.projectName || aiStructured?.title || 'AI consultation project';
+    const region = projectPayload?.region || aiStructured?.locationPrimary || userLocation?.primary || 'Hong Kong';
+    const trades = (projectPayload?.tradesRequired || aiStructured?.trades || []).slice(0, 5);
+    const summary = (aiStructured?.summary || aiStructured?.scope || '').trim();
+    const chatCardMessage = [
+      '🗂 Project Details Card',
+      `Project: ${projectTitle}`,
+      `Location: ${region}`,
+      trades.length > 0 ? `Trades: ${trades.join(', ')}` : null,
+      aiStructured?.projectScale ? `Scale: ${aiStructured.projectScale}` : null,
+      projectPayload?.isEmergency ? 'Emergency: Yes' : 'Emergency: No',
+      summary ? `Summary: ${summary}` : null,
+      payload.notes ? `Client note: ${payload.notes}` : null,
+      '',
+      'Please help me start this discussion now.',
+    ]
+      .filter((line): line is string => Boolean(line && line.trim()))
+      .join('\n');
+
+    window.dispatchEvent(
+      new CustomEvent('foh-open-chat', {
+        detail: {
+          context: 'project_creation',
+          projectName: projectTitle,
+          initialMessage: chatCardMessage,
+          autoSendInitialMessage: true,
+        },
+      }),
+    );
+
+    setShowAssistModal(false);
+  }, [buildAiAssistProjectPayload, aiStructured, userLocation]);
+
   useEffect(() => {
     const hasReadyAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
     if (!isLoggedIn || !accessToken || !hasReadyAiResponse || !aiStructured) return;
@@ -1932,6 +1967,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         initialNotes={(aiStructured?.scope || aiStructured?.summary || initialAiPrompt || '').slice(0, 1200)}
         projectName={aiStructured?.title || 'AI consultation project'}
         disableWhatsapp={isLoggedIn === true ? !user?.mobile : !leadMobile.trim()}
+        onChatNow={handleChatNowFromAssist}
       />
 
       {(() => { const _panel = !isAdminTester ? null : (

@@ -5,6 +5,7 @@ import { ModalOverlay } from "./modal-overlay";
 
 export type AssistContactMethod = "chat" | "call" | "whatsapp";
 export type AssistCategory = "payment" | "delay" | "quality" | "safety" | "dispute" | "general";
+type PreProjectContactChoice = "callback" | "video" | "whatsapp";
 
 export type AssistRequestModalSubmit = {
   contactMethod: AssistContactMethod;
@@ -31,6 +32,8 @@ type AssistRequestModalProps = {
   submitPrefix?: string;
   /** When true the WhatsApp option is greyed out (no mobile number on record) */
   disableWhatsapp?: boolean;
+  /** Optional quick path to open chat immediately (pre-project flow) */
+  onChatNow?: (payload: { notes: string; projectName?: string }) => void;
 };
 
 const SLOT_INTERVAL_MINUTES = 30;
@@ -100,8 +103,10 @@ export function AssistRequestModal({
   context = "pre-project",
   submitPrefix = "Request assistance",
   disableWhatsapp = false,
+  onChatNow,
 }: AssistRequestModalProps) {
   const [contactMethod, setContactMethod] = useState<AssistContactMethod>("chat");
+  const [preProjectChoice, setPreProjectChoice] = useState<PreProjectContactChoice>("callback");
   const [category, setCategory] = useState<AssistCategory>("general");
   const [notes, setNotes] = useState(initialNotes);
   const [requestedDate, setRequestedDate] = useState(getNextAllowedDate());
@@ -124,7 +129,13 @@ export function AssistRequestModal({
       setLocalError("Please describe what you need help with.");
       return;
     }
-    if (contactMethod === "call") {
+    const effectiveContactMethod: AssistContactMethod = isActive
+      ? contactMethod
+      : preProjectChoice === "whatsapp"
+        ? "whatsapp"
+        : "call";
+
+    if (effectiveContactMethod === "call") {
       if (new Date(`${requestedDate}T00:00:00`).getDay() === 0) {
         setLocalError("Calls are not available on Sundays.");
         return;
@@ -135,15 +146,23 @@ export function AssistRequestModal({
       }
     }
 
+    const normalizedNotes = !isActive
+      ? preProjectChoice === "video"
+        ? `[Video call requested]\n${notes.trim()}`
+        : preProjectChoice === "callback"
+          ? `[Phone callback requested]\n${notes.trim()}`
+          : notes.trim()
+      : notes.trim();
+
     const result = await onSubmit({
-      contactMethod,
+      contactMethod: effectiveContactMethod,
       category,
-      notes: notes.trim(),
+      notes: normalizedNotes,
       requestedCallAt:
-        contactMethod === "call"
+        effectiveContactMethod === "call"
           ? new Date(`${requestedDate}T${requestedTime}:00+08:00`).toISOString()
           : undefined,
-      requestedCallTimezone: contactMethod === "call" ? "Asia/Hong_Kong" : undefined,
+      requestedCallTimezone: effectiveContactMethod === "call" ? "Asia/Hong_Kong" : undefined,
     });
 
     if (result && (result as any).caseNumber) {
@@ -158,7 +177,7 @@ export function AssistRequestModal({
         <div className="space-y-5 text-center py-4">
           <div className="text-5xl">{"\u{2705}"}</div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-600 mb-1">Case raised</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 mb-1">Case raised</p>
             <h2 className="text-2xl font-bold text-slate-900">We are on it</h2>
             <p className="mt-2 text-sm text-slate-600">
               A coordinator will respond within <strong>1 hour</strong>.
@@ -172,7 +191,7 @@ export function AssistRequestModal({
           <button
             type="button"
             onClick={() => { setCaseNumber(null); onClose(); }}
-            className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition"
+            className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition"
           >
             Close
           </button>
@@ -186,8 +205,8 @@ export function AssistRequestModal({
       <div className="space-y-6">
         {/* Header */}
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600">
-            Fitout Hub {isActive ? "project management" : "assistance"}
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+            Mimo {isActive ? "project management" : "consultation"}
           </p>
           <h2 className="text-2xl font-bold text-slate-900">
             {isActive ? "Request a project manager" : "Choose how you want FoH to help"}
@@ -215,7 +234,7 @@ export function AssistRequestModal({
                   onClick={() => setCategory(cat.value)}
                   className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
                     category === cat.value
-                      ? "border-indigo-500 bg-indigo-50 font-semibold text-indigo-900 shadow-sm"
+                      ? "border-emerald-500 bg-emerald-50 font-semibold text-emerald-900 shadow-sm"
                       : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                   }`}
                 >
@@ -232,38 +251,83 @@ export function AssistRequestModal({
           {isActive && (
             <p className="text-sm font-semibold text-slate-900 mb-2">How should we reach you?</p>
           )}
-          <div className="grid gap-3 md:grid-cols-3">
-            {[
-              { value: "chat",      title: "In-platform chat",    description: "Continue in the FoH chat thread.",             emoji: "\u{1F4AC}" },
-              { value: "call",      title: "Book a call",         description: "Request a call with a coordinator.",           emoji: "\u{1F4DE}" },
-              { value: "whatsapp",  title: "Please WhatsApp me",  description: "FoH will follow up on WhatsApp.",              emoji: "\u{1F7E2}" },
-            ].map((option) => {
-              const isWhatsappDisabled = option.value === "whatsapp" && disableWhatsapp;
-              const active = contactMethod === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  disabled={isWhatsappDisabled}
-                  title={isWhatsappDisabled ? "Add a mobile number to use WhatsApp" : undefined}
-                  onClick={() => !isWhatsappDisabled && setContactMethod(option.value as AssistContactMethod)}
-                  className={`rounded-xl border p-4 text-left transition ${
-                    isWhatsappDisabled
-                      ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-50"
-                      : active
-                        ? "border-indigo-500 bg-indigo-50 shadow-sm"
-                        : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
-                >
-                  <div className="mb-3 text-2xl">{option.emoji}</div>
-                  <div className="text-sm font-semibold text-slate-900">{option.title}</div>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                    {isWhatsappDisabled ? "Add a mobile number to enable WhatsApp." : option.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
+          {isActive ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                { value: "chat",      title: "In-platform chat",    description: "Continue in the FoH chat thread.",             emoji: "\u{1F4AC}" },
+                { value: "call",      title: "Book a call",         description: "Request a call with a coordinator.",           emoji: "\u{1F4DE}" },
+                { value: "whatsapp",  title: "Please WhatsApp me",  description: "FoH will follow up on WhatsApp.",              emoji: "\u{1F7E2}" },
+              ].map((option) => {
+                const isWhatsappDisabled = option.value === "whatsapp" && disableWhatsapp;
+                const active = contactMethod === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    disabled={isWhatsappDisabled}
+                    title={isWhatsappDisabled ? "Add a mobile number to use WhatsApp" : undefined}
+                    onClick={() => !isWhatsappDisabled && setContactMethod(option.value as AssistContactMethod)}
+                    className={`rounded-xl border p-4 text-left transition ${
+                      isWhatsappDisabled
+                        ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-50"
+                        : active
+                          ? "border-emerald-500 bg-emerald-50 shadow-sm"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="mb-3 text-2xl">{option.emoji}</div>
+                    <div className="text-sm font-semibold text-slate-900">{option.title}</div>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                      {isWhatsappDisabled ? "Add a mobile number to enable WhatsApp." : option.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid gap-3 md:grid-cols-3">
+                {[
+                  { value: "callback", title: "Let us call you", description: "Book a callback with a coordinator.", emoji: "\u{1F4DE}" },
+                  { value: "video", title: "Book a video call", description: "Schedule a video consultation.", emoji: "\u{1F4F9}" },
+                  { value: "whatsapp", title: "WhatsApp me", description: "We will follow up on WhatsApp.", emoji: "\u{1F7E2}" },
+                ].map((option) => {
+                  const isWhatsappDisabled = option.value === "whatsapp" && disableWhatsapp;
+                  const active = preProjectChoice === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      disabled={isWhatsappDisabled}
+                      title={isWhatsappDisabled ? "Add a mobile number to use WhatsApp" : undefined}
+                      onClick={() => !isWhatsappDisabled && setPreProjectChoice(option.value as PreProjectContactChoice)}
+                      className={`rounded-xl border p-4 text-left transition ${
+                        isWhatsappDisabled
+                          ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-50"
+                          : active
+                            ? "border-emerald-500 bg-emerald-50 shadow-sm"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="mb-3 text-2xl">{option.emoji}</div>
+                      <div className="text-sm font-semibold text-slate-900">{option.title}</div>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                        {isWhatsappDisabled ? "Add a mobile number to enable WhatsApp." : option.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onChatNow?.({ notes: notes.trim(), projectName })}
+                className="w-full rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 transition"
+              >
+                Chat now
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Notes + optional call slot */}
@@ -279,17 +343,17 @@ export function AssistRequestModal({
               placeholder={
                 isActive
                   ? "Please describe the situation clearly — include relevant dates, amounts, or previous communications."
-                  : contactMethod === "call"
+                  : (preProjectChoice === "callback" || preProjectChoice === "video")
                     ? "Tell the FoH project manager what you need help with before the call."
-                    : contactMethod === "whatsapp"
+                    : preProjectChoice === "whatsapp"
                       ? "Tell FoH what you would like discussed on WhatsApp."
                       : "Tell FoH how you would like help with this project."
               }
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </div>
 
-          {contactMethod === "call" && (
+          {(isActive ? contactMethod === "call" : preProjectChoice !== "whatsapp") && (
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-900">Preferred date</label>
@@ -298,7 +362,7 @@ export function AssistRequestModal({
                   min={getNextAllowedDate()}
                   value={requestedDate}
                   onChange={(e) => handleDateChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
                 <p className="mt-1 text-xs text-slate-500">Mon–Fri 09:00–18:00, Sat 09:00–13:00.</p>
               </div>
@@ -307,7 +371,7 @@ export function AssistRequestModal({
                 <select
                   value={requestedTime}
                   onChange={(e) => setRequestedTime(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
                   {availableTimes.length === 0 ? (
                     <option value="">No slots available</option>
@@ -351,15 +415,21 @@ export function AssistRequestModal({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-50"
+            className="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
           >
             {isSubmitting
               ? "Submitting..."
-              : contactMethod === "chat"
-                ? `${submitPrefix} via chat`
-                : contactMethod === "call"
-                  ? `${submitPrefix} - book call`
-                  : `${submitPrefix} via WhatsApp`}
+              : isActive
+                ? contactMethod === "chat"
+                  ? `${submitPrefix} via chat`
+                  : contactMethod === "call"
+                    ? `${submitPrefix} - book call`
+                    : `${submitPrefix} via WhatsApp`
+                : preProjectChoice === "callback"
+                  ? `${submitPrefix} - let us call you`
+                  : preProjectChoice === "video"
+                    ? `${submitPrefix} - book video call`
+                    : `${submitPrefix} via WhatsApp`}
           </button>
         </div>
       </div>
