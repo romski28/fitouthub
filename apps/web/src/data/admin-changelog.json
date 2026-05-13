@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-13-bf63771",
+    "date": "2026-05-13T11:53:39+08:00",
+    "title": "fix(assist): allow null contact snapshot metadata in DTO",
+    "summary": "fix(assist): allow null contact snapshot metadata in DTO",
+    "areas": [
+      "api"
+    ],
+    "commit": "bf63771",
+    "files": [
+      "apps/api/src/assist/assist-requests.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-13-b89a81f",
     "date": "2026-05-13T11:43:15+08:00",
     "title": "feat(ai-consultation): persist prospective lifecycle and add admin funnel analytics",

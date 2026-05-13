@@ -19,8 +19,8 @@ interface CreateAssistRequestDto {
   bookingChannel?: 'app' | 'ai_guest_quick' | 'ai_logged_in' | 'manual_admin';
   leadLifecycleAtBooking?: 'active' | 'prospective' | 'suspended' | 'blocked';
   consultationDurationMin?: number;
-  contactEmailSnapshot?: string;
-  contactMobileSnapshot?: string;
+  contactEmailSnapshot?: string | null;
+  contactMobileSnapshot?: string | null;
 }
 
 interface CreateAiConsultationBookingDto {
