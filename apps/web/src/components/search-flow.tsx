@@ -1891,6 +1891,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         submitPrefix="Book consultation"
         initialNotes={(aiStructured?.scope || aiStructured?.summary || initialAiPrompt || '').slice(0, 1200)}
         projectName={aiStructured?.title || 'AI consultation project'}
+        disableWhatsapp={isLoggedIn === true ? !user?.mobile : !leadMobile.trim()}
       />
 
       {(() => { const _panel = !isAdminTester ? null : (

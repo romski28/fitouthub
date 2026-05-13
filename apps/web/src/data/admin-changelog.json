@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-13-0ce1a54",
+    "date": "2026-05-13T12:31:15+08:00",
+    "title": "feat(booking): block existing users from guest flow; disable WhatsApp when no mobile",
+    "summary": "feat(booking): block existing users from guest flow; disable WhatsApp when no mobile",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0ce1a54",
+    "files": [
+      "apps/api/src/assist/assist-requests.service.ts",
+      "apps/web/src/components/assist-request-modal.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-13-bf63771",
     "date": "2026-05-13T11:53:39+08:00",
     "title": "fix(assist): allow null contact snapshot metadata in DTO",

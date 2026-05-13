@@ -29,6 +29,8 @@ type AssistRequestModalProps = {
   /** pre-project hides category picker; active shows it */
   context?: AssistContext;
   submitPrefix?: string;
+  /** When true the WhatsApp option is greyed out (no mobile number on record) */
+  disableWhatsapp?: boolean;
 };
 
 const SLOT_INTERVAL_MINUTES = 30;
@@ -97,6 +99,7 @@ export function AssistRequestModal({
   projectName,
   context = "pre-project",
   submitPrefix = "Request assistance",
+  disableWhatsapp = false,
 }: AssistRequestModalProps) {
   const [contactMethod, setContactMethod] = useState<AssistContactMethod>("chat");
   const [category, setCategory] = useState<AssistCategory>("general");
@@ -235,19 +238,28 @@ export function AssistRequestModal({
               { value: "call",      title: "Book a call",         description: "Request a call with a coordinator.",           emoji: "\u{1F4DE}" },
               { value: "whatsapp",  title: "Please WhatsApp me",  description: "FoH will follow up on WhatsApp.",              emoji: "\u{1F7E2}" },
             ].map((option) => {
+              const isWhatsappDisabled = option.value === "whatsapp" && disableWhatsapp;
               const active = contactMethod === option.value;
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setContactMethod(option.value as AssistContactMethod)}
+                  disabled={isWhatsappDisabled}
+                  title={isWhatsappDisabled ? "Add a mobile number to use WhatsApp" : undefined}
+                  onClick={() => !isWhatsappDisabled && setContactMethod(option.value as AssistContactMethod)}
                   className={`rounded-xl border p-4 text-left transition ${
-                    active ? "border-indigo-500 bg-indigo-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
+                    isWhatsappDisabled
+                      ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-50"
+                      : active
+                        ? "border-indigo-500 bg-indigo-50 shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
                   <div className="mb-3 text-2xl">{option.emoji}</div>
                   <div className="text-sm font-semibold text-slate-900">{option.title}</div>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">{option.description}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                    {isWhatsappDisabled ? "Add a mobile number to enable WhatsApp." : option.description}
+                  </p>
                 </button>
               );
             })}

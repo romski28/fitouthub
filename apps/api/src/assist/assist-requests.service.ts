@@ -325,11 +325,26 @@ export class AssistRequestsService {
     const source = dto.context?.source || 'ai_guest_quick';
 
     let user = email
-      ? await this.prisma.user.findUnique({ where: { email }, select: { id: true, firstName: true, surname: true, email: true, role: true } })
+      ? await this.prisma.user.findUnique({ where: { email }, select: { id: true, firstName: true, surname: true, email: true, role: true, emailVerified: true } })
       : null;
 
     if (user && user.role !== 'client') {
-      throw new BadRequestException('This email is already linked to a non-client account. Please sign in first.');
+      throw new BadRequestException('This email is already linked to a non-client account. Please sign in to continue.');
+    }
+
+    if (user && user.emailVerified) {
+      throw new BadRequestException('This email address is already registered. Please log in to book your consultation.');
+    }
+
+    // Check mobile: if a verified account already holds this mobile, block the guest path
+    if (mobile) {
+      const mobileConflict = await this.prisma.user.findFirst({
+        where: { mobile, emailVerified: true },
+        select: { id: true },
+      });
+      if (mobileConflict) {
+        throw new BadRequestException('This mobile number is already registered. Please log in to continue.');
+      }
     }
 
     if (!user) {
