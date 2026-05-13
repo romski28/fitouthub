@@ -581,10 +581,17 @@ export default function FloatingChat() {
     };
   }, [isOpen, threadId, isLoggedIn, accessToken, messages.length]);
 
-  const doSend = async (text: string, attachmentsToSend: { url: string; filename: string }[]): Promise<boolean> => {
-    if ((!text.trim() && attachmentsToSend.length === 0) || !threadId || sending) return false;
+  const doSend = async (
+    text: string,
+    attachmentsToSend: { url: string; filename: string }[],
+    options?: { manageSendingState?: boolean },
+  ): Promise<boolean> => {
+    const manageSendingState = options?.manageSendingState ?? true;
+    if ((!text.trim() && attachmentsToSend.length === 0) || !threadId || (manageSendingState && sending)) return false;
 
-    setSending(true);
+    if (manageSendingState) {
+      setSending(true);
+    }
     try {
       // For stub threads with logged-in users, try to create a real thread first
       let actualThreadId = threadId;
@@ -668,14 +675,22 @@ export default function FloatingChat() {
       if (res.ok) {
         const data = await res.json();
         console.log('[FloatingChat] Message sent successfully:', data);
-        setMessages((prev) => [...prev, data.message || {
-          id: Date.now().toString(),
-          senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
-          content: text.trim(),
-          attachments: attachmentsToSend,
-          context: chatContext,
-          createdAt: new Date().toISOString(),
-        }]);
+        setMessages((prev) => {
+          const outgoingMessage: ChatMessage = data.message || {
+            id: Date.now().toString(),
+            senderType: userRole === 'professional' ? 'professional' : userRole === 'client' ? 'user' : 'anonymous',
+            content: text.trim(),
+            attachments: attachmentsToSend,
+            context: chatContext,
+            createdAt: new Date().toISOString(),
+          };
+
+          if (outgoingMessage.id && prev.some((item) => item.id === outgoingMessage.id)) {
+            return prev;
+          }
+
+          return [...prev, outgoingMessage];
+        });
         setThreadStatus('in_progress');
         setThreadClosureDueAt(null);
         setThreadResolvedAt(null);
@@ -693,7 +708,9 @@ export default function FloatingChat() {
       console.error('[FloatingChat] Error sending message:', error);
       return false;
     } finally {
-      setSending(false);
+      if (manageSendingState) {
+        setSending(false);
+      }
     }
   };
 
@@ -772,6 +789,8 @@ export default function FloatingChat() {
     e.preventDefault();
     if ((!message.trim() && pendingFiles.length === 0) || !threadId || sending) return;
 
+    setSending(true);
+
     // Upload any pending files before sending
     let attachmentsToSend: { url: string; filename: string }[] = [];
     if (pendingFiles.length > 0) {
@@ -805,11 +824,12 @@ export default function FloatingChat() {
       }
 
       if (attachmentsToSend.length === 0) {
+        setSending(false);
         return;
       }
     }
 
-    const sent = await doSend(message.trim(), attachmentsToSend);
+    const sent = await doSend(message.trim(), attachmentsToSend, { manageSendingState: false });
     if (sent) {
       setMessage('');
       pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -817,6 +837,7 @@ export default function FloatingChat() {
       setPendingPreviewUrls([]);
       setImageUploadError(null);
     }
+    setSending(false);
   };
 
   // Don't show on admin pages.

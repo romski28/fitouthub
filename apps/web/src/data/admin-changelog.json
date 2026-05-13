@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-13-196f269",
+    "date": "2026-05-13T21:05:48+08:00",
+    "title": "fix(chat): prevent double-send on image uploads and set sending state immediately",
+    "summary": "fix(chat): prevent double-send on image uploads and set sending state immediately",
+    "areas": [
+      "web"
+    ],
+    "commit": "196f269",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-05-13-454dfca",
     "date": "2026-05-13T20:57:40+08:00",
     "title": "fix(chat): inline image picker row, horizontal previews, and reliable image send gating",
