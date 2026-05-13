@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-13-24c6e9f",
+    "date": "2026-05-13T09:49:57+08:00",
+    "title": "feat(search): add Let’s talk CTA and complex-project advisory",
+    "summary": "feat(search): add Let’s talk CTA and complex-project advisory",
+    "areas": [
+      "web"
+    ],
+    "commit": "24c6e9f",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-12-30f8d7f",
     "date": "2026-05-12T23:34:07+08:00",
     "title": "fix(ai): import BadRequestException in scope reorder endpoint",

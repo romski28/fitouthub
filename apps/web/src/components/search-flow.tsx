@@ -242,7 +242,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, onSequenceStateChange, onRemoveTrade }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
@@ -252,6 +252,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   fullCoverageCompanyCount: number;
   specialistCount: number;
   showForgottenPrompt: boolean;
+  isComplexProject: boolean;
   onSequenceStateChange?: (done: boolean) => void;
   onRemoveTrade?: (trade: string) => void;
 }) {
@@ -444,6 +445,12 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
           {visibleMimoWordCount < mimoWords.length && (
             <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse bg-slate-400 align-[-2px]" />
           )}
+        </p>
+      )}
+
+      {showTradesBlock && isSequenceComplete && isComplexProject && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+          Nice project, but could be challenging. Book a free chat to better understand your needs and best define it to the marketplace.
         </p>
       )}
 
@@ -1353,6 +1360,21 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const showPromptHelperText = aiRoundCount === 0;
   const showPromptUploader = aiRoundCount === 0;
   const displayedTrades = activeTrades.length > 0 ? activeTrades : (aiStructured?.trades ?? []);
+  const isLargeProject = (() => {
+    if (!aiStructured?.size || aiStructured.size.value === null) return false;
+    const value = aiStructured.size.value;
+    const unitHint = `${aiStructured.size.unit || ''} ${aiStructured.size.rawText || ''}`.toLowerCase();
+    if (unitHint.includes('m2') || unitHint.includes('sqm') || unitHint.includes('sq m')) return value >= 120;
+    if (unitHint.includes('sqft') || unitHint.includes('sq ft') || unitHint.includes('ft2')) return value >= 1300;
+    return value >= 1300;
+  })();
+  const isComplexProject = Boolean(
+    aiStructured && (
+      aiStructured.projectScale === 'SCALE_3' ||
+      displayedTrades.length > 1 ||
+      isLargeProject
+    ),
+  );
 
   const handleRemoveTrade = (tradeToRemove: string) => {
     setActiveTrades((current) => {
@@ -1411,6 +1433,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 matchCount={aiMatchCount}
                 matchLoading={aiCountLoading}
                 trades={displayedTrades}
+                isComplexProject={isComplexProject}
                 safetyAssessment={aiStructured.safetyAssessment}
                 fullCoverageCompanyCount={aiFullCoverageCompanyCount}
                 specialistCount={aiSpecialistCount}
@@ -1503,6 +1526,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               </button>
             </>
           )}
+          <button
+            type="button"
+            onClick={() => router.push('/contact?source=ai-search&intent=free-chat')}
+            className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-3 font-semibold text-amber-800 transition-all duration-200 hover:-translate-y-1 hover:border-amber-400 hover:bg-amber-100"
+          >
+            Let&rsquo;s talk
+          </button>
         </div>
       )}
 
