@@ -52,6 +52,11 @@ interface CreateAiConsultationBookingDto {
   };
 }
 
+interface GuestLeadPrecheckDto {
+  email?: string;
+  mobile?: string;
+}
+
 interface MirrorSupportPoolParams {
   projectId: string;
   contactMethod: 'chat' | 'call' | 'whatsapp';
@@ -203,6 +208,80 @@ export class AssistRequestsService {
     return createHash('sha256').update(input.trim()).digest('hex');
   }
 
+  private normalizeEmail(input?: string | null) {
+    return (input || '').trim().toLowerCase();
+  }
+
+  private normalizePhoneDigits(input?: string | null) {
+    return (input || '').replace(/\D/g, '');
+  }
+
+  private buildHongKongMobileVariants(input?: string | null) {
+    const raw = (input || '').trim();
+    if (!raw) return [] as string[];
+
+    const digits = this.normalizePhoneDigits(raw);
+    if (!digits) return [] as string[];
+
+    const local = digits.startsWith('852') && digits.length > 8 ? digits.slice(3) : digits;
+    const variants = new Set<string>([
+      raw,
+      digits,
+      `+${digits}`,
+    ]);
+
+    if (local.length === 8) {
+      variants.add(local);
+      variants.add(`852${local}`);
+      variants.add(`+852${local}`);
+    }
+
+    return Array.from(variants);
+  }
+
+  async precheckAiConsultationGuestLead(dto: GuestLeadPrecheckDto) {
+    const email = this.normalizeEmail(dto.email);
+    const mobileVariants = this.buildHongKongMobileVariants(dto.mobile);
+
+    if (!email && mobileVariants.length === 0) {
+      return {
+        eligible: false,
+        code: 'MISSING_CONTACT',
+        message: 'Please provide either email or mobile.',
+      };
+    }
+
+    if (email) {
+      const emailConflict = await this.prisma.user.findFirst({
+        where: { email },
+        select: { id: true, role: true },
+      });
+      if (emailConflict) {
+        return {
+          eligible: false,
+          code: 'EMAIL_EXISTS',
+          message: 'This email address is already in our system. Please log in to continue.',
+        };
+      }
+    }
+
+    if (mobileVariants.length > 0) {
+      const mobileConflict = await this.prisma.user.findFirst({
+        where: { mobile: { in: mobileVariants } },
+        select: { id: true, role: true },
+      });
+      if (mobileConflict) {
+        return {
+          eligible: false,
+          code: 'MOBILE_EXISTS',
+          message: 'This mobile number is already in our system. Please log in to continue.',
+        };
+      }
+    }
+
+    return { eligible: true as const };
+  }
+
   private async logProspectiveLeadEvent(payload: {
     userId?: string | null;
     projectId?: string | null;
@@ -305,7 +384,7 @@ export class AssistRequestsService {
 
   async createAiConsultationBooking(dto: CreateAiConsultationBookingDto) {
     const name = (dto.lead?.name || '').trim();
-    const email = (dto.lead?.email || '').trim().toLowerCase();
+    const email = this.normalizeEmail(dto.lead?.email);
     const mobile = (dto.lead?.mobile || '').trim();
 
     if (!name) {
@@ -324,28 +403,19 @@ export class AssistRequestsService {
     const uaHash = this.sha256(dto.context?.userAgent);
     const source = dto.context?.source || 'ai_guest_quick';
 
-    let user = email
-      ? await this.prisma.user.findUnique({ where: { email }, select: { id: true, firstName: true, surname: true, email: true, role: true, emailVerified: true } })
-      : null;
-
-    if (user && user.role !== 'client') {
-      throw new BadRequestException('This email is already linked to a non-client account. Please sign in to continue.');
+    const precheck = await this.precheckAiConsultationGuestLead({ email, mobile });
+    if (!precheck.eligible) {
+      throw new BadRequestException(precheck.message);
     }
 
-    if (user && user.emailVerified) {
-      throw new BadRequestException('This email address is already registered. Please log in to book your consultation.');
-    }
-
-    // Check mobile: if a verified account already holds this mobile, block the guest path
-    if (mobile) {
-      const mobileConflict = await this.prisma.user.findFirst({
-        where: { mobile, emailVerified: true },
-        select: { id: true },
-      });
-      if (mobileConflict) {
-        throw new BadRequestException('This mobile number is already registered. Please log in to continue.');
-      }
-    }
+    let user: {
+      id: string;
+      firstName: string;
+      surname: string;
+      email: string;
+      emailVerified: boolean;
+      role: string;
+    } | null = null;
 
     if (!user) {
       const nicknameBase = name

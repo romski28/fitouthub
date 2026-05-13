@@ -649,6 +649,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [leadName, setLeadName] = useState('');
   const [leadEmail, setLeadEmail] = useState('');
   const [leadMobile, setLeadMobile] = useState('');
+  const [leadChecking, setLeadChecking] = useState(false);
   const [leadFormError, setLeadFormError] = useState<string | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistSubmitting, setAssistSubmitting] = useState(false);
@@ -904,7 +905,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setShowAssistModal(true);
   }, [aiStructured, persistTempAssistDraft, isLoggedIn, accessToken]);
 
-  const handleGuestContinueQuick = useCallback(() => {
+  const handleGuestContinueQuick = useCallback(async () => {
     const safeName = leadName.trim();
     const safeEmail = leadEmail.trim();
     const safeMobile = leadMobile.trim();
@@ -919,8 +920,32 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
 
     setLeadFormError(null);
-    setShowConsultChoiceModal(false);
-    setShowAssistModal(true);
+    setLeadChecking(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/assist-requests/ai-consultation/precheck`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: safeEmail || undefined,
+          mobile: safeMobile || undefined,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({} as { eligible?: boolean; message?: string }));
+
+      if (!response.ok || data.eligible === false) {
+        setLeadFormError(data.message || 'These contact details are already in our system. Please log in to continue.');
+        return;
+      }
+
+      setShowConsultChoiceModal(false);
+      setShowAssistModal(true);
+    } catch {
+      setLeadFormError('Unable to validate your contact details right now. Please try again.');
+    } finally {
+      setLeadChecking(false);
+    }
   }, [leadName, leadEmail, leadMobile]);
 
   const handleGuestJoin = useCallback(() => {
@@ -1841,9 +1866,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             <button
               type="button"
               onClick={handleGuestContinueQuick}
-              className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              disabled={leadChecking}
+              className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Continue to Booking
+              {leadChecking ? 'Checking details...' : 'Continue to Booking'}
             </button>
           </div>
 

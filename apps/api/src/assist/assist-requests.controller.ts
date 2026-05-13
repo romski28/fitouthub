@@ -117,6 +117,27 @@ export class AssistRequestsController {
     }
   }
 
+  @Post('ai-consultation/precheck')
+  async precheckAiConsultationGuestLead(
+    @Body()
+    body: {
+      email?: string;
+      mobile?: string;
+    },
+  ) {
+    try {
+      return await this.service.precheckAiConsultationGuestLead({
+        email: body?.email,
+        mobile: body?.mobile,
+      });
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to validate guest contact details',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   @Get('ai-consultation/report')
   @UseGuards(CombinedAuthGuard)
   async getAiConsultationReport(
