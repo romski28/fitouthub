@@ -1117,23 +1117,26 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const handleChatNowFromAssist = useCallback((payload: { notes: string; projectName?: string }) => {
     const projectPayload = buildAiAssistProjectPayload();
     const projectTitle = payload.projectName || projectPayload?.projectName || aiStructured?.title || 'AI consultation project';
-    const region = projectPayload?.region || aiStructured?.locationPrimary || userLocation?.primary || 'Hong Kong';
-    const trades = (projectPayload?.tradesRequired || aiStructured?.trades || []).slice(0, 5);
-    const summary = (aiStructured?.summary || aiStructured?.scope || '').trim();
+    const rawPrompt = (initialAiPrompt || aiPromptHistory[0] || '').trim();
+    const prompt = rawPrompt || payload.notes.trim();
+    const aiResponseSource = (aiConversationalText || aiOutput || '').trim();
+    const aiFirstParagraph = aiResponseSource
+      .split(/\n\s*\n/)
+      .map((part) => part.trim())
+      .find(Boolean)
+      || aiResponseSource.split('\n').map((part) => part.trim()).find(Boolean)
+      || '';
+    const cardSummary = [
+      'Mimo was asked...',
+      prompt,
+      aiFirstParagraph ? `AI response: ${aiFirstParagraph}` : '',
+    ].filter(Boolean).join('\n\n');
+
     const chatCardMessage = buildStructuredChatEventMessage({
       type: 'generic',
-      icon: '🗂',
-      title: 'Project details card',
-      summary: 'Client requested to start chat from AI consultation flow.',
-      fields: [
-        { label: 'Project', value: projectTitle },
-        { label: 'Location', value: region },
-        ...(trades.length > 0 ? [{ label: 'Trades', value: trades.join(', ') }] : []),
-        ...(aiStructured?.projectScale ? [{ label: 'Scale', value: aiStructured.projectScale }] : []),
-        { label: 'Emergency', value: projectPayload?.isEmergency ? 'Yes' : 'No' },
-        ...(summary ? [{ label: 'Summary', value: summary.slice(0, 220) }] : []),
-        ...(payload.notes ? [{ label: 'Client note', value: payload.notes.slice(0, 220) }] : []),
-      ],
+      icon: '💬',
+      title: 'General enquiry',
+      summary: cardSummary,
     });
 
     window.dispatchEvent(
@@ -1148,7 +1151,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     );
 
     setShowAssistModal(false);
-  }, [buildAiAssistProjectPayload, aiStructured, userLocation]);
+  }, [buildAiAssistProjectPayload, aiStructured, initialAiPrompt, aiPromptHistory, aiConversationalText, aiOutput]);
 
   useEffect(() => {
     const hasReadyAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);

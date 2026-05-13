@@ -14,7 +14,7 @@ export default function ChatEventCard({ event, isCurrentUser = false }: ChatEven
     : isNotSelected
       ? 'border-rose-400/50 bg-rose-500/10 text-rose-50'
       : isCurrentUser
-        ? 'border-emerald-400/50 bg-emerald-600/20 text-emerald-50'
+        ? 'border-2 border-[#ff6b5b] bg-emerald-500 text-white'
         : 'border-sky-400/40 bg-sky-500/10 text-slate-100';
 
   const titleTone = isAward
@@ -22,14 +22,14 @@ export default function ChatEventCard({ event, isCurrentUser = false }: ChatEven
     : isNotSelected
       ? 'text-rose-200'
       : isCurrentUser
-        ? 'text-emerald-100'
+        ? 'text-[#ff6b5b]'
         : 'text-sky-200';
   const iconTone = isAward
     ? 'bg-amber-400/25'
     : isNotSelected
       ? 'bg-rose-400/20'
       : isCurrentUser
-        ? 'bg-emerald-500/25'
+        ? 'bg-white/20'
         : 'bg-sky-500/20';
 
   return (
@@ -40,13 +40,13 @@ export default function ChatEventCard({ event, isCurrentUser = false }: ChatEven
         </div>
         <div className="min-w-0 flex-1">
           <p className={`text-sm font-semibold ${titleTone}`}>{event.title}</p>
-          {event.summary ? <p className="mt-0.5 text-xs text-slate-200/90">{event.summary}</p> : null}
+          {event.summary ? <p className={`mt-0.5 text-xs whitespace-pre-wrap ${isCurrentUser ? 'text-white' : 'text-slate-200/90'}`}>{event.summary}</p> : null}
 
           {event.fields && event.fields.length > 0 ? (
             <dl className="mt-2 space-y-1">
               {event.fields.map((field) => (
                 <div key={`${field.label}-${field.value}`} className="flex items-baseline gap-2 text-xs">
-                  <dt className="shrink-0 text-slate-300">{field.label}:</dt>
+                  <dt className={`shrink-0 ${isCurrentUser ? 'text-white' : 'text-slate-300'}`}>{field.label}:</dt>
                   <dd className="font-medium text-white break-words">{field.value}</dd>
                 </div>
               ))}
