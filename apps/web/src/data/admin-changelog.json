@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-14-713f699",
+    "date": "2026-05-14T11:41:30+08:00",
+    "title": "feat(create-project): launch AI brief wizard on source=ai and add option3 route plan",
+    "summary": "feat(create-project): launch AI brief wizard on source=ai and add option3 route plan",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "713f699",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "docs/OPTION_3_AI_WIZARD_ROUTE_PLAN.md"
+    ]
+  },
+  {
     "id": "2026-05-14-d5ca23d",
     "date": "2026-05-14T11:02:40+08:00",
     "title": "fix(auth-flow): resume AI users into create-project wizard after join/login",

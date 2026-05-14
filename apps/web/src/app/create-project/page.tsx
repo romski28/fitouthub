@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import { ProjectForm } from '@/components/project-form';
+import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
 import { ProjectDescriptionModal } from '@/components/project-description-modal';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import type { ProjectFormData } from '@/components/project-form';
@@ -60,6 +61,7 @@ const filterProjectSelectableProfessionals = (professionals: Professional[]) => 
 
 export default function CreateProjectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations('project');
   const { isLoggedIn, accessToken, user, userLocation } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,6 +69,15 @@ export default function CreateProjectPage() {
   const [hydrated, setHydrated] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionData, setDescriptionData] = useState<ProjectDescriptionData | null>(null);
+  const [showAiBriefWizard, setShowAiBriefWizard] = useState(false);
+  const [aiWizardSeed, setAiWizardSeed] = useState<{
+    title: string;
+    summary: string;
+    scope: string;
+    assumptions: string[];
+    location?: CanonicalLocation;
+    emergency?: boolean;
+  } | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
@@ -85,6 +96,7 @@ export default function CreateProjectPage() {
 
   useEffect(() => {
     if (hydrated && isLoggedIn) {
+      const routeSource = searchParams.get('source');
       const handoffDebug =
         typeof window !== 'undefined' &&
         (new URLSearchParams(window.location.search).get('debugFlow') === '1' ||
@@ -166,6 +178,32 @@ export default function CreateProjectPage() {
         }
       }
 
+      const hasAiHandoff = Boolean(mergedDraft || parsedDescriptionForDebug);
+      if (routeSource === 'ai' && hasAiHandoff) {
+        const seedTitle =
+          mergedDraft?.initialData?.projectName ||
+          parsedDescriptionForDebug?.title ||
+          '';
+        const seedSummary =
+          parsedDescriptionForDebug?.description ||
+          mergedDraft?.initialData?.notes ||
+          '';
+        const seedScope = mergedDraft?.initialData?.notes || parsedDescriptionForDebug?.description || '';
+        const seedAssumptions = mergedDraft?.initialData?.aiFrom?.assumptions || [];
+        const seedLocation = mergedDraft?.initialData?.location || parsedDescriptionForDebug?.location;
+        const seedEmergency = mergedDraft?.initialData?.isEmergency ?? parsedDescriptionForDebug?.isEmergency;
+
+        setAiWizardSeed({
+          title: seedTitle,
+          summary: seedSummary,
+          scope: seedScope,
+          assumptions: seedAssumptions,
+          location: seedLocation,
+          emergency: seedEmergency,
+        });
+        setShowAiBriefWizard(true);
+      }
+
       if (handoffDebug) {
         const resolvedTitle =
           parsedDraftForDebug?.initialData?.projectName || parsedDescriptionForDebug?.title || '';
@@ -202,7 +240,54 @@ export default function CreateProjectPage() {
         setShowDescriptionModal(true);
       }
     }
-  }, [hydrated, isLoggedIn]);
+  }, [hydrated, isLoggedIn, searchParams]);
+
+  const handleAiWizardComplete = (payload: {
+    title: string;
+    summary: string;
+    location: CanonicalLocation;
+    isEmergency: boolean;
+    followUpAnswers: Array<{ question: string; answer: string }>;
+  }) => {
+    const followUpBlock = (payload.followUpAnswers || [])
+      .map((item) => ({
+        question: (item.question || '').trim(),
+        answer: (item.answer || '').trim(),
+      }))
+      .filter((item) => item.question.length > 0 && item.answer.length > 0)
+      .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
+      .join('\n\n');
+
+    const mergedSummary = [
+      (payload.summary || '').trim(),
+      followUpBlock ? `Additional Questions & Answers:\n${followUpBlock}` : '',
+    ].filter(Boolean).join('\n\n');
+
+    const resolvedRegion = [payload.location.secondary, payload.location.primary]
+      .filter((item): item is string => Boolean(item && item.trim()))
+      .join(', ');
+
+    setInitialFormData((prev) => ({
+      ...prev,
+      projectName: payload.title || prev.projectName || '',
+      notes: mergedSummary || prev.notes || '',
+      location: payload.location,
+      region: resolvedRegion || prev.region || '',
+      isEmergency: payload.isEmergency,
+    }));
+
+    setDescriptionData((prev) => ({
+      title: payload.title || prev?.title || '',
+      description: mergedSummary || prev?.description || '',
+      projectScale: prev?.projectScale,
+      isEmergency: payload.isEmergency,
+      profession: prev?.profession,
+      location: payload.location,
+      tradesRequired: prev?.tradesRequired || initialFormData.tradesRequired || [],
+    }));
+
+    setShowAiBriefWizard(false);
+  };
 
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />;
@@ -400,6 +485,20 @@ export default function CreateProjectPage() {
           setShowDescriptionModal(false);
         }}
         onCancel={() => router.push('/projects')}
+      />
+
+      <AiProjectBriefModal
+        isOpen={showAiBriefWizard && !!aiWizardSeed}
+        onClose={() => setShowAiBriefWizard(false)}
+        initialTitle={aiWizardSeed?.title || initialFormData.projectName || descriptionData?.title || ''}
+        initialSummary={aiWizardSeed?.summary || descriptionData?.description || ''}
+        initialScope={aiWizardSeed?.scope || initialFormData.notes || descriptionData?.description || ''}
+        initialAssumptions={aiWizardSeed?.assumptions || initialFormData.aiFrom?.assumptions || []}
+        initialLocation={aiWizardSeed?.location || initialFormData.location || descriptionData?.location}
+        fallbackLocation={userLocation}
+        initialEmergency={aiWizardSeed?.emergency ?? initialFormData.isEmergency ?? descriptionData?.isEmergency}
+        followUpQuestions={[]}
+        onComplete={handleAiWizardComplete}
       />
 
       <AssistRequestModal
