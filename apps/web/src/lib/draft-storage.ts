@@ -31,6 +31,7 @@ type CreateProjectDraftValue = {
     businessName?: string | null;
   }>;
   aiIntakeId?: string;
+  followUpQuestions?: string[];
 };
 
 const CREATE_PROJECT_DRAFT_KEY = 'createProjectDraft';
@@ -93,6 +94,7 @@ const compactCreateProjectDraft = (value: CreateProjectDraftValue): CreateProjec
       ? value.selectedProfessionals.slice(0, 30)
       : undefined,
     aiIntakeId: value.aiIntakeId,
+    followUpQuestions: toLimitedStringArray(value.followUpQuestions, 12, 220),
   };
 };
 
@@ -117,6 +119,7 @@ export const writeCreateProjectDraftSafely = (value: CreateProjectDraftValue): b
         isEmergency: Boolean(value.initialData?.isEmergency),
       },
       aiIntakeId: value.aiIntakeId,
+      followUpQuestions: toLimitedStringArray(value.followUpQuestions, 8, 220),
     },
   ];
 

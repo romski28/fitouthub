@@ -43,6 +43,7 @@ interface CreateProjectDraft {
   initialData?: Partial<ProjectFormData>;
   selectedProfessionals?: Professional[];
   aiIntakeId?: string;
+  followUpQuestions?: string[];
 }
 
 const normalizeProjectScale = (value?: string | null): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null => {
@@ -135,6 +136,10 @@ export default function CreateProjectPage() {
                 ? memoryDraft.selectedProfessionals
                 : parsedStoredDraft?.selectedProfessionals,
             aiIntakeId: memoryDraft?.aiIntakeId || parsedStoredDraft?.aiIntakeId,
+            followUpQuestions:
+              memoryDraft?.followUpQuestions?.length
+                ? memoryDraft.followUpQuestions
+                : parsedStoredDraft?.followUpQuestions,
           }
         : null;
 
@@ -201,7 +206,11 @@ export default function CreateProjectPage() {
         const seedAssumptions = mergedDraft?.initialData?.aiFrom?.assumptions || [];
         const seedLocation = mergedDraft?.initialData?.location || parsedDescriptionForDebug?.location;
         const seedEmergency = mergedDraft?.initialData?.isEmergency ?? parsedDescriptionForDebug?.isEmergency;
-        const seedFollowUpQuestions = (parsedDescriptionForDebug?.followUpQuestions || []).filter((q: string) => typeof q === 'string' && q.trim().length > 0);
+        const seedFollowUpQuestions = (
+          parsedDescriptionForDebug?.followUpQuestions ||
+          mergedDraft?.followUpQuestions ||
+          []
+        ).filter((q: string) => typeof q === 'string' && q.trim().length > 0);
 
         console.log('[AI-WIZARD-SEED] Setting wizard seed:', {
           seedTitle,

@@ -739,6 +739,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         },
       },
       ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
+      followUpQuestions: (aiStructured.nextQuestions || []).filter((q) => q.trim().length > 0),
     };
 
     const saved = writeCreateProjectDraftSafely(aiDraft);
@@ -755,6 +756,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       profession: aiDraft.initialData.tradesRequired?.[0],
       location: aiDraft.initialData.location,
       tradesRequired: aiDraft.initialData.tradesRequired || [],
+      followUpQuestions: (aiStructured.nextQuestions || []).filter((q) => q.trim().length > 0),
     };
     setProjectDescriptionHandoff(projectDescriptionPayload);
 
@@ -1002,6 +1004,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         ),
       },
       ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
+      followUpQuestions: (aiStructured.nextQuestions || []).filter((q) => q.trim().length > 0),
     };
 
     writeCreateProjectDraftSafely(aiDraft);
@@ -1586,6 +1589,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           budget?: { currency?: string | null; min?: number | null; max?: number | null; rawText?: string | null; confidence?: number };
           timeline?: { durationText?: string | null; startText?: string | null };
           keyFacts?: string[];
+          missingInfo?: string[];
           nextQuestions?: string[];
           followUpQuestions?: string[];
           assumptions?: string[];
@@ -1636,6 +1640,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           p.project.projectScale === 'SCALE_3')
           ? p.project.projectScale
           : null;
+      const normalizedFollowUpQuestions = [
+        p?.nextQuestions,
+        p?.followUpQuestions,
+        p?.missingInfo,
+      ]
+        .find((candidate) => Array.isArray(candidate))
+        ?.filter((item): item is string => typeof item === 'string' && item.trim().length > 0) || [];
       setAiStructured({
         intakeId: payload.intakeId ?? null,
         projectScale:
@@ -1659,7 +1670,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         } : null,
         timeline: p?.timeline ? { durationText: p.timeline.durationText ?? null, startText: p.timeline.startText ?? null } : null,
         keyFacts: p?.keyFacts ?? [],
-        nextQuestions: p?.nextQuestions ?? p?.followUpQuestions ?? [],
+        nextQuestions: normalizedFollowUpQuestions,
         assumptions: Array.isArray(p?.assumptions) ? p.assumptions.filter((item): item is string => typeof item === 'string') : [],
         risks: Array.isArray(p?.risks) ? p.risks.filter((item): item is string => typeof item === 'string') : [],
         safetyAssessment: p?.safetyAssessment ? {

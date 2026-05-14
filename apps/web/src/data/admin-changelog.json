@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-14-c241e36",
+    "date": "2026-05-14T13:09:57+08:00",
+    "title": "fix(ai-wizard): persist follow-up questions across all handoff paths",
+    "summary": "fix(ai-wizard): persist follow-up questions across all handoff paths",
+    "areas": [
+      "web"
+    ],
+    "commit": "c241e36",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/create-project-handoff.ts",
+      "apps/web/src/lib/draft-storage.ts"
+    ]
+  },
+  {
     "id": "2026-05-14-7e82d0b",
     "date": "2026-05-14T12:56:26+08:00",
     "title": "fix(ai-wizard): filter empty strings from follow-up questions array",

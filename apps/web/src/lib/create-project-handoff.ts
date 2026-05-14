@@ -6,6 +6,7 @@ export interface CreateProjectDraftHandoff {
   initialData?: Partial<ProjectFormData>;
   selectedProfessionals?: Professional[];
   aiIntakeId?: string;
+  followUpQuestions?: string[];
 }
 
 export interface ProjectDescriptionHandoff {
