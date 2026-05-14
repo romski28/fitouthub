@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-14-7c560c8",
+    "date": "2026-05-14T23:32:47+08:00",
+    "title": "refine(ai-wizard): tighten panel flow and preserve follow-up prompts",
+    "summary": "refine(ai-wizard): tighten panel flow and preserve follow-up prompts",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "7c560c8",
+    "files": [
+      "AI_UPDATES_MAY_2026.md",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-1c632f9",
     "date": "2026-05-14T22:54:06+08:00",
     "title": "fix(ai-wizard): recover follow-ups for conversational mode and scale up wizard typography",

@@ -76,6 +76,11 @@ const MOTIVATION = [
   'Final stretch, let\'s launch this.',
 ];
 
+const panelTitleClass = 'flex items-start gap-2 text-xl font-semibold text-slate-900 sm:text-2xl';
+const panelNoteClass = 'text-base leading-relaxed text-slate-700';
+const panelCardClass = 'space-y-4';
+const panelContentClass = 'min-h-[320px] space-y-4';
+
 export default function CreateProjectWizardPage() {
   const router = useRouter();
   const { isLoggedIn, userLocation, accessToken } = useAuth();
@@ -96,6 +101,7 @@ export default function CreateProjectWizardPage() {
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [imageUrlDraft, setImageUrlDraft] = useState('');
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isBinaryAnswers, setIsBinaryAnswers] = useState<Record<string, boolean>>({});
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -191,15 +197,17 @@ export default function CreateProjectWizardPage() {
     setSiteInspectionAvailableOn(nextSiteInspection);
     setExistingImageUrls(seededPhotos);
     setAnswers({});
+    setIsBinaryAnswers(
+      nextQuestions.reduce<Record<string, boolean>>((acc, question, index) => {
+        acc[`q-${index}`] = /^(is|are|do|does|did|can|could|should|would|will|have|has)\b/i.test(question.trim());
+        return acc;
+      }, {}),
+    );
     setCurrentStep(0);
   }, [seedLoaded, seedDraft, seedDescription, userLocation]);
 
   const steps = useMemo<WizardStep[]>(() => {
-    const list: WizardStep[] = [{ kind: 'title' }];
-
-    const hasLocation = Boolean(location.primary || location.secondary || location.tertiary);
-    if (!hasLocation) list.push({ kind: 'location' });
-
+    const list: WizardStep[] = [{ kind: 'title' }, { kind: 'location' }];
     list.push({ kind: 'emergency' });
 
     followUpQuestions.forEach((question, index) => {
@@ -212,7 +220,7 @@ export default function CreateProjectWizardPage() {
     list.push({ kind: 'review' });
 
     return list;
-  }, [followUpQuestions, location.primary, location.secondary, location.tertiary]);
+  }, [followUpQuestions]);
 
   const activeStep = steps[currentStep];
   const currentMotivation = MOTIVATION[Math.min(currentStep, MOTIVATION.length - 1)] || MOTIVATION[MOTIVATION.length - 1];
@@ -369,9 +377,9 @@ export default function CreateProjectWizardPage() {
       </div>
 
       <section className="-mx-6 px-6">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
-          <p className="text-base font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Let&apos;s lock in your project title</h1>
+        <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Let&apos;s lock in your project</h1>
         </div>
       </section>
 
@@ -389,7 +397,7 @@ export default function CreateProjectWizardPage() {
           </div>
 
           <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
-            <div className="h-[calc(100vh-460px)] min-h-[360px] max-h-[520px] overflow-hidden">
+            <div className="h-[calc(100vh-420px)] min-h-[400px] max-h-[560px] overflow-hidden">
               <div
                 className="flex h-full transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentStep * 100}%)` }}
@@ -397,49 +405,26 @@ export default function CreateProjectWizardPage() {
                 {steps.map((step, index) => (
                   <div key={`${step.kind}-${index}`} className="h-full w-full shrink-0 overflow-y-auto p-5 sm:p-6">
                     {step.kind === 'title' && (
-                      <div className="space-y-4">
-                        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-base text-slate-700">
-                          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">Mini brief</p>
-                          <div className="mt-1 space-y-2">
-                            {seedSummary && (
-                              <p><span className="font-semibold text-slate-900">Summary:</span> {seedSummary}</p>
-                            )}
-                            {seedScope && (
-                              <p><span className="font-semibold text-slate-900">Scope:</span> {seedScope}</p>
-                            )}
-                            {seedAssumptions.length > 0 && (
-                              <div>
-                                <p className="font-semibold text-slate-900">Assumptions:</p>
-                                <ul className="mt-1 list-disc space-y-1 pl-5">
-                                  {seedAssumptions.slice(0, 3).map((assumption, assumptionIndex) => (
-                                    <li key={`assumption-${assumptionIndex}`}>{assumption}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {!seedSummary && !seedScope && seedAssumptions.length === 0 && (
-                              <p>We extracted your project details from the prompt.</p>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-base font-semibold text-slate-900">📝 Shall we call this project...</p>
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>📝</span><span>Shape your project&apos;s story with a great title</span></h3>
+                        <p className={panelNoteClass}>Keep the AI title or give it one of your own.</p>
                         <input
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="e.g. Bathroom leak repair"
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
                       </div>
                     )}
 
                     {step.kind === 'location' && (
-                      <div className="space-y-4">
-                        <p className="text-base font-semibold text-slate-900">📍 Where is this project located?</p>
-                        <p className="text-sm text-slate-600">We prefilled your saved area when possible. Tweak it if needed.</p>
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
+                        <p className={panelNoteClass}>Pick the district that best matches the job location.</p>
                         <MapOrList
                           storageKey="fh-map-or-list-preference"
                           label="Project location input mode"
-                          helperText="Use the district map for a visual pick, or switch to text mode."
+                          helperText="Use the district map for a visual pick, or switch to words."
                           mapLabel="Map"
                           listLabel="Words"
                           listPanelClassName="max-h-[38vh] overflow-y-auto pr-1"
@@ -465,23 +450,24 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'emergency' && (
-                      <div className="space-y-4">
-                        <p className="text-base font-semibold text-slate-900">🚨 Is this an emergency project?</p>
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>🚨</span><span>Is this an emergency?</span></h3>
+                        <p className={panelNoteClass}>Choose the option that best matches the urgency.</p>
                         <div className="grid grid-cols-2 gap-3">
                           <button
                             type="button"
                             onClick={() => setIsEmergency(false)}
-                            className={`rounded-lg border px-4 py-3 text-left ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
+                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
                           >
-                            <p className="font-semibold text-slate-900">Standard</p>
+                            <p className="text-base font-semibold text-slate-900">Standard</p>
                             <p className="text-sm text-slate-600">Normal matching works perfectly.</p>
                           </button>
                           <button
                             type="button"
                             onClick={() => setIsEmergency(true)}
-                            className={`rounded-lg border px-4 py-3 text-left ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
+                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
                           >
-                            <p className="font-semibold text-slate-900">Emergency</p>
+                            <p className="text-base font-semibold text-slate-900">Emergency</p>
                             <p className="text-sm text-slate-600">We\'ll prioritize emergency-ready professionals.</p>
                           </button>
                         </div>
@@ -489,52 +475,68 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'followup' && (
-                      <div className="space-y-4">
-                        <p className="text-base font-semibold text-slate-900">💡 Quick pit stop</p>
-                        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-base text-slate-800">{step.question}</p>
-                        <textarea
-                          value={answers[step.id] || ''}
-                          onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
-                          rows={4}
-                          placeholder="Type your answer..."
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
-                        />
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>💡</span><span>Help us understand you better.</span></h3>
+                        <p className={panelNoteClass}>{step.question}</p>
+                        {isBinaryAnswers[step.id] ? (
+                          <div className="flex flex-wrap gap-2">
+                            {['Yes', 'No', 'Not sure'].map((choice) => (
+                              <button
+                                key={choice}
+                                type="button"
+                                onClick={() => setAnswers((prev) => ({ ...prev, [step.id]: choice }))}
+                                className={`rounded-full border px-4 py-2.5 text-base font-semibold transition ${answers[step.id] === choice ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-300 bg-white text-slate-700'}`}
+                              >
+                                {choice}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={answers[step.id] || ''}
+                            onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
+                            rows={4}
+                            placeholder="Type your answer..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                          />
+                        )}
                       </div>
                     )}
 
                     {step.kind === 'scope' && (
-                      <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">🧾 Any final notes for professionals?</h2>
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>🧾</span><span>Help us understand you better.</span></h3>
+                        <p className={panelNoteClass}>Anything else you want to share before we lock in?</p>
                         <textarea
                           value={summary}
                           onChange={(e) => setSummary(e.target.value)}
                           rows={6}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
                       </div>
                     )}
 
                     {step.kind === 'endDate' && (
-                      <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">Preferred end date</h2>
-                        <p className="text-base text-slate-700">Same scheduling fields as create-project so timelines stay consistent.</p>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="grid gap-1">
-                            <label className="text-base font-medium text-slate-800">I need this completed by</label>
-                            <input
-                              type="date"
-                              value={endDate}
-                              onChange={(e) => setEndDate(e.target.value)}
-                              className="rounded-md border border-slate-300 px-3 py-2.5 text-base"
-                            />
-                          </div>
-                          <div className="grid gap-1">
-                            <label className="text-base font-medium text-slate-800">I can allow site inspection on</label>
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>📅</span><span>Let&apos;s set some dates.</span></h3>
+                        <div className="grid gap-4">
+                          <div className="grid gap-1.5">
+                            <p className={panelNoteClass}>Date you can allow site inspection.</p>
+                            <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
                             <input
                               type="date"
                               value={siteInspectionAvailableOn}
                               onChange={(e) => setSiteInspectionAvailableOn(e.target.value)}
-                              className="rounded-md border border-slate-300 px-3 py-2.5 text-base"
+                              className="rounded-md border border-slate-300 px-3 py-3 text-base"
+                            />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <p className={panelNoteClass}>When do you need this completed by?</p>
+                            <input
+                              type="date"
+                              value={endDate}
+                              onChange={(e) => setEndDate(e.target.value)}
+                              className="rounded-md border border-slate-300 px-3 py-3 text-base"
                             />
                           </div>
                         </div>
@@ -542,22 +544,13 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'images' && (
-                      <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">📷 Photos</h2>
-                        <p className="text-base text-slate-700">Matches create-project behavior: keep seeded images and add more if needed.</p>
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>📷</span><span>Photos, documents and other information.</span></h3>
+                        <p className={panelNoteClass}>Please share photos of the site, plans, and any other documents you think might help your team understand the project better.</p>
+                        <p className="text-sm italic text-slate-600">Let&apos;s review the upload detail later.</p>
 
-                        <div className="flex gap-2">
-                          <input
-                            value={imageUrlDraft}
-                            onChange={(e) => setImageUrlDraft(e.target.value)}
-                            placeholder="https://..."
-                            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
-                          />
-                          <button type="button" onClick={addImageUrl} className="rounded-lg bg-slate-800 px-3 py-2.5 text-base font-semibold text-white">Add URL</button>
-                        </div>
-
-                        <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-2.5 text-base font-semibold text-white hover:bg-emerald-700">
-                          {isUploadingImages ? 'Uploading...' : 'Upload images'}
+                        <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-3 text-base font-semibold text-white hover:bg-emerald-700">
+                          {isUploadingImages ? 'Uploading...' : 'Upload images, documents or photos'}
                           <input
                             type="file"
                             accept="image/*"
@@ -570,37 +563,48 @@ export default function CreateProjectWizardPage() {
 
                         {uploadError && <p className="text-sm text-rose-700">{uploadError}</p>}
 
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                          {existingImageUrls.map((url) => (
-                            <div key={url} className="rounded-lg border border-slate-200 bg-white p-2">
-                              <div className="relative h-24 overflow-hidden rounded">
-                                <Image src={resolveMediaAssetUrl(url)} alt="Project image" fill className="object-cover" unoptimized />
+                        <div className="space-y-2">
+                          <p className={panelNoteClass}>Filmstrip of images already associated.</p>
+                          <div className="flex gap-3 overflow-x-auto pb-1">
+                            {existingImageUrls.map((url) => (
+                              <div key={url} className="min-w-32 rounded-lg border border-slate-200 bg-white p-2">
+                                <div className="relative h-24 overflow-hidden rounded">
+                                  <Image src={resolveMediaAssetUrl(url)} alt="Project image" fill className="object-cover" unoptimized />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeImageUrl(url)}
+                                  className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                                >
+                                  Remove
+                                </button>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => removeImageUrl(url)}
-                                className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
 
                     {step.kind === 'review' && (
-                      <div className="space-y-3">
-                        <h2 className="text-xl font-bold text-slate-900">Review and continue</h2>
-                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-base">
-                          <p><span className="font-semibold">Title:</span> {title || 'N/A'}</p>
-                          <p><span className="font-semibold">Urgency:</span> {isEmergency ? 'Emergency' : 'Standard'}</p>
-                          <p><span className="font-semibold">Preferred end date:</span> {endDate || 'Not set'}</p>
-                          <p><span className="font-semibold">Site inspection:</span> {siteInspectionAvailableOn || 'Not set'}</p>
-                          <p><span className="font-semibold">Images:</span> {existingImageUrls.length}</p>
-                          <p className="mt-2 whitespace-pre-wrap"><span className="font-semibold">Summary:</span> {summary || 'N/A'}</p>
+                      <div className={panelContentClass}>
+                        <h3 className={panelTitleClass}><span>✅</span><span>Review and save</span></h3>
+                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                          <div className="grid grid-cols-[180px_minmax(0,1fr)] divide-y divide-slate-200 text-base">
+                            {[
+                              ['Title', title || 'N/A'],
+                              ['Emergency', isEmergency ? 'Yes' : 'No'],
+                              ['Follow-up questions', followUpQuestions.length ? `${followUpQuestions.length}` : 'None'],
+                              ['Site inspection', siteInspectionAvailableOn || 'Not set'],
+                              ['Completion date', endDate || 'Not set'],
+                              ['Photos', `${existingImageUrls.length}`],
+                            ].map(([label, value]) => (
+                              <div key={label} className="contents">
+                                <div className="border-r border-slate-200 bg-slate-50 px-4 py-3 text-right font-semibold text-slate-700">{label}</div>
+                                <div className="px-4 py-3 text-left text-slate-900">{value}</div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <p className="text-base text-slate-600">Next you&apos;ll go to final create-project review and submit.</p>
                       </div>
                     )}
                   </div>

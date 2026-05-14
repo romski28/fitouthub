@@ -536,7 +536,7 @@ CONVERSATION STYLE
 
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
-2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, overallConfidence
+2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence
 3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs
 4) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
@@ -577,6 +577,8 @@ OUTPUT FORMAT (JSON only)
   "propertyType": "string|null",
   "summary": "string|null",
   "title": "string|null",
+  "nextQuestions": ["string"],
+  "followUpQuestions": ["string"],
   "overallConfidence": number
 }`;
 
@@ -861,11 +863,18 @@ OUTPUT FORMAT (JSON only)
       ? result.assumptions
       : [];
     const risks = Array.isArray(result.risks) ? result.risks : [];
+    const imageInsights =
+      project.imageInsights && typeof project.imageInsights === 'object' && !Array.isArray(project.imageInsights)
+        ? (project.imageInsights as Record<string, unknown>)
+        : null;
+    const imageInsightFollowUps = imageInsights && Array.isArray(imageInsights.followUpQuestions)
+      ? imageInsights.followUpQuestions
+      : [];
     const nextQuestions = Array.isArray(result.nextQuestions)
       ? result.nextQuestions
       : Array.isArray(result.followUpQuestions)
         ? result.followUpQuestions
-        : [];
+        : imageInsightFollowUps;
     const safetyAssessment = this.normalizeSafetyAssessment(result.safetyAssessment);
     const projectScale =
       this.normalizeProjectScale(result.projectScale) ||
