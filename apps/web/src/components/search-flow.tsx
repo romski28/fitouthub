@@ -1572,6 +1572,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         durationMs: number;
         conversationalText?: string | null;
         usage?: { totalTokens?: number | null };
+        contractDocumentation?: {
+          nextQuestions?: string[];
+          followUpQuestions?: string[];
+          missingInfo?: string[];
+        } | null;
         parsedOutput?: {
           projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
           title?: string | null;
@@ -1629,6 +1634,40 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       });
 
       const p = payload.parsedOutput;
+      const normalizeQuestionList = (value: unknown): string[] =>
+        Array.isArray(value)
+          ? value
+              .filter((item): item is string => typeof item === 'string')
+              .map((item) => item.trim())
+              .filter((item) => item.length > 0)
+          : [];
+
+      let rawOutputQuestions: string[] = [];
+      if (typeof payload.output === 'string' && payload.output.trim().startsWith('{')) {
+        try {
+          const rawParsed = JSON.parse(payload.output) as Record<string, unknown>;
+          const rawContract =
+            rawParsed.contractDocumentation &&
+            typeof rawParsed.contractDocumentation === 'object' &&
+            !Array.isArray(rawParsed.contractDocumentation)
+              ? (rawParsed.contractDocumentation as Record<string, unknown>)
+              : null;
+
+          rawOutputQuestions = Array.from(
+            new Set([
+              ...normalizeQuestionList(rawParsed.nextQuestions),
+              ...normalizeQuestionList(rawParsed.followUpQuestions),
+              ...normalizeQuestionList(rawParsed.missingInfo),
+              ...normalizeQuestionList(rawContract?.nextQuestions),
+              ...normalizeQuestionList(rawContract?.followUpQuestions),
+              ...normalizeQuestionList(rawContract?.missingInfo),
+            ]),
+          );
+        } catch {
+          rawOutputQuestions = [];
+        }
+      }
+
       const parsedTrades = Array.isArray(p?.trades)
         ? p.trades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
         : [];
@@ -1643,12 +1682,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       const normalizedFollowUpQuestions = Array.from(
         new Set(
           [
-            ...(Array.isArray(p?.nextQuestions) ? p.nextQuestions : []),
-            ...(Array.isArray(p?.followUpQuestions) ? p.followUpQuestions : []),
-            ...(Array.isArray(p?.missingInfo) ? p.missingInfo : []),
+            ...normalizeQuestionList(p?.nextQuestions),
+            ...normalizeQuestionList(p?.followUpQuestions),
+            ...normalizeQuestionList(p?.missingInfo),
+            ...normalizeQuestionList(payload.contractDocumentation?.nextQuestions),
+            ...normalizeQuestionList(payload.contractDocumentation?.followUpQuestions),
+            ...normalizeQuestionList(payload.contractDocumentation?.missingInfo),
+            ...rawOutputQuestions,
           ]
-            .filter((item): item is string => typeof item === 'string')
-            .map((item) => item.trim())
             .filter((item) => item.length > 0),
         ),
       );
