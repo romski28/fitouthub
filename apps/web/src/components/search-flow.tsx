@@ -1018,6 +1018,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       followUpQuestions: aiStructured.nextQuestions || [],
     };
 
+    console.log('[PERSIST-HANDOFF] Storing AI wizard handoff:', {
+      projectName: aiDraft.initialData.projectName,
+      aiStructuredTitle: aiStructured?.title,
+      nextQuestions: aiStructured?.nextQuestions,
+      payload: projectDescriptionPayload,
+    });
+
     setProjectDescriptionHandoff(projectDescriptionPayload);
     try {
       sessionStorage.setItem('projectDescription', JSON.stringify(projectDescriptionPayload));

@@ -30,6 +30,7 @@ interface ProjectDescriptionData {
   profession?: string;
   location?: CanonicalLocation;
   tradesRequired: string[];
+  followUpQuestions?: string[];
 }
 
 interface AssistDraft {
@@ -155,6 +156,7 @@ export default function CreateProjectPage() {
       if (stored) {
         try {
           const parsedDescription = JSON.parse(stored) as ProjectDescriptionData;
+          console.log('[HANDOFF-READ] Found projectDescription in sessionStorage:', parsedDescription);
           parsedDescriptionForDebug = parsedDescription;
           setDescriptionData(parsedDescription);
           sessionStorage.removeItem('projectDescription');
@@ -165,7 +167,12 @@ export default function CreateProjectPage() {
 
       if (!stored) {
         const memoryDescription = getProjectDescriptionHandoff();
+        console.log('[HANDOFF-READ] Checking memory for projectDescription:', memoryDescription);
         if (memoryDescription) {
+          console.log('[HANDOFF-READ] Found projectDescription in memory:', {
+            title: memoryDescription.title,
+            followUpQuestions: memoryDescription.followUpQuestions,
+          });
           parsedDescriptionForDebug = {
             description: memoryDescription.description || '',
             title: memoryDescription.title,
@@ -174,6 +181,7 @@ export default function CreateProjectPage() {
             profession: memoryDescription.profession,
             location: memoryDescription.location,
             tradesRequired: memoryDescription.tradesRequired || [],
+            followUpQuestions: memoryDescription.followUpQuestions || [],
           };
           setDescriptionData(parsedDescriptionForDebug);
         }
@@ -194,6 +202,25 @@ export default function CreateProjectPage() {
         const seedLocation = mergedDraft?.initialData?.location || parsedDescriptionForDebug?.location;
         const seedEmergency = mergedDraft?.initialData?.isEmergency ?? parsedDescriptionForDebug?.isEmergency;
         const seedFollowUpQuestions = parsedDescriptionForDebug?.followUpQuestions || [];
+
+        console.log('[AI-WIZARD-SEED] Setting wizard seed:', {
+          seedTitle,
+          seedSummary,
+          seedScope,
+          seedAssumptions,
+          seedLocation,
+          seedEmergency,
+          seedFollowUpQuestions,
+          mergedDraft: {
+            projectName: mergedDraft?.initialData?.projectName,
+            notes: (mergedDraft?.initialData?.notes || '').substring(0, 100),
+          },
+          parsedDescription: {
+            title: parsedDescriptionForDebug?.title,
+            description: (parsedDescriptionForDebug?.description || '').substring(0, 100),
+            followUpQuestions: parsedDescriptionForDebug?.followUpQuestions,
+          },
+        });
 
         setAiWizardSeed({
           title: seedTitle,

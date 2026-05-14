@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-14-4839aef",
+    "date": "2026-05-14T12:13:49+08:00",
+    "title": "fix(ai-wizard): add followUpQuestions to ProjectDescriptionData interface and add debug logging",
+    "summary": "fix(ai-wizard): add followUpQuestions to ProjectDescriptionData interface and add debug logging",
+    "areas": [
+      "web"
+    ],
+    "commit": "4839aef",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-e352c75",
     "date": "2026-05-14T11:56:44+08:00",
     "title": "fix(ai-wizard): persist followUpQuestions through login handoff",
