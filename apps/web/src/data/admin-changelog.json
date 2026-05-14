@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-14-b621763",
+    "date": "2026-05-14T21:58:35+08:00",
+    "title": "feat(ai-wizard): add dedicated /create-project/wizard route and rewire AI entry flow",
+    "summary": "feat(ai-wizard): add dedicated /create-project/wizard route and rewire AI entry flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "b621763",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-80a9633",
     "date": "2026-05-14T21:15:00+08:00",
     "title": "fix(ai-questions): extract follow-ups from parsedOutput, contractDocumentation, and raw output fallback",

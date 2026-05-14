@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import toast from 'react-hot-toast';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
 import ChatImageUploader from '@/components/chat-image-uploader';
@@ -1038,10 +1039,20 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     return true;
   }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, userLocation]);
 
+  const handleOpenAiWizardRoute = useCallback(() => {
+    const persisted = persistAiWizardHandoffForAuth();
+    if (!persisted) {
+      toast.error('Unable to prepare AI project details. Please try again.');
+      return;
+    }
+    setShowConsultChoiceModal(false);
+    router.push('/create-project/wizard?source=ai');
+  }, [persistAiWizardHandoffForAuth, router]);
+
   const handleGuestJoin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project?source=ai');
+      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
     } catch {
       // Ignore storage failures
     }
@@ -1052,7 +1063,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const handleGuestLogin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project?source=ai');
+      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
     } catch {
       // Ignore storage failures
     }
@@ -1991,7 +2002,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           {isLoggedIn === true ? (
             <button
               type="button"
-              onClick={() => setShowBriefModal(true)}
+              onClick={handleOpenAiWizardRoute}
               className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
             >
               Continue to Matching
@@ -2309,7 +2320,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 {isLoggedIn === true && (
                   <button
                     type="button"
-                    onClick={() => setShowBriefModal(true)}
+                    onClick={handleOpenAiWizardRoute}
                     className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
                   >
                     Continue to Matching
