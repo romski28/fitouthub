@@ -69,6 +69,14 @@ const normalizeQuestions = (input: unknown): string[] =>
 const mergeQuestions = (...inputs: unknown[]): string[] =>
   Array.from(new Set(inputs.flatMap((input) => normalizeQuestions(input))));
 
+const stripSummaryPrefix = (value: string): string => {
+  const trimmed = value.trimStart();
+  if (/^summary\s*:\s*/i.test(trimmed)) {
+    return trimmed.replace(/^summary\s*:\s*/i, '').trimStart();
+  }
+  return value;
+};
+
 const MOTIVATION = [
   'Nice! Let\'s build this in under a minute.',
   'You\'re on fire, one quick step at a time.',
@@ -79,7 +87,7 @@ const MOTIVATION = [
 const panelTitleClass = 'flex items-start gap-2 text-xl font-semibold text-slate-900 sm:text-2xl';
 const panelNoteClass = 'text-base leading-relaxed text-slate-700';
 const panelCardClass = 'space-y-4';
-const panelContentClass = 'min-h-[320px] space-y-4';
+const panelContentClass = 'flex h-full min-h-0 flex-col gap-4';
 
 export default function CreateProjectWizardPage() {
   const router = useRouter();
@@ -178,7 +186,8 @@ export default function CreateProjectWizardPage() {
     if (!seedLoaded) return;
 
     const nextTitle = seedDraft?.initialData?.projectName || seedDescription?.title || '';
-    const nextSummary = seedDescription?.description || seedDraft?.initialData?.notes || '';
+    const nextSummaryRaw = seedDescription?.description || seedDraft?.initialData?.notes || '';
+    const nextSummary = stripSummaryPrefix(nextSummaryRaw);
     const nextLocation = seedDraft?.initialData?.location || seedDescription?.location || userLocation || {};
     const nextEmergency = seedDraft?.initialData?.isEmergency ?? seedDescription?.isEmergency ?? null;
     const nextQuestions = mergeQuestions(seedDescription?.followUpQuestions, seedDraft?.followUpQuestions);
@@ -397,13 +406,13 @@ export default function CreateProjectWizardPage() {
           </div>
 
           <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
-            <div className="h-[calc(100vh-420px)] min-h-[400px] max-h-[560px] overflow-hidden">
+            <div className="h-[calc(100vh-420px)] min-h-[420px] max-h-[620px] overflow-hidden">
               <div
                 className="flex h-full transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentStep * 100}%)` }}
               >
                 {steps.map((step, index) => (
-                  <div key={`${step.kind}-${index}`} className="h-full w-full shrink-0 overflow-y-auto p-5 sm:p-6">
+                  <div key={`${step.kind}-${index}`} className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5 sm:p-6">
                     {step.kind === 'title' && (
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>📝</span><span>Shape your project&apos;s story with a great title</span></h3>
@@ -497,7 +506,7 @@ export default function CreateProjectWizardPage() {
                             onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
                             rows={4}
                             placeholder="Type your answer..."
-                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                            className="w-full flex-1 rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                           />
                         )}
                       </div>
@@ -511,7 +520,7 @@ export default function CreateProjectWizardPage() {
                           value={summary}
                           onChange={(e) => setSummary(e.target.value)}
                           rows={6}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                          className="w-full flex-1 rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
                       </div>
                     )}
@@ -589,7 +598,7 @@ export default function CreateProjectWizardPage() {
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>✅</span><span>Review and save</span></h3>
                         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                          <div className="grid grid-cols-[180px_minmax(0,1fr)] divide-y divide-slate-200 text-base">
+                          <div className="text-base">
                             {[
                               ['Title', title || 'N/A'],
                               ['Emergency', isEmergency ? 'Yes' : 'No'],
@@ -597,8 +606,11 @@ export default function CreateProjectWizardPage() {
                               ['Site inspection', siteInspectionAvailableOn || 'Not set'],
                               ['Completion date', endDate || 'Not set'],
                               ['Photos', `${existingImageUrls.length}`],
-                            ].map(([label, value]) => (
-                              <div key={label} className="contents">
+                            ].map(([label, value], rowIndex, rows) => (
+                              <div
+                                key={label}
+                                className={`grid grid-cols-[180px_minmax(0,1fr)] ${rowIndex < rows.length - 1 ? 'border-b border-slate-200' : ''}`}
+                              >
                                 <div className="border-r border-slate-200 bg-slate-50 px-4 py-3 text-right font-semibold text-slate-700">{label}</div>
                                 <div className="px-4 py-3 text-left text-slate-900">{value}</div>
                               </div>

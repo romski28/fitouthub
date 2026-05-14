@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-14-becd521",
+    "date": "2026-05-14T23:48:50+08:00",
+    "title": "refine(ai-wizard): flexible panel body and clean step hydration copy",
+    "summary": "refine(ai-wizard): flexible panel body and clean step hydration copy",
+    "areas": [
+      "web"
+    ],
+    "commit": "becd521",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-7c560c8",
     "date": "2026-05-14T23:32:47+08:00",
     "title": "refine(ai-wizard): tighten panel flow and preserve follow-up prompts",
