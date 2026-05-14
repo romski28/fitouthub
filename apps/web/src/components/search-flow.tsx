@@ -1015,6 +1015,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       profession: aiDraft.initialData.tradesRequired?.[0],
       location: aiDraft.initialData.location,
       tradesRequired: aiDraft.initialData.tradesRequired || [],
+      followUpQuestions: aiStructured.nextQuestions || [],
     };
 
     setProjectDescriptionHandoff(projectDescriptionPayload);

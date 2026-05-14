@@ -16,6 +16,7 @@ export interface ProjectDescriptionHandoff {
   profession?: string;
   location?: CanonicalLocation;
   tradesRequired?: string[];
+  followUpQuestions?: string[];
 }
 
 let draftCache: CreateProjectDraftHandoff | null = null;

@@ -77,6 +77,7 @@ export default function CreateProjectPage() {
     assumptions: string[];
     location?: CanonicalLocation;
     emergency?: boolean;
+    followUpQuestions?: string[];
   } | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
@@ -192,6 +193,7 @@ export default function CreateProjectPage() {
         const seedAssumptions = mergedDraft?.initialData?.aiFrom?.assumptions || [];
         const seedLocation = mergedDraft?.initialData?.location || parsedDescriptionForDebug?.location;
         const seedEmergency = mergedDraft?.initialData?.isEmergency ?? parsedDescriptionForDebug?.isEmergency;
+        const seedFollowUpQuestions = parsedDescriptionForDebug?.followUpQuestions || [];
 
         setAiWizardSeed({
           title: seedTitle,
@@ -200,6 +202,7 @@ export default function CreateProjectPage() {
           assumptions: seedAssumptions,
           location: seedLocation,
           emergency: seedEmergency,
+          followUpQuestions: seedFollowUpQuestions,
         });
         setShowAiBriefWizard(true);
       }
@@ -495,7 +498,7 @@ export default function CreateProjectPage() {
         initialScope={aiWizardSeed?.scope || initialFormData.notes || descriptionData?.description || ''}
         initialAssumptions={aiWizardSeed?.assumptions || initialFormData.aiFrom?.assumptions || []}
         initialLocation={aiWizardSeed?.location || initialFormData.location || descriptionData?.location}
-        fallbackLocation={userLocation}
+        fallbackLocation={uaiWizardSeed?.followUpQuestions || serLocation}
         initialEmergency={aiWizardSeed?.emergency ?? initialFormData.isEmergency ?? descriptionData?.isEmergency}
         followUpQuestions={[]}
         onComplete={handleAiWizardComplete}

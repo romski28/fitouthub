@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-14-e352c75",
+    "date": "2026-05-14T11:56:44+08:00",
+    "title": "fix(ai-wizard): persist followUpQuestions through login handoff",
+    "summary": "fix(ai-wizard): persist followUpQuestions through login handoff",
+    "areas": [
+      "web"
+    ],
+    "commit": "e352c75",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/create-project-handoff.ts"
+    ]
+  },
+  {
     "id": "2026-05-14-713f699",
     "date": "2026-05-14T11:41:30+08:00",
     "title": "feat(create-project): launch AI brief wizard on source=ai and add option3 route plan",
