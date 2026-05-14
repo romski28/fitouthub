@@ -109,7 +109,6 @@ export default function CreateProjectWizardPage() {
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [imageUrlDraft, setImageUrlDraft] = useState('');
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [isBinaryAnswers, setIsBinaryAnswers] = useState<Record<string, boolean>>({});
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -206,12 +205,6 @@ export default function CreateProjectWizardPage() {
     setSiteInspectionAvailableOn(nextSiteInspection);
     setExistingImageUrls(seededPhotos);
     setAnswers({});
-    setIsBinaryAnswers(
-      nextQuestions.reduce<Record<string, boolean>>((acc, question, index) => {
-        acc[`q-${index}`] = /^(is|are|do|does|did|can|could|should|would|will|have|has)\b/i.test(question.trim());
-        return acc;
-      }, {}),
-    );
     setCurrentStep(0);
   }, [seedLoaded, seedDraft, seedDescription, userLocation]);
 
@@ -219,7 +212,7 @@ export default function CreateProjectWizardPage() {
     const list: WizardStep[] = [{ kind: 'title' }, { kind: 'location' }];
     list.push({ kind: 'emergency' });
 
-    followUpQuestions.forEach((question, index) => {
+    followUpQuestions.slice(0, 3).forEach((question, index) => {
       list.push({ kind: 'followup', question, id: `q-${index}` });
     });
 
@@ -405,14 +398,14 @@ export default function CreateProjectWizardPage() {
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
-            <div className="h-[calc(100vh-420px)] min-h-[420px] max-h-[620px] overflow-hidden">
+          <div className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-300/60 bg-white/70">
+            <div className="min-h-[420px]">
               <div
-                className="flex h-full transition-transform duration-500 ease-out"
+                className="flex transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentStep * 100}%)` }}
               >
                 {steps.map((step, index) => (
-                  <div key={`${step.kind}-${index}`} className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5 sm:p-6">
+                  <div key={`${step.kind}-${index}`} className="flex w-full shrink-0 flex-col p-5 sm:p-6">
                     {step.kind === 'title' && (
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>📝</span><span>Shape your project&apos;s story with a great title</span></h3>
@@ -487,28 +480,13 @@ export default function CreateProjectWizardPage() {
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>💡</span><span>Help us understand you better.</span></h3>
                         <p className={panelNoteClass}>{step.question}</p>
-                        {isBinaryAnswers[step.id] ? (
-                          <div className="flex flex-wrap gap-2">
-                            {['Yes', 'No', 'Not sure'].map((choice) => (
-                              <button
-                                key={choice}
-                                type="button"
-                                onClick={() => setAnswers((prev) => ({ ...prev, [step.id]: choice }))}
-                                className={`rounded-full border px-4 py-2.5 text-base font-semibold transition ${answers[step.id] === choice ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-300 bg-white text-slate-700'}`}
-                              >
-                                {choice}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <textarea
-                            value={answers[step.id] || ''}
-                            onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
-                            rows={4}
-                            placeholder="Type your answer..."
-                            className="w-full flex-1 rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
-                          />
-                        )}
+                        <textarea
+                          value={answers[step.id] || ''}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
+                          rows={4}
+                          placeholder="Type your answer..."
+                          className="w-full flex-1 rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                        />
                       </div>
                     )}
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-c6d54df",
+    "date": "2026-05-15T00:20:07+08:00",
+    "title": "Wizard UX polish: cap follow-ups to 3, simplify to text-only answers, remove fixed height constraints",
+    "summary": "Wizard UX polish: cap follow-ups to 3, simplify to text-only answers, remove fixed height constraints",
+    "areas": [
+      "web"
+    ],
+    "commit": "c6d54df",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-becd521",
     "date": "2026-05-14T23:48:50+08:00",
     "title": "refine(ai-wizard): flexible panel body and clean step hydration copy",
