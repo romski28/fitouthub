@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
 import type { CanonicalLocation } from '@/components/location-select';
+import LocationSelect from '@/components/location-select';
 import type { ProjectFormData } from '@/components/project-form';
 import type { Professional } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
@@ -14,6 +15,18 @@ import {
   setProjectDescriptionHandoff,
 } from '@/lib/create-project-handoff';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
+import { API_BASE_URL } from '@/config/api';
+import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
+
+type WizardStep =
+  | { kind: 'title' }
+  | { kind: 'location' }
+  | { kind: 'emergency' }
+  | { kind: 'followup'; question: string; id: string }
+  | { kind: 'scope' }
+  | { kind: 'endDate' }
+  | { kind: 'images' }
+  | { kind: 'review' };
 
 interface ProjectDescriptionData {
   title?: string;
@@ -41,15 +54,36 @@ const normalizeProjectScale = (value?: string | null): 'SCALE_1' | 'SCALE_2' | '
   return undefined;
 };
 
+const normalizeQuestions = (input: unknown): string[] =>
+  Array.isArray(input)
+    ? input
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    : [];
+
 export default function CreateProjectWizardPage() {
   const router = useRouter();
-  const { isLoggedIn, userLocation } = useAuth();
+  const { isLoggedIn, userLocation, accessToken } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
-
   const [seedDraft, setSeedDraft] = useState<CreateProjectDraft | null>(null);
   const [seedDescription, setSeedDescription] = useState<ProjectDescriptionData | null>(null);
   const [seedLoaded, setSeedLoaded] = useState(false);
+
+  const [title, setTitle] = useState('');
+  const [summary, setSummary] = useState('');
+  const [location, setLocation] = useState<CanonicalLocation>({});
+  const [isEmergency, setIsEmergency] = useState<boolean | null>(null);
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [endDate, setEndDate] = useState('');
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [imageUrlDraft, setImageUrlDraft] = useState('');
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     setHydrated(true);
@@ -115,85 +149,138 @@ export default function CreateProjectWizardPage() {
     setSeedLoaded(true);
   }, [hydrated, isLoggedIn, router]);
 
-  const wizardSeed = useMemo(() => {
-    if (!seedLoaded) return null;
+  useEffect(() => {
+    if (!seedLoaded) return;
 
-    const title =
-      seedDraft?.initialData?.projectName ||
-      seedDescription?.title ||
-      '';
+    const nextTitle = seedDraft?.initialData?.projectName || seedDescription?.title || '';
+    const nextSummary = seedDescription?.description || seedDraft?.initialData?.notes || '';
+    const nextLocation = seedDraft?.initialData?.location || seedDescription?.location || userLocation || {};
+    const nextEmergency = seedDraft?.initialData?.isEmergency ?? seedDescription?.isEmergency ?? null;
+    const nextQuestions = normalizeQuestions(seedDescription?.followUpQuestions || seedDraft?.followUpQuestions || []);
+    const nextEndDate = seedDraft?.initialData?.endDate || '';
+    const seededPhotos = Array.isArray(seedDraft?.initialData?.photoUrls)
+      ? seedDraft.initialData.photoUrls.filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
+      : [];
 
-    const summary =
-      seedDescription?.description ||
-      seedDraft?.initialData?.notes ||
-      '';
+    setTitle(nextTitle);
+    setSummary(nextSummary);
+    setLocation(nextLocation);
+    setIsEmergency(typeof nextEmergency === 'boolean' ? nextEmergency : null);
+    setFollowUpQuestions(nextQuestions);
+    setEndDate(nextEndDate);
+    setExistingImageUrls(seededPhotos);
+    setAnswers({});
+    setCurrentStep(0);
+  }, [seedLoaded, seedDraft, seedDescription, userLocation]);
 
-    const scope =
-      seedDraft?.initialData?.notes ||
-      seedDescription?.description ||
-      '';
+  const steps = useMemo<WizardStep[]>(() => {
+    const list: WizardStep[] = [{ kind: 'title' }];
 
-    const assumptions = seedDraft?.initialData?.aiFrom?.assumptions || [];
+    const hasLocation = Boolean(location.primary || location.secondary || location.tertiary);
+    if (!hasLocation) list.push({ kind: 'location' });
 
-    const location = seedDraft?.initialData?.location || seedDescription?.location;
+    list.push({ kind: 'emergency' });
 
-    const emergency = seedDraft?.initialData?.isEmergency ?? seedDescription?.isEmergency;
+    followUpQuestions.forEach((question, index) => {
+      list.push({ kind: 'followup', question, id: `q-${index}` });
+    });
 
-    const followUpQuestions = (
-      seedDescription?.followUpQuestions ||
-      seedDraft?.followUpQuestions ||
-      []
-    )
-      .filter((q): q is string => typeof q === 'string')
-      .map((q) => q.trim())
-      .filter((q) => q.length > 0);
+    list.push({ kind: 'scope' });
+    list.push({ kind: 'endDate' });
+    list.push({ kind: 'images' });
+    list.push({ kind: 'review' });
 
-    if (!title && !summary && !scope && followUpQuestions.length === 0) return null;
+    return list;
+  }, [followUpQuestions, location.primary, location.secondary, location.tertiary]);
 
-    return {
-      title,
-      summary,
-      scope,
-      assumptions,
-      location,
-      emergency,
-      followUpQuestions,
-    };
-  }, [seedLoaded, seedDraft, seedDescription]);
+  const activeStep = steps[currentStep];
+  const canGoNext = useMemo(() => {
+    if (!activeStep) return false;
+    if (activeStep.kind === 'title') return title.trim().length > 0;
+    if (activeStep.kind === 'location') return Boolean(location.primary || location.secondary || location.tertiary);
+    if (activeStep.kind === 'emergency') return isEmergency !== null;
+    if (activeStep.kind === 'followup') return (answers[activeStep.id] || '').trim().length > 0;
+    if (activeStep.kind === 'scope') return summary.trim().length > 0;
+    return true;
+  }, [activeStep, title, location.primary, location.secondary, location.tertiary, isEmergency, answers, summary]);
 
-  const handleComplete = (payload: {
-    title: string;
-    summary: string;
-    location: CanonicalLocation;
-    isEmergency: boolean;
-    followUpAnswers: Array<{ question: string; answer: string }>;
-  }) => {
-    const followUpBlock = (payload.followUpAnswers || [])
-      .map((item) => ({
-        question: (item.question || '').trim(),
-        answer: (item.answer || '').trim(),
-      }))
-      .filter((item) => item.question.length > 0 && item.answer.length > 0)
-      .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
+  const progress = steps.length > 0 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
+
+  const goNext = () => {
+    if (!canGoNext) return;
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+  };
+
+  const goBack = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
+
+  const addImageUrl = () => {
+    const normalized = imageUrlDraft.trim();
+    if (!normalized) return;
+    if (!/^https?:\/\//i.test(normalized)) return;
+    setExistingImageUrls((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
+    setImageUrlDraft('');
+  };
+
+  const removeImageUrl = (url: string) => {
+    setExistingImageUrls((prev) => prev.filter((item) => item !== url));
+  };
+
+  const uploadImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const pending = Array.from(files);
+
+    setIsUploadingImages(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      pending.forEach((file) => formData.append('files', file));
+      const response = await fetch(`${API_BASE_URL}/uploads`, {
+        method: 'POST',
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        body: formData,
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.message || `Image upload failed (${response.status})`);
+      }
+      const uploadedUrls = getUploadResponseKeys(payload);
+      if (uploadedUrls.length > 0) {
+        setExistingImageUrls((prev) => Array.from(new Set([...prev, ...uploadedUrls])));
+      }
+    } catch (error) {
+      setUploadError((error as Error).message || 'Failed to upload images');
+    } finally {
+      setIsUploadingImages(false);
+    }
+  };
+
+  const submitWizard = () => {
+    const followUpBlock = followUpQuestions
+      .map((question, index) => {
+        const answer = (answers[`q-${index}`] || '').trim();
+        if (!answer) return null;
+        return `Q: ${question}\nA: ${answer}`;
+      })
+      .filter((item): item is string => Boolean(item))
       .join('\n\n');
 
     const mergedSummary = [
-      (payload.summary || '').trim(),
+      summary.trim(),
       followUpBlock ? `Additional Questions & Answers:\n${followUpBlock}` : '',
     ].filter(Boolean).join('\n\n');
 
-    const resolvedRegion = [payload.location.secondary, payload.location.primary]
+    const resolvedRegion = [location.secondary, location.primary]
       .filter((item): item is string => Boolean(item && item.trim()))
       .join(', ');
 
     const nextDraft: CreateProjectDraft = {
       initialData: {
         ...(seedDraft?.initialData || {}),
-        projectName: payload.title || seedDraft?.initialData?.projectName || '',
-        notes: mergedSummary || seedDraft?.initialData?.notes || '',
-        location: payload.location,
+        projectName: title.trim(),
+        notes: mergedSummary,
+        location,
         region: resolvedRegion || seedDraft?.initialData?.region || '',
-        isEmergency: payload.isEmergency,
+        isEmergency: Boolean(isEmergency),
         projectScale:
           normalizeProjectScale(seedDraft?.initialData?.projectScale) ||
           normalizeProjectScale(seedDescription?.projectScale) ||
@@ -202,10 +289,12 @@ export default function CreateProjectWizardPage() {
           seedDraft?.initialData?.tradesRequired ||
           seedDescription?.tradesRequired ||
           [],
+        endDate: endDate || undefined,
+        photoUrls: existingImageUrls,
       },
       selectedProfessionals: seedDraft?.selectedProfessionals || [],
       aiIntakeId: seedDraft?.aiIntakeId,
-      followUpQuestions: wizardSeed?.followUpQuestions || [],
+      followUpQuestions,
     };
 
     writeCreateProjectDraftSafely(nextDraft);
@@ -219,7 +308,7 @@ export default function CreateProjectWizardPage() {
       profession: nextDraft.initialData?.tradesRequired?.[0],
       location: nextDraft.initialData?.location,
       tradesRequired: nextDraft.initialData?.tradesRequired || [],
-      followUpQuestions: wizardSeed?.followUpQuestions || [],
+      followUpQuestions,
     };
 
     setProjectDescriptionHandoff(nextDescription);
@@ -246,29 +335,219 @@ export default function CreateProjectWizardPage() {
       <section className="-mx-6 px-6">
         <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Let’s frame your project before publishing</h1>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Let&apos;s frame your project before publishing</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-700 sm:text-base">
-            We will confirm title, location, urgency, and follow-up details, then move you to final project review.
+            Sliding wizard flow: confirm title, answers, end date, and images before final review.
           </p>
         </div>
       </section>
 
-      <AiProjectBriefModal
-        key={`${wizardSeed?.title || 'wizard'}-${(wizardSeed?.followUpQuestions || []).join('|')}`}
-        isOpen={Boolean(wizardSeed)}
-        onClose={() => router.push('/')}
-        initialTitle={wizardSeed?.title || ''}
-        initialSummary={wizardSeed?.summary || ''}
-        initialScope={wizardSeed?.scope || ''}
-        initialAssumptions={wizardSeed?.assumptions || []}
-        initialLocation={wizardSeed?.location}
-        fallbackLocation={userLocation}
-        initialEmergency={wizardSeed?.emergency}
-        followUpQuestions={wizardSeed?.followUpQuestions || []}
-        onComplete={handleComplete}
-      />
+      <section className="-mx-6 mt-6 px-6">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+              Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
+            </p>
+            <p className="text-sm font-semibold text-slate-700">{progress}% complete</p>
+          </div>
+          <div className="mb-5 h-2 overflow-hidden rounded-full bg-white/70">
+            <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+          </div>
 
-      {seedLoaded && !wizardSeed && (
+          <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
+            <div className="h-[calc(100vh-360px)] min-h-[430px] max-h-[620px] overflow-hidden">
+              <div
+                className="flex h-full transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${currentStep * 100}%)` }}
+              >
+                {steps.map((step, index) => (
+                  <div key={`${step.kind}-${index}`} className="h-full w-full shrink-0 overflow-y-auto p-5 sm:p-6">
+                    {step.kind === 'title' && (
+                      <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900">Project title</h2>
+                        <p className="text-sm text-slate-700">Give your project a clear, client-facing title.</p>
+                        <input
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          placeholder="e.g. Front room smart-home renovation"
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {step.kind === 'location' && (
+                      <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900">Project location</h2>
+                        <p className="text-sm text-slate-700">Where will the works take place?</p>
+                        <LocationSelect value={location} onChange={setLocation} />
+                      </div>
+                    )}
+
+                    {step.kind === 'emergency' && (
+                      <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900">Urgency</h2>
+                        <p className="text-sm text-slate-700">Does this need immediate attention?</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setIsEmergency(false)}
+                            className={`rounded-lg border px-4 py-3 text-left ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
+                          >
+                            <p className="font-semibold text-slate-900">Standard</p>
+                            <p className="text-xs text-slate-600">Normal project timing</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsEmergency(true)}
+                            className={`rounded-lg border px-4 py-3 text-left ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
+                          >
+                            <p className="font-semibold text-slate-900">Emergency</p>
+                            <p className="text-xs text-slate-600">Prioritize urgent response</p>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {step.kind === 'followup' && (
+                      <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900">Follow-up detail</h2>
+                        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800">{step.question}</p>
+                        <textarea
+                          value={answers[step.id] || ''}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
+                          rows={4}
+                          placeholder="Type your answer..."
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {step.kind === 'scope' && (
+                      <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900">Project scope summary</h2>
+                        <p className="text-sm text-slate-700">Describe the work package in a concise way.</p>
+                        <textarea
+                          value={summary}
+                          onChange={(e) => setSummary(e.target.value)}
+                          rows={6}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {step.kind === 'endDate' && (
+                      <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900">Preferred end date</h2>
+                        <p className="text-sm text-slate-700">Optional but useful for scheduling and matching.</p>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {step.kind === 'images' && (
+                      <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900">Image collection</h2>
+                        <p className="text-sm text-slate-700">Add images from initial AI prompt and upload more for contractors.</p>
+
+                        <div className="flex gap-2">
+                          <input
+                            value={imageUrlDraft}
+                            onChange={(e) => setImageUrlDraft(e.target.value)}
+                            placeholder="https://..."
+                            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                          />
+                          <button type="button" onClick={addImageUrl} className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Add URL</button>
+                        </div>
+
+                        <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                          {isUploadingImages ? 'Uploading...' : 'Upload images'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => uploadImages(e.target.files)}
+                            disabled={isUploadingImages}
+                          />
+                        </label>
+
+                        {uploadError && <p className="text-sm text-rose-700">{uploadError}</p>}
+
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                          {existingImageUrls.map((url) => (
+                            <div key={url} className="rounded-lg border border-slate-200 bg-white p-2">
+                              <div className="relative h-24 overflow-hidden rounded">
+                                <Image src={resolveMediaAssetUrl(url)} alt="Project image" fill className="object-cover" unoptimized />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeImageUrl(url)}
+                                className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {step.kind === 'review' && (
+                      <div className="space-y-3">
+                        <h2 className="text-xl font-bold text-slate-900">Review and continue</h2>
+                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
+                          <p><span className="font-semibold">Title:</span> {title || 'N/A'}</p>
+                          <p><span className="font-semibold">Urgency:</span> {isEmergency ? 'Emergency' : 'Standard'}</p>
+                          <p><span className="font-semibold">Preferred end date:</span> {endDate || 'Not set'}</p>
+                          <p><span className="font-semibold">Images:</span> {existingImageUrls.length}</p>
+                          <p className="mt-2 whitespace-pre-wrap"><span className="font-semibold">Summary:</span> {summary || 'N/A'}</p>
+                        </div>
+                        <p className="text-sm text-slate-600">Next you&apos;ll go to final create-project review and submit.</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white/60 p-4">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={currentStep === 0}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-50"
+              >
+                Back
+              </button>
+
+              {currentStep < steps.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={!canGoNext}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={submitWizard}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                >
+                  Continue to Create Project
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {seedLoaded && !title && !summary && followUpQuestions.length === 0 && (
         <section className="-mx-6 mt-6 px-6">
           <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
             <p className="text-sm text-slate-800">No AI wizard data was found. Start from the home AI panel and try again.</p>

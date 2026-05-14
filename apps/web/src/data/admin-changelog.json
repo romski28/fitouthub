@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-14-24167ef",
+    "date": "2026-05-14T22:14:32+08:00",
+    "title": "feat(ai-wizard): replace modal with full-page sliding panels + end date and image steps",
+    "summary": "feat(ai-wizard): replace modal with full-page sliding panels + end date and image steps",
+    "areas": [
+      "web"
+    ],
+    "commit": "24167ef",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-b621763",
     "date": "2026-05-14T21:58:35+08:00",
     "title": "feat(ai-wizard): add dedicated /create-project/wizard route and rewire AI entry flow",

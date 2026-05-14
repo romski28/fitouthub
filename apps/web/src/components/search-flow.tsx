@@ -730,6 +730,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         tradesRequired: selectedTrades,
         region: resolvedRegion,
         location: payload.location,
+        photoUrls: initialAiImageUrls,
         isEmergency: payload.isEmergency,
         aiFrom: {
           assumptions: aiStructured.assumptions,
@@ -998,6 +999,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         tradesRequired: selectedTrades,
         region: resolvedRegion,
         location,
+        photoUrls: initialAiImageUrls,
         isEmergency: Boolean(
           aiStructured.safetyAssessment?.shouldEscalateEmergency ||
           aiStructured.safetyAssessment?.isDangerous ||
@@ -1037,7 +1039,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
 
     return true;
-  }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, userLocation]);
+  }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation]);
 
   const handleOpenAiWizardRoute = useCallback(() => {
     const persisted = persistAiWizardHandoffForAuth();
