@@ -1640,13 +1640,18 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           p.project.projectScale === 'SCALE_3')
           ? p.project.projectScale
           : null;
-      const normalizedFollowUpQuestions = [
-        p?.nextQuestions,
-        p?.followUpQuestions,
-        p?.missingInfo,
-      ]
-        .find((candidate) => Array.isArray(candidate))
-        ?.filter((item): item is string => typeof item === 'string' && item.trim().length > 0) || [];
+      const normalizedFollowUpQuestions = Array.from(
+        new Set(
+          [
+            ...(Array.isArray(p?.nextQuestions) ? p.nextQuestions : []),
+            ...(Array.isArray(p?.followUpQuestions) ? p.followUpQuestions : []),
+            ...(Array.isArray(p?.missingInfo) ? p.missingInfo : []),
+          ]
+            .filter((item): item is string => typeof item === 'string')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0),
+        ),
+      );
       setAiStructured({
         intakeId: payload.intakeId ?? null,
         projectScale:

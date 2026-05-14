@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-14-3359bd9",
+    "date": "2026-05-14T17:32:13+08:00",
+    "title": "fix(ai): merge question arrays so empty nextQuestions doesn't drop follow-up prompts",
+    "summary": "fix(ai): merge question arrays so empty nextQuestions doesn't drop follow-up prompts",
+    "areas": [
+      "web"
+    ],
+    "commit": "3359bd9",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-c241e36",
     "date": "2026-05-14T13:09:57+08:00",
     "title": "fix(ai-wizard): persist follow-up questions across all handoff paths",
