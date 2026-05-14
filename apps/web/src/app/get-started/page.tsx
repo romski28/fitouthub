@@ -119,6 +119,20 @@ export default function GetStartedPage() {
     agreeToSecurity: false,
   });
 
+  const consumePostLoginRedirect = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const redirect = sessionStorage.getItem('postLoginRedirect');
+      if (redirect) {
+        sessionStorage.removeItem('postLoginRedirect');
+        return redirect;
+      }
+    } catch {
+      // Ignore storage failures
+    }
+    return null;
+  };
+
   const totalSteps = role ? stepsByRole[role].length : 0;
   const progressPercent = role ? ((step + 1) / totalSteps) * 100 : 0;
   const canRenderGoogle = role && step === 0;
@@ -487,7 +501,7 @@ export default function GetStartedPage() {
       if (pendingOtp.role === 'client') {
         if (!pendingOtp.password) throw new Error('Missing password for login.');
         await clientLogin(pendingOtp.email, pendingOtp.password);
-        router.push('/projects');
+        router.push(consumePostLoginRedirect() || '/projects');
       } else {
         if (!pendingOtp.password) throw new Error('Missing password for login.');
         await professionalLogin(pendingOtp.email, pendingOtp.password);

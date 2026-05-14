@@ -100,6 +100,20 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
   const commonT = useTranslations('common');
   const { openLoginModal } = useAuthModalControl();
   const { login } = useAuth();
+
+  const consumePostLoginRedirect = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const redirect = sessionStorage.getItem('postLoginRedirect');
+      if (redirect) {
+        sessionStorage.removeItem('postLoginRedirect');
+        return redirect;
+      }
+    } catch {
+      // Ignore storage failures
+    }
+    return null;
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -164,7 +178,7 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
       if (data?.otpRequired) {
         setPendingVerificationEmail(formData.email);
       } else {
-        router.push('/projects');
+        router.push(consumePostLoginRedirect() || '/projects');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.registrationFailed'));
@@ -196,7 +210,7 @@ function ClientSignupFlow({ onBack }: { onBack: () => void }) {
 
       await response.json();
       await login(pendingVerificationEmail, formData.password);
-      router.push('/projects');
+      router.push(consumePostLoginRedirect() || '/projects');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to verify OTP');
     } finally {

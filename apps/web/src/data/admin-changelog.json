@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-14-d5ca23d",
+    "date": "2026-05-14T11:02:40+08:00",
+    "title": "fix(auth-flow): resume AI users into create-project wizard after join/login",
+    "summary": "fix(auth-flow): resume AI users into create-project wizard after join/login",
+    "areas": [
+      "web"
+    ],
+    "commit": "d5ca23d",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/app/join/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-13-196f269",
     "date": "2026-05-13T21:05:48+08:00",
     "title": "fix(chat): prevent double-send on image uploads and set sending state immediately",

@@ -957,15 +957,97 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
   }, [leadName, leadEmail, leadMobile]);
 
-  const handleGuestJoin = useCallback(() => {
+  const persistAiWizardHandoffForAuth = useCallback(() => {
+    if (!aiStructured) return false;
+
+    const selectedTrades = activeTrades.length > 0 ? activeTrades : aiStructured.trades;
+    const assumptions = (aiStructured.assumptions || [])
+      .map((item) => (item || '').trim())
+      .filter((item) => item.length > 0);
+    const baseSummary = (
+      aiStructured.scope ||
+      aiStructured.summary ||
+      aiConversationalText ||
+      initialAiPrompt ||
+      ''
+    ).trim();
+    const notes = [
+      baseSummary ? `Summary:\n${baseSummary}` : '',
+      assumptions.length > 0 ? `Assumptions:\n${assumptions.map((item) => `- ${item}`).join('\n')}` : '',
+    ].filter(Boolean).join('\n\n');
+
+    const location = aiStructured.locationPrimary
+      ? {
+          primary: aiStructured.locationPrimary,
+          secondary: aiStructured.locationSecondary || undefined,
+        }
+      : userLocation;
+
+    const resolvedRegion = [location.secondary, location.primary]
+      .filter((item): item is string => Boolean(item && item.trim()))
+      .join(', ');
+
+    const aiDraft = {
+      initialData: {
+        projectName: (aiStructured.title || aiStructured.summary || initialAiPrompt || 'AI project').slice(0, 180),
+        notes: (notes || baseSummary || initialAiPrompt || '').slice(0, 5000),
+        projectScale: aiStructured.projectScale || undefined,
+        tradesRequired: selectedTrades,
+        region: resolvedRegion,
+        location,
+        isEmergency: Boolean(
+          aiStructured.safetyAssessment?.shouldEscalateEmergency ||
+          aiStructured.safetyAssessment?.isDangerous ||
+          ['high', 'critical'].includes(String(aiStructured.safetyAssessment?.riskLevel || '').toLowerCase()),
+        ),
+      },
+      ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
+    };
+
+    writeCreateProjectDraftSafely(aiDraft);
+    setCreateProjectDraftHandoff(aiDraft);
+
+    const projectDescriptionPayload = {
+      title: aiDraft.initialData.projectName || '',
+      description: aiDraft.initialData.notes || '',
+      projectScale: aiDraft.initialData.projectScale,
+      isEmergency: Boolean(aiDraft.initialData.isEmergency),
+      profession: aiDraft.initialData.tradesRequired?.[0],
+      location: aiDraft.initialData.location,
+      tradesRequired: aiDraft.initialData.tradesRequired || [],
+    };
+
+    setProjectDescriptionHandoff(projectDescriptionPayload);
     try {
-      sessionStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search);
+      sessionStorage.setItem('projectDescription', JSON.stringify(projectDescriptionPayload));
+    } catch {
+      // Ignore storage failures; createProjectDraft is primary handoff.
+    }
+
+    return true;
+  }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, userLocation]);
+
+  const handleGuestJoin = useCallback(() => {
+    persistAiWizardHandoffForAuth();
+    try {
+      sessionStorage.setItem('postLoginRedirect', '/create-project?source=ai');
     } catch {
       // Ignore storage failures
     }
     setShowConsultChoiceModal(false);
     openJoinModal();
-  }, [openJoinModal]);
+  }, [openJoinModal, persistAiWizardHandoffForAuth]);
+
+  const handleGuestLogin = useCallback(() => {
+    persistAiWizardHandoffForAuth();
+    try {
+      sessionStorage.setItem('postLoginRedirect', '/create-project?source=ai');
+    } catch {
+      // Ignore storage failures
+    }
+    setShowConsultChoiceModal(false);
+    openLoginModal();
+  }, [openLoginModal, persistAiWizardHandoffForAuth]);
 
   const submitAssistFromGuest = useCallback(async (assistConfig: AssistRequestModalSubmit) => {
     if (!aiStructured) {
@@ -1853,14 +1935,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             <>
               <button
                 type="button"
-                onClick={openJoinModal}
+                onClick={handleGuestJoin}
                 className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
               >
                 Join to Continue
               </button>
               <button
                 type="button"
-                onClick={openLoginModal}
+                onClick={handleGuestLogin}
                 className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
               >
                 Login
@@ -1941,8 +2023,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               <button
                 type="button"
                 onClick={() => {
-                  setShowConsultChoiceModal(false);
-                  openLoginModal();
+                  handleGuestLogin();
                 }}
                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
               >
@@ -2179,9 +2260,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       {isLoggedIn === false && !isAdminTester && !aiConversationalText && (
         <div className="text-center pt-2">
           <p className="text-xs text-slate-500">
-            <button onClick={openLoginModal} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">Login</button>
+            <button onClick={handleGuestLogin} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">Login</button>
             {' or '}
-            <button onClick={openJoinModal} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">Join Now</button>
+            <button onClick={handleGuestJoin} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">Join Now</button>
             {' for the best experience'}
           </p>
         </div>
