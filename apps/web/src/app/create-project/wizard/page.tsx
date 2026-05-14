@@ -66,6 +66,9 @@ const normalizeQuestions = (input: unknown): string[] =>
         .filter((item) => item.length > 0)
     : [];
 
+const mergeQuestions = (...inputs: unknown[]): string[] =>
+  Array.from(new Set(inputs.flatMap((input) => normalizeQuestions(input))));
+
 const MOTIVATION = [
   'Nice! Let\'s build this in under a minute.',
   'You\'re on fire, one quick step at a time.',
@@ -153,6 +156,10 @@ export default function CreateProjectWizardPage() {
       ? {
           ...(parsedStoredDescription || {}),
           ...(memoryDescription || {}),
+          followUpQuestions: mergeQuestions(
+            parsedStoredDescription?.followUpQuestions,
+            memoryDescription?.followUpQuestions,
+          ),
         }
       : null;
 
@@ -168,7 +175,7 @@ export default function CreateProjectWizardPage() {
     const nextSummary = seedDescription?.description || seedDraft?.initialData?.notes || '';
     const nextLocation = seedDraft?.initialData?.location || seedDescription?.location || userLocation || {};
     const nextEmergency = seedDraft?.initialData?.isEmergency ?? seedDescription?.isEmergency ?? null;
-    const nextQuestions = normalizeQuestions(seedDescription?.followUpQuestions || seedDraft?.followUpQuestions || []);
+    const nextQuestions = mergeQuestions(seedDescription?.followUpQuestions, seedDraft?.followUpQuestions);
     const nextEndDate = seedDraft?.initialData?.endDate || '';
     const nextSiteInspection = seedDraft?.initialData?.siteInspectionAvailableOn || '';
     const seededPhotos = Array.isArray(seedDraft?.initialData?.photoUrls)

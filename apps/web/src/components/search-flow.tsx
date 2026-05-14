@@ -60,6 +60,48 @@ interface AiStructured {
   overallConfidence: number | null;
 }
 
+const normalizeQuestionList = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    : [];
+
+const extractFollowUpQuestionsFromOutput = (rawOutput: string | null | undefined): string[] => {
+  if (typeof rawOutput !== 'string') return [];
+  const trimmed = rawOutput.trim();
+  if (!trimmed.startsWith('{')) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    const parsedOutput =
+      parsed.parsedOutput && typeof parsed.parsedOutput === 'object' && !Array.isArray(parsed.parsedOutput)
+        ? (parsed.parsedOutput as Record<string, unknown>)
+        : null;
+    const contractDocumentation =
+      parsed.contractDocumentation && typeof parsed.contractDocumentation === 'object' && !Array.isArray(parsed.contractDocumentation)
+        ? (parsed.contractDocumentation as Record<string, unknown>)
+        : null;
+
+    return Array.from(
+      new Set([
+        ...normalizeQuestionList(parsed.nextQuestions),
+        ...normalizeQuestionList(parsed.followUpQuestions),
+        ...normalizeQuestionList(parsed.missingInfo),
+        ...normalizeQuestionList(parsedOutput?.nextQuestions),
+        ...normalizeQuestionList(parsedOutput?.followUpQuestions),
+        ...normalizeQuestionList(parsedOutput?.missingInfo),
+        ...normalizeQuestionList(contractDocumentation?.nextQuestions),
+        ...normalizeQuestionList(contractDocumentation?.followUpQuestions),
+        ...normalizeQuestionList(contractDocumentation?.missingInfo),
+      ]),
+    );
+  } catch {
+    return [];
+  }
+};
+
 function ThinkingIndicator() {
   const phases = ['Reading your request', 'Mapping trades and location', 'Structuring project requirements'];
   const [phaseIndex, setPhaseIndex] = useState(0);
@@ -991,6 +1033,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       .filter((item): item is string => Boolean(item && item.trim()))
       .join(', ');
 
+    const followUpQuestions = Array.from(
+      new Set([
+        ...normalizeQuestionList(aiStructured.nextQuestions),
+        ...extractFollowUpQuestionsFromOutput(aiOutput),
+      ]),
+    );
+
     const aiDraft = {
       initialData: {
         projectName: (aiStructured.title || aiStructured.summary || initialAiPrompt || 'AI project').slice(0, 180),
@@ -1007,7 +1056,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         ),
       },
       ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
-      followUpQuestions: (aiStructured.nextQuestions || []).filter((q) => q.trim().length > 0),
+      followUpQuestions,
     };
 
     writeCreateProjectDraftSafely(aiDraft);
@@ -1021,13 +1070,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       profession: aiDraft.initialData.tradesRequired?.[0],
       location: aiDraft.initialData.location,
       tradesRequired: aiDraft.initialData.tradesRequired || [],
-      followUpQuestions: (aiStructured.nextQuestions || []).filter((q: string) => typeof q === 'string' && q.trim().length > 0),
+      followUpQuestions,
     };
 
     console.log('[PERSIST-HANDOFF] Storing AI wizard handoff:', {
       projectName: aiDraft.initialData.projectName,
       aiStructuredTitle: aiStructured?.title,
       nextQuestions: aiStructured?.nextQuestions,
+      mergedFollowUpQuestions: followUpQuestions,
       payload: projectDescriptionPayload,
     });
 
@@ -1039,7 +1089,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
 
     return true;
-  }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation]);
+  }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation, aiOutput]);
 
   const handleOpenAiWizardRoute = useCallback(() => {
     const persisted = persistAiWizardHandoffForAuth();
