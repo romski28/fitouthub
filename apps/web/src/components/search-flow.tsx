@@ -1015,7 +1015,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       profession: aiDraft.initialData.tradesRequired?.[0],
       location: aiDraft.initialData.location,
       tradesRequired: aiDraft.initialData.tradesRequired || [],
-      followUpQuestions: aiStructured.nextQuestions || [],
+      followUpQuestions: (aiStructured.nextQuestions || []).filter((q: string) => typeof q === 'string' && q.trim().length > 0),
     };
 
     console.log('[PERSIST-HANDOFF] Storing AI wizard handoff:', {

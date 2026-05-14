@@ -201,7 +201,7 @@ export default function CreateProjectPage() {
         const seedAssumptions = mergedDraft?.initialData?.aiFrom?.assumptions || [];
         const seedLocation = mergedDraft?.initialData?.location || parsedDescriptionForDebug?.location;
         const seedEmergency = mergedDraft?.initialData?.isEmergency ?? parsedDescriptionForDebug?.isEmergency;
-        const seedFollowUpQuestions = parsedDescriptionForDebug?.followUpQuestions || [];
+        const seedFollowUpQuestions = (parsedDescriptionForDebug?.followUpQuestions || []).filter((q: string) => typeof q === 'string' && q.trim().length > 0);
 
         console.log('[AI-WIZARD-SEED] Setting wizard seed:', {
           seedTitle,

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-14-7e82d0b",
+    "date": "2026-05-14T12:56:26+08:00",
+    "title": "fix(ai-wizard): filter empty strings from follow-up questions array",
+    "summary": "fix(ai-wizard): filter empty strings from follow-up questions array",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "7e82d0b",
+    "files": [
+      "apply_followup_fix.py",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-3e3e56d",
     "date": "2026-05-14T12:31:52+08:00",
     "title": "fix(ai-wizard): rehydrate modal props and remove 3-question cap",
