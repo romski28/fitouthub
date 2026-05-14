@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { CanonicalLocation } from '@/components/location-select';
 import LocationSelect from '@/components/location-select';
+import { HkDistrictList } from '@/components/hk-district-list';
+import { HkDistrictMap } from '@/components/hk-district-map';
+import { MapOrList } from '@/components/map-or-list';
 import type { ProjectFormData } from '@/components/project-form';
 import type { Professional } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
@@ -17,6 +20,7 @@ import {
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { API_BASE_URL } from '@/config/api';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
+import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 
 type WizardStep =
   | { kind: 'title' }
@@ -62,6 +66,13 @@ const normalizeQuestions = (input: unknown): string[] =>
         .filter((item) => item.length > 0)
     : [];
 
+const MOTIVATION = [
+  'Nice! Let’s build this in under a minute.',
+  'You’re on fire, one quick step at a time.',
+  'Looking great. This is coming together.',
+  'Final stretch, let’s launch this.',
+];
+
 export default function CreateProjectWizardPage() {
   const router = useRouter();
   const { isLoggedIn, userLocation, accessToken } = useAuth();
@@ -78,6 +89,7 @@ export default function CreateProjectWizardPage() {
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [endDate, setEndDate] = useState('');
+  const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState('');
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [imageUrlDraft, setImageUrlDraft] = useState('');
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -158,6 +170,7 @@ export default function CreateProjectWizardPage() {
     const nextEmergency = seedDraft?.initialData?.isEmergency ?? seedDescription?.isEmergency ?? null;
     const nextQuestions = normalizeQuestions(seedDescription?.followUpQuestions || seedDraft?.followUpQuestions || []);
     const nextEndDate = seedDraft?.initialData?.endDate || '';
+    const nextSiteInspection = seedDraft?.initialData?.siteInspectionAvailableOn || '';
     const seededPhotos = Array.isArray(seedDraft?.initialData?.photoUrls)
       ? seedDraft.initialData.photoUrls.filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
       : [];
@@ -168,6 +181,7 @@ export default function CreateProjectWizardPage() {
     setIsEmergency(typeof nextEmergency === 'boolean' ? nextEmergency : null);
     setFollowUpQuestions(nextQuestions);
     setEndDate(nextEndDate);
+    setSiteInspectionAvailableOn(nextSiteInspection);
     setExistingImageUrls(seededPhotos);
     setAnswers({});
     setCurrentStep(0);
@@ -194,6 +208,20 @@ export default function CreateProjectWizardPage() {
   }, [followUpQuestions, location.primary, location.secondary, location.tertiary]);
 
   const activeStep = steps[currentStep];
+  const currentMotivation = MOTIVATION[Math.min(currentStep, MOTIVATION.length - 1)] || MOTIVATION[MOTIVATION.length - 1];
+  const selectedProjectAreaCode = useMemo(
+    () => deriveProjectAreaCodeFromLocation(location),
+    [location],
+  );
+
+  const handleProjectMapSelection = (codes: string[]) => {
+    const nextCode = codes[0];
+    setLocation((nextCode ? areaCodeToCanonicalLocation(nextCode) : {}) as CanonicalLocation);
+  };
+
+  const seedAssumptions = seedDraft?.initialData?.aiFrom?.assumptions || [];
+  const seedSummary = (seedDescription?.description || '').trim();
+  const seedScope = (seedDraft?.initialData?.notes || '').trim();
   const canGoNext = useMemo(() => {
     if (!activeStep) return false;
     if (activeStep.kind === 'title') return title.trim().length > 0;
@@ -290,6 +318,7 @@ export default function CreateProjectWizardPage() {
           seedDescription?.tradesRequired ||
           [],
         endDate: endDate || undefined,
+        siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
         photoUrls: existingImageUrls,
       },
       selectedProfessionals: seedDraft?.selectedProfessionals || [],
@@ -337,7 +366,7 @@ export default function CreateProjectWizardPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>
           <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Let&apos;s frame your project before publishing</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-700 sm:text-base">
-            Sliding wizard flow: confirm title, answers, end date, and images before final review.
+            Sliding wizard flow: confirm title, map location, urgency, answers, end date, and images before final review.
           </p>
         </div>
       </section>
@@ -350,12 +379,13 @@ export default function CreateProjectWizardPage() {
             </p>
             <p className="text-sm font-semibold text-slate-700">{progress}% complete</p>
           </div>
+          <p className="mb-4 text-sm text-slate-700">{currentMotivation}</p>
           <div className="mb-5 h-2 overflow-hidden rounded-full bg-white/70">
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
           <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
-            <div className="h-[calc(100vh-360px)] min-h-[430px] max-h-[620px] overflow-hidden">
+            <div className="h-[calc(100vh-460px)] min-h-[360px] max-h-[520px] overflow-hidden">
               <div
                 className="flex h-full transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentStep * 100}%)` }}
@@ -364,12 +394,35 @@ export default function CreateProjectWizardPage() {
                   <div key={`${step.kind}-${index}`} className="h-full w-full shrink-0 overflow-y-auto p-5 sm:p-6">
                     {step.kind === 'title' && (
                       <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">Project title</h2>
-                        <p className="text-sm text-slate-700">Give your project a clear, client-facing title.</p>
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-slate-700">
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Mini brief</p>
+                          <div className="mt-1 space-y-2">
+                            {seedSummary && (
+                              <p><span className="font-semibold text-slate-900">Summary:</span> {seedSummary}</p>
+                            )}
+                            {seedScope && (
+                              <p><span className="font-semibold text-slate-900">Scope:</span> {seedScope}</p>
+                            )}
+                            {seedAssumptions.length > 0 && (
+                              <div>
+                                <p className="font-semibold text-slate-900">Assumptions:</p>
+                                <ul className="mt-1 list-disc space-y-1 pl-5">
+                                  {seedAssumptions.slice(0, 3).map((assumption, assumptionIndex) => (
+                                    <li key={`assumption-${assumptionIndex}`}>{assumption}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {!seedSummary && !seedScope && seedAssumptions.length === 0 && (
+                              <p>We extracted your project details from the prompt.</p>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm font-semibold text-slate-900">📝 Shall we call this project…</p>
                         <input
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
-                          placeholder="e.g. Front room smart-home renovation"
+                          placeholder="e.g. Bathroom leak repair"
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                         />
                       </div>
@@ -377,16 +430,39 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'location' && (
                       <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">Project location</h2>
-                        <p className="text-sm text-slate-700">Where will the works take place?</p>
-                        <LocationSelect value={location} onChange={setLocation} />
+                        <p className="text-sm font-semibold text-slate-900">📍 Where is this project located?</p>
+                        <p className="text-xs text-slate-600">We prefilled your saved area when possible. Tweak it if needed.</p>
+                        <MapOrList
+                          storageKey="fh-map-or-list-preference"
+                          label="Project location input mode"
+                          helperText="Use the district map for a visual pick, or switch to text mode."
+                          mapLabel="Map"
+                          listLabel="Words"
+                          listPanelClassName="max-h-[38vh] overflow-y-auto pr-1"
+                          map={
+                            <HkDistrictMap
+                              selectionMode="single"
+                              selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                              onChange={handleProjectMapSelection}
+                            />
+                          }
+                          list={
+                            <div className="space-y-3">
+                              <HkDistrictList
+                                selectionMode="single"
+                                selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                                onChange={handleProjectMapSelection}
+                              />
+                              <LocationSelect value={location} onChange={setLocation} enableSearch={true} />
+                            </div>
+                          }
+                        />
                       </div>
                     )}
 
                     {step.kind === 'emergency' && (
                       <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">Urgency</h2>
-                        <p className="text-sm text-slate-700">Does this need immediate attention?</p>
+                        <p className="text-sm font-semibold text-slate-900">🚨 Is this an emergency project?</p>
                         <div className="grid grid-cols-2 gap-3">
                           <button
                             type="button"
@@ -394,7 +470,7 @@ export default function CreateProjectWizardPage() {
                             className={`rounded-lg border px-4 py-3 text-left ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
                           >
                             <p className="font-semibold text-slate-900">Standard</p>
-                            <p className="text-xs text-slate-600">Normal project timing</p>
+                            <p className="text-xs text-slate-600">Normal matching works perfectly.</p>
                           </button>
                           <button
                             type="button"
@@ -402,7 +478,7 @@ export default function CreateProjectWizardPage() {
                             className={`rounded-lg border px-4 py-3 text-left ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
                           >
                             <p className="font-semibold text-slate-900">Emergency</p>
-                            <p className="text-xs text-slate-600">Prioritize urgent response</p>
+                            <p className="text-xs text-slate-600">We’ll prioritize emergency-ready professionals.</p>
                           </button>
                         </div>
                       </div>
@@ -410,7 +486,7 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'followup' && (
                       <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">Follow-up detail</h2>
+                        <p className="text-sm font-semibold text-slate-900">💡 Quick pit stop</p>
                         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800">{step.question}</p>
                         <textarea
                           value={answers[step.id] || ''}
@@ -424,8 +500,7 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'scope' && (
                       <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">Project scope summary</h2>
-                        <p className="text-sm text-slate-700">Describe the work package in a concise way.</p>
+                        <h2 className="text-xl font-bold text-slate-900">🧾 Any final notes for professionals?</h2>
                         <textarea
                           value={summary}
                           onChange={(e) => setSummary(e.target.value)}
@@ -438,20 +513,34 @@ export default function CreateProjectWizardPage() {
                     {step.kind === 'endDate' && (
                       <div className="space-y-4">
                         <h2 className="text-xl font-bold text-slate-900">Preferred end date</h2>
-                        <p className="text-sm text-slate-700">Optional but useful for scheduling and matching.</p>
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                        />
+                        <p className="text-sm text-slate-700">Same scheduling fields as create-project so timelines stay consistent.</p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="grid gap-1">
+                            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
+                            <input
+                              type="date"
+                              value={endDate}
+                              onChange={(e) => setEndDate(e.target.value)}
+                              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            />
+                          </div>
+                          <div className="grid gap-1">
+                            <label className="text-sm font-medium text-slate-800">I can allow site inspection on</label>
+                            <input
+                              type="date"
+                              value={siteInspectionAvailableOn}
+                              onChange={(e) => setSiteInspectionAvailableOn(e.target.value)}
+                              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
 
                     {step.kind === 'images' && (
                       <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900">Image collection</h2>
-                        <p className="text-sm text-slate-700">Add images from initial AI prompt and upload more for contractors.</p>
+                        <h2 className="text-xl font-bold text-slate-900">📷 Photos</h2>
+                        <p className="text-sm text-slate-700">Matches create-project behavior: keep seeded images and add more if needed.</p>
 
                         <div className="flex gap-2">
                           <input
@@ -503,6 +592,7 @@ export default function CreateProjectWizardPage() {
                           <p><span className="font-semibold">Title:</span> {title || 'N/A'}</p>
                           <p><span className="font-semibold">Urgency:</span> {isEmergency ? 'Emergency' : 'Standard'}</p>
                           <p><span className="font-semibold">Preferred end date:</span> {endDate || 'Not set'}</p>
+                          <p><span className="font-semibold">Site inspection:</span> {siteInspectionAvailableOn || 'Not set'}</p>
                           <p><span className="font-semibold">Images:</span> {existingImageUrls.length}</p>
                           <p className="mt-2 whitespace-pre-wrap"><span className="font-semibold">Summary:</span> {summary || 'N/A'}</p>
                         </div>

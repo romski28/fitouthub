@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-14-c048e4b",
+    "date": "2026-05-14T22:25:42+08:00",
+    "title": "refine(ai-wizard): restore modal-faithful panel content and map/list location UX",
+    "summary": "refine(ai-wizard): restore modal-faithful panel content and map/list location UX",
+    "areas": [
+      "web"
+    ],
+    "commit": "c048e4b",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-24167ef",
     "date": "2026-05-14T22:14:32+08:00",
     "title": "feat(ai-wizard): replace modal with full-page sliding panels + end date and image steps",
