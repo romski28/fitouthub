@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-7ae2d33",
+    "date": "2026-05-15T01:45:01+08:00",
+    "title": "Wizard layout fixes: restore step clipping, reduce textareas, fit panel height, route to professionals",
+    "summary": "Wizard layout fixes: restore step clipping, reduce textareas, fit panel height, route to professionals",
+    "areas": [
+      "web"
+    ],
+    "commit": "7ae2d33",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-c6d54df",
     "date": "2026-05-15T00:20:07+08:00",
     "title": "Wizard UX polish: cap follow-ups to 3, simplify to text-only answers, remove fixed height constraints",

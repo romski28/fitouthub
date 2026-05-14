@@ -364,7 +364,27 @@ export default function CreateProjectWizardPage() {
       // best effort
     }
 
-    router.push('/create-project?source=ai-wizard');
+    const params = new URLSearchParams();
+    const selectedTrades = nextDraft.initialData?.tradesRequired || [];
+    if (selectedTrades[0]) params.set('trade', selectedTrades[0]);
+    if (selectedTrades.length > 0) params.set('trades', selectedTrades.join(','));
+    if (location.tertiary) params.set('location', location.tertiary);
+    else if (location.secondary) params.set('location', location.secondary);
+    else if (location.primary) params.set('location', location.primary);
+    else params.set('askRegion', '1');
+    if (nextDraft.initialData?.projectName) {
+      params.set('aiTitle', nextDraft.initialData.projectName.slice(0, 180));
+    }
+    if (nextDraft.initialData?.notes) {
+      params.set('aiScope', nextDraft.initialData.notes.slice(0, 1800));
+    }
+    if (nextDraft.initialData?.projectScale) {
+      params.set('aiScale', nextDraft.initialData.projectScale);
+    }
+    params.set('aiEmergency', nextDraft.initialData?.isEmergency ? '1' : '0');
+    params.set('source', 'ai-wizard');
+
+    router.push(`/professionals?${params.toString()}`);
   };
 
   if (!hydrated || isLoggedIn === undefined) {
@@ -398,14 +418,14 @@ export default function CreateProjectWizardPage() {
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-300/60 bg-white/70">
-            <div className="min-h-[420px]">
+          <div className="mx-auto flex max-h-[calc(100vh-250px)] min-h-[340px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
+            <div className="min-h-0 flex-1 overflow-hidden">
               <div
-                className="flex transition-transform duration-500 ease-out"
+                className="flex h-full transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentStep * 100}%)` }}
               >
                 {steps.map((step, index) => (
-                  <div key={`${step.kind}-${index}`} className="flex w-full shrink-0 flex-col p-5 sm:p-6">
+                  <div key={`${step.kind}-${index}`} className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5 sm:p-6">
                     {step.kind === 'title' && (
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>📝</span><span>Shape your project&apos;s story with a great title</span></h3>
@@ -483,9 +503,9 @@ export default function CreateProjectWizardPage() {
                         <textarea
                           value={answers[step.id] || ''}
                           onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
-                          rows={4}
+                          rows={2}
                           placeholder="Type your answer..."
-                          className="w-full flex-1 rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                          className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
                       </div>
                     )}
@@ -497,8 +517,8 @@ export default function CreateProjectWizardPage() {
                         <textarea
                           value={summary}
                           onChange={(e) => setSummary(e.target.value)}
-                          rows={6}
-                          className="w-full flex-1 rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                          rows={3}
+                          className="w-full min-h-[110px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
                       </div>
                     )}
@@ -627,7 +647,7 @@ export default function CreateProjectWizardPage() {
                   onClick={submitWizard}
                   className="rounded-lg bg-slate-900 px-4 py-2.5 text-base font-semibold text-white hover:bg-slate-800"
                 >
-                  Continue to Create Project
+                  Continue to Invite Professionals
                 </button>
               )}
             </div>
