@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-14-f009c1b",
+    "date": "2026-05-14T12:17:02+08:00",
+    "title": "fix(ai-wizard): correct typo in fallbackLocation and followUpQuestions props",
+    "summary": "fix(ai-wizard): correct typo in fallbackLocation and followUpQuestions props",
+    "areas": [
+      "web"
+    ],
+    "commit": "f009c1b",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-4839aef",
     "date": "2026-05-14T12:13:49+08:00",
     "title": "fix(ai-wizard): add followUpQuestions to ProjectDescriptionData interface and add debug logging",

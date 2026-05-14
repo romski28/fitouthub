@@ -525,9 +525,9 @@ export default function CreateProjectPage() {
         initialScope={aiWizardSeed?.scope || initialFormData.notes || descriptionData?.description || ''}
         initialAssumptions={aiWizardSeed?.assumptions || initialFormData.aiFrom?.assumptions || []}
         initialLocation={aiWizardSeed?.location || initialFormData.location || descriptionData?.location}
-        fallbackLocation={uaiWizardSeed?.followUpQuestions || serLocation}
+        fallbackLocation={userLocation}
         initialEmergency={aiWizardSeed?.emergency ?? initialFormData.isEmergency ?? descriptionData?.isEmergency}
-        followUpQuestions={[]}
+        followUpQuestions={aiWizardSeed?.followUpQuestions || []}
         onComplete={handleAiWizardComplete}
       />
 
