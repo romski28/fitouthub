@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-14-3e3e56d",
+    "date": "2026-05-14T12:31:52+08:00",
+    "title": "fix(ai-wizard): rehydrate modal props and remove 3-question cap",
+    "summary": "fix(ai-wizard): rehydrate modal props and remove 3-question cap",
+    "areas": [
+      "web"
+    ],
+    "commit": "3e3e56d",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/ai-project-brief-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-f009c1b",
     "date": "2026-05-14T12:17:02+08:00",
     "title": "fix(ai-wizard): correct typo in fallbackLocation and followUpQuestions props",

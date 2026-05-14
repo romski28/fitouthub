@@ -86,7 +86,7 @@ export function AiProjectBriefModal({
 
     list.push({ kind: 'emergency' });
 
-    const followUps = (followUpQuestions || []).filter((question) => question.trim().length > 0).slice(0, 3);
+    const followUps = (followUpQuestions || []).filter((question) => question.trim().length > 0);
     followUps.forEach((question, index) => {
       list.push({ kind: 'followup', question, id: `q-${index}` });
     });
@@ -114,7 +114,7 @@ export function AiProjectBriefModal({
   const hasLocation = Boolean(location.primary || location.secondary || location.tertiary);
   const selectedProjectAreaCode = useMemo(
     () => deriveProjectAreaCodeFromLocation(location),
-    [location.primary, location.secondary, location.tertiary],
+    [location],
   );
 
   const handleProjectMapSelection = (codes: string[]) => {

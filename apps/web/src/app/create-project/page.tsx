@@ -518,6 +518,7 @@ export default function CreateProjectPage() {
       />
 
       <AiProjectBriefModal
+        key={`${showAiBriefWizard ? 'open' : 'closed'}-${aiWizardSeed?.title || 'untitled'}-${(aiWizardSeed?.followUpQuestions || []).join('|')}`}
         isOpen={showAiBriefWizard && !!aiWizardSeed}
         onClose={() => setShowAiBriefWizard(false)}
         initialTitle={aiWizardSeed?.title || initialFormData.projectName || descriptionData?.title || ''}
