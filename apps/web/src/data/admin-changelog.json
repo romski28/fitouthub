@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-14-1c632f9",
+    "date": "2026-05-14T22:54:06+08:00",
+    "title": "fix(ai-wizard): recover follow-ups for conversational mode and scale up wizard typography",
+    "summary": "fix(ai-wizard): recover follow-ups for conversational mode and scale up wizard typography",
+    "areas": [
+      "web"
+    ],
+    "commit": "1c632f9",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-2d90baf",
     "date": "2026-05-14T22:33:41+08:00",
     "title": "fix(ai-wizard): preserve follow-up questions through handoff and hydration",

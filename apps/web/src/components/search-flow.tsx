@@ -102,6 +102,21 @@ const extractFollowUpQuestionsFromOutput = (rawOutput: string | null | undefined
   }
 };
 
+const extractQuestionSentences = (input: string | null | undefined, maxItems = 4): string[] => {
+  if (typeof input !== 'string' || input.trim().length === 0) return [];
+
+  const candidates = input
+    .split(/\r?\n/)
+    .flatMap((line) => line.split(/(?<=\?)\s+/))
+    .map((item) => item.replace(/^[\-\d\.)\s]+/, '').trim())
+    .filter((item) => item.length > 0 && item.includes('?'))
+    .map((item) => (item.endsWith('?') ? item : `${item.slice(0, 220).trim()}?`))
+    .map((item) => item.replace(/\s+/g, ' ').trim())
+    .filter((item) => item.length >= 12 && item.length <= 220);
+
+  return Array.from(new Set(candidates)).slice(0, maxItems);
+};
+
 function ThinkingIndicator() {
   const phases = ['Reading your request', 'Mapping trades and location', 'Structuring project requirements'];
   const [phaseIndex, setPhaseIndex] = useState(0);
@@ -1742,7 +1757,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           p.project.projectScale === 'SCALE_3')
           ? p.project.projectScale
           : null;
-      const normalizedFollowUpQuestions = Array.from(
+      const structuredFollowUpQuestions = Array.from(
         new Set(
           [
             ...normalizeQuestionList(p?.nextQuestions),
@@ -1756,6 +1771,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             .filter((item) => item.length > 0),
         ),
       );
+      const fallbackQuestionSentences = extractQuestionSentences(payload.conversationalText || payload.output, 4);
+      const normalizedFollowUpQuestions =
+        structuredFollowUpQuestions.length > 0
+          ? structuredFollowUpQuestions
+          : fallbackQuestionSentences;
       setAiStructured({
         intakeId: payload.intakeId ?? null,
         projectScale:

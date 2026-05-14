@@ -370,23 +370,20 @@ export default function CreateProjectWizardPage() {
 
       <section className="-mx-6 px-6">
         <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Let&apos;s frame your project before publishing</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-700 sm:text-base">
-            Sliding wizard flow: confirm title, map location, urgency, answers, end date, and images before final review.
-          </p>
+          <p className="text-base font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Let&apos;s lock in your project title</h1>
         </div>
       </section>
 
       <section className="-mx-6 mt-6 px-6">
         <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
               Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
             </p>
-            <p className="text-sm font-semibold text-slate-700">{progress}% complete</p>
+            <p className="text-base font-semibold text-slate-700">{progress}% complete</p>
           </div>
-          <p className="mb-4 text-sm text-slate-700">{currentMotivation}</p>
+          <p className="mb-4 text-base text-slate-700">{currentMotivation}</p>
           <div className="mb-5 h-2 overflow-hidden rounded-full bg-white/70">
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
@@ -401,8 +398,8 @@ export default function CreateProjectWizardPage() {
                   <div key={`${step.kind}-${index}`} className="h-full w-full shrink-0 overflow-y-auto p-5 sm:p-6">
                     {step.kind === 'title' && (
                       <div className="space-y-4">
-                        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-slate-700">
-                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Mini brief</p>
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-base text-slate-700">
+                          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">Mini brief</p>
                           <div className="mt-1 space-y-2">
                             {seedSummary && (
                               <p><span className="font-semibold text-slate-900">Summary:</span> {seedSummary}</p>
@@ -425,20 +422,20 @@ export default function CreateProjectWizardPage() {
                             )}
                           </div>
                         </div>
-                        <p className="text-sm font-semibold text-slate-900">📝 Shall we call this project…</p>
+                        <p className="text-base font-semibold text-slate-900">📝 Shall we call this project...</p>
                         <input
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="e.g. Bathroom leak repair"
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
                         />
                       </div>
                     )}
 
                     {step.kind === 'location' && (
                       <div className="space-y-4">
-                        <p className="text-sm font-semibold text-slate-900">📍 Where is this project located?</p>
-                        <p className="text-xs text-slate-600">We prefilled your saved area when possible. Tweak it if needed.</p>
+                        <p className="text-base font-semibold text-slate-900">📍 Where is this project located?</p>
+                        <p className="text-sm text-slate-600">We prefilled your saved area when possible. Tweak it if needed.</p>
                         <MapOrList
                           storageKey="fh-map-or-list-preference"
                           label="Project location input mode"
@@ -469,7 +466,7 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'emergency' && (
                       <div className="space-y-4">
-                        <p className="text-sm font-semibold text-slate-900">🚨 Is this an emergency project?</p>
+                        <p className="text-base font-semibold text-slate-900">🚨 Is this an emergency project?</p>
                         <div className="grid grid-cols-2 gap-3">
                           <button
                             type="button"
@@ -477,7 +474,7 @@ export default function CreateProjectWizardPage() {
                             className={`rounded-lg border px-4 py-3 text-left ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
                           >
                             <p className="font-semibold text-slate-900">Standard</p>
-                            <p className="text-xs text-slate-600">Normal matching works perfectly.</p>
+                            <p className="text-sm text-slate-600">Normal matching works perfectly.</p>
                           </button>
                           <button
                             type="button"
@@ -485,7 +482,7 @@ export default function CreateProjectWizardPage() {
                             className={`rounded-lg border px-4 py-3 text-left ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
                           >
                             <p className="font-semibold text-slate-900">Emergency</p>
-                            <p className="text-xs text-slate-600">We\'ll prioritize emergency-ready professionals.</p>
+                            <p className="text-sm text-slate-600">We\'ll prioritize emergency-ready professionals.</p>
                           </button>
                         </div>
                       </div>
@@ -493,14 +490,14 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'followup' && (
                       <div className="space-y-4">
-                        <p className="text-sm font-semibold text-slate-900">💡 Quick pit stop</p>
-                        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800">{step.question}</p>
+                        <p className="text-base font-semibold text-slate-900">💡 Quick pit stop</p>
+                        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-base text-slate-800">{step.question}</p>
                         <textarea
                           value={answers[step.id] || ''}
                           onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
                           rows={4}
                           placeholder="Type your answer..."
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
                         />
                       </div>
                     )}
@@ -512,7 +509,7 @@ export default function CreateProjectWizardPage() {
                           value={summary}
                           onChange={(e) => setSummary(e.target.value)}
                           rows={6}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
                         />
                       </div>
                     )}
@@ -520,24 +517,24 @@ export default function CreateProjectWizardPage() {
                     {step.kind === 'endDate' && (
                       <div className="space-y-4">
                         <h2 className="text-xl font-bold text-slate-900">Preferred end date</h2>
-                        <p className="text-sm text-slate-700">Same scheduling fields as create-project so timelines stay consistent.</p>
+                        <p className="text-base text-slate-700">Same scheduling fields as create-project so timelines stay consistent.</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div className="grid gap-1">
-                            <label className="text-sm font-medium text-slate-800">I need this completed by</label>
+                            <label className="text-base font-medium text-slate-800">I need this completed by</label>
                             <input
                               type="date"
                               value={endDate}
                               onChange={(e) => setEndDate(e.target.value)}
-                              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                              className="rounded-md border border-slate-300 px-3 py-2.5 text-base"
                             />
                           </div>
                           <div className="grid gap-1">
-                            <label className="text-sm font-medium text-slate-800">I can allow site inspection on</label>
+                            <label className="text-base font-medium text-slate-800">I can allow site inspection on</label>
                             <input
                               type="date"
                               value={siteInspectionAvailableOn}
                               onChange={(e) => setSiteInspectionAvailableOn(e.target.value)}
-                              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                              className="rounded-md border border-slate-300 px-3 py-2.5 text-base"
                             />
                           </div>
                         </div>
@@ -547,19 +544,19 @@ export default function CreateProjectWizardPage() {
                     {step.kind === 'images' && (
                       <div className="space-y-4">
                         <h2 className="text-xl font-bold text-slate-900">📷 Photos</h2>
-                        <p className="text-sm text-slate-700">Matches create-project behavior: keep seeded images and add more if needed.</p>
+                        <p className="text-base text-slate-700">Matches create-project behavior: keep seeded images and add more if needed.</p>
 
                         <div className="flex gap-2">
                           <input
                             value={imageUrlDraft}
                             onChange={(e) => setImageUrlDraft(e.target.value)}
                             placeholder="https://..."
-                            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
                           />
-                          <button type="button" onClick={addImageUrl} className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Add URL</button>
+                          <button type="button" onClick={addImageUrl} className="rounded-lg bg-slate-800 px-3 py-2.5 text-base font-semibold text-white">Add URL</button>
                         </div>
 
-                        <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                        <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-2.5 text-base font-semibold text-white hover:bg-emerald-700">
                           {isUploadingImages ? 'Uploading...' : 'Upload images'}
                           <input
                             type="file"
@@ -595,7 +592,7 @@ export default function CreateProjectWizardPage() {
                     {step.kind === 'review' && (
                       <div className="space-y-3">
                         <h2 className="text-xl font-bold text-slate-900">Review and continue</h2>
-                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
+                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-base">
                           <p><span className="font-semibold">Title:</span> {title || 'N/A'}</p>
                           <p><span className="font-semibold">Urgency:</span> {isEmergency ? 'Emergency' : 'Standard'}</p>
                           <p><span className="font-semibold">Preferred end date:</span> {endDate || 'Not set'}</p>
@@ -603,7 +600,7 @@ export default function CreateProjectWizardPage() {
                           <p><span className="font-semibold">Images:</span> {existingImageUrls.length}</p>
                           <p className="mt-2 whitespace-pre-wrap"><span className="font-semibold">Summary:</span> {summary || 'N/A'}</p>
                         </div>
-                        <p className="text-sm text-slate-600">Next you&apos;ll go to final create-project review and submit.</p>
+                        <p className="text-base text-slate-600">Next you&apos;ll go to final create-project review and submit.</p>
                       </div>
                     )}
                   </div>
@@ -616,7 +613,7 @@ export default function CreateProjectWizardPage() {
                 type="button"
                 onClick={goBack}
                 disabled={currentStep === 0}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-800 disabled:opacity-50"
               >
                 Back
               </button>
@@ -626,7 +623,7 @@ export default function CreateProjectWizardPage() {
                   type="button"
                   onClick={goNext}
                   disabled={!canGoNext}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -634,7 +631,7 @@ export default function CreateProjectWizardPage() {
                 <button
                   type="button"
                   onClick={submitWizard}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                  className="rounded-lg bg-slate-900 px-4 py-2.5 text-base font-semibold text-white hover:bg-slate-800"
                 >
                   Continue to Create Project
                 </button>
