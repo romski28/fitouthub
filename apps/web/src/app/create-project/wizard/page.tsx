@@ -67,10 +67,10 @@ const normalizeQuestions = (input: unknown): string[] =>
     : [];
 
 const MOTIVATION = [
-  'Nice! Let’s build this in under a minute.',
-  'You’re on fire, one quick step at a time.',
+  'Nice! Let\'s build this in under a minute.',
+  'You\'re on fire, one quick step at a time.',
   'Looking great. This is coming together.',
-  'Final stretch, let’s launch this.',
+  'Final stretch, let\'s launch this.',
 ];
 
 export default function CreateProjectWizardPage() {
@@ -478,7 +478,7 @@ export default function CreateProjectWizardPage() {
                             className={`rounded-lg border px-4 py-3 text-left ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
                           >
                             <p className="font-semibold text-slate-900">Emergency</p>
-                            <p className="text-xs text-slate-600">We’ll prioritize emergency-ready professionals.</p>
+                            <p className="text-xs text-slate-600">We\'ll prioritize emergency-ready professionals.</p>
                           </button>
                         </div>
                       </div>

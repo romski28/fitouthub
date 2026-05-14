@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-14-c914faa",
+    "date": "2026-05-14T22:26:58+08:00",
+    "title": "chore(ai-wizard): normalize copy apostrophes to ascii",
+    "summary": "chore(ai-wizard): normalize copy apostrophes to ascii",
+    "areas": [
+      "web"
+    ],
+    "commit": "c914faa",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-14-c048e4b",
     "date": "2026-05-14T22:25:42+08:00",
     "title": "refine(ai-wizard): restore modal-faithful panel content and map/list location UX",
