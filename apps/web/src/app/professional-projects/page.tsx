@@ -263,19 +263,25 @@ export default function ProfessionalProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent pb-16">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
-        {/* Updates badge — fixed right for thumb access */}
-        <div className="fixed bottom-[260px] right-6 z-30">
-          <UpdatesButton onSummaryChange={setUpdatesSummary} />
+    <div className="relative isolate">
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+        <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
+        <div className="absolute inset-0 bg-[#1a1a1a]/44" />
+      </div>
+
+      <div className="min-h-screen pb-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
+          {/* Updates badge — fixed right for thumb access */}
+          <div className="fixed bottom-[260px] right-6 z-30">
+            <UpdatesButton onSummaryChange={setUpdatesSummary} />
         </div>
 
         {/* Hero (match client styling) */}
-        <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
+        <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-5 py-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">{professional?.fullName || professional?.businessName || 'Projects'}</p>
-              <h1 className="text-2xl font-bold leading-tight">My Projects</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{professional?.fullName || professional?.businessName || 'Projects'}</p>
+              <h1 className="text-2xl font-bold leading-tight text-slate-900">My Projects</h1>
             </div>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
@@ -286,22 +292,22 @@ export default function ProfessionalProjectsPage() {
                 <SummaryCard label="Awarded" value={totals.awarded} tone="purple" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
                 <SummaryCard label="Declined" value={totals.declined} tone="rose" filterStatus="declined" currentFilter={filterStatus} onClick={() => setFilterStatus('declined')} />
               </div>
-              <p className="text-[10px] text-center text-slate-300 italic">Click on a status to filter</p>
+              <p className="text-[10px] text-center text-slate-600 italic">Click on a status to filter</p>
             </div>
           </div>
         </div>
 
         {/* Action Dashboard */}
         {dashboardProjects.length > 0 && (
-          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
+          <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Action Required</p>
-                <h2 className="text-xl font-bold text-white">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
+                <h2 className="text-xl font-bold text-slate-900">
                   {dashboardProjects.length} Projects in this view
                   {nextStepsLoading && (
-                    <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-300">
-                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+                    <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-600">
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-transparent" />
                       Gathering action items&hellip;
                     </span>
                   )}
@@ -349,13 +355,13 @@ export default function ProfessionalProjectsPage() {
                     <div className="grid gap-3">
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         {isRestricted ? (
-                          <span className="truncate text-sm font-bold text-white">
+                          <span className="truncate text-sm font-bold text-slate-900">
                             {projectProf.project.projectName}
                           </span>
                         ) : (
                           <Link
                             href={`/professional-projects/${projectProf.id}?tab=overview`}
-                            className="truncate text-sm font-bold text-white underline-offset-2 hover:underline"
+                            className="truncate text-sm font-bold text-slate-900 underline-offset-2 hover:underline"
                             title="Open project details"
                           >
                             {projectProf.project.projectName}
@@ -375,21 +381,21 @@ export default function ProfessionalProjectsPage() {
                       <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
                         {/* Project Details */}
                         <div className="col-span-2 md:col-span-1">
-                          <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
                             {projectProf.project.region ? <span>{projectProf.project.region}</span> : null}
                             {!isRestricted && projectProf.quoteAmount && (
                               <>
                                 {projectProf.project.region ? <span>•</span> : null}
-                                <span className="font-medium text-white">${Number(projectProf.quoteAmount).toLocaleString()}</span>
+                                <span className="font-medium text-slate-900">${Number(projectProf.quoteAmount).toLocaleString()}</span>
                               </>
                             )}
                           </div>
                           {isRestricted ? (
-                            <p className="mt-2 text-xs text-slate-300">
+                            <p className="mt-2 text-xs text-slate-600">
                               {projectProf.project.notes || 'Bidding has concluded for this project.'}
                             </p>
                           ) : primaryAction?.description ? (
-                            <p className="mt-2 text-xs text-slate-300">{primaryAction.description}</p>
+                            <p className="mt-2 text-xs text-slate-600">{primaryAction.description}</p>
                           ) : null}
                         </div>
 
@@ -399,7 +405,7 @@ export default function ProfessionalProjectsPage() {
                               Bidding closed
                             </span>
                           ) : nextStepsLoading && !nextStepMap[projectProf.project.id] ? (
-                            <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
+                            <div className="animate-pulse rounded-lg bg-slate-300/50 h-9 w-28" />
                           ) : (
                             <>
                               {primaryActions.length > 0 ? (
@@ -464,12 +470,13 @@ export default function ProfessionalProjectsPage() {
         )}
 
         {dashboardProjects.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-transparent p-6 text-sm text-slate-600">
+          <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
             No immediate actions. Check Recent Activity for updates.
           </div>
         ) : null}
 
         <BackToTop />
+        </div>
       </div>
     </div>
   );
@@ -491,12 +498,12 @@ function SummaryCard({
   onClick: () => void;
 }) {
   const toneMap: Record<SummaryTone, { valueColor: string; activeRing: string }> = {
-    slate: { valueColor: 'text-white', activeRing: 'ring-white' },
-    amber: { valueColor: 'text-amber-200', activeRing: 'ring-amber-300' },
-    emerald: { valueColor: 'text-emerald-300', activeRing: 'ring-emerald-300' },
-    blue: { valueColor: 'text-blue-200', activeRing: 'ring-blue-300' },
-    purple: { valueColor: 'text-purple-200', activeRing: 'ring-purple-300' },
-    rose: { valueColor: 'text-rose-200', activeRing: 'ring-rose-300' },
+    slate: { valueColor: 'text-slate-900', activeRing: 'ring-slate-700' },
+    amber: { valueColor: 'text-amber-700', activeRing: 'ring-amber-300' },
+    emerald: { valueColor: 'text-emerald-700', activeRing: 'ring-emerald-300' },
+    blue: { valueColor: 'text-blue-700', activeRing: 'ring-blue-300' },
+    purple: { valueColor: 'text-purple-700', activeRing: 'ring-purple-300' },
+    rose: { valueColor: 'text-rose-700', activeRing: 'ring-rose-300' },
   };
 
   const { valueColor, activeRing } = toneMap[tone];
@@ -505,11 +512,11 @@ function SummaryCard({
   return (
     <button
       onClick={onClick}
-      className={`rounded-lg bg-white/10 px-3 py-2 text-left transition-all hover:bg-white/20 ${
-        isActive ? `ring-2 ${activeRing} bg-white/20` : ''
+      className={`rounded-lg bg-white/40 px-3 py-2 text-left transition-all hover:bg-white/60 ${
+        isActive ? `ring-2 ${activeRing} bg-white/60` : ''
       }`}
     >
-      <p className="text-[11px] uppercase tracking-wide text-slate-200">{label}</p>
+      <p className="text-[11px] uppercase tracking-wide text-slate-700">{label}</p>
       <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
     </button>
   );

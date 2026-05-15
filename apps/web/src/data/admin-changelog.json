@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-c2b35ee",
+    "date": "2026-05-15T11:05:09+08:00",
+    "title": "professionals: align look and feel with home page",
+    "summary": "professionals: align look and feel with home page",
+    "areas": [
+      "web"
+    ],
+    "commit": "c2b35ee",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-2e34eed",
     "date": "2026-05-15T10:58:42+08:00",
     "title": "MapOrList: coral active button with cream text, grey inactive with cream text",
