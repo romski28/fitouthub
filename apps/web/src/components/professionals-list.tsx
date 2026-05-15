@@ -727,6 +727,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         .map((part) => part!.toLowerCase());
     })();
 
+    const selectedZoneCode =
+      !typedLocation &&
+      typeof loc.secondary === 'string' &&
+      Boolean(HK_ZONE_LABELS[loc.secondary.toUpperCase() as HkZoneCode])
+        ? loc.secondary.toUpperCase()
+        : null;
+
     const items = professionals.filter((pro) => {
       const haystacks = [
         pro.professionType,
@@ -758,6 +765,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       // If no location filter is set, show based on search only
       if (locationParts.length === 0) {
         return true;
+      }
+
+      if (selectedZoneCode) {
+        const professionalZones = deriveHighlightedZones(pro);
+        if (professionalZones.length > 0) {
+          return professionalZones.includes(selectedZoneCode);
+        }
       }
 
       const allAreas = getProfessionalCoverageTokens(pro);
