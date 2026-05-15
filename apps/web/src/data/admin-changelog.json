@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-a716f03",
+    "date": "2026-05-15T23:16:52+08:00",
+    "title": "professionals: simplify to clean 5-part row layout",
+    "summary": "professionals: simplify to clean 5-part row layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "a716f03",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-a169ff5",
     "date": "2026-05-15T17:44:11+08:00",
     "title": "professionals: add desktop match rows with safe rollback flag",
