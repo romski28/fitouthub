@@ -310,7 +310,206 @@ const inferZoneCodeFromLocation = (location: CanonicalLocation): HkZoneCode | nu
   return match || null;
 };
 
-const ProfessionalCard = memo(({
+const ENABLE_PRO_MATCH_ROW_VIEW = process.env.NEXT_PUBLIC_ENABLE_PRO_MATCH_ROW_VIEW !== 'false';
+
+type ProfessionalMatchMeta = {
+  matchedTrades: string[];
+  missingTrades: string[];
+  locationMatched: boolean;
+  locationLabel: string;
+  ratingMatched: boolean;
+  ratingValue: number;
+  matchScore: number;
+};
+
+const buildProfessionalMatchMeta = ({
+  pro,
+  requiredTrades,
+  locationParts,
+  selectedZoneCode,
+  minRating,
+}: {
+  pro: Professional;
+  requiredTrades: string[];
+  locationParts: string[];
+  selectedZoneCode: string | null;
+  minRating: number;
+}): ProfessionalMatchMeta => {
+  const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+  const tradeTokens = getProfessionalTradeTokens(pro);
+
+  const matchedTrades = requiredTrades.filter((trade, index) => {
+    const tradeLower = requiredTradesLower[index];
+    return tradeTokens.some((token) => token.includes(tradeLower) || tradeLower.includes(token));
+  });
+
+  const missingTrades = requiredTrades.filter((trade) => !matchedTrades.includes(trade));
+
+  const hasLocationFilter = locationParts.length > 0;
+  let locationMatched = true;
+
+  if (hasLocationFilter) {
+    const zones = deriveHighlightedZones(pro);
+    if (selectedZoneCode && zones.length > 0) {
+      locationMatched = zones.includes(selectedZoneCode);
+    } else {
+      const allAreas = getProfessionalCoverageTokens(pro);
+      locationMatched =
+        allAreas.length === 0 ||
+        locationParts.some((locPart) =>
+          allAreas.some((area) => area.includes(locPart) || locPart.includes(area)),
+        );
+    }
+  }
+
+  const ratingValue = typeof pro.rating === 'number' && Number.isFinite(pro.rating) ? pro.rating : 0;
+  const ratingMatched = minRating === 0 || ratingValue >= minRating;
+
+  return {
+    matchedTrades,
+    missingTrades,
+    locationMatched,
+    locationLabel: hasLocationFilter
+      ? locationMatched
+        ? 'In your location'
+        : 'Outside your location'
+      : 'Location not set',
+    ratingMatched,
+    ratingValue,
+    matchScore: 1 + (locationMatched ? 1 : 0) + (ratingMatched ? 1 : 0),
+  };
+};
+
+const ProfessionalMatchRow = memo(({
+  pro,
+  matchMeta,
+  onToggle,
+  onViewDetails,
+  onCompare,
+  isSelected,
+  isCompared,
+  disableSelection,
+  showSelectionAction,
+}: {
+  pro: Professional;
+  matchMeta: ProfessionalMatchMeta;
+  onToggle: (pro: Professional) => void;
+  onViewDetails: (pro: Professional) => void;
+  onCompare: (pro: Professional) => void;
+  isSelected: boolean;
+  isCompared: boolean;
+  disableSelection: boolean;
+  showSelectionAction: boolean;
+}) => {
+  const t = useTranslations('professionalsPage.list');
+  const displayName = pro.fullName || pro.businessName || t('fallbackProfessional');
+  const secondaryName = pro.businessName && pro.fullName && pro.businessName !== pro.fullName ? pro.businessName : '';
+  const roleLabel = pro.professionType === 'company' ? 'Company' : pro.professionType === 'contractor' ? 'Contractor' : 'Professional';
+
+  const scoreBadgeClass =
+    matchMeta.matchScore === 3
+      ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+      : matchMeta.matchScore === 2
+        ? 'border-amber-300 bg-amber-50 text-amber-700'
+        : 'border-slate-300 bg-slate-100 text-slate-700';
+
+  const stars = [1, 2, 3, 4, 5];
+
+  return (
+    <div className={`rounded-xl border bg-white p-3 shadow-sm transition ${isSelected ? 'border-emerald-400 ring-2 ring-emerald-200' : 'border-slate-200'}`}>
+      <div className="grid grid-cols-12 gap-3">
+        <div className="col-span-12 lg:col-span-3 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-slate-900">{displayName}</p>
+              {secondaryName ? <p className="truncate text-xs text-slate-500">{secondaryName}</p> : null}
+              <p className="mt-1 text-xs font-medium text-slate-500">{roleLabel}</p>
+            </div>
+            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${scoreBadgeClass}`}>
+              {`${matchMeta.matchScore}/3 match`}
+            </span>
+          </div>
+        </div>
+
+        <div className="col-span-12 lg:col-span-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Trade match</p>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {matchMeta.matchedTrades.length > 0 ? (
+              matchMeta.matchedTrades.map((trade) => (
+                <span key={`${pro.id}-matched-trade-${trade}`} className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  {trade}
+                </span>
+              ))
+            ) : (
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">Trade matched</span>
+            )}
+            {matchMeta.missingTrades.length > 0 && (
+              <span className="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
+                {`Missing: ${matchMeta.missingTrades.join(', ')}`}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="col-span-12 lg:col-span-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Location</p>
+          <div className="mt-1">
+            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${matchMeta.locationMatched ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+              {matchMeta.locationLabel}
+            </span>
+          </div>
+        </div>
+
+        <div className="col-span-12 lg:col-span-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Rating</p>
+          <div className="mt-1 flex items-center gap-1">
+            {stars.map((star) => (
+              <span
+                key={`${pro.id}-star-${star}`}
+                className={`text-sm ${star <= Math.round(matchMeta.ratingValue) ? (matchMeta.ratingMatched ? 'text-amber-500' : 'text-slate-300') : 'text-slate-200'}`}
+              >
+                ★
+              </span>
+            ))}
+            <span className={`text-xs font-semibold ${matchMeta.ratingMatched ? 'text-slate-700' : 'text-slate-400'}`}>
+              {matchMeta.ratingValue.toFixed(1)}
+            </span>
+          </div>
+        </div>
+
+        <div className="col-span-12 lg:col-span-2 flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => onViewDetails(pro)}
+            className="rounded-lg border border-sky-500 bg-sky-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-sky-600"
+          >
+            Show More
+          </button>
+          <button
+            type="button"
+            onClick={() => onCompare(pro)}
+            className={`rounded-lg border border-violet-600 px-2.5 py-1.5 text-xs font-semibold ${isCompared ? 'bg-violet-600 text-white hover:bg-violet-700' : 'bg-white text-violet-700 hover:bg-violet-50'}`}
+          >
+            {isCompared ? 'Comparing' : 'Compare'}
+          </button>
+          {showSelectionAction && (
+            <button
+              type="button"
+              onClick={() => onToggle(pro)}
+              disabled={disableSelection}
+              className={`rounded-lg border border-emerald-600 px-2.5 py-1.5 text-xs font-semibold ${isSelected ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-700 hover:bg-emerald-50'} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {isSelected ? 'Selected' : t('askForHelp')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+ProfessionalMatchRow.displayName = 'ProfessionalMatchRow';
+
+const ProfessionalCard = memo(({ 
   pro,
   onToggle,
   onViewDetails,
@@ -1061,6 +1260,38 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [showCompare, setShowCompare] = useState(false);
   const locationSelected = Boolean(loc.primary || loc.secondary || loc.tertiary);
   const blockInviteForMissingLocation = requireLocation && !locationSelected;
+  const useMatchRowView = ENABLE_PRO_MATCH_ROW_VIEW;
+
+  const locationPartsForMatchView = useMemo(() => {
+    const typedLocation = locationSearch.trim().toLowerCase();
+    if (typedLocation) {
+      const matched = matchLocation(typedLocation);
+      if (matched) {
+        return [matched.primary, matched.secondary, matched.tertiary]
+          .filter(Boolean)
+          .map((part) => part!.toLowerCase());
+      }
+      return [typedLocation];
+    }
+
+    return [loc.primary, loc.secondary, loc.tertiary]
+      .filter(Boolean)
+      .map((part) => part!.toLowerCase());
+  }, [locationSearch, loc.primary, loc.secondary, loc.tertiary]);
+
+  const selectedZoneCodeForMatchView = useMemo(() => {
+    const typedLocation = locationSearch.trim().toLowerCase();
+    if (typedLocation) return null;
+
+    if (
+      typeof loc.secondary === 'string' &&
+      Boolean(HK_ZONE_LABELS[loc.secondary.toUpperCase() as HkZoneCode])
+    ) {
+      return loc.secondary.toUpperCase();
+    }
+
+    return null;
+  }, [locationSearch, loc.secondary]);
 
   // Preselect first N (recommendation) - only if coming from home page with intent.
   // Do not clear existing selections when the user changes filters; selection is meant to span modes.
@@ -1408,6 +1639,85 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     setDetailsOpen(true);
   };
 
+  const sortByMatchStrength = (items: Professional[]) => {
+    if (!useMatchRowView) return items;
+
+    return items.slice().sort((a, b) => {
+      const metaA = buildProfessionalMatchMeta({
+        pro: a,
+        requiredTrades: enforcedRequiredTrades,
+        locationParts: locationPartsForMatchView,
+        selectedZoneCode: selectedZoneCodeForMatchView,
+        minRating,
+      });
+      const metaB = buildProfessionalMatchMeta({
+        pro: b,
+        requiredTrades: enforcedRequiredTrades,
+        locationParts: locationPartsForMatchView,
+        selectedZoneCode: selectedZoneCodeForMatchView,
+        minRating,
+      });
+
+      if (metaB.matchScore !== metaA.matchScore) return metaB.matchScore - metaA.matchScore;
+      if (metaB.matchedTrades.length !== metaA.matchedTrades.length) {
+        return metaB.matchedTrades.length - metaA.matchedTrades.length;
+      }
+      if (metaB.ratingValue !== metaA.ratingValue) return metaB.ratingValue - metaA.ratingValue;
+      return (a.fullName || a.businessName || '').localeCompare(b.fullName || b.businessName || '');
+    });
+  };
+
+  const renderProfessionalCollection = (items: Professional[]) => {
+    const orderedItems = sortByMatchStrength(items);
+
+    return (
+      <div className="space-y-2">
+        {orderedItems.map((pro) => {
+          const matchMeta = buildProfessionalMatchMeta({
+            pro,
+            requiredTrades: enforcedRequiredTrades,
+            locationParts: locationPartsForMatchView,
+            selectedZoneCode: selectedZoneCodeForMatchView,
+            minRating,
+          });
+
+          return (
+            <div key={pro.id}>
+              <div className={useMatchRowView ? 'lg:hidden' : ''}>
+                <ProfessionalCard
+                  isSelected={selectedIds.has(pro.id)}
+                  isCompared={compareIds.has(pro.id)}
+                  pro={pro}
+                  onToggle={toggleSelection}
+                  onViewDetails={openDetails}
+                  onCompare={toggleCompare}
+                  isAdmin={isAdmin}
+                  disableSelection={blockInviteForMissingLocation}
+                  showSelectionAction={canInviteProfessionals}
+                />
+              </div>
+              {useMatchRowView && (
+                <div className="hidden lg:block">
+                  <ProfessionalMatchRow
+                    isSelected={selectedIds.has(pro.id)}
+                    isCompared={compareIds.has(pro.id)}
+                    pro={pro}
+                    matchMeta={matchMeta}
+                    onToggle={toggleSelection}
+                    onViewDetails={openDetails}
+                    onCompare={toggleCompare}
+                    disableSelection={blockInviteForMissingLocation}
+                    showSelectionAction={canInviteProfessionals}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3">
       {/* Filters */}
@@ -1652,22 +1962,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                     {groupedTradeDisplay.fullCoverageCompanies.length} compan{groupedTradeDisplay.fullCoverageCompanies.length === 1 ? 'y' : 'ies'} can handle this scope end-to-end.
                   </p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {groupedTradeDisplay.fullCoverageCompanies.map((pro) => (
-                    <ProfessionalCard
-                      key={pro.id}
-                      isSelected={selectedIds.has(pro.id)}
-                      isCompared={compareIds.has(pro.id)}
-                      pro={pro}
-                      onToggle={toggleSelection}
-                      onViewDetails={openDetails}
-                      onCompare={toggleCompare}
-                      isAdmin={isAdmin}
-                      disableSelection={blockInviteForMissingLocation}
-                      showSelectionAction={canInviteProfessionals}
-                    />
-                  ))}
-                </div>
+                {renderProfessionalCollection(groupedTradeDisplay.fullCoverageCompanies)}
               </section>
             )}
 
@@ -1681,22 +1976,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                       {section.professionals.length} match{section.professionals.length === 1 ? '' : 'es'} available for this trade.
                     </p>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {section.professionals.map((pro) => (
-                      <ProfessionalCard
-                        key={pro.id}
-                        isSelected={selectedIds.has(pro.id)}
-                        isCompared={compareIds.has(pro.id)}
-                        pro={pro}
-                        onToggle={toggleSelection}
-                        onViewDetails={openDetails}
-                        onCompare={toggleCompare}
-                        isAdmin={isAdmin}
-                        disableSelection={blockInviteForMissingLocation}
-                        showSelectionAction={canInviteProfessionals}
-                      />
-                    ))}
-                  </div>
+                  {renderProfessionalCollection(section.professionals)}
                 </section>
               ))}
 
@@ -1705,22 +1985,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700">Additional matches</p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {groupedTradeDisplay.uncategorized.map((pro) => (
-                    <ProfessionalCard
-                      key={pro.id}
-                      isSelected={selectedIds.has(pro.id)}
-                      isCompared={compareIds.has(pro.id)}
-                      pro={pro}
-                      onToggle={toggleSelection}
-                      onViewDetails={openDetails}
-                      onCompare={toggleCompare}
-                      isAdmin={isAdmin}
-                      disableSelection={blockInviteForMissingLocation}
-                      showSelectionAction={canInviteProfessionals}
-                    />
-                  ))}
-                </div>
+                {renderProfessionalCollection(groupedTradeDisplay.uncategorized)}
               </section>
             )}
           </div>
@@ -1731,22 +1996,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 <p className="text-lg font-semibold text-slate-900">{`${activeFilterLabel} (${filtered.length})`}</p>
               </div>
             )}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((pro) => (
-                <ProfessionalCard
-                  key={pro.id}
-                  isSelected={selectedIds.has(pro.id)}
-                  isCompared={compareIds.has(pro.id)}
-                  pro={pro}
-                  onToggle={toggleSelection}
-                  onViewDetails={openDetails}
-                  onCompare={toggleCompare}
-                  isAdmin={isAdmin}
-                  disableSelection={blockInviteForMissingLocation}
-                  showSelectionAction={canInviteProfessionals}
-                />
-              ))}
-            </div>
+            {renderProfessionalCollection(filtered)}
           </div>
         )
       )}
@@ -1815,7 +2065,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           // Clear selections after sending emails
           setSelectedIds(new Set());
         }}
-        professionals={filtered.filter((p) => selectedIds.has(p.id))}
+        professionals={professionals.filter((p) => selectedIds.has(p.id))}
         projectId={projectId}
         initialData={shareInitialData}
       />
@@ -1838,7 +2088,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             {selectedIds.size > 0 && (
               <div className="hidden md:flex flex-wrap gap-1.5 min-w-0">
                 {Array.from(selectedIds).map((id) => {
-                  const pro = filtered.find((p) => p.id === id);
+                  const pro = professionals.find((p) => p.id === id);
                   if (!pro) return null;
                   return (
                     <span key={id} className="flex items-center gap-1 rounded-full bg-emerald-500 pl-2.5 pr-1 py-0.5 text-[11px] font-semibold text-white">
@@ -1885,7 +2135,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {/* Comparison overlay */}
       {showCompare && (
         <ComparisonOverlay
-          professionals={filtered.filter((p) => compareIds.has(p.id))}
+          professionals={professionals.filter((p) => compareIds.has(p.id))}
           selectedIds={selectedIds}
           onToggle={toggleSelection}
           canSelectForInvite={canInviteProfessionals}
