@@ -370,10 +370,11 @@ const ProfessionalRowItem = memo(({
   const ratingMatches = minRating === 0 || ratingValue >= minRating;
 
   return (
-    <div className={`rounded-lg bg-[#FCF8EE] p-4 transition ${isSelected ? 'border-4 border-emerald-600' : 'border border-slate-200'}`}>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+    <div className={`rounded-lg bg-[#FCF8EE] transition ${isSelected ? 'border-4 border-emerald-600' : 'border border-slate-200'}`}>
+      {/* Mobile: Stacked layout */}
+      <div className="flex flex-col gap-3 p-4 lg:hidden">
         {/* Part 1: Name + Note */}
-        <div className="flex-1 min-w-0">
+        <div>
           <p className="truncate font-bold text-[#201C1A]">{pro.fullName || pro.businessName || t('fallbackProfessional')}</p>
           <button
             type="button"
@@ -421,6 +422,67 @@ const ProfessionalRowItem = memo(({
             onClick={() => onToggle(pro)}
             disabled={disableSelection}
             className={`rounded-lg px-4 py-2 text-xs font-semibold transition whitespace-nowrap ${
+              isSelected
+                ? 'border-2 border-emerald-600 bg-emerald-600 text-[#FCF8EE]'
+                : 'border border-[#7A7974] bg-[#7A7974] text-[#FCF8EE] hover:bg-[#6A6A64]'
+            } disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            {isSelected ? 'Selected' : 'Ask for quote'}
+          </button>
+        )}
+      </div>
+
+      {/* Desktop: Grid layout with proportional widths */}
+      <div className="hidden lg:grid lg:grid-cols-12 gap-3 p-4" style={{ gridTemplateColumns: '1fr 1.4fr 0.4fr 0.8fr 0.8fr' }}>
+        {/* Part 1: Name + Note (25%) */}
+        <div className="flex flex-col justify-center min-w-0">
+          <p className="truncate font-bold text-[#201C1A]">{pro.fullName || pro.businessName || t('fallbackProfessional')}</p>
+          <button
+            type="button"
+            onClick={() => onViewDetails(pro)}
+            className="mt-1 text-xs italic text-[#201C1A] hover:underline text-left"
+          >
+            Click for more...
+          </button>
+        </div>
+
+        {/* Part 2: Matched Trades (35%) */}
+        <div className="flex flex-wrap items-center gap-2 h-10">
+          {matchedTrades.length > 0 ? (
+            matchedTrades.map((trade) => (
+              <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-[#FCF8EE] h-fit">
+                {trade}
+              </span>
+            ))
+          ) : null}
+        </div>
+
+        {/* Part 3: Location (10%) */}
+        <div className="flex items-center h-10">
+          <span className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-semibold h-10 w-full ${locationMatches ? 'bg-emerald-600 text-[#FCF8EE]' : 'bg-[#7A7974] text-[#FCF8EE]'}`}>
+            {locationMatches ? 'Is local' : 'Not local'}
+          </span>
+        </div>
+
+        {/* Part 4: Star Rating (20%) */}
+        <div className="flex items-center justify-center gap-0.5 h-10">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <span
+              key={`${pro.id}-star-${star}`}
+              className={`text-sm leading-none ${star <= Math.round(ratingValue) ? (ratingMatches ? 'text-emerald-600' : 'text-[#7A7974]') : 'text-[#7A7974]'}`}
+            >
+              ★
+            </span>
+          ))}
+        </div>
+
+        {/* Part 5: CTA Button (20%) */}
+        {showSelectionAction && (
+          <button
+            type="button"
+            onClick={() => onToggle(pro)}
+            disabled={disableSelection}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition whitespace-nowrap h-10 flex items-center justify-center ${
               isSelected
                 ? 'border-2 border-emerald-600 bg-emerald-600 text-[#FCF8EE]'
                 : 'border border-[#7A7974] bg-[#7A7974] text-[#FCF8EE] hover:bg-[#6A6A64]'
