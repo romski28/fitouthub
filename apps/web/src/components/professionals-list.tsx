@@ -184,6 +184,44 @@ const getProfessionalTradeTokens = (pro: Professional): string[] => {
   return tradeTokens.map((value) => value.toLowerCase());
 };
 
+type TradeAutoFilterMode = 'teams' | `single:${string}`;
+
+const getTradeCoverageMeta = (pro: Professional, requiredTradesLower: string[]) => {
+  const tradeTokens = getProfessionalTradeTokens(pro);
+  const isCompany = pro.professionType === 'company';
+  const isTeamCandidate = pro.professionType === 'company' || pro.professionType === 'contractor';
+
+  if (requiredTradesLower.length === 0) {
+    return { matchedCount: 0, coversAllRequiredTrades: false, isCompany, isTeamCandidate };
+  }
+
+  const matchedCount = requiredTradesLower.filter((trade) =>
+    tradeTokens.some((token) => token.includes(trade) || trade.includes(token)),
+  ).length;
+
+  return {
+    matchedCount,
+    coversAllRequiredTrades: matchedCount === requiredTradesLower.length,
+    isCompany,
+    isTeamCandidate,
+  };
+};
+
+const matchesTradeAutoFilterMode = (
+  pro: Professional,
+  requiredTradesLower: string[],
+  tradeAutoFilterMode: TradeAutoFilterMode,
+) => {
+  const tradeCoverage = getTradeCoverageMeta(pro, requiredTradesLower);
+
+  if (requiredTradesLower.length === 0) return true;
+  if (tradeAutoFilterMode === 'teams') {
+    return tradeCoverage.isTeamCandidate && tradeCoverage.matchedCount > 1;
+  }
+
+  return tradeCoverage.matchedCount > 0;
+};
+
 const getTopLevelCoverageLabels = (pro: Professional): string[] => {
   const labels = new Set<string>();
 
@@ -576,14 +614,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
     [initialRequiredTrades, initialProjectData?.tradesRequired],
   );
-  const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<'all' | 'multi' | `single:${string}`>('all');
+  const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('teams');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
 
   useEffect(() => {
     if (hasInitializedTradeAutoFilter) return;
 
     if (requiredTrades.length > 1) {
-      setTradeAutoFilterMode('multi');
+      setTradeAutoFilterMode('teams');
       setHasInitializedTradeAutoFilter(true);
       return;
     }
@@ -594,14 +632,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       return;
     }
 
-    setTradeAutoFilterMode('all');
+    setTradeAutoFilterMode('teams');
     setHasInitializedTradeAutoFilter(true);
   }, [requiredTrades, hasInitializedTradeAutoFilter]);
 
   const enforcedRequiredTrades = useMemo(
     () => {
-      if (tradeAutoFilterMode === 'all') return [];
-      if (tradeAutoFilterMode === 'multi') return requiredTrades;
       if (tradeAutoFilterMode.startsWith('single:')) {
         const trade = tradeAutoFilterMode.slice('single:'.length).trim();
         return trade ? [trade] : [];
@@ -649,7 +685,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   }, [searchTerm, professionHint, locationSearch, loc.primary, loc.secondary, loc.tertiary]);
 
   const tradeAutoFilterCounts = useMemo(() => {
-    const countWithRequiredTrades = (trades: string[]) => {
+    const countWithMode = (mode: TradeAutoFilterMode, trades: string[]) => {
       const requiredTradesLower = trades.map((trade) => trade.toLowerCase());
 
       return professionals.filter((pro) => {
@@ -676,12 +712,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           : true;
         if (!bySearch) return false;
 
-        if (requiredTradesLower.length > 0) {
-          const tradeTokens = getProfessionalTradeTokens(pro);
-          const matchedCount = requiredTradesLower.filter((trade) =>
-            tradeTokens.some((token) => token.includes(trade) || trade.includes(token)),
-          ).length;
-          if (matchedCount === 0) return false;
+        if (!matchesTradeAutoFilterMode(pro, requiredTradesLower, mode)) {
+          return false;
         }
 
         const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
@@ -711,12 +743,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
     const single: Record<string, number> = {};
     requiredTrades.forEach((trade) => {
-      single[trade.toLowerCase()] = countWithRequiredTrades([trade]);
+      single[trade.toLowerCase()] = countWithMode(`single:${trade.toLowerCase()}`, [trade]);
     });
 
     return {
-      all: countWithRequiredTrades([]),
-      multi: countWithRequiredTrades(requiredTrades),
+      teams: countWithMode('teams', requiredTrades),
       single,
     };
   }, [professionals, requiredTrades, activeFilterContext, minRating]);
@@ -756,9 +787,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   }, [professionals]);
 
   const handleSearchChange = (value: string) => {
-    if (requiredTrades.length > 0) {
-      setTradeAutoFilterMode('all');
-    }
     setSearchTerm(value);
   };
 
@@ -832,25 +860,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
     const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
 
-    const getTradeCoverageMeta = (pro: Professional) => {
-      const tradeTokens = getProfessionalTradeTokens(pro);
-      const isCompany = pro.professionType === 'company';
-
-      if (requiredTradesLower.length === 0) {
-        return { matchedCount: 0, coversAllRequiredTrades: false, isCompany };
-      }
-
-      const matchedCount = requiredTradesLower.filter((trade) =>
-        tradeTokens.some((token) => token.includes(trade) || trade.includes(token)),
-      ).length;
-
-      return {
-        matchedCount,
-        coversAllRequiredTrades: matchedCount === requiredTradesLower.length,
-        isCompany,
-      };
-    };
-
     const typedLocation = locationSearch.trim().toLowerCase();
     const locationParts = (() => {
       if (typedLocation) {
@@ -895,8 +904,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       const bySearch = needle || effectiveProfession ? textMatch || professionMatch || (!needle && professionMatch) : true;
       if (!bySearch) return false;
 
-      const tradeCoverage = getTradeCoverageMeta(pro);
-      if (requiredTradesLower.length > 0 && tradeCoverage.matchedCount === 0) {
+      if (!matchesTradeAutoFilterMode(pro, requiredTradesLower, tradeAutoFilterMode)) {
         return false;
       }
 
@@ -960,8 +968,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     };
 
     const sorted = items.slice().sort((a, b) => {
-      const tradeA = getTradeCoverageMeta(a);
-      const tradeB = getTradeCoverageMeta(b);
+      const tradeA = getTradeCoverageMeta(a, requiredTradesLower);
+      const tradeB = getTradeCoverageMeta(b, requiredTradesLower);
 
       const aPrimaryTier = tradeA.isCompany && tradeA.coversAllRequiredTrades ? 3 : 0;
       const bPrimaryTier = tradeB.isCompany && tradeB.coversAllRequiredTrades ? 3 : 0;
@@ -985,7 +993,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return sorted;
-  }, [professionals, searchTerm, professionHint, loc.primary, loc.secondary, loc.tertiary, locationSearch, minRating, enforcedRequiredTrades]);
+  }, [professionals, searchTerm, professionHint, loc.primary, loc.secondary, loc.tertiary, locationSearch, minRating, enforcedRequiredTrades, tradeAutoFilterMode]);
 
   const [regionExpanded, setRegionExpanded] = useState(false);
   // Reset expansion whenever the location filter itself changes
@@ -993,31 +1001,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const filtered = useMemo(() => {
     const hasLocation = Boolean(locationSearch.trim() || loc.primary || loc.secondary || loc.tertiary);
-    const hasExplicitRating = minRating > 0;
     const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
 
-    const getTradeCoverageMeta = (pro: Professional) => {
-      const tradeTokens = getProfessionalTradeTokens(pro);
-      const isCompany = pro.professionType === 'company';
-
-      if (requiredTradesLower.length === 0) {
-        return { matchedCount: 0, coversAllRequiredTrades: false, isCompany };
-      }
-
-      const matchedCount = requiredTradesLower.filter((trade) =>
-        tradeTokens.some((token) => token.includes(trade) || trade.includes(token)),
-      ).length;
-
-      return {
-        matchedCount,
-        coversAllRequiredTrades: matchedCount === requiredTradesLower.length,
-        isCompany,
-      };
-    };
-
     const sortByTradePipeline = (a: Professional, b: Professional) => {
-      const tradeA = getTradeCoverageMeta(a);
-      const tradeB = getTradeCoverageMeta(b);
+      const tradeA = getTradeCoverageMeta(a, requiredTradesLower);
+      const tradeB = getTradeCoverageMeta(b, requiredTradesLower);
 
       const aPrimaryTier = tradeA.isCompany && tradeA.coversAllRequiredTrades ? 3 : 0;
       const bPrimaryTier = tradeB.isCompany && tradeB.coversAllRequiredTrades ? 3 : 0;
@@ -1050,51 +1038,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           const professionMatch = effectiveProfession ? haystacks.some((s) => s.includes(effectiveProfession)) : false;
           const bySearch = needle || effectiveProfession ? textMatch || professionMatch || (!needle && professionMatch) : true;
           if (!bySearch) return false;
-          const tradeCoverage = getTradeCoverageMeta(pro);
-          if (requiredTradesLower.length > 0 && tradeCoverage.matchedCount === 0) return false;
+          if (!matchesTradeAutoFilterMode(pro, requiredTradesLower, tradeAutoFilterMode)) return false;
           return minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
         })
         .sort(sortByTradePipeline);
     }
 
-    // Only widen when: no location is set, OR fewer than 3 results AND no explicit rating is applied.
-    // Never drop location when the user has chosen a specific rating — that would silently ignore one of their filters.
-    if (filteredBase.length >= 3 || !hasLocation || hasExplicitRating) return filteredBase;
-
-    // Widen scope: relax location when fewer than 3 results and no explicit rating, preserving trade/search intent.
-    const needle = searchTerm.trim().toLowerCase();
-    const mappedProfession = needle ? matchServiceToProfession(needle) : null;
-    const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
-
-    const widened = professionals
-      .filter((pro) => {
-        const haystacks = [
-          pro.professionType,
-          pro.fullName,
-          pro.businessName,
-          pro.primaryTrade,
-          ...(pro.tradesOffered ?? []),
-          ...(pro.suppliesOffered ?? []),
-        ]
-          .filter(Boolean)
-          .map((s) => s!.toString().toLowerCase());
-
-        const textMatch = needle ? haystacks.some((s) => s.includes(needle)) : false;
-        const professionMatch = effectiveProfession
-          ? haystacks.some((s) => s.includes(effectiveProfession))
-          : false;
-
-        const bySearch = needle || effectiveProfession
-          ? textMatch || professionMatch || (!needle && professionMatch)
-          : true;
-        if (!bySearch) return false;
-        const tradeCoverage = getTradeCoverageMeta(pro);
-        if (requiredTradesLower.length > 0 && tradeCoverage.matchedCount === 0) return false;
-        return true;
-      })
-      .sort(sortByTradePipeline);
-    return widened;
-  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, locationSearch, searchTerm, professionHint, minRating, regionExpanded, enforcedRequiredTrades]);
+    return filteredBase;
+  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, locationSearch, searchTerm, professionHint, minRating, regionExpanded, enforcedRequiredTrades, tradeAutoFilterMode]);
 
   // Narrowly-scoped count: how many matched with location+trade+rating (before any widening)
   const filteredBaseCount = filteredBase.length;
@@ -1178,7 +1129,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const groupedTradeDisplay = useMemo(() => {
     const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
-    if (requiredTradesLower.length < 2) {
+    if (requiredTradesLower.length < 2 || tradeAutoFilterMode === 'teams') {
       console.log('[ProfessionalsList] Grouping disabled - not enough trades:', { requiredTrades: enforcedRequiredTrades, requiredTradesLower });
       return {
         isEnabled: false,
@@ -1233,7 +1184,17 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       specialistSections,
       uncategorized,
     };
-  }, [filtered, enforcedRequiredTrades]);
+  }, [filtered, enforcedRequiredTrades, tradeAutoFilterMode]);
+
+  const activeFilterLabel = useMemo(() => {
+    if (requiredTrades.length === 0) return null;
+    if (tradeAutoFilterMode === 'teams') return 'Teams';
+    if (tradeAutoFilterMode.startsWith('single:')) {
+      const selectedTrade = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
+      return requiredTrades.find((trade) => trade.toLowerCase() === selectedTrade) || enforcedRequiredTrades[0] || 'Trade';
+    }
+    return null;
+  }, [requiredTrades, tradeAutoFilterMode, enforcedRequiredTrades]);
 
   const shareInitialData = useMemo<Partial<ProjectFormData>>(() => {
     const needle = (searchTerm || '').trim();
@@ -1568,30 +1529,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             <button
               type="button"
               onClick={() => {
-                setTradeAutoFilterMode('all');
+                setTradeAutoFilterMode('teams');
                 setSearchTerm('');
               }}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                tradeAutoFilterMode === 'all'
-                  ? 'bg-slate-800 text-white'
-                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              {`All (${tradeAutoFilterCounts.all})`}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTradeAutoFilterMode('multi');
-                setSearchTerm('');
-              }}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                tradeAutoFilterMode === 'multi'
+                tradeAutoFilterMode === 'teams'
                   ? 'bg-emerald-600 text-white'
                   : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
               }`}
             >
-              {`MultiTrade (${tradeAutoFilterCounts.multi})`}
+              {`Teams (${tradeAutoFilterCounts.teams})`}
             </button>
             {requiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
@@ -1777,21 +1724,28 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             )}
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" suppressHydrationWarning>
-            {filtered.map((pro) => (
-              <ProfessionalCard
-                key={pro.id}
-                isSelected={selectedIds.has(pro.id)}
-                isCompared={compareIds.has(pro.id)}
-                pro={pro}
-                onToggle={toggleSelection}
-                onViewDetails={openDetails}
-                onCompare={toggleCompare}
-                isAdmin={isAdmin}
-                disableSelection={blockInviteForMissingLocation}
-                showSelectionAction={canInviteProfessionals}
-              />
-            ))}
+          <div className="space-y-3" suppressHydrationWarning>
+            {activeFilterLabel && (
+              <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/70 px-4 py-3 shadow-sm">
+                <p className="text-lg font-semibold text-slate-900">{`${activeFilterLabel} (${filtered.length})`}</p>
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((pro) => (
+                <ProfessionalCard
+                  key={pro.id}
+                  isSelected={selectedIds.has(pro.id)}
+                  isCompared={compareIds.has(pro.id)}
+                  pro={pro}
+                  onToggle={toggleSelection}
+                  onViewDetails={openDetails}
+                  onCompare={toggleCompare}
+                  isAdmin={isAdmin}
+                  disableSelection={blockInviteForMissingLocation}
+                  showSelectionAction={canInviteProfessionals}
+                />
+              ))}
+            </div>
           </div>
         )
       )}
