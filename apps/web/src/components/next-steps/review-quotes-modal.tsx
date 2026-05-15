@@ -24,6 +24,8 @@ interface QuotedProfessional {
   quoteEstimatedDurationMinutes?: number;
   quoteEstimatedDurationUnit?: 'hours' | 'days';
   quotedAt?: string;
+  quoteRequestedTrades?: string[];
+  projectTradesSnapshot?: string[];
   professional: {
     fullName?: string;
     businessName?: string;
@@ -353,6 +355,18 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
                       <p className="font-semibold text-white truncate">{name}</p>
+                      {(pp.quoteRequestedTrades?.length || pp.projectTradesSnapshot?.length) && (
+                        <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
+                          {pp.quoteRequestedTrades?.length
+                            ? `Quote for ${pp.quoteRequestedTrades.join(', ')}`
+                            : 'Quote for full scope'}
+                          {pp.projectTradesSnapshot?.length
+                            ? ` · Also required: ${pp.projectTradesSnapshot
+                                .filter((trade) => !(pp.quoteRequestedTrades || []).some((requested) => requested.toLowerCase() === trade.toLowerCase()))
+                                .join(', ') || 'none'}`
+                            : ''}
+                        </p>
+                      )}
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {isCheapest && (
                           <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">

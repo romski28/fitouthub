@@ -30,6 +30,8 @@ interface ProjectDetail {
   projectId: string;
   projectScale?: string;
   professionalId?: string;
+  quoteRequestedTrades?: string[];
+  projectTradesSnapshot?: string[];
   project: {
     id: string;
     projectName: string;
@@ -40,6 +42,7 @@ interface ProjectDetail {
     isEmergency?: boolean;
     budget?: string;
     notes?: string;
+    tradesRequired?: string[];
     photos?: {
       id: string;
       url: string;
@@ -1516,6 +1519,13 @@ export default function ProjectDetailPage() {
 
   const awardedAmountValue = project.quoteAmount ? Number(project.quoteAmount) : undefined;
   const projectBudgetValue = project.project.budget ? Number(project.project.budget) : undefined;
+  const requestedQuoteTrades = project.quoteRequestedTrades || [];
+  const projectTradeScope = project.projectTradesSnapshot?.length
+    ? project.projectTradesSnapshot
+    : project.project.tradesRequired || [];
+  const otherProjectTrades = projectTradeScope.filter(
+    (trade) => !requestedQuoteTrades.some((requested) => requested.toLowerCase() === trade.toLowerCase()),
+  );
   const totalRequested = mappedPaymentRequests.reduce((sum, request) => sum + request.amount, 0);
   const totalPaid = mappedPaymentRequests
     .filter((request) => request.status === 'paid' || request.status === 'approved')
@@ -1554,6 +1564,35 @@ export default function ProjectDetailPage() {
               projectSentimentScope="professional"
               attachTabs
             />
+
+            {(requestedQuoteTrades.length > 0 || projectTradeScope.length > 0) && (
+              <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/80 px-4 py-4 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Quote scope</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {requestedQuoteTrades.length > 0 ? (
+                    requestedQuoteTrades.map((trade) => (
+                      <span key={`requested-${trade}`} className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+                        Quote for: {trade}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+                      Quote for: full scope
+                    </span>
+                  )}
+                  {otherProjectTrades.map((trade) => (
+                    <span key={`other-${trade}`} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                      Also required: {trade}
+                    </span>
+                  ))}
+                </div>
+                {projectTradeScope.length > 0 && (
+                  <p className="mt-2 text-xs text-slate-600">
+                    Full project trade scope: {projectTradeScope.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="-mt-px">
               <ProjectTabs

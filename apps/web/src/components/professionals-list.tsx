@@ -1053,7 +1053,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   // Show expand nudge when a region is active, not yet expanded, and local results are thin (≤2)
   const canShowExpand = locationIsActive && !regionExpanded && filteredBaseCount <= 2;
 
-  const maxSelect = Math.min(3, filtered.length);
+  const maxSelect = requiredTrades.length > 1 ? Math.max(3, requiredTrades.length * 2) : 3;
   // Always start with empty selection - no persistence
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   // Separate compare set — up to 3 professionals for side-by-side comparison

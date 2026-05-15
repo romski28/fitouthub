@@ -541,6 +541,8 @@ model ProjectProfessional {
   quotedAt                DateTime?
   directContactShared     Boolean                @default(false)
   directContactSharedAt   DateTime?
+  quoteRequestedTrades    String[]               @default([])
+  projectTradesSnapshot   String[]               @default([])
   quoteReminderSentAt     DateTime?
   quoteExtendedUntil      DateTime?
   visitApprovedButNotDone Boolean                @default(false)

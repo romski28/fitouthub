@@ -56,6 +56,9 @@ export class EmailService {
     projectName: string;
     projectDescription: string;
     location: string;
+    requestedTradesText?: string;
+    otherRequiredTradesText?: string;
+    projectTradesText?: string;
     acceptToken: string;
     declineToken: string;
     authToken: string;
@@ -89,6 +92,9 @@ export class EmailService {
             <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #1f2937;">${params.projectName}</h3>
               <p style="color: #6b7280; margin: 10px 0;"><strong>Location:</strong> ${params.location}</p>
+              ${params.requestedTradesText ? `<p style="color: #6b7280; margin: 10px 0;"><strong>Quote requested for:</strong> ${params.requestedTradesText}</p>` : ''}
+              ${params.otherRequiredTradesText ? `<p style="color: #6b7280; margin: 10px 0;"><strong>Other trades required:</strong> ${params.otherRequiredTradesText}</p>` : ''}
+              ${params.projectTradesText ? `<p style="color: #6b7280; margin: 10px 0;"><strong>Full trade scope:</strong> ${params.projectTradesText}</p>` : ''}
               <p style="color: #6b7280; margin: 10px 0;"><strong>Description:</strong></p>
               <p style="color: #374151;">${params.projectDescription}</p>
             </div>

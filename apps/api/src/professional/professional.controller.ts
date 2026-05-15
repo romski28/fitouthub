@@ -472,6 +472,7 @@ export class ProfessionalController {
               region: true,
               budget: true,
               notes: true,
+              tradesRequired: true,
             },
           },
         },

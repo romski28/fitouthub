@@ -149,7 +149,16 @@ export class ProjectsService {
           ? { emergencyCalloutAvailable: true }
           : {}),
       },
-      select: { id: true, email: true, phone: true, fullName: true, businessName: true },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        fullName: true,
+        businessName: true,
+        professionType: true,
+        primaryTrade: true,
+        tradesOffered: true,
+      },
     });
 
     if (professionals.length !== ids.length) {
@@ -161,6 +170,97 @@ export class ProjectsService {
     }
 
     return professionals;
+  }
+
+  private normalizeTradeLabels(values: Array<string | null | undefined>): string[] {
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    for (const value of values) {
+      const cleaned = String(value || '').trim();
+      if (!cleaned) continue;
+      const key = cleaned.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(cleaned);
+    }
+
+    return result;
+  }
+
+  private getProfessionalTradeTokens(professional: any): string[] {
+    return this.normalizeTradeLabels([
+      professional?.primaryTrade,
+      ...(Array.isArray(professional?.tradesOffered)
+        ? professional.tradesOffered
+        : []),
+    ]).map((value) => value.toLowerCase());
+  }
+
+  private deriveInvitationTradeScope(
+    projectTrades: string[] | null | undefined,
+    professional: any,
+  ): {
+    requestedTrades: string[];
+    otherRequiredTrades: string[];
+    projectTrades: string[];
+  } {
+    const normalizedProjectTrades = this.normalizeTradeLabels(projectTrades || []);
+    if (normalizedProjectTrades.length === 0) {
+      return {
+        requestedTrades: [],
+        otherRequiredTrades: [],
+        projectTrades: [],
+      };
+    }
+
+    const tradeTokens = this.getProfessionalTradeTokens(professional);
+    let requestedTrades = normalizedProjectTrades.filter((trade) =>
+      tradeTokens.some((token) => token.includes(trade.toLowerCase()) || trade.toLowerCase().includes(token)),
+    );
+
+    if (requestedTrades.length === 0) {
+      requestedTrades = normalizedProjectTrades.slice();
+    }
+
+    requestedTrades = this.normalizeTradeLabels(requestedTrades);
+    const requestedKeys = new Set(requestedTrades.map((trade) => trade.toLowerCase()));
+    const otherRequiredTrades = normalizedProjectTrades.filter(
+      (trade) => !requestedKeys.has(trade.toLowerCase()),
+    );
+
+    return {
+      requestedTrades,
+      otherRequiredTrades,
+      projectTrades: normalizedProjectTrades,
+    };
+  }
+
+  private buildInvitationTradeCopy(scope: {
+    requestedTrades: string[];
+    otherRequiredTrades: string[];
+    projectTrades: string[];
+  }) {
+    return {
+      requestedTradesLine:
+        scope.requestedTrades.length > 0
+          ? `Quote requested for: ${scope.requestedTrades.join(', ')}`
+          : null,
+      otherRequiredTradesLine:
+        scope.otherRequiredTrades.length > 0
+          ? `Other trades required on this project: ${scope.otherRequiredTrades.join(', ')}`
+          : null,
+      projectTradesLine:
+        scope.projectTrades.length > 0
+          ? `Trades required: ${scope.projectTrades.join(', ')}`
+          : 'Trades: To be discussed',
+      directMessage:
+        scope.requestedTrades.length > 0
+          ? `Quote requested for ${scope.requestedTrades.join(', ')}${scope.otherRequiredTrades.length > 0 ? `. Other project trades: ${scope.otherRequiredTrades.join(', ')}` : ''}.`
+          : scope.projectTrades.length > 0
+            ? `Trades required: ${scope.projectTrades.join(', ')}.`
+            : 'Trades to be discussed.',
+    };
   }
 
   private betterStatus(
@@ -1632,20 +1732,37 @@ export class ProjectsService {
       throw new BadRequestException('No professionals found for given ids');
     }
 
+    const invitationScopeByProfessionalId = new Map(
+      professionals.map((professional) => [
+        professional.id,
+        this.deriveInvitationTradeScope(project.tradesRequired || [], professional),
+      ]),
+    );
+
     // Create or ensure ProjectProfessional relations (update status to 'pending' if exists)
     const junctionPromises = professionals.map((pro) =>
-      this.prisma.projectProfessional.upsert({
+      (this.prisma as any).projectProfessional.upsert({
         where: {
           projectId_professionalId: {
             projectId,
             professionalId: pro.id,
           },
         },
-        update: { status: 'pending' },
+        update: {
+          status: 'pending',
+          quoteRequestedTrades:
+            invitationScopeByProfessionalId.get(pro.id)?.requestedTrades || [],
+          projectTradesSnapshot:
+            invitationScopeByProfessionalId.get(pro.id)?.projectTrades || [],
+        },
         create: {
           projectId,
           professionalId: pro.id,
           status: 'pending',
+          quoteRequestedTrades:
+            invitationScopeByProfessionalId.get(pro.id)?.requestedTrades || [],
+          projectTradesSnapshot:
+            invitationScopeByProfessionalId.get(pro.id)?.projectTrades || [],
         },
       }),
     );
@@ -1656,10 +1773,13 @@ export class ProjectsService {
     const messagePromises = junctionResults.map(async (projectProfessional) => {
       const professional = professionals.find(p => p.id === projectProfessional.professionalId);
       if (!professional) return;
-
-      const tradesText = project.tradesRequired && project.tradesRequired.length > 0
-        ? `Trades Required: ${project.tradesRequired.join(', ')}`
-        : 'Trades: To be discussed';
+      const tradeCopy = this.buildInvitationTradeCopy(
+        invitationScopeByProfessionalId.get(projectProfessional.professionalId) || {
+          requestedTrades: [],
+          otherRequiredTrades: [],
+          projectTrades: this.normalizeTradeLabels(project.tradesRequired || []),
+        },
+      );
 
       const timelineText = project.endDate 
         ? `Timeline: Needed by ${new Date(project.endDate).toLocaleDateString()}`
@@ -1669,7 +1789,9 @@ export class ProjectsService {
 
 You've been invited to submit a quote for this project.
 
-${tradesText}
+${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}
+` : ''}${tradeCopy.otherRequiredTradesLine ? `${tradeCopy.otherRequiredTradesLine}
+` : ''}${tradeCopy.projectTradesLine}
 Region: ${project.region}
 ${timelineText}
 
@@ -1725,6 +1847,12 @@ Please review the project details and respond with your quote or decline the inv
       const { professional, acceptToken, declineToken, authToken } = tokenData[i];
       const professionalName = professional.fullName || professional.businessName || 'Professional';
       const quoteWindowLabel = project.isEmergency ? '12 hours' : '3 days';
+      const tradeScope = invitationScopeByProfessionalId.get(professional.id) || {
+        requestedTrades: [],
+        otherRequiredTrades: [],
+        projectTrades: this.normalizeTradeLabels(project.tradesRequired || []),
+      };
+      const tradeCopy = this.buildInvitationTradeCopy(tradeScope);
       const recipientAudit: NotificationAuditRecipient = {
         actorType: 'professional',
         actorId: professional.id,
@@ -1741,6 +1869,9 @@ Please review the project details and respond with your quote or decline the inv
           projectName: project.projectName,
           projectDescription: project.notes || 'No description provided',
           location: project.region,
+          requestedTradesText: tradeScope.requestedTrades.join(', '),
+          otherRequiredTradesText: tradeScope.otherRequiredTrades.join(', '),
+          projectTradesText: tradeScope.projectTrades.join(', '),
           acceptToken,
           declineToken,
           authToken,
@@ -1804,7 +1935,7 @@ Please review the project details and respond with your quote or decline the inv
           recipientAudit.direct.channel = directChannel;
 
           if (directChannel) {
-            const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. Check your email or log in to respond.`;
+            const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. ${tradeCopy.directMessage} Check your email or log in to respond.`;
             const sendResult = await this.notificationService.send({
               professionalId: professional.id,
               phoneNumber: professional.phone,
@@ -1859,9 +1990,16 @@ Please review the project details and respond with your quote or decline the inv
     });
     if (!project) throw new BadRequestException('Project not found');
 
-    await this.getProjectSelectableProfessionals(ids, {
+    const professionals = await this.getProjectSelectableProfessionals(ids, {
       requireEmergencyCallout: !!project.isEmergency,
     });
+
+    const invitationScopeByProfessionalId = new Map(
+      professionals.map((professional) => [
+        professional.id,
+        this.deriveInvitationTradeScope(project.tradesRequired || [], professional),
+      ]),
+    );
 
     const results: any[] = [];
     for (const proId of ids) {
@@ -1874,19 +2012,38 @@ Please review the project details and respond with your quote or decline the inv
         .catch(() => null);
 
       if (!existing) {
-        const created = await this.prisma.projectProfessional.create({
+        const created = await (this.prisma as any).projectProfessional.create({
           data: {
             projectId,
             professionalId: proId,
             status: 'selected',
+            quoteRequestedTrades:
+              invitationScopeByProfessionalId.get(proId)?.requestedTrades || [],
+            projectTradesSnapshot:
+              invitationScopeByProfessionalId.get(proId)?.projectTrades || [],
           },
         });
         results.push(created);
       } else {
+        await (this.prisma as any).projectProfessional.update({
+          where: { id: existing.id },
+          data: {
+            quoteRequestedTrades:
+              invitationScopeByProfessionalId.get(proId)?.requestedTrades || [],
+            projectTradesSnapshot:
+              invitationScopeByProfessionalId.get(proId)?.projectTrades || [],
+          },
+        });
         // Preserve existing lifecycle status for already-linked professionals.
         // Do not downgrade active invitations back to `selected`, otherwise they
         // disappear from the bidding board even though bidding is still live.
-        results.push(existing);
+        results.push({
+          ...existing,
+          quoteRequestedTrades:
+            invitationScopeByProfessionalId.get(proId)?.requestedTrades || [],
+          projectTradesSnapshot:
+            invitationScopeByProfessionalId.get(proId)?.projectTrades || [],
+        });
       }
     }
 
@@ -1936,9 +2093,19 @@ Please review the project details and respond with your quote or decline the inv
     normalized.endDate = this.normalizeDateInput(normalized.endDate);
     normalized.siteInspectionAvailableOn = this.normalizeDateInput(normalized.siteInspectionAvailableOn);
 
+    const normalizedProjectTrades = this.normalizeTradeLabels(
+      Array.isArray(normalized.tradesRequired) ? normalized.tradesRequired : [],
+    );
+    const invitationScopeByProfessionalId = new Map(
+      professionals.map((professional) => [
+        professional.id,
+        this.deriveInvitationTradeScope(normalizedProjectTrades, professional),
+      ]),
+    );
+
     const resolvedScale = this.inferProjectScaleFromContext({
       explicitScale: (createProjectDto as any).projectScale,
-      tradesRequired: Array.isArray(normalized.tradesRequired) ? normalized.tradesRequired : [],
+      tradesRequired: normalizedProjectTrades,
       isEmergency: Boolean(normalized.isEmergency),
     });
     normalized.projectScale = resolvedScale;
@@ -1951,6 +2118,10 @@ Please review the project details and respond with your quote or decline the inv
         create: ids.map((id) => ({
           professionalId: id,
           status: 'pending',
+          quoteRequestedTrades:
+            invitationScopeByProfessionalId.get(id)?.requestedTrades || [],
+          projectTradesSnapshot:
+            invitationScopeByProfessionalId.get(id)?.projectTrades || [],
         })),
       },
     };
@@ -1989,14 +2160,16 @@ Please review the project details and respond with your quote or decline the inv
       const messagePromises = project.professionals.map(async (projectProfessional) => {
         const professional = professionals.find(p => p.id === projectProfessional.professionalId);
         if (!professional) return;
+        const tradeScope = invitationScopeByProfessionalId.get(projectProfessional.professionalId) || {
+          requestedTrades: [],
+          otherRequiredTrades: [],
+          projectTrades: normalizedProjectTrades,
+        };
+        const tradeCopy = this.buildInvitationTradeCopy(tradeScope);
 
         const budgetText = project.budget 
           ? `Budget: HK$${project.budget.toLocaleString()}`
           : 'Budget: TBD';
-        
-        const tradesText = project.tradesRequired && project.tradesRequired.length > 0
-          ? `Trades Required: ${project.tradesRequired.join(', ')}`
-          : 'Trades: To be discussed';
 
         const timelineText = project.endDate 
           ? `Timeline: Needed by ${new Date(project.endDate).toLocaleDateString()}`
@@ -2007,7 +2180,9 @@ Please review the project details and respond with your quote or decline the inv
 You've been invited to submit a quote for this project.
 
 ${budgetText}
-${tradesText}
+${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}
+` : ''}${tradeCopy.otherRequiredTradesLine ? `${tradeCopy.otherRequiredTradesLine}
+` : ''}${tradeCopy.projectTradesLine}
 Region: ${project.region}
 ${timelineText}
 
@@ -2074,6 +2249,12 @@ Please review the project details and respond with your quote or decline the inv
         professional.fullName || professional.businessName || 'Professional';
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
       const quoteWindowLabel = project.isEmergency ? '12 hours' : '3 days';
+      const tradeScope = invitationScopeByProfessionalId.get(professional.id) || {
+        requestedTrades: [],
+        otherRequiredTrades: [],
+        projectTrades: normalizedProjectTrades,
+      };
+      const tradeCopy = this.buildInvitationTradeCopy(tradeScope);
 
       emailPromises.push(
         this.emailService
@@ -2083,6 +2264,9 @@ Please review the project details and respond with your quote or decline the inv
             projectName: project.projectName,
             projectDescription: project.notes || 'No description provided',
             location: project.region,
+            requestedTradesText: tradeScope.requestedTrades.join(', '),
+            otherRequiredTradesText: tradeScope.otherRequiredTrades.join(', '),
+            projectTradesText: tradeScope.projectTrades.join(', '),
             acceptToken,
             declineToken,
             authToken,
@@ -2151,7 +2335,7 @@ Please review the project details and respond with your quote or decline the inv
                 return;
               }
 
-              const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. Check your email or log in to respond.`;
+              const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. ${tradeCopy.directMessage} Check your email or log in to respond.`;
               const sendResult = await this.notificationService.send({
                 professionalId: professional.id,
                 phoneNumber: professional.phone,

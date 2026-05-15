@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-05-15-13c85f5",
+    "date": "2026-05-15T14:10:12+08:00",
+    "title": "quotes: surface trade scope on invites and review screens",
+    "summary": "quotes: surface trade scope on invites and review screens",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "13c85f5",
+    "files": [
+      "apps/api/prisma/add_project_professional_trade_scope.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-8268f75",
     "date": "2026-05-15T13:43:36+08:00",
     "title": "professionals: tighten location filter and simplify trade modes",
