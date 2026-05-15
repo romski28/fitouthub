@@ -1062,25 +1062,26 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const locationSelected = Boolean(loc.primary || loc.secondary || loc.tertiary);
   const blockInviteForMissingLocation = requireLocation && !locationSelected;
 
-  // Preselect first N (recommendation) - only if coming from home page with intent
+  // Preselect first N (recommendation) - only if coming from home page with intent.
+  // Do not clear existing selections when the user changes filters; selection is meant to span modes.
   useMemo(() => {
-    // Drop selections that no longer exist in the filtered list
-    const currentIds = new Set(filtered.map((p) => p.id));
+    const allIds = new Set(professionals.map((pro) => pro.id));
     const next = new Set<string>();
-    selectedIds.forEach((id) => { if (currentIds.has(id)) next.add(id); });
-    
-    // If coming from home page (intentData), auto-preselect first N if none selected
+    selectedIds.forEach((id) => {
+      if (allIds.has(id)) next.add(id);
+    });
+
     const hasRequiredLocation = !requireLocation || Boolean(loc.primary || loc.secondary || loc.tertiary);
     if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession && hasRequiredLocation && canInviteProfessionals) {
       for (let i = 0; i < Math.min(3, filtered.length); i++) {
         next.add(filtered[i].id);
       }
     }
-    
+
     if (Array.from(next).sort().join(',') !== Array.from(selectedIds).sort().join(',')) {
       setSelectedIds(next);
     }
-  }, [filtered, initialFromIntent.profession, requireLocation, loc.primary, loc.secondary, loc.tertiary, canInviteProfessionals]);
+  }, [professionals, filtered, initialFromIntent.profession, requireLocation, loc.primary, loc.secondary, loc.tertiary, canInviteProfessionals]);
 
   useEffect(() => {
     if (!canInviteProfessionals && selectedIds.size > 0) {
@@ -1232,7 +1233,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       return;
     }
 
-    const selectedProfessionals = filtered.filter((p) => selectedIds.has(p.id));
+    const selectedProfessionals = professionals.filter((p) => selectedIds.has(p.id));
     if (selectedProfessionals.length === 0) return;
 
     const handoffDebug =
