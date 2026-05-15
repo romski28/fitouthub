@@ -403,8 +403,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [searchTerm, setSearchTerm] = useState<string>(initialSearch);
   const [professionHint] = useState<string | undefined>(initialFromIntent.profession);
   const [loc, setLoc] = useState<CanonicalLocation>(baseLoc);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [locationSearch, setLocationSearch] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<Array<{ primary?: string; secondary?: string; tertiary?: string; display: string }>>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
@@ -435,6 +433,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [selectedZoneCode, setSelectedZoneCode] = useState<HkZoneCode | null>(inferZoneCodeFromLocation(baseLoc));
+  const [hasManuallyClearedLocation, setHasManuallyClearedLocation] = useState(false);
 
   const requiredTrades = useMemo(
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
@@ -447,7 +446,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       initialLocation?.primary || initialLocation?.secondary || initialLocation?.tertiary,
     );
 
-    if (hasSelectedLocation || !hasIncomingLocation) return;
+    if (hasSelectedLocation || !hasIncomingLocation || hasManuallyClearedLocation) return;
 
     setLoc(initialLocation as CanonicalLocation);
     setLocationDisplay(
@@ -460,6 +459,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     loc.primary,
     loc.secondary,
     loc.tertiary,
+    hasManuallyClearedLocation,
   ]);
 
   const suggestionPool = useMemo(() => {
@@ -476,25 +476,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-
-    const trimmed = value.trim();
-    if (!trimmed) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    const lower = trimmed.toLowerCase();
-    const matches = suggestionPool
-      .filter((s) => s.toLowerCase().includes(lower))
-      .slice(0, 8);
-    setSuggestions(matches);
-    setShowSuggestions(matches.length > 0);
-  };
-
-  const handleSuggestionSelect = (value: string) => {
-    setSearchTerm(value);
-    setShowSuggestions(false);
   };
 
   const handleLocationSearch = (value: string) => {
@@ -515,6 +496,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     setLocationDisplay(result.display);
     setShowLocationSuggestions(false);
     setSelectedZoneCode(null);
+    setHasManuallyClearedLocation(false);
   };
 
   const openLocationMapModal = () => {
@@ -528,6 +510,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       setLocationDisplay('');
       setLocationSearch('');
       setShowLocationSuggestions(false);
+      setHasManuallyClearedLocation(true);
       setIsLocationMapOpen(false);
       return;
     }
@@ -537,6 +520,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     setLocationDisplay(label);
     setLocationSearch('');
     setShowLocationSuggestions(false);
+    setHasManuallyClearedLocation(false);
     setIsLocationMapOpen(false);
   };
 
@@ -1147,8 +1131,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 placeholder={t('filters.professionalOrTradePlaceholder')}
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                onFocus={() => setShowSuggestions(suggestions.length > 0)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
                 className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 pr-8 text-sm"
                 list="name-or-trade-options"
               />
@@ -1170,21 +1152,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 </button>
               )}
             </div>
-            {showSuggestions && suggestions.length > 0 ? (
-              <div className="absolute top-full z-10 mt-1 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className="flex w-full items-center px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleSuggestionSelect(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            ) : null}
           </div>
 
           <div className="relative grid gap-1">
@@ -1213,6 +1180,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                       setLocationDisplay('');
                       setLoc({});
                       setSelectedZoneCode(null);
+                      setHasManuallyClearedLocation(true);
                     }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
                     aria-label={t('filters.clearLocationAria')}
@@ -1256,6 +1224,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
             >
               <option value={0}>{t('filters.anyRating')}</option>
+              <option value={5}>⭐⭐⭐⭐⭐ 5</option>
               <option value={4.5}>⭐⭐⭐⭐+ 4+</option>
               <option value={4}>⭐⭐⭐⭐ 4+</option>
               <option value={3}>⭐⭐⭐ 3+</option>
@@ -1270,7 +1239,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={() => setIsLocationMapOpen(false)} />
           <div
-            className="relative mx-4 w-full max-w-3xl rounded-2xl border border-white/45 bg-[#F5EEDE] p-5 shadow-2xl"
+            className="relative mx-4 flex h-[80vh] w-full max-w-3xl flex-col rounded-2xl border border-white/45 bg-[#F5EEDE] p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -1290,6 +1259,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             <HkZoneMap
               highlightedCodes={selectedZoneCode ? [selectedZoneCode] : []}
               onToggleCode={(code) => setSelectedZoneCode((prev) => (prev === code ? null : code))}
+              svgClassName="h-[52vh] w-full"
             />
 
             <div className="mt-3 flex flex-wrap gap-2">

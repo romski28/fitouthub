@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-15-317251d",
+    "date": "2026-05-15T11:51:59+08:00",
+    "title": "professionals: refine filter interactions and map modal behavior",
+    "summary": "professionals: refine filter interactions and map modal behavior",
+    "areas": [
+      "web"
+    ],
+    "commit": "317251d",
+    "files": [
+      "apps/web/src/components/hk-zone-map.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-717af2a",
     "date": "2026-05-15T11:41:45+08:00",
     "title": "professionals: upgrade filter panel UX on matched professionals page",

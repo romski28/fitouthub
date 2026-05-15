@@ -40,9 +40,10 @@ type Props = {
   highlightedCodes?: string[];
   compact?: boolean;
   onToggleCode?: (code: HkZoneCode) => void;
+  svgClassName?: string;
 };
 
-export function HkZoneMap({ highlightedCodes = [], compact = false, onToggleCode }: Props) {
+export function HkZoneMap({ highlightedCodes = [], compact = false, onToggleCode, svgClassName }: Props) {
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
   const active = useMemo(() => new Set(highlightedCodes.map((code) => code.toUpperCase())), [highlightedCodes]);
   const hoveredZone = ZONES.find((zone) => zone.code === hoveredCode) || null;
@@ -50,7 +51,7 @@ export function HkZoneMap({ highlightedCodes = [], compact = false, onToggleCode
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-      <svg viewBox="0 0 1000 733" className="h-28 w-full" role="img" aria-label="Hong Kong zone coverage map">
+      <svg viewBox="0 0 1000 733" className={svgClassName || 'h-28 w-full'} role="img" aria-label="Hong Kong zone coverage map">
         <rect x="0" y="0" width="1000" height="733" rx="14" className="fill-white" />
         {ZONES.map((zone) => {
           const isActive = active.has(zone.code);
