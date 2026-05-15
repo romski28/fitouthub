@@ -23,12 +23,10 @@ import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets'
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 
 type WizardStep =
-  | { kind: 'title' }
+  | { kind: 'basics' }
   | { kind: 'location' }
-  | { kind: 'emergency' }
-  | { kind: 'followup'; question: string; id: string }
-  | { kind: 'scope' }
-  | { kind: 'endDate' }
+  | { kind: 'followups' }
+  | { kind: 'scopeDates' }
   | { kind: 'images' }
   | { kind: 'review' };
 
@@ -66,8 +64,16 @@ const normalizeQuestions = (input: unknown): string[] =>
         .filter((item) => item.length > 0)
     : [];
 
+const isLocationFollowUpQuestion = (question: string): boolean => {
+  const normalized = question.toLowerCase();
+  return /(location|district|area|region|neighbou?rhood|where\s+is|where\s+in|hong\s*kong|hk\b|kowloon|new\s*territories|island|address|postal|postcode|zip|estate|building)/i.test(normalized);
+};
+
+const sanitizeFollowUpQuestions = (questions: string[]): string[] =>
+  questions.filter((question) => !isLocationFollowUpQuestion(question));
+
 const mergeQuestions = (...inputs: unknown[]): string[] =>
-  Array.from(new Set(inputs.flatMap((input) => normalizeQuestions(input))));
+  sanitizeFollowUpQuestions(Array.from(new Set(inputs.flatMap((input) => normalizeQuestions(input)))));
 
 const stripSummaryPrefix = (value: string): string => {
   const trimmed = value.trimStart();
@@ -208,21 +214,19 @@ export default function CreateProjectWizardPage() {
     setCurrentStep(0);
   }, [seedLoaded, seedDraft, seedDescription, userLocation]);
 
-  const steps = useMemo<WizardStep[]>(() => {
-    const list: WizardStep[] = [{ kind: 'title' }, { kind: 'location' }];
-    list.push({ kind: 'emergency' });
+  const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
 
-    followUpQuestions.slice(0, 3).forEach((question, index) => {
-      list.push({ kind: 'followup', question, id: `q-${index}` });
-    });
-
-    list.push({ kind: 'scope' });
-    list.push({ kind: 'endDate' });
-    list.push({ kind: 'images' });
-    list.push({ kind: 'review' });
-
-    return list;
-  }, [followUpQuestions]);
+  const steps = useMemo<WizardStep[]>(
+    () => [
+      { kind: 'basics' },
+      { kind: 'location' },
+      { kind: 'followups' },
+      { kind: 'scopeDates' },
+      { kind: 'images' },
+      { kind: 'review' },
+    ],
+    [],
+  );
 
   const activeStep = steps[currentStep];
   const currentMotivation = MOTIVATION[Math.min(currentStep, MOTIVATION.length - 1)] || MOTIVATION[MOTIVATION.length - 1];
@@ -241,13 +245,14 @@ export default function CreateProjectWizardPage() {
   const seedScope = (seedDraft?.initialData?.notes || '').trim();
   const canGoNext = useMemo(() => {
     if (!activeStep) return false;
-    if (activeStep.kind === 'title') return title.trim().length > 0;
+    if (activeStep.kind === 'basics') return title.trim().length > 0 && isEmergency !== null;
     if (activeStep.kind === 'location') return Boolean(location.primary || location.secondary || location.tertiary);
-    if (activeStep.kind === 'emergency') return isEmergency !== null;
-    if (activeStep.kind === 'followup') return (answers[activeStep.id] || '').trim().length > 0;
-    if (activeStep.kind === 'scope') return summary.trim().length > 0;
+    if (activeStep.kind === 'followups') {
+      return followUpStepQuestions.every((_, index) => (answers[`q-${index}`] || '').trim().length > 0);
+    }
+    if (activeStep.kind === 'scopeDates') return summary.trim().length > 0;
     return true;
-  }, [activeStep, title, location.primary, location.secondary, location.tertiary, isEmergency, answers, summary]);
+  }, [activeStep, title, location.primary, location.secondary, location.tertiary, isEmergency, followUpStepQuestions, answers, summary]);
 
   const progress = steps.length > 0 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
 
@@ -300,7 +305,7 @@ export default function CreateProjectWizardPage() {
   };
 
   const submitWizard = () => {
-    const followUpBlock = followUpQuestions
+    const followUpBlock = followUpStepQuestions
       .map((question, index) => {
         const answer = (answers[`q-${index}`] || '').trim();
         if (!answer) return null;
@@ -340,7 +345,7 @@ export default function CreateProjectWizardPage() {
       },
       selectedProfessionals: seedDraft?.selectedProfessionals || [],
       aiIntakeId: seedDraft?.aiIntakeId,
-      followUpQuestions,
+      followUpQuestions: followUpStepQuestions,
     };
 
     writeCreateProjectDraftSafely(nextDraft);
@@ -354,7 +359,7 @@ export default function CreateProjectWizardPage() {
       profession: nextDraft.initialData?.tradesRequired?.[0],
       location: nextDraft.initialData?.location,
       tradesRequired: nextDraft.initialData?.tradesRequired || [],
-      followUpQuestions,
+      followUpQuestions: followUpStepQuestions,
     };
 
     setProjectDescriptionHandoff(nextDescription);
@@ -426,16 +431,34 @@ export default function CreateProjectWizardPage() {
               >
                 {steps.map((step, index) => (
                   <div key={`${step.kind}-${index}`} className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5 sm:p-6">
-                    {step.kind === 'title' && (
+                    {step.kind === 'basics' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>📝</span><span>Shape your project&apos;s story with a great title</span></h3>
-                        <p className={panelNoteClass}>Keep the AI title or give it one of your own.</p>
+                        <h3 className={panelTitleClass}><span>📝</span><span>Project basics</span></h3>
+                        <p className={panelNoteClass}>Give your project a clear title and set urgency.</p>
                         <input
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="e.g. Bathroom leak repair"
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setIsEmergency(false)}
+                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
+                          >
+                            <p className="text-base font-semibold text-slate-900">Standard</p>
+                            <p className="text-sm text-slate-600">Normal matching works perfectly.</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsEmergency(true)}
+                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
+                          >
+                            <p className="text-base font-semibold text-slate-900">Emergency</p>
+                            <p className="text-sm text-slate-600">We\'ll prioritize emergency-ready professionals.</p>
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -471,48 +494,37 @@ export default function CreateProjectWizardPage() {
                       </div>
                     )}
 
-                    {step.kind === 'emergency' && (
+                    {step.kind === 'followups' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>🚨</span><span>Is this an emergency?</span></h3>
-                        <p className={panelNoteClass}>Choose the option that best matches the urgency.</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setIsEmergency(false)}
-                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
-                          >
-                            <p className="text-base font-semibold text-slate-900">Standard</p>
-                            <p className="text-sm text-slate-600">Normal matching works perfectly.</p>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsEmergency(true)}
-                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
-                          >
-                            <p className="text-base font-semibold text-slate-900">Emergency</p>
-                            <p className="text-sm text-slate-600">We\'ll prioritize emergency-ready professionals.</p>
-                          </button>
+                        <h3 className={panelTitleClass}><span>💡</span><span>Clarifications</span></h3>
+                        <p className={panelNoteClass}>Answer these quick questions so we can brief professionals properly.</p>
+                        <div className="space-y-3">
+                          {followUpStepQuestions.length === 0 ? (
+                            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">No extra clarification needed. You can continue.</p>
+                          ) : (
+                            followUpStepQuestions.map((question, index) => {
+                              const answerKey = `q-${index}`;
+                              return (
+                                <div key={answerKey} className="space-y-1.5">
+                                  <p className={panelNoteClass}>{question}</p>
+                                  <textarea
+                                    value={answers[answerKey] || ''}
+                                    onChange={(e) => setAnswers((prev) => ({ ...prev, [answerKey]: e.target.value }))}
+                                    rows={2}
+                                    placeholder="Type your answer..."
+                                    className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                                  />
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
                     )}
 
-                    {step.kind === 'followup' && (
+                    {step.kind === 'scopeDates' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>💡</span><span>Help us understand you better.</span></h3>
-                        <p className={panelNoteClass}>{step.question}</p>
-                        <textarea
-                          value={answers[step.id] || ''}
-                          onChange={(e) => setAnswers((prev) => ({ ...prev, [step.id]: e.target.value }))}
-                          rows={2}
-                          placeholder="Type your answer..."
-                          className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
-                        />
-                      </div>
-                    )}
-
-                    {step.kind === 'scope' && (
-                      <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>🧾</span><span>Help us understand you better.</span></h3>
+                        <h3 className={panelTitleClass}><span>🧾</span><span>Scope and dates</span></h3>
                         <p className={panelNoteClass}>Anything else you want to share before we lock in?</p>
                         <textarea
                           value={summary}
@@ -520,12 +532,6 @@ export default function CreateProjectWizardPage() {
                           rows={3}
                           className="w-full min-h-[110px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
-                      </div>
-                    )}
-
-                    {step.kind === 'endDate' && (
-                      <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>📅</span><span>Let&apos;s set some dates.</span></h3>
                         <div className="grid gap-4">
                           <div className="grid gap-1.5">
                             <p className={panelNoteClass}>Date you can allow site inspection.</p>
@@ -600,7 +606,7 @@ export default function CreateProjectWizardPage() {
                             {[
                               ['Title', title || 'N/A'],
                               ['Emergency', isEmergency ? 'Yes' : 'No'],
-                              ['Follow-up questions', followUpQuestions.length ? `${followUpQuestions.length}` : 'None'],
+                              ['Follow-up questions', followUpStepQuestions.length ? `${followUpStepQuestions.length}` : 'None'],
                               ['Site inspection', siteInspectionAvailableOn || 'Not set'],
                               ['Completion date', endDate || 'Not set'],
                               ['Photos', `${existingImageUrls.length}`],

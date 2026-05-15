@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-15-c7b4b91",
+    "date": "2026-05-15T10:15:34+08:00",
+    "title": "AI wizard: 6-step flow, suppress location follow-ups, keep invite-professionals finish",
+    "summary": "AI wizard: 6-step flow, suppress location follow-ups, keep invite-professionals finish",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "c7b4b91",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-7ae2d33",
     "date": "2026-05-15T01:45:01+08:00",
     "title": "Wizard layout fixes: restore step clipping, reduce textareas, fit panel height, route to professionals",

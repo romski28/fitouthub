@@ -540,6 +540,7 @@ CRITICAL RULES FOR DATA EXTRACTION
 3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs
 4) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
+6) Do NOT ask location-related follow-up questions in nextQuestions/followUpQuestions because location is collected separately in the wizard (avoid asking about district/area/region/address).
 
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.

@@ -68,6 +68,14 @@ const normalizeQuestionList = (value: unknown): string[] =>
         .filter((item) => item.length > 0)
     : [];
 
+const isLocationFollowUpQuestion = (question: string): boolean => {
+  const normalized = question.toLowerCase();
+  return /(location|district|area|region|neighbou?rhood|where\s+is|where\s+in|hong\s*kong|hk\b|kowloon|new\s*territories|island|address|postal|postcode|zip|estate|building)/i.test(normalized);
+};
+
+const sanitizeFollowUpQuestions = (questions: string[]): string[] =>
+  questions.filter((question) => !isLocationFollowUpQuestion(question));
+
 const extractFollowUpQuestionsFromOutput = (rawOutput: string | null | undefined): string[] => {
   if (typeof rawOutput !== 'string') return [];
   const trimmed = rawOutput.trim();
@@ -84,7 +92,7 @@ const extractFollowUpQuestionsFromOutput = (rawOutput: string | null | undefined
         ? (parsed.contractDocumentation as Record<string, unknown>)
         : null;
 
-    return Array.from(
+    return sanitizeFollowUpQuestions(Array.from(
       new Set([
         ...normalizeQuestionList(parsed.nextQuestions),
         ...normalizeQuestionList(parsed.followUpQuestions),
@@ -96,7 +104,7 @@ const extractFollowUpQuestionsFromOutput = (rawOutput: string | null | undefined
         ...normalizeQuestionList(contractDocumentation?.followUpQuestions),
         ...normalizeQuestionList(contractDocumentation?.missingInfo),
       ]),
-    );
+    ));
   } catch {
     return [];
   }
@@ -1048,12 +1056,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       .filter((item): item is string => Boolean(item && item.trim()))
       .join(', ');
 
-    const followUpQuestions = Array.from(
+    const followUpQuestions = sanitizeFollowUpQuestions(Array.from(
       new Set([
         ...normalizeQuestionList(aiStructured.nextQuestions),
         ...extractFollowUpQuestionsFromOutput(aiOutput),
       ]),
-    );
+    ));
 
     const aiDraft = {
       initialData: {
@@ -1757,7 +1765,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           p.project.projectScale === 'SCALE_3')
           ? p.project.projectScale
           : null;
-      const structuredFollowUpQuestions = Array.from(
+      const structuredFollowUpQuestions = sanitizeFollowUpQuestions(Array.from(
         new Set(
           [
             ...normalizeQuestionList(p?.nextQuestions),
@@ -1770,7 +1778,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           ]
             .filter((item) => item.length > 0),
         ),
-      );
+      ));
       const fallbackQuestionSentences = extractQuestionSentences(payload.conversationalText || payload.output, 4);
       const normalizedFollowUpQuestions =
         structuredFollowUpQuestions.length > 0
