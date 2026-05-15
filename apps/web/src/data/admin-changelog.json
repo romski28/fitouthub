@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-e8cab2f",
+    "date": "2026-05-15T12:38:42+08:00",
+    "title": "professionals: live location refresh and card coverage map toggle",
+    "summary": "professionals: live location refresh and card coverage map toggle",
+    "areas": [
+      "web"
+    ],
+    "commit": "e8cab2f",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-278ca7f",
     "date": "2026-05-15T12:16:32+08:00",
     "title": "professionals: refresh list on live location filter edits",

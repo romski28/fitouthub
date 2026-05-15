@@ -181,6 +181,7 @@ const ProfessionalCard = memo(({
   const roleIcon = pro.professionType === 'company' ? '🏢' : pro.professionType === 'reseller' ? '📦' : '👷';
   const [showAllTrades, setShowAllTrades] = useState(false);
   const [showAllAreas, setShowAllAreas] = useState(false);
+  const [showCoverageMap, setShowCoverageMap] = useState(false);
   const serviceAreas = useMemo(() => splitCsvUnique(pro.serviceArea), [pro.serviceArea]);
   const tradeBadges = useMemo(() => {
     if (pro.professionType === 'reseller') {
@@ -264,9 +265,20 @@ const ProfessionalCard = memo(({
           )}
 
           {/* Areas covered (deduplicated) */}
-          {serviceAreas.length > 0 && (
+          {serviceAreas.length > 0 && !showCoverageMap && (
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">Areas covered</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">Areas covered</p>
+                {highlightedZones.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCoverageMap(true)}
+                    className="rounded-full border border-slate-500 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-200 hover:bg-slate-700"
+                  >
+                    Show map
+                  </button>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 {visibleAreas.map((area) => (
                   <span key={`${pro.id}-area-${area}`} className="rounded-full bg-slate-700 px-2.5 py-0.5 text-[11px] font-medium text-white">
@@ -295,9 +307,18 @@ const ProfessionalCard = memo(({
             </div>
           )}
 
-          {highlightedZones.length > 0 && (
+          {highlightedZones.length > 0 && showCoverageMap && (
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">Coverage map</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">Coverage map</p>
+                <button
+                  type="button"
+                  onClick={() => setShowCoverageMap(false)}
+                  className="rounded-full border border-slate-500 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-200 hover:bg-slate-700"
+                >
+                  Show areas
+                </button>
+              </div>
               <HkZoneMap highlightedCodes={highlightedZones} compact />
             </div>
           )}
@@ -573,6 +594,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       };
     };
 
+    const typedLocation = locationSearch.trim().toLowerCase();
+    const locationParts = (() => {
+      if (typedLocation) {
+        const matched = matchLocation(typedLocation);
+        if (matched) {
+          return [matched.primary, matched.secondary, matched.tertiary]
+            .filter(Boolean)
+            .map((part) => part!.toLowerCase());
+        }
+        return [typedLocation];
+      }
+
+      return [loc.primary, loc.secondary, loc.tertiary]
+        .filter(Boolean)
+        .map((part) => part!.toLowerCase());
+    })();
+
     const items = professionals.filter((pro) => {
       const haystacks = [
         pro.professionType,
@@ -602,7 +640,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       if (!byRating) return false;
 
       // If no location filter is set, show based on search only
-      if (!loc.primary && !loc.secondary && !loc.tertiary) {
+      if (locationParts.length === 0) {
         return true;
       }
 
@@ -614,9 +652,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       }
 
       // Check if any of the selected location parts match any service area
-      const locationParts = [loc.primary, loc.secondary, loc.tertiary]
-        .filter(Boolean)
-        .map((l) => l!.toLowerCase());
       const byLocation = locationParts.length === 0 || locationParts.some((locPart) =>
         allAreas.some((area) => area.includes(locPart) || locPart.includes(area))
       );
@@ -624,9 +659,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       return byLocation;
     });
 
-    const targetParts = [loc.tertiary, loc.secondary, loc.primary]
-      .filter(Boolean)
-      .map((t) => t!.toLowerCase());
+    const targetParts = locationParts.slice().reverse();
 
     const scoreFor = (pro: Professional) => {
       const areas = getProfessionalCoverageTokens(pro);
@@ -681,14 +714,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return sorted;
-  }, [professionals, searchTerm, professionHint, loc, minRating, enforcedRequiredTrades]);
+  }, [professionals, searchTerm, professionHint, loc.primary, loc.secondary, loc.tertiary, locationSearch, minRating, enforcedRequiredTrades]);
 
   const [regionExpanded, setRegionExpanded] = useState(false);
   // Reset expansion whenever the location filter itself changes
   useEffect(() => { setRegionExpanded(false); }, [loc.primary, loc.secondary, loc.tertiary]);
 
   const filtered = useMemo(() => {
-    const hasLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
+    const hasLocation = Boolean(locationSearch.trim() || loc.primary || loc.secondary || loc.tertiary);
     const hasExplicitRating = minRating > 0;
     const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
 
@@ -790,7 +823,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       })
       .sort(sortByTradePipeline);
     return widened;
-  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating, regionExpanded, enforcedRequiredTrades]);
+  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, locationSearch, searchTerm, professionHint, minRating, regionExpanded, enforcedRequiredTrades]);
 
   // Narrowly-scoped count: how many matched with location+trade+rating (before any widening)
   const filteredBaseCount = filteredBase.length;
