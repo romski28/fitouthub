@@ -62,6 +62,35 @@ const DISTRICT_TO_ZONE: Record<string, string> = {
   'islands': 'ISL',
 };
 
+const ZONE_CODE_TO_LABEL: Record<string, string> = {
+  HKI: 'Hong Kong Island',
+  KLN: 'Kowloon',
+  NTE: 'New Territories East',
+  NTW: 'New Territories West',
+  ISL: 'Islands',
+};
+
+const ZONE_EQUIVALENTS: Record<string, string[]> = {
+  'hong kong island': ['hki'],
+  hki: ['hong kong island'],
+  kowloon: ['kln'],
+  kln: ['kowloon'],
+  'new territories east': ['nte', 'new territories'],
+  nte: ['new territories east', 'new territories'],
+  'new territories west': ['ntw', 'new territories'],
+  ntw: ['new territories west', 'new territories'],
+  islands: ['isl', 'islands district'],
+  isl: ['islands', 'islands district'],
+};
+
+const addWithEquivalents = (tokens: Set<string>, value?: string) => {
+  const normalized = (value || '').trim().toLowerCase();
+  if (!normalized) return;
+  tokens.add(normalized);
+  const extras = ZONE_EQUIVALENTS[normalized] || [];
+  extras.forEach((extra) => tokens.add(extra));
+};
+
 const deriveHighlightedZones = (pro: Professional): string[] => {
   const normalizedCodes = new Set<string>();
 
@@ -98,14 +127,17 @@ const getProfessionalCoverageTokens = (pro: Professional): string[] => {
     const areaCode = coverage?.area?.code?.trim().toLowerCase();
     const zoneLabel = coverage?.zone?.label?.trim().toLowerCase();
     const zoneCode = coverage?.zone?.code?.trim().toLowerCase();
-    if (areaName) tokens.add(areaName);
+    if (areaName) {
+      tokens.add(areaName);
+      const mappedZone = DISTRICT_TO_ZONE[areaName];
+      if (mappedZone) {
+        addWithEquivalents(tokens, mappedZone);
+        addWithEquivalents(tokens, ZONE_CODE_TO_LABEL[mappedZone]);
+      }
+    }
     if (areaCode) tokens.add(areaCode);
-    if (zoneLabel) tokens.add(zoneLabel);
-    if (zoneCode) tokens.add(zoneCode);
-  }
-
-  if (tokens.size > 0) {
-    return Array.from(tokens);
+    addWithEquivalents(tokens, zoneLabel);
+    addWithEquivalents(tokens, zoneCode);
   }
 
   const serviceAreasRaw = Array.isArray(pro.serviceArea)
@@ -120,7 +152,25 @@ const getProfessionalCoverageTokens = (pro: Professional): string[] => {
     .filter(Boolean)
     .map((l) => l!.toLowerCase());
 
-  return [...serviceAreas, ...locationFields];
+  locationFields.forEach((field) => {
+    addWithEquivalents(tokens, field);
+    const mappedZone = DISTRICT_TO_ZONE[field];
+    if (mappedZone) {
+      addWithEquivalents(tokens, mappedZone);
+      addWithEquivalents(tokens, ZONE_CODE_TO_LABEL[mappedZone]);
+    }
+  });
+
+  serviceAreas.forEach((area) => {
+    addWithEquivalents(tokens, area);
+    const mappedZone = DISTRICT_TO_ZONE[area];
+    if (mappedZone) {
+      addWithEquivalents(tokens, mappedZone);
+      addWithEquivalents(tokens, ZONE_CODE_TO_LABEL[mappedZone]);
+    }
+  });
+
+  return Array.from(tokens);
 };
 
 const getProfessionalTradeTokens = (pro: Professional): string[] => {
@@ -132,6 +182,72 @@ const getProfessionalTradeTokens = (pro: Professional): string[] => {
     pro.professionType === 'company' ? 'company' : null,
   ]);
   return tradeTokens.map((value) => value.toLowerCase());
+};
+
+const getTopLevelCoverageLabels = (pro: Professional): string[] => {
+  const labels = new Set<string>();
+
+  for (const coverage of pro.regionCoverage || []) {
+    const zoneCode = coverage?.zone?.code?.trim().toUpperCase();
+    const zoneLabel = coverage?.zone?.label?.trim();
+    const areaName = coverage?.area?.name?.trim().toLowerCase();
+
+    if (zoneLabel) {
+      labels.add(zoneLabel);
+      continue;
+    }
+
+    if (zoneCode && ZONE_CODE_TO_LABEL[zoneCode]) {
+      labels.add(ZONE_CODE_TO_LABEL[zoneCode]);
+      continue;
+    }
+
+    if (areaName) {
+      const mapped = DISTRICT_TO_ZONE[areaName];
+      if (mapped && ZONE_CODE_TO_LABEL[mapped]) {
+        labels.add(ZONE_CODE_TO_LABEL[mapped]);
+      }
+    }
+  }
+
+  const fromServiceArea = splitCsvUnique(pro.serviceArea).map((item) => item.toLowerCase());
+  fromServiceArea.forEach((item) => {
+    if (ZONE_EQUIVALENTS[item]) {
+      const key = item.toUpperCase();
+      if (ZONE_CODE_TO_LABEL[key]) {
+        labels.add(ZONE_CODE_TO_LABEL[key]);
+      } else {
+        const mapped = DISTRICT_TO_ZONE[item];
+        if (mapped && ZONE_CODE_TO_LABEL[mapped]) {
+          labels.add(ZONE_CODE_TO_LABEL[mapped]);
+        } else if (item === 'new territories') {
+          labels.add('New Territories East');
+          labels.add('New Territories West');
+        } else {
+          labels.add(item.replace(/\b\w/g, (c) => c.toUpperCase()));
+        }
+      }
+      return;
+    }
+
+    const mapped = DISTRICT_TO_ZONE[item];
+    if (mapped && ZONE_CODE_TO_LABEL[mapped]) {
+      labels.add(ZONE_CODE_TO_LABEL[mapped]);
+    }
+  });
+
+  const primary = (pro.locationPrimary || '').trim().toLowerCase();
+  if (primary) {
+    if (primary === 'new territories') {
+      labels.add('New Territories East');
+      labels.add('New Territories West');
+    } else if (ZONE_EQUIVALENTS[primary]) {
+      const key = primary.toUpperCase();
+      if (ZONE_CODE_TO_LABEL[key]) labels.add(ZONE_CODE_TO_LABEL[key]);
+    }
+  }
+
+  return Array.from(labels);
 };
 
 const HK_ZONE_LABELS: Record<HkZoneCode, string> = {
@@ -182,7 +298,7 @@ const ProfessionalCard = memo(({
   const [showAllTrades, setShowAllTrades] = useState(false);
   const [showAllAreas, setShowAllAreas] = useState(false);
   const [showCoverageMap, setShowCoverageMap] = useState(false);
-  const serviceAreas = useMemo(() => splitCsvUnique(pro.serviceArea), [pro.serviceArea]);
+  const serviceAreas = useMemo(() => getTopLevelCoverageLabels(pro), [pro]);
   const tradeBadges = useMemo(() => {
     if (pro.professionType === 'reseller') {
       return normalizeUniqueList([pro.primaryTrade, ...(pro.suppliesOffered || [])]);
@@ -561,7 +677,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     }
 
     const label = HK_ZONE_LABELS[selectedZoneCode];
-    setLoc({ primary: label });
+    setLoc({ primary: label, secondary: selectedZoneCode });
     setLocationDisplay(label);
     setLocationSearch('');
     setShowLocationSuggestions(false);
