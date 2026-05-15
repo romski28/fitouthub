@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-2e34eed",
+    "date": "2026-05-15T10:58:42+08:00",
+    "title": "MapOrList: coral active button with cream text, grey inactive with cream text",
+    "summary": "MapOrList: coral active button with cream text, grey inactive with cream text",
+    "areas": [
+      "web"
+    ],
+    "commit": "2e34eed",
+    "files": [
+      "apps/web/src/components/map-or-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-0c2796c",
     "date": "2026-05-15T10:45:40+08:00",
     "title": "Wizard refinements: emergency checkbox, location cleanup, optional follow-ups, mobile table, green button",

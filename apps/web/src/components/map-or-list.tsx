@@ -72,7 +72,7 @@ export function MapOrList({
             onClick={() => handleModeChange('map')}
             aria-pressed={activeMode === 'map'}
             className={`w-full rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-              activeMode === 'map' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              activeMode === 'map' ? 'bg-orange-600 text-amber-50 shadow-md' : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
             }`}
           >
             {mapLabel}
@@ -82,7 +82,7 @@ export function MapOrList({
             onClick={() => handleModeChange('list')}
             aria-pressed={activeMode === 'list'}
             className={`w-full rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-              activeMode === 'list' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              activeMode === 'list' ? 'bg-orange-600 text-amber-50 shadow-md' : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
             }`}
           >
             {listLabel}
