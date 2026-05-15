@@ -434,10 +434,15 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [selectedZoneCode, setSelectedZoneCode] = useState<HkZoneCode | null>(inferZoneCodeFromLocation(baseLoc));
   const [hasManuallyClearedLocation, setHasManuallyClearedLocation] = useState(false);
+  const [hasUserEditedTradeFilter, setHasUserEditedTradeFilter] = useState(false);
 
   const requiredTrades = useMemo(
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
     [initialRequiredTrades, initialProjectData?.tradesRequired],
+  );
+  const enforcedRequiredTrades = useMemo(
+    () => (hasUserEditedTradeFilter ? [] : requiredTrades),
+    [hasUserEditedTradeFilter, requiredTrades],
   );
 
   useEffect(() => {
@@ -475,6 +480,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   }, [professionals]);
 
   const handleSearchChange = (value: string) => {
+    setHasUserEditedTradeFilter(true);
     setSearchTerm(value);
   };
 
@@ -528,7 +534,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const needle = searchTerm.trim().toLowerCase();
     const mappedProfession = needle ? matchServiceToProfession(needle) : null;
     const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
-    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+    const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
 
     const getTradeCoverageMeta = (pro: Professional) => {
       const tradeTokens = getProfessionalTradeTokens(pro);
@@ -657,7 +663,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return sorted;
-  }, [professionals, searchTerm, professionHint, loc, minRating, requiredTrades]);
+  }, [professionals, searchTerm, professionHint, loc, minRating, enforcedRequiredTrades]);
 
   const [regionExpanded, setRegionExpanded] = useState(false);
   // Reset expansion whenever the location filter itself changes
@@ -666,7 +672,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const filtered = useMemo(() => {
     const hasLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
     const hasExplicitRating = minRating > 0;
-    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+    const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
 
     const getTradeCoverageMeta = (pro: Professional) => {
       const tradeTokens = getProfessionalTradeTokens(pro);
@@ -766,7 +772,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       })
       .sort(sortByTradePipeline);
     return widened;
-  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating, regionExpanded, requiredTrades]);
+  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, searchTerm, professionHint, minRating, regionExpanded, enforcedRequiredTrades]);
 
   // Narrowly-scoped count: how many matched with location+trade+rating (before any widening)
   const filteredBaseCount = filteredBase.length;
@@ -849,9 +855,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
 
   const groupedTradeDisplay = useMemo(() => {
-    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+    const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
     if (requiredTradesLower.length < 2) {
-      console.log('[ProfessionalsList] Grouping disabled - not enough trades:', { requiredTrades, requiredTradesLower });
+      console.log('[ProfessionalsList] Grouping disabled - not enough trades:', { requiredTrades: enforcedRequiredTrades, requiredTradesLower });
       return {
         isEnabled: false,
         fullCoverageCompanies: [] as Professional[],
@@ -874,7 +880,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
     const usedIds = new Set(fullCoverageCompanies.map((pro) => pro.id));
 
-    const specialistSections = requiredTrades.map((trade, index) => {
+    const specialistSections = enforcedRequiredTrades.map((trade, index) => {
       const tradeLower = requiredTradesLower[index];
       const professionalsForTrade = filtered.filter((pro) => {
         if (usedIds.has(pro.id)) return false;
@@ -892,7 +898,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const uncategorized = filtered.filter((pro) => !usedIds.has(pro.id));
 
     console.log('[ProfessionalsList] Grouping enabled:', {
-      requiredTrades,
+      requiredTrades: enforcedRequiredTrades,
       fullCoverageCompanyCount: fullCoverageCompanies.length,
       specialistSections: specialistSections.map((s) => ({ trade: s.trade, count: s.professionals.length })),
       uncategorizedCount: uncategorized.length,
@@ -905,7 +911,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       specialistSections,
       uncategorized,
     };
-  }, [filtered, requiredTrades]);
+  }, [filtered, enforcedRequiredTrades]);
 
   const shareInitialData = useMemo<Partial<ProjectFormData>>(() => {
     const needle = (searchTerm || '').trim();
