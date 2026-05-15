@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-717af2a",
+    "date": "2026-05-15T11:41:45+08:00",
+    "title": "professionals: upgrade filter panel UX on matched professionals page",
+    "summary": "professionals: upgrade filter panel UX on matched professionals page",
+    "areas": [
+      "web"
+    ],
+    "commit": "717af2a",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-10768ac",
     "date": "2026-05-15T11:14:34+08:00",
     "title": "professionals: match home page visual treatment",

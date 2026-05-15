@@ -14,6 +14,7 @@ import { ProjectShareModal } from '@/components/project-share-modal';
 import { useAuth } from '@/context/auth-context';
 import { BackToTop } from '@/components/back-to-top';
 import type { ProjectFormData } from '@/components/project-form';
+import type { HkZoneCode } from '@/lib/hk-districts';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import {
   getCreateProjectDraftHandoff,
@@ -131,6 +132,28 @@ const getProfessionalTradeTokens = (pro: Professional): string[] => {
     pro.professionType === 'company' ? 'company' : null,
   ]);
   return tradeTokens.map((value) => value.toLowerCase());
+};
+
+const HK_ZONE_LABELS: Record<HkZoneCode, string> = {
+  HKI: 'Hong Kong Island',
+  KLN: 'Kowloon',
+  NTE: 'New Territories East',
+  NTW: 'New Territories West',
+  ISL: 'Islands',
+};
+
+const HK_ZONE_CODES = Object.keys(HK_ZONE_LABELS) as HkZoneCode[];
+
+const inferZoneCodeFromLocation = (location: CanonicalLocation): HkZoneCode | null => {
+  const value = (location.tertiary || location.secondary || location.primary || '').trim().toLowerCase();
+  if (!value) return null;
+
+  const match = HK_ZONE_CODES.find((code) => {
+    const label = HK_ZONE_LABELS[code].toLowerCase();
+    return value === code.toLowerCase() || value === label;
+  });
+
+  return match || null;
 };
 
 const ProfessionalCard = memo(({
@@ -410,6 +433,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     initialSearch
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
+  const [selectedZoneCode, setSelectedZoneCode] = useState<HkZoneCode | null>(inferZoneCodeFromLocation(baseLoc));
 
   const requiredTrades = useMemo(
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
@@ -489,6 +514,30 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     setLocationSearch('');
     setLocationDisplay(result.display);
     setShowLocationSuggestions(false);
+    setSelectedZoneCode(null);
+  };
+
+  const openLocationMapModal = () => {
+    setSelectedZoneCode(inferZoneCodeFromLocation(loc));
+    setIsLocationMapOpen(true);
+  };
+
+  const applyLocationFromMap = () => {
+    if (!selectedZoneCode) {
+      setLoc({});
+      setLocationDisplay('');
+      setLocationSearch('');
+      setShowLocationSuggestions(false);
+      setIsLocationMapOpen(false);
+      return;
+    }
+
+    const label = HK_ZONE_LABELS[selectedZoneCode];
+    setLoc({ primary: label });
+    setLocationDisplay(label);
+    setLocationSearch('');
+    setShowLocationSuggestions(false);
+    setIsLocationMapOpen(false);
   };
 
   const filteredBase = useMemo(() => {
@@ -1088,10 +1137,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   return (
     <div className="space-y-3">
       {/* Filters */}
-      <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-2 shadow-sm">
-        <div className="grid gap-2 md:grid-cols-3">
-          <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-white">{t('filters.professionalOrTrade')}</label>
+      <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-4 shadow-sm">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="relative grid gap-1">
+            <label className="flex h-10 items-center text-sm font-semibold text-slate-700">Name or Trade</label>
             <div className="relative">
               <input
                 type="text"
@@ -1100,8 +1149,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onFocus={() => setShowSuggestions(suggestions.length > 0)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-                className="w-full rounded-md border border-slate-300 bg-white/95 px-2.5 py-1.5 pr-8 text-sm"
+                className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 pr-8 text-sm"
+                list="name-or-trade-options"
               />
+              <datalist id="name-or-trade-options">
+                {suggestionPool.slice(0, 60).map((item) => (
+                  <option key={item} value={item} />
+                ))}
+              </datalist>
               {searchTerm && (
                 <button
                   type="button"
@@ -1132,41 +1187,49 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             ) : null}
           </div>
 
-          <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-white">{t('filters.location')}</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={t('filters.locationPlaceholder')}
-                value={locationDisplay || locationSearch}
-                onChange={(e) => {
-                  setLocationDisplay('');
-                  handleLocationSearch(e.target.value);
-                }}
-                onFocus={() => {
-                  // Don't clear locationDisplay on focus - only when user starts typing
-                  // Show suggestions only if there's an active search
-                  if (locationSearch) setShowLocationSuggestions(locationSuggestions.length > 0);
-                }}
-                onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 100)}
-                className="w-full rounded-md border border-slate-300 bg-white/95 px-2.5 py-1.5 pr-8 text-sm"
-              />
-              {(locationSearch || locationDisplay || loc.primary || loc.secondary || loc.tertiary) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleLocationSearch('');
+          <div className="relative grid gap-1">
+            <label className="flex h-10 items-center text-sm font-semibold text-slate-700">{t('filters.location')}</label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder={t('filters.locationPlaceholder')}
+                  value={locationDisplay || locationSearch}
+                  onChange={(e) => {
                     setLocationDisplay('');
-                    setLoc({});
+                    handleLocationSearch(e.target.value);
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                  aria-label={t('filters.clearLocationAria')}
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+                  onFocus={() => {
+                    if (locationSearch) setShowLocationSuggestions(locationSuggestions.length > 0);
+                  }}
+                  onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 100)}
+                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 pr-8 text-sm"
+                />
+                {(locationSearch || locationDisplay || loc.primary || loc.secondary || loc.tertiary) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleLocationSearch('');
+                      setLocationDisplay('');
+                      setLoc({});
+                      setSelectedZoneCode(null);
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                    aria-label={t('filters.clearLocationAria')}
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={openLocationMapModal}
+                className="h-10 shrink-0 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Map
+              </button>
             </div>
             {showLocationSuggestions && locationSuggestions.length > 0 ? (
               <div className="absolute top-full z-10 mt-1 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
@@ -1174,34 +1237,97 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   <button
                     key={`${idx}-${result.primary}-${result.secondary}-${result.tertiary}`}
                     type="button"
-                    className="w-full text-left px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                    className="w-full border-b border-slate-100 px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50 last:border-b-0"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleLocationSelect(result)}
                   >
-                    <div className="font-medium text-sm">{result.display}</div>
+                    <div className="text-sm font-medium">{result.display}</div>
                   </button>
                 ))}
               </div>
             ) : null}
           </div>
 
-          <div className="relative grid gap-0.5">
-            <label className="text-xs font-medium text-white">{t('filters.rating')}</label>
+          <div className="relative grid gap-1">
+            <label className="flex h-10 items-center text-sm font-semibold text-slate-700">{t('filters.rating')}</label>
             <select
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
-              className="w-full rounded-md border border-slate-300 bg-white/95 px-2.5 py-1.5 text-sm"
+              className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
             >
               <option value={0}>{t('filters.anyRating')}</option>
-              <option value={4.5}>{t('filters.rating45')}</option>
-              <option value={4}>{t('filters.rating4')}</option>
-              <option value={3.5}>{t('filters.rating35')}</option>
-              <option value={3}>{t('filters.rating3')}</option>
-              <option value={2}>{t('filters.rating2')}</option>
+              <option value={4.5}>⭐⭐⭐⭐+ 4+</option>
+              <option value={4}>⭐⭐⭐⭐ 4+</option>
+              <option value={3}>⭐⭐⭐ 3+</option>
+              <option value={2}>⭐⭐ 2+</option>
+              <option value={1}>⭐ 1+</option>
             </select>
           </div>
         </div>
       </div>
+
+      {isLocationMapOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={() => setIsLocationMapOpen(false)} />
+          <div
+            className="relative mx-4 w-full max-w-3xl rounded-2xl border border-white/45 bg-[#F5EEDE] p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Location Picker</p>
+                <h3 className="text-lg font-bold text-slate-900">Select a zone from the map</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLocationMapOpen(false)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <HkZoneMap
+              highlightedCodes={selectedZoneCode ? [selectedZoneCode] : []}
+              onToggleCode={(code) => setSelectedZoneCode((prev) => (prev === code ? null : code))}
+            />
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {HK_ZONE_CODES.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setSelectedZoneCode((prev) => (prev === code ? null : code))}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    selectedZoneCode === code
+                      ? 'bg-emerald-600 text-white'
+                      : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {HK_ZONE_LABELS[code]}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedZoneCode(null)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Clear map selection
+              </button>
+              <button
+                type="button"
+                onClick={applyLocationFromMap}
+                className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Apply location
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {blockInviteForMissingLocation && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
