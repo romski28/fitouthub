@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-10768ac",
+    "date": "2026-05-15T11:14:34+08:00",
+    "title": "professionals: match home page visual treatment",
+    "summary": "professionals: match home page visual treatment",
+    "areas": [
+      "web"
+    ],
+    "commit": "10768ac",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-c2b35ee",
     "date": "2026-05-15T11:05:09+08:00",
     "title": "professionals: align look and feel with home page",

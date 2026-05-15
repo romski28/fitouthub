@@ -253,63 +253,72 @@ function ProfessionalsPageInner() {
         onLoginClick={openLoginModal}
       />
 
-      <div className="browse-page-shell">
-        <div className="browse-page-inner">
-          <div className="browse-page-stack">
-        {/* Compact Hero Section */}
-        <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 text-white py-6 px-6">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-400">
-              {t('hero.tagline')}
-            </p>
-            <h1 className="text-2xl font-bold">
-              {isMatchedContext ? 'Matched professionals' : t('hero.title')}
-            </h1>
-            <p className="text-sm text-slate-300 max-w-2xl">
-              {isMatchedContext
-                ? 'A curated shortlist from the wider professional network based on your project context.'
-                : t('hero.description')}
-            </p>
-          </div>
-        </section>
+      <div className="relative isolate">
+        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+          <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
+          <div className="absolute inset-0 bg-[#1a1a1a]/44" />
+        </div>
 
-        {shouldShowRegionNotice && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            We couldn&apos;t confirm your area. Please set the location filter to find better matches.
-          </div>
-        )}
-
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm animate-pulse">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-5 w-32 bg-slate-200 rounded"></div>
-                  <div className="h-6 w-20 bg-slate-200 rounded-full"></div>
-                </div>
+        <div className="space-y-6 pb-8 pt-4">
+          {/* Compact Hero Section */}
+          <section className="relative -mx-6 px-6">
+            <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-12">
+              <div className="px-4 sm:px-6 lg:px-12">
                 <div className="space-y-2">
-                  <div className="h-4 w-48 bg-slate-200 rounded"></div>
-                  <div className="h-4 w-64 bg-slate-200 rounded"></div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    {t('hero.tagline')}
+                  </p>
+                  <h1 className="text-2xl font-bold text-slate-900">
+                    {isMatchedContext ? 'Matched professionals' : t('hero.title')}
+                  </h1>
+                  <p className="max-w-2xl text-sm text-slate-600">
+                    {isMatchedContext
+                      ? 'A curated shortlist from the wider professional network based on your project context.'
+                      : t('hero.description')}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : professionals.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-            {t('states.empty')}
-          </div>
-        ) : (
-          <ProfessionalsList
-            professionals={professionals}
-            initialLocation={defaultLocation}
-            projectId={projectId}
-            initialSearchTerm={tradeParam || initialRequiredTrades[0] || projectName}
-            initialRequiredTrades={initialRequiredTrades}
-            initialProjectData={mergedPrefill}
-            requireLocation={shouldShowRegionNotice}
-          />
-        )}
-          </div>
+            </div>
+          </section>
+
+          {shouldShowRegionNotice && (
+            <section className="relative -mx-6 px-6">
+              <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 text-sm text-slate-700">
+                We couldn&apos;t confirm your area. Please set the location filter to find better matches.
+              </div>
+            </section>
+          )}
+
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 shadow-sm animate-pulse">
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="h-5 w-32 rounded bg-slate-300/70"></div>
+                    <div className="h-6 w-20 rounded-full bg-slate-300/70"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-4 w-48 rounded bg-slate-300/70"></div>
+                    <div className="h-4 w-64 rounded bg-slate-300/70"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : professionals.length === 0 ? (
+            <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
+              {t('states.empty')}
+            </div>
+          ) : (
+            <ProfessionalsList
+              professionals={professionals}
+              initialLocation={defaultLocation}
+              projectId={projectId}
+              initialSearchTerm={tradeParam || initialRequiredTrades[0] || projectName}
+              initialRequiredTrades={initialRequiredTrades}
+              initialProjectData={mergedPrefill}
+              requireLocation={shouldShowRegionNotice}
+            />
+          )}
         </div>
       </div>
     </>
