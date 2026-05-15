@@ -611,6 +611,116 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     [tradeAutoFilterMode, requiredTrades],
   );
 
+  const activeFilterContext = useMemo(() => {
+    const needle = searchTerm.trim().toLowerCase();
+    const mappedProfession = needle ? matchServiceToProfession(needle) : null;
+    const effectiveProfession = (mappedProfession || professionHint || '').toLowerCase() || undefined;
+    const typedLocation = locationSearch.trim().toLowerCase();
+
+    const locationParts = (() => {
+      if (typedLocation) {
+        const matched = matchLocation(typedLocation);
+        if (matched) {
+          return [matched.primary, matched.secondary, matched.tertiary]
+            .filter(Boolean)
+            .map((part) => part!.toLowerCase());
+        }
+        return [typedLocation];
+      }
+
+      return [loc.primary, loc.secondary, loc.tertiary]
+        .filter(Boolean)
+        .map((part) => part!.toLowerCase());
+    })();
+
+    const selectedZoneCode =
+      !typedLocation &&
+      typeof loc.secondary === 'string' &&
+      Boolean(HK_ZONE_LABELS[loc.secondary.toUpperCase() as HkZoneCode])
+        ? loc.secondary.toUpperCase()
+        : null;
+
+    return {
+      needle,
+      effectiveProfession,
+      locationParts,
+      selectedZoneCode,
+    };
+  }, [searchTerm, professionHint, locationSearch, loc.primary, loc.secondary, loc.tertiary]);
+
+  const tradeAutoFilterCounts = useMemo(() => {
+    const countWithRequiredTrades = (trades: string[]) => {
+      const requiredTradesLower = trades.map((trade) => trade.toLowerCase());
+
+      return professionals.filter((pro) => {
+        const haystacks = [
+          pro.professionType,
+          pro.fullName,
+          pro.businessName,
+          pro.primaryTrade,
+          ...(pro.tradesOffered ?? []),
+          ...(pro.suppliesOffered ?? []),
+        ]
+          .filter(Boolean)
+          .map((s) => s!.toString().toLowerCase());
+
+        const textMatch = activeFilterContext.needle
+          ? haystacks.some((s) => s.includes(activeFilterContext.needle))
+          : false;
+        const professionMatch = activeFilterContext.effectiveProfession
+          ? haystacks.some((s) => s.includes(activeFilterContext.effectiveProfession!))
+          : false;
+
+        const bySearch = activeFilterContext.needle || activeFilterContext.effectiveProfession
+          ? textMatch || professionMatch || (!activeFilterContext.needle && professionMatch)
+          : true;
+        if (!bySearch) return false;
+
+        if (requiredTradesLower.length > 0) {
+          const tradeTokens = getProfessionalTradeTokens(pro);
+          const matchedCount = requiredTradesLower.filter((trade) =>
+            tradeTokens.some((token) => token.includes(trade) || trade.includes(token)),
+          ).length;
+          if (matchedCount === 0) return false;
+        }
+
+        const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
+        if (!byRating) return false;
+
+        if (activeFilterContext.locationParts.length === 0) {
+          return true;
+        }
+
+        if (activeFilterContext.selectedZoneCode) {
+          const professionalZones = deriveHighlightedZones(pro);
+          if (professionalZones.length > 0 && !professionalZones.includes(activeFilterContext.selectedZoneCode)) {
+            return false;
+          }
+        }
+
+        const allAreas = getProfessionalCoverageTokens(pro);
+        if (allAreas.length === 0) {
+          return true;
+        }
+
+        return activeFilterContext.locationParts.some((locPart) =>
+          allAreas.some((area) => area.includes(locPart) || locPart.includes(area)),
+        );
+      }).length;
+    };
+
+    const single: Record<string, number> = {};
+    requiredTrades.forEach((trade) => {
+      single[trade.toLowerCase()] = countWithRequiredTrades([trade]);
+    });
+
+    return {
+      all: countWithRequiredTrades([]),
+      multi: countWithRequiredTrades(requiredTrades),
+      single,
+    };
+  }, [professionals, requiredTrades, activeFilterContext, minRating]);
+
   useEffect(() => {
     const hasSelectedLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
     const hasIncomingLocation = Boolean(
@@ -1467,7 +1577,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              All
+              {`All (${tradeAutoFilterCounts.all})`}
             </button>
             <button
               type="button"
@@ -1481,10 +1591,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
               }`}
             >
-              MultiTrade
+              {`MultiTrade (${tradeAutoFilterCounts.multi})`}
             </button>
             {requiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
+              const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
               return (
                 <button
                   key={`autofilter-${trade}`}
@@ -1499,7 +1610,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                       : 'border border-sky-300 bg-white text-sky-700 hover:bg-sky-50'
                   }`}
                 >
-                  {trade}
+                  {`${trade} (${count})`}
                 </button>
               );
             })}
