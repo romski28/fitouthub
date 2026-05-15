@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-15-0c2796c",
+    "date": "2026-05-15T10:45:40+08:00",
+    "title": "Wizard refinements: emergency checkbox, location cleanup, optional follow-ups, mobile table, green button",
+    "summary": "Wizard refinements: emergency checkbox, location cleanup, optional follow-ups, mobile table, green button",
+    "areas": [
+      "web"
+    ],
+    "commit": "0c2796c",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-15-c7b4b91",
     "date": "2026-05-15T10:15:34+08:00",
     "title": "AI wizard: 6-step flow, suppress location follow-ups, keep invite-professionals finish",

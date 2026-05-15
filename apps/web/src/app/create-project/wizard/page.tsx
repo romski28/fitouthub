@@ -245,14 +245,12 @@ export default function CreateProjectWizardPage() {
   const seedScope = (seedDraft?.initialData?.notes || '').trim();
   const canGoNext = useMemo(() => {
     if (!activeStep) return false;
-    if (activeStep.kind === 'basics') return title.trim().length > 0 && isEmergency !== null;
+    if (activeStep.kind === 'basics') return title.trim().length > 0;
     if (activeStep.kind === 'location') return Boolean(location.primary || location.secondary || location.tertiary);
-    if (activeStep.kind === 'followups') {
-      return followUpStepQuestions.every((_, index) => (answers[`q-${index}`] || '').trim().length > 0);
-    }
+    if (activeStep.kind === 'followups') return true;
     if (activeStep.kind === 'scopeDates') return summary.trim().length > 0;
     return true;
-  }, [activeStep, title, location.primary, location.secondary, location.tertiary, isEmergency, followUpStepQuestions, answers, summary]);
+  }, [activeStep, title, location.primary, location.secondary, location.tertiary, followUpStepQuestions, summary]);
 
   const progress = steps.length > 0 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
 
@@ -441,38 +439,29 @@ export default function CreateProjectWizardPage() {
                           placeholder="e.g. Bathroom leak repair"
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setIsEmergency(false)}
-                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === false ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300 bg-white'}`}
-                          >
-                            <p className="text-base font-semibold text-slate-900">Standard</p>
-                            <p className="text-sm text-slate-600">Normal matching works perfectly.</p>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsEmergency(true)}
-                            className={`rounded-xl border px-4 py-4 text-left transition ${isEmergency === true ? 'border-rose-600 bg-rose-50' : 'border-slate-300 bg-white'}`}
-                          >
-                            <p className="text-base font-semibold text-slate-900">Emergency</p>
-                            <p className="text-sm text-slate-600">We\'ll prioritize emergency-ready professionals.</p>
-                          </button>
-                        </div>
+                        <label className="flex items-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 cursor-pointer hover:bg-slate-50">
+                          <input
+                            type="checkbox"
+                            checked={isEmergency === true}
+                            onChange={(e) => setIsEmergency(e.target.checked)}
+                            className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-base font-medium text-slate-900">This is an urgent request</span>
+                        </label>
                       </div>
                     )}
 
                     {step.kind === 'location' && (
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
-                        <p className={panelNoteClass}>Pick the district that best matches the job location.</p>
+                        <p className={panelNoteClass}>Select your project district.</p>
                         <MapOrList
                           storageKey="fh-map-or-list-preference"
-                          label="Project location input mode"
-                          helperText="Use the district map for a visual pick, or switch to words."
+                          label=""
+                          helperText=""
                           mapLabel="Map"
                           listLabel="Words"
-                          listPanelClassName="max-h-[38vh] overflow-y-auto pr-1"
+                          listPanelClassName="max-h-[32vh] overflow-y-auto pr-1"
                           map={
                             <HkDistrictMap
                               selectionMode="single"
@@ -487,7 +476,9 @@ export default function CreateProjectWizardPage() {
                                 selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
                                 onChange={handleProjectMapSelection}
                               />
-                              <LocationSelect value={location} onChange={setLocation} enableSearch={true} />
+                              <div className="hidden">
+                                <LocationSelect value={location} onChange={setLocation} enableSearch={true} />
+                              </div>
                             </div>
                           }
                         />
@@ -500,7 +491,7 @@ export default function CreateProjectWizardPage() {
                         <p className={panelNoteClass}>Answer these quick questions so we can brief professionals properly.</p>
                         <div className="space-y-3">
                           {followUpStepQuestions.length === 0 ? (
-                            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">No extra clarification needed. You can continue.</p>
+                            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">No clarification questions at this time.</p>
                           ) : (
                             followUpStepQuestions.map((question, index) => {
                               const answerKey = `q-${index}`;
@@ -530,6 +521,7 @@ export default function CreateProjectWizardPage() {
                           value={summary}
                           onChange={(e) => setSummary(e.target.value)}
                           rows={3}
+                          placeholder="Add any additional context or requirements..."
                           className="w-full min-h-[110px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
                         <div className="grid gap-4">
@@ -560,7 +552,6 @@ export default function CreateProjectWizardPage() {
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>📷</span><span>Photos, documents and other information.</span></h3>
                         <p className={panelNoteClass}>Please share photos of the site, plans, and any other documents you think might help your team understand the project better.</p>
-                        <p className="text-sm italic text-slate-600">Let&apos;s review the upload detail later.</p>
 
                         <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-3 text-base font-semibold text-white hover:bg-emerald-700">
                           {isUploadingImages ? 'Uploading...' : 'Upload images, documents or photos'}
@@ -602,7 +593,7 @@ export default function CreateProjectWizardPage() {
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>✅</span><span>Review and save</span></h3>
                         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                          <div className="text-base">
+                          <div className="text-base overflow-x-auto">
                             {[
                               ['Title', title || 'N/A'],
                               ['Emergency', isEmergency ? 'Yes' : 'No'],
@@ -613,7 +604,7 @@ export default function CreateProjectWizardPage() {
                             ].map(([label, value], rowIndex, rows) => (
                               <div
                                 key={label}
-                                className={`grid grid-cols-[180px_minmax(0,1fr)] ${rowIndex < rows.length - 1 ? 'border-b border-slate-200' : ''}`}
+                                className={`grid grid-cols-2 sm:grid-cols-[180px_minmax(0,1fr)] ${rowIndex < rows.length - 1 ? 'border-b border-slate-200' : ''}`}
                               >
                                 <div className="border-r border-slate-200 bg-slate-50 px-4 py-3 text-right font-semibold text-slate-700">{label}</div>
                                 <div className="px-4 py-3 text-left text-slate-900">{value}</div>
@@ -651,7 +642,7 @@ export default function CreateProjectWizardPage() {
                 <button
                   type="button"
                   onClick={submitWizard}
-                  className="rounded-lg bg-slate-900 px-4 py-2.5 text-base font-semibold text-white hover:bg-slate-800"
+                  className="rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 transition"
                 >
                   Continue to Invite Professionals
                 </button>
