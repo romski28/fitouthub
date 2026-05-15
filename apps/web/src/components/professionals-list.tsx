@@ -571,15 +571,44 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [selectedZoneCode, setSelectedZoneCode] = useState<HkZoneCode | null>(inferZoneCodeFromLocation(baseLoc));
   const [hasManuallyClearedLocation, setHasManuallyClearedLocation] = useState(false);
-  const [hasUserEditedTradeFilter, setHasUserEditedTradeFilter] = useState(false);
 
   const requiredTrades = useMemo(
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
     [initialRequiredTrades, initialProjectData?.tradesRequired],
   );
+  const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<'all' | 'multi' | `single:${string}`>('all');
+  const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
+
+  useEffect(() => {
+    if (hasInitializedTradeAutoFilter) return;
+
+    if (requiredTrades.length > 1) {
+      setTradeAutoFilterMode('multi');
+      setHasInitializedTradeAutoFilter(true);
+      return;
+    }
+
+    if (requiredTrades.length === 1) {
+      setTradeAutoFilterMode(`single:${requiredTrades[0]!.toLowerCase()}`);
+      setHasInitializedTradeAutoFilter(true);
+      return;
+    }
+
+    setTradeAutoFilterMode('all');
+    setHasInitializedTradeAutoFilter(true);
+  }, [requiredTrades, hasInitializedTradeAutoFilter]);
+
   const enforcedRequiredTrades = useMemo(
-    () => (hasUserEditedTradeFilter ? [] : requiredTrades),
-    [hasUserEditedTradeFilter, requiredTrades],
+    () => {
+      if (tradeAutoFilterMode === 'all') return [];
+      if (tradeAutoFilterMode === 'multi') return requiredTrades;
+      if (tradeAutoFilterMode.startsWith('single:')) {
+        const trade = tradeAutoFilterMode.slice('single:'.length).trim();
+        return trade ? [trade] : [];
+      }
+      return requiredTrades;
+    },
+    [tradeAutoFilterMode, requiredTrades],
   );
 
   useEffect(() => {
@@ -617,7 +646,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   }, [professionals]);
 
   const handleSearchChange = (value: string) => {
-    setHasUserEditedTradeFilter(true);
+    if (requiredTrades.length > 0) {
+      setTradeAutoFilterMode('all');
+    }
     setSearchTerm(value);
   };
 
@@ -1420,6 +1451,60 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             </select>
           </div>
         </div>
+
+        {requiredTrades.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200/80 pt-3">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">Autofilters</span>
+            <button
+              type="button"
+              onClick={() => {
+                setTradeAutoFilterMode('all');
+                setSearchTerm('');
+              }}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                tradeAutoFilterMode === 'all'
+                  ? 'bg-slate-800 text-white'
+                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTradeAutoFilterMode('multi');
+                setSearchTerm('');
+              }}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                tradeAutoFilterMode === 'multi'
+                  ? 'bg-emerald-600 text-white'
+                  : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
+              }`}
+            >
+              MultiTrade
+            </button>
+            {requiredTrades.map((trade) => {
+              const key = `single:${trade.toLowerCase()}` as const;
+              return (
+                <button
+                  key={`autofilter-${trade}`}
+                  type="button"
+                  onClick={() => {
+                    setTradeAutoFilterMode(key);
+                    setSearchTerm('');
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    tradeAutoFilterMode === key
+                      ? 'bg-sky-600 text-white'
+                      : 'border border-sky-300 bg-white text-sky-700 hover:bg-sky-50'
+                  }`}
+                >
+                  {trade}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {isLocationMapOpen && (
