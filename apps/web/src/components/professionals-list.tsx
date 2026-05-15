@@ -486,11 +486,29 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const handleLocationSearch = (value: string) => {
     setLocationSearch(value);
-    if (!value.trim()) {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      setLoc({});
+      setHasManuallyClearedLocation(true);
       setLocationSuggestions([]);
       setShowLocationSuggestions(false);
       return;
     }
+
+    const matched = matchLocation(trimmed);
+    if (matched) {
+      setLoc({
+        primary: matched.primary,
+        secondary: matched.secondary,
+        tertiary: matched.tertiary,
+      });
+    } else {
+      // Keep filtering responsive for free-typed values even when no canonical location match is found.
+      setLoc({ primary: trimmed });
+    }
+    setHasManuallyClearedLocation(false);
+
     const results = searchLocations(value, 6);
     setLocationSuggestions(results);
     setShowLocationSuggestions(results.length > 0);
