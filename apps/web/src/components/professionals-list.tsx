@@ -320,6 +320,13 @@ const getMatchedTradesOnly = (pro: Professional, requiredTrades: string[]): stri
   });
 };
 
+const getProfessionalDisplayTrades = (pro: Professional): string[] => {
+  if (pro.professionType === 'reseller') {
+    return normalizeUniqueList([pro.primaryTrade, ...(pro.suppliesOffered || [])]);
+  }
+  return normalizeUniqueList([pro.primaryTrade, ...(pro.tradesOffered || [])]);
+};
+
 const isLocationMatch = (
   pro: Professional,
   locationParts: string[],
@@ -365,6 +372,7 @@ const ProfessionalRowItem = memo(({
   onViewDetails,
   disableSelection,
   showSelectionAction,
+  displayAllTrades,
 }: {
   pro: Professional;
   requiredTrades: string[];
@@ -376,10 +384,14 @@ const ProfessionalRowItem = memo(({
   onViewDetails: (pro: Professional) => void;
   disableSelection: boolean;
   showSelectionAction: boolean;
+  displayAllTrades: boolean;
 }) => {
   const t = useTranslations('professionalsPage.list');
   const roleIcon = pro.professionType === 'company' ? '🏢' : '👷';
-  const matchedTrades = useMemo(() => getMatchedTradesOnly(pro, requiredTrades), [pro, requiredTrades]);
+  const visibleTrades = useMemo(
+    () => (displayAllTrades ? getProfessionalDisplayTrades(pro) : getMatchedTradesOnly(pro, requiredTrades)),
+    [displayAllTrades, pro, requiredTrades],
+  );
   const locationMatches = useMemo(() => isLocationMatch(pro, locationParts, selectedZoneCode), [pro, locationParts, selectedZoneCode]);
   const ratingValue = typeof pro.rating === 'number' && Number.isFinite(pro.rating) ? pro.rating : 0;
   const ratingMatches = minRating === 0 || ratingValue >= minRating;
@@ -405,8 +417,8 @@ const ProfessionalRowItem = memo(({
 
         {/* Part 2: Matched Trades */}
         <div className="flex flex-wrap gap-2">
-          {matchedTrades.length > 0 ? (
-            matchedTrades.map((trade) => (
+          {visibleTrades.length > 0 ? (
+            visibleTrades.map((trade) => (
               <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-[#FCF8EE]">
                 {trade}
               </span>
@@ -469,8 +481,8 @@ const ProfessionalRowItem = memo(({
 
         {/* Part 2: Matched Trades (35%) */}
         <div className="flex flex-wrap items-center gap-2 h-10">
-          {matchedTrades.length > 0 ? (
-            matchedTrades.map((trade) => (
+          {visibleTrades.length > 0 ? (
+            visibleTrades.map((trade) => (
               <span key={`${pro.id}-trade-${trade}`} className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-[#FCF8EE] h-fit">
                 {trade}
               </span>
@@ -1888,6 +1900,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                       onViewDetails={openDetails}
                       disableSelection={blockInviteForMissingLocation}
                       showSelectionAction={canInviteProfessionals}
+                      displayAllTrades={!canInviteProfessionals}
                     />
                   ))}
                 </div>
@@ -1918,6 +1931,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                         onViewDetails={openDetails}
                         disableSelection={blockInviteForMissingLocation}
                         showSelectionAction={canInviteProfessionals}
+                        displayAllTrades={!canInviteProfessionals}
                       />
                     ))}
                   </div>
@@ -1943,6 +1957,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                       onViewDetails={openDetails}
                       disableSelection={blockInviteForMissingLocation}
                       showSelectionAction={canInviteProfessionals}
+                      displayAllTrades={!canInviteProfessionals}
                     />
                   ))}
                 </div>
@@ -1996,6 +2011,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                     onViewDetails={openDetails}
                     disableSelection={blockInviteForMissingLocation}
                     showSelectionAction={canInviteProfessionals}
+                    displayAllTrades={!canInviteProfessionals}
                   />
                 );
               }
