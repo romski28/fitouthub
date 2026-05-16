@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-16-a235df7",
+    "date": "2026-05-16T10:36:11+08:00",
+    "title": "professionals: autofilters always visible, centred, button-styled",
+    "summary": "professionals: autofilters always visible, centred, button-styled",
+    "areas": [
+      "web"
+    ],
+    "commit": "a235df7",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-16-ef52d77",
     "date": "2026-05-16T10:27:58+08:00",
     "title": "professionals: square location chip, collapsible filters, match-strength tiers",

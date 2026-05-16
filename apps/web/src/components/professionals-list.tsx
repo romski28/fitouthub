@@ -1713,19 +1713,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           </div>
         </div>
 
-        {requiredTrades.length > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200/80 pt-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">Autofilters</span>
+      </div>
+        )}
+      </div>
+
+      {requiredTrades.length > 0 && (
+        <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
+          <div className="flex flex-wrap justify-center gap-2">
             <button
               type="button"
               onClick={() => {
                 setTradeAutoFilterMode('teams');
                 setSearchTerm('');
               }}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+              className={`h-10 rounded-md px-5 text-sm font-semibold transition ${
                 tradeAutoFilterMode === 'teams'
-                  ? 'bg-emerald-600 text-white'
-                  : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
               {`Teams (${tradeAutoFilterCounts.teams})`}
@@ -1741,21 +1745,19 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                     setTradeAutoFilterMode(key);
                     setSearchTerm('');
                   }}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  className={`h-10 rounded-md px-5 text-sm font-semibold transition ${
                     tradeAutoFilterMode === key
-                      ? 'bg-sky-600 text-white'
-                      : 'border border-sky-300 bg-white text-sky-700 hover:bg-sky-50'
+                      ? 'bg-sky-600 text-white shadow-sm'
+                      : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  {`${trade} (${count})`}
+                  {trade} <span className="ml-1 opacity-70">({count})</span>
                 </button>
               );
             })}
           </div>
-        )}
-      </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {isLocationMapOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
