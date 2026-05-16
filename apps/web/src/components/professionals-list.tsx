@@ -817,6 +817,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
     [initialRequiredTrades, initialProjectData?.tradesRequired],
   );
+  const selectedProjectTradeKeys = useMemo(
+    () => new Set(requiredTrades.map((trade) => trade.toLowerCase())),
+    [requiredTrades],
+  );
   const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('teams');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
 
@@ -1732,11 +1736,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              {`Teams (${tradeAutoFilterCounts.teams})`}
+              {`${tradeAutoFilterCounts.teams} x Teams`}
+              {selectedProjectTradeKeys.size > 0 && <span className="ml-2">✓</span>}
             </button>
             {requiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
+              const hasSelectedTrade = selectedProjectTradeKeys.has(trade.toLowerCase());
               return (
                 <button
                   key={`autofilter-${trade}`}
@@ -1751,7 +1757,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                       : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  {trade} <span className="ml-1 opacity-70">({count})</span>
+                  {`${count} x ${trade}`}
+                  {hasSelectedTrade && <span className="ml-2">✓</span>}
                 </button>
               );
             })}
