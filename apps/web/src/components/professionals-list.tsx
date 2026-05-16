@@ -460,6 +460,14 @@ const ProfessionalRowItem = memo(({
             {isSelected ? 'Selected' : 'Ask for quote'}
           </button>
         )}
+        {!showSelectionAction && (
+          <button
+            type="button"
+            className="rounded-lg px-4 py-2 text-xs font-semibold transition whitespace-nowrap border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          >
+            I have a project for you
+          </button>
+        )}
       </div>
 
       {/* Desktop: Grid layout with proportional widths */}
@@ -522,6 +530,14 @@ const ProfessionalRowItem = memo(({
             } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             {isSelected ? 'Selected' : 'Ask for quote'}
+          </button>
+        )}
+        {!showSelectionAction && (
+          <button
+            type="button"
+            className="rounded-lg px-3 py-2 text-xs font-semibold transition whitespace-nowrap h-10 flex items-center justify-center border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          >
+            I have a project for you
           </button>
         )}
       </div>
