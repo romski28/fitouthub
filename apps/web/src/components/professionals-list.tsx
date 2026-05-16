@@ -340,6 +340,20 @@ const isLocationMatch = (
   );
 };
 
+// Returns 3 (trade+location+rating), 2 (trade + one of location/rating), or 1 (trade only).
+// Trade is always assumed to match (callers already hard-filter on trade).
+const getMatchStrength = (
+  pro: Professional,
+  locationParts: string[],
+  selectedZoneCode: string | null,
+  minRating: number,
+): 3 | 2 | 1 => {
+  const locMatch = isLocationMatch(pro, locationParts, selectedZoneCode);
+  const ratingVal = typeof pro.rating === 'number' && Number.isFinite(pro.rating) ? pro.rating : 0;
+  const ratingMatch = minRating === 0 || ratingVal >= minRating;
+  return (1 + (locMatch ? 1 : 0) + (ratingMatch ? 1 : 0)) as 3 | 2 | 1;
+};
+
 const ProfessionalRowItem = memo(({
   pro,
   requiredTrades,
@@ -398,7 +412,7 @@ const ProfessionalRowItem = memo(({
 
         {/* Part 3: Location */}
         <div>
-          <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${locationMatches ? 'bg-emerald-600 text-[#FCF8EE]' : 'bg-[#7A7974] text-[#FCF8EE]'}`}>
+          <span className={`inline-block rounded-none px-3 py-1 text-xs font-semibold ${locationMatches ? 'bg-emerald-600 text-[#FCF8EE]' : 'bg-[#7A7974] text-[#FCF8EE]'}`}>
             {locationMatches ? 'Is local' : 'Not local'}
           </span>
         </div>
@@ -459,7 +473,7 @@ const ProfessionalRowItem = memo(({
 
         {/* Part 3: Location (10%) */}
         <div className="flex items-center h-10">
-          <span className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-semibold h-10 w-full ${locationMatches ? 'bg-emerald-600 text-[#FCF8EE]' : 'bg-[#7A7974] text-[#FCF8EE]'}`}>
+          <span className={`inline-flex items-center justify-center rounded-none px-2 py-1 text-xs font-semibold h-10 w-full ${locationMatches ? 'bg-emerald-600 text-[#FCF8EE]' : 'bg-[#7A7974] text-[#FCF8EE]'}`}>
             {locationMatches ? 'Is local' : 'Not local'}
           </span>
         </div>
@@ -726,9 +740,10 @@ interface Props {
   initialRequiredTrades?: string[];
   initialProjectData?: Partial<ProjectFormData>;
   requireLocation?: boolean;
+  defaultFiltersOpen?: boolean;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, requireLocation = false }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, requireLocation = false, defaultFiltersOpen = true }: Props) {
   const t = useTranslations('professionalsPage.list');
   const router = useRouter();
   const { role } = useAuth();
@@ -783,6 +798,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   // Debug: log pre-population values
     const [minRating, setMinRating] = useState<number>(0);
+  const [filtersOpen, setFiltersOpen] = useState(defaultFiltersOpen);
 
   console.log('[ProfessionalsList] Pre-population:', {
     projectId,
@@ -903,28 +919,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           return false;
         }
 
-        const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
-        if (!byRating) return false;
-
-        if (activeFilterContext.locationParts.length === 0) {
-          return true;
-        }
-
-        if (activeFilterContext.selectedZoneCode) {
-          const professionalZones = deriveHighlightedZones(pro);
-          if (professionalZones.length > 0 && !professionalZones.includes(activeFilterContext.selectedZoneCode)) {
-            return false;
-          }
-        }
-
-        const allAreas = getProfessionalCoverageTokens(pro);
-        if (allAreas.length === 0) {
-          return true;
-        }
-
-        return activeFilterContext.locationParts.some((locPart) =>
-          allAreas.some((area) => area.includes(locPart) || locPart.includes(area)),
-        );
+        return true;
       }).length;
     };
 
@@ -1095,34 +1090,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         return false;
       }
 
-      const byRating = minRating === 0 || (typeof pro.rating === 'number' && pro.rating >= minRating);
-      if (!byRating) return false;
-
-      // If no location filter is set, show based on search only
-      if (locationParts.length === 0) {
-        return true;
-      }
-
-      if (selectedZoneCode) {
-        const professionalZones = deriveHighlightedZones(pro);
-        if (professionalZones.length > 0) {
-          return professionalZones.includes(selectedZoneCode);
-        }
-      }
-
-      const allAreas = getProfessionalCoverageTokens(pro);
-
-      // If professional has no service area, include them (they serve all areas)
-      if (allAreas.length === 0) {
-        return true;
-      }
-
-      // Check if any of the selected location parts match any service area
-      const byLocation = locationParts.length === 0 || locationParts.some((locPart) =>
-        allAreas.some((area) => area.includes(locPart) || locPart.includes(area))
-      );
-
-      return byLocation;
+      // Trade must match — location and rating are soft-ranked, not hard-filtered.
+      return true;
     });
 
     const targetParts = locationParts.slice().reverse();
@@ -1155,6 +1124,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     };
 
     const sorted = items.slice().sort((a, b) => {
+      // Primary sort: match strength (3 = trade+location+rating, 2 = trade+one, 1 = trade only)
+      const strengthA = getMatchStrength(a, locationParts, selectedZoneCode, minRating);
+      const strengthB = getMatchStrength(b, locationParts, selectedZoneCode, minRating);
+      if (strengthB !== strengthA) return strengthB - strengthA;
+
       const tradeA = getTradeCoverageMeta(a, requiredTradesLower);
       const tradeB = getTradeCoverageMeta(b, requiredTradesLower);
 
@@ -1609,7 +1583,24 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   return (
     <div className="space-y-3">
       {/* Filters */}
-      <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-4 shadow-sm">
+      <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 shadow-sm">
+        {/* Collapsible header */}
+        <div className="flex items-center justify-between py-3">
+          <span className="text-sm font-semibold text-slate-700">Filters</span>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((prev) => !prev)}
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 transition"
+            aria-label={filtersOpen ? 'Collapse filters' : 'Expand filters'}
+          >
+            {filtersOpen ? 'Hide' : 'Show'}
+            <svg className={`h-4 w-4 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        {filtersOpen && (
+        <div className="pb-4">
         <div className="grid gap-3 md:grid-cols-3">
           <div className="relative grid gap-1">
             <label className="flex h-10 items-center text-sm font-semibold text-slate-700">Name or Trade</label>
@@ -1761,6 +1752,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               );
             })}
           </div>
+        )}
+      </div>
         )}
       </div>
 
@@ -1932,23 +1925,51 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 <p className="text-lg font-semibold text-slate-900">{`${activeFilterLabel} (${filtered.length})`}</p>
               </div>
             )}
-            <div className="space-y-3">
-              {filtered.map((pro) => (
-                <ProfessionalRowItem
-                  key={pro.id}
-                  pro={pro}
-                  requiredTrades={enforcedRequiredTrades}
-                  locationParts={locationPartsForRender}
-                  selectedZoneCode={selectedZoneCodeForRender}
-                  minRating={minRating}
-                  isSelected={selectedIds.has(pro.id)}
-                  onToggle={toggleSelection}
-                  onViewDetails={openDetails}
-                  disableSelection={blockInviteForMissingLocation}
-                  showSelectionAction={canInviteProfessionals}
-                />
-              ))}
-            </div>
+            {(() => {
+              // Group by match strength and insert tier headers when strength drops.
+              const tiers = [3, 2, 1] as const;
+              const tierLabels: Record<number, string> = {
+                3: 'Best match — trade, location & rating',
+                2: 'Partial match',
+                1: 'Trade match only',
+              };
+              const hasMultipleTiers = tiers.some((t) =>
+                filtered.some((p) => getMatchStrength(p, locationPartsForRender, selectedZoneCodeForRender, minRating) === t)
+              ) && tiers.filter((t) =>
+                filtered.some((p) => getMatchStrength(p, locationPartsForRender, selectedZoneCodeForRender, minRating) === t)
+              ).length > 1;
+
+              const elements: React.ReactNode[] = [];
+              let lastStrength: number | null = null;
+
+              for (const pro of filtered) {
+                const strength = getMatchStrength(pro, locationPartsForRender, selectedZoneCodeForRender, minRating);
+                if (hasMultipleTiers && strength !== lastStrength) {
+                  elements.push(
+                    <div key={`tier-${strength}`} className={`rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide ${strength === 3 ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : strength === 2 ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-slate-200 bg-slate-50 text-slate-600'}`}>
+                      {tierLabels[strength]}
+                    </div>
+                  );
+                  lastStrength = strength;
+                }
+                elements.push(
+                  <ProfessionalRowItem
+                    key={pro.id}
+                    pro={pro}
+                    requiredTrades={enforcedRequiredTrades}
+                    locationParts={locationPartsForRender}
+                    selectedZoneCode={selectedZoneCodeForRender}
+                    minRating={minRating}
+                    isSelected={selectedIds.has(pro.id)}
+                    onToggle={toggleSelection}
+                    onViewDetails={openDetails}
+                    disableSelection={blockInviteForMissingLocation}
+                    showSelectionAction={canInviteProfessionals}
+                  />
+                );
+              }
+              return elements;
+            })()}
           </div>
         )
       )}

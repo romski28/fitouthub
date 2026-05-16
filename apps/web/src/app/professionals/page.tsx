@@ -73,6 +73,7 @@ function ProfessionalsPageInner() {
   const aiScopeParam = searchParams.get('aiScope') || undefined;
   const aiScaleParam = searchParams.get('aiScale') || undefined;
   const aiEmergencyParam = searchParams.get('aiEmergency') || undefined;
+  const sourceParam = searchParams.get('source') || undefined;
   const askRegion = searchParams.get('askRegion') === '1';
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
@@ -317,6 +318,7 @@ function ProfessionalsPageInner() {
               initialRequiredTrades={initialRequiredTrades}
               initialProjectData={mergedPrefill}
               requireLocation={shouldShowRegionNotice}
+              defaultFiltersOpen={sourceParam !== 'ai-wizard'}
             />
           )}
         </div>
