@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-16-a5ae94b",
+    "date": "2026-05-16T12:10:17+08:00",
+    "title": "fix(home): restore emergency CTA emoji and move CTA to top active area",
+    "summary": "fix(home): restore emergency CTA emoji and move CTA to top active area",
+    "areas": [
+      "web"
+    ],
+    "commit": "a5ae94b",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-16-eb4dde0",
     "date": "2026-05-16T12:00:41+08:00",
     "title": "feat(home): add emergency 🚨 button with modal for urgent project intake",

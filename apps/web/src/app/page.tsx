@@ -85,10 +85,24 @@ export default function Home() {
       </div>
 
       <div className="space-y-6 pb-8 pt-4">
-        {/* Updates Button â€” fixed right for thumb access, same as project list pages */}
+        {/* Updates button fixed on right for thumb access, same as project list pages */}
         {hydrated && (isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
             <UpdatesButton />
+          </div>
+        )}
+
+        {/* Emergency CTA in top active area */}
+        {hydrated && (
+          <div className="sticky top-4 z-40 ml-auto mr-6 w-fit">
+            <button
+              onClick={() => setEmergencyModalOpen(true)}
+              className="flex h-12 items-center justify-center rounded-full bg-red-600 px-5 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:bg-red-700"
+              aria-label="Emergency help"
+              title="Emergency - Get help now"
+            >
+              Emergency {'\u{1F6A8}'}
+            </button>
           </div>
         )}
 
@@ -284,24 +298,11 @@ export default function Home() {
           </div>
         </section>
 
-      {/* Emergency floating button */}
-      {hydrated && (
-        <>
-          <button
-            onClick={() => setEmergencyModalOpen(true)}
-            className="fixed bottom-8 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-2xl shadow-lg hover:bg-red-700 transition hover:scale-110"
-            aria-label="Emergency help"
-            title="Emergency - Get help now"
-          >
-            ??
-          </button>
-          <EmergencyModal
-            isOpen={emergencyModalOpen}
-            onClose={() => setEmergencyModalOpen(false)}
-            availableTrades={availableTrades}
-          />
-        </>
-      )}
+      <EmergencyModal
+        isOpen={emergencyModalOpen}
+        onClose={() => setEmergencyModalOpen(false)}
+        availableTrades={availableTrades}
+      />
       </div>
     </div>
   );
