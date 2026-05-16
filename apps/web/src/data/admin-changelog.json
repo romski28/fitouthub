@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-16-ccf577f",
+    "date": "2026-05-16T11:02:17+08:00",
+    "title": "professionals: restore role emojis in row list",
+    "summary": "professionals: restore role emojis in row list",
+    "areas": [
+      "web"
+    ],
+    "commit": "ccf577f",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-16-5d48969",
     "date": "2026-05-16T10:50:52+08:00",
     "title": "professionals: trade ticks reflect actual selections; add team heading",

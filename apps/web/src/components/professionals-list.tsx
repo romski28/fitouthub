@@ -378,6 +378,7 @@ const ProfessionalRowItem = memo(({
   showSelectionAction: boolean;
 }) => {
   const t = useTranslations('professionalsPage.list');
+  const roleIcon = pro.professionType === 'company' ? '🏢' : '👷';
   const matchedTrades = useMemo(() => getMatchedTradesOnly(pro, requiredTrades), [pro, requiredTrades]);
   const locationMatches = useMemo(() => isLocationMatch(pro, locationParts, selectedZoneCode), [pro, locationParts, selectedZoneCode]);
   const ratingValue = typeof pro.rating === 'number' && Number.isFinite(pro.rating) ? pro.rating : 0;
@@ -389,7 +390,10 @@ const ProfessionalRowItem = memo(({
       <div className="flex flex-col gap-3 p-4 lg:hidden">
         {/* Part 1: Name + Note */}
         <div>
-          <p className="truncate font-bold text-[#201C1A]">{pro.fullName || pro.businessName || t('fallbackProfessional')}</p>
+          <p className="truncate font-bold text-[#201C1A]">
+            <span className="mr-1" aria-hidden="true">{roleIcon}</span>
+            {pro.fullName || pro.businessName || t('fallbackProfessional')}
+          </p>
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
@@ -450,7 +454,10 @@ const ProfessionalRowItem = memo(({
       <div className="hidden lg:grid lg:grid-cols-12 gap-3 p-4" style={{ gridTemplateColumns: '1fr 1.4fr 0.4fr 0.8fr 0.8fr' }}>
         {/* Part 1: Name + Note (25%) */}
         <div className="flex flex-col justify-center min-w-0">
-          <p className="truncate font-bold text-[#201C1A]">{pro.fullName || pro.businessName || t('fallbackProfessional')}</p>
+          <p className="truncate font-bold text-[#201C1A]">
+            <span className="mr-1" aria-hidden="true">{roleIcon}</span>
+            {pro.fullName || pro.businessName || t('fallbackProfessional')}
+          </p>
           <button
             type="button"
             onClick={() => onViewDetails(pro)}
