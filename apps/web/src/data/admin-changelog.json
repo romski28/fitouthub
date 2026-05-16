@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-16-5d48969",
+    "date": "2026-05-16T10:50:52+08:00",
+    "title": "professionals: trade ticks reflect actual selections; add team heading",
+    "summary": "professionals: trade ticks reflect actual selections; add team heading",
+    "areas": [
+      "web"
+    ],
+    "commit": "5d48969",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-16-c96775f",
     "date": "2026-05-16T10:43:29+08:00",
     "title": "professionals: count-first autofilter labels and trade-selection ticks",

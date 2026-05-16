@@ -817,10 +817,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
     [initialRequiredTrades, initialProjectData?.tradesRequired],
   );
-  const selectedProjectTradeKeys = useMemo(
-    () => new Set(requiredTrades.map((trade) => trade.toLowerCase())),
-    [requiredTrades],
-  );
   const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('teams');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
 
@@ -1221,6 +1217,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const maxSelect = requiredTrades.length > 1 ? Math.max(3, requiredTrades.length * 2) : 3;
   // Always start with empty selection - no persistence
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selectedTradeCoverageKeys = useMemo(() => {
+    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+    const covered = new Set<string>();
+
+    professionals.forEach((pro) => {
+      if (!selectedIds.has(pro.id)) return;
+      const tradeTokens = getProfessionalTradeTokens(pro);
+      requiredTradesLower.forEach((requiredTrade) => {
+        const matchesTrade = tradeTokens.some(
+          (token) => token.includes(requiredTrade) || requiredTrade.includes(token),
+        );
+        if (matchesTrade) covered.add(requiredTrade);
+      });
+    });
+
+    return covered;
+  }, [professionals, selectedIds, requiredTrades]);
   const locationSelected = Boolean(loc.primary || loc.secondary || loc.tertiary);
   const blockInviteForMissingLocation = requireLocation && !locationSelected;
 
@@ -1723,6 +1736,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
       {requiredTrades.length > 0 && (
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
+          <p className="mb-2 text-center text-sm font-semibold text-slate-700">
+            {requiredTrades.length > 1 ? 'Select your team' : `Choose your ${requiredTrades[0]}`}
+          </p>
           <div className="flex flex-wrap justify-center gap-2">
             <button
               type="button"
@@ -1737,12 +1753,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               }`}
             >
               {`${tradeAutoFilterCounts.teams} x Teams`}
-              {selectedProjectTradeKeys.size > 0 && <span className="ml-2">✓</span>}
             </button>
             {requiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
-              const hasSelectedTrade = selectedProjectTradeKeys.has(trade.toLowerCase());
+              const hasSelectedTrade = selectedTradeCoverageKeys.has(trade.toLowerCase());
               return (
                 <button
                   key={`autofilter-${trade}`}
