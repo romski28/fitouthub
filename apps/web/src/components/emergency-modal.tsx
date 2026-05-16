@@ -1,71 +1,67 @@
-'use client';
-
-import { useState, useMemo } from 'react';
+﻿'use client';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import { CanonicalLocation } from '@/components/location-select';
-import { searchLocations } from '@/lib/location-search';
-import { matchLocation } from '@/lib/location-matcher';
-import { Professional } from '@/lib/types';
-
+import LocationSelect, { CanonicalLocation } from '@/components/location-select';
+import { API_BASE_URL } from '@/config/api';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  availableTrades: string[];
 }
-
-export function EmergencyModal({ isOpen, onClose, availableTrades }: Props) {
+export function EmergencyModal({ isOpen, onClose }: Props) {
   const router = useRouter();
-  const t = useTranslations('emergency');
   const [selectedTrade, setSelectedTrade] = useState<string>('');
-  const [locationSearch, setLocationSearch] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<CanonicalLocation | null>(null);
-  const [locationSuggestions, setLocationSuggestions] = useState<Array<{ primary?: string; secondary?: string; tertiary?: string; display: string }>>([]);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-
-  // Determine if we're in business hours (07:00 - 20:00)
+  const [selectedLocation, setSelectedLocation] = useState<CanonicalLocation>({});
+  const [description, setDescription] = useState('');
+  const [trades, setTrades] = useState<string[]>([]);
+  const [tradesLoading, setTradesLoading] = useState(false);
   const isBusinessHours = useMemo(() => {
-    const now = new Date();
-    const hours = now.getHours();
+    const hours = new Date().getHours();
     return hours >= 7 && hours < 20;
   }, []);
-
-  const handleLocationSearch = (value: string) => {
-    setLocationSearch(value);
-    if (!value.trim()) {
-      setLocationSuggestions([]);
-      setShowLocationSuggestions(false);
-      return;
+  useEffect(() => {
+    if (!isOpen) return;
+    setTradesLoading(true);
+    fetch(API_BASE_URL + '/trades')
+      .then((r) => r.json())
+      .then((data: Array<{ name?: string; title?: string; enabled?: boolean; sortOrder?: number }>) => {
+        const names = (data || [])
+          .filter((t) => t.enabled !== false)
+          .sort((a, b) => {
+            const diff = (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
+            if (diff !== 0) return diff;
+            return (a.name ?? a.title ?? '').localeCompare(b.name ?? b.title ?? '');
+          })
+          .map((t) => t.name ?? t.title ?? '')
+          .filter(Boolean);
+        setTrades(names);
+      })
+      .catch(() => {})
+      .finally(() => setTradesLoading(false));
+  }, [isOpen]);
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedTrade('');
+      setSelectedLocation({});
+      setDescription('');
     }
-
-    const results = searchLocations(value, 6);
-    setLocationSuggestions(results);
-    setShowLocationSuggestions(results.length > 0);
-  };
-
-  const handleLocationSelect = (result: { primary?: string; secondary?: string; tertiary?: string; display: string }) => {
-    setSelectedLocation(result as CanonicalLocation);
-    setLocationSearch(result.display);
-    setShowLocationSuggestions(false);
-  };
-
+  }, [isOpen]);
+  const hasLocation = Boolean(selectedLocation.primary);
   const handleGetHelp = () => {
-    if (!selectedTrade || !selectedLocation) return;
-
-    // Build query params
+    if (!selectedTrade || !hasLocation) return;
+    const locationParts = [selectedLocation.primary, selectedLocation.secondary, selectedLocation.tertiary]
+      .filter(Boolean)
+      .join(', ');
     const params = new URLSearchParams({
       source: 'emergency',
       trade: selectedTrade,
-      location: [selectedLocation.primary, selectedLocation.secondary, selectedLocation.tertiary].filter(Boolean).join(', '),
-      emergencyOnly: isBusinessHours ? 'false' : 'true', // Off-hours only show emergency-certified
+      location: locationParts,
+      emergencyOnly: isBusinessHours ? 'false' : 'true',
     });
-
-    router.push(`/professionals?${params.toString()}`);
+    if (description.trim()) params.set('notes', description.trim());
+    router.push('/professionals?' + params.toString());
     onClose();
   };
-
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={onClose} />
@@ -73,72 +69,51 @@ export function EmergencyModal({ isOpen, onClose, availableTrades }: Props) {
         className="relative mx-4 w-full max-w-md rounded-2xl border border-white/45 bg-[#F5EEDE]/95 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-6 text-center">
-          <p className="text-3xl mb-2">🚨</p>
-          <h2 className="text-lg font-bold text-slate-900">It's an emergency and I need a...</h2>
-        </div>
-
-        <div className="space-y-4">
-          {/* Trade selector */}
-          <div className="grid gap-1">
-            <label className="text-sm font-semibold text-slate-700">Trade</label>
-            <select
-              value={selectedTrade}
-              onChange={(e) => setSelectedTrade(e.target.value)}
-              className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
-            >
-              <option value="">Select a trade...</option>
-              {availableTrades.map((trade) => (
-                <option key={trade} value={trade}>
-                  {trade}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Location selector */}
-          <div className="grid gap-1">
-            <label className="text-sm font-semibold text-slate-700">Location</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Enter your location..."
-                value={locationSearch}
-                onChange={(e) => handleLocationSearch(e.target.value)}
-                onFocus={() => {
-                  if (locationSearch) setShowLocationSuggestions(locationSuggestions.length > 0);
-                }}
-                onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 100)}
-                className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
-              />
-              {showLocationSuggestions && locationSuggestions.length > 0 && (
-                <div className="absolute top-full z-10 mt-1 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
-                  {locationSuggestions.map((result, idx) => (
-                    <button
-                      key={`${idx}-${result.primary}-${result.secondary}-${result.tertiary}`}
-                      type="button"
-                      className="w-full border-b border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 last:border-b-0"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleLocationSelect(result)}
-                    >
-                      {result.display}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Business hours info */}
+        <div className="mb-5 text-center">
+          <p className="text-3xl mb-1">&#x1F6A8;</p>
+          <h2 className="text-lg font-bold text-slate-900">Emergency help needed</h2>
           {!isBusinessHours && (
-            <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              <p className="font-semibold">Off-hours mode</p>
-              <p>Showing professionals available for emergency calls.</p>
+            <div className="mt-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+              <span className="font-semibold">Off-hours mode</span> ? showing only emergency-available professionals
             </div>
           )}
         </div>
-
-        {/* Actions */}
+        <div className="space-y-4">
+          <div className="grid gap-1">
+            <label className="text-sm font-semibold text-slate-700">Briefly describe the problem</label>
+            <textarea
+              rows={3}
+              placeholder="e.g. Burst pipe under the kitchen sink, water everywhere..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#F97362]/40"
+            />
+          </div>
+          <div className="grid gap-1">
+            <label className="text-sm font-semibold text-slate-700">Trade needed</label>
+            <select
+              value={selectedTrade}
+              onChange={(e) => setSelectedTrade(e.target.value)}
+              disabled={tradesLoading}
+              className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm disabled:opacity-60"
+            >
+              <option value="">{tradesLoading ? 'Loading trades...' : 'Select a trade...'}</option>
+              {trades.map((trade) => (
+                <option key={trade} value={trade}>{trade}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-1">
+            <label className="text-sm font-semibold text-slate-700">Your location</label>
+            <LocationSelect
+              value={selectedLocation}
+              onChange={setSelectedLocation}
+              enableSearch
+              labels={{ primary: 'Region', secondary: 'District', tertiary: 'Area' }}
+              className="grid gap-2"
+            />
+          </div>
+        </div>
         <div className="mt-6 flex gap-2">
           <button
             type="button"
@@ -150,13 +125,14 @@ export function EmergencyModal({ isOpen, onClose, availableTrades }: Props) {
           <button
             type="button"
             onClick={handleGetHelp}
-            disabled={!selectedTrade || !selectedLocation}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!selectedTrade || !hasLocation}
+            className="flex-1 rounded-lg bg-[#F97362] px-4 py-2 text-sm font-semibold text-[#FCF8EE] hover:bg-[#e8624f] transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Get help!
+            Find help now
           </button>
         </div>
       </div>
     </div>
   );
 }
+

@@ -30,7 +30,6 @@ export default function Home() {
   const [hydrated, setHydrated] = useState(false);
   const [greetingIndex, setGreetingIndex] = useState(0);
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
-  const [availableTrades, setAvailableTrades] = useState<string[]>([]);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
@@ -56,26 +55,7 @@ export default function Home() {
     }
   }, [hydrated, user, profIsLoggedIn, router]);
 
-  // Fetch available trades for emergency modal
-  useEffect(() => {
-    if (!hydrated) return;
-    const fetchTrades = async () => {
-      try {
-        const response = await fetch('/api/professionals', { next: { revalidate: 60 } });
-        if (!response.ok) return;
-        const data = await response.json();
-        const trades = new Set<string>();
-        (data || []).forEach((pro: any) => {
-          if (pro.primaryTrade) trades.add(pro.primaryTrade);
-          (pro.tradesOffered || []).forEach((t: string) => trades.add(t));
-        });
-        setAvailableTrades(Array.from(trades).sort());
-      } catch (error) {
-        console.error('Failed to fetch trades:', error);
-      }
-    };
-    fetchTrades();
-  }, [hydrated]);
+
 
   return (
     <div className="relative isolate">
@@ -84,7 +64,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[#1a1a1a]/44" />
       </div>
 
-      <div className="space-y-6 pb-8 pt-4">
+      <div className="space-y-6 pb-8 pt-2">
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {hydrated && (isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
@@ -92,26 +72,21 @@ export default function Home() {
           </div>
         )}
 
-        {/* Emergency CTA in top active area */}
-        {hydrated && (
-          <div className="sticky top-4 z-40 ml-auto mr-6 w-fit">
-            <button
-              onClick={() => setEmergencyModalOpen(true)}
-              className="flex h-12 items-center justify-center rounded-full bg-red-600 px-5 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:bg-red-700"
-              aria-label="Emergency help"
-              title="Emergency - Get help now"
-            >
-              Emergency {'\u{1F6A8}'}
-            </button>
-          </div>
-        )}
-
-        {/* AI Prompt + Response Panel */}
+{/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
           className="relative -mx-6 px-6"
         >
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-12">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-12">            {hydrated && (
+              <button
+                onClick={() => setEmergencyModalOpen(true)}
+                className="absolute right-4 top-4 flex h-10 items-center justify-center rounded-full border-[3px] border-[#F97362] bg-[#FCF8EE] px-4 text-sm font-semibold text-[#F97362] shadow transition hover:bg-[#F97362] hover:text-[#FCF8EE]"
+                aria-label="Emergency help"
+                title="Emergency - Get help now"
+              >
+                {'\u{1F6A8}'} Emergency
+              </button>
+            )}
             <div className="px-4 sm:px-6 lg:px-12">
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
@@ -301,12 +276,12 @@ export default function Home() {
       <EmergencyModal
         isOpen={emergencyModalOpen}
         onClose={() => setEmergencyModalOpen(false)}
-        availableTrades={availableTrades}
       />
       </div>
     </div>
   );
 }
+
 
 
 

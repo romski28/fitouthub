@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-16-deb4d57",
+    "date": "2026-05-16T15:17:09+08:00",
+    "title": "feat(emergency): relocate CTA into AI panel, restyle cream/coral, enrich modal",
+    "summary": "feat(emergency): relocate CTA into AI panel, restyle cream/coral, enrich modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "deb4d57",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-16-a5ae94b",
     "date": "2026-05-16T12:10:17+08:00",
     "title": "fix(home): restore emergency CTA emoji and move CTA to top active area",
