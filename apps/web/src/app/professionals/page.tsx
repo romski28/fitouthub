@@ -1,4 +1,4 @@
-
+﻿
 // Wrap search params usage in Suspense to satisfy Next.js requirements
 'use client';
 
@@ -75,6 +75,10 @@ function ProfessionalsPageInner() {
   const aiEmergencyParam = searchParams.get('aiEmergency') || undefined;
   const sourceParam = searchParams.get('source') || undefined;
   const askRegion = searchParams.get('askRegion') === '1';
+  const emergencySource = searchParams.get('source') === 'emergency';
+  const emergencyOnly = searchParams.get('emergencyOnly') === 'true';
+  const emergencyTradeParam = searchParams.get('trade') || undefined;
+  const emergencyLocationParam = searchParams.get('location') || undefined;
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
   const [projectPrefill, setProjectPrefill] = useState<Partial<ProjectFormData>>({});
@@ -232,7 +236,37 @@ function ProfessionalsPageInner() {
     });
   }
 
-  const isMatchedContext = Boolean(
+  // Filter professionals based on emergency mode
+  const filteredProfessionals = useMemo(() => {
+    let result = professionals;
+    if (emergencySource && emergencyOnly) {
+      result = result.filter((pro) => pro.emergencyCalloutAvailable === true);
+    }
+    if (emergencySource && emergencyTradeParam) {
+      result = result.filter((pro) => {
+        const trades = [pro.primaryTrade, ...(pro.tradesOffered || [])];
+        return trades.some((t) => t && t.toLowerCase() === emergencyTradeParam.toLowerCase());
+      });
+    }
+    if (emergencySource && emergencyLocationParam) {
+      result = result.filter((pro) => {
+        if (!emergencyLocationParam) return true;
+        const matched = matchLocation(emergencyLocationParam);
+        if (!matched) return false;
+        // Check if professional covers any of the requested locations
+        return [pro.locationPrimary, pro.locationSecondary, pro.locationTertiary].some(
+          (loc) => loc && (
+            loc === matched.primary ||
+            loc === matched.secondary ||
+            loc === matched.tertiary
+          )
+        );
+      });
+    }
+    return result;
+  }, [professionals, emergencySource, emergencyOnly, emergencyTradeParam, emergencyLocationParam]);
+
+    const isMatchedContext = Boolean(
     projectId ||
       tradeParam ||
       tradesParam ||
@@ -311,7 +345,7 @@ function ProfessionalsPageInner() {
             </div>
           ) : (
             <ProfessionalsList
-              professionals={professionals}
+              professionals={emergencySource ? filteredProfessionals : professionals}
               initialLocation={defaultLocation}
               projectId={projectId}
               initialSearchTerm={tradeParam || initialRequiredTrades[0] || projectName}
@@ -335,3 +369,8 @@ export default function ProfessionalsPage() {
     </Suspense>
   );
 }
+
+
+
+
+

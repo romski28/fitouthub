@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-16-eb4dde0",
+    "date": "2026-05-16T12:00:41+08:00",
+    "title": "feat(home): add emergency 🚨 button with modal for urgent project intake",
+    "summary": "feat(home): add emergency 🚨 button with modal for urgent project intake",
+    "areas": [
+      "web"
+    ],
+    "commit": "eb4dde0",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-16-cd203be",
     "date": "2026-05-16T11:35:27+08:00",
     "title": "professionals: add browse-mode CTA button",

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -11,6 +11,7 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
 import { HomeCardRail } from '@/components/home-card-rail';
+import { EmergencyModal } from '@/components/emergency-modal';
 
 const WELCOME_GREETINGS = [
   'Hi and welcome to your fitout adventure, Mimo',
@@ -28,6 +29,8 @@ export default function Home() {
   const searchParams = useSearchParams();
   const [hydrated, setHydrated] = useState(false);
   const [greetingIndex, setGreetingIndex] = useState(0);
+  const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
+  const [availableTrades, setAvailableTrades] = useState<string[]>([]);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
@@ -53,6 +56,27 @@ export default function Home() {
     }
   }, [hydrated, user, profIsLoggedIn, router]);
 
+  // Fetch available trades for emergency modal
+  useEffect(() => {
+    if (!hydrated) return;
+    const fetchTrades = async () => {
+      try {
+        const response = await fetch('/api/professionals', { next: { revalidate: 60 } });
+        if (!response.ok) return;
+        const data = await response.json();
+        const trades = new Set<string>();
+        (data || []).forEach((pro: any) => {
+          if (pro.primaryTrade) trades.add(pro.primaryTrade);
+          (pro.tradesOffered || []).forEach((t: string) => trades.add(t));
+        });
+        setAvailableTrades(Array.from(trades).sort());
+      } catch (error) {
+        console.error('Failed to fetch trades:', error);
+      }
+    };
+    fetchTrades();
+  }, [hydrated]);
+
   return (
     <div className="relative isolate">
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
@@ -61,7 +85,7 @@ export default function Home() {
       </div>
 
       <div className="space-y-6 pb-8 pt-4">
-        {/* Updates Button — fixed right for thumb access, same as project list pages */}
+        {/* Updates Button â€” fixed right for thumb access, same as project list pages */}
         {hydrated && (isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
             <UpdatesButton />
@@ -259,7 +283,34 @@ export default function Home() {
             <InformationSection />
           </div>
         </section>
+
+      {/* Emergency floating button */}
+      {hydrated && (
+        <>
+          <button
+            onClick={() => setEmergencyModalOpen(true)}
+            className="fixed bottom-8 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-2xl shadow-lg hover:bg-red-700 transition hover:scale-110"
+            aria-label="Emergency help"
+            title="Emergency - Get help now"
+          >
+            ??
+          </button>
+          <EmergencyModal
+            isOpen={emergencyModalOpen}
+            onClose={() => setEmergencyModalOpen(false)}
+            availableTrades={availableTrades}
+          />
+        </>
+      )}
       </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
