@@ -395,9 +395,28 @@ const ProfessionalRowItem = memo(({
   const locationMatches = useMemo(() => isLocationMatch(pro, locationParts, selectedZoneCode), [pro, locationParts, selectedZoneCode]);
   const ratingValue = typeof pro.rating === 'number' && Number.isFinite(pro.rating) ? pro.rating : 0;
   const ratingMatches = minRating === 0 || ratingValue >= minRating;
+  const handleCardClick = () => {
+    if (!showSelectionAction || disableSelection) return;
+    onToggle(pro);
+  };
+
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!showSelectionAction || disableSelection) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onToggle(pro);
+    }
+  };
 
   return (
-    <div className={`rounded-lg bg-[#FCF8EE] transition ${isSelected ? 'border-4 border-emerald-600' : 'border border-slate-200'}`}>
+    <div
+      className={`rounded-lg bg-[#FCF8EE] transition ${isSelected ? 'border-4 border-emerald-600' : 'border border-slate-200'} ${showSelectionAction ? 'cursor-pointer' : ''}`}
+      role={showSelectionAction ? 'button' : undefined}
+      tabIndex={showSelectionAction ? 0 : undefined}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      aria-pressed={showSelectionAction ? isSelected : undefined}
+    >
       {/* Mobile: Stacked layout */}
       <div className="flex flex-col gap-3 p-4 lg:hidden">
         {/* Part 1: Name + Note */}
@@ -408,7 +427,10 @@ const ProfessionalRowItem = memo(({
           </p>
           <button
             type="button"
-            onClick={() => onViewDetails(pro)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onViewDetails(pro);
+            }}
             className="mt-1 text-xs italic text-[#201C1A] hover:underline"
           >
             Click for more...
@@ -449,7 +471,10 @@ const ProfessionalRowItem = memo(({
         {showSelectionAction && (
           <button
             type="button"
-            onClick={() => onToggle(pro)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggle(pro);
+            }}
             disabled={disableSelection}
             className={`rounded-lg px-4 py-2 text-xs font-semibold transition whitespace-nowrap ${
               isSelected
@@ -457,7 +482,7 @@ const ProfessionalRowItem = memo(({
                 : 'border border-[#7A7974] bg-[#7A7974] text-[#FCF8EE] hover:bg-[#6A6A64]'
             } disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            {isSelected ? 'Selected' : 'Ask for quote'}
+            {isSelected ? '☑ Selected' : '☐ Select'}
           </button>
         )}
         {!showSelectionAction && (
@@ -480,7 +505,10 @@ const ProfessionalRowItem = memo(({
           </p>
           <button
             type="button"
-            onClick={() => onViewDetails(pro)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onViewDetails(pro);
+            }}
             className="mt-1 text-xs italic text-[#201C1A] hover:underline text-left"
           >
             Click for more...
@@ -521,7 +549,10 @@ const ProfessionalRowItem = memo(({
         {showSelectionAction && (
           <button
             type="button"
-            onClick={() => onToggle(pro)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggle(pro);
+            }}
             disabled={disableSelection}
             className={`rounded-lg px-3 py-2 text-xs font-semibold transition whitespace-nowrap h-10 flex items-center justify-center ${
               isSelected
@@ -529,7 +560,7 @@ const ProfessionalRowItem = memo(({
                 : 'border border-[#7A7974] bg-[#7A7974] text-[#FCF8EE] hover:bg-[#6A6A64]'
             } disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            {isSelected ? 'Selected' : 'Ask for quote'}
+            {isSelected ? '☑ Selected' : '☐ Select'}
           </button>
         )}
         {!showSelectionAction && (
@@ -2098,10 +2129,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       />
 
       {/* Selection band — centered fixed footer to avoid viewport-edge jitter */}
-      <div className="fixed bottom-3 left-1/2 z-40 w-[min(1200px,calc(100%-1rem))] -translate-x-1/2 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 shadow-2xl">
+      <div className="fixed bottom-3 left-1/2 z-40 w-[min(1200px,calc(100%-1rem))] -translate-x-1/2 rounded-2xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-3 shadow-2xl backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <span className="text-sm font-semibold text-white shrink-0">
+            <span className="text-sm font-semibold text-slate-800 shrink-0">
               {selectedIds.size === 0 ? '0 selected' : selectedIds.size === 1 ? '1 selected' : `${selectedIds.size} selected`}
             </span>
             {selectedIds.size > 0 && (
@@ -2110,12 +2141,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   const pro = professionals.find((p) => p.id === id);
                   if (!pro) return null;
                   return (
-                    <span key={id} className="flex items-center gap-1 rounded-full bg-emerald-500 pl-2.5 pr-1 py-0.5 text-[11px] font-semibold text-white">
+                    <span key={id} className="flex items-center gap-1 rounded-full bg-emerald-600 pl-2.5 pr-1 py-0.5 text-[11px] font-semibold text-white">
                       {pro.fullName || pro.businessName || 'Professional'}
                       <button
                         type="button"
                         onClick={() => toggleSelection(pro)}
-                        className="rounded-full p-0.5 hover:bg-emerald-400 text-emerald-100"
+                        className="rounded-full p-0.5 hover:bg-emerald-500 text-emerald-100"
                         aria-label={`Deselect ${pro.fullName || pro.businessName}`}
                       >
                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2133,7 +2164,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               <button
                 type="button"
                 onClick={() => setSelectedIds(new Set())}
-                className="rounded-lg border border-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Clear
               </button>
@@ -2142,7 +2173,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               type="button"
               onClick={handleInviteSelected}
               disabled={blockInviteForMissingLocation}
-              className="rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-[#DC143C] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#b01030] disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={t('actions.shareProjectAria')}
             >
               Finish creating your project →
