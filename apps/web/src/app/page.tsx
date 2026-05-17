@@ -65,18 +65,22 @@ export default function Home() {
       </div>
 
       <div className="space-y-6 pb-8 pt-2">
-        {/* Floating action buttons fixed right */}
+        {/* Emergency FAB — top of active area, same right column as other FABs */}
         {hydrated && (
-          <div className="fixed bottom-[260px] right-6 z-30 flex items-center gap-2">
-            <button
-              onClick={() => setEmergencyModalOpen(true)}
-              className="flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-[#F97362] bg-[#FCF8EE] text-[22px] text-[#F97362] shadow-lg transition hover:bg-[#F97362] hover:text-[#FCF8EE]"
-              aria-label="Emergency help"
-              title="Emergency - Get help now"
-            >
-              {"\u{1F6A8}"}
-            </button>
-            {(isLoggedIn || profIsLoggedIn) && <UpdatesButton />}
+          <button
+            onClick={() => setEmergencyModalOpen(true)}
+            className="fixed right-6 top-20 z-30 flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-[#F97362] bg-[#FCF8EE] text-2xl text-[#F97362] shadow-lg transition hover:bg-[#F97362] hover:text-[#FCF8EE]"
+            aria-label="Emergency help"
+            title="Emergency - Get help now"
+          >
+            {"\u{1F6A8}"}
+          </button>
+        )}
+
+        {/* Updates button fixed on right for thumb access, same as project list pages */}
+        {hydrated && (isLoggedIn || profIsLoggedIn) && (
+          <div className="fixed bottom-[260px] right-6 z-30">
+            <UpdatesButton />
           </div>
         )}
 
