@@ -15,6 +15,7 @@ import { API_BASE_URL } from '@/config/api';
 import { useSearchParams } from 'next/navigation';
 import { matchLocation } from '@/lib/location-matcher';
 import type { ProjectFormData } from '@/components/project-form';
+import { EmergencySummaryScreen } from '@/components/emergency-summary-screen';
 
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
 
@@ -82,6 +83,21 @@ function ProfessionalsPageInner() {
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
   const [projectPrefill, setProjectPrefill] = useState<Partial<ProjectFormData>>({});
+
+  // Emergency selection state — only active when source=emergency
+  const [selectedEmergencyPros, setSelectedEmergencyPros] = useState<Professional[]>([]);
+  const [showSummary, setShowSummary] = useState(false);
+  const emergencyNotesParam = searchParams.get('notes') || '';
+  const emergencyAiTitle = searchParams.get('aiTitle') || '';
+  const emergencyAiWarnings = searchParams.get('aiWarnings') || '';
+
+  const toggleEmergencySelection = (pro: Professional) => {
+    setSelectedEmergencyPros((prev) =>
+      prev.some((p) => p.id === pro.id)
+        ? prev.filter((p) => p.id !== pro.id)
+        : [...prev, pro]
+    );
+  };
   const requestedTradesFromQuery = useMemo(
     () =>
       (tradesParam || '')
@@ -294,8 +310,29 @@ function ProfessionalsPageInner() {
           <div className="absolute inset-0 bg-[#1a1a1a]/44" />
         </div>
 
-        <div className="space-y-6 pb-8 pt-4">
-          {/* Compact Hero Section */}
+        <div className={`space-y-6 pt-4 ${emergencySource ? 'pb-28' : 'pb-8'}`}>
+          {/* Emergency context banner — only shown for emergency route */}
+          {emergencySource && (
+            <section className="relative -mx-6 px-6">
+              <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-red-400/60 bg-[#DC143C]/10 px-5 py-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl leading-none">🚨</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#DC143C] uppercase tracking-widest mb-0.5">Emergency Request</p>
+                    <p className="text-sm text-slate-800">
+                      Select one or more professionals below, then tap <strong>Send invites</strong>. They will be notified immediately and asked to respond within <strong>1 hour</strong>.
+                    </p>
+                    {emergencyTradeParam && (
+                      <p className="mt-1 text-xs text-slate-600">Trade: <span className="font-semibold">{emergencyTradeParam}</span></p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Compact Hero Section — hidden on emergency route to keep focus on professionals */}
+          {!emergencySource && (
           <section className="relative -mx-6 px-6">
             <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-12">
               <div className="px-4 sm:px-6 lg:px-12">
@@ -315,6 +352,7 @@ function ProfessionalsPageInner() {
               </div>
             </div>
           </section>
+          )}
 
           {shouldShowRegionNotice && (
             <section className="relative -mx-6 px-6">
@@ -343,6 +381,57 @@ function ProfessionalsPageInner() {
             <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
               {t('states.empty')}
             </div>
+          ) : emergencySource ? (
+            /* Emergency mode: simple tap-to-select card list, no project form */
+            <div className="space-y-3">
+              {filteredProfessionals.length === 0 ? (
+                <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
+                  No professionals found matching this trade and area. Try broadening the location.
+                </div>
+              ) : filteredProfessionals.map((pro) => {
+                const isSelected = selectedEmergencyPros.some((p) => p.id === pro.id);
+                return (
+                  <button
+                    key={pro.id}
+                    type="button"
+                    onClick={() => toggleEmergencySelection(pro)}
+                    className={`w-full text-left rounded-2xl border-2 px-5 py-4 shadow-sm transition-all bg-[#F5EEDE]/90 ${
+                      isSelected
+                        ? 'border-emerald-400 ring-2 ring-emerald-300/60 bg-emerald-50/80'
+                        : 'border-white/60 hover:border-emerald-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-xl font-bold text-slate-600">
+                        {(pro.businessName || pro.fullName || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-semibold text-slate-900">
+                          {pro.businessName || pro.fullName || 'Professional'}
+                        </p>
+                        <p className="truncate text-sm text-slate-500">
+                          {pro.primaryTrade}{pro.locationPrimary ? ` · ${pro.locationPrimary}` : ''}
+                        </p>
+                        {pro.emergencyCalloutAvailable && (
+                          <span className="mt-1 inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                            24/7 Emergency
+                          </span>
+                        )}
+                      </div>
+                      <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                        isSelected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white'
+                      }`}>
+                        {isSelected && (
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
             <ProfessionalsList
               professionals={emergencySource ? filteredProfessionals : professionals}
@@ -356,6 +445,43 @@ function ProfessionalsPageInner() {
             />
           )}
         </div>
+
+        {/* Sticky emergency action bar — only shown when 1+ selected */}
+        {emergencySource && selectedEmergencyPros.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-[#FCF8EE]/95 px-4 py-3 backdrop-blur-sm">
+            <div className="mx-auto flex max-w-lg items-center gap-3">
+              <p className="flex-1 text-sm font-semibold text-slate-800">
+                {selectedEmergencyPros.length} professional{selectedEmergencyPros.length !== 1 ? 's' : ''} selected
+              </p>
+              <button
+                onClick={() => setSelectedEmergencyPros([])}
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => setShowSummary(true)}
+                className="rounded-full bg-[#DC143C] px-5 py-2 text-sm font-bold text-white shadow transition hover:bg-[#b01030]"
+              >
+                Send invites
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Emergency summary confirmation screen */}
+        <EmergencySummaryScreen
+          isOpen={showSummary}
+          onBack={() => setShowSummary(false)}
+          selectedProfessionals={selectedEmergencyPros}
+          emergencyContext={{
+            trade: emergencyTradeParam || '',
+            location: emergencyLocationParam || '',
+            notes: emergencyNotesParam,
+            aiTitle: emergencyAiTitle || undefined,
+            aiWarnings: emergencyAiWarnings || undefined,
+          }}
+        />
       </div>
     </>
   );

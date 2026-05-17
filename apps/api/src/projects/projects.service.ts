@@ -2175,7 +2175,17 @@ Please review the project details and respond with your quote or decline the inv
           ? `Timeline: Needed by ${new Date(project.endDate).toLocaleDateString()}`
           : 'Timeline: Flexible';
 
-        const invitationMessage = `📋 Project Invitation: ${project.projectName}
+        const invitationMessage = project.isEmergency
+          ? `🚨 EMERGENCY PROJECT: ${project.projectName}
+
+This is an urgent request requiring immediate attention.
+⏱ Response needed within 1 hour.
+
+${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}\n` : ''}${tradeCopy.otherRequiredTradesLine ? `${tradeCopy.otherRequiredTradesLine}\n` : ''}${tradeCopy.projectTradesLine}
+Region: ${project.region}
+
+Please review the project details and respond immediately with your availability or decline. Emergency callout rates apply.`
+          : `📋 Project Invitation: ${project.projectName}
 
 You've been invited to submit a quote for this project.
 

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-17-bb741d0",
+    "date": "2026-05-17T21:52:39+08:00",
+    "title": "feat(emergency): professional selection, summary screen, emergency invite message",
+    "summary": "feat(emergency): professional selection, summary screen, emergency invite message",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "bb741d0",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/emergency-summary-screen.tsx"
+    ]
+  },
+  {
     "id": "2026-05-17-6ab96b6",
     "date": "2026-05-17T12:43:08+08:00",
     "title": "fix(home): lower emergency FAB 10px, crimson border, add ping animation",
