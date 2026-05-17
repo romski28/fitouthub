@@ -67,14 +67,19 @@ export default function Home() {
       <div className="space-y-6 pb-8 pt-2">
         {/* Emergency FAB — top of active area, same right column as other FABs */}
         {hydrated && (
-          <button
-            onClick={() => setEmergencyModalOpen(true)}
-            className="fixed right-6 top-20 z-30 flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-[#F97362] bg-[#FCF8EE] text-2xl text-[#F97362] shadow-lg transition hover:bg-[#F97362] hover:text-[#FCF8EE]"
-            aria-label="Emergency help"
-            title="Emergency - Get help now"
-          >
-            {"\u{1F6A8}"}
-          </button>
+          <div className="fixed right-6 top-[90px] z-30">
+            <div className="relative h-14 w-14">
+              <span className="absolute inset-0 rounded-full bg-[#DC143C]/40 animate-ping" />
+              <button
+                onClick={() => setEmergencyModalOpen(true)}
+                className="relative flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-[#DC143C] bg-[#FCF8EE] text-2xl text-[#DC143C] shadow-lg transition hover:bg-[#DC143C] hover:text-[#FCF8EE]"
+                aria-label="Emergency help"
+                title="Emergency - Get help now"
+              >
+                {"\u{1F6A8}"}
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Updates button fixed on right for thumb access, same as project list pages */}

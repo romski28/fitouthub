@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-17-6ab96b6",
+    "date": "2026-05-17T12:43:08+08:00",
+    "title": "fix(home): lower emergency FAB 10px, crimson border, add ping animation",
+    "summary": "fix(home): lower emergency FAB 10px, crimson border, add ping animation",
+    "areas": [
+      "web"
+    ],
+    "commit": "6ab96b6",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-17-13be0c6",
     "date": "2026-05-17T12:33:39+08:00",
     "title": "fix(home): move emergency FAB to top of active area, match h-14 w-14 size",
