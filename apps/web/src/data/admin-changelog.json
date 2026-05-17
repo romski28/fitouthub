@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-17-55ed40b",
+    "date": "2026-05-17T12:16:17+08:00",
+    "title": "feat(home): align emergency FAB with floating action buttons",
+    "summary": "feat(home): align emergency FAB with floating action buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "55ed40b",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-16-deb4d57",
     "date": "2026-05-16T15:17:09+08:00",
     "title": "feat(emergency): relocate CTA into AI panel, restyle cream/coral, enrich modal",

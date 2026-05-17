@@ -65,10 +65,18 @@ export default function Home() {
       </div>
 
       <div className="space-y-6 pb-8 pt-2">
-        {/* Updates button fixed on right for thumb access, same as project list pages */}
-        {hydrated && (isLoggedIn || profIsLoggedIn) && (
-          <div className="fixed bottom-[260px] right-6 z-30">
-            <UpdatesButton />
+        {/* Floating action buttons fixed right */}
+        {hydrated && (
+          <div className="fixed bottom-[260px] right-6 z-30 flex items-center gap-2">
+            <button
+              onClick={() => setEmergencyModalOpen(true)}
+              className="flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-[#F97362] bg-[#FCF8EE] text-[22px] text-[#F97362] shadow-lg transition hover:bg-[#F97362] hover:text-[#FCF8EE]"
+              aria-label="Emergency help"
+              title="Emergency - Get help now"
+            >
+              {"\u{1F6A8}"}
+            </button>
+            {(isLoggedIn || profIsLoggedIn) && <UpdatesButton />}
           </div>
         )}
 
@@ -77,16 +85,7 @@ export default function Home() {
           id="project-prompt"
           className="relative -mx-6 px-6"
         >
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-12">            {hydrated && (
-              <button
-                onClick={() => setEmergencyModalOpen(true)}
-                className="absolute right-4 top-4 flex h-10 items-center justify-center rounded-full border-[3px] border-[#F97362] bg-[#FCF8EE] px-4 text-sm font-semibold text-[#F97362] shadow transition hover:bg-[#F97362] hover:text-[#FCF8EE]"
-                aria-label="Emergency help"
-                title="Emergency - Get help now"
-              >
-                {'\u{1F6A8}'} Emergency
-              </button>
-            )}
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/90 py-12">
             <div className="px-4 sm:px-6 lg:px-12">
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
