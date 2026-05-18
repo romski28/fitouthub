@@ -49,6 +49,7 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
   const [selectedLocation, setSelectedLocation] = useState<CanonicalLocation>({});
   const [description, setDescription] = useState('');
   const [pendingPhotoFiles, setPendingPhotoFiles] = useState<File[]>([]);
+  const [showPhotoPrompt, setShowPhotoPrompt] = useState(false);
   const [trades, setTrades] = useState<string[]>([]);
   const [tradesLoading, setTradesLoading] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
@@ -104,12 +105,13 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
       setSelectedLocation({});
       setDescription('');
       setPendingPhotoFiles([]);
+      setShowPhotoPrompt(false);
       setUploadingPhotos(false);
       setUploadError(null);
     }
   }, [isOpen]);
   const hasLocation = Boolean(selectedLocation.primary);
-  const handleGetHelp = async () => {
+  const proceedToProfessionals = async () => {
     if (!selectedTrade || !hasLocation) return;
     setUploadError(null);
 
@@ -142,6 +144,15 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
     router.push('/professionals?' + params.toString());
     onClose();
   };
+
+  const handleGetHelp = async () => {
+    if (!selectedTrade || !hasLocation) return;
+    if (pendingPhotoFiles.length === 0) {
+      setShowPhotoPrompt(true);
+      return;
+    }
+    await proceedToProfessionals();
+  };
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -150,6 +161,35 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
         className="relative mx-4 w-full max-w-md rounded-2xl border border-white/45 bg-[#F5EEDE]/95 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {showPhotoPrompt && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-slate-950/55 p-4">
+            <div className="w-full max-w-sm rounded-2xl border border-white/55 bg-[#FCF8EE] p-5 shadow-2xl">
+              <h3 className="text-base font-bold text-slate-900">Add photos before sending?</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Pictures really help professionals understand the emergency, arrive with the right equipment, and price the job more accurately.
+              </p>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoPrompt(false)}
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Add photos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPhotoPrompt(false);
+                    void proceedToProfessionals();
+                  }}
+                  className="flex-1 rounded-lg bg-[#F97362] px-4 py-2 text-sm font-semibold text-[#FCF8EE] hover:bg-[#e8624f] transition"
+                >
+                  Continue without photos
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="mb-5 text-center">
           <p className="text-3xl mb-1">&#x1F6A8;</p>
           <h2 className="text-lg font-bold text-slate-900">Emergency help needed</h2>

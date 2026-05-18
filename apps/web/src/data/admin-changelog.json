@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-664754b",
+    "date": "2026-05-18T14:57:07+08:00",
+    "title": "feat(web): add emergency photo soft blocker",
+    "summary": "feat(web): add emergency photo soft blocker",
+    "areas": [
+      "web"
+    ],
+    "commit": "664754b",
+    "files": [
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-0adbf01",
     "date": "2026-05-18T14:31:33+08:00",
     "title": "feat(web): carry emergency photos through invite flow",
