@@ -36,6 +36,43 @@ const tomorrowAtNine = () => {
   return date;
 };
 
+const todayAtNine = () => {
+  const date = new Date();
+  date.setHours(9, 0, 0, 0);
+  return date;
+};
+
+const nextQuarterHour = () => {
+  const date = new Date();
+  date.setSeconds(0, 0);
+  const minutes = date.getMinutes();
+  const roundedMinutes = Math.ceil(minutes / 15) * 15;
+
+  if (roundedMinutes >= 60) {
+    date.setHours(date.getHours() + 1, 0, 0, 0);
+    return date;
+  }
+
+  date.setMinutes(roundedMinutes, 0, 0);
+  return date;
+};
+
+const getEmergencyDateOptions = () => {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  return [
+    { label: 'Today', value: toDateInput(today) },
+    { label: 'Tomorrow', value: toDateInput(tomorrow) },
+  ] as const;
+};
+
+const isEmergencyStartDateAllowed = (value?: string | null) => {
+  if (!value) return false;
+  return getEmergencyDateOptions().some((option) => option.value === value);
+};
+
 const formatCompletionDate = (value?: string | null) => {
   if (!value) return null;
   const date = new Date(value);
@@ -168,6 +205,12 @@ export function QuoteActionModal({
         setSiteInspectionRawDate(inspectionDateRaw);
         setIsEmergencyProject(detail?.project?.isEmergency === true);
         setProjectScale(detail?.projectScale || detail?.project?.projectScale || null);
+        if (!detail?.quoteEstimatedStartAt) {
+          const defaultStart = detail?.project?.isEmergency === true ? nextQuarterHour() : tomorrowAtNine();
+          setEstimatedStartDate(toDateInput(defaultStart));
+          setEstimatedStartHour(String(defaultStart.getHours()).padStart(2, '0'));
+          setEstimatedStartMinute(String(defaultStart.getMinutes()).padStart(2, '0'));
+        }
 
         // Check whether this professional already has an active site access request
         if (inspectionDateRaw && state.projectId) {
@@ -281,11 +324,20 @@ export function QuoteActionModal({
       return;
     }
 
+    if (isEmergencyProject && !isEmergencyStartDateAllowed(estimatedStartDate)) {
+      setError('For emergency jobs, choose today or tomorrow for Be with you on..');
+      return;
+    }
+
     const timeHour = Number(estimatedStartHour);
     const timeMinute = Number(estimatedStartMinute);
     const startMinutes = timeHour * 60 + timeMinute;
-    if (startMinutes < 8 * 60 || startMinutes > 18 * 60 || timeMinute % 15 !== 0) {
-      setError('Please select a start time between 08:00 and 18:00 in 15-minute intervals');
+    if ((!isEmergencyProject && (startMinutes < 8 * 60 || startMinutes > 18 * 60)) || timeMinute % 15 !== 0) {
+      setError(
+        isEmergencyProject
+          ? 'Please select a start time in 15-minute intervals'
+          : 'Please select a start time between 08:00 and 18:00 in 15-minute intervals',
+      );
       return;
     }
 
@@ -398,6 +450,10 @@ export function QuoteActionModal({
 
   const showSiteVisitCta = Boolean(siteInspectionRawDate) && !hasPendingSiteAccessRequest;
   const breakdownFields = getQuoteBreakdownFields(isEmergencyProject);
+  const emergencyDateOptions = getEmergencyDateOptions();
+  const hourOptions = isEmergencyProject
+    ? Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+    : Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0'));
   const enteredTotal = getQuoteBreakdownFormTotal(breakdown);
 
   if (showSuccess) {
@@ -542,18 +598,39 @@ export function QuoteActionModal({
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">Estimated start date</span>
-                      <input
-                        type="date"
-                        value={estimatedStartDate}
-                        onChange={(e) => setEstimatedStartDate(e.target.value)}
-                        className="quote-picker-input w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                        disabled={submitting}
-                      />
+                      <span className="mb-1 block text-sm font-semibold text-slate-200">{isEmergencyProject ? 'Be with you on..' : 'Estimated start date'}</span>
+                      {isEmergencyProject ? (
+                        <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-slate-600 bg-slate-800">
+                          {emergencyDateOptions.map((option) => {
+                            const active = estimatedStartDate === option.value;
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setEstimatedStartDate(option.value)}
+                                className={`px-3 py-2 text-sm font-semibold transition ${
+                                  active ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                                }`}
+                                disabled={submitting}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <input
+                          type="date"
+                          value={estimatedStartDate}
+                          onChange={(e) => setEstimatedStartDate(e.target.value)}
+                          className="quote-picker-input w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          disabled={submitting}
+                        />
+                      )}
                     </label>
 
                     <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">Estimated start time</span>
+                      <span className="mb-1 block text-sm font-semibold text-slate-200">{isEmergencyProject ? 'at...' : 'Estimated start time'}</span>
                       <div className="flex items-center gap-2">
                         <select
                           value={estimatedStartHour}
@@ -561,7 +638,7 @@ export function QuoteActionModal({
                           className="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
                           disabled={submitting}
                         >
-                          {Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0')).map((h) => (
+                          {hourOptions.map((h) => (
                             <option key={h} value={h}>{h}</option>
                           ))}
                         </select>

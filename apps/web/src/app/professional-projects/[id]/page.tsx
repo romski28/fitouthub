@@ -173,6 +173,20 @@ const toTimeInputValue = (value?: string | null) => {
   return dateTime ? dateTime.slice(11, 16) : '';
 };
 
+const toDateOnlyValue = (value: Date) => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+};
+
+const isEmergencyStartDateAllowed = (value?: string | null) => {
+  if (!value) return false;
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  return value === toDateOnlyValue(today) || value === toDateOnlyValue(tomorrow);
+};
+
 const durationMinutesToHoursInput = (value?: number | null) => {
   if (value == null || !Number.isFinite(value)) return '';
   const hours = value / 60;
@@ -876,6 +890,11 @@ export default function ProjectDetailPage() {
 
     if (!quoteForm.estimatedStartDate || !quoteForm.estimatedStartTime) {
       setError('Please enter an estimated start date and time');
+      return;
+    }
+
+    if (project?.project?.isEmergency === true && !isEmergencyStartDateAllowed(quoteForm.estimatedStartDate)) {
+      setError('For emergency jobs, choose today or tomorrow for Be with you on..');
       return;
     }
 

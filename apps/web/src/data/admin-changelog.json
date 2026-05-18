@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-18-272d17a",
+    "date": "2026-05-18T16:11:36+08:00",
+    "title": "fix(emergency): tighten quote timing UX",
+    "summary": "fix(emergency): tighten quote timing UX",
+    "areas": [
+      "web"
+    ],
+    "commit": "272d17a",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-e081eda",
     "date": "2026-05-18T15:54:33+08:00",
     "title": "feat(quotes): add structured quote breakdowns",

@@ -18,6 +18,24 @@ const TIME_HOUR_OPTIONS = Array.from({ length: 24 }, (_, index) =>
 
 const TIME_MINUTE_OPTIONS = ['00', '15', '30', '45'] as const;
 
+const toDateInput = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getEmergencyDateOptions = () => {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  return [
+    { label: 'Today', value: toDateInput(today) },
+    { label: 'Tomorrow', value: toDateInput(tomorrow) },
+  ] as const;
+};
+
 interface OverviewTabProps {
   tab?: string;
   project: {
@@ -242,8 +260,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     </span>
   ) : null;
   const breakdownFields = getQuoteBreakdownFields(project.project.isEmergency === true);
+  const emergencyDateOptions = getEmergencyDateOptions();
+  const isEmergencyProject = project.project.isEmergency === true;
   const quoteBreakdownTotal = buildQuoteBreakdownPayload(quoteForm.breakdown, {
-    isEmergency: project.project.isEmergency === true,
+    isEmergency: isEmergencyProject,
     projectScale: null,
   }).baseTotal ?? 0;
   const existingBreakdownItems = getQuoteBreakdownBaseItems(project.quoteBreakdown);
@@ -381,22 +401,43 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   <label htmlFor="estimatedStartDate" className="block text-sm font-semibold text-white mb-1">
-                    Start Date *
+                    {isEmergencyProject ? 'Be with you on.. *' : 'Start Date *'}
                   </label>
-                  <input
-                    id="estimatedStartDate"
-                    type="date"
-                    required
-                    disabled={submittingQuote}
-                    value={quoteForm.estimatedStartDate}
-                    onChange={(e) => onUpdateQuoteForm({ estimatedStartDate: e.target.value })}
-                    className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
-                  />
+                  {isEmergencyProject ? (
+                    <div className="grid w-full grid-cols-2 overflow-hidden rounded-md border border-slate-600 bg-slate-900">
+                      {emergencyDateOptions.map((option) => {
+                        const active = quoteForm.estimatedStartDate === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            disabled={submittingQuote}
+                            onClick={() => onUpdateQuoteForm({ estimatedStartDate: option.value })}
+                            className={`px-3 py-2 text-sm font-semibold transition ${
+                              active ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-200 hover:bg-slate-800'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <input
+                      id="estimatedStartDate"
+                      type="date"
+                      required
+                      disabled={submittingQuote}
+                      value={quoteForm.estimatedStartDate}
+                      onChange={(e) => onUpdateQuoteForm({ estimatedStartDate: e.target.value })}
+                      className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                    />
+                  )}
                 </div>
 
                 <div>
                   <label htmlFor="estimatedStartHour" className="block text-sm font-semibold text-white mb-1">
-                    Start Time *
+                    {isEmergencyProject ? 'at... *' : 'Start Time *'}
                   </label>
                   <div className="flex items-center gap-2">
                     <select
@@ -575,7 +616,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
 
             <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Estimated Start</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">
+                {isEmergencyProject ? 'Be with you on..' : 'Estimated Start'}
+              </p>
               <p className="text-sm font-semibold text-white">{formatDateTime(project.quoteEstimatedStartAt)}</p>
             </div>
           </div>
