@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import type { Professional } from '@/lib/types';
+import { SafetyGuidanceCard, parseSafetyGuidanceText } from '@/components/safety-guidance-card';
 
 interface EmergencyContext {
   trade: string;
@@ -33,6 +34,7 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
   const displayTitle = emergencyContext.aiTitle || `Emergency: ${emergencyContext.trade}`;
   const hasWarnings = Boolean(emergencyContext.aiWarnings);
   const hasAiResult = Boolean(emergencyContext.aiTitle || emergencyContext.aiWarnings || emergencyContext.aiIntakeId);
+  const parsedWarnings = parseSafetyGuidanceText(emergencyContext.aiWarnings);
 
   const handleConfirm = async () => {
     setSending(true);
@@ -118,10 +120,7 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
 
           {/* AI Warnings */}
           {hasWarnings && (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-amber-700 mb-1">⚠ Safety Warnings</p>
-              <p className="text-sm text-amber-800 whitespace-pre-wrap">{emergencyContext.aiWarnings}</p>
-            </div>
+            <SafetyGuidanceCard guidance={parsedWarnings} />
           )}
 
           {hasAiResult && !hasWarnings && emergencyContext.aiIntakeId && (

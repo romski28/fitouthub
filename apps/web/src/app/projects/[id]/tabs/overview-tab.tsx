@@ -48,6 +48,7 @@ interface ProjectDetail {
     assumptions?: unknown;
     risks?: unknown;
     project?: unknown;
+    safetyAssessment?: unknown;
   } | null;
 }
 
@@ -259,7 +260,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const projectStatus = project.status ?? 'pending';
   const hasAiInsights = Boolean(
     project.aiIntake &&
-      (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
+      (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project || project.aiIntake.safetyAssessment),
   );
   const invitedCount = project.professionals?.length ?? 0;
   const quotedProfessionals =

@@ -1,5 +1,7 @@
 'use client';
 
+import { SafetyGuidanceCard, buildSafetyGuidanceFromAssessment } from '@/components/safety-guidance-card';
+
 type AiIntakeView = {
   id?: string;
   assumptions?: unknown;
@@ -92,6 +94,7 @@ export function ProjectAiPanel({
   const risks = toStringArray(aiIntake.risks);
   const safety = parseSafetyAssessment(aiIntake);
   const normalizedRiskLevel = (safety?.riskLevel || '').toLowerCase();
+  const safetyGuidance = buildSafetyGuidanceFromAssessment(safety);
   const hasSafety = Boolean(
     safety &&
       (
@@ -101,79 +104,27 @@ export function ProjectAiPanel({
         Boolean(safety.emergencyReason) ||
         safety.concerns.length > 0 ||
         safety.temporaryMitigations.length > 0 ||
-        normalizedRiskLevel === 'high' ||
-        normalizedRiskLevel === 'critical'
+        (normalizedRiskLevel.length > 0 && normalizedRiskLevel !== 'none')
       ),
   );
   const isSafetyAcknowledged = safety?.adminReview?.status === 'acknowledged';
 
-  const safetyTone =
-    safety?.riskLevel === 'critical'
-      ? 'border-rose-500/70'
-      : safety?.riskLevel === 'high'
-        ? 'border-amber-500/70'
-        : 'border-emerald-500/70';
-
-  const safetyFlagLevelTone =
-    safety?.riskLevel === 'critical'
-      ? 'text-rose-300'
-      : safety?.riskLevel === 'high'
-        ? 'text-amber-300'
-        : 'text-emerald-300';
-
   const safetyBlock = hasSafety ? (
-    <div className={`mb-3 rounded-lg border-2 p-4 text-white ${safetyTone}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h4 className="text-sm font-bold text-white">
-            Safety flag:{' '}
-            <span className={safetyFlagLevelTone}>{safety?.riskLevel || 'review'}</span>
-          </h4>
-          {safety?.emergencyReason && (
-            <p className="mt-1 text-sm font-medium text-white">{safety.emergencyReason}</p>
-          )}
-        </div>
-        {mode === 'admin' && onAcknowledgeSafety && (
+    <div className="mb-3 space-y-2">
+      {mode === 'admin' && onAcknowledgeSafety && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-violet-200">Safety review</p>
           <button
             type="button"
             onClick={() => void onAcknowledgeSafety()}
             disabled={isAcknowledgingSafety || isSafetyAcknowledged}
-            className="rounded-md border border-current bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
+            className="rounded-md border border-current bg-white px-3 py-1.5 text-xs font-semibold text-violet-800 disabled:opacity-60"
           >
             {isSafetyAcknowledged ? 'OK recorded' : isAcknowledgingSafety ? 'Saving…' : 'OK'}
           </button>
-        )}
-      </div>
-
-      {safety?.concerns && safety.concerns.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-white">Concerns</p>
-          <ul className="space-y-1">
-            {safety.concerns.map((item, index) => (
-              <li key={`safety-concern-${index}`} className="text-sm text-white flex gap-2">
-                <span>•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
-
-      {safety?.temporaryMitigations && safety.temporaryMitigations.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-white">Suggested mitigations</p>
-          <ul className="space-y-1">
-            {safety.temporaryMitigations.map((item, index) => (
-              <li key={`safety-mitigation-${index}`} className="text-sm text-white flex gap-2">
-                <span>•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {safety?.disclaimer && <p className="mt-3 text-xs text-white/90">{safety.disclaimer}</p>}
+      <SafetyGuidanceCard guidance={safetyGuidance} />
       {mode === 'admin' && isSafetyAcknowledged && safety?.adminReview?.acknowledgedByName && (
         <p className="mt-2 text-xs text-white/80">Acknowledged by {safety.adminReview.acknowledgedByName}</p>
       )}

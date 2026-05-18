@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-18-9890bd7",
+    "date": "2026-05-18T12:28:59+08:00",
+    "title": "refactor(web): unify ai safety guidance cards",
+    "summary": "refactor(web): unify ai safety guidance cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "9890bd7",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/emergency-summary-screen.tsx",
+      "apps/web/src/components/project-ai-panel.tsx",
+      "apps/web/src/components/safety-guidance-card.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-2c7bf41",
     "date": "2026-05-18T12:07:03+08:00",
     "title": "fix(web): surface emergency ai completion states",

@@ -16,6 +16,7 @@ import { useSearchParams } from 'next/navigation';
 import { matchLocation } from '@/lib/location-matcher';
 import type { ProjectFormData } from '@/components/project-form';
 import { EmergencySummaryScreen } from '@/components/emergency-summary-screen';
+import { SafetyGuidanceCard, parseSafetyGuidanceText } from '@/components/safety-guidance-card';
 
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
 
@@ -505,7 +506,11 @@ function ProfessionalsPageInner() {
                               <p className="mt-1"><span className="font-semibold">Title:</span> {emergencyAiTitleState}</p>
                             )}
                             {emergencyAiWarningsState && (
-                              <p className="mt-1 line-clamp-2"><span className="font-semibold">Safety:</span> {emergencyAiWarningsState}</p>
+                              <SafetyGuidanceCard
+                                guidance={parseSafetyGuidanceText(emergencyAiWarningsState)}
+                                size="compact"
+                                className="mt-2"
+                              />
                             )}
                             {!emergencyAiTitleState && !emergencyAiWarningsState && emergencyAiIntakeId && (
                               <p className="mt-1"><span className="font-semibold">Status:</span> AI response received and linked.</p>
