@@ -265,7 +265,7 @@ function ProfessionalsPageInner() {
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [accessToken, emergencyAiLoading, emergencyAiPrompt, emergencyAiTitleState, emergencyAiWarningsState, emergencyNotesParam, emergencySource]);
+  }, [accessToken, emergencyAiPrompt, emergencyAiTitleState, emergencyAiWarningsState, emergencyNotesParam, emergencySource]);
 
   useEffect(() => {
     const fetchProfessionals = async () => {

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-18-2c7bf41",
+    "date": "2026-05-18T12:07:03+08:00",
+    "title": "fix(web): surface emergency ai completion states",
+    "summary": "fix(web): surface emergency ai completion states",
+    "areas": [
+      "web"
+    ],
+    "commit": "2c7bf41",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/emergency-summary-screen.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-0b8e88d",
     "date": "2026-05-18T11:55:56+08:00",
     "title": "fix(emergency): stop false AI failure state on professionals page",

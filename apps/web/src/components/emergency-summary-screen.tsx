@@ -32,6 +32,7 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
 
   const displayTitle = emergencyContext.aiTitle || `Emergency: ${emergencyContext.trade}`;
   const hasWarnings = Boolean(emergencyContext.aiWarnings);
+  const hasAiResult = Boolean(emergencyContext.aiTitle || emergencyContext.aiWarnings || emergencyContext.aiIntakeId);
 
   const handleConfirm = async () => {
     setSending(true);
@@ -99,8 +100,11 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Project Title</p>
             <p className="text-base font-semibold text-slate-900">{displayTitle}</p>
-            {!emergencyContext.aiTitle && (
-              <p className="text-xs text-slate-400 mt-0.5 italic">Generating title in background…</p>
+            {!hasAiResult && (
+              <p className="text-xs text-slate-400 mt-0.5 italic">Waiting for AI title and safety guidance…</p>
+            )}
+            {hasAiResult && !emergencyContext.aiTitle && emergencyContext.aiIntakeId && (
+              <p className="text-xs text-emerald-700 mt-0.5 italic">AI response received and linked.</p>
             )}
           </div>
 
@@ -117,6 +121,13 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
             <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-widest text-amber-700 mb-1">⚠ Safety Warnings</p>
               <p className="text-sm text-amber-800 whitespace-pre-wrap">{emergencyContext.aiWarnings}</p>
+            </div>
+          )}
+
+          {hasAiResult && !hasWarnings && emergencyContext.aiIntakeId && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700 mb-1">AI Intake</p>
+              <p className="text-sm text-emerald-800">AI analysis has been received and attached to this emergency project.</p>
             </div>
           )}
 
