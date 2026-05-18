@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-18-172853b",
+    "date": "2026-05-18T11:14:25+08:00",
+    "title": "feat(home): show Mimo thinking state and cache emergency trades",
+    "summary": "feat(home): show Mimo thinking state and cache emergency trades",
+    "areas": [
+      "web"
+    ],
+    "commit": "172853b",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/emergency-modal.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-6375f83",
     "date": "2026-05-18T10:55:42+08:00",
     "title": "fix(professionals): align standard selection styling and hide empty team modes",

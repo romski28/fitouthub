@@ -635,7 +635,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
   );
 }
 
-export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean }) {
+export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false, onAiLoadingChange }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean; onAiLoadingChange?: (isLoading: boolean) => void }) {
   const AI_ASSIST_DRAFT_STORAGE_KEY = 'aiPendingAssistDraft';
   const MAX_AI_ROUNDS = 2;
   const AI_SESSION_STORAGE_KEY = 'aiSandboxSessionId';
@@ -696,6 +696,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [visionProvider, setVisionProvider] = useState<'deepseek' | 'qwen'>('deepseek');
   const [visionModel, setVisionModel] = useState('deepseek-v4-pro');
   const [visionImageUrl, setVisionImageUrl] = useState('https://picsum.photos/id/1062/1200/800');
+
+  useEffect(() => {
+    onAiLoadingChange?.(aiLoading);
+  }, [aiLoading, onAiLoadingChange]);
   const [visionResult, setVisionResult] = useState<{
     ok: boolean;
     provider?: 'deepseek' | 'qwen';

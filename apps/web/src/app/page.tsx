@@ -30,6 +30,7 @@ export default function Home() {
   const [hydrated, setHydrated] = useState(false);
   const [greetingIndex, setGreetingIndex] = useState(0);
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
+  const [mimoThinking, setMimoThinking] = useState(false);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
@@ -106,8 +107,18 @@ export default function Home() {
                       {WELCOME_GREETINGS[greetingIndex]}
                     </span>
                   </h2>
+                  {mimoThinking && (
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 shadow-sm" aria-live="polite">
+                      <span className="flex items-end gap-1" aria-hidden="true">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
+                      </span>
+                      <span>Mimo is thinking...</span>
+                    </div>
+                  )}
                 </div>
-                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} />
+                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
               </div>
             </div>
           </div>

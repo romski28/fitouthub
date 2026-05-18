@@ -3,6 +3,37 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LocationSelect, { CanonicalLocation } from '@/components/location-select';
 import { API_BASE_URL } from '@/config/api';
+
+let cachedEmergencyTrades: string[] | null = null;
+let cachedEmergencyTradesPromise: Promise<string[]> | null = null;
+
+async function loadEmergencyTrades(): Promise<string[]> {
+  if (cachedEmergencyTrades) return cachedEmergencyTrades;
+  if (cachedEmergencyTradesPromise) return cachedEmergencyTradesPromise;
+
+  cachedEmergencyTradesPromise = fetch(`${API_BASE_URL}/trades`)
+    .then((r) => r.json())
+    .then((data: Array<{ name?: string; title?: string; enabled?: boolean; sortOrder?: number }>) => {
+      const names = (data || [])
+        .filter((t) => t.enabled !== false)
+        .sort((a, b) => {
+          const diff = (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
+          if (diff !== 0) return diff;
+          return (a.name ?? a.title ?? '').localeCompare(b.name ?? b.title ?? '');
+        })
+        .map((t) => t.name ?? t.title ?? '')
+        .filter(Boolean);
+
+      cachedEmergencyTrades = names;
+      return names;
+    })
+    .finally(() => {
+      cachedEmergencyTradesPromise = null;
+    });
+
+  return cachedEmergencyTradesPromise;
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -18,21 +49,17 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
     const hours = new Date().getHours();
     return hours >= 7 && hours < 20;
   }, []);
+
   useEffect(() => {
     if (!isOpen) return;
+    if (cachedEmergencyTrades) {
+      setTrades(cachedEmergencyTrades);
+      return;
+    }
+
     setTradesLoading(true);
-    fetch(API_BASE_URL + '/trades')
-      .then((r) => r.json())
-      .then((data: Array<{ name?: string; title?: string; enabled?: boolean; sortOrder?: number }>) => {
-        const names = (data || [])
-          .filter((t) => t.enabled !== false)
-          .sort((a, b) => {
-            const diff = (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
-            if (diff !== 0) return diff;
-            return (a.name ?? a.title ?? '').localeCompare(b.name ?? b.title ?? '');
-          })
-          .map((t) => t.name ?? t.title ?? '')
-          .filter(Boolean);
+    loadEmergencyTrades()
+      .then((names) => {
         setTrades(names);
       })
       .catch(() => {})
