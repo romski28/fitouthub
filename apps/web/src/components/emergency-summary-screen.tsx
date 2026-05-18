@@ -12,6 +12,7 @@ interface EmergencyContext {
   notes: string;
   aiTitle?: string;
   aiWarnings?: string;
+  aiIntakeId?: string;
 }
 
 interface Props {
@@ -48,6 +49,7 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
           region: emergencyContext.location,
           tradesRequired: [emergencyContext.trade],
           isEmergency: true,
+          aiIntakeId: emergencyContext.aiIntakeId,
           professionalIds: selectedProfessionals.map((p) => p.id),
         }),
       });

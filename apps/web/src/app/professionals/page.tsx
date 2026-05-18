@@ -59,9 +59,58 @@ function toAbsolute(url: string): string {
   return `${base}${normalized}`;
 }
 
+function buildEmergencyAiPrompt(trade: string, location: string, notes: string): string {
+  const sections = [
+    'This is an emergency property repair request in Hong Kong.',
+    trade ? `Trade needed: ${trade}.` : '',
+    location ? `Location: ${location}.` : '',
+    notes ? `Problem description: ${notes}` : '',
+    'Generate a short project title and identify any safety risks or immediate temporary mitigations if relevant.',
+  ];
+
+  return sections.filter(Boolean).join('\n');
+}
+
+function formatEmergencyWarnings(parsedOutput: {
+  risks?: string[];
+  safetyAssessment?: {
+    riskLevel?: string;
+    emergencyReason?: string | null;
+    concerns?: string[];
+    temporaryMitigations?: string[];
+    disclaimer?: string | null;
+  };
+} | null | undefined): string | undefined {
+  if (!parsedOutput) return undefined;
+
+  const lines: string[] = [];
+  const safety = parsedOutput.safetyAssessment;
+  if (safety?.riskLevel && safety.riskLevel !== 'none') {
+    lines.push(`Risk: ${safety.riskLevel}`);
+  }
+  if (safety?.emergencyReason) {
+    lines.push(safety.emergencyReason);
+  }
+  if (Array.isArray(safety?.concerns)) {
+    lines.push(...safety.concerns.filter(Boolean));
+  }
+  if (Array.isArray(parsedOutput.risks)) {
+    lines.push(...parsedOutput.risks.filter(Boolean));
+  }
+  if (Array.isArray(safety?.temporaryMitigations) && safety.temporaryMitigations.length > 0) {
+    lines.push(`Immediate steps: ${safety.temporaryMitigations.filter(Boolean).join('; ')}`);
+  }
+  if (safety?.disclaimer) {
+    lines.push(safety.disclaimer);
+  }
+
+  const unique = Array.from(new Set(lines.map((line) => line.trim()).filter(Boolean)));
+  return unique.length > 0 ? unique.join('\n') : undefined;
+}
+
 function ProfessionalsPageInner() {
   const t = useTranslations('professionalsPage');
-  const { isLoggedIn, userLocation } = useAuth();
+  const { isLoggedIn, userLocation, accessToken } = useAuth();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +139,10 @@ function ProfessionalsPageInner() {
   const emergencyNotesParam = searchParams.get('notes') || '';
   const emergencyAiTitle = searchParams.get('aiTitle') || '';
   const emergencyAiWarnings = searchParams.get('aiWarnings') || '';
+  const [emergencyAiTitleState, setEmergencyAiTitleState] = useState(emergencyAiTitle);
+  const [emergencyAiWarningsState, setEmergencyAiWarningsState] = useState(emergencyAiWarnings);
+  const [emergencyAiIntakeId, setEmergencyAiIntakeId] = useState<string | undefined>(undefined);
+  const [emergencyAiLoading, setEmergencyAiLoading] = useState(false);
 
   const toggleEmergencySelection = (pro: Professional) => {
     setSelectedEmergencyPros((prev) =>
@@ -106,6 +159,85 @@ function ProfessionalsPageInner() {
         .filter(Boolean),
     [tradesParam],
   );
+
+  const emergencyAiPrompt = useMemo(
+    () => buildEmergencyAiPrompt(emergencyTradeParam || '', emergencyLocationParam || '', emergencyNotesParam.trim()),
+    [emergencyLocationParam, emergencyNotesParam, emergencyTradeParam],
+  );
+
+  useEffect(() => {
+    setEmergencyAiTitleState(emergencyAiTitle);
+    setEmergencyAiWarningsState(emergencyAiWarnings);
+    setEmergencyAiIntakeId(undefined);
+  }, [emergencyAiTitle, emergencyAiWarnings, emergencyAiPrompt]);
+
+  useEffect(() => {
+    if (!emergencySource) return;
+    if (!emergencyNotesParam.trim()) return;
+    if (emergencyAiTitleState || emergencyAiWarningsState || emergencyAiLoading) return;
+
+    let cancelled = false;
+
+    const runEmergencyAi = async () => {
+      setEmergencyAiLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: JSON.stringify({
+            prompt: emergencyAiPrompt,
+            mode: 'structured',
+          }),
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload: {
+          intakeId?: string | null;
+          parsedOutput?: {
+            title?: string | null;
+            risks?: string[];
+            safetyAssessment?: {
+              riskLevel?: string;
+              emergencyReason?: string | null;
+              concerns?: string[];
+              temporaryMitigations?: string[];
+              disclaimer?: string | null;
+            };
+          } | null;
+        } = await response.json();
+
+        if (cancelled) return;
+
+        setEmergencyAiIntakeId(payload.intakeId || undefined);
+        if (payload.parsedOutput?.title) {
+          setEmergencyAiTitleState(payload.parsedOutput.title);
+        }
+
+        const warnings = formatEmergencyWarnings(payload.parsedOutput);
+        if (warnings) {
+          setEmergencyAiWarningsState(warnings);
+        }
+      } catch {
+        // Best-effort enrichment only; emergency flow must continue without AI.
+      } finally {
+        if (!cancelled) {
+          setEmergencyAiLoading(false);
+        }
+      }
+    };
+
+    runEmergencyAi();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, emergencyAiLoading, emergencyAiPrompt, emergencyAiTitleState, emergencyAiWarningsState, emergencyNotesParam, emergencySource]);
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -314,7 +446,7 @@ function ProfessionalsPageInner() {
           {/* Emergency context banner — only shown for emergency route */}
           {emergencySource && (
             <section className="relative -mx-6 px-6">
-              <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-red-400/60 bg-[#DC143C]/10 px-5 py-4">
+              <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/45 bg-[#F5EEDE]/95 px-5 py-4 shadow-sm backdrop-blur-sm">
                 <div className="flex items-start gap-3">
                   <span className="text-2xl leading-none">🚨</span>
                   <div className="flex-1 min-w-0">
@@ -324,6 +456,15 @@ function ProfessionalsPageInner() {
                     </p>
                     {emergencyTradeParam && (
                       <p className="mt-1 text-xs text-slate-600">Trade: <span className="font-semibold">{emergencyTradeParam}</span></p>
+                    )}
+                    {emergencyNotesParam.trim() && (
+                      <p className="mt-1 text-xs text-slate-600">
+                        {emergencyAiLoading
+                          ? 'Generating AI title and safety guidance in the background...'
+                          : emergencyAiTitleState || emergencyAiWarningsState
+                            ? 'AI title and safety guidance ready for the confirmation screen.'
+                            : 'AI guidance unavailable. The emergency flow still works without it.'}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -448,7 +589,7 @@ function ProfessionalsPageInner() {
 
         {/* Sticky emergency action bar — only shown when 1+ selected */}
         {emergencySource && selectedEmergencyPros.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-[#FCF8EE]/95 px-4 py-3 backdrop-blur-sm">
+          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-[#F5EEDE]/90 px-4 py-3 backdrop-blur-sm">
             <div className="mx-auto flex max-w-lg items-center gap-3">
               <p className="flex-1 text-sm font-semibold text-slate-800">
                 {selectedEmergencyPros.length} professional{selectedEmergencyPros.length !== 1 ? 's' : ''} selected
@@ -478,8 +619,9 @@ function ProfessionalsPageInner() {
             trade: emergencyTradeParam || '',
             location: emergencyLocationParam || '',
             notes: emergencyNotesParam,
-            aiTitle: emergencyAiTitle || undefined,
-            aiWarnings: emergencyAiWarnings || undefined,
+            aiTitle: emergencyAiTitleState || undefined,
+            aiWarnings: emergencyAiWarningsState || undefined,
+            aiIntakeId: emergencyAiIntakeId,
           }}
         />
       </div>

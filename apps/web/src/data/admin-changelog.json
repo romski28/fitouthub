@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-18-c55d85b",
+    "date": "2026-05-18T11:24:24+08:00",
+    "title": "feat(emergency): run background AI enrichment on professionals page",
+    "summary": "feat(emergency): run background AI enrichment on professionals page",
+    "areas": [
+      "web"
+    ],
+    "commit": "c55d85b",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/emergency-summary-screen.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-172853b",
     "date": "2026-05-18T11:14:25+08:00",
     "title": "feat(home): show Mimo thinking state and cache emergency trades",
