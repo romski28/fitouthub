@@ -17,6 +17,7 @@ export interface LocationSelectProps {
   className?: string;
   labels?: { primary?: string; secondary?: string; tertiary?: string };
   enableSearch?: boolean;
+  maxLevel?: 1 | 2 | 3;
 }
 
 export default function LocationSelect({
@@ -26,6 +27,7 @@ export default function LocationSelect({
   className,
   labels,
   enableSearch = false,
+  maxLevel = 3,
 }: LocationSelectProps) {
   const [primary, setPrimary] = useState<string | undefined>(value?.primary);
   const [secondary, setSecondary] = useState<string | undefined>(value?.secondary);
@@ -91,7 +93,7 @@ export default function LocationSelect({
 
   return (
     <div className={className ?? 'grid gap-4'}>
-      {enableSearch && (
+      {enableSearch && maxLevel > 1 && (
         <div className="relative">
           <label className="text-sm font-medium text-gray-700 block mb-2">Search Location (Optional)</label>
           <input
@@ -146,7 +148,7 @@ export default function LocationSelect({
       </div>
 
       {/* Secondary District Selector (hidden until primary selected) */}
-      {primary && (
+      {primary && maxLevel > 1 && (
         <div className="grid gap-1 animate-in fade-in slide-in-from-top-2">
           <label className="text-sm font-medium text-gray-700">{labels?.secondary ?? 'District'}</label>
           <select
@@ -166,7 +168,7 @@ export default function LocationSelect({
       )}
 
       {/* Tertiary Area Selector (hidden until secondary selected) */}
-      {secondary && (
+      {secondary && maxLevel > 2 && (
         <div className="grid gap-1 animate-in fade-in slide-in-from-top-2">
           <label className="text-sm font-medium text-gray-700">{labels?.tertiary ?? 'Area'}</label>
           <select

@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-18-0adbf01",
+    "date": "2026-05-18T14:31:33+08:00",
+    "title": "feat(web): carry emergency photos through invite flow",
+    "summary": "feat(web): carry emergency photos through invite flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "0adbf01",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/emergency-modal.tsx",
+      "apps/web/src/components/emergency-summary-screen.tsx",
+      "apps/web/src/components/location-select.tsx",
+      "apps/web/src/lib/emergency-photos.ts"
+    ]
+  },
+  {
     "id": "2026-05-18-d752bce",
     "date": "2026-05-18T14:21:23+08:00",
     "title": "fix(emergency): shorten quote window to 1 hour",

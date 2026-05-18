@@ -6,11 +6,15 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import type { Professional } from '@/lib/types';
 import { SafetyGuidanceCard, parseSafetyGuidanceText } from '@/components/safety-guidance-card';
+import { resolveMediaAssetUrl } from '@/lib/media-assets';
+import { clearEmergencyPhotoUrls } from '@/lib/emergency-photos';
 
 interface EmergencyContext {
   trade: string;
   location: string;
   notes: string;
+  photoUrls?: string[];
+  photoStorageKey?: string;
   aiTitle?: string;
   aiWarnings?: string;
   aiIntakeId?: string;
@@ -52,6 +56,9 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
           projectName: displayTitle,
           clientName,
           notes: emergencyContext.notes,
+          photos: emergencyContext.photoUrls?.length
+            ? emergencyContext.photoUrls.map((url) => ({ url }))
+            : undefined,
           region: emergencyContext.location,
           tradesRequired: [emergencyContext.trade],
           isEmergency: true,
@@ -75,6 +82,8 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
         'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a6b3c;color:#fff;padding:12px 24px;border-radius:999px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);font-size:14px;';
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 3500);
+
+      clearEmergencyPhotoUrls(emergencyContext.photoStorageKey);
 
       router.push(`/projects/${encodeURIComponent(projectId)}`);
     } catch (err) {
@@ -118,6 +127,19 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Description</p>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{emergencyContext.notes}</p>
+            </div>
+          )}
+
+          {emergencyContext.photoUrls && emergencyContext.photoUrls.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">Photos</p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {emergencyContext.photoUrls.map((url) => (
+                  <div key={url} className="h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <img src={resolveMediaAssetUrl(url)} alt="Emergency issue" className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

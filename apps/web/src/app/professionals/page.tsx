@@ -16,6 +16,8 @@ import { useSearchParams } from 'next/navigation';
 import { matchLocation } from '@/lib/location-matcher';
 import type { ProjectFormData } from '@/components/project-form';
 import { EmergencySummaryScreen } from '@/components/emergency-summary-screen';
+import { resolveMediaAssetUrl } from '@/lib/media-assets';
+import { readEmergencyPhotoUrls } from '@/lib/emergency-photos';
 
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
 
@@ -129,6 +131,7 @@ function ProfessionalsPageInner() {
   const emergencyOnly = searchParams.get('emergencyOnly') === 'true';
   const emergencyTradeParam = searchParams.get('trade') || undefined;
   const emergencyLocationParam = searchParams.get('location') || undefined;
+  const emergencyPhotoKey = searchParams.get('photoKey');
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
   const [projectPrefill, setProjectPrefill] = useState<Partial<ProjectFormData>>({});
@@ -137,6 +140,7 @@ function ProfessionalsPageInner() {
   const [selectedEmergencyPros, setSelectedEmergencyPros] = useState<Professional[]>([]);
   const [showSummary, setShowSummary] = useState(false);
   const emergencyNotesParam = searchParams.get('notes') || '';
+  const [emergencyPhotoUrls, setEmergencyPhotoUrls] = useState<string[]>([]);
   const emergencyAiTitle = searchParams.get('aiTitle') || '';
   const emergencyAiWarnings = searchParams.get('aiWarnings') || '';
   const [emergencyAiTitleState, setEmergencyAiTitleState] = useState(emergencyAiTitle);
@@ -266,6 +270,14 @@ function ProfessionalsPageInner() {
       window.clearTimeout(timeoutId);
     };
   }, [accessToken, emergencyAiPrompt, emergencyAiTitleState, emergencyAiWarningsState, emergencyNotesParam, emergencySource]);
+
+  useEffect(() => {
+    if (!emergencyPhotoKey) {
+      setEmergencyPhotoUrls([]);
+      return;
+    }
+    setEmergencyPhotoUrls(readEmergencyPhotoUrls(emergencyPhotoKey));
+  }, [emergencyPhotoKey]);
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -485,6 +497,18 @@ function ProfessionalsPageInner() {
                     {emergencyTradeParam && (
                       <p className="mt-1 text-xs text-slate-600">Trade: <span className="font-semibold">{emergencyTradeParam}</span></p>
                     )}
+                    {emergencyPhotoUrls.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        <p className="text-xs text-slate-600">Attached photos: <span className="font-semibold">{emergencyPhotoUrls.length}</span></p>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {emergencyPhotoUrls.map((url) => (
+                            <div key={url} className="h-16 w-16 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                              <img src={resolveMediaAssetUrl(url)} alt="Emergency issue" className="h-full w-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {emergencyNotesParam.trim() && (
                       <div className="mt-2 space-y-2">
                         {emergencyAiLoading && (
@@ -662,6 +686,8 @@ function ProfessionalsPageInner() {
             trade: emergencyTradeParam || '',
             location: emergencyLocationParam || '',
             notes: emergencyNotesParam,
+            photoUrls: emergencyPhotoUrls,
+            photoStorageKey: emergencyPhotoKey || undefined,
             aiTitle: emergencyAiTitleState || undefined,
             aiWarnings: emergencyAiWarningsState || undefined,
             aiIntakeId: emergencyAiIntakeId,

@@ -1,8 +1,12 @@
 ﻿'use client';
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ChatImageUploader from '@/components/chat-image-uploader';
 import LocationSelect, { CanonicalLocation } from '@/components/location-select';
 import { API_BASE_URL } from '@/config/api';
+import { useAuth } from '@/context/auth-context';
+import { getUploadResponseKeys } from '@/lib/media-assets';
+import { storeEmergencyPhotoUrls } from '@/lib/emergency-photos';
 
 let cachedEmergencyTrades: string[] | null = null;
 let cachedEmergencyTradesPromise: Promise<string[]> | null = null;
@@ -40,15 +44,44 @@ interface Props {
 }
 export function EmergencyModal({ isOpen, onClose }: Props) {
   const router = useRouter();
+  const { accessToken } = useAuth();
   const [selectedTrade, setSelectedTrade] = useState<string>('');
   const [selectedLocation, setSelectedLocation] = useState<CanonicalLocation>({});
   const [description, setDescription] = useState('');
+  const [pendingPhotoFiles, setPendingPhotoFiles] = useState<File[]>([]);
   const [trades, setTrades] = useState<string[]>([]);
   const [tradesLoading, setTradesLoading] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const isBusinessHours = useMemo(() => {
     const hours = new Date().getHours();
     return hours >= 7 && hours < 20;
   }, []);
+
+  const uploadEmergencyPhotos = async (files: File[]): Promise<string[]> => {
+    if (files.length === 0) return [];
+
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
+      method: 'POST',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      body: formData,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error((payload as { message?: string })?.message || `Image upload failed (${response.status})`);
+    }
+
+    const uploadedUrls = getUploadResponseKeys(payload as any);
+    if (uploadedUrls.length === 0) {
+      throw new Error('Image upload failed: invalid response');
+    }
+
+    return uploadedUrls;
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -70,12 +103,32 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
       setSelectedTrade('');
       setSelectedLocation({});
       setDescription('');
+      setPendingPhotoFiles([]);
+      setUploadingPhotos(false);
+      setUploadError(null);
     }
   }, [isOpen]);
   const hasLocation = Boolean(selectedLocation.primary);
-  const handleGetHelp = () => {
+  const handleGetHelp = async () => {
     if (!selectedTrade || !hasLocation) return;
-    const locationParts = [selectedLocation.primary, selectedLocation.secondary, selectedLocation.tertiary]
+    setUploadError(null);
+
+    let photoToken: string | null = null;
+    if (pendingPhotoFiles.length > 0) {
+      try {
+        setUploadingPhotos(true);
+        const uploadedUrls = await uploadEmergencyPhotos(pendingPhotoFiles);
+        photoToken = storeEmergencyPhotoUrls(uploadedUrls);
+      } catch (error) {
+        setUploadError(error instanceof Error ? error.message : 'Failed to upload images');
+        setUploadingPhotos(false);
+        return;
+      } finally {
+        setUploadingPhotos(false);
+      }
+    }
+
+    const locationParts = [selectedLocation.primary]
       .filter(Boolean)
       .join(', ');
     const params = new URLSearchParams({
@@ -85,6 +138,7 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
       emergencyOnly: isBusinessHours ? 'false' : 'true',
     });
     if (description.trim()) params.set('notes', description.trim());
+    if (photoToken) params.set('photoKey', photoToken);
     router.push('/professionals?' + params.toString());
     onClose();
   };
@@ -135,10 +189,21 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
             <LocationSelect
               value={selectedLocation}
               onChange={setSelectedLocation}
-              enableSearch
-              labels={{ primary: 'Region', secondary: 'District', tertiary: 'Area' }}
+              labels={{ primary: 'Region' }}
+              maxLevel={1}
               className="grid gap-2"
             />
+          </div>
+          <div className="grid gap-1">
+            <label className="text-sm font-semibold text-slate-700">Pictures of the problem</label>
+            <ChatImageUploader
+              onFilesSelected={(files) => {
+                setPendingPhotoFiles(files);
+                setUploadError(null);
+              }}
+              disabled={uploadingPhotos}
+            />
+            {uploadError && <p className="text-xs text-rose-700">{uploadError}</p>}
           </div>
         </div>
         <div className="mt-6 flex gap-2">
@@ -152,10 +217,10 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
           <button
             type="button"
             onClick={handleGetHelp}
-            disabled={!selectedTrade || !hasLocation}
+            disabled={!selectedTrade || !hasLocation || uploadingPhotos}
             className="flex-1 rounded-lg bg-[#F97362] px-4 py-2 text-sm font-semibold text-[#FCF8EE] hover:bg-[#e8624f] transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Find help now
+            {uploadingPhotos ? 'Uploading photos...' : 'Find help now'}
           </button>
         </div>
       </div>
