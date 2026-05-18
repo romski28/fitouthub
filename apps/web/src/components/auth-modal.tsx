@@ -465,7 +465,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }}
     >
       <div 
-        className="w-full max-w-2xl rounded-lg bg-white shadow-lg"
+        className="w-full max-w-2xl rounded-lg bg-[#F7F0E1] shadow-lg"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -527,14 +527,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   onClick={() => setUserType('client')}
                   className={`group relative rounded-2xl border pb-4 pl-24 pr-4 pt-4 text-left transition ${
                     userType === 'client'
-                      ? 'border-[#FF6B5B]/60 bg-gradient-to-br from-[#FF6B5B]/12 to-[#FF6B5B]/20'
-                      : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'
+                      ? 'border-[#0E7C3A]/60 bg-gradient-to-br from-[#0E7C3A]/12 to-[#0E7C3A]/20'
+                      : 'border-[#D9D9D9] bg-[#F3F4F6] hover:bg-[#E5E7EB]'
                   }`}
                 >
                   <div className="pointer-events-none absolute bottom-0 -left-5 w-24 select-none">
                     <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={96} height={132} className="object-contain" />
                   </div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-red-700">{modalT('client')}</p>
+                  <p className={`text-[11px] uppercase tracking-[0.2em] ${userType === 'client' ? 'text-[#0E7C3A]' : 'text-slate-500'}`}>{modalT('client')}</p>
                   <p className="mt-1 text-base font-bold text-[#1A1A1A]">Plan and control</p>
                   <p className="mt-1 text-xs text-[#4E4A42]">Project owner sign-in</p>
                 </button>
@@ -544,13 +544,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   className={`group relative rounded-2xl border pb-4 pl-4 pr-24 pt-4 text-left transition ${
                     userType === 'professional'
                       ? 'border-[#0E7C3A]/60 bg-gradient-to-br from-[#0E7C3A]/12 to-[#0E7C3A]/20'
-                      : 'border-[#E8DFD5] bg-[#EFE7CF] hover:bg-[#EEE5D4]'
+                      : 'border-[#D9D9D9] bg-[#F3F4F6] hover:bg-[#E5E7EB]'
                   }`}
                 >
                   <div className="pointer-events-none absolute bottom-0 -right-5 w-24 select-none">
                     <Image src="/assets/images/tradesmen-character-pack/ben-800.webp" alt="Ben" width={96} height={132} className="object-contain" />
                   </div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-blue-700">{modalT('professional')}</p>
+                  <p className={`text-[11px] uppercase tracking-[0.2em] ${userType === 'professional' ? 'text-[#0E7C3A]' : 'text-slate-500'}`}>{modalT('professional')}</p>
                   <p className="mt-1 text-base font-bold text-[#1A1A1A]">Run your jobs</p>
                   <p className="mt-1 text-xs text-[#4E4A42]">Trade professional sign-in</p>
                 </button>
@@ -599,34 +599,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                 ) : (
                   <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        {t('login.email')}
-                      </label>
-                      <input
-                        type="email"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('login.password')}
-                      </label>
-                      <input
-                        type="password"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      />
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('login.email')}
+                        </label>
+                        <input
+                          type="email"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('login.password')}
+                        </label>
+                        <input
+                          type="password"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
                     </div>
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                      className="mt-5 w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400"
                     >
                       {loading ? modalT('loading') : modalT('login')}
                     </button>
@@ -643,8 +645,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onClick={() => setUserType('client')}
                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                       userType === 'client'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                        ? 'bg-[#0E7C3A] text-white shadow-sm'
+                        : 'bg-[#F3F4F6] text-gray-600 hover:bg-[#E5E7EB] hover:text-gray-900'
                     }`}
                   >
                     👤 {modalT('client')}
@@ -654,8 +656,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onClick={() => setUserType('professional')}
                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                       userType === 'professional'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                        ? 'bg-[#0E7C3A] text-white shadow-sm'
+                        : 'bg-[#F3F4F6] text-gray-600 hover:bg-[#E5E7EB] hover:text-gray-900'
                     }`}
                   >
                     👷 {modalT('professional')}

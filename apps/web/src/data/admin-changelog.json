@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-f1f3fa8",
+    "date": "2026-05-18T16:20:29+08:00",
+    "title": "fix(auth): polish login modal layout",
+    "summary": "fix(auth): polish login modal layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "f1f3fa8",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-272d17a",
     "date": "2026-05-18T16:11:36+08:00",
     "title": "fix(emergency): tighten quote timing UX",
