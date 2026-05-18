@@ -303,6 +303,9 @@ export class ProjectsService {
         if (merged.quoteAmount == null && e?.quoteAmount != null) {
           merged.quoteAmount = e.quoteAmount;
         }
+        if (!merged.quoteBreakdown && e?.quoteBreakdown) {
+          merged.quoteBreakdown = e.quoteBreakdown;
+        }
         if (!merged.quoteNotes && e?.quoteNotes) {
           merged.quoteNotes = e.quoteNotes;
         }

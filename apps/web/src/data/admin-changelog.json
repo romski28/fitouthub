@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-e2a40e4",
+    "date": "2026-05-18T16:47:31+08:00",
+    "title": "fix(api): preserve quote breakdown in client project payloads",
+    "summary": "fix(api): preserve quote breakdown in client project payloads",
+    "areas": [
+      "api"
+    ],
+    "commit": "e2a40e4",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-18-4e8b2ee",
     "date": "2026-05-18T16:21:34+08:00",
     "title": "fix(client): remove project card edit button",
