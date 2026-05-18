@@ -143,6 +143,8 @@ function ProfessionalsPageInner() {
   const [emergencyAiWarningsState, setEmergencyAiWarningsState] = useState(emergencyAiWarnings);
   const [emergencyAiIntakeId, setEmergencyAiIntakeId] = useState<string | undefined>(undefined);
   const [emergencyAiLoading, setEmergencyAiLoading] = useState(false);
+  const [emergencyAiReady, setEmergencyAiReady] = useState(false);
+  const [emergencyAiError, setEmergencyAiError] = useState<string | null>(null);
 
   const toggleEmergencySelection = (pro: Professional) => {
     setSelectedEmergencyPros((prev) =>
@@ -169,6 +171,8 @@ function ProfessionalsPageInner() {
     setEmergencyAiTitleState(emergencyAiTitle);
     setEmergencyAiWarningsState(emergencyAiWarnings);
     setEmergencyAiIntakeId(undefined);
+    setEmergencyAiReady(Boolean(emergencyAiTitle || emergencyAiWarnings));
+    setEmergencyAiError(null);
   }, [emergencyAiTitle, emergencyAiWarnings, emergencyAiPrompt]);
 
   useEffect(() => {
@@ -177,12 +181,16 @@ function ProfessionalsPageInner() {
     if (emergencyAiTitleState || emergencyAiWarningsState || emergencyAiLoading) return;
 
     let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 25000);
 
     const runEmergencyAi = async () => {
       setEmergencyAiLoading(true);
+      setEmergencyAiError(null);
       try {
         const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements`, {
           method: 'POST',
+          signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
             ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
@@ -194,6 +202,9 @@ function ProfessionalsPageInner() {
         });
 
         if (!response.ok) {
+          if (!cancelled) {
+            setEmergencyAiError(`AI request failed (${response.status}).`);
+          }
           return;
         }
 
@@ -223,9 +234,17 @@ function ProfessionalsPageInner() {
         if (warnings) {
           setEmergencyAiWarningsState(warnings);
         }
-      } catch {
-        // Best-effort enrichment only; emergency flow must continue without AI.
+        setEmergencyAiReady(true);
+      } catch (error) {
+        if (!cancelled) {
+          setEmergencyAiError(
+            error instanceof Error && error.name === 'AbortError'
+              ? 'AI response timed out. You can still continue without it.'
+              : 'AI guidance unavailable. You can still continue without it.',
+          );
+        }
       } finally {
+        window.clearTimeout(timeoutId);
         if (!cancelled) {
           setEmergencyAiLoading(false);
         }
@@ -236,6 +255,8 @@ function ProfessionalsPageInner() {
 
     return () => {
       cancelled = true;
+      controller.abort();
+      window.clearTimeout(timeoutId);
     };
   }, [accessToken, emergencyAiLoading, emergencyAiPrompt, emergencyAiTitleState, emergencyAiWarningsState, emergencyNotesParam, emergencySource]);
 
@@ -458,13 +479,34 @@ function ProfessionalsPageInner() {
                       <p className="mt-1 text-xs text-slate-600">Trade: <span className="font-semibold">{emergencyTradeParam}</span></p>
                     )}
                     {emergencyNotesParam.trim() && (
-                      <p className="mt-1 text-xs text-slate-600">
-                        {emergencyAiLoading
-                          ? 'Generating AI title and safety guidance in the background...'
-                          : emergencyAiTitleState || emergencyAiWarningsState
-                            ? 'AI title and safety guidance ready for the confirmation screen.'
-                            : 'AI guidance unavailable. The emergency flow still works without it.'}
-                      </p>
+                      <div className="mt-2 space-y-2">
+                        {emergencyAiLoading && (
+                          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+                            <span className="flex items-end gap-1" aria-hidden="true">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
+                            </span>
+                            <span>Mimo is generating title and safety guidance...</span>
+                          </div>
+                        )}
+
+                        {!emergencyAiLoading && emergencyAiReady && (emergencyAiTitleState || emergencyAiWarningsState) && (
+                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                            <p className="font-semibold uppercase tracking-wide text-emerald-700">AI brief ready</p>
+                            {emergencyAiTitleState && (
+                              <p className="mt-1"><span className="font-semibold">Title:</span> {emergencyAiTitleState}</p>
+                            )}
+                            {emergencyAiWarningsState && (
+                              <p className="mt-1 line-clamp-2"><span className="font-semibold">Safety:</span> {emergencyAiWarningsState}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {!emergencyAiLoading && emergencyAiError && (
+                          <p className="text-xs text-amber-700">{emergencyAiError}</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

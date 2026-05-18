@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-4672042",
+    "date": "2026-05-18T11:45:49+08:00",
+    "title": "fix(emergency): surface AI intake progress and completion state",
+    "summary": "fix(emergency): surface AI intake progress and completion state",
+    "areas": [
+      "web"
+    ],
+    "commit": "4672042",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-c55d85b",
     "date": "2026-05-18T11:24:24+08:00",
     "title": "feat(emergency): run background AI enrichment on professionals page",
