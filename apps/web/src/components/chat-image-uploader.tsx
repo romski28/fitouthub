@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface ChatImageUploaderProps {
   onFilesSelected: (files: File[]) => void;
@@ -21,6 +21,8 @@ export default function ChatImageUploader({
   const [error, setError] = useState<string | null>(null);
   const [previewFiles, setPreviewFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   // Clear when parent signals success via clearKey increment
   useEffect(() => {
@@ -32,11 +34,14 @@ export default function ChatImageUploader({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearKey]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, options?: { append?: boolean }) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    if (files.length > maxImages) {
+    const append = options?.append === true;
+    const nextTotal = append ? previewFiles.length + files.length : files.length;
+
+    if (nextTotal > maxImages) {
       setError(`Maximum ${maxImages} image${maxImages > 1 ? 's' : ''} allowed`);
       return;
     }
@@ -55,13 +60,20 @@ export default function ChatImageUploader({
 
     setError(null);
 
-    // Revoke any existing preview URLs before replacing
-    previewUrls.forEach(u => URL.revokeObjectURL(u));
-
     const urls = files.map(f => URL.createObjectURL(f));
-    setPreviewFiles(files);
-    setPreviewUrls(urls);
-    onFilesSelected(files);
+    if (append) {
+      const mergedFiles = [...previewFiles, ...files];
+      const mergedUrls = [...previewUrls, ...urls];
+      setPreviewFiles(mergedFiles);
+      setPreviewUrls(mergedUrls);
+      onFilesSelected(mergedFiles);
+    } else {
+      // Revoke any existing preview URLs before replacing
+      previewUrls.forEach(u => URL.revokeObjectURL(u));
+      setPreviewFiles(files);
+      setPreviewUrls(urls);
+      onFilesSelected(files);
+    }
 
     // Reset the input so the same file can be re-selected after clearing
     e.target.value = '';
@@ -87,12 +99,15 @@ export default function ChatImageUploader({
   return (
     <div className="space-y-2">
       {/* File input trigger */}
-      <div className="flex items-center gap-2">
-        <label
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => galleryInputRef.current?.click()}
+          disabled={disabled}
           className={
             compact
-              ? `inline-flex h-10 w-10 items-center justify-center rounded-lg cursor-pointer transition shadow-sm ${disabled ? 'bg-slate-400 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
-              : `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium transition shadow-sm ${disabled ? 'bg-slate-600 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
+              ? `inline-flex h-10 w-10 items-center justify-center rounded-lg transition shadow-sm ${disabled ? 'bg-slate-400 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
+              : `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm ${disabled ? 'bg-slate-600 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
           }
           title="Attach images"
           aria-label="Attach images"
@@ -101,15 +116,46 @@ export default function ChatImageUploader({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           {!compact && <span>Add images</span>}
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileSelect}
-            disabled={disabled}
-            className="hidden"
-          />
-        </label>
+        </button>
+
+        <input
+          ref={galleryInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleFileSelect}
+          disabled={disabled}
+          className="hidden"
+        />
+
+        <button
+          type="button"
+          onClick={() => cameraInputRef.current?.click()}
+          disabled={disabled}
+          className={
+            compact
+              ? `inline-flex h-10 w-10 items-center justify-center rounded-lg transition shadow-sm sm:hidden ${disabled ? 'bg-slate-300 opacity-50 cursor-not-allowed' : 'bg-slate-700 hover:bg-slate-800'} text-white`
+              : `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm sm:hidden ${disabled ? 'bg-slate-300 opacity-50 cursor-not-allowed' : 'bg-slate-700 hover:bg-slate-800'} text-white`
+          }
+          title="Take photo"
+          aria-label="Take photo"
+        >
+          <svg className={compact ? 'w-5 h-5' : 'w-4 h-4'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h4l2-2h6l2 2h4v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+            <circle cx="12" cy="13" r="3.5" strokeWidth="2" />
+          </svg>
+          {!compact && <span>Take photo</span>}
+        </button>
+
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={(e) => handleFileSelect(e, { append: true })}
+          disabled={disabled}
+          className="hidden"
+        />
 
         {previewFiles.length > 0 && !compact && (
           <span className="text-xs text-slate-400 ml-1">

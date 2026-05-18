@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-df7808e",
+    "date": "2026-05-18T15:07:33+08:00",
+    "title": "feat(web): add mobile camera upload action",
+    "summary": "feat(web): add mobile camera upload action",
+    "areas": [
+      "web"
+    ],
+    "commit": "df7808e",
+    "files": [
+      "apps/web/src/components/chat-image-uploader.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-664754b",
     "date": "2026-05-18T14:57:07+08:00",
     "title": "feat(web): add emergency photo soft blocker",
