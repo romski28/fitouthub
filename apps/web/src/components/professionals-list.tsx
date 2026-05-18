@@ -410,7 +410,11 @@ const ProfessionalRowItem = memo(({
 
   return (
     <div
-      className={`rounded-lg bg-[#FCF8EE] transition ${isSelected ? 'border-4 border-emerald-600' : 'border border-slate-200'} ${showSelectionAction ? 'cursor-pointer' : ''}`}
+      className={`rounded-lg transition ${
+        isSelected
+          ? 'border-2 border-emerald-400 bg-emerald-50/80 ring-2 ring-emerald-300/60'
+          : 'border border-slate-200 bg-[#FCF8EE] hover:border-emerald-300'
+      } ${showSelectionAction ? 'cursor-pointer' : ''}`}
       role={showSelectionAction ? 'button' : undefined}
       tabIndex={showSelectionAction ? 0 : undefined}
       onClick={handleCardClick}
@@ -476,13 +480,16 @@ const ProfessionalRowItem = memo(({
               onToggle(pro);
             }}
             disabled={disableSelection}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold transition whitespace-nowrap ${
+            className={`ml-auto flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
               isSelected
-                ? 'border-2 border-emerald-600 bg-emerald-600 text-[#FCF8EE]'
-                : 'border border-[#7A7974] bg-[#7A7974] text-[#FCF8EE] hover:bg-[#6A6A64]'
+                ? 'border-emerald-500 bg-emerald-500 text-white'
+                : 'border-slate-300 bg-white text-transparent hover:border-emerald-400'
             } disabled:cursor-not-allowed disabled:opacity-50`}
+            aria-label={isSelected ? 'Deselect professional' : 'Select professional'}
           >
-            {isSelected ? '☑ Selected' : '☐ Select'}
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
           </button>
         )}
         {!showSelectionAction && (
@@ -554,13 +561,16 @@ const ProfessionalRowItem = memo(({
               onToggle(pro);
             }}
             disabled={disableSelection}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold transition whitespace-nowrap h-10 flex items-center justify-center ${
+            className={`ml-auto flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
               isSelected
-                ? 'border-2 border-emerald-600 bg-emerald-600 text-[#FCF8EE]'
-                : 'border border-[#7A7974] bg-[#7A7974] text-[#FCF8EE] hover:bg-[#6A6A64]'
+                ? 'border-emerald-500 bg-emerald-500 text-white'
+                : 'border-slate-300 bg-white text-transparent hover:border-emerald-400'
             } disabled:cursor-not-allowed disabled:opacity-50`}
+            aria-label={isSelected ? 'Deselect professional' : 'Select professional'}
           >
-            {isSelected ? '☑ Selected' : '☐ Select'}
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
           </button>
         )}
         {!showSelectionAction && (
@@ -999,6 +1009,20 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       single,
     };
   }, [professionals, requiredTrades, activeFilterContext, minRating]);
+
+  useEffect(() => {
+    if (requiredTrades.length <= 1) return;
+    if (tradeAutoFilterMode !== 'teams') return;
+    if (tradeAutoFilterCounts.teams > 0) return;
+
+    const firstTradeWithMatches = requiredTrades.find(
+      (trade) => (tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0) > 0,
+    );
+
+    if (firstTradeWithMatches) {
+      setTradeAutoFilterMode(`single:${firstTradeWithMatches.toLowerCase()}`);
+    }
+  }, [requiredTrades, tradeAutoFilterCounts, tradeAutoFilterMode]);
 
   useEffect(() => {
     const hasSelectedLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
@@ -1800,26 +1824,26 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         )}
       </div>
 
-      {requiredTrades.length > 0 && (
+      {requiredTrades.length > 1 && (
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
-          <p className="mb-2 text-center text-sm font-semibold text-slate-700">
-            {requiredTrades.length > 1 ? 'Select your team' : `Choose your ${requiredTrades[0]}`}
-          </p>
+          <p className="mb-2 text-center text-sm font-semibold text-slate-700">Select your team</p>
           <div className="flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setTradeAutoFilterMode('teams');
-                setSearchTerm('');
-              }}
-              className={`h-10 rounded-md px-5 text-sm font-semibold transition ${
-                tradeAutoFilterMode === 'teams'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              {`${tradeAutoFilterCounts.teams} x Teams`}
-            </button>
+            {tradeAutoFilterCounts.teams > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTradeAutoFilterMode('teams');
+                  setSearchTerm('');
+                }}
+                className={`h-10 rounded-md px-5 text-sm font-semibold transition ${
+                  tradeAutoFilterMode === 'teams'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {`${tradeAutoFilterCounts.teams} x Teams`}
+              </button>
+            )}
             {requiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-6375f83",
+    "date": "2026-05-18T10:55:42+08:00",
+    "title": "fix(professionals): align standard selection styling and hide empty team modes",
+    "summary": "fix(professionals): align standard selection styling and hide empty team modes",
+    "areas": [
+      "web"
+    ],
+    "commit": "6375f83",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-17-c246094",
     "date": "2026-05-17T23:51:11+08:00",
     "title": "feat(professionals): standardize selection on card click and checkbox state",
