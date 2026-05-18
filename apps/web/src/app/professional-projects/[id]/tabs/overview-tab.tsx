@@ -194,11 +194,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   // Initial quote deadline countdown from invitation date
   const invitedAt = project.createdAt ? new Date(project.createdAt) : null;
   const quoteWindowMs = project.project?.isEmergency
-    ? 12 * 60 * 60 * 1000
+    ? 1 * 60 * 60 * 1000
     : 3 * 24 * 60 * 60 * 1000;
-  const quoteWindowLabel = project.project?.isEmergency ? '12h' : '3d';
+  const quoteWindowLabel = project.project?.isEmergency ? '1h' : '3d';
   const quoteWindowLongLabel = project.project?.isEmergency
-    ? '12 hours from invitation'
+    ? '1 hour from invitation'
     : '3 days from invitation';
   const quoteDeadline = project.quoteExtendedUntil
     ? new Date(project.quoteExtendedUntil)

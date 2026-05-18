@@ -770,7 +770,7 @@ export class ProfessionalController {
         ? new Date(projectProfessional.createdAt)
         : null;
       const quoteWindowMs = projectProfessional.project?.isEmergency
-        ? 12 * 60 * 60 * 1000
+        ? 1 * 60 * 60 * 1000
         : 3 * 24 * 60 * 60 * 1000;
 
       if (inviteCreatedAt) {
@@ -781,7 +781,7 @@ export class ProfessionalController {
         if (new Date() > quoteDeadline) {
           throw new BadRequestException(
             projectProfessional.project?.isEmergency
-              ? 'Initial quote window closed (12 hours from invitation)'
+              ? 'Initial quote window closed (1 hour from invitation)'
               : 'Initial quote window closed (3 days from invitation)',
           );
         }
