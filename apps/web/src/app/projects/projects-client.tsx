@@ -938,15 +938,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                             )}
                           </>
                         )}
-                        {project.status !== 'withdrawn' && (
-                          <button
-                            type="button"
-                            onClick={() => setEditing(project)}
-                            className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition text-center leading-tight"
-                          >
-                            {t('edit')}
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
