@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 import { getClientTabForAction } from '@/lib/client-workflow';
+import { getQuoteBreakdownClientItems, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 
 interface ProjectProfessional {
   id: string;
@@ -14,6 +15,7 @@ interface ProjectProfessional {
   projectId: string;
   status: string;
   quoteAmount?: string | number;
+  quoteBreakdown?: StoredQuoteBreakdown | null;
   quoteNotes?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
@@ -376,6 +378,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
               {biddingProfessionals.map((pp) => {
                 const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
                 const hasQuote = Number.isFinite(getNumericQuote(pp.quoteAmount));
+                const breakdownItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
                 const isLowestQuote = lowestQuoteProfessional?.id === pp.id;
                 const isEarliestStart = earliestStartProfessional?.id === pp.id;
                 const isQuickestDuration = quickestDurationProfessional?.id === pp.id;
@@ -499,6 +502,20 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                       </div>
                     )}
 
+                    {breakdownItems.length > 0 && (
+                      <div className="mb-3 rounded-md border border-slate-700 bg-slate-950/60 p-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-300">Quote breakdown</p>
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          {breakdownItems.map((item) => (
+                            <div key={`${pp.id}-${item.code}`} className="rounded-md border border-slate-700 bg-slate-900/50 px-3 py-2">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
+                              <p className="text-sm font-semibold text-white">{formatHKD(item.amount)}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {pp.quoteAmount && (
                       <div className={`grid gap-2 ${isClass1Or2Project ? 'grid-cols-3' : 'grid-cols-4'}`}>
                         <button
@@ -568,6 +585,25 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
             onToggle={onToggleAccordion}
           >
             <div className="space-y-3">
+              {(() => {
+                const breakdownItems = getQuoteBreakdownClientItems(awardedProfessional.quoteBreakdown);
+                if (breakdownItems.length === 0) return null;
+
+                return (
+                  <div className="rounded-md bg-slate-900/60 p-3 border border-emerald-500/30">
+                    <p className="text-xs text-white font-semibold uppercase mb-2">Awarded breakdown</p>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {breakdownItems.map((item) => (
+                        <div key={`awarded-${item.code}`} className="rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
+                          <p className="text-sm font-semibold text-white">{formatHKD(item.amount)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>

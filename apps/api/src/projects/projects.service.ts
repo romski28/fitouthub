@@ -16,6 +16,11 @@ import { Prisma } from '@prisma/client';
 import { ProjectStage } from '@prisma/client';
 import { NotificationChannel } from '@prisma/client';
 import { extractObjectKeyFromValue, buildPublicAssetUrl } from '../storage/media-assets.util';
+import {
+  getQuoteBreakdownDisplayLines,
+  normalizeQuoteBreakdownInput,
+  withClientQuoteBreakdown,
+} from './quote-breakdown';
 
 type NotificationDeliveryStatus = 'sent' | 'failed' | 'skipped';
 type NotificationActorType = 'professional' | 'client' | 'reseller' | 'platform' | 'unknown';
@@ -5340,6 +5345,7 @@ Please review the project details and respond with your quote or decline the inv
         professionalName: winnerName,
         projectName: project.projectName,
         quoteAmount: projectProfessional.quoteAmount?.toString() || '0',
+        quoteBreakdownLines: getQuoteBreakdownDisplayLines((projectProfessional as any).quoteBreakdown),
         nextStepsMessage:
           'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.\n\nWhile you are waiting for the client to get in contact with you, please ensure you sign the project contract, available in your project panel. Without a signed, binding contract we will not ask the client to fund the project.',
       });
@@ -5467,6 +5473,16 @@ Please review the project details and respond with your quote or decline the inv
         fields: [
           { label: 'Project', value: project.projectName },
           ...(awardedAmount ? [{ label: 'Amount', value: awardedAmount }] : []),
+          ...getQuoteBreakdownDisplayLines((projectProfessional as any).quoteBreakdown).map((line) => {
+            const separatorIndex = line.indexOf(':');
+            if (separatorIndex === -1) {
+              return { label: 'Breakdown', value: line };
+            }
+            return {
+              label: line.slice(0, separatorIndex),
+              value: line.slice(separatorIndex + 1).trim(),
+            };
+          }),
         ],
       };
       await this.prisma.message.create({
@@ -6027,6 +6043,7 @@ Please review the project details and respond with your quote or decline the inv
     projectId: string,
     professionalId: string,
     quoteAmount: number,
+    quoteBreakdownInput?: unknown,
     quoteNotes?: string,
     quoteEstimatedStartAt?: string,
     quoteEstimatedDurationMinutes?: number,
@@ -6060,12 +6077,21 @@ Please review the project details and respond with your quote or decline the inv
       { required: true },
     );
 
+    const normalizedBreakdown = normalizeQuoteBreakdownInput(quoteBreakdownInput, {
+      projectScale: (projectProfessional.project as any)?.projectScale,
+      isEmergency: Boolean((projectProfessional.project as any)?.isEmergency),
+    });
+
+    const baseQuoteAmount = normalizedBreakdown?.baseTotal ?? quoteAmount;
+
     // Calculate gross price (with platform fee) from professional's base quote
     const feeBreakdown = await this.platformFeeService.calculateGrossPrice(
-      quoteAmount,
+      baseQuoteAmount,
       professionalId,
       projectProfessional.project?.clientId || undefined,
     );
+
+    const storedBreakdown = withClientQuoteBreakdown(normalizedBreakdown, feeBreakdown.grossAmount);
 
     // Update quote
     const updated = await this.prisma.projectProfessional.update({
@@ -6082,6 +6108,7 @@ Please review the project details and respond with your quote or decline the inv
         quotePlatformFeePercent: feeBreakdown.effectivePercent,
         quotePricingVersion: feeBreakdown.pricingVersion,
         quotePlatformFeeBreakdown: feeBreakdown as any,
+        quoteBreakdown: storedBreakdown as any,
         feeCalculatedAt: feeBreakdown.calculatedAt,
         quoteNotes,
         quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,

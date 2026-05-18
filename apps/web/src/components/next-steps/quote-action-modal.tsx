@@ -6,6 +6,14 @@ import { API_BASE_URL } from '@/config/api';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
+import {
+  buildQuoteBreakdownPayload,
+  emptyQuoteBreakdownForm,
+  getQuoteBreakdownFields,
+  getQuoteBreakdownFormTotal,
+  parseQuoteBreakdownForm,
+  type QuoteBreakdownFormValues,
+} from '@/lib/quote-breakdown';
 
 interface QuoteActionModalProps {
   isOpen: boolean;
@@ -78,7 +86,7 @@ export function QuoteActionModal({
   const router = useRouter();
   const { accessToken } = useProfessionalAuth();
   const { state } = useNextStepModal();
-  const [amount, setAmount] = useState('');
+  const [breakdown, setBreakdown] = useState<QuoteBreakdownFormValues>(emptyQuoteBreakdownForm());
   const [estimatedStartDate, setEstimatedStartDate] = useState(() => toDateInput(tomorrowAtNine()));
   const [estimatedStartHour, setEstimatedStartHour] = useState('09');
   const [estimatedStartMinute, setEstimatedStartMinute] = useState('00');
@@ -94,6 +102,8 @@ export function QuoteActionModal({
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState<string | null>(null);
   const [siteInspectionRawDate, setSiteInspectionRawDate] = useState<string | null>(null);
   const [hasPendingSiteAccessRequest, setHasPendingSiteAccessRequest] = useState(false);
+  const [isEmergencyProject, setIsEmergencyProject] = useState(false);
+  const [projectScale, setProjectScale] = useState<string | null>(null);
   const [platformFeePercent, setPlatformFeePercent] = useState<number | undefined>();
   const [platformFeeAmount, setPlatformFeeAmount] = useState<number | undefined>();
   const [grossAmount, setGrossAmount] = useState<number | undefined>();
@@ -121,11 +131,14 @@ export function QuoteActionModal({
       setShowSuccess(false);
       setError(null);
       setShowDetails(false);
+      setBreakdown(emptyQuoteBreakdownForm());
       setRequestedCompletionBy(null);
       setRequestedCompletionDeadline(null);
       setSiteInspectionAvailableOn(null);
       setSiteInspectionRawDate(null);
       setHasPendingSiteAccessRequest(false);
+      setIsEmergencyProject(false);
+      setProjectScale(null);
       setPlatformFeePercent(undefined);
       setPlatformFeeAmount(undefined);
       setGrossAmount(undefined);
@@ -146,12 +159,15 @@ export function QuoteActionModal({
 
         if (!response.ok) return;
         const detail = await response.json();
+        setBreakdown(parseQuoteBreakdownForm(detail?.quoteBreakdown, detail?.quoteBaseAmount || detail?.quoteAmount));
         const endDateRaw = detail?.project?.endDate || detail?.endDate || null;
         setRequestedCompletionBy(formatCompletionDate(endDateRaw));
         setRequestedCompletionDeadline(parseCompletionDeadline(endDateRaw));
         const inspectionDateRaw = detail?.project?.siteInspectionAvailableOn || detail?.siteInspectionAvailableOn || null;
         setSiteInspectionAvailableOn(formatCompletionDate(inspectionDateRaw));
         setSiteInspectionRawDate(inspectionDateRaw);
+        setIsEmergencyProject(detail?.project?.isEmergency === true);
+        setProjectScale(detail?.projectScale || detail?.project?.projectScale || null);
 
         // Check whether this professional already has an active site access request
         if (inspectionDateRaw && state.projectId) {
@@ -188,15 +204,9 @@ export function QuoteActionModal({
   }, [accessToken, isOpen, projectProfessionalId, state.projectId]);
 
   useEffect(() => {
-    if (!isOpen || !accessToken || !projectProfessionalId || !amount) {
-      setPlatformFeePercent(undefined);
-      setPlatformFeeAmount(undefined);
-      setGrossAmount(undefined);
-      return;
-    }
+    const amount = getQuoteBreakdownFormTotal(breakdown);
 
-    const numericAmount = parseFloat(amount);
-    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+    if (!isOpen || !accessToken || !projectProfessionalId || amount <= 0) {
       setPlatformFeePercent(undefined);
       setPlatformFeeAmount(undefined);
       setGrossAmount(undefined);
@@ -215,7 +225,7 @@ export function QuoteActionModal({
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ quoteAmount: numericAmount }),
+            body: JSON.stringify({ quoteAmount: amount }),
           },
         );
 
@@ -241,7 +251,7 @@ export function QuoteActionModal({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [amount, accessToken, isOpen, projectProfessionalId]);
+  }, [accessToken, breakdown, isOpen, projectProfessionalId]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -260,14 +270,9 @@ export function QuoteActionModal({
       return;
     }
 
-    if (!amount) {
-      setError('Please enter a quote amount');
-      return;
-    }
-
-    const numericAmount = parseFloat(amount);
-    if (Number.isNaN(numericAmount) || numericAmount < 0) {
-      setError('Please enter a valid quote amount');
+    const numericAmount = getQuoteBreakdownFormTotal(breakdown);
+    if (numericAmount <= 0) {
+      setError('Please enter a valid quote breakdown');
       return;
     }
 
@@ -301,8 +306,13 @@ export function QuoteActionModal({
     }
 
     const quoteEstimatedStartAt = new Date(`${estimatedStartDate}T${estimatedStartHour}:${estimatedStartMinute}`).toISOString();
+    const quoteBreakdown = buildQuoteBreakdownPayload(breakdown, {
+      isEmergency: isEmergencyProject,
+      projectScale,
+    });
     const payload = {
       quoteAmount: numericAmount,
+      quoteBreakdown,
       quoteNotes: notes,
       quoteEstimatedStartAt,
       // API normalizes this value using the provided unit.
@@ -387,6 +397,8 @@ export function QuoteActionModal({
   ]);
 
   const showSiteVisitCta = Boolean(siteInspectionRawDate) && !hasPendingSiteAccessRequest;
+  const breakdownFields = getQuoteBreakdownFields(isEmergencyProject);
+  const enteredTotal = getQuoteBreakdownFormTotal(breakdown);
 
   if (showSuccess) {
     return (
@@ -471,20 +483,23 @@ export function QuoteActionModal({
                 </div>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">Your quote amount (HKD)</span>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
-                        placeholder="Enter your quote"
-                        disabled={submitting}
-                      />
-                    </label>
+                  <div className={`grid grid-cols-1 gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+                    {breakdownFields.map((field) => (
+                      <label key={field.code} className="block">
+                        <span className="mb-1 block text-sm font-semibold text-slate-200">{field.label}{field.required ? ' *' : ''}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={breakdown[field.key]}
+                          onChange={(e) => setBreakdown((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                          className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          placeholder="0.00"
+                          disabled={submitting}
+                          required={field.required}
+                        />
+                      </label>
+                    ))}
 
                     <label className="block">
                       <span className="mb-1 block text-sm font-semibold text-slate-200">Mimo fee</span>
@@ -497,9 +512,13 @@ export function QuoteActionModal({
                     </label>
                   </div>
 
-                  {amount && platformFeePercent !== undefined && grossAmount !== undefined && (
+                  <div className="rounded-lg border border-slate-600 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
+                    <p>Entered subtotal: {formatHKD(enteredTotal)}</p>
+                  </div>
+
+                  {enteredTotal > 0 && platformFeePercent !== undefined && grossAmount !== undefined && (
                     <div className="rounded-lg border border-slate-600 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
-                      <p>Your quote: {formatHKD(amount)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
+                      <p>Your quote: {formatHKD(enteredTotal)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
                     </div>
                   )}
 

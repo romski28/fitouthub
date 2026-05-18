@@ -28,6 +28,7 @@ import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
+import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 import toast from 'react-hot-toast';
 
 interface ProjectProfessional {
@@ -40,9 +41,11 @@ interface ProjectProfessional {
   quoteReminderSentAt?: string;
   quoteExtendedUntil?: string;
   quoteAmount?: string | number;
+  quoteBreakdown?: StoredQuoteBreakdown | null;
   quoteNotes?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
+  quoteEstimatedDurationUnit?: 'hours' | 'days';
   quotedAt?: string;
   professional: {
     id: string;

@@ -22,6 +22,14 @@ import { AcPlansTab } from './tabs/ac-plans-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
+import {
+  buildQuoteBreakdownPayload,
+  emptyQuoteBreakdownForm,
+  getQuoteBreakdownBaseTotal,
+  parseQuoteBreakdownForm,
+  type QuoteBreakdownFormValues,
+  type StoredQuoteBreakdown,
+} from '@/lib/quote-breakdown';
 
 const TabPanel: React.FC<{ tab: string; children: React.ReactNode }> = ({ children }) => <>{children}</>;
 
@@ -52,9 +60,12 @@ interface ProjectDetail {
   };
   status: string;
   quoteAmount?: string;
+  quoteBaseAmount?: string;
+  quoteBreakdown?: StoredQuoteBreakdown | null;
   quoteNotes?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
+  quoteEstimatedDurationUnit?: 'hours' | 'days';
   quotedAt?: string;
   respondedAt?: string;
   createdAt?: string;
@@ -247,7 +258,7 @@ export default function ProjectDetailPage() {
   const [, setError] = useState<string | null>(null);
   const [submittingQuote, setSubmittingQuote] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
-    amount: '',
+    breakdown: emptyQuoteBreakdownForm() as QuoteBreakdownFormValues,
     notes: '',
     estimatedStartDate: '',
     estimatedStartTime: '',
@@ -399,7 +410,7 @@ export default function ProjectDetailPage() {
 
       if (data.quoteAmount && !quoteFormDirtyRef.current && !submittingQuote) {
         setQuoteForm({
-          amount: data.quoteAmount,
+          breakdown: parseQuoteBreakdownForm(data.quoteBreakdown, data.quoteBaseAmount || data.quoteAmount),
           notes: data.quoteNotes || '',
           estimatedStartDate: toDateInputValue(data.quoteEstimatedStartAt),
           estimatedStartTime: toTimeInputValue(data.quoteEstimatedStartAt),
@@ -852,14 +863,14 @@ export default function ProjectDetailPage() {
   const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!quoteForm.amount) {
-      setError('Please enter a quote amount');
-      return;
-    }
+    const quoteBreakdown = buildQuoteBreakdownPayload(quoteForm.breakdown, {
+      isEmergency: project?.project?.isEmergency === true,
+      projectScale: project?.projectScale || project?.project?.projectScale || null,
+    });
+    const amount = quoteBreakdown.baseTotal ?? 0;
 
-    const amount = parseFloat(quoteForm.amount);
-    if (isNaN(amount) || amount < 0) {
-      setError('Please enter a valid quote amount');
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError('Please enter a valid quote breakdown total');
       return;
     }
 
@@ -905,6 +916,7 @@ export default function ProjectDetailPage() {
             body: JSON.stringify({
               professionalId: project.professionalId || project.projectId /* fallback to projectProfessionalId is incorrect but kept to avoid undefined */,
               quoteAmount: amount,
+              quoteBreakdown,
               quoteNotes: quoteForm.notes,
               quoteEstimatedStartAt,
               quoteEstimatedDurationMinutes,
@@ -924,6 +936,7 @@ export default function ProjectDetailPage() {
             },
             body: JSON.stringify({
               quoteAmount: amount,
+              quoteBreakdown,
               quoteNotes: quoteForm.notes,
               quoteEstimatedStartAt,
               quoteEstimatedDurationMinutes,
@@ -950,7 +963,10 @@ export default function ProjectDetailPage() {
         ? { ...(project || {}), ...result.projectProfessional }
         : result.projectProfessional;
       setQuoteForm({
-        amount: nextProject?.quoteAmount ? String(nextProject.quoteAmount) : quoteForm.amount,
+        breakdown: parseQuoteBreakdownForm(
+          nextProject?.quoteBreakdown,
+          nextProject?.quoteBaseAmount || nextProject?.quoteAmount || amount,
+        ),
         notes: nextProject?.quoteNotes || '',
         estimatedStartDate:
           toDateInputValue(nextProject?.quoteEstimatedStartAt) || quoteForm.estimatedStartDate,
@@ -1002,7 +1018,7 @@ export default function ProjectDetailPage() {
 
   const handleKeepCurrentQuote = async () => {
     if (!project || !accessToken) return;
-    const currentAmount = project.quoteAmount ? parseFloat(project.quoteAmount) : NaN;
+    const currentAmount = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
     if (isNaN(currentAmount)) {
       setError('No existing quote amount found to keep. Please enter a new quote.');
       return;
@@ -1023,6 +1039,7 @@ export default function ProjectDetailPage() {
           body: JSON.stringify({
             professionalId: project.professionalId || project.projectId,
             quoteAmount: currentAmount,
+            quoteBreakdown: project.quoteBreakdown || undefined,
             quoteNotes: (quoteForm.notes && quoteForm.notes.trim().length > 0)
               ? quoteForm.notes
               : (project.quoteNotes || 'No change to current offer'),

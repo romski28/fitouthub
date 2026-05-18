@@ -23,6 +23,12 @@ import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
 import { buildPublicAssetUrl } from '../storage/media-assets.util';
 import { extractObjectKeyFromValue } from '../storage/media-assets.util';
+import {
+  getQuoteBreakdownDisplayLines,
+  getStoredQuoteBreakdownClientItems,
+  normalizeQuoteBreakdownInput,
+  withClientQuoteBreakdown,
+} from '../projects/quote-breakdown';
 
 @Controller('professional')
 export class ProfessionalController {
@@ -721,6 +727,7 @@ export class ProfessionalController {
     @Body()
     body: {
       quoteAmount: number | string;
+      quoteBreakdown?: unknown;
       quoteNotes?: string;
       quoteEstimatedStartAt?: string;
       quoteEstimatedDurationMinutes?: number | string;
@@ -743,6 +750,8 @@ export class ProfessionalController {
           project: {
             select: {
               isEmergency: true,
+              projectScale: true,
+              clientId: true,
             },
           },
         },
@@ -752,7 +761,15 @@ export class ProfessionalController {
         throw new BadRequestException('Project not found');
       }
 
-      const quoteAmount = parseFloat(String(body.quoteAmount));
+      const normalizedBreakdown = normalizeQuoteBreakdownInput(body.quoteBreakdown, {
+        projectScale: projectProfessional.project?.projectScale,
+        isEmergency: projectProfessional.project?.isEmergency === true,
+      });
+
+      const quoteAmount = normalizedBreakdown
+        ? normalizedBreakdown.baseTotal
+        : parseFloat(String(body.quoteAmount));
+
       if (isNaN(quoteAmount) || quoteAmount < 0) {
         throw new BadRequestException('Invalid quote amount');
       }
@@ -794,6 +811,8 @@ export class ProfessionalController {
         projectProfessional.project?.clientId,
       );
 
+      const storedBreakdown = withClientQuoteBreakdown(normalizedBreakdown, feeBreakdown.grossAmount);
+
       await (this.prisma as any).projectProfessional.update({
         where: { id: projectProfessionalId },
         data: {
@@ -803,6 +822,7 @@ export class ProfessionalController {
           quotePlatformFeePercent: feeBreakdown.effectivePercent,
           quotePricingVersion: feeBreakdown.pricingVersion,
           quotePlatformFeeBreakdown: feeBreakdown as any,
+          quoteBreakdown: storedBreakdown as any,
           feeCalculatedAt: feeBreakdown.calculatedAt,
           quoteNotes: body.quoteNotes || '',
           quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
@@ -843,6 +863,10 @@ export class ProfessionalController {
         title: 'Quotation Submitted',
         fields: [
           ...(isNaN(quoteAmount) ? [] : [{ label: 'Amount', value: `HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}` }]),
+          ...getStoredQuoteBreakdownClientItems(storedBreakdown).map((item) => ({
+            label: item.label,
+            value: `HK$${item.amount.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+          })),
           { label: 'Start', value: _fmtDate(quoteSchedule.quoteEstimatedStartAt) },
           { label: 'Duration', value: this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes) },
           ...(body.quoteNotes ? [{ label: 'Notes', value: body.quoteNotes }] : []),
@@ -879,6 +903,7 @@ export class ProfessionalController {
               'A professional',
             projectName: updated.project?.projectName || 'Your Project',
             quoteAmount: Number(quoteAmount) || 0,
+            quoteBreakdownLines: getQuoteBreakdownDisplayLines(storedBreakdown),
             projectId: updated.project?.id,
             baseUrl,
           });

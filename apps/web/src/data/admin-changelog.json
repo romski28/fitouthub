@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-05-18-e081eda",
+    "date": "2026-05-18T15:54:33+08:00",
+    "title": "feat(quotes): add structured quote breakdowns",
+    "summary": "feat(quotes): add structured quote breakdowns",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e081eda",
+    "files": [
+      "apps/api/prisma/migrations/20260518_add_quote_breakdown/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/client/client.controller.ts",
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/projects/quote-breakdown.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx",
+      "apps/web/src/lib/quote-breakdown.ts"
+    ]
+  },
+  {
     "id": "2026-05-18-aeac695",
     "date": "2026-05-18T15:13:50+08:00",
     "title": "feat(web): restyle client project list cards",

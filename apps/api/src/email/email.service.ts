@@ -5,6 +5,21 @@ import { Resend } from 'resend';
 export class EmailService {
   private resend: Resend;
 
+  private renderQuoteBreakdownList(lines?: string[]): string {
+    if (!lines || lines.length === 0) return '';
+
+    const items = lines
+      .map((line) => `<li style="margin: 0 0 6px; color: #374151;">${line}</li>`)
+      .join('');
+
+    return `
+      <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; text-align: left;">
+        <p style="margin: 0 0 10px; color: #111827; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Quote breakdown</p>
+        <ul style="margin: 0; padding-left: 18px;">${items}</ul>
+      </div>
+    `;
+  }
+
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
@@ -203,6 +218,7 @@ export class EmailService {
     professionalName: string;
     projectName: string;
     quoteAmount: number;
+    quoteBreakdownLines?: string[];
     projectId: string;
     baseUrl: string;
   }): Promise<void> {
@@ -232,6 +248,7 @@ export class EmailService {
                 HK$${params.quoteAmount.toLocaleString()}
               </p>
             </div>
+            ${this.renderQuoteBreakdownList(params.quoteBreakdownLines)}
             
             <div style="margin: 30px 0; text-align: center;">
               <a href="${projectUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
@@ -491,6 +508,7 @@ export class EmailService {
     professionalName: string;
     projectName: string;
     quoteAmount: string;
+    quoteBreakdownLines?: string[];
     nextStepsMessage: string;
   }): Promise<void> {
     if (!this.resend) {
@@ -514,6 +532,7 @@ export class EmailService {
             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 6px;">
               <h3 style="margin-top: 0; color: #047857;">${params.projectName}</h3>
               <p style="color: #065f46; margin: 10px 0;"><strong>Quote Amount:</strong> ${params.quoteAmount}</p>
+              ${this.renderQuoteBreakdownList(params.quoteBreakdownLines)}
             </div>
             
             <p>${params.nextStepsMessage}</p>

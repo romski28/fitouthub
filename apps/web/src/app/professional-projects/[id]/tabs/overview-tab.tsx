@@ -3,6 +3,14 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
+import {
+  buildQuoteBreakdownPayload,
+  getQuoteBreakdownBaseItems,
+  getQuoteBreakdownBaseTotal,
+  getQuoteBreakdownFields,
+  type QuoteBreakdownFormValues,
+  type StoredQuoteBreakdown,
+} from '@/lib/quote-breakdown';
 
 const TIME_HOUR_OPTIONS = Array.from({ length: 24 }, (_, index) =>
   String(index).padStart(2, '0'),
@@ -31,9 +39,12 @@ interface OverviewTabProps {
     };
     status: string;
     quoteAmount?: string;
+    quoteBaseAmount?: string;
+    quoteBreakdown?: StoredQuoteBreakdown | null;
     quoteNotes?: string;
     quoteEstimatedStartAt?: string;
     quoteEstimatedDurationMinutes?: number;
+    quoteEstimatedDurationUnit?: 'hours' | 'days';
     quotedAt?: string;
     createdAt?: string;
     quoteReminderSentAt?: string;
@@ -41,7 +52,7 @@ interface OverviewTabProps {
     updatedAt?: string;
   };
   quoteForm: {
-    amount: string;
+    breakdown: QuoteBreakdownFormValues;
     notes: string;
     estimatedStartDate: string;
     estimatedStartTime: string;
@@ -50,7 +61,7 @@ interface OverviewTabProps {
   };
   onUpdateQuoteForm: (
     patch: Partial<{
-      amount: string;
+      breakdown: QuoteBreakdownFormValues;
       notes: string;
       estimatedStartDate: string;
       estimatedStartTime: string;
@@ -230,6 +241,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           : `⏱ ${hoursLeft}h to quote`} ({quoteWindowLabel})
     </span>
   ) : null;
+  const breakdownFields = getQuoteBreakdownFields(project.project.isEmergency === true);
+  const quoteBreakdownTotal = buildQuoteBreakdownPayload(quoteForm.breakdown, {
+    isEmergency: project.project.isEmergency === true,
+    projectScale: null,
+  }).baseTotal ?? 0;
+  const existingBreakdownItems = getQuoteBreakdownBaseItems(project.quoteBreakdown);
+  const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
 
   return (
     <div className="space-y-6">
@@ -311,22 +329,38 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
               )}
 
-              <div>
-                <label htmlFor="amount" className="block text-sm font-semibold text-white mb-1">
-                  Quote Amount ($) *
-                </label>
-                <input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  disabled={submittingQuote}
-                  value={quoteForm.amount}
-                  onChange={(e) => onUpdateQuoteForm({ amount: e.target.value })}
-                  className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
-                  placeholder="0.00"
-                />
+              <div className={`grid gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+                {breakdownFields.map((field) => (
+                  <div key={field.code}>
+                    <label htmlFor={`quote-${field.code}`} className="block text-sm font-semibold text-white mb-1">
+                      {field.label}{field.required ? ' *' : ''}
+                    </label>
+                    <input
+                      id={`quote-${field.code}`}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required={field.required}
+                      disabled={submittingQuote}
+                      value={quoteForm.breakdown[field.key]}
+                      onChange={(e) =>
+                        onUpdateQuoteForm({
+                          breakdown: {
+                            ...quoteForm.breakdown,
+                            [field.key]: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Quote total before platform fee</p>
+                <p className="text-lg font-bold text-white">HK${quoteBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
               </div>
 
               <div>
@@ -459,8 +493,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {/* Calculate form validity */}
               {(() => {
                 const isFormValid = Boolean(
-                  quoteForm.amount.trim() &&
-                    parseFloat(quoteForm.amount) > 0 &&
+                  quoteBreakdownTotal > 0 &&
                     quoteForm.estimatedStartDate &&
                     quoteForm.estimatedStartTime &&
                     quoteForm.estimatedDurationValue &&
@@ -523,6 +556,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Amount</p>
               <p className="text-2xl font-bold text-white">${project.quoteAmount}</p>
             </div>
+
+            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Entered subtotal</p>
+              <p className="text-sm font-semibold text-white">HK${existingBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
+            </div>
             
             <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Submitted</p>
@@ -541,6 +579,20 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <p className="text-sm font-semibold text-white">{formatDateTime(project.quoteEstimatedStartAt)}</p>
             </div>
           </div>
+
+          {existingBreakdownItems.length > 0 && (
+            <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Breakdown</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {existingBreakdownItems.map((item) => (
+                  <div key={item.code} className="rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
+                    <p className="text-sm font-semibold text-white">HK${Number(item.amount || 0).toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">

@@ -737,6 +737,7 @@ export class ProjectsController {
     body: {
       professionalId: string;
       quoteAmount: number;
+      quoteBreakdown?: unknown;
       quoteNotes?: string;
       quoteEstimatedStartAt?: string;
       quoteEstimatedDurationMinutes?: number;
@@ -747,6 +748,7 @@ export class ProjectsController {
       projectId,
       body.professionalId,
       body.quoteAmount,
+      body.quoteBreakdown,
       body.quoteNotes,
       body.quoteEstimatedStartAt,
       body.quoteEstimatedDurationMinutes,

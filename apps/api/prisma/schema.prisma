@@ -533,6 +533,7 @@ model ProjectProfessional {
   quotePlatformFeePercent Decimal?               @db.Decimal(5, 2) @default(0)
   quotePricingVersion     String?                @default("unknown")
   quotePlatformFeeBreakdown Json?
+  quoteBreakdown          Json?
   feeCalculatedAt         DateTime?
   quoteNotes              String?
   quoteEstimatedStartAt   DateTime?

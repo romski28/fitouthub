@@ -8,6 +8,7 @@ import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { fetchPrimaryNextStep, NextStepAction } from '@/lib/next-steps';
 import { getClientTabForAction } from '@/lib/client-workflow';
+import { getQuoteBreakdownClientItems, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 
 interface ReviewQuotesModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface QuotedProfessional {
   professionalId: string;
   status: string;
   quoteAmount?: string | number;
+  quoteBreakdown?: StoredQuoteBreakdown | null;
   quoteNotes?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
@@ -343,6 +345,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               const isFastest = pp.id === fastestId && withDuration.length > 1;
               const startDate = formatShortDate(pp.quoteEstimatedStartAt);
               const duration = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
+              const breakdownItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
               const isAccepting = acceptingId === pp.id;
 
               return (
@@ -399,8 +402,20 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                     </div>
                   </div>
 
-                  {(startDate || duration || pp.quoteNotes) && (
+                  {(breakdownItems.length > 0 || startDate || duration || pp.quoteNotes) && (
                     <div className="mb-3 space-y-1">
+                      {breakdownItems.length > 0 && (
+                        <div className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2">
+                          <div className="grid gap-1 text-xs text-slate-300 sm:grid-cols-3">
+                            {breakdownItems.map((item) => (
+                              <div key={`${pp.id}-${item.code}`} className="flex items-center justify-between gap-2 sm:block">
+                                <span className="text-slate-500">{item.label}</span>
+                                <span className="font-semibold text-slate-100">{formatHKD(item.amount)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {(startDate || duration) && (
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-300">
                           {startDate && (

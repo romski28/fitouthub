@@ -16,6 +16,7 @@ import { UpdatesService } from '../updates/updates.service';
 import { EmailService } from '../email/email.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ProjectStage } from '@prisma/client';
+import { getQuoteBreakdownDisplayLines, getStoredQuoteBreakdownClientItems } from '../projects/quote-breakdown';
 
 @Controller('client')
 export class ClientController {
@@ -165,6 +166,10 @@ export class ClientController {
         fields: [
           { label: 'Project', value: pp.project.projectName },
           ...(winnerAmount ? [{ label: 'Amount', value: winnerAmount }] : []),
+          ...getStoredQuoteBreakdownClientItems((pp as any).quoteBreakdown).map((item) => ({
+            label: item.label,
+            value: `HK$${item.amount.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+          })),
         ],
       };
       await tx.message.create({
@@ -245,6 +250,7 @@ export class ClientController {
         professionalName: winnerName,
         projectName: pp.project.projectName,
         quoteAmount: pp.quoteAmount?.toString() || '0',
+        quoteBreakdownLines: getQuoteBreakdownDisplayLines((pp as any).quoteBreakdown),
         nextStepsMessage:
           'The client will be in contact soon to discuss next steps. Please sign the project contract, available in your project panel, to move forward.',
       });
