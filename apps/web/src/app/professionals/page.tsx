@@ -2,7 +2,7 @@
 // Wrap search params usage in Suspense to satisfy Next.js requirements
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
@@ -145,6 +145,7 @@ function ProfessionalsPageInner() {
   const [emergencyAiLoading, setEmergencyAiLoading] = useState(false);
   const [emergencyAiReady, setEmergencyAiReady] = useState(false);
   const [emergencyAiError, setEmergencyAiError] = useState<string | null>(null);
+  const emergencyAiAttemptedPromptRef = useRef<string | null>(null);
 
   const toggleEmergencySelection = (pro: Professional) => {
     setSelectedEmergencyPros((prev) =>
@@ -173,18 +174,21 @@ function ProfessionalsPageInner() {
     setEmergencyAiIntakeId(undefined);
     setEmergencyAiReady(Boolean(emergencyAiTitle || emergencyAiWarnings));
     setEmergencyAiError(null);
+    emergencyAiAttemptedPromptRef.current = null;
   }, [emergencyAiTitle, emergencyAiWarnings, emergencyAiPrompt]);
 
   useEffect(() => {
     if (!emergencySource) return;
     if (!emergencyNotesParam.trim()) return;
     if (emergencyAiTitleState || emergencyAiWarningsState || emergencyAiLoading) return;
+    if (emergencyAiAttemptedPromptRef.current === emergencyAiPrompt) return;
 
     let cancelled = false;
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 25000);
 
     const runEmergencyAi = async () => {
+      emergencyAiAttemptedPromptRef.current = emergencyAiPrompt;
       setEmergencyAiLoading(true);
       setEmergencyAiError(null);
       try {
@@ -226,6 +230,9 @@ function ProfessionalsPageInner() {
         if (cancelled) return;
 
         setEmergencyAiIntakeId(payload.intakeId || undefined);
+        if (payload.intakeId) {
+          setEmergencyAiReady(true);
+        }
         if (payload.parsedOutput?.title) {
           setEmergencyAiTitleState(payload.parsedOutput.title);
         }
@@ -491,7 +498,7 @@ function ProfessionalsPageInner() {
                           </div>
                         )}
 
-                        {!emergencyAiLoading && emergencyAiReady && (emergencyAiTitleState || emergencyAiWarningsState) && (
+                        {!emergencyAiLoading && emergencyAiReady && (emergencyAiTitleState || emergencyAiWarningsState || emergencyAiIntakeId) && (
                           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
                             <p className="font-semibold uppercase tracking-wide text-emerald-700">AI brief ready</p>
                             {emergencyAiTitleState && (
@@ -499,6 +506,9 @@ function ProfessionalsPageInner() {
                             )}
                             {emergencyAiWarningsState && (
                               <p className="mt-1 line-clamp-2"><span className="font-semibold">Safety:</span> {emergencyAiWarningsState}</p>
+                            )}
+                            {!emergencyAiTitleState && !emergencyAiWarningsState && emergencyAiIntakeId && (
+                              <p className="mt-1"><span className="font-semibold">Status:</span> AI response received and linked.</p>
                             )}
                           </div>
                         )}
