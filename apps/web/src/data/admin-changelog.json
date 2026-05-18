@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-485bb22",
+    "date": "2026-05-18T13:10:27+08:00",
+    "title": "fix(web): require emergency callout availability",
+    "summary": "fix(web): require emergency callout availability",
+    "areas": [
+      "web"
+    ],
+    "commit": "485bb22",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-79d0003",
     "date": "2026-05-18T12:35:07+08:00",
     "title": "fix(web): simplify emergency ai ready chip",

@@ -415,7 +415,7 @@ function ProfessionalsPageInner() {
   // Filter professionals based on emergency mode
   const filteredProfessionals = useMemo(() => {
     let result = professionals;
-    if (emergencySource && emergencyOnly) {
+    if (emergencySource) {
       result = result.filter((pro) => pro.emergencyCalloutAvailable === true);
     }
     if (emergencySource && emergencyTradeParam) {
