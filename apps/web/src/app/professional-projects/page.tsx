@@ -32,6 +32,7 @@ interface ProjectProfessional {
     region?: string;
     budget?: string;
     notes?: string;
+    isEmergency?: boolean;
   };
   status: string;
   accessRestricted?: boolean;
@@ -322,14 +323,17 @@ export default function ProfessionalProjectsPage() {
                 const primaryAction = primaryActions[0] || null;
                 const isStopStatus = ['declined', 'rejected'].includes((projectProf.status || '').toLowerCase());
                 const isRestricted = Boolean(projectProf.accessRestricted);
+                const isEmergencyProject = projectProf.project.isEmergency === true;
                 const baseBorder = professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
                 const unreadCount = unreadByProjectId[String(projectProf.project.id)] || 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
-                  <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-2 px-4 py-3 transition ${
+                  <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
                     isStopStatus
                       ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
-                      : `${baseBorder} bg-transparent hover:bg-white/10`
+                      : isEmergencyProject
+                        ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
+                        : `${baseBorder} bg-[var(--mimo-project-paper)] hover:bg-[var(--mimo-project-paper)]`
                   }`}>
                     {unreadCount > 0 && (
                       <button
@@ -355,16 +359,16 @@ export default function ProfessionalProjectsPage() {
                     <div className="grid gap-3">
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         {isRestricted ? (
-                          <span className="truncate text-sm font-bold text-slate-900">
-                            {projectProf.project.projectName}
+                          <span className="truncate text-[1.2rem] font-bold leading-tight text-slate-900">
+                            {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                           </span>
                         ) : (
                           <Link
                             href={`/professional-projects/${projectProf.id}?tab=overview`}
-                            className="truncate text-sm font-bold text-slate-900 underline-offset-2 hover:underline"
+                            className="truncate text-[1.2rem] font-bold leading-tight text-slate-900 underline-offset-2 hover:underline"
                             title="Open project details"
                           >
-                            {projectProf.project.projectName}
+                            {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                           </Link>
                         )}
                         <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">

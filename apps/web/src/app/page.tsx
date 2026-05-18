@@ -67,7 +67,7 @@ export default function Home() {
 
       <div className="space-y-6 pb-8 pt-2">
         {/* Emergency FAB — top of active area, same right column as other FABs */}
-        {hydrated && (
+        {hydrated && isLoggedIn && user?.role === 'client' && (
           <div className="fixed right-6 top-[90px] z-30">
             <div className="relative h-14 w-14">
               <span className="absolute inset-0 rounded-full bg-[#DC143C]/40 animate-ping" />

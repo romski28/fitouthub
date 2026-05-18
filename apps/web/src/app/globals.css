@@ -6,6 +6,7 @@
   --mimo-jade: #0E7C3A;
   --mimo-bamboo: #F5B700;
   --mimo-paper: #F4EEDC;
+  --mimo-project-paper: #FCF8EE;
   --mimo-cream: #EFE7CF;
   --mimo-ink: #1A1A1A;
 
@@ -69,6 +70,25 @@
 
 .site-access-throb {
   animation: site-access-throb 1.8s ease-in-out infinite;
+}
+
+@keyframes emergency-card-border-throb {
+  0% {
+    border-color: rgba(220, 20, 60, 0.72);
+    box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.12);
+  }
+  50% {
+    border-color: rgba(220, 20, 60, 0.95);
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.08);
+  }
+  100% {
+    border-color: rgba(220, 20, 60, 0.72);
+    box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.12);
+  }
+}
+
+.emergency-card-throb {
+  animation: emergency-card-border-throb 2.2s ease-in-out infinite;
 }
 
 @keyframes thumbs-wiggle {

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-18-3e74102",
+    "date": "2026-05-18T14:09:07+08:00",
+    "title": "style(web): refresh professional project cards",
+    "summary": "style(web): refresh professional project cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "3e74102",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-e7130dc",
     "date": "2026-05-18T13:43:52+08:00",
     "title": "fix(web): harden emergency summary send flow",
