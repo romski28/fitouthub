@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-18-e7130dc",
+    "date": "2026-05-18T13:43:52+08:00",
+    "title": "fix(web): harden emergency summary send flow",
+    "summary": "fix(web): harden emergency summary send flow",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "e7130dc",
+    "files": [
+      "apps/web/src/components/emergency-summary-screen.tsx",
+      "docs/EMERGENCY_AI_POST_CREATE_LINKING_NOTE.md"
+    ]
+  },
+  {
     "id": "2026-05-18-485bb22",
     "date": "2026-05-18T13:10:27+08:00",
     "title": "fix(web): require emergency callout availability",

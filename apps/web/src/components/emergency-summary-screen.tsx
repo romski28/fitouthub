@@ -25,7 +25,7 @@ interface Props {
 
 export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, emergencyContext }: Props) {
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +35,8 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
   const hasWarnings = Boolean(emergencyContext.aiWarnings);
   const hasAiResult = Boolean(emergencyContext.aiTitle || emergencyContext.aiWarnings || emergencyContext.aiIntakeId);
   const parsedWarnings = parseSafetyGuidanceText(emergencyContext.aiWarnings);
+  const canConfirm = hasAiResult && selectedProfessionals.length > 0 && !sending;
+  const clientName = `${user?.firstName || ''} ${user?.surname || ''}`.trim() || user?.nickname?.trim() || 'Client';
 
   const handleConfirm = async () => {
     setSending(true);
@@ -48,6 +50,7 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
         },
         body: JSON.stringify({
           projectName: displayTitle,
+          clientName,
           notes: emergencyContext.notes,
           region: emergencyContext.location,
           tradesRequired: [emergencyContext.trade],
@@ -178,13 +181,18 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
           >
             Back
           </button>
-          <button
-            onClick={handleConfirm}
-            disabled={sending || selectedProfessionals.length === 0}
-            className="flex-[2] rounded-full bg-[#DC143C] py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b01030] disabled:opacity-50"
-          >
-            {sending ? 'Sending…' : `Confirm & Send ${selectedProfessionals.length > 0 ? `(${selectedProfessionals.length})` : ''}`}
-          </button>
+          <div className="flex-[2]">
+            <button
+              onClick={handleConfirm}
+              disabled={!canConfirm}
+              className="w-full rounded-full bg-[#DC143C] py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#b01030] disabled:opacity-50"
+            >
+              {sending ? 'Sending…' : `Confirm & Send ${selectedProfessionals.length > 0 ? `(${selectedProfessionals.length})` : ''}`}
+            </button>
+            {!hasAiResult && (
+              <p className="mt-2 text-center text-xs text-slate-500">Waiting for AI brief before invites can be sent.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
