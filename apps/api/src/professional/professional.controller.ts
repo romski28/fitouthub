@@ -468,6 +468,7 @@ export class ProfessionalController {
             select: {
               id: true,
               projectName: true,
+              isEmergency: true,
               clientName: true,
               region: true,
               budget: true,
@@ -491,6 +492,7 @@ export class ProfessionalController {
           project: {
             id: pp.project?.id,
             projectName: pp.project?.projectName,
+            isEmergency: pp.project?.isEmergency,
             clientName: '',
             region: '',
             budget: undefined,
