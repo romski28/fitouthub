@@ -797,13 +797,16 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               );
               const quoteOverdue = isQuoteOverdueForProject(project);
               const isStopStatus = ['withdrawn', 'rejected', 'declined'].includes((project.status || '').toLowerCase());
+              const isEmergencyProject = (project as any).isEmergency === true;
               const baseBorder = clientCardBorderByStatus[project.status] || 'border-white/20';
               const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
               return (
-                <div key={`dash-${project.id}`} className={`relative rounded-lg border-2 px-4 py-3 transition ${
+                <div key={`dash-${project.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
                   quoteOverdue || isStopStatus
                     ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
-                    : `${baseBorder} bg-transparent hover:bg-white/10`
+                    : isEmergencyProject
+                      ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
+                      : `${baseBorder} bg-[var(--mimo-project-paper)] hover:bg-[var(--mimo-project-paper)]`
                 }`}>
                   {unreadCount > 0 && (
                     <button
@@ -828,10 +831,12 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                       <Link
                         href={`/projects/${project.id}?tab=overview`}
-                        className="truncate text-sm font-bold text-white underline-offset-2 hover:underline"
+                        className={`truncate text-[1.2rem] font-bold leading-tight underline-offset-2 hover:underline ${
+                          quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'
+                        }`}
                         title="Open project details"
                       >
-                        {project.projectName}
+                        {isEmergencyProject ? `🚨 ${project.projectName}` : project.projectName}
                       </Link>
                       <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
                         {quoteOverdue && (
@@ -855,7 +860,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     </div>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
                       <div className="col-span-2 md:col-span-1">
-                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                        <div className={`flex items-center gap-2 text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
                           <span>{project.region}</span>
                           {quotedCount > 0 && (
                             <>
@@ -868,7 +873,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                           <p className="mt-2 text-xs text-rose-200">
                             No quote was submitted within the allowed window. Re-invite professionals or request assistance.
                           </p>
-                        ) : primaryAction?.description ? <p className="mt-2 text-xs text-slate-300">{primaryAction.description}</p> : null}
+                        ) : primaryAction?.description ? (
+                          <p className={`mt-2 text-xs ${isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>{primaryAction.description}</p>
+                        ) : null}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 md:justify-end">

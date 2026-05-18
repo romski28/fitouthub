@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-aeac695",
+    "date": "2026-05-18T15:13:50+08:00",
+    "title": "feat(web): restyle client project list cards",
+    "summary": "feat(web): restyle client project list cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "aeac695",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-df7808e",
     "date": "2026-05-18T15:07:33+08:00",
     "title": "feat(web): add mobile camera upload action",
