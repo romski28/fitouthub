@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-18-79d0003",
+    "date": "2026-05-18T12:35:07+08:00",
+    "title": "fix(web): simplify emergency ai ready chip",
+    "summary": "fix(web): simplify emergency ai ready chip",
+    "areas": [
+      "web"
+    ],
+    "commit": "79d0003",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-9890bd7",
     "date": "2026-05-18T12:28:59+08:00",
     "title": "refactor(web): unify ai safety guidance cards",
