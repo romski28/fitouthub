@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-19-0c0e807",
+    "date": "2026-05-19T12:27:55+08:00",
+    "title": "style(web): pulse overdue project cards",
+    "summary": "style(web): pulse overdue project cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "0c0e807",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-19-2c63f83",
     "date": "2026-05-19T12:15:18+08:00",
     "title": "style(web): refine project list dashboard states",

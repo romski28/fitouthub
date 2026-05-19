@@ -810,8 +810,10 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
                   return (
                     <div key={`dash-${project.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
-                      quoteOverdue || isStopStatus
-                        ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)] shadow-[0_0_16px_rgba(220,20,60,0.32)] hover:bg-[rgba(121,24,38,0.9)]'
+                      quoteOverdue
+                        ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)] emergency-card-throb shadow-[0_0_16px_rgba(220,20,60,0.32)] hover:bg-[rgba(121,24,38,0.9)]'
+                        : isStopStatus
+                          ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)] shadow-[0_0_16px_rgba(220,20,60,0.32)] hover:bg-[rgba(121,24,38,0.9)]'
                         : isEmergencyProject
                           ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
                           : `${baseBorder} bg-[var(--mimo-project-paper)] hover:bg-[var(--mimo-project-paper)]`
