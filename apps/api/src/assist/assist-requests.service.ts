@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { NotificationService } from '../notifications/notification.service';
+import { ActivityLogService } from '../activity-log.service';
 import { NotificationChannel } from '../notifications/notification.types';
 import { createHash } from 'crypto';
 
@@ -656,6 +657,7 @@ export class AssistRequestsService {
     private emailService: EmailService,
     private notificationService: NotificationService,
     private realtime: RealtimeService,
+    private activityLogService: ActivityLogService,
   ) {}
 
   /**
@@ -883,6 +885,27 @@ export class AssistRequestsService {
       console.warn('[AssistRequestsService] Support pool mirror failed (new assist):', err);
     }
 
+    await this.activityLogService.record({
+      actorType: dto.professionalId ? 'professional' : 'client',
+      actorName: dto.professionalId ? 'Professional' : dto.clientName || 'Client',
+      action: 'assist_request_created',
+      resource: 'ProjectAssistRequest',
+      resourceId: created.id,
+      projectId: dto.projectId,
+      projectTitle: project.projectName,
+      details: 'Project assist request created',
+      metadata: {
+        category: created.category,
+        contactMethod,
+        raisedBy: created.raisedBy,
+      },
+      status: 'info',
+      userId: dto.professionalId ? null : dto.userId || project.userId || null,
+      professionalId: dto.professionalId || null,
+    }).catch((error) => {
+      console.warn('[AssistRequestsService] Failed to write assist request activity log:', (error as Error)?.message);
+    });
+
     // Notify FOH via email
     try {
       const methodLabel =
@@ -1090,6 +1113,24 @@ export class AssistRequestsService {
     if (assist.userId) {
       this.realtime.emitToUser(assist.userId, event);
     }
+
+    await this.activityLogService.record({
+      actorType: sender === 'foh' ? 'admin' : 'client',
+      actorName: sender === 'foh' ? 'FOH' : 'Client',
+      action: 'assist_message_created',
+      resource: 'ProjectAssistRequest',
+      resourceId: assistRequestId,
+      projectId: assist.projectId,
+      details: sender === 'foh' ? 'FOH replied on project assist request' : 'Client sent project assist message',
+      metadata: {
+        sender,
+        caseId: assist.caseId ?? null,
+      },
+      status: 'info',
+      userId: sender === 'foh' ? senderUserId || null : assist.userId || senderUserId || null,
+    }).catch((error) => {
+      console.warn('[AssistRequestsService] Failed to write assist message activity log:', (error as Error)?.message);
+    });
 
     return message;
   }

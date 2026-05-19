@@ -4,6 +4,7 @@ import { PrivateChatThreadDto, PrivateChatMessageDto } from './dto/private-chat.
 import { AnonymousChatThreadDto, AnonymousChatMessageDto } from './dto/anonymous-chat.dto';
 import { ProjectChatThreadDto, ProjectChatMessageDto } from './dto/project-chat.dto';
 import { RealtimeService } from '../realtime/realtime.service';
+import { ActivityLogService } from '../activity-log.service';
 
 @Injectable()
 export class ChatService {
@@ -13,6 +14,7 @@ export class ChatService {
   constructor(
     private prisma: PrismaService,
     private readonly realtime: RealtimeService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   private appendTimelineEvent(
@@ -944,6 +946,24 @@ export class ChatService {
       where: { id: threadId },
       data: { updatedAt: new Date() },
     });
+
+    await this.activityLogService.record({
+      actorType: senderType === 'user' ? 'client' : senderType || 'system',
+      actorName: senderType === 'professional' ? 'Professional' : senderType === 'client' || senderType === 'user' ? 'Client' : 'System',
+      action: 'project_chat_message_sent',
+      resource: 'ProjectChatThread',
+      resourceId: threadId,
+      projectId: thread.projectId,
+      details: 'Project chat message sent',
+      metadata: {
+        threadId,
+        threadScope: scope,
+        threadScopeId: scopeId,
+      },
+      status: 'info',
+      userId: senderUserId,
+      professionalId: senderProId,
+    }).catch(() => undefined);
 
     return this.mapProjectMessageDto(message);
   }

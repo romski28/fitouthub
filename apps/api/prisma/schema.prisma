@@ -380,6 +380,11 @@ model Project {
   clientId                     String?
   createdAt                    DateTime                @default(now())
   updatedAt                    DateTime                @updatedAt
+  lastActivityAt               DateTime?
+  lastClientActivityAt         DateTime?
+  lastProfessionalActivityAt   DateTime?
+  lastAdminActivityAt          DateTime?
+  lastSystemActivityAt         DateTime?
   userId                       String?
   budget                       Decimal?                @db.Decimal(12, 2)
   approvedBudget               Decimal?                @db.Decimal(12, 2)
@@ -454,6 +459,12 @@ model Project {
   // On-site start confirmation
   siteStartedAt                DateTime?
   siteStartConfirmedById       String?             // userId of the client who confirmed the QR scan
+
+  @@index([lastActivityAt(sort: Desc)])
+  @@index([lastClientActivityAt(sort: Desc)])
+  @@index([lastProfessionalActivityAt(sort: Desc)])
+  @@index([lastAdminActivityAt(sort: Desc)])
+  @@index([lastSystemActivityAt(sort: Desc)])
 }
 
 model AcProject {

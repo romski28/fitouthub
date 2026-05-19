@@ -13,6 +13,7 @@ import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 import { NotificationService } from '../notifications/notification.service';
 import { StripePaymentsService } from './stripe-payments.service';
+import { ActivityLogService } from '../activity-log.service';
 import { createHash, randomInt } from 'crypto';
 
 export interface CreateFinancialTransactionDto {
@@ -67,6 +68,7 @@ export class FinancialService {
     private chatService: ChatService,
     private notificationService: NotificationService,
     private stripePaymentsService: StripePaymentsService,
+    private activityLogService: ActivityLogService,
   ) {}
 
   private readonly slaMarker = '__FOH_SLA_POLICY__';
@@ -293,19 +295,21 @@ export class FinancialService {
         actorName = input.actorId ? `system:${input.actorId}` : 'system';
       }
 
-      await (this.prisma as any).activityLog.create({
-        data: {
-          userId,
-          professionalId,
-          actorName,
-          actorType,
-          action: input.action,
-          resource: 'FinancialTransaction',
-          resourceId: input.transactionId,
-          details: input.details,
-          metadata: input.metadata || {},
-          status: input.status || 'success',
-        },
+      await this.activityLogService.record({
+        userId,
+        professionalId,
+        actorName,
+        actorType,
+        action: input.action,
+        resource: 'FinancialTransaction',
+        resourceId: input.transactionId,
+        details: input.details,
+        metadata: input.metadata || {},
+        projectId:
+          typeof input.metadata?.projectId === 'string' && input.metadata.projectId
+            ? input.metadata.projectId
+            : null,
+        status: input.status || 'success',
       });
     } catch (error) {
       console.warn('[FinancialService] Failed to write financial audit log:', error);

@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 import { UpdatesService } from '../updates/updates.service';
 import { EmailService } from '../email/email.service';
+import { ActivityLogService } from '../activity-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ProjectStage } from '@prisma/client';
 import { getQuoteBreakdownDisplayLines, getStoredQuoteBreakdownClientItems } from '../projects/quote-breakdown';
@@ -24,6 +25,7 @@ export class ClientController {
     private prisma: PrismaService,
     private updatesService: UpdatesService,
     private emailService: EmailService,
+    private activityLogService: ActivityLogService,
   ) {}
 
   @Get('projects/:projectProfessionalId/messages')
@@ -283,6 +285,25 @@ export class ClientController {
       }
     }
 
+    await this.activityLogService.record({
+      userId,
+      actorName: req.user?.fullName || req.user?.email || 'Client',
+      actorType: 'client',
+      action: 'quote_accepted',
+      resource: 'ProjectProfessional',
+      resourceId: projectProfessionalId,
+      projectId: pp.projectId,
+      projectTitle: pp.project.projectName,
+      details: `Accepted quote for ${pp.project.projectName}`,
+      metadata: {
+        projectProfessionalId,
+        professionalId: pp.professionalId,
+      },
+      status: 'success',
+    }).catch((error) => {
+      console.warn('[ClientController.acceptQuote] Failed to write activity log:', (error as Error)?.message);
+    });
+
     return { success: true, projectProfessional: updated };
   }
 
@@ -314,6 +335,24 @@ export class ClientController {
         content: 'We have declined your quotation.',
       },
     });
+
+    await this.activityLogService.record({
+      userId,
+      actorName: req.user?.fullName || req.user?.email || 'Client',
+      actorType: 'client',
+      action: 'quote_rejected',
+      resource: 'ProjectProfessional',
+      resourceId: projectProfessionalId,
+      projectId: pp.projectId,
+      details: 'Client declined quotation',
+      metadata: {
+        projectProfessionalId,
+      },
+      status: 'info',
+    }).catch((error) => {
+      console.warn('[ClientController.rejectQuote] Failed to write activity log:', (error as Error)?.message);
+    });
+
     return { success: true, projectProfessional: updated };
   }
 
@@ -345,6 +384,24 @@ export class ClientController {
         content: 'We would appreciate a better offer if possible.',
       },
     });
+
+    await this.activityLogService.record({
+      userId,
+      actorName: req.user?.fullName || req.user?.email || 'Client',
+      actorType: 'client',
+      action: 'better_offer_requested',
+      resource: 'ProjectProfessional',
+      resourceId: projectProfessionalId,
+      projectId: pp.projectId,
+      details: 'Client requested a better offer',
+      metadata: {
+        projectProfessionalId,
+      },
+      status: 'info',
+    }).catch((error) => {
+      console.warn('[ClientController.requestBetterOffer] Failed to write activity log:', (error as Error)?.message);
+    });
+
     return { success: true, projectProfessional: updated };
   }
 }

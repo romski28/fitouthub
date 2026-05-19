@@ -31,6 +31,7 @@ import { UpdatesModule } from './updates/updates.module';
 import { MagicLinkController } from './auth/magic-link.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ActivityLogController } from './activity-log.controller';
+import { ActivityLogModule } from './activity-log.module';
 import { MilestonesModule } from './milestones/milestones.module';
 import { NotificationModule } from './notifications/notification.module';
 import { PoliciesModule } from './policies/policies.module';
@@ -67,6 +68,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     RealtimeModule,
     ConversationModule,
     SupportRequestsModule,
+    ActivityLogModule,
     AiModule,
     AcProjectsModule,
     ProgressReportsModule,

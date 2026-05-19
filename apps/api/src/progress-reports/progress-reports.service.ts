@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, ForbiddenException, NotFoundException 
 import { PrismaService } from '../prisma.service';
 import { ChatService } from '../chat/chat.service';
 import { FinancialService } from '../financial/financial.service';
+import { ActivityLogService } from '../activity-log.service';
 import { CreateProgressReportDto, PhotoEntryDto } from './progress-reports.dto';
 
 export { CreateProgressReportDto, PhotoEntryDto };
@@ -28,6 +29,7 @@ export class ProgressReportsService {
     private readonly prisma: PrismaService,
     private readonly chatService: ChatService,
     private readonly financialService: FinancialService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   async createReport(
@@ -181,6 +183,29 @@ export class ProgressReportsService {
       data: { chatMessageId: message.id },
     });
 
+    await this.activityLogService.record({
+      actorType: submittedByRole,
+      actorName: submittedByRole === 'professional' ? 'Professional' : 'Client',
+      action: signOffRequested ? 'progress_report_signoff_requested' : 'progress_report_created',
+      resource: 'ProgressReport',
+      resourceId: report.id,
+      projectId,
+      projectTitle: project.projectName,
+      details: signOffRequested
+        ? 'Progress report submitted with milestone sign-off request'
+        : 'Progress report submitted',
+      metadata: {
+        milestoneId: milestoneId ?? null,
+        paymentMilestoneId: paymentMilestoneId ?? null,
+        signOffRequested,
+      },
+      status: 'info',
+      userId: submittedByRole === 'client' ? submittedById : null,
+      professionalId: submittedByRole === 'professional' ? submittedById : null,
+    }).catch((error) => {
+      console.warn('[ProgressReportsService.createReport] Failed to write activity log:', (error as Error)?.message);
+    });
+
     return { ...report, chatMessageId: message.id };
   }
 
@@ -330,6 +355,25 @@ export class ProgressReportsService {
       [],
       { threadScope: 'progress', threadScopeId: report.milestoneId || 'general' },
     );
+
+    await this.activityLogService.record({
+      userId: requesterId,
+      actorType: 'client',
+      actorName: 'Client',
+      action: decision === 'approved' ? 'progress_report_signoff_approved' : 'progress_report_signoff_rejected',
+      resource: 'ProgressReport',
+      resourceId: report.id,
+      projectId: report.projectId,
+      projectTitle: project.projectName,
+      details: decision === 'approved' ? 'Client approved progress report sign-off' : 'Client rejected progress report sign-off',
+      metadata: {
+        milestoneId: report.milestoneId ?? null,
+        rejectionNote: rejectionNote ?? null,
+      },
+      status: decision === 'approved' ? 'success' : 'warning',
+    }).catch((error) => {
+      console.warn('[ProgressReportsService.approveSignOff] Failed to write activity log:', (error as Error)?.message);
+    });
 
     return updated;
   }

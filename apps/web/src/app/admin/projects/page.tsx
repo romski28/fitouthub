@@ -41,6 +41,11 @@ type Project = {
     invoice?: { amount?: number | string; paymentStatus?: string | null } | null;
   }>;
   updatedAt?: string;
+  lastActivityAt?: string;
+  lastClientActivityAt?: string;
+  lastProfessionalActivityAt?: string;
+  lastAdminActivityAt?: string;
+  lastSystemActivityAt?: string;
 };
 
 type BulkCleanAction = "archive" | "permanent_delete";
@@ -189,8 +194,8 @@ function ProjectCard({
               <p className="text-sm font-semibold text-slate-900">{quotesCount}</p>
             </div>
             <div className="rounded-lg bg-white/40 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-wide text-slate-500">Updated</p>
-              <p className="text-sm font-semibold text-slate-900">{formatDate(project.updatedAt || project.createdAt)}</p>
+              <p className="text-[11px] uppercase tracking-wide text-slate-500">Activity</p>
+              <p className="text-sm font-semibold text-slate-900">{formatDate(project.lastActivityAt || project.updatedAt || project.createdAt)}</p>
             </div>
           </div>
 
@@ -216,7 +221,7 @@ function ProjectCard({
 
         <div className="flex items-center justify-between border-t border-black/5 pt-2 text-[11px] text-slate-500">
           <span className="font-mono">ID: {project.id}</span>
-          <span>Updated: {formatDate(project.updatedAt || project.createdAt)}</span>
+          <span>Last activity: {formatDate(project.lastActivityAt || project.updatedAt || project.createdAt)}</span>
         </div>
       </div>
     </div>
@@ -497,31 +502,46 @@ export default function AdminProjectsPage() {
     }
   };
 
-  const filtered = projects.filter((p) => {
-    if (statusFilter === "active" && (p.status === "archived" || p.status === "completed")) {
-      return false;
-    }
-    if (statusFilter === "pending" && p.status !== "pending") return false;
-    if (statusFilter === "onsite" && p.status !== "awarded") return false;
-    if (statusFilter === "completed" && p.status !== "completed") return false;
-    if (statusFilter === "cancelled" && !cancelledStatuses.includes(p.status)) return false;
-    if (statusFilter === "archived" && p.status !== "archived") return false;
+  const filtered = useMemo(() => {
+    const filteredProjects = projects.filter((p) => {
+      if (statusFilter === "active" && (p.status === "archived" || p.status === "completed")) {
+        return false;
+      }
+      if (statusFilter === "pending" && p.status !== "pending") return false;
+      if (statusFilter === "onsite" && p.status !== "awarded") return false;
+      if (statusFilter === "completed" && p.status !== "completed") return false;
+      if (statusFilter === "cancelled" && !cancelledStatuses.includes(p.status)) return false;
+      if (statusFilter === "archived" && p.status !== "archived") return false;
 
-    // Filter by search text
-    if (!filter.trim()) return true;
-    const needle = filter.toLowerCase();
-    const fields = [
-      p.projectName,
-      p.clientName,
-      p.contractorName,
-      p.region,
-      p.notes,
-      p.status,
-    ]
-      .filter(Boolean)
-      .map((v) => v!.toString().toLowerCase());
-    return fields.some((f) => f.includes(needle));
-  });
+      if (!filter.trim()) return true;
+      const needle = filter.toLowerCase();
+      const fields = [
+        p.projectName,
+        p.clientName,
+        p.contractorName,
+        p.region,
+        p.notes,
+        p.status,
+      ]
+        .filter(Boolean)
+        .map((v) => v!.toString().toLowerCase());
+      return fields.some((f) => f.includes(needle));
+    });
+
+    return filteredProjects.sort((a, b) => {
+      const aTime = new Date(a.lastActivityAt || a.updatedAt || a.createdAt).getTime();
+      const bTime = new Date(b.lastActivityAt || b.updatedAt || b.createdAt).getTime();
+
+      if (Number.isFinite(aTime) && Number.isFinite(bTime) && aTime !== bTime) {
+        return bTime - aTime;
+      }
+
+      if (Number.isFinite(aTime) && !Number.isFinite(bTime)) return -1;
+      if (!Number.isFinite(aTime) && Number.isFinite(bTime)) return 1;
+
+      return (b.projectName || "").localeCompare(a.projectName || "");
+    });
+  }, [projects, statusFilter, filter]);
 
   const editFields: FieldDefinition[] = editingProject
     ? [

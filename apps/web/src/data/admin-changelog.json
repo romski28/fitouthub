@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026-05-19-510b71d",
+    "date": "2026-05-19T23:24:43+08:00",
+    "title": "feat(activity): add project activity rollups and admin recency views",
+    "summary": "feat(activity): add project activity rollups and admin recency views",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "510b71d",
+    "files": [
+      "ACTIVITY_LOGGING_IMPLEMENTATION.md",
+      "apps/api/prisma/migrations/20260519_add_project_activity_rollups/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/activity-log.controller.ts",
+      "apps/api/src/activity-log.module.ts",
+      "apps/api/src/activity-log.service.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/assist/assist-requests.service.ts",
+      "apps/api/src/chat/chat.service.ts",
+      "apps/api/src/client/client.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/support-requests/support-requests.service.ts",
+      "apps/web/src/app/admin/activity-log/page.tsx",
+      "apps/web/src/app/admin/projects/page.tsx",
+      "docs/local-dev-diagnosis.md"
+    ]
+  },
+  {
     "id": "2026-05-19-b39d730",
     "date": "2026-05-19T14:33:49+08:00",
     "title": "style(web): restyle admin projects dashboard",

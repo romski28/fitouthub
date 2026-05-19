@@ -12,6 +12,7 @@ import { TwilioProvider } from '../notifications/twilio.provider';
 import { WhatsAppInboundDto } from './dto/whatsapp-inbound.dto';
 import { CreateCallbackDto } from './dto/support-request.dto';
 import { RealtimeService } from '../realtime/realtime.service';
+import { ActivityLogService } from '../activity-log.service';
 
 @Injectable()
 export class SupportRequestsService {
@@ -23,6 +24,7 @@ export class SupportRequestsService {
     private readonly prisma: PrismaService,
     private readonly twilio: TwilioProvider,
     private readonly realtime: RealtimeService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   private emitAdminFeedChanged(sourceId?: string) {
@@ -611,6 +613,26 @@ export class SupportRequestsService {
           }),
         },
       });
+      if (dto.projectId) {
+        await this.activityLogService.record({
+          actorType: 'client',
+          actorName: dto.clientName || 'Client',
+          action: 'support_callback_requested',
+          resource: 'SupportRequest',
+          resourceId: created.id,
+          projectId: dto.projectId,
+          details: 'Support callback requested from website form',
+          metadata: {
+            channel: 'callback',
+            clientEmail: dto.clientEmail ?? null,
+            phone: dto.phone ?? null,
+          },
+          status: 'info',
+          bumpProjectActivity: true,
+        }).catch((error) => {
+          this.logger.warn(`[SupportRequestsService.createCallback] Failed to write activity log: ${(error as Error).message}`);
+        });
+      }
       this.emitAdminFeedChanged(created.id);
       return created;
     } catch (error) {

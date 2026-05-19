@@ -19,6 +19,7 @@ import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { PlatformFeeService } from '../common/platform-fee.service';
 import { UpdatesService } from '../updates/updates.service';
+import { ActivityLogService } from '../activity-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
 import { buildPublicAssetUrl } from '../storage/media-assets.util';
@@ -37,6 +38,7 @@ export class ProfessionalController {
     private email: EmailService,
     private platformFeeService: PlatformFeeService,
     private updatesService: UpdatesService,
+    private activityLogService: ActivityLogService,
   ) {}
 
   private readonly visibleProfessionalStatuses = [
@@ -913,25 +915,25 @@ export class ProfessionalController {
       }
 
       try {
-        await (this.prisma as any).activityLog.create({
-          data: {
-            professionalId,
-            actorName:
-              updated.professional?.fullName ||
-              updated.professional?.businessName ||
-              updated.professional?.email ||
-              'Professional',
-            actorType: 'professional',
-            action: 'quote_submitted',
-            resource: 'Project',
-            resourceId: updated.project?.id || projectProfessional.projectId,
-            details: `Submitted quote for ${updated.project?.projectName || 'project'}`,
-            metadata: {
-              projectProfessionalId,
-              quoteAmount: Number(quoteAmount) || 0,
-            },
-            status: 'success',
+        await this.activityLogService.record({
+          professionalId,
+          actorName:
+            updated.professional?.fullName ||
+            updated.professional?.businessName ||
+            updated.professional?.email ||
+            'Professional',
+          actorType: 'professional',
+          action: 'quote_submitted',
+          resource: 'Project',
+          resourceId: updated.project?.id || projectProfessional.projectId,
+          projectId: updated.project?.id || projectProfessional.projectId,
+          projectTitle: updated.project?.projectName,
+          details: `Submitted quote for ${updated.project?.projectName || 'project'}`,
+          metadata: {
+            projectProfessionalId,
+            quoteAmount: Number(quoteAmount) || 0,
           },
+          status: 'success',
         });
       } catch (e) {
         console.error('[ProfessionalController.submitQuote] Failed to write activity log:', (e as any)?.message);
@@ -1047,21 +1049,20 @@ export class ProfessionalController {
       });
 
       try {
-        await (this.prisma as any).activityLog.create({
-          data: {
-            professionalId,
-            actorName: req.user?.fullName || req.user?.email || 'Professional',
-            actorType: 'professional',
-            action: 'project_invitation_accepted',
-            resource: 'ProjectProfessional',
-            resourceId: projectProfessionalId,
-            details: `Accepted project invitation for ${projectProfessional.project?.projectName || 'project'}`,
-            metadata: {
-              projectId: projectProfessional.projectId,
-              projectProfessionalId,
-            },
-            status: 'success',
+        await this.activityLogService.record({
+          professionalId,
+          actorName: req.user?.fullName || req.user?.email || 'Professional',
+          actorType: 'professional',
+          action: 'project_invitation_accepted',
+          resource: 'ProjectProfessional',
+          resourceId: projectProfessionalId,
+          projectId: projectProfessional.projectId,
+          projectTitle: projectProfessional.project?.projectName,
+          details: `Accepted project invitation for ${projectProfessional.project?.projectName || 'project'}`,
+          metadata: {
+            projectProfessionalId,
           },
+          status: 'success',
         });
       } catch (e) {
         console.error('[ProfessionalController.acceptProject] Failed to write activity log:', (e as any)?.message);
@@ -1111,20 +1112,19 @@ export class ProfessionalController {
       });
 
       try {
-        await (this.prisma as any).activityLog.create({
-          data: {
-            professionalId,
-            actorName: req.user?.fullName || req.user?.email || 'Professional',
-            actorType: 'professional',
-            action: 'project_invitation_rejected',
-            resource: 'ProjectProfessional',
-            resourceId: projectProfessionalId,
-            details: 'Declined project invitation',
-            metadata: {
-              projectProfessionalId,
-            },
-            status: 'info',
+        await this.activityLogService.record({
+          professionalId,
+          actorName: req.user?.fullName || req.user?.email || 'Professional',
+          actorType: 'professional',
+          action: 'project_invitation_rejected',
+          resource: 'ProjectProfessional',
+          resourceId: projectProfessionalId,
+          projectId: projectProfessional.projectId,
+          details: 'Declined project invitation',
+          metadata: {
+            projectProfessionalId,
           },
+          status: 'info',
         });
       } catch (e) {
         console.error('[ProfessionalController.rejectProject] Failed to write activity log:', (e as any)?.message);

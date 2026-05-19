@@ -8,9 +8,13 @@ import { API_BASE_URL } from '@/config/api';
 interface ActivityLog {
   id: string;
   actorName: string;
+  actorType: string;
   action: string;
   resource?: string;
   resourceId?: string;
+  projectId?: string | null;
+  projectTitle?: string | null;
+  projectLastActivityAt?: string | null;
   details?: string;
   metadata?: unknown;
   status: 'success' | 'info' | 'warning' | 'danger';
@@ -152,6 +156,21 @@ export default function ActivityLogPage() {
                         <span className="text-slate-700">· {item.resource}</span>
                       )}
                     </div>
+                    {(item.projectId || item.projectTitle || item.projectLastActivityAt) && (
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                        {item.projectTitle ? (
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                            {item.projectTitle}
+                          </span>
+                        ) : null}
+                        {item.projectId ? (
+                          <span className="font-mono text-[11px] text-slate-500">Project ID: {item.projectId}</span>
+                        ) : null}
+                        {item.projectLastActivityAt ? (
+                          <span>Last project activity: {formatTimestamp(item.projectLastActivityAt)}</span>
+                        ) : null}
+                      </div>
+                    )}
                     {item.details && (
                       <p className="text-xs text-slate-600 mt-0.5">{item.details}</p>
                     )}

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto, CreateMultipleMilestonesDto, MilestoneResponseDto } from './dtos';
 import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
+import { ActivityLogService } from '../activity-log.service';
 import { extractObjectKeyFromValue, buildPublicAssetUrl } from '../storage/media-assets.util';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class MilestonesService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private notificationService: NotificationService,
+    private activityLogService: ActivityLogService,
   ) {}
 
   private resolveMilestonePhotoUrls<T extends { photoUrls?: string[] | null }>(milestone: T): T {
@@ -78,6 +80,23 @@ export class MilestonesService {
         },
       });
 
+      await this.activityLogService.record({
+        actorType: 'system',
+        actorName: 'System',
+        action: 'milestone_created',
+        resource: 'ProjectMilestone',
+        resourceId: result.id,
+        projectId: data.projectId,
+        details: `Milestone created: ${data.title}`,
+        metadata: {
+          sequence: data.sequence,
+          projectProfessionalId: data.projectProfessionalId ?? null,
+        },
+        status: 'info',
+      }).catch((activityError) => {
+        console.warn('[MilestonesService] Failed to write milestone create activity log:', (activityError as Error)?.message);
+      });
+
       console.log(`[MilestonesService] Milestone created with ID: ${result.id}`);
       return result;
     } catch (error) {
@@ -128,6 +147,25 @@ export class MilestonesService {
         }),
       ),
     );
+
+    await this.activityLogService.record({
+      actorType: 'system',
+      actorName: 'System',
+      action: 'milestones_replaced',
+      resource: 'Project',
+      resourceId: data.projectId,
+      projectId: data.projectId,
+      details: `Milestone set replaced with ${created.length} milestones`,
+      metadata: {
+        deletedCount: deleteResult.count,
+        createdCount: created.length,
+        projectProfessionalId: data.projectProfessionalId ?? null,
+      },
+      status: 'info',
+    }).catch((activityError) => {
+      console.warn('[MilestonesService] Failed to write milestone batch activity log:', (activityError as Error)?.message);
+    });
+
     console.log(`[MilestonesService] Created ${created.length} new milestones`);
     return created;
   }
@@ -187,6 +225,25 @@ export class MilestonesService {
           },
         });
       }
+
+      await this.activityLogService.record({
+        actorType: 'system',
+        actorName: 'System',
+        action: 'milestone_updated',
+        resource: 'ProjectMilestone',
+        resourceId: id,
+        projectId: existingMilestone.projectId,
+        projectTitle: existingMilestone.project?.projectName,
+        details: `Milestone updated: ${existingMilestone.title}`,
+        metadata: {
+          status: result.status,
+          percentComplete: result.percentComplete,
+          projectProfessionalId: existingMilestone.projectProfessionalId ?? null,
+        },
+        status: 'info',
+      }).catch((activityError) => {
+        console.warn('[MilestonesService] Failed to write milestone update activity log:', (activityError as Error)?.message);
+      });
 
       const becameCompleted =
         existingMilestone.status !== 'completed' && result.status === 'completed';
@@ -335,6 +392,25 @@ export class MilestonesService {
       console.warn('[MilestonesService] Failed to send milestone access decline email:', emailError);
     }
 
+    await this.activityLogService.record({
+      userId: clientUserId,
+      actorType: 'client',
+      actorName: 'Client',
+      action: 'milestone_access_declined',
+      resource: 'ProjectMilestone',
+      resourceId: milestoneId,
+      projectId: milestone.projectId,
+      projectTitle: milestone.project.projectName,
+      details: `Client declined access for milestone "${milestone.title}"`,
+      metadata: {
+        reason,
+        projectProfessionalId: milestone.projectProfessionalId,
+      },
+      status: 'warning',
+    }).catch((error) => {
+      console.warn('[MilestonesService] Failed to write milestone access decline activity log:', (error as Error)?.message);
+    });
+
     return {
       success: true,
       milestone: declined,
@@ -417,6 +493,25 @@ export class MilestonesService {
         notificationError,
       );
     }
+
+    await this.activityLogService.record({
+      userId: clientUserId,
+      actorType: 'client',
+      actorName: 'Client',
+      action: action === 'agreed' ? 'milestone_completion_agreed' : 'milestone_completion_questioned',
+      resource: 'ProjectMilestone',
+      resourceId: milestoneId,
+      projectId: milestone.projectId,
+      projectTitle: milestone.project.projectName,
+      details: messageContent,
+      metadata: {
+        reason: reason ?? null,
+        projectProfessionalId: milestone.projectProfessionalId,
+      },
+      status: action === 'agreed' ? 'success' : 'warning',
+    }).catch((error) => {
+      console.warn('[MilestonesService] Failed to write milestone completion feedback activity log:', (error as Error)?.message);
+    });
 
     return {
       success: true,
@@ -719,6 +814,26 @@ export class MilestonesService {
 
         await Promise.all(relinkUpdates.filter(Boolean));
       }
+
+      await this.activityLogService.record({
+        actorType: 'system',
+        actorName: 'System',
+        action: 'milestones_reset_to_default',
+        resource: 'ProjectProfessional',
+        resourceId: projectProfessionalId,
+        projectId: assignment.projectId,
+        projectTitle: assignment.project?.projectName,
+        details: 'Project milestones reset to default schedule',
+        metadata: {
+          deletedCount: deleted.count,
+          createdCount: synced.length,
+          professionalId,
+        },
+        status: 'warning',
+        tx,
+      }).catch((activityError) => {
+        console.warn('[MilestonesService] Failed to write milestone reset activity log:', (activityError as Error)?.message);
+      });
 
       return {
         success: true,

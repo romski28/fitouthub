@@ -5,6 +5,7 @@ import { ChatService } from '../chat/chat.service';
 import { PlatformFeeService } from '../common/platform-fee.service';
 import { NotificationService } from '../notifications/notification.service';
 import { AiService } from '../ai/ai.service';
+import { ActivityLogService } from '../activity-log.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { resolve } from 'path';
@@ -61,6 +62,7 @@ export class ProjectsService {
     private platformFeeService: PlatformFeeService,
     private notificationService: NotificationService,
     private aiService: AiService,
+    private activityLogService: ActivityLogService,
   ) {}
 
   private readonly STATUS_ORDER = [
@@ -118,20 +120,19 @@ export class ProjectsService {
     });
 
     try {
-      await (this.prisma as any).activityLog.create({
-        data: {
-          actorName: 'System',
-          actorType: 'system',
-          action: 'notification_audit',
-          resource: 'Project',
-          resourceId: audit.projectId,
-          details: `Notification audit for ${audit.event}`,
-          metadata: {
-            ...audit,
-            summary,
-          },
-          status: summary.email.failed > 0 || summary.direct.failed > 0 ? 'warning' : 'success',
+      await this.activityLogService.record({
+        actorName: 'System',
+        actorType: 'system',
+        action: 'notification_audit',
+        resource: 'Project',
+        resourceId: audit.projectId,
+        projectId: audit.projectId,
+        details: `Notification audit for ${audit.event}`,
+        metadata: {
+          ...audit,
+          summary,
         },
+        status: summary.email.failed > 0 || summary.direct.failed > 0 ? 'warning' : 'success',
       });
     } catch (error) {
       console.error('[ProjectsService.notificationAudit] Failed to persist activity log:', {
@@ -5837,25 +5838,25 @@ Please review the project details and respond with your quote or decline the inv
         },
       });
 
-      await (tx as any).activityLog.create({
-        data: {
-          userId: adminUserId,
-          actorName: 'Admin',
-          actorType: 'admin',
-          action: 'project_award_reversed',
-          resource: 'Project',
-          resourceId: projectId,
-          details: `Award reversed for ${reversedProfessionalName}`,
-          metadata: {
-            projectId,
-            awardedProjectProfessionalId: awardedProjectProfessional.id,
-            reversedProfessionalId: awardedProjectProfessional.professionalId,
-            reopenPriorQuotes,
-            reopenedProjectProfessionalIds: reopenedIds,
-            reason,
-          },
-          status: 'warning',
+      await this.activityLogService.record({
+        userId: adminUserId,
+        actorName: 'Admin',
+        actorType: 'admin',
+        action: 'project_award_reversed',
+        resource: 'Project',
+        resourceId: projectId,
+        projectId,
+        projectTitle: project.projectName,
+        details: `Award reversed for ${reversedProfessionalName}`,
+        metadata: {
+          awardedProjectProfessionalId: awardedProjectProfessional.id,
+          reversedProfessionalId: awardedProjectProfessional.professionalId,
+          reopenPriorQuotes,
+          reopenedProjectProfessionalIds: reopenedIds,
+          reason,
         },
+        status: 'warning',
+        tx,
       });
     });
 
@@ -7122,25 +7123,25 @@ Please review the project details and respond with your quote or decline the inv
   }) {
     const totalRecords = Object.values(data.impactCounts).reduce((sum, n) => sum + n, 0);
     try {
-      await this.prisma.activityLog.create({
-        data: {
-          userId: data.adminId || null,
-          actorName: data.adminName || 'Admin',
-          actorType: 'admin',
-          action: 'project_purged',
-          resource: 'PurgeAuditLog',
-          resourceId: data.projectId,
-          details: `Project "${data.projectName}" permanently deleted. ${totalRecords} records purged across ${Object.keys(data.impactCounts).length} tables. ${data.filesCleanedUp} file(s) removed from storage.`,
-          metadata: {
-            projectId: data.projectId,
-            projectName: data.projectName,
-            impact: data.impactCounts,
-            totalRecords,
-            filesCleanedUp: data.filesCleanedUp,
-            purgedAt: new Date().toISOString(),
-          },
-          status: 'danger',
+      await this.activityLogService.record({
+        userId: data.adminId || null,
+        actorName: data.adminName || 'Admin',
+        actorType: 'admin',
+        action: 'project_purged',
+        resource: 'PurgeAuditLog',
+        resourceId: data.projectId,
+        projectId: data.projectId,
+        projectTitle: data.projectName,
+        details: `Project "${data.projectName}" permanently deleted. ${totalRecords} records purged across ${Object.keys(data.impactCounts).length} tables. ${data.filesCleanedUp} file(s) removed from storage.`,
+        metadata: {
+          projectName: data.projectName,
+          impact: data.impactCounts,
+          totalRecords,
+          filesCleanedUp: data.filesCleanedUp,
+          purgedAt: new Date().toISOString(),
         },
+        status: 'danger',
+        bumpProjectActivity: false,
       });
     } catch (err) {
       // Audit write must not block the response — log and continue

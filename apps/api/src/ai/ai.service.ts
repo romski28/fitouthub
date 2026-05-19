@@ -9,6 +9,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { LOCATIONS } from '../../../../packages/schemas/locations';
 import { PrismaService } from '../prisma.service';
+import { ActivityLogService } from '../activity-log.service';
 import { TradesService, type TradeView } from '../trades/trades.service';
 
 type DeepSeekMessage = {
@@ -128,6 +129,7 @@ export class AiService {
   constructor(
     private readonly tradesService: TradesService,
     private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   private sanitizeSessionId(sessionId?: string) {
@@ -2327,23 +2329,21 @@ OUTPUT FORMAT (JSON only)
       },
     });
 
-    await (this.prisma as any).activityLog.create({
-      data: {
-        actorName: context.adminName || 'Admin',
-        actorType: 'admin',
-        userId: context.adminUserId,
-        action: 'ai_safety_acknowledged',
-        resource: 'AiIntake',
-        resourceId: intakeId,
-        details: 'AI safety triage acknowledged by admin',
-        metadata: {
-          intakeId,
-          projectId: intake.projectId,
-          riskLevel: safetyAssessment.riskLevel,
-          concerns: safetyAssessment.concerns,
-        },
-        status: 'warning',
+    await this.activityLogService.record({
+      actorName: context.adminName || 'Admin',
+      actorType: 'admin',
+      userId: context.adminUserId,
+      action: 'ai_safety_acknowledged',
+      resource: 'AiIntake',
+      resourceId: intakeId,
+      projectId: intake.projectId,
+      details: 'AI safety triage acknowledged by admin',
+      metadata: {
+        intakeId,
+        riskLevel: safetyAssessment.riskLevel,
+        concerns: safetyAssessment.concerns,
       },
+      status: 'warning',
     }).catch((error) => {
       this.logger.warn(
         `[acknowledgeSafetyTriage] Failed to write activity log: ${(error as Error).message}`,
@@ -2786,6 +2786,20 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
 
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
 
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_generated',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'AI project scope generated',
+      metadata: { versionId: scopeVersion.id, version: scopeVersion.version },
+      status: 'info',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
+
     return {
       scope: scopeVersion,
       versionCount: container.versions.length,
@@ -2850,6 +2864,20 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
 
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
 
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_entry_created',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'Project scope entry created',
+      metadata: { entryId: entry.id, workPackage: entry.workPackage },
+      status: 'info',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
+
     return { scope: updatedVersion };
   }
 
@@ -2902,6 +2930,20 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
 
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
 
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_entry_updated',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'Project scope entry updated',
+      metadata: { entryId },
+      status: 'info',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
+
     return { scope: updatedVersion };
   }
 
@@ -2934,6 +2976,20 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
     };
 
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_entry_deleted',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'Project scope entry deleted',
+      metadata: { entryId },
+      status: 'warning',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
 
     return { scope: updatedVersion };
   }
@@ -2972,6 +3028,19 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
     const versions = context.container.versions.map((v) => (v.id === updated.id ? updated : v));
     const container: ScopeContainer = { ...context.container, versions };
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_reviewed',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'Project scope reviewed',
+      metadata: { note: note ?? null, status: updated.status },
+      status: 'info',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
     return { scope: updated, workflowStatus: updated.status };
   }
 
@@ -3000,6 +3069,19 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
       versions,
     };
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_published',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'Project scope published',
+      metadata: { note: note ?? null, versionId: published.id, status: published.status },
+      status: 'success',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
     return { scope: published, workflowStatus: published.status };
   }
 
@@ -3036,6 +3118,19 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
       versions: [...context.container.versions, revision],
     };
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_revised',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'Project scope revised into a new draft version',
+      metadata: { note: note ?? null, versionId: revision.id, version: revision.version },
+      status: 'info',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
     return { scope: revision, workflowStatus: revision.status };
   }
 
@@ -3056,6 +3151,19 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
     const versions = context.container.versions.map((v) => (v.id === updated.id ? updated : v));
     const container: ScopeContainer = { ...context.container, versions };
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+    await this.activityLogService.record({
+      actorType: actor.role,
+      action: 'project_scope_reordered',
+      resource: 'AiIntake',
+      resourceId: context.intake.id,
+      projectId,
+      projectTitle: context.project.projectName,
+      details: 'Project scope entries reordered',
+      metadata: { entryCount: reordered.length },
+      status: 'info',
+      userId: actor.role === 'admin' || actor.role === 'client' ? actor.actorId : null,
+      professionalId: actor.role === 'professional' ? actor.actorId : null,
+    }).catch(() => undefined);
     return { scope: updated };
   }
 
