@@ -104,7 +104,20 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
   async getContract(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        currentStage: true,
+        projectName: true,
+        contractType: true,
+        contractContent: true,
+        contractGeneratedAt: true,
+        clientSignedAt: true,
+        professionalSignedAt: true,
+        userId: true,
+        clientId: true,
+        clientSignedById: true,
+        professionalSignedById: true,
         user: {
           select: { id: true, email: true, firstName: true, surname: true },
         },
@@ -233,7 +246,18 @@ By digitally signing this agreement in FitOutHub, each party acknowledges accept
   async signContract(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        currentStage: true,
+        contractContent: true,
+        clientSignedAt: true,
+        professionalSignedAt: true,
+        userId: true,
+        clientId: true,
+        clientSignedById: true,
+        professionalSignedById: true,
+        awardedProjectProfessionalId: true,
         awardedProjectProfessional: {
           include: {
             professional: {

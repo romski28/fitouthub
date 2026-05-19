@@ -3156,6 +3156,17 @@ Please review the project details and respond with your quote or decline the inv
   private async assertClientProjectAccess(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
+      select: {
+        id: true,
+        userId: true,
+        clientId: true,
+        projectName: true,
+        status: true,
+        escrowRequired: true,
+        escrowHeld: true,
+        locationDetailsRequiredAt: true,
+        siteInspectionAvailableOn: true,
+      },
     });
 
     if (!project) {
