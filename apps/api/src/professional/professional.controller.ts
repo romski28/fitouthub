@@ -667,8 +667,79 @@ export class ProfessionalController {
 
       return projectProfessional;
     } catch (error) {
-      console.error('Error fetching project detail:', error);
-      throw error;
+      console.error('Error fetching project detail, retrying with explicit project select:', error);
+
+      try {
+        const professionalId = req.user.id || req.user.sub;
+        const projectProfessional = await (
+          this.prisma as any
+        ).projectProfessional.findFirst({
+          where: {
+            id: projectProfessionalId,
+            professionalId,
+            status: { in: this.activeProfessionalStatuses },
+            project: {
+              status: { not: 'archived' },
+            },
+          },
+          select: {
+            id: true,
+            projectId: true,
+            professionalId: true,
+            status: true,
+            quoteAmount: true,
+            quoteBaseAmount: true,
+            quoteBreakdown: true,
+            quoteNotes: true,
+            quoteEstimatedStartAt: true,
+            quoteEstimatedDurationMinutes: true,
+            quoteEstimatedDurationUnit: true,
+            quotedAt: true,
+            respondedAt: true,
+            createdAt: true,
+            quoteReminderSentAt: true,
+            quoteExtendedUntil: true,
+            updatedAt: true,
+            quoteRequestedTrades: true,
+            projectTradesSnapshot: true,
+            project: {
+              select: {
+                id: true,
+                projectName: true,
+                clientName: true,
+                region: true,
+                projectScale: true,
+                currentStage: true,
+                isEmergency: true,
+                budget: true,
+                notes: true,
+                tradesRequired: true,
+                photos: true,
+              },
+            },
+            paymentRequests: {
+              select: {
+                id: true,
+                requestType: true,
+                requestAmount: true,
+                requestPercentage: true,
+                status: true,
+                notes: true,
+                createdAt: true,
+              },
+            },
+          },
+        });
+
+        if (!projectProfessional) {
+          throw new BadRequestException('Project not found');
+        }
+
+        return projectProfessional;
+      } catch (fallbackError) {
+        console.error('Fallback error fetching project detail:', fallbackError);
+        throw fallbackError;
+      }
     }
   }
 

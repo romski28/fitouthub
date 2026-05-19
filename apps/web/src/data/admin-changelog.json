@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-20-e1f6291",
+    "date": "2026-05-20T00:02:54+08:00",
+    "title": "fix(project-detail): tolerate missing rollup columns",
+    "summary": "fix(project-detail): tolerate missing rollup columns",
+    "areas": [
+      "api"
+    ],
+    "commit": "e1f6291",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-19-6a70a40",
     "date": "2026-05-19T23:41:52+08:00",
     "title": "fix(activity-log): fail open on project enrichment",

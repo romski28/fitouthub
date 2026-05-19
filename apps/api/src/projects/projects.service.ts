@@ -1675,8 +1675,87 @@ export class ProjectsService {
         photos: this.resolveProjectPhotos((project as any).photos),
       } as any;
     } catch (error) {
-      console.error('[ProjectsService.findOneForClient] Error:', error?.message, error?.stack);
-      return null;
+      console.error('[ProjectsService.findOneForClient] Primary query failed, retrying with explicit project select:', error);
+
+      try {
+        const project = await this.prisma.project.findFirst({
+          where: {
+            id,
+            userId,
+            status: { not: this.ARCHIVED_STATUS },
+          },
+          select: {
+            id: true,
+            status: true,
+            budget: true,
+            approvedBudget: true,
+            clientName: true,
+            contractorContactEmail: true,
+            contractorContactName: true,
+            contractorContactPhone: true,
+            createdAt: true,
+            currentStage: true,
+            endDate: true,
+            isEmergency: true,
+            locationDetailsProvidedAt: true,
+            locationDetailsRequiredAt: true,
+            locationDetailsStatus: true,
+            notes: true,
+            projectName: true,
+            projectScale: true,
+            region: true,
+            siteAccessDataCollected: true,
+            siteAccessDataCollectedAt: true,
+            siteInspectionAvailableOn: true,
+            startDate: true,
+            tradesRequired: true,
+            updatedAt: true,
+            professionals: {
+              include: {
+                professional: true,
+              },
+            },
+            paymentPlan: {
+              include: {
+                milestones: {
+                  orderBy: {
+                    sequence: 'asc',
+                  },
+                },
+              },
+            },
+            startProposals: {
+              orderBy: {
+                createdAt: 'desc',
+              },
+              take: 10,
+            },
+            aiIntake: {
+              select: {
+                id: true,
+                assumptions: true,
+                risks: true,
+                project: true,
+              },
+            },
+            photos: true,
+          },
+        });
+
+        console.log('[ProjectsService.findOneForClient] Fallback project found:', !!project);
+        if (!project) return null;
+
+        const walletTransferTimeline = await this.getWalletTransferTimeline(project.id);
+        return {
+          ...project,
+          ...walletTransferTimeline,
+          professionals: this.dedupeProfessionals((project as any).professionals),
+          photos: this.resolveProjectPhotos((project as any).photos),
+        } as any;
+      } catch (fallbackError) {
+        console.error('[ProjectsService.findOneForClient] Fallback query failed:', fallbackError);
+        return null;
+      }
     }
   }
 
