@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-19-6a70a40",
+    "date": "2026-05-19T23:41:52+08:00",
+    "title": "fix(activity-log): fail open on project enrichment",
+    "summary": "fix(activity-log): fail open on project enrichment",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6a70a40",
+    "files": [
+      "apps/api/src/activity-log.controller.ts",
+      "apps/web/src/app/admin/activity-log/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-19-510b71d",
     "date": "2026-05-19T23:24:43+08:00",
     "title": "feat(activity): add project activity rollups and admin recency views",

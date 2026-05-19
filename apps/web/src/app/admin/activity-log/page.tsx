@@ -23,6 +23,17 @@ interface ActivityLog {
   professional?: { fullName: string; email: string };
 }
 
+interface ActivityLogResponse {
+  logs: ActivityLog[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+  error?: string;
+}
+
 const statusStyles: Record<string, string> = {
   success: 'bg-emerald-100 text-emerald-700',
   info: 'bg-blue-100 text-blue-700',
@@ -46,6 +57,7 @@ export default function ActivityLogPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const [expandedPayloads, setExpandedPayloads] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -56,16 +68,19 @@ export default function ActivityLogPage() {
     if (!accessToken) {
       // Try without token first for debugging
       setLoading(true);
+      setError(null);
       try {
         const res = await fetch(`${API_BASE_URL}/activity-log?page=${page}&limit=50`);
 
         if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
 
-        const data = await res.json();
+        const data: ActivityLogResponse = await res.json();
+        if (data.error) throw new Error(data.error);
         setLogs(data.logs);
         setTotal(data.pagination.total);
       } catch (err) {
         console.error('Activity log error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load activity log');
         toast.error('Failed to load activity log');
       } finally {
         setLoading(false);
@@ -74,6 +89,7 @@ export default function ActivityLogPage() {
     }
     
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`${API_BASE_URL}/activity-log?page=${page}&limit=50`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -81,10 +97,12 @@ export default function ActivityLogPage() {
 
       if (!res.ok) throw new Error(await res.text());
 
-      const data = await res.json();
+      const data: ActivityLogResponse = await res.json();
+      if (data.error) throw new Error(data.error);
       setLogs(data.logs);
       setTotal(data.pagination.total);
     } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load activity log');
       toast.error('Failed to load activity log');
       console.error(err);
     } finally {
@@ -137,6 +155,10 @@ export default function ActivityLogPage() {
           <div className="py-12 text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
             <p className="mt-4 text-slate-600">Loading activity log...</p>
+          </div>
+        ) : error ? (
+          <div className="py-12 text-center text-sm text-rose-600">
+            Failed to load activity log: {error}
           </div>
         ) : logs.length === 0 ? (
           <div className="py-12 text-center text-slate-500">
