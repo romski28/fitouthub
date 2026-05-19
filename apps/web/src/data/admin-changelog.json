@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-19-b39d730",
+    "date": "2026-05-19T14:33:49+08:00",
+    "title": "style(web): restyle admin projects dashboard",
+    "summary": "style(web): restyle admin projects dashboard",
+    "areas": [
+      "web"
+    ],
+    "commit": "b39d730",
+    "files": [
+      "apps/web/src/app/admin/projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-19-0c0e807",
     "date": "2026-05-19T12:27:55+08:00",
     "title": "style(web): pulse overdue project cards",
