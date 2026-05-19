@@ -59,9 +59,11 @@ export default async function RootLayout({
                 <Toaster position="top-right" />
                 <div className="relative min-h-screen bg-[var(--mimo-paper)] text-slate-900">
                   <SiteWallpaperShell />
-                  <NavbarWrapper />
-                  <MainWrapper>{children}</MainWrapper>
-                  <FooterWrapper />
+                  <div className="relative z-10">
+                    <NavbarWrapper />
+                    <MainWrapper>{children}</MainWrapper>
+                    <FooterWrapper />
+                  </div>
                   {/* Version badge for quick deployment verification */}
                   <div className="fixed bottom-2 right-2 z-50 rounded bg-slate-900/80 px-2 py-1 text-[11px] font-medium text-slate-100">
                     <span>web v{appVersion}</span>

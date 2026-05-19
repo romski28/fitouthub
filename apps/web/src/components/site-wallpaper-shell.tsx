@@ -36,7 +36,7 @@ export function SiteWallpaperShell() {
       data-wallpaper-season={wallpaper.season}
       data-wallpaper-time={wallpaper.timeBucket}
       data-wallpaper-rotation={wallpaper.rotationToken}
-      className="pointer-events-none fixed inset-0 -z-10 transition-opacity duration-500"
+      className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"
     >
       <div
         className="h-full w-full bg-cover bg-center bg-no-repeat"
