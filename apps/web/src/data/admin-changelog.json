@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-20-2dc4f8d",
+    "date": "2026-05-20T00:57:14+08:00",
+    "title": "fix(web): dedupe vision quota status fetches",
+    "summary": "fix(web): dedupe vision quota status fetches",
+    "areas": [
+      "web"
+    ],
+    "commit": "2dc4f8d",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-f9600c3",
     "date": "2026-05-20T00:52:40+08:00",
     "title": "fix(api): avoid implicit project selects in contract and site access flows",

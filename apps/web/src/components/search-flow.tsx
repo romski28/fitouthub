@@ -696,6 +696,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [visionProvider, setVisionProvider] = useState<'deepseek' | 'qwen'>('deepseek');
   const [visionModel, setVisionModel] = useState('deepseek-v4-pro');
   const [visionImageUrl, setVisionImageUrl] = useState('https://picsum.photos/id/1062/1200/800');
+  const lastVisionQuotaFetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     onAiLoadingChange?.(aiLoading);
@@ -728,6 +729,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const { isLoggedIn, userLocation, user, accessToken } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
   const isAdminTester = user?.role === 'admin';
+  const visionQuotaScopeKey = user?.role === 'client' && user?.id
+    ? `client:${user.id}`
+    : aiSessionId
+      ? `visitor:${aiSessionId}`
+      : null;
   const promptImageLimit = visionQuota?.maxImagesPerPrompt ?? ((isLoggedIn && user?.role === 'client') ? 3 : 1);
 
   // Portal support: render AI results panel into an external DOM node
@@ -1364,11 +1370,19 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiSessionId(generated);
   }, [createAiSessionId]);
 
-  const fetchVisionQuota = async () => {
+  const fetchVisionQuota = async (options?: { force?: boolean }) => {
     if (!aiSessionId) {
       console.log('[fetchVisionQuota] Skipping: no aiSessionId');
       return;
     }
+    if (!visionQuotaScopeKey) {
+      console.log('[fetchVisionQuota] Skipping: no quota scope key');
+      return;
+    }
+    if (!options?.force && lastVisionQuotaFetchKeyRef.current === visionQuotaScopeKey) {
+      return;
+    }
+    lastVisionQuotaFetchKeyRef.current = visionQuotaScopeKey;
     console.log('[fetchVisionQuota] Starting fetch with sessionId:', aiSessionId);
     setVisionQuotaLoading(true);
     setVisionQuotaError(null);
@@ -1397,6 +1411,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         canUseVision: Boolean(payload?.canUseVision),
       });
     } catch (error) {
+      lastVisionQuotaFetchKeyRef.current = null;
       console.error('[fetchVisionQuota] Error:', error);
       setVisionQuota(null);
       setVisionQuotaError((error as Error).message || 'Failed to load image quota');
@@ -1597,7 +1612,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     if (!deepSeekSandboxEnabled || isAdminTester) return;
     fetchVisionQuota();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiSessionId, accessToken, isLoggedIn, user?.role, deepSeekSandboxEnabled, isAdminTester]);
+  }, [visionQuotaScopeKey, deepSeekSandboxEnabled, isAdminTester]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1831,7 +1846,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       if (imageUrls.length > 0) {
         setPromptImages([]);
         setPromptUploaderClearKey((key) => key + 1);
-        fetchVisionQuota();
+        fetchVisionQuota({ force: true });
       }
 
     } catch (error) {
