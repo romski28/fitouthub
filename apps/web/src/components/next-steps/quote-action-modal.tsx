@@ -325,7 +325,7 @@ export function QuoteActionModal({
     }
 
     if (isEmergencyProject && !isEmergencyStartDateAllowed(estimatedStartDate)) {
-      setError('For emergency jobs, choose today or tomorrow for Be with you on..');
+      setError('For emergency jobs, choose today or tomorrow for Be with you...');
       return;
     }
 
@@ -598,7 +598,7 @@ export function QuoteActionModal({
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">{isEmergencyProject ? 'Be with you on..' : 'Estimated start date'}</span>
+                      <span className="mb-1 block text-sm font-semibold text-slate-200">{isEmergencyProject ? 'Be with you...' : 'Estimated start date'}</span>
                       {isEmergencyProject ? (
                         <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-slate-600 bg-slate-800">
                           {emergencyDateOptions.map((option) => {

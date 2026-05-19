@@ -3,6 +3,7 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
+import { API_BASE_URL } from '@/config/api';
 import {
   buildQuoteBreakdownPayload,
   getQuoteBreakdownBaseItems,
@@ -140,6 +141,13 @@ const formatDate = (value?: string) => {
   }
 };
 
+const formatHKD = (value?: number | string): string => {
+  if (value === null || value === undefined) return '—';
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (Number.isNaN(num)) return '—';
+  return `HK$${num.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+};
+
 const extractOverviewSummaryLines = (value?: string): string[] => {
   const source = (value || '').trim();
   if (!source) return [];
@@ -191,10 +199,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onKeepCurrentQuote,
   onOpenAccessSchedule,
   submittingQuote,
+  accessToken,
 }) => {
   const [nowMs, setNowMs] = React.useState<number | null>(null);
   const [selectedHour, setSelectedHour] = React.useState('');
   const [selectedMinute, setSelectedMinute] = React.useState('');
+  const [platformFeePercent, setPlatformFeePercent] = React.useState<number | undefined>();
+  const [platformFeeAmount, setPlatformFeeAmount] = React.useState<number | undefined>();
+  const [grossAmount, setGrossAmount] = React.useState<number | undefined>();
+  const [loadingFeePreview, setLoadingFeePreview] = React.useState(false);
 
   React.useEffect(() => {
     const [hour = '', minute = ''] = quoteForm.estimatedStartTime.split(':');
@@ -238,6 +251,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isOverdue = msRemaining !== null && msRemaining < 0;
   const daysLeft = msRemaining !== null && msRemaining > 0 ? Math.floor(msRemaining / (24 * 60 * 60 * 1000)) : 0;
   const hoursLeft = msRemaining !== null && msRemaining > 0 ? Math.floor((msRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)) : 0;
+  const minutesLeft = msRemaining !== null && msRemaining > 0 ? Math.max(1, Math.ceil(msRemaining / (60 * 1000))) : 0;
 
   const hasInitialQuote = Boolean(project.quotedAt);
   const isRebidFlow = project.status === 'counter_requested' || project.status === 'quoted';
@@ -256,7 +270,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         ? '⚠ Quote overdue'
         : daysLeft > 0
           ? `⏱ ${daysLeft}d ${hoursLeft}h to quote`
-          : `⏱ ${hoursLeft}h to quote`} ({quoteWindowLabel})
+          : hoursLeft > 0
+            ? `⏱ ${hoursLeft}h to quote`
+            : `⏱ ${minutesLeft}m to quote`} ({quoteWindowLabel})
     </span>
   ) : null;
   const breakdownFields = getQuoteBreakdownFields(project.project.isEmergency === true);
@@ -268,6 +284,48 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   }).baseTotal ?? 0;
   const existingBreakdownItems = getQuoteBreakdownBaseItems(project.quoteBreakdown);
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
+
+  React.useEffect(() => {
+    if (!accessToken || !project.id || quoteBreakdownTotal <= 0) {
+      setPlatformFeePercent(undefined);
+      setPlatformFeeAmount(undefined);
+      setGrossAmount(undefined);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setLoadingFeePreview(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/professional/projects/${project.id}/quote-preview`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ quoteAmount: quoteBreakdownTotal }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPlatformFeePercent(data.platformFeePercent);
+          setPlatformFeeAmount(data.platformFeeAmount);
+          setGrossAmount(data.grossAmount);
+        } else {
+          setPlatformFeePercent(undefined);
+          setPlatformFeeAmount(undefined);
+          setGrossAmount(undefined);
+        }
+      } catch {
+        setPlatformFeePercent(undefined);
+        setPlatformFeeAmount(undefined);
+        setGrossAmount(undefined);
+      } finally {
+        setLoadingFeePreview(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [accessToken, project.id, quoteBreakdownTotal]);
 
   return (
     <div className="space-y-6">
@@ -323,7 +381,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           )}
 
-          {project.status !== 'awarded' && (
+          {project.status !== 'awarded' && !isEmergencyProject && (
             <div className="mb-4 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
               You can request site access before quoting to better appraise the project while tentatively accepting it.
               <button
@@ -349,7 +407,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
               )}
 
-              <div className={`grid gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+              <div className={`grid gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
                 {breakdownFields.map((field) => (
                   <div key={field.code}>
                     <label htmlFor={`quote-${field.code}`} className="block text-sm font-semibold text-white mb-1">
@@ -376,12 +434,31 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     />
                   </div>
                 ))}
+
+                <div>
+                  <label htmlFor="quote-platform-fee" className="block text-sm font-semibold text-white mb-1">
+                    Mimo fee
+                  </label>
+                  <input
+                    id="quote-platform-fee"
+                    type="text"
+                    value={loadingFeePreview ? '...' : platformFeePercent !== undefined ? `${platformFeePercent.toFixed(1)}%` : '—'}
+                    disabled
+                    className="w-full rounded-md border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-slate-300 text-center focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Quote total before platform fee</p>
                 <p className="text-lg font-bold text-white">HK${quoteBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
               </div>
+
+              {quoteBreakdownTotal > 0 && platformFeePercent !== undefined && grossAmount !== undefined && (
+                <div className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-xs text-slate-300">
+                  <p>Your quote: {formatHKD(quoteBreakdownTotal)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="notes" className="block text-sm font-semibold text-white mb-1">
@@ -401,7 +478,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   <label htmlFor="estimatedStartDate" className="block text-sm font-semibold text-white mb-1">
-                    {isEmergencyProject ? 'Be with you on.. *' : 'Start Date *'}
+                    {isEmergencyProject ? 'Be with you... *' : 'Start Date *'}
                   </label>
                   {isEmergencyProject ? (
                     <div className="grid w-full grid-cols-2 overflow-hidden rounded-md border border-slate-600 bg-slate-900">
@@ -617,7 +694,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
             <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">
-                {isEmergencyProject ? 'Be with you on..' : 'Estimated Start'}
+                {isEmergencyProject ? 'Be with you...' : 'Estimated Start'}
               </p>
               <p className="text-sm font-semibold text-white">{formatDateTime(project.quoteEstimatedStartAt)}</p>
             </div>

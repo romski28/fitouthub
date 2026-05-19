@@ -25,6 +25,10 @@ import type { UpdatesSummary } from '@/lib/updates-cache';
 interface ProjectProfessional {
   id: string;
   projectId: string;
+  createdAt?: string;
+  quoteExtendedUntil?: string;
+  quoteReminderSentAt?: string;
+  respondedAt?: string;
   project: {
     id: string;
     projectName: string;
@@ -43,6 +47,12 @@ interface ProjectProfessional {
 
 type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
 
+type QuoteDeadlineState = {
+  isOverdue: boolean;
+  remainingLabel: string | null;
+  windowLongLabel: string;
+};
+
 const professionalCardBorderByStatus: Record<string, string> = {
   awarded: 'border-purple-300/70',
   quoted: 'border-blue-300/70',
@@ -50,6 +60,59 @@ const professionalCardBorderByStatus: Record<string, string> = {
   pending: 'border-amber-300/70',
   declined: 'border-rose-300/80',
   rejected: 'border-rose-300/80',
+};
+
+const getQuoteDeadlineState = (projectProfessional: ProjectProfessional): QuoteDeadlineState | null => {
+  const status = String(projectProfessional.status || '').toLowerCase();
+  if (['quoted', 'awarded', 'counter_requested', 'declined', 'rejected', 'withdrawn'].includes(status)) {
+    return null;
+  }
+  if (projectProfessional.quotedAt || !projectProfessional.createdAt) {
+    return null;
+  }
+
+  const invitedAtMs = new Date(projectProfessional.createdAt).getTime();
+  if (!Number.isFinite(invitedAtMs)) {
+    return null;
+  }
+
+  const quoteWindowMs = projectProfessional.project.isEmergency
+    ? 1 * 60 * 60 * 1000
+    : 3 * 24 * 60 * 60 * 1000;
+  const effectiveDeadlineMs = projectProfessional.quoteExtendedUntil
+    ? new Date(projectProfessional.quoteExtendedUntil).getTime()
+    : invitedAtMs + quoteWindowMs;
+
+  if (!Number.isFinite(effectiveDeadlineMs)) {
+    return null;
+  }
+
+  const remainingMs = effectiveDeadlineMs - Date.now();
+  const windowLongLabel = projectProfessional.project.isEmergency
+    ? '1 hour from invitation'
+    : '3 days from invitation';
+
+  if (remainingMs <= 0) {
+    return {
+      isOverdue: true,
+      remainingLabel: null,
+      windowLongLabel,
+    };
+  }
+
+  const daysLeft = Math.floor(remainingMs / (24 * 60 * 60 * 1000));
+  const hoursLeft = Math.floor((remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const minutesLeft = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+
+  return {
+    isOverdue: false,
+    remainingLabel: daysLeft > 0
+      ? `${daysLeft}d ${hoursLeft}h left`
+      : hoursLeft > 0
+        ? `${hoursLeft}h left`
+        : `${minutesLeft}m left`,
+    windowLongLabel,
+  };
 };
 
 export default function ProfessionalProjectsPage() {
@@ -317,7 +380,17 @@ export default function ProfessionalProjectsPage() {
             </div>
             <div className="space-y-2">
               {dashboardProjects.map((projectProf) => {
-                const actions = nextStepMap[projectProf.project.id] || [];
+                const quoteDeadlineState = getQuoteDeadlineState(projectProf);
+                const quoteOverdue = Boolean(quoteDeadlineState?.isOverdue);
+                const actions = (nextStepMap[projectProf.project.id] || []).filter((action) => {
+                  if (projectProf.project.isEmergency === true && action.actionKey === 'REQUEST_SITE_ACCESS') {
+                    return false;
+                  }
+                  if (quoteOverdue && action.actionKey === 'SUBMIT_QUOTE') {
+                    return false;
+                  }
+                  return true;
+                });
                 const primaryActions = actions.filter((action) => action.isPrimary);
                 const electiveActions = actions.filter((action) => action.isElective);
                 const primaryAction = primaryActions[0] || null;
@@ -329,7 +402,7 @@ export default function ProfessionalProjectsPage() {
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
                   <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
-                    isStopStatus
+                    quoteOverdue || isStopStatus
                       ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
                       : isEmergencyProject
                         ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
@@ -365,13 +438,24 @@ export default function ProfessionalProjectsPage() {
                         ) : (
                           <Link
                             href={`/professional-projects/${projectProf.id}?tab=overview`}
-                            className="truncate text-[1.2rem] font-bold leading-tight text-slate-900 underline-offset-2 hover:underline"
+                            className={`truncate text-[1.2rem] font-bold leading-tight underline-offset-2 hover:underline ${
+                              quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'
+                            }`}
                             title="Open project details"
                           >
                             {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                           </Link>
                         )}
                         <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
+                          {quoteOverdue && quoteDeadlineState ? (
+                            <Link
+                              href={`/professional-projects/${projectProf.id}?tab=chat`}
+                              className="inline-flex items-center rounded-full border border-rose-200/90 bg-rose-500/35 px-2 py-1 text-xs font-semibold text-rose-100 shadow-[0_0_10px_rgba(251,113,133,0.3)] hover:bg-rose-500/45"
+                              title="Open chat with the client"
+                            >
+                              Quote overdue ({quoteDeadlineState.windowLongLabel}). Contact client to reopen bidding.
+                            </Link>
+                          ) : null}
                           <ProjectSentimentBadge
                             projectId={projectProf.project.id}
                             storageScope="professional"
@@ -385,18 +469,22 @@ export default function ProfessionalProjectsPage() {
                       <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
                         {/* Project Details */}
                         <div className="col-span-2 md:col-span-1">
-                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <div className={`flex items-center gap-2 text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
                             {projectProf.project.region ? <span>{projectProf.project.region}</span> : null}
                             {!isRestricted && projectProf.quoteAmount && (
                               <>
                                 {projectProf.project.region ? <span>•</span> : null}
-                                <span className="font-medium text-slate-900">${Number(projectProf.quoteAmount).toLocaleString()}</span>
+                                <span className={`font-medium ${quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'}`}>${Number(projectProf.quoteAmount).toLocaleString()}</span>
                               </>
                             )}
                           </div>
                           {isRestricted ? (
-                            <p className="mt-2 text-xs text-slate-600">
+                            <p className={`mt-2 text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
                               {projectProf.project.notes || 'Bidding has concluded for this project.'}
+                            </p>
+                          ) : quoteOverdue ? (
+                            <p className="mt-2 text-xs text-rose-100">
+                              No quote was submitted within the allowed window. Open chat to ask the client to reopen bidding.
                             </p>
                           ) : primaryAction?.description ? (
                             <p className="mt-2 text-xs text-slate-600">{primaryAction.description}</p>
@@ -415,6 +503,12 @@ export default function ProfessionalProjectsPage() {
                               {primaryActions.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
                                   {primaryActions.slice(0, 2).map((action) => (
+                                    (() => {
+                                      const label = action.actionKey === 'SUBMIT_QUOTE' && quoteDeadlineState?.remainingLabel
+                                        ? `${action.actionLabel} · ${quoteDeadlineState.remainingLabel}`
+                                        : action.actionLabel;
+
+                                      return (
                                     <button
                                       key={`${projectProf.project.id}-${action.actionKey}`}
                                       type="button"
@@ -427,8 +521,10 @@ export default function ProfessionalProjectsPage() {
                                       }
                                       className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
                                     >
-                                      {action.actionLabel}
+                                      {label}
                                     </button>
+                                      );
+                                    })()
                                   ))}
                                   {electiveActions.map((action) => (
                                     <button

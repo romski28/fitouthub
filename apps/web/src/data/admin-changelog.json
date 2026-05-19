@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-19-4d5bd2e",
+    "date": "2026-05-19T11:39:08+08:00",
+    "title": "fix(web): tighten quote deadline cues and emergency gating",
+    "summary": "fix(web): tighten quote deadline cues and emergency gating",
+    "areas": [
+      "web"
+    ],
+    "commit": "4d5bd2e",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-18-e2a40e4",
     "date": "2026-05-18T16:47:31+08:00",
     "title": "fix(api): preserve quote breakdown in client project payloads",

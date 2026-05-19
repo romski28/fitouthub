@@ -178,6 +178,32 @@ const toDateOnlyValue = (value: Date) => {
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
 };
 
+const tomorrowAtNine = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(9, 0, 0, 0);
+  return date;
+};
+
+const nextQuarterHour = () => {
+  const date = new Date();
+  date.setSeconds(0, 0);
+  const minutes = date.getMinutes();
+  const roundedMinutes = Math.ceil(minutes / 15) * 15;
+
+  if (roundedMinutes >= 60) {
+    date.setHours(date.getHours() + 1, 0, 0, 0);
+    return date;
+  }
+
+  date.setMinutes(roundedMinutes, 0, 0);
+  return date;
+};
+
+const getDefaultQuoteStart = (isEmergency: boolean) => {
+  return isEmergency ? nextQuarterHour() : tomorrowAtNine();
+};
+
 const isEmergencyStartDateAllowed = (value?: string | null) => {
   if (!value) return false;
   const today = new Date();
@@ -422,12 +448,13 @@ export default function ProjectDetailPage() {
       setProject(data);
       hasLoadedProjectRef.current = true;
 
-      if (data.quoteAmount && !quoteFormDirtyRef.current && !submittingQuote) {
+      if (!quoteFormDirtyRef.current && !submittingQuote) {
+        const defaultStart = getDefaultQuoteStart(data?.project?.isEmergency === true);
         setQuoteForm({
           breakdown: parseQuoteBreakdownForm(data.quoteBreakdown, data.quoteBaseAmount || data.quoteAmount),
           notes: data.quoteNotes || '',
-          estimatedStartDate: toDateInputValue(data.quoteEstimatedStartAt),
-          estimatedStartTime: toTimeInputValue(data.quoteEstimatedStartAt),
+          estimatedStartDate: toDateInputValue(data.quoteEstimatedStartAt) || toDateOnlyValue(defaultStart),
+          estimatedStartTime: toTimeInputValue(data.quoteEstimatedStartAt) || defaultStart.toTimeString().slice(0, 5),
           estimatedDurationValue:
             (data.quoteEstimatedDurationUnit === 'days'
               ? durationMinutesToDaysInput(data.quoteEstimatedDurationMinutes)
@@ -894,7 +921,7 @@ export default function ProjectDetailPage() {
     }
 
     if (project?.project?.isEmergency === true && !isEmergencyStartDateAllowed(quoteForm.estimatedStartDate)) {
-      setError('For emergency jobs, choose today or tomorrow for Be with you on..');
+      setError('For emergency jobs, choose today or tomorrow for Be with you...');
       return;
     }
 
