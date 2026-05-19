@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-20-8f670c0",
+    "date": "2026-05-20T01:08:57+08:00",
+    "title": "fix(web): sync agreement tab styling",
+    "summary": "fix(web): sync agreement tab styling",
+    "areas": [
+      "web"
+    ],
+    "commit": "8f670c0",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/contract-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-2dc4f8d",
     "date": "2026-05-20T00:57:14+08:00",
     "title": "fix(web): dedupe vision quota status fetches",
