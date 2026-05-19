@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-19-be69f2e",
+    "date": "2026-05-19T12:00:49+08:00",
+    "title": "style(web): align client project list shell",
+    "summary": "style(web): align client project list shell",
+    "areas": [
+      "web"
+    ],
+    "commit": "be69f2e",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-19-4d5bd2e",
     "date": "2026-05-19T11:39:08+08:00",
     "title": "fix(web): tighten quote deadline cues and emergency gating",

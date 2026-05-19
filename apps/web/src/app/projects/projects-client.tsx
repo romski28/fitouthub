@@ -743,45 +743,52 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-3 sm:px-6 lg:px-8">
-      {/* Updates badge — fixed right for thumb access */}
-      <div className="fixed bottom-[260px] right-6 z-30">
-        <UpdatesButton onSummaryChange={setUpdatesSummary} />
+    <div className="relative isolate">
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+        <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
+        <div className="absolute inset-0 bg-[#1a1a1a]/44" />
       </div>
 
-      <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 text-white shadow-sm">
-        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Action Required</p>
-            <h1 className="text-2xl font-bold leading-tight">
-              My projects
-              {nextStepsLoading && (
-                <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-300">
-                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
-                  Gathering action items&hellip;
-                </span>
-              )}
-            </h1>
+      <div className="min-h-screen pb-16">
+        <div className="mx-auto max-w-7xl space-y-5 px-3 sm:px-6 lg:px-8 py-6">
+          {/* Updates badge — fixed right for thumb access */}
+          <div className="fixed bottom-[260px] right-6 z-30">
+            <UpdatesButton onSummaryChange={setUpdatesSummary} />
           </div>
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={openAiCreateFlow}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-emerald-700"
-            >
-              {t('createNew')}
-            </button>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-              <SummaryCard label={t('total')} value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
-              <SummaryCard label={t('stats.awarded')} value={totals.approved} tone="emerald" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
-              <SummaryCard label={t('stats.pending')} value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
-              <SummaryCard label="WITHDRAWN" value={totals.withdrawn} tone="rose" filterStatus="withdrawn" currentFilter={filterStatus} onClick={() => setFilterStatus('withdrawn')} />
-            </div>
-          </div>
-        </div>
 
-        {dashboardProjects.length > 0 && (
-          <div className="space-y-2">
-            {dashboardProjects.map((project) => {
+          <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-5 shadow-sm">
+            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
+                <h1 className="text-2xl font-bold leading-tight">
+                  My projects
+                  {nextStepsLoading && (
+                    <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-600">
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-transparent" />
+                      Gathering action items&hellip;
+                    </span>
+                  )}
+                </h1>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={openAiCreateFlow}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  {t('createNew')}
+                </button>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                  <SummaryCard label={t('total')} value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
+                  <SummaryCard label={t('stats.awarded')} value={totals.approved} tone="emerald" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
+                  <SummaryCard label={t('stats.pending')} value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
+                  <SummaryCard label="WITHDRAWN" value={totals.withdrawn} tone="rose" filterStatus="withdrawn" currentFilter={filterStatus} onClick={() => setFilterStatus('withdrawn')} />
+                </div>
+              </div>
+            </div>
+
+            {dashboardProjects.length > 0 && (
+              <div className="space-y-2">
+                {dashboardProjects.map((project) => {
               const actions = nextStepMap[project.id] || [];
               const primaryActions = actions.filter((action) => action.isPrimary).slice(0, 3);
               const primaryActionKeys = new Set(primaryActions.map((action) => action.actionKey));
@@ -800,14 +807,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const isEmergencyProject = (project as any).isEmergency === true;
               const baseBorder = clientCardBorderByStatus[project.status] || 'border-white/20';
               const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
-              return (
-                <div key={`dash-${project.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
-                  quoteOverdue || isStopStatus
-                    ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
-                    : isEmergencyProject
-                      ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
-                      : `${baseBorder} bg-[var(--mimo-project-paper)] hover:bg-[var(--mimo-project-paper)]`
-                }`}>
+                  return (
+                    <div key={`dash-${project.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
+                      quoteOverdue || isStopStatus
+                        ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)] shadow-[0_0_16px_rgba(220,20,60,0.32)] hover:bg-[rgba(121,24,38,0.9)]'
+                        : isEmergencyProject
+                          ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
+                          : `${baseBorder} bg-[var(--mimo-project-paper)] hover:bg-[var(--mimo-project-paper)]`
+                    }`}>
                   {unreadCount > 0 && (
                     <button
                       type="button"
@@ -840,7 +847,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       </Link>
                       <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
                         {quoteOverdue && (
-                          <span className="inline-flex items-center rounded-full border border-rose-200/90 bg-rose-500/35 px-2 py-1 text-xs font-semibold text-rose-100 shadow-[0_0_10px_rgba(251,113,133,0.3)]">
+                          <span className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-2 py-1 text-xs font-semibold text-rose-50 shadow-[0_0_10px_rgba(255,255,255,0.08)]">
                             Quote overdue blocker
                           </span>
                         )}
@@ -941,24 +948,26 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-        {dashboardProjects.length === 0 && (
-          <div className="rounded-xl border border-white/10 bg-transparent p-8 text-center space-y-3">
-            <p className="text-base font-semibold text-white">No immediate actions.</p>
-            <p className="text-sm text-slate-300">Check Recent Activity for updates.</p>
-            <button
-              onClick={openAiCreateFlow}
-              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
-            >
-              {t('startProject')}
-            </button>
+            {dashboardProjects.length === 0 && (
+              <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-center space-y-3 text-slate-600 shadow-sm">
+                <p className="text-base font-semibold text-slate-900">No immediate actions.</p>
+                <p className="text-sm text-slate-600">Check Recent Activity for updates.</p>
+                <button
+                  onClick={openAiCreateFlow}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+                >
+                  {t('startProject')}
+                </button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {editing ? (
