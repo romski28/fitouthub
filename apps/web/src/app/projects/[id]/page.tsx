@@ -2053,8 +2053,12 @@ export default function ClientProjectDetailPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-transparent pb-16">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
+      <div className="relative min-h-screen overflow-hidden bg-[#efe5d3] pb-16">
+        <div
+          className="pointer-events-none fixed inset-y-0 right-0 hidden w-[42vw] bg-cover bg-center bg-no-repeat opacity-25 lg:block"
+          style={{ backgroundImage: 'url("/assets/images/hero-homepage.webp")' }}
+        />
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
           {/* Header */}
           <div className="flex items-center justify-between">
             <Link href="/projects" className="text-sm text-blue-600 hover:underline">
@@ -2434,14 +2438,12 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Contract */}
           {activeTab === 'contract' && isAwarded && project && (
-            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
-              <ContractTab
-                projectId={project.id}
-                accessToken={accessToken || ''}
-                userRole="client"
-                onNavigateTab={(tab) => setActiveTab(tab)}
-              />
-            </div>
+            <ContractTab
+              projectId={project.id}
+              accessToken={accessToken || ''}
+              userRole="client"
+              onNavigateTab={(tab) => setActiveTab(tab)}
+            />
           )}
 
           {/* Tab Content - Schedule */}
