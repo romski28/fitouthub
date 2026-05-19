@@ -403,7 +403,7 @@ export default function ProfessionalProjectsPage() {
                 return (
                   <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
                     quoteOverdue || isStopStatus
-                      ? 'border-rose-300/90 bg-rose-500/25 shadow-[0_0_16px_rgba(251,113,133,0.35)] hover:bg-rose-500/30'
+                      ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.25)] shadow-[0_0_16px_rgba(220,20,60,0.22)] hover:bg-[rgba(121,24,38,0.3)]'
                       : isEmergencyProject
                         ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
                         : `${baseBorder} bg-[var(--mimo-project-paper)] hover:bg-[var(--mimo-project-paper)]`
@@ -450,7 +450,7 @@ export default function ProfessionalProjectsPage() {
                           {quoteOverdue && quoteDeadlineState ? (
                             <Link
                               href={`/professional-projects/${projectProf.id}?tab=chat`}
-                              className="inline-flex items-center rounded-full border border-rose-200/90 bg-rose-500/35 px-2 py-1 text-xs font-semibold text-rose-100 shadow-[0_0_10px_rgba(251,113,133,0.3)] hover:bg-rose-500/45"
+                              className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-2 py-1 text-xs font-semibold text-rose-50 shadow-[0_0_10px_rgba(255,255,255,0.08)] hover:bg-white/15"
                               title="Open chat with the client"
                             >
                               Quote overdue ({quoteDeadlineState.windowLongLabel}). Contact client to reopen bidding.

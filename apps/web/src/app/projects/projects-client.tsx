@@ -756,11 +756,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
             <UpdatesButton onSummaryChange={setUpdatesSummary} />
           </div>
 
-          <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-5 shadow-sm">
+          <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-5 py-5 shadow-sm">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
-                <h1 className="text-2xl font-bold leading-tight">
+                <h1 className="text-2xl font-bold leading-tight text-slate-900">
                   My projects
                   {nextStepsLoading && (
                     <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-600">
@@ -783,6 +783,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                   <SummaryCard label={t('stats.pending')} value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
                   <SummaryCard label="WITHDRAWN" value={totals.withdrawn} tone="rose" filterStatus="withdrawn" currentFilter={filterStatus} onClick={() => setFilterStatus('withdrawn')} />
                 </div>
+                <p className="text-[10px] text-center italic text-slate-600">Click on a status to filter</p>
               </div>
             </div>
 
@@ -1000,10 +1001,10 @@ function SummaryCard({
   onClick: () => void;
 }) {
   const toneMap: Record<SummaryTone, { valueColor: string; activeRing: string }> = {
-    slate: { valueColor: 'text-white', activeRing: 'ring-white' },
-    amber: { valueColor: 'text-amber-200', activeRing: 'ring-amber-300' },
-    emerald: { valueColor: 'text-emerald-300', activeRing: 'ring-emerald-300' },
-    rose: { valueColor: 'text-rose-200', activeRing: 'ring-rose-300' },
+    slate: { valueColor: 'text-slate-900', activeRing: 'ring-slate-700' },
+    amber: { valueColor: 'text-amber-700', activeRing: 'ring-amber-300' },
+    emerald: { valueColor: 'text-emerald-700', activeRing: 'ring-emerald-300' },
+    rose: { valueColor: 'text-rose-700', activeRing: 'ring-rose-300' },
   };
 
   const { valueColor, activeRing } = toneMap[tone];
@@ -1012,11 +1013,11 @@ function SummaryCard({
   return (
     <button
       onClick={onClick}
-      className={`rounded-lg bg-white/10 px-3 py-2 text-left transition-all hover:bg-white/20 ${
-        isActive ? `ring-2 ${activeRing} bg-white/20` : ''
+      className={`rounded-lg bg-white/40 px-3 py-2 text-left transition-all hover:bg-white/60 ${
+        isActive ? `ring-2 ${activeRing} bg-white/60` : ''
       }`}
     >
-      <p className="text-[11px] uppercase tracking-wide text-slate-200">{label}</p>
+      <p className="text-[11px] uppercase tracking-wide text-slate-700">{label}</p>
       <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
     </button>
   );

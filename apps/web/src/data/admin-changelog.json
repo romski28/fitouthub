@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-19-2c63f83",
+    "date": "2026-05-19T12:15:18+08:00",
+    "title": "style(web): refine project list dashboard states",
+    "summary": "style(web): refine project list dashboard states",
+    "areas": [
+      "web"
+    ],
+    "commit": "2c63f83",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-05-19-be69f2e",
     "date": "2026-05-19T12:00:49+08:00",
     "title": "style(web): align client project list shell",
