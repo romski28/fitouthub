@@ -469,20 +469,13 @@ function ProfessionalsPageInner() {
   console.log('[ProfessionalsPage] Final state:', { userLocation, projectRegion, locationParam, projectName, defaultLocation });
 
   return (
-    <>
+    <div className={`space-y-6 pt-4 ${emergencySource ? 'pb-28' : 'pb-8'}`}>
       {/* Protected page overlay */}
       <ProtectedPageOverlay
         onJoinClick={openJoinModal}
         onLoginClick={openLoginModal}
       />
 
-      <div className="relative isolate">
-        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-          <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
-          <div className="absolute inset-0 bg-[#1a1a1a]/44" />
-        </div>
-
-        <div className={`space-y-6 pt-4 ${emergencySource ? 'pb-28' : 'pb-8'}`}>
           {/* Emergency context banner — only shown for emergency route */}
           {emergencySource && (
             <section className="relative -mx-6 px-6">
@@ -652,7 +645,6 @@ function ProfessionalsPageInner() {
               defaultFiltersOpen={sourceParam !== 'ai-wizard'}
             />
           )}
-        </div>
 
         {/* Sticky emergency action bar — only shown when 1+ selected */}
         {emergencySource && selectedEmergencyPros.length > 0 && (
@@ -693,8 +685,7 @@ function ProfessionalsPageInner() {
             aiIntakeId: emergencyAiIntakeId,
           }}
         />
-      </div>
-    </>
+    </div>
   );
 }
 

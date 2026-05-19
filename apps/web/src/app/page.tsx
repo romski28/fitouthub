@@ -59,12 +59,6 @@ export default function Home() {
 
 
   return (
-    <div className="relative isolate">
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-        <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
-        <div className="absolute inset-0 bg-[#1a1a1a]/44" />
-      </div>
-
       <div className="space-y-6 pb-8 pt-2">
         {/* Emergency FAB — top of active area, same right column as other FABs */}
         {hydrated && isLoggedIn && user?.role === 'client' && (
@@ -297,7 +291,6 @@ export default function Home() {
         onClose={() => setEmergencyModalOpen(false)}
       />
       </div>
-    </div>
   );
 }
 

@@ -327,12 +327,6 @@ export default function ProfessionalProjectsPage() {
   }
 
   return (
-    <div className="relative isolate">
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-        <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
-        <div className="absolute inset-0 bg-[#1a1a1a]/44" />
-      </div>
-
       <div className="min-h-screen pb-16">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
           {/* Updates badge — fixed right for thumb access */}
@@ -580,7 +574,6 @@ export default function ProfessionalProjectsPage() {
         <BackToTop />
         </div>
       </div>
-    </div>
   );
 }
 

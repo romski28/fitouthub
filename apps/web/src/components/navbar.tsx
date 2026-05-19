@@ -21,16 +21,61 @@ export const Navbar: React.FC = () => {
   } = useProfessionalAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const isHomePath = pathname === '/';
   const { openJoinModal, openLoginModal } = useAuthModalControl();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => setHydrated(true));
     return () => window.cancelAnimationFrame(frameId);
   }, []);
+
+  useEffect(() => {
+    setProfileMenuOpen(false);
+    setMobileMenuOpen(false);
+    setNavVisible(true);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setHasScrolled(currentScrollY > 8);
+
+      if (mobileMenuOpen || profileMenuOpen) {
+        setNavVisible(true);
+        lastScrollY = currentScrollY;
+        return;
+      }
+
+      if (currentScrollY <= 24) {
+        setNavVisible(true);
+        lastScrollY = currentScrollY;
+        return;
+      }
+
+      const delta = currentScrollY - lastScrollY;
+      if (delta > 10) {
+        setNavVisible(false);
+      } else if (delta < -10) {
+        setNavVisible(true);
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hydrated, mobileMenuOpen, profileMenuOpen]);
 
   const showAuthed = hydrated && isLoggedIn && user;
   const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
@@ -38,16 +83,15 @@ export const Navbar: React.FC = () => {
   const showProjectsLink = hydrated && isLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const showPublicLinks = !showProfessionalAuthed;
+  const navShellClassName = [
+    'sticky top-0 z-40 border-b border-slate-200/80 bg-white/78 backdrop-blur-md transition-transform duration-300',
+    navVisible ? 'translate-y-0' : '-translate-y-full',
+    hasScrolled ? 'shadow-[0_10px_30px_rgba(15,23,42,0.08)]' : 'shadow-sm',
+  ].join(' ');
 
   return (
     <>
-      <header
-        className={
-          isHomePath
-            ? 'relative z-40 border-b border-slate-200/80 bg-white/70 backdrop-blur-md'
-            : 'relative z-40 border-b border-slate-200 bg-white'
-        }
-      >
+      <header className={navShellClassName}>
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
           {/* Logo */}
           <Link
@@ -68,14 +112,14 @@ export const Navbar: React.FC = () => {
           <nav className="hidden min-[820px]:flex items-center gap-6 text-sm font-medium text-slate-700">
             {showPublicLinks ? (
               <>
-                <a className="hover:text-slate-900" href="/professionals">
+                <Link className="hover:text-slate-900" href="/professionals">
                   {t('professionals')}
-                </a>
+                </Link>
               </>
             ) : null}
-            <a className="hover:text-slate-900" href="/docs">
+            <Link className="hover:text-slate-900" href="/docs">
               {t('docs')}
-            </a>
+            </Link>
             {showProjectsLink ? (
               <Link className="hover:text-slate-900" href="/projects">
                 {t('projects')}
@@ -86,9 +130,9 @@ export const Navbar: React.FC = () => {
                 <Link className="hover:text-slate-900" href="/professional-projects">
                   {t('projects')}
                 </Link>
-                <a className="hover:text-slate-900" href="/professional/calendar">
+                <Link className="hover:text-slate-900" href="/professional/calendar">
                   Calendar
-                </a>
+                </Link>
               </>
             ) : null}
 
@@ -96,7 +140,7 @@ export const Navbar: React.FC = () => {
             <LanguageSwitcher />
 
             {/* Desktop Auth buttons */}
-            <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-6">
+            <div className="ml-4 flex min-w-[220px] items-center justify-end gap-3 border-l border-slate-200 pl-6">
               {showAuthed ? (
                 <div className="relative">
                   <button
@@ -122,19 +166,21 @@ export const Navbar: React.FC = () => {
                   {/* Profile dropdown menu */}
                   {profileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-50">
-                      <a
+                      <Link
                         href="/profile"
                         className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() => setProfileMenuOpen(false)}
                       >
                         {t('profile')}
-                      </a>
+                      </Link>
                       {user.role === 'professional' && (
-                        <a
+                        <Link
                           href="/professional/edit"
                           className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                          onClick={() => setProfileMenuOpen(false)}
                         >
                           {t('editProfessional')}
-                        </a>
+                        </Link>
                       )}
                       <button
                         onClick={() => {
@@ -164,18 +210,20 @@ export const Navbar: React.FC = () => {
                   {/* Professional Profile dropdown menu */}
                   {profileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-50">
-                      <a
+                      <Link
                         href="/professional/profile"
                         className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() => setProfileMenuOpen(false)}
                       >
                         {t('profile')}
-                      </a>
-                      <a
+                      </Link>
+                      <Link
                         href="/professional/calendar"
                         className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() => setProfileMenuOpen(false)}
                       >
                         Calendar
-                      </a>
+                      </Link>
                       <button
                         onClick={() => {
                           profLogout();
@@ -191,7 +239,7 @@ export const Navbar: React.FC = () => {
                 </div>
               ) : (
                 // Keep button container stable to avoid hydration diffs
-                <div className="flex items-center gap-3">
+                <div className="flex min-h-10 items-center gap-3">
                   <button
                     onClick={openLoginModal}
                     className="text-slate-700 hover:text-slate-900 font-medium"
@@ -210,7 +258,7 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Mobile Auth & Hamburger */}
-          <div className="flex items-center gap-3 min-[820px]:hidden">
+          <div className="flex min-w-[152px] items-center justify-end gap-3 min-[820px]:hidden">
             {/* Auth buttons on mobile */}
             {showAuthed ? (
               <button
@@ -283,22 +331,22 @@ export const Navbar: React.FC = () => {
             <nav className="flex flex-col px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
               {showPublicLinks ? (
                 <>
-                  <a
+                  <Link
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     href="/professionals"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('professionals')}
-                  </a>
+                  </Link>
                 </>
               ) : null}
-              <a
+              <Link
                 className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                 href="/docs"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {t('docs')}
-              </a>
+              </Link>
               {showProjectsLink ? (
                 <Link
                   className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
@@ -317,13 +365,13 @@ export const Navbar: React.FC = () => {
                   >
                     {t('projects')}
                   </Link>
-                  <a
+                  <Link
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     href="/professional/calendar"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Calendar
-                  </a>
+                  </Link>
                 </>
               ) : null}
 
@@ -331,13 +379,13 @@ export const Navbar: React.FC = () => {
               {showAuthed && (
                 <>
                   <hr className="my-2" />
-                  <a
+                  <Link
                     href="/profile"
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('profile')}
-                  </a>
+                  </Link>
                   {user.role === 'admin' ? (
                     <Link
                       href="/admin"
@@ -348,13 +396,13 @@ export const Navbar: React.FC = () => {
                     </Link>
                   ) : null}
                   {user.role === 'professional' && (
-                    <a
+                    <Link
                       href="/professional/edit"
                       className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {t('editProfessional')}
-                    </a>
+                    </Link>
                   )}
                   <button
                     onClick={() => {
@@ -372,20 +420,20 @@ export const Navbar: React.FC = () => {
               {showProfessionalAuthed && (
                 <>
                   <hr className="my-2" />
-                  <a
+                  <Link
                     href="/professional/profile"
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('profile')}
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="/professional/calendar"
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Calendar
-                  </a>
+                  </Link>
                   <button
                     onClick={() => {
                       profLogout();
@@ -408,13 +456,13 @@ export const Navbar: React.FC = () => {
             <div className="px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
               {showAuthed && (
                 <>
-                  <a
+                  <Link
                     href="/profile"
                     className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
                     onClick={() => setProfileMenuOpen(false)}
                   >
                     Profile
-                  </a>
+                  </Link>
                   {user.role === 'admin' ? (
                     <Link
                       href="/admin"
@@ -425,13 +473,13 @@ export const Navbar: React.FC = () => {
                     </Link>
                   ) : null}
                   {user.role === 'professional' && (
-                    <a
+                    <Link
                       href="/professional/edit"
                       className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
                       onClick={() => setProfileMenuOpen(false)}
                     >
                       Edit Professional Info
-                    </a>
+                    </Link>
                   )}
                   <button
                     onClick={() => {
@@ -448,20 +496,20 @@ export const Navbar: React.FC = () => {
 
               {showProfessionalAuthed && (
                 <>
-                  <a
+                  <Link
                     href="/professional/profile"
                     className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
                     onClick={() => setProfileMenuOpen(false)}
                   >
                     Profile
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="/professional/calendar"
                     className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
                     onClick={() => setProfileMenuOpen(false)}
                   >
                     Calendar
-                  </a>
+                  </Link>
                   <button
                     onClick={() => {
                       profLogout();

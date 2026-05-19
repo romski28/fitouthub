@@ -395,12 +395,7 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="relative isolate min-h-screen pb-10 pt-6">
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-        <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
-        <div className="absolute inset-0 bg-[#1a1a1a]/44" />
-      </div>
-
+    <div className="min-h-screen pb-10 pt-6">
       <section className="-mx-6 px-6">
         <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>

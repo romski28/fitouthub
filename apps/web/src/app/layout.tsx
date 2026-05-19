@@ -16,6 +16,7 @@ import CornerRibbon from "@/components/corner-ribbon";
 import FloatingChat from "@/components/floating-chat";
 import { MainWrapper } from "@/components/main-wrapper";
 import { AdminFab } from "@/components/admin-fab";
+import { SiteWallpaperShell } from "@/components/site-wallpaper-shell";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -56,7 +57,8 @@ export default async function RootLayout({
               <AuthModalControlProvider>
                 <NextStepModalProvider>
                 <Toaster position="top-right" />
-                <div className="min-h-screen bg-[var(--mimo-paper)] text-slate-900">
+                <div className="relative min-h-screen bg-[var(--mimo-paper)] text-slate-900">
+                  <SiteWallpaperShell />
                   <NavbarWrapper />
                   <MainWrapper>{children}</MainWrapper>
                   <FooterWrapper />

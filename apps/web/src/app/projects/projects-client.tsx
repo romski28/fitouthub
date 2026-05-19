@@ -743,12 +743,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   };
 
   return (
-    <div className="relative isolate">
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-        <div className="h-full w-full bg-[url('/assets/images/hero-homepage-empty.webp')] bg-cover bg-center bg-no-repeat" />
-        <div className="absolute inset-0 bg-[#1a1a1a]/44" />
-      </div>
-
       <div className="min-h-screen pb-16">
         <div className="mx-auto max-w-7xl space-y-5 px-3 sm:px-6 lg:px-8 py-6">
           {/* Updates badge — fixed right for thumb access */}
@@ -971,7 +965,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
             )}
           </div>
         </div>
-      </div>
 
       {editing ? (
         <EditProjectModal
