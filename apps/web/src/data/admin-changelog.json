@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-20-7be0416",
+    "date": "2026-05-20T00:32:59+08:00",
+    "title": "fix(updates): harden read-state authorization lookups",
+    "summary": "fix(updates): harden read-state authorization lookups",
+    "areas": [
+      "api"
+    ],
+    "commit": "7be0416",
+    "files": [
+      "apps/api/src/updates/updates.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-20-e1f6291",
     "date": "2026-05-20T00:02:54+08:00",
     "title": "fix(project-detail): tolerate missing rollup columns",

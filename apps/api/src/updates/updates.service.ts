@@ -2127,7 +2127,17 @@ export class UpdatesService {
     if (chatType === 'project-professional') {
       const projectProfessional = await this.prisma.projectProfessional.findUnique({
         where: { id: threadId },
-        include: { project: true },
+        select: {
+          id: true,
+          professionalId: true,
+          project: {
+            select: {
+              id: true,
+              userId: true,
+              clientId: true,
+            },
+          },
+        },
       });
 
       if (!projectProfessional) {
@@ -2181,7 +2191,17 @@ export class UpdatesService {
     } else if (chatType === 'project-general') {
       const thread = await this.prisma.projectChatThread.findUnique({
         where: { id: threadId },
-        include: { project: true },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: {
+              id: true,
+              userId: true,
+              clientId: true,
+            },
+          },
+        },
       });
 
       if (!thread) {
@@ -2240,7 +2260,17 @@ export class UpdatesService {
     } else if (chatType === 'assist') {
       const assistRequest = await this.prisma.projectAssistRequest.findUnique({
         where: { id: threadId },
-        include: { project: true },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: {
+              id: true,
+              userId: true,
+              clientId: true,
+            },
+          },
+        },
       });
 
       if (!assistRequest) {
@@ -2370,7 +2400,17 @@ export class UpdatesService {
     if (chatType === 'project-professional') {
       const projectProfessional = await this.prisma.projectProfessional.findUnique({
         where: { id: threadId },
-        include: { project: true },
+        select: {
+          id: true,
+          professionalId: true,
+          project: {
+            select: {
+              id: true,
+              userId: true,
+              clientId: true,
+            },
+          },
+        },
       });
 
       if (!projectProfessional) {
@@ -2462,7 +2502,17 @@ export class UpdatesService {
     if (chatType === 'project-general') {
       const thread = await this.prisma.projectChatThread.findUnique({
         where: { id: threadId },
-        include: { project: true },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: {
+              id: true,
+              userId: true,
+              clientId: true,
+            },
+          },
+        },
       });
 
       if (!thread) {
@@ -2565,7 +2615,17 @@ export class UpdatesService {
     if (chatType === 'assist') {
       const assistRequest = await this.prisma.projectAssistRequest.findUnique({
         where: { id: threadId },
-        include: { project: true },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: {
+              id: true,
+              userId: true,
+              clientId: true,
+            },
+          },
+        },
       });
 
       if (!assistRequest) {
