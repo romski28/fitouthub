@@ -18,6 +18,7 @@ import {
   type HkZoneCode,
   zoneCodesToAreaCodes,
 } from '@/lib/hk-districts';
+import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
 
 import FileUploader from '@/components/file-uploader';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
@@ -66,6 +67,12 @@ type ProfileChecklistItem = {
   weight: number;
 };
 
+const PROFESSION_TYPE_OPTIONS = [
+  { value: 'company', label: 'Company' },
+  { value: 'contractor', label: 'Contractor' },
+  { value: 'reseller', label: 'Reseller' },
+] as const;
+
 const emptyProfile: ProfessionalProfile = {
   id: '',
   email: '',
@@ -89,22 +96,27 @@ const buildProfileChecklist = (
   refProjects: ReferenceProject[],
   emergencyCalloutAvailable: boolean,
 ): ProfileChecklistItem[] => {
+  const professionType = (profile.professionType || '').trim().toLowerCase();
   const serviceAreas = (profile.serviceArea || '')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
+  const tradesOrProductsListed =
+    professionType === 'reseller'
+      ? (profile.suppliesOffered?.length || 0) > 0
+      : (profile.tradesOffered?.length || 0) > 0 || Boolean(profile.primaryTrade);
 
   return [
     { label: 'Business or full name added', done: Boolean(profile.businessName || profile.fullName), weight: 10 },
     { label: 'Phone number added', done: Boolean(profile.phone), weight: 10 },
     { label: 'Profession type selected', done: Boolean(profile.professionType), weight: 10 },
-    { label: 'Primary trade defined', done: Boolean(profile.primaryTrade), weight: 15 },
-    { label: 'Trades or supplies listed', done: Boolean((profile.tradesOffered?.length || 0) + (profile.suppliesOffered?.length || 0)), weight: 10 },
+    { label: 'Primary trade defined', done: professionType !== 'contractor' || Boolean(profile.primaryTrade), weight: 15 },
+    { label: 'Trades or products listed', done: tradesOrProductsListed, weight: 10 },
     { label: 'Service area described', done: serviceAreas.length > 0, weight: 10 },
     { label: 'Primary location added', done: Boolean(profile.locationPrimary), weight: 10 },
     { label: 'At least 3 profile images uploaded', done: (profile.profileImages?.length || 0) >= 3, weight: 10 },
     { label: 'At least 2 reference projects added', done: refProjects.length >= 2, weight: 10 },
-    { label: 'Emergency availability set', done: emergencyCalloutAvailable || profile.professionType === 'reseller', weight: 5 },
+    { label: 'Emergency availability set', done: true, weight: 5 },
   ];
 };
 
@@ -114,10 +126,9 @@ const buildClientFacingHighlights = (
   emergencyCalloutAvailable: boolean,
 ) => {
   const highlights: string[] = [];
-  if (profile.primaryTrade) highlights.push(`Primary trade: ${profile.primaryTrade}`);
-  if (profile.serviceArea) highlights.push(`Covers ${profile.serviceArea}`);
-  if (refProjects.length > 0) highlights.push(`${refProjects.length} reference project${refProjects.length === 1 ? '' : 's'} added`);
-  if ((profile.profileImages?.length || 0) > 0) highlights.push(`${profile.profileImages?.length} portfolio photo${profile.profileImages?.length === 1 ? '' : 's'} uploaded`);
+  if ((profile.professionType || '').trim().toLowerCase() === 'contractor' && profile.primaryTrade) {
+    highlights.push(`Primary trade: ${profile.primaryTrade}`);
+  }
   if (emergencyCalloutAvailable) highlights.push('24/7 emergency callout available');
   return highlights.slice(0, 4);
 };
@@ -144,6 +155,9 @@ export default function ProfessionalProfilePage() {
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
   const [selectedCoverageAreaCodes, setSelectedCoverageAreaCodes] = useState<string[]>([]);
+  const [tradeOptions, setTradeOptions] = useState<string[]>(() =>
+    fallbackTradesmen.map((trade) => trade.title).filter(Boolean).sort(),
+  );
   const hasLoadedRef = useRef(false);
 
   const profileChecklist = buildProfileChecklist(profile, refProjects, emergencyCalloutAvailable);
@@ -157,6 +171,11 @@ export default function ProfessionalProfilePage() {
     () => areaCodesToZoneCodes(selectedCoverageAreaCodes),
     [selectedCoverageAreaCodes],
   );
+  const normalizedProfessionType = (profile.professionType || '').trim().toLowerCase();
+  const showPrimaryTrade = normalizedProfessionType === 'contractor';
+  const showProductsOffered = normalizedProfessionType === 'reseller';
+  const showTradesOffered = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
+  const showEmergencyAvailability = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
 
   const handleCoverageAreaCodesChange = (codes: string[]) => {
     const nextDraft = deriveCoverageDraftFromAreaCodes(codes);
@@ -216,6 +235,36 @@ export default function ProfessionalProfilePage() {
     // Clear pending files when removing images to allow re-adding
     setRefPendingFiles([]);
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTradeOptions = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/trades`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Trade request failed: ${response.status}`);
+        const payload = await response.json();
+        const names = (Array.isArray(payload) ? payload : [])
+          .map((trade: { name?: string; title?: string; enabled?: boolean }) => trade.name ?? trade.title ?? '')
+          .filter((name: string) => name.trim().length > 0)
+          .sort((left: string, right: string) => left.localeCompare(right));
+
+        if (!cancelled && names.length > 0) {
+          setTradeOptions(names);
+        }
+      } catch {
+        if (!cancelled) {
+          setTradeOptions(fallbackTradesmen.map((trade) => trade.title).filter(Boolean).sort());
+        }
+      }
+    };
+
+    void loadTradeOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -289,11 +338,11 @@ export default function ProfessionalProfilePage() {
           locationSecondary: profile.locationSecondary || undefined,
           locationTertiary: profile.locationTertiary || undefined,
           coverageAreaCodes: selectedCoverageAreaCodes,
-          suppliesOffered: profile.suppliesOffered || [],
-          tradesOffered: profile.tradesOffered || [],
-          primaryTrade: profile.primaryTrade || undefined,
+          suppliesOffered: showProductsOffered ? profile.suppliesOffered || [] : [],
+          tradesOffered: showTradesOffered ? profile.tradesOffered || [] : [],
+          primaryTrade: showPrimaryTrade ? profile.primaryTrade || undefined : undefined,
           profileImages: finalProfileImages,
-          emergencyCalloutAvailable: emergencyCalloutAvailable,
+          emergencyCalloutAvailable: showEmergencyAvailability ? emergencyCalloutAvailable : false,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -509,7 +558,7 @@ export default function ProfessionalProfilePage() {
         <form onSubmit={handleProfileSave} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Full Name</label>
+              <label className="block text-sm font-medium text-slate-700">Primary Contact</label>
               <input
                 type="text"
                 value={profile.fullName || ''}
@@ -537,15 +586,34 @@ export default function ProfessionalProfilePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700">Profession Type</label>
-              <input
-                type="text"
-                value={profile.professionType || ''}
-                onChange={(e) => setProfile((p) => ({ ...p, professionType: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                placeholder="e.g. Renovation, HVAC, Electrical"
-              />
-              <p className="mt-1 text-xs text-slate-500">Use the trade wording clients would search for first.</p>
+              <select
+                value={normalizedProfessionType}
+                onChange={(e) => {
+                  const nextProfessionType = e.target.value;
+                  setProfile((prev) => ({
+                    ...prev,
+                    professionType: nextProfessionType,
+                    primaryTrade: nextProfessionType === 'contractor' ? prev.primaryTrade : '',
+                    suppliesOffered: nextProfessionType === 'reseller' ? prev.suppliesOffered : [],
+                    tradesOffered:
+                      nextProfessionType === 'company' || nextProfessionType === 'contractor'
+                        ? prev.tradesOffered
+                        : [],
+                  }));
+                  if (nextProfessionType === 'reseller') {
+                    setEmergencyCalloutAvailable(false);
+                  }
+                }}
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              >
+                <option value="">Select profession type</option>
+                {PROFESSION_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500">Choose the listing type clients should see first.</p>
             </div>
+            {showPrimaryTrade && (
             <div>
               <label className="block text-sm font-medium text-slate-700">Primary Trade</label>
               <input
@@ -557,6 +625,7 @@ export default function ProfessionalProfilePage() {
               />
               <p className="mt-1 text-xs text-slate-500">Lead with your most hireable specialty.</p>
             </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-slate-700">Coverage</label>
               <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
@@ -631,28 +700,43 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Supplies Offered (comma separated)</label>
-              <input
-                type="text"
-                value={(profile.suppliesOffered || []).join(', ')}
-                onChange={(e) => setProfile((p) => ({ ...p, suppliesOffered: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
-              <p className="mt-1 text-xs text-slate-500">List materials, systems, or brands clients often ask about.</p>
+          {(showProductsOffered || showTradesOffered) && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {showProductsOffered && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Products Offered</label>
+                  <input
+                    type="text"
+                    value={(profile.suppliesOffered || []).join(', ')}
+                    onChange={(e) => setProfile((p) => ({ ...p, suppliesOffered: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) }))}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">List materials, systems, or brands clients often ask about.</p>
+                </div>
+              )}
+              {showTradesOffered && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Trades Offered</label>
+                  <select
+                    multiple
+                    value={profile.tradesOffered || []}
+                    onChange={(e) =>
+                      setProfile((p) => ({
+                        ...p,
+                        tradesOffered: Array.from(e.target.selectedOptions, (option) => option.value),
+                      }))
+                    }
+                    className="mt-1 min-h-36 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                  >
+                    {tradeOptions.map((trade) => (
+                      <option key={trade} value={trade}>{trade}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-slate-500">Use Ctrl/Cmd-click to select multiple trades.</p>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Trades Offered (comma separated)</label>
-              <input
-                type="text"
-                value={(profile.tradesOffered || []).join(', ')}
-                onChange={(e) => setProfile((p) => ({ ...p, tradesOffered: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
-              <p className="mt-1 text-xs text-slate-500">Add adjacent services to widen matching without diluting your main trade.</p>
-            </div>
-          </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-slate-700">New Password</label>
@@ -666,20 +750,27 @@ export default function ProfessionalProfilePage() {
             <p className="mt-1 text-xs text-slate-500">Leave blank to keep your current password</p>
           </div>
 
-          {(profile.professionType === 'contractor' || profile.professionType === 'company') && (
+          {showEmergencyAvailability && (
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
               <h2 className="text-sm font-semibold text-slate-900">Availability</h2>
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="professionalEmergencyCallout"
-                  checked={emergencyCalloutAvailable}
-                  onChange={(e) => setEmergencyCalloutAvailable(e.target.checked)}
-                  className="h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="professionalEmergencyCallout" className="text-sm text-slate-700">
-                  Emergency call out available 24/7
-                </label>
+              <div className="space-y-2">
+                <p className="text-sm text-slate-700">Emergency call out available 24/7</p>
+                <div className="inline-flex rounded-full border border-blue-200 bg-white p-1 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setEmergencyCalloutAvailable(true)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${emergencyCalloutAvailable ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-blue-50'}`}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmergencyCalloutAvailable(false)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${!emergencyCalloutAvailable ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    No
+                  </button>
+                </div>
               </div>
             </div>
           )}
