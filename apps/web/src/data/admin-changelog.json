@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-20-16a12126",
+    "date": "2026-05-20T17:53:57+08:00",
+    "title": "style(web): polish portfolio library actions",
+    "summary": "style(web): polish portfolio library actions",
+    "areas": [
+      "web"
+    ],
+    "commit": "16a12126",
+    "files": [
+      "apps/web/src/components/professional-portfolio-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-538c7bde",
     "date": "2026-05-20T17:45:59+08:00",
     "title": "fix(web): restore portfolio upload action",

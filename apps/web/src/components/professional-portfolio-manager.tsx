@@ -380,9 +380,7 @@ export function ProfessionalPortfolioManager({
                     </div>
                     {item.referenceProject?.title ? (
                       <p className="text-[11px] text-slate-500">Project: {item.referenceProject.title}</p>
-                    ) : (
-                      <p className="text-[11px] text-slate-500">Standalone image</p>
-                    )}
+                    ) : null}
                   </div>
 
                   <div>
@@ -409,7 +407,7 @@ export function ProfessionalPortfolioManager({
                       type="button"
                       onClick={() => void handleMediaUpdate(item.id)}
                       disabled={savingMediaId === item.id}
-                      className="rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                      className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
                     >
                       {savingMediaId === item.id ? 'Saving' : 'Update'}
                     </button>
@@ -420,7 +418,7 @@ export function ProfessionalPortfolioManager({
                       type="button"
                       onClick={() => void handleMediaDelete(item.id)}
                       disabled={deletingMediaId === item.id}
-                      className="rounded-md bg-rose-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-800 disabled:opacity-60"
+                      className="rounded-md bg-rose-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-800 disabled:opacity-60"
                     >
                       {deletingMediaId === item.id ? 'Deleting' : 'Delete'}
                     </button>
