@@ -155,6 +155,34 @@ export class ProfessionalsController {
     return this.professionalsService.exportCsv();
   }
 
+  @Get(':id/certifications')
+  @UseGuards(AuthGuard('jwt'))
+  async listProfessionalCertifications(@Req() req: any, @Param('id') id: string) {
+    this.requireAdmin(req);
+    return this.professionalsService.listProfessionalCertifications(id);
+  }
+
+  @Patch(':id/certifications/:certificationId/review')
+  @UseGuards(AuthGuard('jwt'))
+  async reviewProfessionalCertification(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Param('certificationId') certificationId: string,
+    @Body()
+    body: {
+      verificationStatus?: 'VERIFIED' | 'REJECTED' | 'EXPIRED';
+      verificationNotes?: string | null;
+    },
+  ) {
+    this.requireAdmin(req);
+    return this.professionalsService.reviewProfessionalCertification(
+      id,
+      certificationId,
+      req.user?.id,
+      body || {},
+    );
+  }
+
   // Place parameterized routes after specific meta/export routes to avoid ambiguity
   @Get(':id')
   async findOne(@Param('id') id: string) {

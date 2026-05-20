@@ -375,6 +375,39 @@ export class ProfessionalController {
     return this.resolveProfileMediaUrls(professional);
   }
 
+  private mapTradeCertificationRequirement(requirement: any) {
+    if (!requirement) return requirement;
+    return {
+      ...requirement,
+      certificationType: requirement.certificationType,
+      trade: requirement.trade,
+    };
+  }
+
+  private mapProfessionalCertification(certification: any) {
+    if (!certification) return certification;
+    return {
+      ...certification,
+      documentUrl: certification.documentStorageKey
+        ? buildPublicAssetUrl(certification.documentStorageKey)
+        : null,
+    };
+  }
+
+  private normalizeOptionalDateInput(value?: string | null) {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const normalized = this.normalizeTextInput(value);
+    if (!normalized) return null;
+
+    const parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new BadRequestException(`Invalid date value: ${value}`);
+    }
+
+    return parsed;
+  }
+
   private normalizeQuoteSchedule(input: {
     quoteEstimatedStartAt?: string | Date | null;
     quoteEstimatedDurationMinutes?: number | string | null;
@@ -701,6 +734,265 @@ export class ProfessionalController {
     });
 
     return this.loadResolvedProfessionalProfile(professionalId);
+  }
+
+  @Get('certification-types')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async listCertificationTypes() {
+    const rows = await (this.prisma as any).certificationType.findMany({
+      where: { isActive: true },
+    });
+
+    return rows.sort((left: any, right: any) =>
+      String(left.name || '').localeCompare(String(right.name || '')),
+    );
+  }
+
+  @Get('certification-requirements')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async listCertificationRequirements() {
+    const rows = await (this.prisma as any).tradeCertificationRequirement.findMany({
+      include: {
+        trade: {
+          select: {
+            id: true,
+            title: true,
+            professionType: true,
+          },
+        },
+        certificationType: true,
+      },
+      where: {
+        certificationType: {
+          isActive: true,
+        },
+      },
+    });
+
+    return rows
+      .map((item: any) => this.mapTradeCertificationRequirement(item))
+      .sort((left: any, right: any) => {
+        const tradeCompare = String(left.trade?.title || '').localeCompare(String(right.trade?.title || ''));
+        if (tradeCompare !== 0) return tradeCompare;
+        return String(left.certificationType?.name || '').localeCompare(String(right.certificationType?.name || ''));
+      });
+  }
+
+  @Get('certifications')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async listCertifications(@Request() req: any) {
+    const professionalId = req.user.id || req.user.sub;
+    const rows = await (this.prisma as any).professionalCertification.findMany({
+      where: { professionalId },
+      include: {
+        certificationType: true,
+        trade: {
+          select: {
+            id: true,
+            title: true,
+            professionType: true,
+          },
+        },
+      },
+      orderBy: [
+        { createdAt: 'desc' },
+      ],
+    });
+
+    return rows.map((item: any) => this.mapProfessionalCertification(item));
+  }
+
+  @Post('certifications')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async createCertification(
+    @Request() req: any,
+    @Body()
+    body: {
+      certificationTypeId?: string;
+      tradeId?: string | null;
+      holderType?: 'INDIVIDUAL' | 'BUSINESS';
+      registrationNumber?: string;
+      issuedAt?: string | null;
+      expiresAt?: string | null;
+      documentStorageKey?: string | null;
+    },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    const certificationTypeId = this.normalizeTextInput(body.certificationTypeId);
+    const registrationNumber = this.normalizeTextInput(body.registrationNumber);
+    const documentStorageKey = this.normalizeStorageKeys([body.documentStorageKey])[0] || null;
+    const issuedAt = this.normalizeOptionalDateInput(body.issuedAt);
+    const expiresAt = this.normalizeOptionalDateInput(body.expiresAt);
+    const holderType = body.holderType === 'BUSINESS' ? 'BUSINESS' : 'INDIVIDUAL';
+    const tradeId = this.normalizeTextInput(body.tradeId ?? undefined) || null;
+
+    if (!certificationTypeId) {
+      throw new BadRequestException('Certification type is required');
+    }
+    if (!registrationNumber) {
+      throw new BadRequestException('Registration number is required');
+    }
+    if (!documentStorageKey) {
+      throw new BadRequestException('Certification image is required');
+    }
+    if (issuedAt && expiresAt && issuedAt.getTime() > expiresAt.getTime()) {
+      throw new BadRequestException('Issue date cannot be later than expiry date');
+    }
+
+    const certificationType = await (this.prisma as any).certificationType.findFirst({
+      where: { id: certificationTypeId, isActive: true },
+    });
+    if (!certificationType) {
+      throw new BadRequestException('Certification type not found');
+    }
+
+    if (tradeId) {
+      const trade = await (this.prisma as any).tradesman.findUnique({ where: { id: tradeId } });
+      if (!trade) {
+        throw new BadRequestException('Trade not found');
+      }
+    }
+
+    const created = await (this.prisma as any).professionalCertification.create({
+      data: {
+        professionalId,
+        certificationTypeId,
+        tradeId,
+        holderType,
+        registrationNumber,
+        issuedAt: issuedAt ?? null,
+        expiresAt: expiresAt ?? null,
+        documentStorageKey,
+        verificationStatus: 'SUBMITTED',
+      },
+      include: {
+        certificationType: true,
+        trade: {
+          select: {
+            id: true,
+            title: true,
+            professionType: true,
+          },
+        },
+      },
+    });
+
+    return this.mapProfessionalCertification(created);
+  }
+
+  @Put('certifications/:id')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async updateCertification(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      certificationTypeId?: string;
+      tradeId?: string | null;
+      holderType?: 'INDIVIDUAL' | 'BUSINESS';
+      registrationNumber?: string;
+      issuedAt?: string | null;
+      expiresAt?: string | null;
+      documentStorageKey?: string | null;
+    },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    const existing = await (this.prisma as any).professionalCertification.findFirst({
+      where: { id, professionalId },
+    });
+
+    if (!existing) {
+      throw new BadRequestException('Certification record not found');
+    }
+
+    const certificationTypeId = this.normalizeTextInput(body.certificationTypeId) || existing.certificationTypeId;
+    const registrationNumber = this.normalizeTextInput(body.registrationNumber) || existing.registrationNumber;
+    const normalizedDocumentKeys = body.documentStorageKey === undefined
+      ? undefined
+      : this.normalizeStorageKeys([body.documentStorageKey]);
+    const documentStorageKey = normalizedDocumentKeys === undefined
+      ? existing.documentStorageKey
+      : normalizedDocumentKeys[0] || null;
+    const issuedAt = this.normalizeOptionalDateInput(body.issuedAt);
+    const expiresAt = this.normalizeOptionalDateInput(body.expiresAt);
+    const holderType = body.holderType === undefined ? existing.holderType : body.holderType === 'BUSINESS' ? 'BUSINESS' : 'INDIVIDUAL';
+    const tradeId = body.tradeId === undefined ? existing.tradeId : this.normalizeTextInput(body.tradeId ?? undefined) || null;
+
+    if (!certificationTypeId) {
+      throw new BadRequestException('Certification type is required');
+    }
+    if (!registrationNumber) {
+      throw new BadRequestException('Registration number is required');
+    }
+    if (!documentStorageKey) {
+      throw new BadRequestException('Certification image is required');
+    }
+
+    const certificationType = await (this.prisma as any).certificationType.findFirst({
+      where: { id: certificationTypeId, isActive: true },
+    });
+    if (!certificationType) {
+      throw new BadRequestException('Certification type not found');
+    }
+    if (tradeId) {
+      const trade = await (this.prisma as any).tradesman.findUnique({ where: { id: tradeId } });
+      if (!trade) {
+        throw new BadRequestException('Trade not found');
+      }
+    }
+
+    const nextIssuedAt = issuedAt === undefined ? existing.issuedAt : issuedAt;
+    const nextExpiresAt = expiresAt === undefined ? existing.expiresAt : expiresAt;
+    if (nextIssuedAt && nextExpiresAt && nextIssuedAt.getTime() > nextExpiresAt.getTime()) {
+      throw new BadRequestException('Issue date cannot be later than expiry date');
+    }
+
+    const updated = await (this.prisma as any).professionalCertification.update({
+      where: { id: existing.id },
+      data: {
+        certificationTypeId,
+        tradeId,
+        holderType,
+        registrationNumber,
+        issuedAt: nextIssuedAt ?? null,
+        expiresAt: nextExpiresAt ?? null,
+        documentStorageKey,
+        verificationStatus: 'SUBMITTED',
+        verifiedAt: null,
+        verifiedByAdminId: null,
+      },
+      include: {
+        certificationType: true,
+        trade: {
+          select: {
+            id: true,
+            title: true,
+            professionType: true,
+          },
+        },
+      },
+    });
+
+    return this.mapProfessionalCertification(updated);
+  }
+
+  @Delete('certifications/:id')
+  @UseGuards(AuthGuard('jwt-professional'))
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteCertification(@Request() req: any, @Param('id') id: string) {
+    const professionalId = req.user.id || req.user.sub;
+    const existing = await (this.prisma as any).professionalCertification.findFirst({
+      where: { id, professionalId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      throw new BadRequestException('Certification record not found');
+    }
+
+    await (this.prisma as any).professionalCertification.delete({
+      where: { id: existing.id },
+    });
   }
 
   @Put('me/password')

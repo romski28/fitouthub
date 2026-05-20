@@ -9,6 +9,7 @@ import { fetchWithRetry } from '@/lib/http';
 import { HkZoneMap } from '@/components/hk-zone-map';
 import { HkZoneList } from '@/components/hk-zone-list';
 import { MapOrList } from '@/components/map-or-list';
+import { ProfessionalCertificationManager } from '@/components/professional-certification-manager';
 import {
   HK_ZONE_CODES,
   areaCodesToZoneCodes,
@@ -164,6 +165,17 @@ export default function ProfessionalProfilePage() {
   const showProductsOffered = normalizedProfessionType === 'reseller';
   const showTradesOffered = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
   const showEmergencyAvailability = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
+  const selectedTradeTitles = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [profile.primaryTrade, ...(profile.tradesOffered || [])]
+            .map((value) => (value || '').trim())
+            .filter(Boolean),
+        ),
+      ),
+    [profile.primaryTrade, profile.tradesOffered],
+  );
 
   const handleCoverageAreaCodesChange = (codes: string[]) => {
     const nextDraft = deriveCoverageDraftFromAreaCodes(codes);
@@ -682,6 +694,13 @@ export default function ProfessionalProfilePage() {
           </div>
 
         </form>
+
+        <div className="mt-4">
+          <ProfessionalCertificationManager
+            accessToken={accessToken!}
+            selectedTradeTitles={selectedTradeTitles}
+          />
+        </div>
 
         <div className="pointer-events-none sticky bottom-4 z-20 flex justify-end">
           <button

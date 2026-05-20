@@ -15,6 +15,22 @@ type RegionBackfillActor = {
 export class ProfessionalsService {
   constructor(private prisma: PrismaService) {}
 
+  private buildProfessionalCertificationPayload(certification: any) {
+    if (!certification) return certification;
+    return {
+      ...certification,
+      documentUrl: certification.documentStorageKey
+        ? buildPublicAssetUrl(certification.documentStorageKey)
+        : null,
+    };
+  }
+
+  private normalizeCertificationReviewNotes(value?: string | null) {
+    if (value === undefined) return undefined;
+    const trimmed = String(value || '').trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
   private async writeRegionBackfillActivityLog(params: {
     action: 'region_backfill_dry_run' | 'region_backfill_apply';
     actor?: RegionBackfillActor;
@@ -294,6 +310,78 @@ export class ProfessionalsService {
       },
     });
     return this.resolveProfessionalMedia(professional);
+  }
+
+  async listProfessionalCertifications(professionalId: string) {
+    const rows = await (this.prisma as any).professionalCertification.findMany({
+      where: { professionalId },
+      include: {
+        certificationType: true,
+        trade: {
+          select: {
+            id: true,
+            title: true,
+            professionType: true,
+          },
+        },
+      },
+      orderBy: [
+        { createdAt: 'desc' },
+      ],
+    });
+
+    return rows.map((row: any) => this.buildProfessionalCertificationPayload(row));
+  }
+
+  async reviewProfessionalCertification(
+    professionalId: string,
+    certificationId: string,
+    adminId: string,
+    body: {
+      verificationStatus?: 'VERIFIED' | 'REJECTED' | 'EXPIRED';
+      verificationNotes?: string | null;
+    },
+  ) {
+    const verificationStatus = body.verificationStatus;
+    if (!verificationStatus || !['VERIFIED', 'REJECTED', 'EXPIRED'].includes(verificationStatus)) {
+      throw new BadRequestException('verificationStatus must be VERIFIED, REJECTED, or EXPIRED');
+    }
+
+    const existing = await (this.prisma as any).professionalCertification.findFirst({
+      where: {
+        id: certificationId,
+        professionalId,
+      },
+    });
+
+    if (!existing) {
+      throw new BadRequestException('Certification record not found');
+    }
+
+    const verificationNotes = this.normalizeCertificationReviewNotes(body.verificationNotes);
+    const isVerified = verificationStatus === 'VERIFIED';
+
+    const updated = await (this.prisma as any).professionalCertification.update({
+      where: { id: existing.id },
+      data: {
+        verificationStatus,
+        verificationNotes: verificationNotes === undefined ? existing.verificationNotes : verificationNotes,
+        verifiedAt: isVerified ? new Date() : null,
+        verifiedByAdminId: isVerified ? adminId : null,
+      },
+      include: {
+        certificationType: true,
+        trade: {
+          select: {
+            id: true,
+            title: true,
+            professionType: true,
+          },
+        },
+      },
+    });
+
+    return this.buildProfessionalCertificationPayload(updated);
   }
 
   async update(id: string, updateProfessionalDto: UpdateProfessionalDto) {

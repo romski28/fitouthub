@@ -955,6 +955,7 @@ export class UpdatesService {
       anonymousMessages,
       escrowTransactions,
       escrowAdminActions,
+      professionalCertifications,
       aiProjects,
     ] =
       await Promise.all([
@@ -1074,6 +1075,38 @@ export class UpdatesService {
               select: {
                 id: true,
                 projectName: true,
+              },
+            },
+          },
+        }),
+        (this.prisma as any).professionalCertification.findMany({
+          take: safeLimit,
+          where: {
+            verificationStatus: {
+              in: ['SUBMITTED', 'REJECTED', 'EXPIRED'],
+            },
+          },
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            professional: {
+              select: {
+                id: true,
+                fullName: true,
+                businessName: true,
+                email: true,
+              },
+            },
+            certificationType: {
+              select: {
+                id: true,
+                name: true,
+                regulator: true,
+              },
+            },
+            trade: {
+              select: {
+                id: true,
+                title: true,
               },
             },
           },
@@ -1279,6 +1312,41 @@ export class UpdatesService {
         preview: action.reason || 'Verify escrow receipt before milestone payment approval.',
         createdAt: action.updatedAt.toISOString(),
         href: '/admin/projects',
+      });
+    });
+
+    professionalCertifications.forEach((certification: any) => {
+      const professionalLabel =
+        certification.professional?.fullName ||
+        certification.professional?.businessName ||
+        certification.professional?.email ||
+        'Professional';
+      const status = String(certification.verificationStatus || '').toLowerCase();
+      const tradeLabel = certification.trade?.title ? ` · ${certification.trade.title}` : '';
+      const regulatorLabel = certification.certificationType?.regulator
+        ? ` · ${certification.certificationType.regulator}`
+        : '';
+
+      feedItems.push({
+        id: `professional-certification:${certification.id}`,
+        sourceType: 'professional-certification',
+        sourceId: certification.id,
+        conversationType: 'none',
+        conversationId: undefined,
+        replyChannel: 'none',
+        actionRequired: certification.verificationStatus === 'SUBMITTED',
+        type: 'Professional Certification Review',
+        transport: 'Compliance',
+        context: `Professional · ${professionalLabel}${tradeLabel}`,
+        user: certification.certificationType?.name || 'Certification',
+        status,
+        assignmentStatus: 'unassigned',
+        preview:
+          [certification.registrationNumber, certification.certificationType?.regulator]
+            .filter((value) => typeof value === 'string' && value.trim().length > 0)
+            .join(' · ') || `Certification submission${regulatorLabel}`,
+        createdAt: new Date(certification.updatedAt || certification.createdAt).toISOString(),
+        href: `/admin/professionals?highlight=${encodeURIComponent(certification.professionalId)}&certificationId=${encodeURIComponent(certification.id)}`,
       });
     });
 

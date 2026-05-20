@@ -104,6 +104,24 @@ enum ProfessionalMediaKind {
   REFERENCE_PROJECT
 }
 
+enum CertificationHolderType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum CertificationRequirementLevel {
+  MANDATORY
+  OPTIONAL
+  RECOMMENDED
+}
+
+enum CertificationVerificationStatus {
+  SUBMITTED
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
 enum AdminActionType {
   VERIFY_ESCROW_RECEIPT
   APPROVE_PAYMENT_RELEASE
@@ -229,6 +247,8 @@ model Tradesman {
   serviceMappings ServiceMapping[]
   milestoneTemplates MilestoneTemplate[]
   translations    TradesmanTranslation[]
+  certificationRequirements TradeCertificationRequirement[]
+  professionalCertifications ProfessionalCertification[]
 
   @@index([category])
   @@index([enabled])
@@ -299,6 +319,7 @@ model Professional {
   user                    User?                          @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectProfessionals    ProjectProfessional[]
   media                   ProfessionalMedia[]
+  certifications          ProfessionalCertification[]
   reports                 ProfessionalReport[]
   referenceProjects       ProfessionalReferenceProject[]
   privateChatThreads      PrivateChatThread[]
@@ -751,6 +772,66 @@ model ProfessionalReferenceProject {
   media        ProfessionalMedia[]
 
   @@index([professionalId])
+}
+
+model CertificationType {
+  id                        String                         @id @default(cuid())
+  code                      String                         @unique
+  name                      String
+  regulator                 String?
+  appliesTo                 CertificationHolderType?
+  description               String?
+  isActive                  Boolean                        @default(true)
+  createdAt                 DateTime                       @default(now())
+  updatedAt                 DateTime                       @updatedAt
+  tradeRequirements         TradeCertificationRequirement[]
+  professionalCertifications ProfessionalCertification[]
+
+  @@index([isActive])
+}
+
+model TradeCertificationRequirement {
+  id                  String                         @id @default(cuid())
+  tradeId             String
+  certificationTypeId String
+  requirementLevel    CertificationRequirementLevel @default(MANDATORY)
+  notes               String?
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+
+  trade              Tradesman         @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  certificationType  CertificationType @relation(fields: [certificationTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([tradeId, certificationTypeId])
+  @@index([tradeId])
+  @@index([certificationTypeId])
+}
+
+model ProfessionalCertification {
+  id                  String                         @id @default(cuid())
+  professionalId      String
+  certificationTypeId String
+  tradeId             String?
+  holderType          CertificationHolderType       @default(INDIVIDUAL)
+  registrationNumber  String?
+  issuedAt            DateTime?
+  expiresAt           DateTime?
+  documentStorageKey  String?
+  verificationStatus  CertificationVerificationStatus @default(SUBMITTED)
+  verifiedAt          DateTime?
+  verifiedByAdminId   String?
+  verificationNotes   String?
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+
+  professional       Professional      @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  certificationType  CertificationType @relation(fields: [certificationTypeId], references: [id], onDelete: Cascade)
+  trade              Tradesman?        @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+
+  @@index([professionalId])
+  @@index([certificationTypeId])
+  @@index([tradeId])
+  @@index([verificationStatus])
 }
 
 model ProfessionalMedia {

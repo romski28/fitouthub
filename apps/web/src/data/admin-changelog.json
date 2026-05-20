@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-05-20-aa1cb8c6",
+    "date": "2026-05-20T22:01:32+08:00",
+    "title": "feat(compliance): add certification review workflow",
+    "summary": "feat(compliance): add certification review workflow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "aa1cb8c6",
+    "files": [
+      "apps/api/prisma/migrations/20260520233000_add_professional_certifications/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/professionals/professionals.controller.ts",
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/api/src/updates/updates.service.ts",
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/app/admin/professionals/page.tsx",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/professional-certification-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-48587bd9",
     "date": "2026-05-20T20:52:28+08:00",
     "title": "style(web): refine portfolio projects panel",

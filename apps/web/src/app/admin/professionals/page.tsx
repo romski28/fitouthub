@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { Professional } from "@/lib/types";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -47,8 +48,46 @@ function formatDateTime(date?: string): string {
   }
 }
 
+type CertificationTrade = {
+  id: string;
+  title: string;
+  professionType?: string | null;
+};
+
+type CertificationTypeRecord = {
+  id: string;
+  name: string;
+  regulator?: string | null;
+};
+
+type ProfessionalCertificationRecord = {
+  id: string;
+  certificationTypeId: string;
+  tradeId?: string | null;
+  holderType: 'INDIVIDUAL' | 'BUSINESS';
+  registrationNumber?: string | null;
+  issuedAt?: string | null;
+  expiresAt?: string | null;
+  documentStorageKey?: string | null;
+  documentUrl?: string | null;
+  verificationStatus: 'SUBMITTED' | 'VERIFIED' | 'REJECTED' | 'EXPIRED';
+  verificationNotes?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  certificationType: CertificationTypeRecord;
+  trade?: CertificationTrade | null;
+};
+
+const certificationStatusTone: Record<ProfessionalCertificationRecord['verificationStatus'], string> = {
+  SUBMITTED: 'bg-amber-100 text-amber-800 ring-amber-200',
+  VERIFIED: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
+  REJECTED: 'bg-rose-100 text-rose-800 ring-rose-200',
+  EXPIRED: 'bg-slate-200 text-slate-700 ring-slate-300',
+};
+
 export default function AdminProfessionalsPage() {
   const { accessToken } = useAuth();
+  const searchParams = useSearchParams();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPro, setEditingPro] = useState<Professional | null>(null);
@@ -67,6 +106,11 @@ export default function AdminProfessionalsPage() {
   const [backfillLastRun, setBackfillLastRun] = useState<any | null>(null);
   const [commitConfirmText, setCommitConfirmText] = useState("");
   const [sampleSizeInput, setSampleSizeInput] = useState("25");
+  const [certifications, setCertifications] = useState<ProfessionalCertificationRecord[]>([]);
+  const [certificationsLoading, setCertificationsLoading] = useState(false);
+  const [certificationsError, setCertificationsError] = useState<string | null>(null);
+  const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
+  const [reviewNotesById, setReviewNotesById] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<Record<string, string | number | string[]>>({
     professionType: "",
     email: "",
@@ -99,8 +143,11 @@ export default function AdminProfessionalsPage() {
   ];
 
   const TRADE_OPTIONS_CACHE_KEY = 'admin.tradeOptions.master.v1';
+  const highlightedProfessionalId = searchParams.get('highlight') || '';
+  const highlightedCertificationId = searchParams.get('certificationId') || '';
 
   const tradesLoadedRef = useRef(false);
+  const certificationCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     fetchProfessionals();
@@ -221,6 +268,73 @@ export default function AdminProfessionalsPage() {
     }
   }, [editingPro]);
 
+  useEffect(() => {
+    if (!highlightedProfessionalId || professionals.length === 0) return;
+    const target = professionals.find((professional) => professional.id === highlightedProfessionalId);
+    if (target) {
+      setEditingPro(target);
+    }
+  }, [highlightedProfessionalId, professionals]);
+
+  useEffect(() => {
+    if (!editingPro || !accessToken) {
+      setCertifications([]);
+      setReviewNotesById({});
+      setCertificationsError(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadCertifications = async () => {
+      try {
+        setCertificationsLoading(true);
+        setCertificationsError(null);
+        const res = await fetch(`${API_BASE_URL}/professionals/${editingPro.id}/certifications`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        const nextCertifications = Array.isArray(data) ? data : [];
+        setCertifications(nextCertifications);
+        setReviewNotesById(
+          nextCertifications.reduce((acc, certification) => {
+            acc[certification.id] = certification.verificationNotes || '';
+            return acc;
+          }, {} as Record<string, string>),
+        );
+      } catch (error) {
+        if (!cancelled) {
+          setCertificationsError(error instanceof Error ? error.message : 'Failed to load certifications');
+        }
+      } finally {
+        if (!cancelled) {
+          setCertificationsLoading(false);
+        }
+      }
+    };
+
+    void loadCertifications();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, editingPro]);
+
+  useEffect(() => {
+    if (!editingPro || !highlightedCertificationId || certifications.length === 0) return;
+    const target = certificationCardRefs.current[highlightedCertificationId];
+    if (!target) return;
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [certifications, editingPro, highlightedCertificationId]);
+
   const fetchProfessionals = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/professionals`);
@@ -294,6 +408,52 @@ export default function AdminProfessionalsPage() {
     } catch (error) {
       console.error("Delete error:", error);
       alert(`Error deleting professional: ${error}`);
+    }
+  };
+
+  const handleCertificationReview = async (
+    certificationId: string,
+    verificationStatus: ProfessionalCertificationRecord['verificationStatus'],
+  ) => {
+    if (!editingPro || !accessToken) {
+      alert('Admin session missing. Please sign in again.');
+      return;
+    }
+
+    try {
+      setReviewBusyId(certificationId);
+      setCertificationsError(null);
+      const res = await fetch(
+        `${API_BASE_URL}/professionals/${editingPro.id}/certifications/${certificationId}/review`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            verificationStatus,
+            verificationNotes: reviewNotesById[certificationId] || '',
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      const updated = await res.json();
+      setCertifications((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setReviewNotesById((current) => ({
+        ...current,
+        [updated.id]: updated.verificationNotes || '',
+      }));
+    } catch (error) {
+      setCertificationsError(error instanceof Error ? error.message : 'Failed to review certification');
+    } finally {
+      setReviewBusyId(null);
     }
   };
 
@@ -736,7 +896,9 @@ export default function AdminProfessionalsPage() {
           <div
             key={pro.id}
             className={`group overflow-hidden rounded-xl border ${
-              selectedIds.includes(pro.id) ? "border-emerald-400 ring-2 ring-emerald-200" : "border-slate-200"
+              selectedIds.includes(pro.id) || highlightedProfessionalId === pro.id
+                ? "border-emerald-400 ring-2 ring-emerald-200"
+                : "border-slate-200"
             } bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md`}
           >
             <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
@@ -864,14 +1026,26 @@ export default function AdminProfessionalsPage() {
 
       {editingPro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur p-4">
-          <div className="w-full max-w-2xl rounded-lg bg-white shadow-lg">
+          <div className="w-full max-w-5xl rounded-lg bg-white shadow-lg">
             <div className="border-b border-slate-200 px-6 py-4">
-              <h2 className="text-xl font-bold text-slate-900">
-                Edit {editingPro.fullName || editingPro.businessName}
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Edit {editingPro.fullName || editingPro.businessName}
+                  </h2>
+                  {highlightedCertificationId && (
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                      Deep-linked certification review target active
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  {certifications.length} certification{certifications.length === 1 ? '' : 's'}
+                </div>
+              </div>
             </div>
 
-            <div className="max-h-96 overflow-y-auto px-6 py-4">
+            <div className="max-h-[85vh] overflow-y-auto px-6 py-4">
               <div className="space-y-4">
                 {/* Basic fields */}
                 <div className="grid gap-4 md:grid-cols-2">
@@ -1103,6 +1277,147 @@ export default function AdminProfessionalsPage() {
                       className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
                     />
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Certification review</p>
+                      <p className="text-xs text-slate-600">
+                        Review regulated trade credentials without leaving the existing professionals workflow.
+                      </p>
+                    </div>
+                  </div>
+
+                  {certificationsLoading && (
+                    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                      Loading certifications...
+                    </div>
+                  )}
+
+                  {certificationsError && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                      {certificationsError}
+                    </div>
+                  )}
+
+                  {!certificationsLoading && !certificationsError && certifications.length === 0 && (
+                    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                      No certifications on file for this professional yet.
+                    </div>
+                  )}
+
+                  {!certificationsLoading && certifications.length > 0 && (
+                    <div className="space-y-3">
+                      {certifications.map((certification) => {
+                        const isTargeted = certification.id === highlightedCertificationId;
+                        return (
+                          <div
+                            key={certification.id}
+                            ref={(node) => {
+                              certificationCardRefs.current[certification.id] = node;
+                            }}
+                            className={`rounded-xl border bg-white p-4 shadow-sm ${
+                              isTargeted ? 'border-emerald-400 ring-2 ring-emerald-200' : 'border-slate-200'
+                            }`}
+                          >
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="text-base font-semibold text-slate-900">
+                                    {certification.certificationType.name}
+                                  </h3>
+                                  <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${certificationStatusTone[certification.verificationStatus]}`}>
+                                    {certification.verificationStatus}
+                                  </span>
+                                  {isTargeted && (
+                                    <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                      Review target
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="grid gap-1 text-sm text-slate-600 md:grid-cols-2">
+                                  <p><span className="font-semibold text-slate-800">Registration:</span> {certification.registrationNumber || '—'}</p>
+                                  <p><span className="font-semibold text-slate-800">Holder:</span> {certification.holderType}</p>
+                                  <p><span className="font-semibold text-slate-800">Trade:</span> {certification.trade?.title || '—'}</p>
+                                  <p><span className="font-semibold text-slate-800">Regulator:</span> {certification.certificationType.regulator || '—'}</p>
+                                  <p><span className="font-semibold text-slate-800">Issued:</span> {formatDate(certification.issuedAt || undefined)}</p>
+                                  <p><span className="font-semibold text-slate-800">Expires:</span> {formatDate(certification.expiresAt || undefined)}</p>
+                                </div>
+                                {certification.documentUrl && (
+                                  <a
+                                    href={certification.documentUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex text-sm font-semibold text-sky-700 hover:text-sky-800"
+                                  >
+                                    Open uploaded document
+                                  </a>
+                                )}
+                              </div>
+
+                              {certification.documentUrl && (
+                                <a href={certification.documentUrl} target="_blank" rel="noreferrer" className="block shrink-0">
+                                  <img
+                                    src={certification.documentUrl}
+                                    alt={certification.certificationType.name}
+                                    className="h-32 w-32 rounded-lg border border-slate-200 object-cover"
+                                  />
+                                </a>
+                              )}
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                  Review notes
+                                </label>
+                                <textarea
+                                  value={reviewNotesById[certification.id] || ''}
+                                  onChange={(event) =>
+                                    setReviewNotesById((current) => ({
+                                      ...current,
+                                      [certification.id]: event.target.value,
+                                    }))
+                                  }
+                                  rows={3}
+                                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                                  placeholder="Add admin review notes"
+                                />
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  disabled={reviewBusyId === certification.id}
+                                  onClick={() => handleCertificationReview(certification.id, 'VERIFIED')}
+                                  className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                                >
+                                  {reviewBusyId === certification.id ? 'Saving...' : 'Mark verified'}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={reviewBusyId === certification.id}
+                                  onClick={() => handleCertificationReview(certification.id, 'REJECTED')}
+                                  className="rounded-md border border-rose-300 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={reviewBusyId === certification.id}
+                                  onClick={() => handleCertificationReview(certification.id, 'EXPIRED')}
+                                  className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                >
+                                  Mark expired
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

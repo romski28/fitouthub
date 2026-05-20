@@ -105,16 +105,16 @@ const formatRelativeTime = (dateValue: string) => {
 
 const statusBadgeClass = (status: string) => {
   const normalized = status.toLowerCase();
-  if (["unassigned", "open", "pending", "needs_review"].includes(normalized)) {
+  if (["unassigned", "open", "pending", "needs_review", "submitted", "expired"].includes(normalized)) {
     return "border-2 border-amber-400 text-white";
   }
-  if (["in_progress", "in review", "claimed", "delivered", "read", "tagged_emergency"].includes(normalized)) {
+  if (["in_progress", "in review", "claimed", "delivered", "read", "tagged_emergency", "verified"].includes(normalized)) {
     return "border-2 border-sky-400 text-white";
   }
   if (["resolved", "closed", "sent", "success"].includes(normalized)) {
     return "border-2 border-emerald-400 text-white";
   }
-  if (["failed", "undeliverable", "danger"].includes(normalized)) {
+  if (["failed", "undeliverable", "danger", "rejected"].includes(normalized)) {
     return "border-2 border-rose-400 text-white";
   }
   return "border-2 border-violet-400 text-white";
