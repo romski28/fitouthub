@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-20-189f8af",
+    "date": "2026-05-20T11:48:47+08:00",
+    "title": "fix(emergency): simplify summary panel copy",
+    "summary": "fix(emergency): simplify summary panel copy",
+    "areas": [
+      "web"
+    ],
+    "commit": "189f8af",
+    "files": [
+      "apps/web/src/components/emergency-summary-screen.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-05d6f5d",
     "date": "2026-05-20T10:20:47+08:00",
     "title": "feat(emergency): enrich AI intake through project creation",

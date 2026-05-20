@@ -132,44 +132,15 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
           {/* Description */}
           {emergencyContext.notes && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Description</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">You Said...</p>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{emergencyContext.notes}</p>
             </div>
           )}
 
           {emergencyContext.aiBrief?.summary && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">AI Summary</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Description</p>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{emergencyContext.aiBrief.summary}</p>
-            </div>
-          )}
-
-          {(emergencyContext.aiBrief?.projectScale || emergencyContext.aiBrief?.propertyType || emergencyContext.aiBrief?.budgetLabel || emergencyContext.aiBrief?.timelineLabel) && (
-            <div className="grid gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:grid-cols-2">
-              {emergencyContext.aiBrief?.projectScale && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Project Scale</p>
-                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.projectScale}</p>
-                </div>
-              )}
-              {emergencyContext.aiBrief?.propertyType && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Property Type</p>
-                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.propertyType}</p>
-                </div>
-              )}
-              {emergencyContext.aiBrief?.budgetLabel && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Budget Signal</p>
-                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.budgetLabel}</p>
-                </div>
-              )}
-              {emergencyContext.aiBrief?.timelineLabel && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Timeline Signal</p>
-                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.timelineLabel}</p>
-                </div>
-              )}
             </div>
           )}
 
