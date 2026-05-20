@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-20-05d6f5d",
+    "date": "2026-05-20T10:20:47+08:00",
+    "title": "feat(emergency): enrich AI intake through project creation",
+    "summary": "feat(emergency): enrich AI intake through project creation",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "05d6f5d",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/emergency-summary-screen.tsx",
+      "apps/web/src/components/project-ai-panel.tsx",
+      "apps/web/src/lib/emergency-ai.ts"
+    ]
+  },
+  {
     "id": "2026-05-20-3df7adc",
     "date": "2026-05-20T02:02:23+08:00",
     "title": "fix(web): restore wallpaper visibility in site shell",

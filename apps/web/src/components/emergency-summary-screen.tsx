@@ -8,6 +8,7 @@ import type { Professional } from '@/lib/types';
 import { SafetyGuidanceCard, parseSafetyGuidanceText } from '@/components/safety-guidance-card';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
 import { clearEmergencyPhotoUrls } from '@/lib/emergency-photos';
+import { buildEmergencyProjectNotes, type EmergencyAiBrief } from '@/lib/emergency-ai';
 
 interface EmergencyContext {
   trade: string;
@@ -18,6 +19,8 @@ interface EmergencyContext {
   aiTitle?: string;
   aiWarnings?: string;
   aiIntakeId?: string;
+  aiBrief?: EmergencyAiBrief;
+  aiPrompt?: string;
 }
 
 interface Props {
@@ -41,6 +44,8 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
   const parsedWarnings = parseSafetyGuidanceText(emergencyContext.aiWarnings);
   const canConfirm = hasAiResult && selectedProfessionals.length > 0 && !sending;
   const clientName = `${user?.firstName || ''} ${user?.surname || ''}`.trim() || user?.nickname?.trim() || 'Client';
+  const confidenceValue = emergencyContext.aiBrief?.overallConfidence;
+  const showConfidenceWarning = typeof confidenceValue === 'number' && confidenceValue < 0.6;
 
   const handleConfirm = async () => {
     setSending(true);
@@ -55,7 +60,7 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
         body: JSON.stringify({
           projectName: displayTitle,
           clientName,
-          notes: emergencyContext.notes,
+          notes: buildEmergencyProjectNotes(emergencyContext.notes, emergencyContext.aiBrief || null),
           photos: emergencyContext.photoUrls?.length
             ? emergencyContext.photoUrls.map((url) => ({ url }))
             : undefined,
@@ -63,6 +68,8 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
           tradesRequired: [emergencyContext.trade],
           isEmergency: true,
           aiIntakeId: emergencyContext.aiIntakeId,
+          userPrompt: emergencyContext.aiPrompt,
+          projectScale: emergencyContext.aiBrief?.projectScale || undefined,
           professionalIds: selectedProfessionals.map((p) => p.id),
         }),
       });
@@ -130,6 +137,56 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
             </div>
           )}
 
+          {emergencyContext.aiBrief?.summary && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">AI Summary</p>
+              <p className="text-sm text-slate-700 whitespace-pre-wrap">{emergencyContext.aiBrief.summary}</p>
+            </div>
+          )}
+
+          {(emergencyContext.aiBrief?.projectScale || emergencyContext.aiBrief?.propertyType || emergencyContext.aiBrief?.budgetLabel || emergencyContext.aiBrief?.timelineLabel) && (
+            <div className="grid gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:grid-cols-2">
+              {emergencyContext.aiBrief?.projectScale && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Project Scale</p>
+                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.projectScale}</p>
+                </div>
+              )}
+              {emergencyContext.aiBrief?.propertyType && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Property Type</p>
+                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.propertyType}</p>
+                </div>
+              )}
+              {emergencyContext.aiBrief?.budgetLabel && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Budget Signal</p>
+                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.budgetLabel}</p>
+                </div>
+              )}
+              {emergencyContext.aiBrief?.timelineLabel && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Timeline Signal</p>
+                  <p className="text-sm text-slate-800">{emergencyContext.aiBrief.timelineLabel}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {emergencyContext.aiBrief?.keyFacts && emergencyContext.aiBrief.keyFacts.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">Key Facts</p>
+              <ul className="space-y-1 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                {emergencyContext.aiBrief.keyFacts.slice(0, 4).map((fact) => (
+                  <li key={fact} className="flex gap-2 text-sm text-slate-700">
+                    <span className="text-slate-400">•</span>
+                    <span>{fact}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {emergencyContext.photoUrls && emergencyContext.photoUrls.length > 0 && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">Photos</p>
@@ -146,6 +203,31 @@ export function EmergencySummaryScreen({ isOpen, onBack, selectedProfessionals, 
           {/* AI Warnings */}
           {hasWarnings && (
             <SafetyGuidanceCard guidance={parsedWarnings} />
+          )}
+
+          {showConfidenceWarning && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-amber-700 mb-1">Low AI Confidence</p>
+              <p className="text-sm text-amber-800">
+                The AI extracted this brief with limited confidence. The invite will still send, but contractors should rely on the photos and your original description first.
+              </p>
+            </div>
+          )}
+
+          {((emergencyContext.aiBrief?.advisoryTrades.length || 0) > 0 || (emergencyContext.aiBrief?.advisoryUnmappedNeeds.length || 0) > 0) && (
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">Possible Additional Needs</p>
+              {emergencyContext.aiBrief?.advisoryTrades && emergencyContext.aiBrief.advisoryTrades.length > 0 && (
+                <p className="text-sm text-slate-700">
+                  Additional trades to keep in mind: {emergencyContext.aiBrief.advisoryTrades.slice(0, 3).join(', ')}
+                </p>
+              )}
+              {emergencyContext.aiBrief?.advisoryUnmappedNeeds && emergencyContext.aiBrief.advisoryUnmappedNeeds.length > 0 && (
+                <p className="mt-1 text-sm text-slate-700">
+                  Other possible needs: {emergencyContext.aiBrief.advisoryUnmappedNeeds.slice(0, 3).join(', ')}
+                </p>
+              )}
+            </div>
           )}
 
           {hasAiResult && !hasWarnings && emergencyContext.aiIntakeId && (

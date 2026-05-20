@@ -4,6 +4,11 @@ import { SafetyGuidanceCard, buildSafetyGuidanceFromAssessment } from '@/compone
 
 type AiIntakeView = {
   id?: string;
+  title?: unknown;
+  summary?: unknown;
+  scope?: unknown;
+  overallConfidence?: unknown;
+  rawOutput?: unknown;
   assumptions?: unknown;
   risks?: unknown;
   project?: unknown;
@@ -40,6 +45,12 @@ const toStringArray = (value: unknown): string[] => {
   return value
     .map((item) => (typeof item === 'string' ? item.trim() : ''))
     .filter((item) => item.length > 0);
+};
+
+const toStringValue = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 const parseSafetyAssessment = (aiIntake: AiIntakeView): SafetyAssessmentView | null => {
@@ -92,6 +103,29 @@ export function ProjectAiPanel({
 
   const assumptions = toStringArray(aiIntake.assumptions);
   const risks = toStringArray(aiIntake.risks);
+  const projectJson =
+    aiIntake.project && typeof aiIntake.project === 'object' && !Array.isArray(aiIntake.project)
+      ? (aiIntake.project as Record<string, unknown>)
+      : null;
+  const rawOutput =
+    aiIntake.rawOutput && typeof aiIntake.rawOutput === 'object' && !Array.isArray(aiIntake.rawOutput)
+      ? (aiIntake.rawOutput as Record<string, unknown>)
+      : null;
+  const title = toStringValue(aiIntake.title);
+  const summary =
+    toStringValue(aiIntake.summary) ||
+    toStringValue(aiIntake.scope) ||
+    toStringValue(projectJson?.scopeText);
+  const propertyType = toStringValue(projectJson?.propertyType);
+  const projectScale =
+    rawOutput?.projectScale === 'SCALE_1' || rawOutput?.projectScale === 'SCALE_2' || rawOutput?.projectScale === 'SCALE_3'
+      ? rawOutput.projectScale
+      : projectJson?.projectScale === 'SCALE_1' || projectJson?.projectScale === 'SCALE_2' || projectJson?.projectScale === 'SCALE_3'
+        ? projectJson.projectScale
+        : null;
+  const keyFacts = toStringArray(rawOutput?.keyFacts).slice(0, 4);
+  const missingInfo = toStringArray(rawOutput?.missingInfo).slice(0, 3);
+  const overallConfidence = typeof aiIntake.overallConfidence === 'number' ? aiIntake.overallConfidence : null;
   const safety = parseSafetyAssessment(aiIntake);
   const normalizedRiskLevel = (safety?.riskLevel || '').toLowerCase();
   const safetyGuidance = buildSafetyGuidanceFromAssessment(safety);
@@ -138,7 +172,61 @@ export function ProjectAiPanel({
           <h3 className="text-sm font-bold text-violet-200">From AI (Full Intake)</h3>
           {aiIntake.id && <span className="text-[11px] text-violet-300/70">Intake ID: {aiIntake.id}</span>}
         </div>
+        {(title || summary) && (
+          <div className="mb-3 rounded-lg border border-violet-500/25 bg-slate-950/25 p-3">
+            {title && <p className="text-sm font-semibold text-white">{title}</p>}
+            {summary && <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{summary}</p>}
+          </div>
+        )}
+        {(projectScale || propertyType || overallConfidence !== null) && (
+          <div className="mb-3 grid gap-2 sm:grid-cols-3">
+            {projectScale && (
+              <div className="rounded-lg border border-violet-500/25 bg-slate-950/25 px-3 py-2">
+                <p className="text-[11px] uppercase tracking-wide text-violet-200/80">Project scale</p>
+                <p className="text-sm font-semibold text-white">{projectScale}</p>
+              </div>
+            )}
+            {propertyType && (
+              <div className="rounded-lg border border-violet-500/25 bg-slate-950/25 px-3 py-2">
+                <p className="text-[11px] uppercase tracking-wide text-violet-200/80">Property type</p>
+                <p className="text-sm font-semibold text-white">{propertyType}</p>
+              </div>
+            )}
+            {overallConfidence !== null && (
+              <div className="rounded-lg border border-violet-500/25 bg-slate-950/25 px-3 py-2">
+                <p className="text-[11px] uppercase tracking-wide text-violet-200/80">Confidence</p>
+                <p className="text-sm font-semibold text-white">{Math.round(overallConfidence * 100)}%</p>
+              </div>
+            )}
+          </div>
+        )}
         {safetyBlock}
+        {keyFacts.length > 0 && (
+          <div className="mb-3 rounded-lg border border-violet-500/25 bg-slate-950/25 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-violet-200">Key facts</p>
+            <ul className="space-y-1">
+              {keyFacts.map((item, index) => (
+                <li key={`ai-key-fact-${index}`} className="flex gap-2 text-sm text-slate-200">
+                  <span className="text-violet-300">•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {missingInfo.length > 0 && (
+          <div className="mb-3 rounded-lg border border-amber-400/25 bg-amber-500/10 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-100">Still missing</p>
+            <ul className="space-y-1">
+              {missingInfo.map((item, index) => (
+                <li key={`ai-missing-${index}`} className="flex gap-2 text-sm text-amber-50">
+                  <span className="text-amber-200">•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-900/50 p-3 text-[11px] text-slate-300 border border-violet-500/20">
           {JSON.stringify(aiIntake, null, 2)}
         </pre>

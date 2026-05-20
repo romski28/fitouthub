@@ -269,6 +269,91 @@ export class ProjectsService {
     };
   }
 
+  private toAiString(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  private toAiStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item) => item.length > 0);
+  }
+
+  private getAiIntakeProjectJson(aiIntake: any): Record<string, unknown> | null {
+    return aiIntake?.project && typeof aiIntake.project === 'object' && !Array.isArray(aiIntake.project)
+      ? (aiIntake.project as Record<string, unknown>)
+      : null;
+  }
+
+  private getAiIntakeRawOutput(aiIntake: any): Record<string, unknown> | null {
+    return aiIntake?.rawOutput && typeof aiIntake.rawOutput === 'object' && !Array.isArray(aiIntake.rawOutput)
+      ? (aiIntake.rawOutput as Record<string, unknown>)
+      : null;
+  }
+
+  private getAiIntakeProjectScale(aiIntake: any): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null {
+    const rawOutput = this.getAiIntakeRawOutput(aiIntake);
+    const projectJson = this.getAiIntakeProjectJson(aiIntake);
+    const value = rawOutput?.projectScale ?? projectJson?.projectScale ?? projectJson?.projectScaleSuggested;
+    return value === 'SCALE_1' || value === 'SCALE_2' || value === 'SCALE_3' ? value : null;
+  }
+
+  private buildEmergencyAiInviteSnippet(aiIntake: any): {
+    inAppLines: string[];
+    emailDescription: string | null;
+    directMessageSuffix: string | null;
+  } {
+    const projectJson = this.getAiIntakeProjectJson(aiIntake);
+    const rawOutput = this.getAiIntakeRawOutput(aiIntake);
+    const safety =
+      (projectJson?.safetyAssessment && typeof projectJson.safetyAssessment === 'object'
+        ? (projectJson.safetyAssessment as Record<string, unknown>)
+        : null) ||
+      (rawOutput?.safetyAssessment && typeof rawOutput.safetyAssessment === 'object'
+        ? (rawOutput.safetyAssessment as Record<string, unknown>)
+        : null);
+
+    const summary =
+      this.toAiString(aiIntake?.summary) ||
+      this.toAiString(aiIntake?.scope) ||
+      this.toAiString(projectJson?.scopeText);
+    const keyFacts = this.toAiStringArray(rawOutput?.keyFacts).slice(0, 2);
+    const emergencyReason = this.toAiString(safety?.emergencyReason);
+    const concerns = this.toAiStringArray(safety?.concerns).slice(0, 2);
+    const mitigations = this.toAiStringArray(safety?.temporaryMitigations).slice(0, 1);
+    const requiresImmediateHumanContact = safety?.requiresImmediateHumanContact === true;
+
+    const inAppLines: string[] = [];
+    if (summary) {
+      inAppLines.push(`AI brief: ${summary}`);
+    }
+
+    const safetyBits = [
+      requiresImmediateHumanContact ? 'Immediate human contact recommended.' : null,
+      emergencyReason,
+      ...concerns,
+      mitigations.length > 0 ? `Temporary steps: ${mitigations.join('; ')}` : null,
+    ].filter((value): value is string => Boolean(value));
+
+    if (safetyBits.length > 0) {
+      inAppLines.push(`Safety: ${safetyBits.join(' | ')}`);
+    }
+
+    if (keyFacts.length > 0) {
+      inAppLines.push(`Key facts: ${keyFacts.join('; ')}`);
+    }
+
+    const emailParts = [summary, ...keyFacts, ...safetyBits].filter((value): value is string => Boolean(value));
+    return {
+      inAppLines,
+      emailDescription: emailParts.length > 0 ? emailParts.join('\n\n') : null,
+      directMessageSuffix: summary ? ` AI brief: ${summary}` : null,
+    };
+  }
+
   private betterStatus(
     a?: string | null,
     b?: string | null,
@@ -2149,6 +2234,29 @@ Please review the project details and respond with your quote or decline the inv
     const { professionalId: _legacyField, ...projectData } = rest as any;
 
     const normalizedPhotos = this.normalizePhotos(photos, photoUrls);
+    let aiIntakeContext: any = null;
+
+    if (aiIntakeId) {
+      try {
+        aiIntakeContext = await (this.prisma as any).aiIntake.findUnique({
+          where: { id: aiIntakeId },
+          select: {
+            id: true,
+            title: true,
+            summary: true,
+            scope: true,
+            project: true,
+            rawOutput: true,
+            overallConfidence: true,
+          },
+        });
+      } catch (error) {
+        console.warn('[ProjectsService.create] Failed to load AI intake context:', {
+          aiIntakeId,
+          error: (error as Error)?.message,
+        });
+      }
+    }
 
     // Backward compatibility: allow single professionalId in payload
     const ids: string[] = Array.isArray(professionalIds)
@@ -2180,6 +2288,9 @@ Please review the project details and respond with your quote or decline the inv
     normalized.startDate = this.normalizeDateInput(normalized.startDate);
     normalized.endDate = this.normalizeDateInput(normalized.endDate);
     normalized.siteInspectionAvailableOn = this.normalizeDateInput(normalized.siteInspectionAvailableOn);
+    if (!normalized.projectScale && aiIntakeContext) {
+      normalized.projectScale = this.getAiIntakeProjectScale(aiIntakeContext) || undefined;
+    }
 
     const normalizedProjectTrades = this.normalizeTradeLabels(
       Array.isArray(normalized.tradesRequired) ? normalized.tradesRequired : [],
@@ -2254,6 +2365,9 @@ Please review the project details and respond with your quote or decline the inv
           projectTrades: normalizedProjectTrades,
         };
         const tradeCopy = this.buildInvitationTradeCopy(tradeScope);
+        const emergencyAiInvite = project.isEmergency
+          ? this.buildEmergencyAiInviteSnippet(aiIntakeContext)
+          : null;
 
         const budgetText = project.budget 
           ? `Budget: HK$${project.budget.toLocaleString()}`
@@ -2270,7 +2384,7 @@ This is an urgent request requiring immediate attention.
 ⏱ Response needed within 1 hour.
 
 ${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}\n` : ''}${tradeCopy.otherRequiredTradesLine ? `${tradeCopy.otherRequiredTradesLine}\n` : ''}${tradeCopy.projectTradesLine}
-Region: ${project.region}
+${emergencyAiInvite?.inAppLines.length ? `${emergencyAiInvite.inAppLines.join('\n')}\n` : ''}Region: ${project.region}
 
 Please review the project details and respond immediately with your availability or decline. Emergency callout rates apply.`
           : `📋 Project Invitation: ${project.projectName}
@@ -2353,6 +2467,9 @@ Please review the project details and respond with your quote or decline the inv
         projectTrades: normalizedProjectTrades,
       };
       const tradeCopy = this.buildInvitationTradeCopy(tradeScope);
+      const emergencyAiInvite = project.isEmergency
+        ? this.buildEmergencyAiInviteSnippet(aiIntakeContext)
+        : null;
 
       emailPromises.push(
         this.emailService
@@ -2360,7 +2477,10 @@ Please review the project details and respond with your quote or decline the inv
             to: professional.email,
             professionalName,
             projectName: project.projectName,
-            projectDescription: project.notes || 'No description provided',
+            projectDescription:
+              (project.isEmergency && emergencyAiInvite?.emailDescription) ||
+              project.notes ||
+              'No description provided',
             location: project.region,
             requestedTradesText: tradeScope.requestedTrades.join(', '),
             otherRequiredTradesText: tradeScope.otherRequiredTrades.join(', '),
@@ -2433,7 +2553,7 @@ Please review the project details and respond with your quote or decline the inv
                 return;
               }
 
-              const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. ${tradeCopy.directMessage} Check your email or log in to respond.`;
+              const shortMsg = `📋 New project invitation: "${project.projectName}" in ${project.region}. ${tradeCopy.directMessage}${project.isEmergency && emergencyAiInvite?.directMessageSuffix ? emergencyAiInvite.directMessageSuffix : ''} Check your email or log in to respond.`;
               const sendResult = await this.notificationService.send({
                 professionalId: professional.id,
                 phoneNumber: professional.phone,

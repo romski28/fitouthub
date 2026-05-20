@@ -18,6 +18,7 @@ import type { ProjectFormData } from '@/components/project-form';
 import { EmergencySummaryScreen } from '@/components/emergency-summary-screen';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
 import { readEmergencyPhotoUrls } from '@/lib/emergency-photos';
+import { type EmergencyAiBrief, normalizeEmergencyAiBrief } from '@/lib/emergency-ai';
 
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
 
@@ -73,20 +74,22 @@ function buildEmergencyAiPrompt(trade: string, location: string, notes: string):
   return sections.filter(Boolean).join('\n');
 }
 
-function formatEmergencyWarnings(parsedOutput: {
-  risks?: string[];
-  safetyAssessment?: {
-    riskLevel?: string;
-    emergencyReason?: string | null;
-    concerns?: string[];
-    temporaryMitigations?: string[];
-    disclaimer?: string | null;
+function formatEmergencyWarnings(parsedOutput: unknown): string | undefined {
+  if (!parsedOutput || typeof parsedOutput !== 'object' || Array.isArray(parsedOutput)) return undefined;
+
+  const source = parsedOutput as {
+    risks?: string[];
+    safetyAssessment?: {
+      riskLevel?: string;
+      emergencyReason?: string | null;
+      concerns?: string[];
+      temporaryMitigations?: string[];
+      disclaimer?: string | null;
+    };
   };
-} | null | undefined): string | undefined {
-  if (!parsedOutput) return undefined;
 
   const lines: string[] = [];
-  const safety = parsedOutput.safetyAssessment;
+  const safety = source.safetyAssessment;
   if (safety?.riskLevel && safety.riskLevel !== 'none') {
     lines.push(`Risk: ${safety.riskLevel}`);
   }
@@ -96,8 +99,8 @@ function formatEmergencyWarnings(parsedOutput: {
   if (Array.isArray(safety?.concerns)) {
     lines.push(...safety.concerns.filter(Boolean));
   }
-  if (Array.isArray(parsedOutput.risks)) {
-    lines.push(...parsedOutput.risks.filter(Boolean));
+  if (Array.isArray(source.risks)) {
+    lines.push(...source.risks.filter(Boolean));
   }
   if (Array.isArray(safety?.temporaryMitigations) && safety.temporaryMitigations.length > 0) {
     lines.push(`Immediate steps: ${safety.temporaryMitigations.filter(Boolean).join('; ')}`);
@@ -146,6 +149,7 @@ function ProfessionalsPageInner() {
   const [emergencyAiTitleState, setEmergencyAiTitleState] = useState(emergencyAiTitle);
   const [emergencyAiWarningsState, setEmergencyAiWarningsState] = useState(emergencyAiWarnings);
   const [emergencyAiIntakeId, setEmergencyAiIntakeId] = useState<string | undefined>(undefined);
+  const [emergencyAiBrief, setEmergencyAiBrief] = useState<EmergencyAiBrief | null>(null);
   const [emergencyAiLoading, setEmergencyAiLoading] = useState(false);
   const [emergencyAiReady, setEmergencyAiReady] = useState(false);
   const [emergencyAiError, setEmergencyAiError] = useState<string | null>(null);
@@ -176,6 +180,7 @@ function ProfessionalsPageInner() {
     setEmergencyAiTitleState(emergencyAiTitle);
     setEmergencyAiWarningsState(emergencyAiWarnings);
     setEmergencyAiIntakeId(undefined);
+    setEmergencyAiBrief(null);
     setEmergencyAiReady(Boolean(emergencyAiTitle || emergencyAiWarnings));
     setEmergencyAiError(null);
     emergencyAiAttemptedPromptRef.current = null;
@@ -218,27 +223,19 @@ function ProfessionalsPageInner() {
 
         const payload: {
           intakeId?: string | null;
-          parsedOutput?: {
-            title?: string | null;
-            risks?: string[];
-            safetyAssessment?: {
-              riskLevel?: string;
-              emergencyReason?: string | null;
-              concerns?: string[];
-              temporaryMitigations?: string[];
-              disclaimer?: string | null;
-            };
-          } | null;
+          parsedOutput?: unknown;
         } = await response.json();
 
         if (cancelled) return;
 
         setEmergencyAiIntakeId(payload.intakeId || undefined);
+        const normalizedBrief = normalizeEmergencyAiBrief(payload.parsedOutput, emergencyTradeParam);
+        setEmergencyAiBrief(normalizedBrief);
         if (payload.intakeId) {
           setEmergencyAiReady(true);
         }
-        if (payload.parsedOutput?.title) {
-          setEmergencyAiTitleState(payload.parsedOutput.title);
+        if (normalizedBrief?.title) {
+          setEmergencyAiTitleState(normalizedBrief.title);
         }
 
         const warnings = formatEmergencyWarnings(payload.parsedOutput);
@@ -683,6 +680,8 @@ function ProfessionalsPageInner() {
             aiTitle: emergencyAiTitleState || undefined,
             aiWarnings: emergencyAiWarningsState || undefined,
             aiIntakeId: emergencyAiIntakeId,
+            aiBrief: emergencyAiBrief || undefined,
+            aiPrompt: emergencyAiPrompt,
           }}
         />
     </div>
